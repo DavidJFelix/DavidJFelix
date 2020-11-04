@@ -1,8 +1,18 @@
-:wave: Hey, you found me! Welcome to my GitHub profile.
+:wave: &nbsp; Hey, you found me! :alien:
 
-## About Me
+Feel free to poke around my profile.
+If you see anything interesting please reach out by email with a subject that starts with `[Github]`.
 
-I am a full-stack engineer with a passion for DevOps and cloud technology.
+## Bio
+
+I am a full-stack software engineer with a passion for Serverless, DevOps and Cloud-first technology.
+I graduated from the [University of Dayton College of Engineering](https://udayton.edu/engineering/) with Bachelor's of Science degree in computer engineering.
+I've founded a number of tech startups with varying success:
+
+* Swarmfarm
+* Pepperonio
+* MG4.tv / iotv
+* NullServe
 
 [![David's github stats](https://github-readme-stats.vercel.app/api?username=davidjfelix&count_private=true)](https://github.com/anuraghazra/github-readme-stats)
 

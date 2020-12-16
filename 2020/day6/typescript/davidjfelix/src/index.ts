@@ -1,6 +1,4 @@
-import { group } from 'console'
 import fs from 'fs'
-import _ from 'lodash'
 
 const input = fs
   .readFileSync('./input.txt', 'utf8')

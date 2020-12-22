@@ -1,5 +1,5 @@
 import fs from 'fs'
-import _, { reduce } from 'lodash'
+import _ from 'lodash'
 
 const input = fs
   .readFileSync('./input.txt', 'utf8')

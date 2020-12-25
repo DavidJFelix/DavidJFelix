@@ -1,5 +1,5 @@
 import fs from 'fs'
-import _, { slice } from 'lodash'
+import _ from 'lodash'
 
 const input: [string, number][] = fs
   .readFileSync('./input.txt', 'utf8')

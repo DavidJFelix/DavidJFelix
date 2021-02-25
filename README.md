@@ -1,4 +1,4 @@
-:wave: &nbsp; Hey, you found me! :alien:
+:wave::skin-tone-2: &nbsp; Hey, you found me! :alien:
 
 Feel free to poke around my profile.
 If you see anything interesting please reach out by email with a subject that starts with `[Github]`.

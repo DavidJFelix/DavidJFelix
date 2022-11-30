@@ -1,0 +1,24 @@
+{
+  "name": "002",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "react": "^16.3.2",
+    "react-dom": "^16.3.3",
+    "react-scripts": "1.1.4",
+    "react-stripe-elements": "^1.6.0"
+  },
+  "scripts": {
+    "build:css": "postcss src/styles/index.css -o src/index.css",
+    "watch:css": "postcss src/styles/index.css -o src/index.css -w",
+    "start": "npm run watch:css & react-scripts start",
+    "build": "npm run build:css && react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  },
+  "devDependencies": {
+    "autoprefixer": "^8.4.1",
+    "postcss-cli": "^5.0.0",
+    "tailwindcss": "^0.5.3"
+  }
+}

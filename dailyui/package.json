@@ -1,0 +1,10 @@
+{
+  "name": "dailyui",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "David J. Felix <felix.davidj@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "create-react-app": "^1.5.2"
+  }
+}

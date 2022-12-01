@@ -5,6 +5,7 @@ fn main() {
     let contents: String = fs::read_to_string("../input.txt").unwrap();
     let input: Vec<Vec<u64>> = contents
         .split("\n\n")
+        // Remove the trailing newline group from the end
         .filter(|group| *group != "")
         .map(|group| {
             group

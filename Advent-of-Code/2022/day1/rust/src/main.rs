@@ -9,8 +9,7 @@ fn main() {
         .map(|group| {
             group
                 .split("\n")
-                .map(|line| line.parse::<u64>())
-                .map(Result::unwrap_or_default)
+                .map(|line| line.parse::<u64>().unwrap_or_default())
                 .collect()
         })
         .collect();

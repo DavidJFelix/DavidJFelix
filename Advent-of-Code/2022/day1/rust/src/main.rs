@@ -4,12 +4,13 @@ use std::fs;
 fn main() {
     let contents: String = fs::read_to_string("../input.txt").unwrap();
     let input: Vec<Vec<u64>> = contents
-        .lines()
-        .map(|line| line.parse::<u64>())
-        .group_by(|result| result.is_ok())
-        .into_iter()
-        .filter(|(is_ok, _)| *is_ok)
-        .map(|(_, lines)| lines.map(|line| line.unwrap()).collect())
+        .split("\n\n")
+        .map(|group| {
+            group
+                .split("\n")
+                .map(|line| line.parse::<u64>().unwrap())
+                .collect()
+        })
         .collect();
 
     let p1_max_calories: u64 = input

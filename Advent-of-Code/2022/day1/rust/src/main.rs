@@ -5,10 +5,15 @@ fn main() {
     let contents: String = fs::read_to_string("../input.txt").unwrap();
     let input: Vec<Vec<u64>> = contents
         .split("\n\n")
+        .filter(|group| *group != "")
         .map(|group| {
             group
                 .split("\n")
-                .map(|line| line.parse::<u64>().unwrap())
+                .map(|line| line.parse::<u64>())
+                .map(|result| match result {
+                    Ok(inner) => inner,
+                    Err(_) => 0,
+                })
                 .collect()
         })
         .collect();

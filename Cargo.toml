@@ -1,0 +1,2 @@
+[workspace]
+members = ["Advent-of-Code/2022/rust/*"]

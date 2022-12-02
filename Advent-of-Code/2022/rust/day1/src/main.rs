@@ -2,7 +2,7 @@ use itertools::Itertools;
 use std::fs;
 
 fn main() {
-    let contents: String = fs::read_to_string("../input.txt").unwrap();
+    let contents: String = fs::read_to_string("../../inputs/day1.txt").unwrap();
     let input = contents
         .split("\n\n")
         // Remove the trailing newline group from the end

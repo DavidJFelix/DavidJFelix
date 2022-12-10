@@ -85,6 +85,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "day10"
+version = "0.1.0"
+dependencies = [
+ "color-eyre",
+ "itertools",
+]
+
+[[package]]
 name = "day2"
 version = "0.1.0"
 
@@ -128,6 +136,14 @@ name = "day8"
 version = "0.1.0"
 dependencies = [
  "color-eyre",
+]
+
+[[package]]
+name = "day9"
+version = "0.1.0"
+dependencies = [
+ "color-eyre",
+ "nom",
 ]
 
 [[package]]

@@ -194,7 +194,7 @@ fn parse_monkey_rule_hashmap(input: &str) -> IResult<&str, HashMap<Monkey, Monke
 fn main() -> color_eyre::Result<()> {
     color_eyre::install().unwrap();
     let contents = include_str!("../../../inputs/day11.txt");
-    let hashmap = parse_monkey_rule_hashmap(contents);
+    let hashmap = parse_monkey_rule_hashmap(contents)?;
 
     dbg!(hashmap);
     Ok(())
@@ -250,21 +250,21 @@ mod test {
         assert_eq!(parse_starting_items(input), Ok(("", expect)))
     }
 
-    #[test_case("+", Operation::Add)]
-    #[test_case("*", Operation::Multiply)]
+    #[test_case("+", Operation::Add; "add")]
+    #[test_case("*", Operation::Multiply; "multiply")]
     fn test_parse_operation(input: &str, expect: Operation) {
         assert_eq!(parse_operation(input), Ok(("", expect)))
     }
 
-    #[test_case("old", Operand::Old)]
-    #[test_case("11", Operand::Value(11))]
-    #[test_case("1", Operand::Value(1))]
-    #[test_case("2", Operand::Value(2))]
-    #[test_case("13", Operand::Value(13))]
-    #[test_case("5", Operand::Value(5))]
-    #[test_case("6", Operand::Value(6))]
-    #[test_case("7", Operand::Value(7))]
-    #[test_case("19", Operand::Value(19))]
+    #[test_case("old", Operand::Old; "old")]
+    #[test_case("11", Operand::Value(11); "value 11")]
+    #[test_case("1", Operand::Value(1); "value 1")]
+    #[test_case("2", Operand::Value(2); "value 2")]
+    #[test_case("13", Operand::Value(13); "value 13")]
+    #[test_case("5", Operand::Value(5); "value 5")]
+    #[test_case("6", Operand::Value(6); "value 6")]
+    #[test_case("7", Operand::Value(7); "value 7")]
+    #[test_case("19", Operand::Value(19); "value 19")]
     fn test_parse_operand(input: &str, expect: Operand) {
         assert_eq!(parse_operand(input), Ok(("", expect)))
     }
@@ -482,7 +482,170 @@ Monkey 3:
                 false_monkey_receiver: Monkey(1)
             }
         }
-    })]
+    }; "sample input")]
+    #[test_case(
+        r#"Monkey 0:
+  Starting items: 84, 66, 62, 69, 88, 91, 91
+  Operation: new = old * 11
+  Test: divisible by 2
+    If true: throw to monkey 4
+    If false: throw to monkey 7
+
+Monkey 1:
+  Starting items: 98, 50, 76, 99
+  Operation: new = old * old
+  Test: divisible by 7
+    If true: throw to monkey 3
+    If false: throw to monkey 6
+
+Monkey 2:
+  Starting items: 72, 56, 94
+  Operation: new = old + 1
+  Test: divisible by 13
+    If true: throw to monkey 4
+    If false: throw to monkey 0
+
+Monkey 3:
+  Starting items: 55, 88, 90, 77, 60, 67
+  Operation: new = old + 2
+  Test: divisible by 3
+    If true: throw to monkey 6
+    If false: throw to monkey 5
+
+Monkey 4:
+  Starting items: 69, 72, 63, 60, 72, 52, 63, 78
+  Operation: new = old * 13
+  Test: divisible by 19
+    If true: throw to monkey 1
+    If false: throw to monkey 7
+
+Monkey 5:
+  Starting items: 89, 73
+  Operation: new = old + 5
+  Test: divisible by 17
+    If true: throw to monkey 2
+    If false: throw to monkey 0
+
+Monkey 6:
+  Starting items: 78, 68, 98, 88, 66
+  Operation: new = old + 6
+  Test: divisible by 11
+    If true: throw to monkey 2
+    If false: throw to monkey 5
+
+Monkey 7:
+  Starting items: 70
+  Operation: new = old + 7
+  Test: divisible by 5
+    If true: throw to monkey 1
+    If false: throw to monkey 3
+"#,
+    hashmap!{
+        Monkey(0) => MonkeyState {
+            items: vec![ItemWorryLevel(84), ItemWorryLevel(66), ItemWorryLevel(62), ItemWorryLevel(69), ItemWorryLevel(88), ItemWorryLevel(91), ItemWorryLevel(91)],
+            equation: WorryLevelResponseEquation {
+                left: Operand::Old,
+                operation: Operation::Multiply,
+                right: Operand::Value(11)
+            },
+            conditional: ConditionalMonkeyResponse {
+                divisible_by: 2,
+                true_monkey_receiver: Monkey(4),
+                false_monkey_receiver: Monkey(7)
+            }
+        },
+        Monkey(1) => MonkeyState {
+            items: vec![ItemWorryLevel(98), ItemWorryLevel(50), ItemWorryLevel(76), ItemWorryLevel(99)],
+            equation: WorryLevelResponseEquation {
+                left: Operand::Old,
+                operation: Operation::Multiply,
+                right: Operand::Old
+            },
+            conditional: ConditionalMonkeyResponse {
+                divisible_by: 7,
+                true_monkey_receiver: Monkey(3),
+                false_monkey_receiver: Monkey(6)
+            }
+        },
+        Monkey(2) => MonkeyState {
+            items: vec![ItemWorryLevel(72), ItemWorryLevel(56), ItemWorryLevel(94)],
+            equation: WorryLevelResponseEquation {
+                left: Operand::Old,
+                operation: Operation::Add,
+                right: Operand::Value(1)
+            },
+            conditional: ConditionalMonkeyResponse {
+                divisible_by: 13,
+                true_monkey_receiver: Monkey(4),
+                false_monkey_receiver: Monkey(0)
+            }
+        },
+        Monkey(3) => MonkeyState {
+            items: vec![ItemWorryLevel(55), ItemWorryLevel(88), ItemWorryLevel(90), ItemWorryLevel(77), ItemWorryLevel(60), ItemWorryLevel(67)],
+            equation: WorryLevelResponseEquation {
+                left: Operand::Old,
+                operation: Operation::Add,
+                right: Operand::Value(2)
+            },
+            conditional: ConditionalMonkeyResponse {
+                divisible_by: 3,
+                true_monkey_receiver: Monkey(6),
+                false_monkey_receiver: Monkey(5)
+            }
+        },
+        Monkey(4) => MonkeyState {
+            items: vec![ItemWorryLevel(69), ItemWorryLevel(72), ItemWorryLevel(63), ItemWorryLevel(60), ItemWorryLevel(72), ItemWorryLevel(52), ItemWorryLevel(63), ItemWorryLevel(78)],
+            equation: WorryLevelResponseEquation {
+                left: Operand::Old,
+                operation: Operation::Multiply,
+                right: Operand::Value(13)
+            },
+            conditional: ConditionalMonkeyResponse {
+                divisible_by: 19,
+                true_monkey_receiver: Monkey(1),
+                false_monkey_receiver: Monkey(7)
+            }
+        },
+        Monkey(5) => MonkeyState {
+            items: vec![ItemWorryLevel(89), ItemWorryLevel(73)],
+            equation: WorryLevelResponseEquation {
+                left: Operand::Old,
+                operation: Operation::Add,
+                right: Operand::Value(5)
+            },
+            conditional: ConditionalMonkeyResponse {
+                divisible_by: 17,
+                true_monkey_receiver: Monkey(2),
+                false_monkey_receiver: Monkey(0)
+            }
+        },
+        Monkey(6) => MonkeyState {
+            items: vec![ItemWorryLevel(78), ItemWorryLevel(68), ItemWorryLevel(98), ItemWorryLevel(88), ItemWorryLevel(66)],
+            equation: WorryLevelResponseEquation {
+                left: Operand::Old,
+                operation: Operation::Add,
+                right: Operand::Value(6)
+            },
+            conditional: ConditionalMonkeyResponse {
+                divisible_by: 11,
+                true_monkey_receiver: Monkey(2),
+                false_monkey_receiver: Monkey(5)
+            }
+        },
+        Monkey(7) => MonkeyState {
+            items: vec![ItemWorryLevel(70)],
+            equation: WorryLevelResponseEquation {
+                left: Operand::Old,
+                operation: Operation::Add,
+                right: Operand::Value(7)
+            },
+            conditional: ConditionalMonkeyResponse {
+                divisible_by: 5,
+                true_monkey_receiver: Monkey(1),
+                false_monkey_receiver: Monkey(3)
+            }
+        }
+    }; "actual input")]
     fn test_parse_monkey_rule_hashmap(input: &str, expect: HashMap<Monkey, MonkeyState>) {
         assert_eq!(parse_monkey_rule_hashmap(input), Ok(("", expect)))
     }

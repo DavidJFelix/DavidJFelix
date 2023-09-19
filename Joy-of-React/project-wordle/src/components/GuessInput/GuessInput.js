@@ -4,7 +4,7 @@ const matchNotUppercaseAlphabetRegex =  /[^A-Z]/g
 const validGuessRegex = "[A-Z]{5}"
 
 
-function GuessInput() {
+function GuessInput({onSubmit}) {
   const [guess, setGuess] = React.useState('');
   const onGuessChange = React.useCallback((event) => {
     const nextGuess = event
@@ -21,9 +21,9 @@ function GuessInput() {
       return
     }
 
-    console.log(guess);
+    onSubmit(guess)
     setGuess('')
-  }, [guess]);
+  }, [guess, setGuess, onSubmit]);
 
   return (
     <form className="guess-input-wrapper" onSubmit={onGuessSubmit}>

@@ -14,7 +14,7 @@ function Game() {
   const [guesses, setGuesses] = React.useState([])
   const appendGuess = React.useCallback((newGuess) => {
     setGuesses((guesses) => [...guesses, newGuess])
-  })
+  }, [setGuesses])
 
   return <>
     <GuessResults guesses={guesses} />

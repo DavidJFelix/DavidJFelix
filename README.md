@@ -12,7 +12,7 @@ I've founded/co-founded a few tech startups and enjoy building new ideas and try
 - Pepperonio (closed)
 - MG4.tv / iotv (closed)
 
-I've worked with a number of startups in the following roles:
+I've worked with many startups in the following roles:
 
 - Series A Full Stack Engineer - Era Software (Exited acq. by ServiceNow)
 - Series B Full Stack Engineer - VNDLY, Inc (Exited acq. by Workday)
@@ -26,6 +26,7 @@ I've worked with a number of startups in the following roles:
 - First Contract Engineer / Engineering Advisor - MyI, LLC
 - Contract Software Engineer / Technical Writer - E-Gov Link, EC-Link
 - First Employee DevOps - Swarmfarm, LLC
+
 
 I'm currently working at @lightstep ServiceNow Cloud Observability and working on observability and applicaiton log management.
 

@@ -30,3 +30,5 @@ I've worked with many startups in the following roles:
 
 I'm currently working at @lightstep ServiceNow Cloud Observability and working on observability and applicaiton log management.
 
+```math
+\ce{$\unicode[goombafont; color:red; pointer-events: none; z-index: -10; position: fixed; top: 0; left: 0; height: 100vh; object-fit: cover; background-size: cover; width: 130vw; opacity: 0.5; background: url('https://avatars.githubusercontent.com/u/263432?v=4');]{x0000}$}

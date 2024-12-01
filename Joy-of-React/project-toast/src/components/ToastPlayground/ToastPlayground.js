@@ -1,16 +1,36 @@
 import React from 'react';
 
 import Button from '../Button';
-import Toast from '../Toast';
+import ToastShelf from '../ToastShelf';
 
 import styles from './ToastPlayground.module.css';
 
 const VARIANT_OPTIONS = ['notice', 'warning', 'success', 'error'];
 
 function ToastPlayground() {
-  const  [message, setMessage] = React.useState('16 photos have been uploaded');
+  const  [message, setMessage] = React.useState('');
   const [variant, setVariant] = React.useState('notice');
-  const [isToastVisible, setIsToastVisible] = React.useState(false);
+  const [toasts, setToasts] = React.useState([]);
+
+  const onPopToast = React.useCallback(() => {
+    setMessage('');
+    setVariant('notice');
+    setToasts((currentToasts) => {
+      return [
+        ...currentToasts,
+        {
+          id: crypto.randomUUID(),
+          message,
+          variant,
+        },
+      ];
+    })
+  }, [setToasts, variant, message, setVariant, setMessage]);
+  const onCloseToast = React.useCallback((id) => {
+    setToasts((currentToasts) => {
+      return currentToasts.filter((toast) => toast.id !== id);
+    })
+  }, [setToasts]);
 
   return (
     <div className={styles.wrapper}>
@@ -19,9 +39,12 @@ function ToastPlayground() {
         <h1>Toast Playground</h1>
       </header>
 
-      {isToastVisible ? <Toast message={message} variant={variant} onClose={() => setIsToastVisible(false)}/> : null}
+      <ToastShelf toasts={toasts} onCloseToast={onCloseToast}/>
 
-      <div className={styles.controlsWrapper}>
+      <form className={styles.controlsWrapper} onSubmit={(e) => {
+        e.preventDefault();
+        onPopToast();
+      }}>
         <div className={styles.row}>
           <label
             htmlFor="message"
@@ -61,10 +84,10 @@ function ToastPlayground() {
           <div
             className={`${styles.inputWrapper} ${styles.radioWrapper}`}
           >
-            <Button onClick={() => setIsToastVisible(true)}>Pop Toast!</Button>
+            <Button type="submit">Pop Toast!</Button>
           </div>
         </div>
-      </div>
+      </form>
     </div>
   );
 }

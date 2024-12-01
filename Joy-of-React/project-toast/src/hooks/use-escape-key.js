@@ -1,5 +1,7 @@
+import React from "react";
+
 function useEscapeKey(callback) {
-  useEffect(() => {
+  React.useEffect(() => {
     function handleKeydown(event) {
       if (event.key === 'Escape') {
         callback();

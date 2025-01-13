@@ -1,4 +1,5 @@
 import {Link, Outlet, createRootRoute} from '@tanstack/react-router'
+import React from 'react'
 
 const TanStackRouterDevtools =
   process.env.NODE_ENV === 'production'

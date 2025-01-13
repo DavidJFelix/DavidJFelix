@@ -45,118 +45,94 @@ const demoConfiguration: ProgramConfiguration = {
 function generateSchedule(config: ProgramConfiguration): ProgramSchedule {
   return {
     id: crypto.randomUUID(),
-    weeks: Array.from({length: config.durationWeeks}, () => ({
-      id: crypto.randomUUID(),
-      days: [],
-    })),
+    weeks: Array.from({length: config.durationWeeks}, (_, weekNumber) => {
+      const crossTrainingMinuteIncrements = [30, 40, 50, 60]
+      const shortRunDistanceMileIncrements = [3, 4, 5]
+      const longWeekRunDistanceMileIncrements = [5, 6, 7, 8]
+
+      const percentComplete = (weekNumber + 1) / config.durationWeeks
+      const crossTrainingMinutesIndex = Math.floor(
+        percentComplete * (crossTrainingMinuteIncrements.length - 1),
+      )
+      const shortRunDistanceMilesIndex = Math.floor(
+        percentComplete * (shortRunDistanceMileIncrements.length - 1),
+      )
+      const longWeekRunDistanceMilesIndex = Math.floor(
+        percentComplete * (longWeekRunDistanceMileIncrements.length - 1),
+      )
+
+      const crossTrainingDurationMinutes = crossTrainingMinuteIncrements[crossTrainingMinutesIndex]
+      const shortRunDistanceMiles = shortRunDistanceMileIncrements[shortRunDistanceMilesIndex]
+      const longWeekRunDistanceMiles =
+        longWeekRunDistanceMileIncrements[longWeekRunDistanceMilesIndex]
+      return {
+        id: crypto.randomUUID(),
+        days: [
+          {
+            id: crypto.randomUUID(),
+            workouts: [
+              {
+                description: `${crossTrainingDurationMinutes} Minute Cross Training`,
+                durationMinutes: crossTrainingDurationMinutes,
+              },
+            ],
+          },
+          {
+            id: crypto.randomUUID(),
+            workouts: [
+              {
+                description: `${shortRunDistanceMiles} Mile Easy Run`,
+                distanceMiles: shortRunDistanceMiles,
+              },
+            ],
+          },
+          {
+            id: crypto.randomUUID(),
+            workouts: [
+              {
+                description: `${longWeekRunDistanceMiles} Mile Easy Run`,
+                distanceMiles: longWeekRunDistanceMiles,
+              },
+            ],
+          },
+          {
+            id: crypto.randomUUID(),
+            workouts: [
+              {
+                description: `${shortRunDistanceMiles} Mile Easy Run`,
+                distanceMiles: shortRunDistanceMiles,
+              },
+            ],
+          },
+          {
+            id: crypto.randomUUID(),
+            workouts: [],
+          },
+          {
+            id: crypto.randomUUID(),
+            workouts: [
+              {
+                description: `${longWeekRunDistanceMiles} Mile Easy Run`,
+                distanceMiles: longWeekRunDistanceMiles,
+              },
+            ],
+          },
+          {
+            id: crypto.randomUUID(),
+            workouts: [
+              {
+                description: `${longWeekRunDistanceMiles} Mile Easy Run`,
+                distanceMiles: longWeekRunDistanceMiles,
+              },
+            ],
+          },
+        ],
+      }
+    }),
   }
 }
 
 const demoSchedule = generateSchedule(demoConfiguration)
-const _demoSchedule: ProgramSchedule = {
-  id: crypto.randomUUID(),
-  weeks: [
-    {
-      id: crypto.randomUUID(),
-      days: [
-        {
-          id: crypto.randomUUID(),
-          workouts: [{description: '30 Minute Cross Training', durationMinutes: 30}],
-        },
-        {
-          id: crypto.randomUUID(),
-          workouts: [{description: '3 Mile Easy Run', distanceMiles: 3}],
-        },
-        {
-          id: crypto.randomUUID(),
-          workouts: [{description: '5 x 0.25 Mile 5K Pace', distanceMiles: 2.5}],
-        },
-        {
-          id: crypto.randomUUID(),
-          workouts: [{description: '3 Mile Easy Run', distanceMiles: 3}],
-        },
-        {
-          id: crypto.randomUUID(),
-          workouts: [],
-        },
-        {
-          id: crypto.randomUUID(),
-          workouts: [{description: '3 Mile Easy Run', distanceMiles: 3}],
-        },
-        {
-          id: crypto.randomUUID(),
-          workouts: [{description: '5 Mile Long Easy Run', distanceMiles: 5}],
-        },
-      ],
-    },
-    {
-      id: crypto.randomUUID(),
-      days: [
-        {
-          id: crypto.randomUUID(),
-          workouts: [{description: '30 Minute Cross Training', durationMinutes: 30}],
-        },
-        {
-          id: crypto.randomUUID(),
-          workouts: [{description: '3 Mile Easy Run', distanceMiles: 3}],
-        },
-        {
-          id: crypto.randomUUID(),
-          workouts: [{description: '5 x 0.25 Mile 5K Pace', distanceMiles: 2.5}],
-        },
-        {
-          id: crypto.randomUUID(),
-          workouts: [{description: '3 Mile Easy Run', distanceMiles: 3}],
-        },
-        {
-          id: crypto.randomUUID(),
-          workouts: [],
-        },
-        {
-          id: crypto.randomUUID(),
-          workouts: [{description: '3 Mile Easy Run', distanceMiles: 3}],
-        },
-        {
-          id: crypto.randomUUID(),
-          workouts: [{description: '5 Mile Long Easy Run', distanceMiles: 5}],
-        },
-      ],
-    },
-    {
-      id: crypto.randomUUID(),
-      days: [
-        {
-          id: crypto.randomUUID(),
-          workouts: [{description: '30 Minute Cross Training', durationMinutes: 30}],
-        },
-        {
-          id: crypto.randomUUID(),
-          workouts: [{description: '3 Mile Easy Run', distanceMiles: 3}],
-        },
-        {
-          id: crypto.randomUUID(),
-          workouts: [{description: '5 x 0.25 Mile 5K Pace', distanceMiles: 2.5}],
-        },
-        {
-          id: crypto.randomUUID(),
-          workouts: [{description: '3 Mile Easy Run', distanceMiles: 3}],
-        },
-        {
-          id: crypto.randomUUID(),
-          workouts: [],
-        },
-        {
-          id: crypto.randomUUID(),
-          workouts: [{description: '3 Mile Easy Run', distanceMiles: 3}],
-        },
-        {
-          id: crypto.randomUUID(),
-          workouts: [{description: '5 Mile Long Easy Run', distanceMiles: 5}],
-        },
-      ],
-    },
-  ],
-}
 
 export const Route = createFileRoute('/')({
   component: HomeComponent,
@@ -198,14 +174,14 @@ function Week({programIndex, programWeek, start}: WeekProps) {
 
   return (
     <>
-      <div className='p-2 text-center'>Week {programIndex}</div>
+      <div className='p-2 text-center'>Week {programIndex + 1}</div>
       {programWeek.days.map((programDay, i) => {
         const date = addDays(start, i)
         const {id: dayId} = programDay
         return (
           <Day key={`week-${id}/day-${dayId}`} date={date} programDay={programDay}>
             {programDay.workouts.map((workout) => (
-              <p key={`day-${dayId}/workout-${workout.description}`}>workout.description</p>
+              <p key={`day-${dayId}/workout-${workout.description}`}>{workout.description}</p>
             ))}
           </Day>
         )

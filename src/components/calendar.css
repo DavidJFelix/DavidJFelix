@@ -1,0 +1,37 @@
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Roboto', sans-serif;
+}
+
+.calendar-container {
+  margin: 8px;
+}
+
+.calendar {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.month-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.month {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(6, 1fr);
+  gap: 8px;
+  width: 100%;
+}
+
+.day {
+  display: flex;
+  width: 16px;
+  height: 16px;
+  background-color: #aaa;
+  justify-content: center;
+  align-items: center;
+}

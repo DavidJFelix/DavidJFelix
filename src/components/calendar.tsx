@@ -1,6 +1,8 @@
 import { eachDayOfInterval } from 'date-fns/eachDayOfInterval';
 import { getWeekOfMonth } from 'date-fns/getWeekOfMonth';
+import Holidays from 'date-holidays';
 import { useId } from 'react';
+
 import './calendar.css';
 
 interface MonthDaySlot {
@@ -31,12 +33,14 @@ interface CalendarDisplayProps {
 
 export function CalendarDisplay({ state }: CalendarDisplayProps) {
   const id = useId();
+
+  const holidays = new Holidays('US');
   return (
   <div className="calendar">{state.months.map(({monthName, slottedDays}) => (
     <div key={monthName} className="month-container">
       <h2>{monthName}</h2>
       <div className="month">{slottedDays.map((day) => (
-        <div key={getDayKey({ id, dayIndex: day.index ,monthName})} className={`day ${day.date ? 'filled' : 'absent'}`}>
+        <div key={getDayKey({ id, dayIndex: day.index ,monthName})} className={`day ${day.date ? 'filled' : 'absent'} ${day.date && holidays.isHoliday(day.date) ? 'holiday' : ''}`}>
           {day.date?.getDate() ?? ''}
         </div>
       ))}</div>

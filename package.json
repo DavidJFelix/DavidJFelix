@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "prepare": "panda codegen",
     "preview": "astro preview",
     "astro": "astro"
   },
@@ -17,5 +18,9 @@
     "date-holidays": "^3.26.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.2.5",
+    "@pandacss/dev": "^1.4.1"
   }
 }

@@ -29,9 +29,12 @@ h1, h2, h3, h4, h5, h6 {
 
 .day {
   display: flex;
-  width: 16px;
-  height: 16px;
-  background-color: #aaa;
+  width: 32px;
+  height: 32px;
   justify-content: center;
   align-items: center;
+
+  &.filled {
+    background-color: #aaa;
+  }
 }

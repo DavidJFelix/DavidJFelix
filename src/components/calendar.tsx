@@ -5,7 +5,8 @@ import {subDays} from 'date-fns/subDays'
 import Holidays from 'date-holidays'
 import {type ReactNode, useId} from 'react'
 
-import {css, cx} from '../../styled-system/css'
+import {css, cva, cx} from '../../styled-system/css'
+import {grid, hstack, stack, vstack} from '../../styled-system/patterns'
 
 interface DayFeatureBase {
   type: string
@@ -25,7 +26,22 @@ interface PlanningFeature extends DayFeatureBase {
   name: string
 }
 
-type DayFeature = WeekendFeature | HolidayFeature | PlanningFeature
+interface ExecutionFeature extends DayFeatureBase {
+  type: 'execution'
+  name: string
+}
+
+interface HIPSprintFeature extends DayFeatureBase {
+  type: 'hips-sprint'
+  name: string
+}
+
+type DayFeature =
+  | WeekendFeature
+  | HolidayFeature
+  | PlanningFeature
+  | HIPSprintFeature
+  | ExecutionFeature
 
 interface GridSlot {
   type: string
@@ -51,11 +67,8 @@ interface CalendarDisplayProps {
 export function CalendarDisplay({months}: CalendarDisplayProps) {
   return (
     <div
-      className={css({
-        display: 'flex',
-        alignItems: 'center',
+      className={hstack({
         justifyContent: 'center',
-        flexDirection: 'row',
         flexWrap: 'wrap',
         gap: '4',
       })}
@@ -75,26 +88,106 @@ function Month({monthName, slottedDays}: MonthProps) {
   const id = useId()
   const weekDayHeaders = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
-  const gridCellClass = css({
-    display: 'flex',
+  const gridCellBase = stack({
     aspectRatio: '1',
     padding: '1',
-    justifyContent: 'center',
     alignItems: 'center',
   })
 
+  const gridCellVariants = cva({
+    base: {
+      border: '1px solid transparent',
+      color: 'stone.700',
+    },
+    variants: {
+      cellType: {
+        weekDayHeaders: {
+          fontWeight: '600',
+          color: 'stone.700',
+        },
+        day: {},
+        spacer: {},
+      },
+      dayType: {
+        normal: {},
+        holiday: {
+          backgroundColor: 'red.100',
+          borderColor: 'red.500',
+          color: 'red.950',
+        },
+        weekend: {
+          backgroundColor: 'stone.200',
+          borderColor: 'stone.300',
+          color: 'stone.950',
+        },
+        planning: {
+          backgroundColor: 'blue.100',
+          borderColor: 'blue.500',
+          color: 'blue.950',
+        },
+        execution: {
+          backgroundColor: 'green.100',
+          borderColor: 'green.500',
+          color: 'green.950',
+        },
+        hipsSprint: {
+          backgroundColor: 'purple.100',
+          borderColor: 'purple.500',
+          color: 'purple.950',
+        },
+      },
+    },
+    compoundVariants: [
+      {
+        cellType: 'day',
+        dayType: 'normal',
+        css: {
+          backgroundColor: 'white',
+          borderColor: 'stone.300',
+        },
+      },
+    ],
+    defaultVariants: {
+      cellType: 'spacer',
+      dayType: 'normal',
+    },
+  })
+
+  type DayVariant = NonNullable<Parameters<typeof gridCellVariants>[0]>
+
+  function getDayVariant(day: DayDisplayState): DayVariant {
+    if (day.type === 'day') {
+      let dayType: DayVariant['dayType'] = 'normal'
+      if (day.dayFeatures.some((feature) => feature.type === 'holiday')) {
+        dayType = 'holiday'
+        return {cellType: day.type, dayType}
+      }
+      if (day.dayFeatures.some((feature) => feature.type === 'weekend')) {
+        dayType = 'weekend'
+        return {cellType: day.type, dayType}
+      }
+      if (day.dayFeatures.some((feature) => feature.type === 'planning')) {
+        dayType = 'planning'
+        return {cellType: day.type, dayType}
+      }
+      if (day.dayFeatures.some((feature) => feature.type === 'execution')) {
+        dayType = 'execution'
+        return {cellType: day.type, dayType}
+      }
+      return {cellType: day.type, dayType}
+    }
+    return {cellType: day.type, dayType: 'normal'}
+  }
+
   return (
     <div
-      className={css({
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '16px',
+      className={vstack({
+        gap: '4',
+        alignSelf: 'stretch',
+        padding: '4',
         border: '1px solid',
         borderColor: 'stone.300',
         backgroundColor: 'stone.50',
-        padding: '16px',
-        alignSelf: 'stretch',
       })}
     >
       <h2
@@ -108,8 +201,7 @@ function Month({monthName, slottedDays}: MonthProps) {
         {monthName}
       </h2>
       <div
-        className={css({
-          display: 'grid',
+        className={grid({
           gridTemplateColumns: 'repeat(7, 1fr)',
           gridTemplateRows: 'repeat(6, 1fr)',
           gap: '2',
@@ -119,13 +211,7 @@ function Month({monthName, slottedDays}: MonthProps) {
         {weekDayHeaders.map((dayHeader) => (
           <div
             key={dayHeader}
-            className={cx(
-              css({
-                fontWeight: '600',
-                color: 'stone.700',
-              }),
-              gridCellClass,
-            )}
+            className={cx(gridCellVariants({cellType: 'weekDayHeaders'}), gridCellBase)}
           >
             {dayHeader}
           </div>
@@ -133,32 +219,7 @@ function Month({monthName, slottedDays}: MonthProps) {
         {slottedDays.map((day) => (
           <div
             key={getDayKey({id, dayIndex: day.index})}
-            className={cx(
-              css({
-                border: '1px solid transparent',
-                color: 'stone.700',
-              }),
-              gridCellClass,
-              day.type === 'day' &&
-                css({
-                  backgroundColor: 'white',
-                  borderColor: 'stone.300',
-                }),
-              day.type === 'day' &&
-                day.dayFeatures.some((feature) => feature.type === 'holiday') &&
-                css({
-                  backgroundColor: 'red.100',
-                  borderColor: 'red.500',
-                  color: 'red.950',
-                }),
-              day.type === 'day' &&
-                day.dayFeatures.some((feature) => feature.type === 'weekend') &&
-                css({
-                  backgroundColor: 'stone.200',
-                  borderColor: 'stone.300',
-                  color: 'stone.950',
-                }),
-            )}
+            className={cx(gridCellVariants(getDayVariant(day)), gridCellBase)}
           >
             {day.type === 'day' ? day.date.getDate() : ''}
           </div>
@@ -171,11 +232,7 @@ function Month({monthName, slottedDays}: MonthProps) {
 export const Calendar = () => {
   return (
     <div
-      className={css({
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
+      className={vstack({
         gap: '8',
         margin: '2',
       })}
@@ -219,10 +276,47 @@ function getDayKey({id, dayIndex}: GetDayKeyParams) {
   return `${id}-day-${dayIndex}`
 }
 
+function getDaysMap(days: Date[]): Record<string, DayFeature[]> {
+  // FIXME:CONSTANTS MOVE ELSEWHERE
+  const PLANNING_WEEKDAY_COUNT = 10
+  const EXECUTION_WEEKDAY_COUNT = 60
+
+  const holidays = new Holidays('US', {types: ['bank', 'public', 'school']})
+  const daysEntries: [string, DayFeature[]][] = []
+
+  for (let i = 0; i < days.length; i++) {
+    const day = days[i]
+    const dayFeatures: DayFeature[] = []
+    if (holidays.isHoliday(day)) {
+      dayFeatures.push({type: 'holiday', name: holidays.getHolidays(day)[0].name})
+    }
+  }
+
+  return Object.fromEntries(daysEntries)
+}
+
 function getCalendarDisplayState(interval: Interval): MonthProps[] {
-  const holidays = new Holidays('US')
+  const holidays = new Holidays('US', {types: ['bank', 'public', 'school']})
 
   const days = eachDayOfInterval(interval)
+  const daysMap: Record<string, DayFeature[]> = Object.fromEntries(
+    days.map((day) => {
+      const isHoliday = holidays.isHoliday(day)
+      const isWeekend = day.getDay() === 0 || day.getDay() === 6
+
+      return [
+        day.toISOString(),
+        [
+          ...(isHoliday
+            ? (holidays
+                .getHolidays(day)
+                .map((holiday) => ({type: 'holiday', name: holiday.name})) as HolidayFeature[])
+            : []),
+          ...(isWeekend ? ([{type: 'weekend'}] as WeekendFeature[]) : []),
+        ],
+      ]
+    }),
+  )
 
   const months = eachMonthOfInterval(interval).map((month, monthIndex, months) => {
     const slottedDays: DayDisplayState[] = []
@@ -247,17 +341,8 @@ function getCalendarDisplayState(interval: Interval): MonthProps[] {
       while (slottedDays.length < dayColumn) {
         slottedDays.push({index: slottedDays.length, type: 'spacer'})
       }
-      const dayFeatures: DayFeature[] = []
-      if (holidays.isHoliday(day)) {
-        dayFeatures.push(
-          ...(holidays
-            .getHolidays(day)
-            .map((holiday) => ({type: 'holiday', name: holiday.name})) as HolidayFeature[]),
-        )
-      }
-      if (day.getDay() === 0 || day.getDay() === 6) {
-        dayFeatures.push({type: 'weekend'})
-      }
+      const dayFeatures: DayFeature[] = daysMap[day.toISOString()] ?? []
+
       slottedDays.push({
         index: slottedDays.length,
         type: 'day',

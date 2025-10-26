@@ -89,9 +89,9 @@ function Month({monthName, slottedDays}: MonthProps) {
   const weekDayHeaders = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
   const gridCellBase = stack({
-    aspectRatio: '1',
     padding: '1',
     alignItems: 'center',
+    justifyContent: 'center',
   })
 
   const gridCellVariants = cva({
@@ -204,6 +204,7 @@ function Month({monthName, slottedDays}: MonthProps) {
         className={grid({
           gridTemplateColumns: 'repeat(7, 1fr)',
           gridTemplateRows: 'repeat(6, 1fr)',
+          mx: '4',
           gap: '2',
           width: '100%',
         })}

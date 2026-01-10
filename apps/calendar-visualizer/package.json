@@ -1,0 +1,26 @@
+{
+  "name": "calendar-visualizer",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "prepare": "panda codegen",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/react": "^4.4.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "astro": "^5.14.3",
+    "date-fns": "^4.1.0",
+    "date-holidays": "^3.26.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.2.5",
+    "@pandacss/dev": "^1.4.1"
+  }
+}

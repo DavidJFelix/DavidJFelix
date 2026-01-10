@@ -1,0 +1,26 @@
+{
+  "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
+  "version": "0.2",
+  "dictionaries": [
+    "en-US",
+    "en-gb",
+    "companies",
+    "softwareTerms",
+    "typescript",
+    "node",
+    "go",
+    "fonts",
+    "filetypes",
+    "npm",
+    "aws",
+    "google",
+    "fullstack"
+  ],
+  "words": [
+    "codegen",
+    "hstack",
+    "pandacss",
+    "vstack"
+  ],
+  "dictionaryDefinitions": []
+}

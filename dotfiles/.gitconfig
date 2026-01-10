@@ -1,0 +1,24 @@
+[user]
+	email = felix.davidj@gmail.com
+	name = David J. Felix
+[core]
+	editor = vim
+	excludesfile = ~/.global.gitignore
+	autocrlf = input
+[help]
+	autocorrect = 1
+[color]
+	ui = true
+[push]
+	default = simple
+[includeIf "gitdir:~/Programming/work/"]
+	path = ~/Programming/work/.gitconfig
+[includeIf "gitdir:~/Programming/DavidJFelix"]
+	path = ~/Programming/DavidJFelix/.gitconfig
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+[hub]
+	protocol = https

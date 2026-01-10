@@ -1,0 +1,108 @@
+#! /bin/bash
+
+# Install all dotfiles into the home directory
+DOTFILESDIRREL=$(dirname $0)
+cd $DOTFILESDIRREL/..
+DOTFILESDIR=$(pwd -P)
+
+[ $(uname -s) = "Darwin" ] && export MACOS=1 && export UNIX=1
+[ $(uname -s) = "Linux" ] && export LINUX=1 && export UNIX=1
+uname -s | grep -q "_NT-" && export WINDOWS=1
+
+if [ $MACOS ]
+then
+  VSCODE="$HOME/Library/Application Support/Code/User"
+elif [ $LINUX ]
+then
+  VSCODE="$HOME/.config/Code/User"
+elif [ $WINDOWS ]
+then
+  VSCODE="$APPDATA/Code/User"
+fi
+
+for DOTFILE in *; do
+  HOMEFILE="$HOME/.$DOTFILE"
+  [ -d $DOTFILE ] && DOTFILE="$DOTFILE/"
+  DIRFILE="$DOTFILESDIR/$DOTFILE"
+
+  echo $DOTFILE | egrep -q '(^script/$|\.txt$|\.md$)' && continue
+  echo $DOTFILE | grep -q 'vscode-settings' &&
+       HOMEFILE="$VSCODE/settings.json" &&
+       mkdir -p "$VSCODE"
+
+  echo $DOTFILE | grep -q '\.sh' &&
+       HOMEFILE="$HOME/.$(echo $DOTFILE | sed -e 's/\.sh//')"
+
+  if echo $DOTFILE | grep -q 'rubocop.yml'
+  then
+    HOMEFILE="$HOME/Documents/.rubocop.yml"
+  fi
+
+  if [ $UNIX ]
+  then
+    if [ -L "$HOMEFILE" ] && ! [ -d $DOTFILE ]
+    then
+      ln -sfv "$DIRFILE" "$HOMEFILE"
+    else
+      rm -rv "$HOMEFILE"
+      ln -sv "$DIRFILE" "$HOMEFILE"
+    fi
+  else
+    cp -rv "$DIRFILE" "$HOMEFILE"
+  fi
+done
+
+# Set scrolling to "unnatural"
+
+### Settings / General
+# Dark mode
+defaults write -g "AppleInterfaceStyle" "Dark"
+# Accent blue -- since this is default we clear any entry
+defaults delete -g "AppleAccentColor"
+# Highlight blue -- since this is default we clear any entry
+defaults delete -g "AppleHighlightColor"
+# Sidebar icon medium
+# Auto hide menu off
+# Scroll bars automatically
+# Scroll bar click to next page
+# Default browser Chrome
+# Ask to keep changes off
+# Close windows when quitting on
+# 10 recent items
+# Allow handoff on
+# Use font smoothing on
+
+### Settings / Dock
+# Set dock size pretty small 20/100
+# Turn on dock magnification
+# Set dock magnification 33/100
+# Set dock position left
+# Minimize windows scale effect
+# Prefer tabs always
+# Double click on, zoom
+# Minimize windows into app icon on
+# Automatically hide dock off
+# Show indicators for open applications on
+# Show recent applications off
+
+### Settings / Date and time
+# Force a digital clock on the menu bar
+defaults write com.apple.menuextra.clock IsAnalog -bool false
+# Set clock format to verbose date time without seconds
+defaults write com.apple.menuextra.clock DateFormat -string "EEE d MMM h:mm a"
+
+### Settings / Power
+# Make power indicator show percentage
+defaults write com.apple.menuextra.battery ShowPercent YES
+# killall SystemUIServer
+
+### Keyboard
+# Show keyboard and emoji viewers in menu bar
+
+### Trackpad
+# Tap to click on
+# Scroll direction natural off
+# App Expose on
+
+# Do all the killall last
+killall SystemUIServer

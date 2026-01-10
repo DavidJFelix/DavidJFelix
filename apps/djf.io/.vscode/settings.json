@@ -1,0 +1,48 @@
+{
+	"cSpell.words": [
+		"Angelhack",
+		"architecting",
+		"astro",
+		"astrojs",
+		"Atumsoft",
+		"commenters",
+		"DALL-E",
+		"DEVBOX",
+    "davidjfelix",
+		"doomer",
+		"gatekept",
+		"Grammarly",
+		"Hackathon",
+		"half-assed",
+		"headshot",
+		"Instameals",
+		"iotv",
+		"pandacss",
+		"Pepperonio",
+    "posthog",
+		"Strava",
+		"struct",
+		"Swarmfarm",
+		"tsconfigs",
+		"VNDLY"
+	],
+	"cSpell.enableFiletypes": ["astro", "just", "mdx", "nix"]
+  "[css]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  }
+}

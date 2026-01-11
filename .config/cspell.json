@@ -1,0 +1,41 @@
+{
+  "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
+  "version": "0.2",
+  "language": "en",
+  "dictionaries": [
+    "typescript",
+    "node",
+    "npm",
+    "html",
+    "css",
+    "bash",
+    "software-terms"
+  ],
+  "ignorePaths": [
+    "node_modules",
+    "dist",
+    "build",
+    ".git",
+    "pnpm-lock.yaml",
+    "*.lock",
+    "*.min.js",
+    "*.min.css"
+  ],
+  "words": [
+    "biomejs",
+    "oxlint",
+    "cspell",
+    "pnpm",
+    "mise",
+    "astro",
+    "vite",
+    "tanstack",
+    "zustand",
+    "tailwindcss",
+    "pandacss",
+    "jsonc",
+    "mjs",
+    "tsx",
+    "jsx"
+  ]
+}

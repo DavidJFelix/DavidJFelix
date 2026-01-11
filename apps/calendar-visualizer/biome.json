@@ -1,12 +1,7 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.1.2/schema.json",
-  "vcs": {
-    "enabled": true,
-    "clientKind": "git",
-    "useIgnoreFile": true
-  },
+  "$schema": "https://biomejs.dev/schemas/2.0.0/schema.json",
+  "extends": ["../../biome.jsonc"],
   "files": {
-    "ignoreUnknown": false,
     "includes": [
       "**",
       "!**/.pulumi",
@@ -14,16 +9,6 @@
       "!**/node_modules",
       "!**/styled-system"
     ]
-  },
-  "formatter": {
-    "enabled": true,
-    "useEditorconfig": true,
-    "formatWithErrors": false,
-    "indentStyle": "space",
-    "indentWidth": 2,
-    "lineEnding": "lf",
-    "lineWidth": 100,
-    "attributePosition": "auto"
   },
   "assist": {
     "actions": {
@@ -35,9 +20,7 @@
     }
   },
   "linter": {
-    "enabled": true,
     "rules": {
-      "recommended": true,
       "style": {
         "noParameterAssign": "error",
         "useAsConstAssertion": "error",
@@ -50,27 +33,6 @@
         "noInferrableTypes": "error",
         "noUselessElse": "error"
       }
-    }
-  },
-  "css": {
-    "linter": {
-      "enabled": true
-    },
-    "parser": {
-      "cssModules": true
-    }
-  },
-  "javascript": {
-    "formatter": {
-      "jsxQuoteStyle": "double",
-      "quoteProperties": "asNeeded",
-      "trailingCommas": "all",
-      "semicolons": "asNeeded",
-      "arrowParentheses": "always",
-      "bracketSameLine": false,
-      "quoteStyle": "single",
-      "attributePosition": "auto",
-      "bracketSpacing": false
     }
   }
 }

@@ -7,7 +7,11 @@
     "build": "astro build",
     "prepare": "panda codegen",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "lint": "biome check . && oxlint",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "spell": "cspell --config ../../.config/cspell.json \"**\""
   },
   "dependencies": {
     "@astrojs/react": "^4.4.0",
@@ -20,7 +24,10 @@
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.2.5",
-    "@pandacss/dev": "^1.4.1"
+    "@biomejs/biome": "^2.0.0",
+    "@cspell/dict-typescript": "^3.2.0",
+    "@pandacss/dev": "^1.4.1",
+    "cspell": "^9.0.0",
+    "oxlint": "^0.16.0"
   }
 }

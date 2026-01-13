@@ -90,18 +90,44 @@ Migrate djf.io from Starlight to a custom Astro + MDX + PandaCSS setup for great
 
 ### Phase 5: Page Routes
 
-- [ ] Create blog index page (`src/pages/blog/index.astro`)
-- [ ] Create dynamic blog post route (`src/pages/blog/[...slug].astro`)
 - [ ] Create home page (`src/pages/index.astro`)
+- [ ] Create blog index page with year/month grouping (`src/pages/blog/index.astro`)
+- [ ] Create dynamic blog post route (`src/pages/blog/[...slug].astro`)
+- [ ] Create tag listing page (`src/pages/blog/tags/index.astro`)
+- [ ] Create dynamic tag archive route (`src/pages/blog/tags/[tag].astro`)
 - [ ] Set up RSS feed (`src/pages/rss.xml.ts`)
 
 **Files to create:**
 - `apps/djf.io/src/pages/index.astro`
 - `apps/djf.io/src/pages/blog/index.astro`
 - `apps/djf.io/src/pages/blog/[...slug].astro`
+- `apps/djf.io/src/pages/blog/tags/index.astro`
+- `apps/djf.io/src/pages/blog/tags/[tag].astro`
 - `apps/djf.io/src/pages/rss.xml.ts`
 
-### Phase 6: Remove Starlight
+### Phase 6: Search
+
+- [ ] Install Pagefind (`pagefind` package)
+- [ ] Configure Pagefind to index at build time
+- [ ] Create search UI component
+- [ ] Style search modal/dropdown with PandaCSS
+- [ ] Add search trigger to navigation
+
+**Why Pagefind:**
+- Same search engine Starlight uses under the hood
+- Framework-agnostic (no Starlight coupling)
+- Indexes at build time (static, fast, no server)
+- Tiny runtime (~5kb gzipped)
+- Supports filtering by tags, dates, etc.
+
+**Files to create:**
+- `apps/djf.io/src/components/Search.astro`
+
+**Files to modify:**
+- `apps/djf.io/package.json` (add pagefind)
+- `apps/djf.io/astro.config.mjs` (configure post-build indexing)
+
+### Phase 7: Remove Starlight
 
 - [ ] Remove `@astrojs/starlight` from dependencies
 - [ ] Update `astro.config.mjs` to remove Starlight integration
@@ -112,7 +138,7 @@ Migrate djf.io from Starlight to a custom Astro + MDX + PandaCSS setup for great
 - `apps/djf.io/package.json`
 - `apps/djf.io/astro.config.mjs`
 
-### Phase 7: Polish
+### Phase 8: Polish
 
 - [ ] Add SEO meta tags
 - [ ] Implement Open Graph images
@@ -161,8 +187,29 @@ description: "Page description"
 
 ### Navigation
 
-- Simple top navigation: Home, Blog
+- Simple top navigation: Home, Blog, Search
 - Mobile-friendly hamburger menu or minimal nav
+
+### Blog Index
+
+- Posts grouped by year, with month subheadings
+- Jump navigation (sticky sidebar or dropdown) for quick year access
+- Shows post title, date, tags, and description preview
+- Scales to many posts on single page before needing pagination
+
+### Tag System
+
+- `/blog/tags/` - Lists all tags with post counts
+- `/blog/tags/[tag]` - Shows all posts with that tag
+- Tags displayed on post cards and post pages
+- Clickable tags link to tag archive
+
+### Search
+
+- Pagefind for static, build-time indexing
+- Search modal triggered from nav
+- Supports filtering by content type
+- Keyboard accessible (Cmd/Ctrl+K shortcut)
 
 ## Success Criteria
 
@@ -172,6 +219,9 @@ description: "Page description"
 - [ ] All links functional
 - [ ] RSS feed works
 - [ ] Dark mode toggle works
+- [ ] Search indexes all blog content
+- [ ] Tag pages list correct posts
+- [ ] Blog index groups posts by year/month
 
 ## Progress Notes
 

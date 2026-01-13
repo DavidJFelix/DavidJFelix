@@ -138,13 +138,47 @@ Migrate djf.io from Starlight to a custom Astro + MDX + PandaCSS setup for great
 - `apps/djf.io/package.json`
 - `apps/djf.io/astro.config.mjs`
 
-### Phase 8: Polish
+### Phase 8: Testing
+
+- [ ] Set up Vitest for unit testing
+- [ ] Set up Playwright for E2E testing
+- [ ] Add unit tests for utility functions (date formatting, tag extraction, etc.)
+- [ ] Add E2E tests for critical user flows
+- [ ] Configure CI to run tests on PR
+
+**Test Coverage:**
+
+| Type | Tool | What to Test |
+|------|------|--------------|
+| Unit | Vitest | Date/time formatting, slug generation, tag utilities |
+| E2E | Playwright | Page loads, navigation, search, tag filtering, RSS validity |
+
+**E2E Test Scenarios:**
+- Home page renders with bio content
+- Blog index shows all posts grouped by year
+- Individual blog post renders with correct content
+- Tag page filters posts correctly
+- Search finds posts by title and content
+- Dark mode toggle persists preference
+- RSS feed is valid XML with correct entries
+- All internal links resolve (no 404s)
+
+**Files to create:**
+- `apps/djf.io/vitest.config.ts`
+- `apps/djf.io/playwright.config.ts`
+- `apps/djf.io/src/lib/__tests__/` (unit tests)
+- `apps/djf.io/e2e/` (E2E tests)
+
+**Files to modify:**
+- `apps/djf.io/package.json` (add vitest, playwright, test scripts)
+
+### Phase 9: Polish
 
 - [ ] Add SEO meta tags
 - [ ] Implement Open Graph images
 - [ ] Add sitemap
-- [ ] Test all pages and links
 - [ ] Verify build succeeds
+- [ ] Run full test suite
 
 ## New Content Schema
 
@@ -222,6 +256,9 @@ description: "Page description"
 - [ ] Search indexes all blog content
 - [ ] Tag pages list correct posts
 - [ ] Blog index groups posts by year/month
+- [ ] Unit tests pass
+- [ ] E2E tests pass
+- [ ] CI pipeline runs tests on PR
 
 ## Progress Notes
 

@@ -1,7 +1,5 @@
-import {docsSchema, i18nSchema} from '@astrojs/starlight/schema'
 import {defineCollection, z} from 'astro:content'
 
-// New blog collection schema (will replace Starlight docs for blog posts)
 const blog = defineCollection({
   type: 'content',
   schema: ({image}) =>
@@ -26,7 +24,6 @@ const blog = defineCollection({
     }),
 })
 
-// New pages collection schema (for standalone pages like About)
 const pages = defineCollection({
   type: 'content',
   schema: z.object({
@@ -36,10 +33,6 @@ const pages = defineCollection({
 })
 
 export const collections = {
-  // Existing Starlight collections (will be removed in Phase 7)
-  docs: defineCollection({schema: docsSchema()}),
-  i18n: defineCollection({type: 'data', schema: i18nSchema()}),
-  // New collections
   blog,
   pages,
 }

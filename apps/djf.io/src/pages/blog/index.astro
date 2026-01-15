@@ -1,0 +1,143 @@
+---
+import {css} from '../../../styled-system/css'
+import {getCollection} from 'astro:content'
+import BaseLayout from '../../layouts/base-layout.astro'
+import {formatReadingTime} from '../../lib/reading-time'
+
+const allPosts = await getCollection('blog', ({data}) => !data.draft)
+
+// Sort posts by date (newest first)
+const sortedPosts = allPosts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+
+// Group posts by year
+const postsByYear = sortedPosts.reduce(
+  (acc, post) => {
+    const year = post.data.pubDate.getFullYear()
+    if (!acc[year]) {
+      acc[year] = []
+    }
+    acc[year].push(post)
+    return acc
+  },
+  {} as Record<number, typeof sortedPosts>,
+)
+
+const years = Object.keys(postsByYear)
+  .map(Number)
+  .sort((a, b) => b - a)
+---
+
+<BaseLayout title="Blog" description="Posts about software engineering, startups, and life">
+  <header
+    class={css({
+      mb: '8',
+    })}
+  >
+    <h1
+      class={css({
+        fontSize: {base: '2xl', md: '3xl'},
+        fontWeight: 'bold',
+        lineHeight: 'tight',
+      })}
+    >
+      Blog
+    </h1>
+  </header>
+
+  {
+    years.map((year) => (
+      <section class={css({mb: '8'})}>
+        <h2
+          class={css({
+            fontSize: 'lg',
+            fontWeight: 'semibold',
+            color: 'fg.muted',
+            mb: '4',
+            pb: '2',
+            borderBottom: '1px solid',
+            borderColor: 'border.default',
+          })}
+        >
+          {year}
+        </h2>
+        <ul
+          class={css({
+            listStyle: 'none',
+            m: 0,
+            p: 0,
+          })}
+        >
+          {postsByYear[year].map(async (post) => {
+            const {Content} = await post.render()
+            const body = post.body || ''
+            return (
+              <li
+                class={css({
+                  mb: '6',
+                })}
+              >
+                <a
+                  href={`/blog/${post.slug}`}
+                  class={css({
+                    display: 'block',
+                    textDecoration: 'none',
+                    p: '4',
+                    borderRadius: 'md',
+                    _hover: {
+                      bg: 'bg.muted',
+                    },
+                  })}
+                >
+                  <h3
+                    class={css({
+                      fontSize: 'lg',
+                      fontWeight: 'semibold',
+                      color: 'fg.default',
+                      mb: '1',
+                    })}
+                  >
+                    {post.data.title}
+                  </h3>
+                  <p
+                    class={css({
+                      color: 'fg.muted',
+                      fontSize: 'sm',
+                      mb: '2',
+                    })}
+                  >
+                    {post.data.description}
+                  </p>
+                  <div
+                    class={css({
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      alignItems: 'center',
+                      gap: '2',
+                      fontSize: 'xs',
+                      color: 'fg.subtle',
+                    })}
+                  >
+                    <time datetime={post.data.pubDate.toISOString()}>
+                      {post.data.pubDate.toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </time>
+                    <span>&middot;</span>
+                    <span>{formatReadingTime(body)}</span>
+                    {post.data.tags.length > 0 && (
+                      <>
+                        <span>&middot;</span>
+                        <span>{post.data.tags.slice(0, 3).join(', ')}</span>
+                      </>
+                    )}
+                  </div>
+                </a>
+              </li>
+            )
+          })}
+        </ul>
+      </section>
+    ))
+  }
+</BaseLayout>

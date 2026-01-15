@@ -1,0 +1,112 @@
+---
+import {css} from '../../styled-system/css'
+
+const navLinks = [
+  {href: '/', label: 'Home'},
+  {href: '/blog', label: 'Blog'},
+]
+
+const socialLinks = [
+  {href: 'https://github.com/davidjfelix', label: 'GitHub'},
+  {href: 'https://twitter.com/davidjfelix', label: 'Twitter'},
+]
+
+const currentPath = Astro.url.pathname
+---
+
+<nav
+  class={css({
+    borderBottom: '1px solid',
+    borderColor: 'border.default',
+    bg: 'bg.canvas',
+  })}
+>
+  <div
+    class={css({
+      maxWidth: '48rem',
+      mx: 'auto',
+      px: {base: '4', md: '6'},
+      py: '4',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    })}
+  >
+    <a
+      href="/"
+      class={css({
+        fontSize: 'xl',
+        fontWeight: 'bold',
+        color: 'fg.default',
+        textDecoration: 'none',
+        _hover: {color: 'fg.muted'},
+      })}
+    >
+      djf.io
+    </a>
+
+    <div
+      class={css({
+        display: 'flex',
+        alignItems: 'center',
+        gap: '6',
+      })}
+    >
+      <ul
+        class={css({
+          display: 'flex',
+          gap: '4',
+          listStyle: 'none',
+          m: 0,
+          p: 0,
+        })}
+      >
+        {
+          navLinks.map((link) => (
+            <li>
+              <a
+                href={link.href}
+                class={css({
+                  color: currentPath === link.href ? 'fg.default' : 'fg.muted',
+                  textDecoration: 'none',
+                  fontWeight: currentPath === link.href ? 'semibold' : 'normal',
+                  _hover: {color: 'fg.default'},
+                })}
+              >
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+
+      <div
+        class={css({
+          display: {base: 'none', sm: 'flex'},
+          gap: '3',
+          borderLeft: '1px solid',
+          borderColor: 'border.default',
+          pl: '4',
+        })}
+      >
+        {
+          socialLinks.map((link) => (
+            <a
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              class={css({
+                color: 'fg.muted',
+                textDecoration: 'none',
+                fontSize: 'sm',
+                _hover: {color: 'fg.default'},
+              })}
+            >
+              {link.label}
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</nav>

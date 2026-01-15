@@ -1,0 +1,260 @@
+---
+import {css} from '../../styled-system/css'
+import {Image} from 'astro:assets'
+import type {CollectionEntry} from 'astro:content'
+import BaseLayout from './BaseLayout.astro'
+import {formatReadingTime} from '../lib/reading-time'
+
+interface Props {
+  post: CollectionEntry<'blog'>
+  content: string
+}
+
+const {post, content} = Astro.props
+const {title, description, author, pubDate, updatedDate, tags, tagline, heroImageUrl, aiAssistants} =
+  post.data
+
+const formattedPubDate = pubDate.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+})
+
+const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+})
+
+const readingTime = formatReadingTime(content)
+---
+
+<BaseLayout title={title} description={description}>
+  <article>
+    <header
+      class={css({
+        mb: '8',
+        pb: '6',
+        borderBottom: '1px solid',
+        borderColor: 'border.default',
+      })}
+    >
+      {
+        heroImageUrl && (
+          <Image
+            src={heroImageUrl}
+            alt={title}
+            class={css({
+              width: '100%',
+              height: 'auto',
+              borderRadius: 'lg',
+              mb: '6',
+            })}
+          />
+        )
+      }
+
+      <h1
+        class={css({
+          fontSize: {base: '2xl', md: '3xl'},
+          fontWeight: 'bold',
+          lineHeight: 'tight',
+          mb: '2',
+        })}
+      >
+        {title}
+      </h1>
+
+      {
+        tagline && (
+          <p
+            class={css({
+              fontSize: 'lg',
+              color: 'fg.muted',
+              fontStyle: 'italic',
+              mb: '4',
+            })}
+          >
+            {tagline}
+          </p>
+        )
+      }
+
+      <div
+        class={css({
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          gap: '2',
+          fontSize: 'sm',
+          color: 'fg.muted',
+        })}
+      >
+        {author && <span>{author}</span>}
+        {author && <span>&middot;</span>}
+        <time datetime={pubDate.toISOString()}>{formattedPubDate}</time>
+        {
+          updatedDate && (
+            <>
+              <span>&middot;</span>
+              <span>Updated {formattedUpdatedDate}</span>
+            </>
+          )
+        }
+        <span>&middot;</span>
+        <span>{readingTime}</span>
+      </div>
+
+      {
+        tags.length > 0 && (
+          <div
+            class={css({
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '2',
+              mt: '4',
+            })}
+          >
+            {tags.map((tag) => (
+              <a
+                href={`/blog/tags/${tag}`}
+                class={css({
+                  fontSize: 'xs',
+                  px: '2',
+                  py: '1',
+                  borderRadius: 'md',
+                  bg: 'bg.muted',
+                  color: 'fg.muted',
+                  textDecoration: 'none',
+                  _hover: {
+                    bg: 'bg.emphasized',
+                    color: 'fg.default',
+                  },
+                })}
+              >
+                {tag}
+              </a>
+            ))}
+          </div>
+        )
+      }
+    </header>
+
+    <div
+      class={css({
+        '& h2': {
+          fontSize: 'xl',
+          fontWeight: 'bold',
+          mt: '8',
+          mb: '4',
+        },
+        '& h3': {
+          fontSize: 'lg',
+          fontWeight: 'semibold',
+          mt: '6',
+          mb: '3',
+        },
+        '& p': {
+          mb: '4',
+        },
+        '& ul, & ol': {
+          mb: '4',
+          pl: '6',
+        },
+        '& li': {
+          mb: '2',
+        },
+        '& a': {
+          color: 'fg.default',
+          textDecoration: 'underline',
+          textUnderlineOffset: '2px',
+          _hover: {
+            color: 'fg.muted',
+          },
+        },
+        '& blockquote': {
+          borderLeft: '4px solid',
+          borderColor: 'border.default',
+          pl: '4',
+          fontStyle: 'italic',
+          color: 'fg.muted',
+          my: '4',
+        },
+        '& pre': {
+          bg: 'bg.muted',
+          p: '4',
+          borderRadius: 'md',
+          overflowX: 'auto',
+          my: '4',
+          fontSize: 'sm',
+        },
+        '& code': {
+          fontFamily: 'monospace',
+        },
+        '& :not(pre) > code': {
+          bg: 'bg.muted',
+          px: '1',
+          py: '0.5',
+          borderRadius: 'sm',
+          fontSize: 'sm',
+        },
+        '& hr': {
+          border: 'none',
+          borderTop: '1px solid',
+          borderColor: 'border.default',
+          my: '8',
+        },
+        '& img': {
+          maxWidth: '100%',
+          height: 'auto',
+          borderRadius: 'md',
+        },
+      })}
+    >
+      <slot />
+    </div>
+
+    {
+      aiAssistants && aiAssistants.length > 0 && (
+        <footer
+          class={css({
+            mt: '8',
+            pt: '6',
+            borderTop: '1px solid',
+            borderColor: 'border.default',
+          })}
+        >
+          <h3
+            class={css({
+              fontSize: 'sm',
+              fontWeight: 'semibold',
+              color: 'fg.muted',
+              mb: '3',
+            })}
+          >
+            AI Assistants Used
+          </h3>
+          <ul
+            class={css({
+              listStyle: 'none',
+              m: 0,
+              p: 0,
+            })}
+          >
+            {aiAssistants.map((assistant) => (
+              <li
+                class={css({
+                  fontSize: 'sm',
+                  color: 'fg.muted',
+                  mb: '2',
+                })}
+              >
+                <strong>{assistant.name}</strong>: {assistant.details}
+              </li>
+            ))}
+          </ul>
+        </footer>
+      )
+    }
+  </article>
+</BaseLayout>

@@ -1,0 +1,75 @@
+---
+import {css} from '../../styled-system/css'
+
+const currentYear = new Date().getFullYear()
+---
+
+<footer
+  class={css({
+    borderTop: '1px solid',
+    borderColor: 'border.default',
+    bg: 'bg.canvas',
+    mt: 'auto',
+  })}
+>
+  <div
+    class={css({
+      maxWidth: '48rem',
+      mx: 'auto',
+      px: {base: '4', md: '6'},
+      py: '6',
+      display: 'flex',
+      flexDirection: {base: 'column', sm: 'row'},
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: '4',
+      fontSize: 'sm',
+      color: 'fg.muted',
+    })}
+  >
+    <p class={css({m: 0})}>
+      &copy; {currentYear} David J. Felix
+    </p>
+    <div
+      class={css({
+        display: 'flex',
+        gap: '4',
+      })}
+    >
+      <a
+        href="/rss.xml"
+        class={css({
+          color: 'fg.muted',
+          textDecoration: 'none',
+          _hover: {color: 'fg.default'},
+        })}
+      >
+        RSS
+      </a>
+      <a
+        href="https://github.com/davidjfelix"
+        target="_blank"
+        rel="noopener noreferrer"
+        class={css({
+          color: 'fg.muted',
+          textDecoration: 'none',
+          _hover: {color: 'fg.default'},
+        })}
+      >
+        GitHub
+      </a>
+      <a
+        href="https://twitter.com/davidjfelix"
+        target="_blank"
+        rel="noopener noreferrer"
+        class={css({
+          color: 'fg.muted',
+          textDecoration: 'none',
+          _hover: {color: 'fg.default'},
+        })}
+      >
+        Twitter
+      </a>
+    </div>
+  </div>
+</footer>

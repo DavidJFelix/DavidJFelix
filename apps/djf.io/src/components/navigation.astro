@@ -1,5 +1,6 @@
 ---
 import {css} from '../../styled-system/css'
+import Search from './search.astro'
 
 const navLinks = [
   {href: '/', label: 'Home'},
@@ -79,6 +80,8 @@ const currentPath = Astro.url.pathname
           ))
         }
       </ul>
+
+      <Search />
 
       <div
         class={css({

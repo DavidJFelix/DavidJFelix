@@ -1,0 +1,264 @@
+---
+import {css} from '../../styled-system/css'
+---
+
+<div id="search" class={css({position: 'relative'})}>
+  <button
+    id="search-button"
+    type="button"
+    aria-label="Search"
+    class={css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: '2',
+      px: '3',
+      py: '1.5',
+      fontSize: 'sm',
+      color: 'fg.muted',
+      bg: 'bg.muted',
+      border: '1px solid',
+      borderColor: 'border.default',
+      borderRadius: 'md',
+      cursor: 'pointer',
+      _hover: {
+        color: 'fg.default',
+        borderColor: 'fg.muted',
+      },
+    })}
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <circle cx="11" cy="11" r="8"></circle>
+      <path d="m21 21-4.3-4.3"></path>
+    </svg>
+    <span class={css({display: {base: 'none', sm: 'inline'}})}>Search</span>
+    <kbd
+      class={css({
+        display: {base: 'none', md: 'inline'},
+        px: '1.5',
+        py: '0.5',
+        fontSize: 'xs',
+        bg: 'bg.canvas',
+        borderRadius: 'sm',
+        border: '1px solid',
+        borderColor: 'border.default',
+      })}
+    >
+      ⌘K
+    </kbd>
+  </button>
+</div>
+
+<script is:inline>
+  async function initPagefind() {
+    // @ts-ignore - pagefind is generated at build time
+    const pagefind = await import('/pagefind/pagefind.js')
+    await pagefind.init()
+
+    const searchButton = document.getElementById('search-button')
+    const modal = document.createElement('div')
+    modal.id = 'search-modal'
+    modal.innerHTML = `
+      <div class="search-backdrop"></div>
+      <div class="search-container">
+        <div class="search-header">
+          <input type="text" id="search-input" placeholder="Search..." autofocus />
+          <button type="button" id="search-close">✕</button>
+        </div>
+        <div id="search-results"></div>
+      </div>
+    `
+    document.body.appendChild(modal)
+
+    const backdrop = modal.querySelector('.search-backdrop') as HTMLElement
+    const input = document.getElementById('search-input') as HTMLInputElement
+    const results = document.getElementById('search-results') as HTMLElement
+    const closeBtn = document.getElementById('search-close') as HTMLButtonElement
+
+    function openSearch() {
+      modal.classList.add('open')
+      input.focus()
+    }
+
+    function closeSearch() {
+      modal.classList.remove('open')
+      input.value = ''
+      results.innerHTML = ''
+    }
+
+    searchButton?.addEventListener('click', openSearch)
+    backdrop?.addEventListener('click', closeSearch)
+    closeBtn?.addEventListener('click', closeSearch)
+
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        if (modal.classList.contains('open')) {
+          closeSearch()
+        } else {
+          openSearch()
+        }
+      }
+      if (e.key === 'Escape' && modal.classList.contains('open')) {
+        closeSearch()
+      }
+    })
+
+    let debounceTimer: ReturnType<typeof setTimeout>
+    input?.addEventListener('input', async () => {
+      clearTimeout(debounceTimer)
+      debounceTimer = setTimeout(async () => {
+        const query = input.value
+        if (!query) {
+          results.innerHTML = ''
+          return
+        }
+
+        const search = await pagefind.search(query)
+        const resultData = await Promise.all(search.results.slice(0, 10).map((r: any) => r.data()))
+
+        if (resultData.length === 0) {
+          results.innerHTML = '<p class="no-results">No results found</p>'
+          return
+        }
+
+        results.innerHTML = resultData
+          .map(
+            (result: any) => `
+          <a href="${result.url}" class="search-result">
+            <h3>${result.meta?.title || result.url}</h3>
+            <p>${result.excerpt}</p>
+          </a>
+        `,
+          )
+          .join('')
+      }, 200)
+    })
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPagefind)
+  } else {
+    initPagefind()
+  }
+</script>
+
+<style is:global>
+  #search-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+  }
+
+  #search-modal.open {
+    display: block;
+  }
+
+  .search-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  .search-container {
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    background: var(--colors-bg-canvas);
+    border-radius: 8px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .search-header {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid var(--colors-border-default);
+  }
+
+  #search-input {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 16px;
+    border: 1px solid var(--colors-border-default);
+    border-radius: 6px;
+    background: var(--colors-bg-canvas);
+    color: var(--colors-fg-default);
+    outline: none;
+  }
+
+  #search-input:focus {
+    border-color: var(--colors-fg-muted);
+  }
+
+  #search-close {
+    margin-left: 12px;
+    padding: 8px 12px;
+    background: none;
+    border: none;
+    color: var(--colors-fg-muted);
+    cursor: pointer;
+    font-size: 16px;
+  }
+
+  #search-close:hover {
+    color: var(--colors-fg-default);
+  }
+
+  #search-results {
+    overflow-y: auto;
+    max-height: 60vh;
+  }
+
+  .search-result {
+    display: block;
+    padding: 16px;
+    text-decoration: none;
+    border-bottom: 1px solid var(--colors-border-default);
+  }
+
+  .search-result:hover {
+    background: var(--colors-bg-muted);
+  }
+
+  .search-result h3 {
+    margin: 0 0 4px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--colors-fg-default);
+  }
+
+  .search-result p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--colors-fg-muted);
+  }
+
+  .search-result mark {
+    background: rgba(255, 200, 0, 0.3);
+    color: inherit;
+  }
+
+  .no-results {
+    padding: 24px;
+    text-align: center;
+    color: var(--colors-fg-muted);
+  }
+</style>

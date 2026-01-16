@@ -67,14 +67,34 @@ Migrate djf.io from Starlight to a custom Astro + MDX + PandaCSS setup for great
 
 ### Phase 3: Styling Foundation
 
-- [ ] Define design tokens in PandaCSS config (colors, typography, spacing)
-- [ ] Create global styles
-- [ ] Style navigation component
-- [ ] Style blog post layout
-- [ ] Style code blocks and syntax highlighting
+See [2026-01-16-progress.md](./2026-01-16-progress.md) for detailed styling plan.
+
+#### Phase 3a: PandaCSS Token System
+- [ ] Define color tokens (grayscale, accent colors)
+- [ ] Define typography tokens (font sizes, line heights, font families)
+- [ ] Define spacing tokens (nav height, content width, padding)
+- [ ] Define semantic tokens for light/dark mode
+- [ ] Run `pnpm prepare` to generate styled-system
+- [ ] Create `src/styles/global.css` that imports styled-system
+
+#### Phase 3b: Prose/Typography Styles
+- [ ] Create prose recipe for Markdown content (headings, paragraphs, lists)
+- [ ] Style inline code and code blocks
+- [ ] Style blockquotes and horizontal rules
+- [ ] Style tables
+- [ ] Style footnotes
+
+#### Phase 3c: Component Styling
+- [ ] Style navigation component (header, links, dark mode toggle)
+- [ ] Style footer component
+- [ ] Style blog post layout wrapper
+- [ ] Style blog index page (post cards, year/month groupings)
+- [ ] Style tag chips
 
 **Files to modify:**
 - `apps/djf.io/panda.config.ts`
+
+**Files to create:**
 - `apps/djf.io/src/styles/global.css`
 
 ### Phase 4: Content Migration
@@ -263,3 +283,4 @@ description: "Page description"
 ## Progress Notes
 
 - [2026-01-13](./2026-01-13-progress.md) - Initial planning
+- [2026-01-16](./2026-01-16-progress.md) - PandaCSS styling plan

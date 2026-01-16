@@ -13,9 +13,10 @@ Migrate djf.io from Starlight to a custom Astro + MDX + PandaCSS setup for great
 
 ## Current State
 
-- **Framework**: Astro 5.0.4 with Starlight 0.37.0
-- **Content**: 3 blog posts (.md) + 1 home page (.mdx)
-- **Styling**: PandaCSS configured but fighting Starlight defaults
+- **Framework**: Astro 5.x with custom layouts (Starlight removed)
+- **Content**: 3 blog posts migrated to `src/content/blog/`
+- **Styling**: Custom PandaCSS preset with semantic tokens
+- **Search**: Pagefind integrated with modal UI
 - **Location**: `apps/djf.io/`
 
 ### Current Content
@@ -41,58 +42,58 @@ Migrate djf.io from Starlight to a custom Astro + MDX + PandaCSS setup for great
 
 ## Migration Phases
 
-### Phase 1: Project Setup
+### Phase 1: Project Setup ✅
 
-- [ ] Create new content collection schema for blog posts
-- [ ] Create new content collection schema for pages
-- [ ] Update `src/content/config.ts` to remove Starlight schemas
+- [x] Create new content collection schema for blog posts
+- [x] Create new content collection schema for pages
+- [x] Update `src/content/config.ts` to remove Starlight schemas
 
 **Files to modify:**
 - `apps/djf.io/src/content/config.ts`
 
-### Phase 2: Layout System
+### Phase 2: Layout System ✅
 
-- [ ] Create base layout component (`src/layouts/BaseLayout.astro`)
-- [ ] Create blog post layout (`src/layouts/BlogPost.astro`)
-- [ ] Create page layout (`src/layouts/Page.astro`)
-- [ ] Implement responsive navigation component
-- [ ] Implement footer component
+- [x] Create base layout component (`src/layouts/base-layout.astro`)
+- [x] Create blog post layout (`src/layouts/blog-post.astro`)
+- [x] Create page layout (`src/layouts/page.astro`)
+- [x] Implement responsive navigation component
+- [x] Implement footer component
 
-**Files to create:**
-- `apps/djf.io/src/layouts/BaseLayout.astro`
-- `apps/djf.io/src/layouts/BlogPost.astro`
-- `apps/djf.io/src/layouts/Page.astro`
-- `apps/djf.io/src/components/Navigation.astro`
-- `apps/djf.io/src/components/Footer.astro`
+**Files created:**
+- `apps/djf.io/src/layouts/base-layout.astro`
+- `apps/djf.io/src/layouts/blog-post.astro`
+- `apps/djf.io/src/layouts/page.astro`
+- `apps/djf.io/src/components/navigation.astro`
+- `apps/djf.io/src/components/footer.astro`
 
-### Phase 3: Styling Foundation
+### Phase 3: Styling Foundation ✅
 
-- [ ] Define design tokens in PandaCSS config (colors, typography, spacing)
-- [ ] Create global styles
-- [ ] Style navigation component
-- [ ] Style blog post layout
-- [ ] Style code blocks and syntax highlighting
+- [x] Define design tokens in PandaCSS config (colors, typography, spacing)
+- [x] Create global styles
+- [x] Style navigation component
+- [x] Style blog post layout
+- [x] Style code blocks and syntax highlighting
 
-**Files to modify:**
+**Files modified:**
 - `apps/djf.io/panda.config.ts`
 - `apps/djf.io/src/styles/global.css`
 
-### Phase 4: Content Migration
+### Phase 4: Content Migration ✅
 
-- [ ] Move blog posts from `src/content/docs/blog/` to `src/content/blog/`
-- [ ] Update frontmatter schema for blog posts
-- [ ] Convert home page to use new layout
-- [ ] Verify all internal links work
+- [x] Move blog posts from `src/content/docs/blog/` to `src/content/blog/`
+- [x] Update frontmatter schema for blog posts
+- [x] Convert home page to use new layout
+- [x] Verify all internal links work
 
 **Content changes:**
-- Update frontmatter in all blog posts to match new schema
-- Remove Starlight-specific frontmatter fields
+- Updated frontmatter in all blog posts to match new schema
+- Removed Starlight-specific frontmatter fields
 
-### Phase 5: Page Routes
+### Phase 5: Page Routes (In Progress)
 
-- [ ] Create home page (`src/pages/index.astro`)
-- [ ] Create blog index page with year/month grouping (`src/pages/blog/index.astro`)
-- [ ] Create dynamic blog post route (`src/pages/blog/[...slug].astro`)
+- [x] Create home page (`src/pages/index.astro`)
+- [x] Create blog index page with year/month grouping (`src/pages/blog/index.astro`)
+- [x] Create dynamic blog post route (`src/pages/blog/[...slug].astro`)
 - [ ] Create tag listing page (`src/pages/blog/tags/index.astro`)
 - [ ] Create dynamic tag archive route (`src/pages/blog/tags/[tag].astro`)
 - [ ] Set up RSS feed (`src/pages/rss.xml.ts`)
@@ -105,13 +106,13 @@ Migrate djf.io from Starlight to a custom Astro + MDX + PandaCSS setup for great
 - `apps/djf.io/src/pages/blog/tags/[tag].astro`
 - `apps/djf.io/src/pages/rss.xml.ts`
 
-### Phase 6: Search
+### Phase 6: Search ✅
 
-- [ ] Install Pagefind (`pagefind` package)
-- [ ] Configure Pagefind to index at build time
-- [ ] Create search UI component
-- [ ] Style search modal/dropdown with PandaCSS
-- [ ] Add search trigger to navigation
+- [x] Install Pagefind (`pagefind` package)
+- [x] Configure Pagefind to index at build time
+- [x] Create search UI component
+- [x] Style search modal/dropdown with PandaCSS
+- [x] Add search trigger to navigation
 
 **Why Pagefind:**
 - Same search engine Starlight uses under the hood
@@ -120,21 +121,21 @@ Migrate djf.io from Starlight to a custom Astro + MDX + PandaCSS setup for great
 - Tiny runtime (~5kb gzipped)
 - Supports filtering by tags, dates, etc.
 
-**Files to create:**
-- `apps/djf.io/src/components/Search.astro`
+**Files created:**
+- `apps/djf.io/src/components/search.astro`
 
-**Files to modify:**
-- `apps/djf.io/package.json` (add pagefind)
-- `apps/djf.io/astro.config.mjs` (configure post-build indexing)
+**Files modified:**
+- `apps/djf.io/package.json` (added pagefind)
+- Build script: `astro build && pagefind --site dist`
 
-### Phase 7: Remove Starlight
+### Phase 7: Remove Starlight ✅
 
-- [ ] Remove `@astrojs/starlight` from dependencies
-- [ ] Update `astro.config.mjs` to remove Starlight integration
-- [ ] Clean up any Starlight-specific files
-- [ ] Remove `src/content/docs/` directory after migration
+- [x] Remove `@astrojs/starlight` from dependencies
+- [x] Update `astro.config.mjs` to remove Starlight integration
+- [x] Clean up any Starlight-specific files
+- [x] Remove `src/content/docs/` directory after migration
 
-**Files to modify:**
+**Files modified:**
 - `apps/djf.io/package.json`
 - `apps/djf.io/astro.config.mjs`
 
@@ -247,15 +248,15 @@ description: "Page description"
 
 ## Success Criteria
 
-- [ ] All existing content renders correctly
-- [ ] Site builds without errors
+- [x] All existing content renders correctly
+- [x] Site builds without errors
 - [ ] Lighthouse performance score > 90
 - [ ] All links functional
 - [ ] RSS feed works
 - [ ] Dark mode toggle works
-- [ ] Search indexes all blog content
+- [x] Search indexes all blog content
 - [ ] Tag pages list correct posts
-- [ ] Blog index groups posts by year/month
+- [x] Blog index groups posts by year/month
 - [ ] Unit tests pass
 - [ ] E2E tests pass
 - [ ] CI pipeline runs tests on PR
@@ -263,3 +264,4 @@ description: "Page description"
 ## Progress Notes
 
 - [2026-01-13](./2026-01-13-progress.md) - Initial planning
+- [2026-01-16](./2026-01-16-progress.md) - Migration complete, remaining work identified

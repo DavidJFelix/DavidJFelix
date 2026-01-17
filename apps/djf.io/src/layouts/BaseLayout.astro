@@ -1,0 +1,128 @@
+---
+import '../index.css'
+import {css} from 'styled-system/css'
+
+interface Props {
+  title: string
+  description?: string
+}
+
+const {title, description = 'Personal blog of David J Felix'} = Astro.props
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title} | djf.io</title>
+  </head>
+  <body
+    class={css({
+      fontFamily: 'system-ui, sans-serif',
+      bg: 'zinc.950',
+      color: 'zinc.100',
+      minH: '100vh',
+      lineHeight: '1.6',
+    })}
+  >
+    <header
+      class={css({
+        borderBottom: '1px solid',
+        borderColor: 'zinc.800',
+        py: '4',
+      })}
+    >
+      <nav
+        class={css({
+          maxW: '4xl',
+          mx: 'auto',
+          px: '4',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        })}
+      >
+        <a
+          href="/"
+          class={css({
+            fontSize: 'xl',
+            fontWeight: 'bold',
+            color: 'zinc.100',
+            textDecoration: 'none',
+            _hover: {color: 'zinc.300'},
+          })}
+        >
+          djf.io
+        </a>
+        <div class={css({display: 'flex', gap: '6'})}>
+          <a
+            href="/blog"
+            class={css({
+              color: 'zinc.400',
+              textDecoration: 'none',
+              _hover: {color: 'zinc.100'},
+            })}
+          >
+            Blog
+          </a>
+          <a
+            href="https://github.com/davidjfelix"
+            class={css({
+              color: 'zinc.400',
+              textDecoration: 'none',
+              _hover: {color: 'zinc.100'},
+            })}
+          >
+            GitHub
+          </a>
+          <a
+            href="https://twitter.com/davidjfelix"
+            class={css({
+              color: 'zinc.400',
+              textDecoration: 'none',
+              _hover: {color: 'zinc.100'},
+            })}
+          >
+            Twitter
+          </a>
+        </div>
+      </nav>
+    </header>
+
+    <main
+      class={css({
+        maxW: '4xl',
+        mx: 'auto',
+        px: '4',
+        py: '8',
+      })}
+    >
+      <slot />
+    </main>
+
+    <footer
+      class={css({
+        borderTop: '1px solid',
+        borderColor: 'zinc.800',
+        py: '6',
+        mt: '12',
+      })}
+    >
+      <div
+        class={css({
+          maxW: '4xl',
+          mx: 'auto',
+          px: '4',
+          textAlign: 'center',
+          color: 'zinc.500',
+          fontSize: 'sm',
+        })}
+      >
+        &copy; {new Date().getFullYear()} David J Felix. All rights reserved.
+      </div>
+    </footer>
+  </body>
+</html>

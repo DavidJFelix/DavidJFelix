@@ -1,0 +1,100 @@
+---
+import {getCollection} from 'astro:content'
+import {css} from 'styled-system/css'
+import BaseLayout from '../../layouts/BaseLayout.astro'
+
+const posts = (await getCollection('blog')).sort(
+  (a, b) => new Date(b.data.date).valueOf() - new Date(a.data.date).valueOf()
+)
+---
+
+<BaseLayout title="Blog" description="Blog posts by David J Felix">
+  <h1
+    class={css({
+      fontSize: '3xl',
+      fontWeight: 'bold',
+      mb: '8',
+    })}
+  >
+    Blog
+  </h1>
+
+  <div class={css({display: 'flex', flexDirection: 'column', gap: '6'})}>
+    {
+      posts.map((post) => {
+        const formattedDate = new Date(post.data.date).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        })
+
+        return (
+          <article
+            class={css({
+              p: '6',
+              bg: 'zinc.900',
+              borderRadius: 'lg',
+              border: '1px solid',
+              borderColor: 'zinc.800',
+              transition: 'border-color 0.2s',
+              _hover: {borderColor: 'zinc.700'},
+            })}
+          >
+            <a
+              href={`/blog/${post.slug}`}
+              class={css({textDecoration: 'none', display: 'block'})}
+            >
+              <h2
+                class={css({
+                  fontSize: 'xl',
+                  fontWeight: 'semibold',
+                  color: 'zinc.100',
+                  mb: '2',
+                  _hover: {color: 'zinc.300'},
+                })}
+              >
+                {post.data.title}
+              </h2>
+
+              <p class={css({color: 'zinc.400', mb: '3', fontSize: 'sm'})}>
+                {post.data.description}
+              </p>
+
+              <div
+                class={css({
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '3',
+                  color: 'zinc.500',
+                  fontSize: 'xs',
+                })}
+              >
+                <span>{formattedDate}</span>
+                {post.data.readingTime && <span>{post.data.readingTime} read</span>}
+              </div>
+
+              {post.data.tags && post.data.tags.length > 0 && (
+                <div class={css({display: 'flex', flexWrap: 'wrap', gap: '2', mt: '3'})}>
+                  {post.data.tags.map((tag: string) => (
+                    <span
+                      class={css({
+                        bg: 'zinc.800',
+                        color: 'zinc.400',
+                        px: '2',
+                        py: '0.5',
+                        borderRadius: 'sm',
+                        fontSize: 'xs',
+                      })}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </a>
+          </article>
+        )
+      })
+    }
+  </div>
+</BaseLayout>

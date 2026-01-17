@@ -13,7 +13,7 @@ readingTime: 5m
 hero:
   tagline: Resolving to ship more in 2024. It's easier said than done, why is that?
   image:
-    file: ../../../assets/shipposting-hero.png
+    file: ../../assets/shipposting-hero.png
     alt: 'ChatGPT Generated image with the following prompt: animated style illustration a software engineer with short blonde hair and a mustache, in a workspace. You can see the slightly conflicted and dissatisfied expression as you write your blog, surrounded by notes and sketches of various blog designs.'
 ---
 
@@ -93,7 +93,7 @@ Rather than building everything, you should stake these projects in their existe
 They should reach their audience first.
 Engineering goals can still be vital cornerstones, but building small and shipping to users is essential.
 
-![ChatGPT Generated image with the following prompt: banner-width illustration of a sunrise over a construction site, portrayed in a more exaggerated and vibrant animated style](../../../assets/shipposting-banner.png)
+![ChatGPT Generated image with the following prompt: banner-width illustration of a sunrise over a construction site, portrayed in a more exaggerated and vibrant animated style](../../assets/shipposting-banner.png)
 
 ## Shipping
 

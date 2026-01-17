@@ -5,7 +5,9 @@
     "jsx": "preserve",
     "jsxImportSource": "react",
     "paths": {
-      "~/*": ["./src/*"]
+      "~/*": ["./src/*"],
+      "styled-system/*": ["./styled-system/*"]
     }
-  }
+  },
+  "include": ["src", "styled-system"]
 }

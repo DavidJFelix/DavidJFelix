@@ -1,0 +1,146 @@
+---
+import type {CollectionEntry} from 'astro:content'
+import {css} from 'styled-system/css'
+import BaseLayout from './BaseLayout.astro'
+
+interface Props {
+  post: CollectionEntry<'blog'>
+}
+
+const {post} = Astro.props
+const {title, description, date, author, tags, readingTime} = post.data
+
+const formattedDate = new Date(date).toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+})
+---
+
+<BaseLayout title={title} description={description}>
+  <article>
+    <header class={css({mb: '8'})}>
+      <h1
+        class={css({
+          fontSize: '4xl',
+          fontWeight: 'bold',
+          mb: '4',
+          lineHeight: '1.2',
+        })}
+      >
+        {title}
+      </h1>
+
+      <div
+        class={css({
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '4',
+          color: 'zinc.400',
+          fontSize: 'sm',
+          mb: '4',
+        })}
+      >
+        <span>{formattedDate}</span>
+        {author && <span>by {author}</span>}
+        {readingTime && <span>{readingTime} read</span>}
+      </div>
+
+      {
+        tags && tags.length > 0 && (
+          <div class={css({display: 'flex', flexWrap: 'wrap', gap: '2'})}>
+            {tags.map((tag: string) => (
+              <span
+                class={css({
+                  bg: 'zinc.800',
+                  color: 'zinc.300',
+                  px: '2',
+                  py: '1',
+                  borderRadius: 'md',
+                  fontSize: 'xs',
+                })}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )
+      }
+    </header>
+
+    <div
+      class={css({
+        '& h2': {
+          fontSize: '2xl',
+          fontWeight: 'bold',
+          mt: '8',
+          mb: '4',
+          color: 'zinc.100',
+        },
+        '& h3': {
+          fontSize: 'xl',
+          fontWeight: 'semibold',
+          mt: '6',
+          mb: '3',
+          color: 'zinc.100',
+        },
+        '& p': {
+          mb: '4',
+          color: 'zinc.300',
+        },
+        '& a': {
+          color: 'blue.400',
+          textDecoration: 'underline',
+          _hover: {color: 'blue.300'},
+        },
+        '& blockquote': {
+          borderLeft: '4px solid',
+          borderColor: 'zinc.600',
+          pl: '4',
+          my: '4',
+          fontStyle: 'italic',
+          color: 'zinc.400',
+        },
+        '& ul, & ol': {
+          pl: '6',
+          mb: '4',
+          color: 'zinc.300',
+        },
+        '& li': {
+          mb: '2',
+        },
+        '& code': {
+          bg: 'zinc.800',
+          px: '1.5',
+          py: '0.5',
+          borderRadius: 'sm',
+          fontSize: 'sm',
+          fontFamily: 'monospace',
+        },
+        '& pre': {
+          bg: 'zinc.900',
+          p: '4',
+          borderRadius: 'lg',
+          overflow: 'auto',
+          mb: '4',
+        },
+        '& pre code': {
+          bg: 'transparent',
+          p: '0',
+        },
+        '& img': {
+          maxW: 'full',
+          h: 'auto',
+          borderRadius: 'lg',
+          my: '6',
+        },
+        '& strong': {
+          fontWeight: 'bold',
+          color: 'zinc.100',
+        },
+      })}
+    >
+      <slot />
+    </div>
+  </article>
+</BaseLayout>

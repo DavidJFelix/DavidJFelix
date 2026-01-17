@@ -69,25 +69,29 @@ Migrate djf.io from Starlight to a custom Astro + MDX + PandaCSS setup for great
 
 See [2026-01-16-progress.md](./2026-01-16-progress.md) for detailed styling plan.
 
-#### Phase 3a: PandaCSS Token System
-- [ ] Define color tokens (grayscale, accent colors)
-- [ ] Define typography tokens (font sizes, line heights, font families)
-- [ ] Define spacing tokens (nav height, content width, padding)
-- [ ] Define semantic tokens for light/dark mode
+**Approach:** Use PandaCSS presets instead of custom recipes.
+
+#### Phase 3a: Install & Configure Presets
+- [ ] Install `pandacss-preset-typography` for prose/Markdown styling
+- [ ] Update `panda.config.ts` to add typography preset
 - [ ] Run `pnpm prepare` to generate styled-system
 - [ ] Create `src/styles/global.css` that imports styled-system
 
-#### Phase 3b: Prose/Typography Styles
-- [ ] Create prose recipe for Markdown content (headings, paragraphs, lists)
-- [ ] Style inline code and code blocks
-- [ ] Style blockquotes and horizontal rules
-- [ ] Style tables
-- [ ] Style footnotes
+**Presets:**
+| Preset | Purpose |
+|--------|---------|
+| `@pandacss/preset-base` | Base tokens (already installed) |
+| `@park-ui/panda-preset` | Design system, Radix colors, dark mode (already installed) |
+| `pandacss-preset-typography` | Prose recipe for Markdown content (to install) |
 
-#### Phase 3c: Component Styling
+#### Phase 3b: Create Layouts with Prose Styling
+- [ ] Create `BaseLayout.astro` that imports global.css
+- [ ] Create `BlogPost.astro` that uses `prose()` recipe from typography preset
+- [ ] Verify prose styling works with existing blog content
+
+#### Phase 3c: Component Styling (using Park UI tokens)
 - [ ] Style navigation component (header, links, dark mode toggle)
 - [ ] Style footer component
-- [ ] Style blog post layout wrapper
 - [ ] Style blog index page (post cards, year/month groupings)
 - [ ] Style tag chips
 

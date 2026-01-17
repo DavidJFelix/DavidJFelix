@@ -16,8 +16,8 @@
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
+    "@astrojs/mdx": "^4.0.0",
     "@astrojs/react": "^4.4.2",
-    "@astrojs/starlight": "^0.37.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "astro": "^5.0.4",
@@ -32,11 +32,6 @@
     "@pandacss/dev": "1.7.2",
     "cspell": "^9.0.0",
     "oxlint": "^0.16.0"
-  },
-  "pnpm": {
-    "overrides": {
-      "@astrojs/mdx": "^4.0.0"
-    }
   },
   "packageManager": "pnpm@10.0.0",
   "engines": {

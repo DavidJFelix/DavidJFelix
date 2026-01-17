@@ -21,7 +21,7 @@ export default defineConfig({
               value: {base: '{colors.neutral.600}', _dark: '{colors.neutral.400}'},
             },
             subtle: {
-              value: {base: '{colors.neutral.500}', _dark: '{colors.neutral.500}'},
+              value: {base: '{colors.neutral.500}', _dark: '{colors.neutral.300}'},
             },
           },
           // Background colors

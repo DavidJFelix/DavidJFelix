@@ -15,14 +15,12 @@
     "spell": "cspell --config ../../.config/cspell.json \"**\""
   },
   "dependencies": {
-    "@ark-ui/react": "^5.0.0",
     "@astrojs/check": "^0.9.4",
     "@astrojs/react": "^4.4.2",
     "@astrojs/starlight": "^0.37.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "astro": "^5.0.4",
-    "lucide-react": "^0.562.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "sharp": "^0.34.0",
@@ -32,7 +30,6 @@
     "@biomejs/biome": "^2.0.0",
     "@cspell/dict-typescript": "^3.2.0",
     "@pandacss/dev": "1.7.2",
-    "@park-ui/panda-preset": "0.43.1",
     "cspell": "^9.0.0",
     "oxlint": "^0.16.0"
   },

@@ -1,23 +1,23 @@
 import {defineConfig} from '@pandacss/dev'
+import {createPreset} from '@park-ui/panda-preset'
+import neutral from '@park-ui/panda-preset/colors/neutral'
+import slate from '@park-ui/panda-preset/colors/slate'
 
 export default defineConfig({
-  // Whether to use css reset
   preflight: true,
-  presets: ['@pandacss/preset-base', '@park-ui/panda-preset'],
-
-  // Where to look for your css declarations
+  presets: [
+    '@pandacss/preset-base',
+    createPreset({
+      accentColor: neutral,
+      grayColor: slate,
+      radius: 'md',
+    }),
+  ],
   include: ['./src/**/*.{ts,tsx,js,jsx,astro}', './pages/**/*.{ts,tsx,js,jsx,astro}'],
-
-  // Files to exclude
   exclude: [],
-
-  // Useful for theme customization
   theme: {
     extend: {},
   },
-
   jsxFramework: 'react',
-
-  // The output directory for your css system
   outdir: 'styled-system',
 })

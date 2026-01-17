@@ -1,0 +1,111 @@
+---
+import {Image} from 'astro:assets'
+import {css} from 'styled-system/css'
+import headshot from '../assets/headshot.png'
+import BaseLayout from '../layouts/BaseLayout.astro'
+---
+
+<BaseLayout title="David J Felix" description="Personal blog of David J Felix">
+  <div class={css({display: 'flex', flexDirection: 'column', gap: '8'})}>
+    <section
+      class={css({
+        display: 'flex',
+        flexDirection: {base: 'column', md: 'row'},
+        alignItems: 'center',
+        gap: '8',
+        mb: '8',
+      })}
+    >
+      <Image
+        src={headshot}
+        alt="David J Felix"
+        class={css({
+          w: '48',
+          h: '48',
+          borderRadius: 'full',
+          border: '4px solid',
+          borderColor: 'zinc.700',
+        })}
+      />
+      <div>
+        <h1 class={css({fontSize: '4xl', fontWeight: 'bold', mb: '2'})}>David J Felix</h1>
+        <p class={css({color: 'zinc.400', fontSize: 'lg'})}>It's all downhill from here</p>
+      </div>
+    </section>
+
+    <section>
+      <h2 class={css({fontSize: '2xl', fontWeight: 'bold', mb: '4'})}>About Me</h2>
+
+      <div
+        class={css({
+          '& p': {mb: '4', color: 'zinc.300'},
+          '& ul': {pl: '6', mb: '4', color: 'zinc.300'},
+          '& li': {mb: '2'},
+        })}
+      >
+        <p>
+          I am a full-stack software engineer passionate about Serverless, DevOps, and
+          Cloud-first technology. I graduated from the University of Dayton College of
+          Engineering with a Bachelor of Science degree in computer engineering. I've
+          founded/co-founded a few tech startups and enjoy building new ideas and trying to
+          make them work.
+        </p>
+
+        <ul>
+          <li>NullServe</li>
+          <li>Pepperonio (closed)</li>
+          <li>MG4.tv / iotv (closed)</li>
+        </ul>
+
+        <p>I've worked with many startups in the following roles:</p>
+
+        <ul>
+          <li>Series A Full Stack Engineer - Era Software (Exited acq. by ServiceNow)</li>
+          <li>Series B Full Stack Engineer - VNDLY, Inc (Exited acq. by Workday)</li>
+          <li>Founder - NullServe</li>
+          <li>Advisor/Mentor - Atumsoft</li>
+          <li>Local Event Host/Sponsor - Angelhack Cincinnati 2015, 2016</li>
+          <li>Founding Engineer/DevOps - Instameals</li>
+          <li>Co-Founding Engineer - Pepperonio</li>
+          <li>Hackathon Winner - Angelhack Cincinnati 2014 (Pepperonio)</li>
+          <li>Founder - MG4.tv / iotv</li>
+          <li>First Contract Engineer / Engineering Advisor - MyI, LLC</li>
+          <li>Contract Software Engineer / Technical Writer - E-Gov Link, EC-Link</li>
+          <li>First Employee DevOps - Swarmfarm, LLC</li>
+        </ul>
+      </div>
+    </section>
+
+    <section
+      class={css({
+        bg: 'zinc.900',
+        p: '6',
+        borderRadius: 'lg',
+        border: '1px solid',
+        borderColor: 'zinc.800',
+      })}
+    >
+      <h2 class={css({fontSize: 'xl', fontWeight: 'bold', mb: '3'})}>
+        AI Attribution & Disclaimer
+      </h2>
+
+      <div class={css({'& p': {mb: '3', color: 'zinc.400', fontSize: 'sm'}})}>
+        <p>
+          I have not used generative AI, nor will I use any for generating written content
+          on this site. My goal is to express my ideas in written form. I utilize tools like
+          Grammarly and Hemingway to improve my writing, but I do not use generative fills
+          or "rewrite this sentence/paragraph" mechanics. I follow grammar and spelling
+          suggestions and auto-corrections for voice and tense. I use these tools because I
+          make mistakes, not because I need them to write for me.
+        </p>
+
+        <p>
+          I use Midjourney and OpenAI's DALL-E to generate illustrations for my posts when
+          writing alone might be too dry. My goal is to move away from using these tools
+          exclusively, but since I'm not an artist, that may take time. I will do my best to
+          identify all AI-generated images.
+        </p>
+      </div>
+    </section>
+  </div>
+</BaseLayout>

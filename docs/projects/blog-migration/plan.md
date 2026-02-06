@@ -57,14 +57,14 @@ Migrate djf.io from Starlight to a custom Astro + MDX + PandaCSS setup for great
 - [x] Update frontmatter schema for blog posts
 - [x] Convert home page to use new layout
 
-### Phase 5: Page Routes - MOSTLY COMPLETE
+### Phase 5: Page Routes - COMPLETE
 
 - [x] Create home page (`src/pages/index.astro`)
 - [x] Create blog index page (`src/pages/blog/index.astro`)
 - [x] Create dynamic blog post route (`src/pages/blog/[...slug].astro`)
 - [x] Set up RSS feed (`src/pages/rss.xml.ts`)
-- [ ] Create tag listing page (`src/pages/blog/tags/index.astro`)
-- [ ] Create dynamic tag archive route (`src/pages/blog/tags/[tag].astro`)
+- [x] Create tag listing page (`src/pages/blog/tags/index.astro`)
+- [x] Create dynamic tag archive route (`src/pages/blog/tags/[tag].astro`)
 
 ### Phase 6: Search
 
@@ -185,7 +185,7 @@ draft: false  # optional, defaults to false
 - [x] All links functional
 - [x] RSS feed works
 - [ ] Search indexes all blog content
-- [ ] Tag pages list correct posts
+- [x] Tag pages list correct posts
 - [ ] Unit tests pass
 - [ ] E2E tests pass
 - [ ] CI pipeline runs tests on PR

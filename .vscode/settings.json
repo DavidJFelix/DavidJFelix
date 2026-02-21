@@ -1,6 +1,12 @@
 {
-  "cSpell.words": [
-    "itertools",
-    "multispace"
-  ]
+  "cSpell.words": ["itertools", "multispace"],
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "biomejs.biome",
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[mdx]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "prettier.requireConfig": true
 }

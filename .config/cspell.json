@@ -36,6 +36,11 @@
     "jsonc",
     "mjs",
     "tsx",
-    "jsx"
+    "jsx",
+    "oxfmt",
+    "prettierrc",
+    "prettierignore",
+    "editorconfig",
+    "prosewrap"
   ]
 }

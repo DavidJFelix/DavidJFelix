@@ -10,7 +10,7 @@
     "astro": "astro",
     "lint": "biome check . && oxlint",
     "lint:fix": "biome check --write .",
-    "format": "biome format --write .",
+    "format": "biome format --write . && prettier --write .",
     "spell": "cspell --config ../../.config/cspell.json \"**\""
   },
   "dependencies": {
@@ -24,10 +24,8 @@
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.0.0",
     "@cspell/dict-typescript": "^3.2.0",
     "@pandacss/dev": "^1.4.1",
-    "cspell": "^9.0.0",
-    "oxlint": "^0.16.0"
+    "cspell": "^9.0.0"
   }
 }

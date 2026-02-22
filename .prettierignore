@@ -1,0 +1,5 @@
+# Prettier is only used for Markdown and MDX files.
+# Everything else is formatted by Biome.
+*
+!**/*.md
+!**/*.mdx

@@ -2,7 +2,6 @@
   "$schema": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxlint/configuration_schema.json",
   "plugins": [
     "react",
-    "react-hooks",
     "react-perf",
     "jsx-a11y",
     "typescript",
@@ -17,7 +16,7 @@
     "style": "off"
   },
   "rules": {
-    "react-hooks/exhaustive-deps": "warn",
-    "react-hooks/rules-of-hooks": "error"
+    "react/exhaustive-deps": "warn",
+    "react/rules-of-hooks": "error"
   }
 }

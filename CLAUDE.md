@@ -41,6 +41,12 @@ Each progress file should contain:
 - Next steps
 - Any blockers or open questions
 
+## Related Docs
+
+- [CONTRIBUTING.md](CONTRIBUTING.md) -- PR workflow, changelog process, code conventions
+- [AGENTS.md](AGENTS.md) -- universal AI agent entry point
+- [docs/changelog/](docs/changelog/) -- monthly change history
+
 ## Monorepo Structure
 
 - `apps/` - Application projects (djf.io, calendar-visualizer, ravrun)

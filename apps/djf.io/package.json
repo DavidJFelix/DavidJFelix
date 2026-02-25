@@ -12,7 +12,8 @@
     "lint": "biome check . && oxlint",
     "lint:fix": "biome check --write .",
     "format": "biome format --write . && prettier --write .",
-    "spell": "cspell --config ../../.config/cspell.json \"**\""
+    "spell": "cspell --config ../../.config/cspell.json \"**\"",
+    "sync:standard-site": "node --experimental-strip-types scripts/standard-site-sync.ts"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",

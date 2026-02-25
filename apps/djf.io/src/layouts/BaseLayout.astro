@@ -18,6 +18,7 @@ const {title, description = 'Personal blog of David J Felix'} = Astro.props
     <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title} | djf.io</title>
+    <slot name="head" />
   </head>
   <body
     class={css({

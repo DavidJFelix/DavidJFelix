@@ -29,6 +29,7 @@ const blog = defineCollection({
           })
         )
         .optional(),
+      atUri: z.string().optional(),
     }),
 })
 

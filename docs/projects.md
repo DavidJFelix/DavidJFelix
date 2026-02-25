@@ -16,6 +16,12 @@ Consolidating dev tooling to root-level mise config. Upgrading Biome (2.0 -> 2.4
 
 **Status**: In Progress
 
+### [Standard.site Integration](./projects/standard-site-integration/plan.md)
+
+Integrating standard.site AT Protocol lexicons into djf.io for decentralized blog discovery and portability.
+
+**Status**: In Progress (verification + sync script complete, needs first run + CI automation)
+
 ### [Contribution Docs](./projects/contribution-docs/plan.md)
 
 Adding contribution guidelines, changelog structure, and PR template. Primary audience is AI agents.

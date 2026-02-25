@@ -41,6 +41,10 @@
     "prettierrc",
     "prettierignore",
     "editorconfig",
-    "prosewrap"
+    "prosewrap",
+    "atproto",
+    "bsky",
+    "rkey",
+    "lexicons"
   ]
 }

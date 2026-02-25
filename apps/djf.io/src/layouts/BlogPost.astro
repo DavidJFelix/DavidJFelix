@@ -8,7 +8,7 @@ interface Props {
 }
 
 const {post} = Astro.props
-const {title, description, date, author, tags, readingTime} = post.data
+const {title, description, date, author, tags, readingTime, atUri} = post.data
 
 const formattedDate = new Date(date).toLocaleDateString('en-US', {
   year: 'numeric',
@@ -18,6 +18,7 @@ const formattedDate = new Date(date).toLocaleDateString('en-US', {
 ---
 
 <BaseLayout title={title} description={description}>
+  {atUri && <link rel="site.standard.document" href={atUri} slot="head" />}
   <article>
     <header class={css({mb: '8'})}>
       <h1

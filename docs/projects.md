@@ -21,3 +21,57 @@ Consolidating dev tooling to root-level mise config. Upgrading Biome (2.0 -> 2.4
 Adding contribution guidelines, changelog structure, and PR template. Primary audience is AI agents.
 
 **Status**: In Progress
+
+### [Blog Style Improvement](./projects/blog-style-improvement/plan.md)
+
+Human-directed polish of djf.io: colors, spacing, layout, images, usability, components.
+
+**Status**: In Progress
+
+### [djf.io Testing](./projects/djf-io-testing/plan.md)
+
+Vitest + Playwright coverage for djf.io with CI gating.
+
+**Status**: In Progress
+
+### [Cloudflare Migration](./projects/cloudflare-migration/plan.md)
+
+Move all Vercel-hosted apps (djf.io, calendar-visualizer, ravrun) to Cloudflare Workers.
+
+**Status**: In Progress
+
+### [New Domain Sites](./projects/new-domain-sites/plan.md)
+
+Stand up sites for 8 owned domains across Astro, TanStack Start, Vue, and SvelteKit.
+
+**Status**: In Progress
+
+### [Dotfiles Overhaul](./projects/dotfiles-overhaul/plan.md)
+
+Migrate shell from omz to fish, add nushell/jj/starship config, sync local state back into repo, audit packages.
+
+**Status**: In Progress
+
+### [Sentry Integration](./projects/sentry-integration/plan.md)
+
+Wire Sentry into every app in the repo for crash and error monitoring.
+
+**Status**: In Progress
+
+### [Dependency Freshness](./projects/dependency-freshness/plan.md)
+
+mise-based versioning and an ongoing process (skill + cadence) to keep packages across the monorepo current.
+
+**Status**: In Progress
+
+### [Profile Bio Refresh](./projects/profile-bio-refresh/plan.md)
+
+Refresh the GitHub profile bio in `README.md`.
+
+**Status**: In Progress
+
+### [PostHog Integration](./projects/posthog-integration/plan.md)
+
+Wire PostHog into every app in the repo for product analytics.
+
+**Status**: In Progress

@@ -21,3 +21,9 @@ Consolidating dev tooling to root-level mise config. Upgrading Biome (2.0 -> 2.4
 Adding contribution guidelines, changelog structure, and PR template. Primary audience is AI agents.
 
 **Status**: In Progress
+
+### [Blog Style Improvement](./projects/blog-style-improvement/plan.md)
+
+Human-directed polish of djf.io: colors, spacing, layout, images, usability, components.
+
+**Status**: In Progress

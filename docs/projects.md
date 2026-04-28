@@ -39,3 +39,9 @@ Vitest + Playwright coverage for djf.io with CI gating.
 Move all Vercel-hosted apps (djf.io, calendar-visualizer, ravrun) to Cloudflare Workers.
 
 **Status**: In Progress
+
+### [New Domain Sites](./projects/new-domain-sites/plan.md)
+
+Stand up sites for 8 owned domains across Astro, TanStack Start, Vue, and SvelteKit.
+
+**Status**: In Progress

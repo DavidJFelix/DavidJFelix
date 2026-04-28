@@ -33,3 +33,9 @@ Human-directed polish of djf.io: colors, spacing, layout, images, usability, com
 Vitest + Playwright coverage for djf.io with CI gating.
 
 **Status**: In Progress
+
+### [Cloudflare Migration](./projects/cloudflare-migration/plan.md)
+
+Move all Vercel-hosted apps (djf.io, calendar-visualizer, ravrun) to Cloudflare Workers.
+
+**Status**: In Progress

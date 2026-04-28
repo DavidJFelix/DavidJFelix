@@ -69,3 +69,9 @@ mise-based versioning and an ongoing process (skill + cadence) to keep packages 
 Refresh the GitHub profile bio in `README.md`.
 
 **Status**: In Progress
+
+### [PostHog Integration](./projects/posthog-integration/plan.md)
+
+Wire PostHog into every app in the repo for product analytics.
+
+**Status**: In Progress

@@ -57,3 +57,9 @@ Migrate shell from omz to fish, add nushell/jj/starship config, sync local state
 Wire Sentry into every app in the repo for crash and error monitoring.
 
 **Status**: In Progress
+
+### [Dependency Freshness](./projects/dependency-freshness/plan.md)
+
+mise-based versioning and an ongoing process (skill + cadence) to keep packages across the monorepo current.
+
+**Status**: In Progress

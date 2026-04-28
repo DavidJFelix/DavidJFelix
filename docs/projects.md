@@ -45,3 +45,9 @@ Move all Vercel-hosted apps (djf.io, calendar-visualizer, ravrun) to Cloudflare 
 Stand up sites for 8 owned domains across Astro, TanStack Start, Vue, and SvelteKit.
 
 **Status**: In Progress
+
+### [Dotfiles Overhaul](./projects/dotfiles-overhaul/plan.md)
+
+Migrate shell from omz to fish, add nushell/jj/starship config, sync local state back into repo, audit packages.
+
+**Status**: In Progress

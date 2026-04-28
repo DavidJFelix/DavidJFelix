@@ -27,3 +27,9 @@ Adding contribution guidelines, changelog structure, and PR template. Primary au
 Human-directed polish of djf.io: colors, spacing, layout, images, usability, components.
 
 **Status**: In Progress
+
+### [djf.io Testing](./projects/djf-io-testing/plan.md)
+
+Vitest + Playwright coverage for djf.io with CI gating.
+
+**Status**: In Progress

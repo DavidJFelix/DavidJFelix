@@ -63,3 +63,9 @@ Wire Sentry into every app in the repo for crash and error monitoring.
 mise-based versioning and an ongoing process (skill + cadence) to keep packages across the monorepo current.
 
 **Status**: In Progress
+
+### [Profile Bio Refresh](./projects/profile-bio-refresh/plan.md)
+
+Refresh the GitHub profile bio in `README.md`.
+
+**Status**: In Progress

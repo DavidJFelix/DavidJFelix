@@ -51,3 +51,9 @@ Stand up sites for 8 owned domains across Astro, TanStack Start, Vue, and Svelte
 Migrate shell from omz to fish, add nushell/jj/starship config, sync local state back into repo, audit packages.
 
 **Status**: In Progress
+
+### [Sentry Integration](./projects/sentry-integration/plan.md)
+
+Wire Sentry into every app in the repo for crash and error monitoring.
+
+**Status**: In Progress

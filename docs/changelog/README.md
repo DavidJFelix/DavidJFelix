@@ -33,4 +33,5 @@ Published packages may maintain their own `CHANGELOG.md` at `apps/<name>/CHANGEL
 
 ## Files
 
+- [2026-04.md](./2026-04.md)
 - [2026-02.md](./2026-02.md)

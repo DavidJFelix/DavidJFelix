@@ -18,5 +18,13 @@
   "rules": {
     "react/exhaustive-deps": "warn",
     "react/rules-of-hooks": "error"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["**/*.d.ts"],
+      "rules": {
+        "typescript/triple-slash-reference": "off"
+      }
+    }
+  ]
 }

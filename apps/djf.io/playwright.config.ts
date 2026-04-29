@@ -4,7 +4,8 @@ const PORT = 4321
 const BASE_URL = `http://127.0.0.1:${PORT}`
 
 export default defineConfig({
-  testDir: './tests/e2e',
+  testDir: './src',
+  testMatch: '**/*.e2e.test.ts',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

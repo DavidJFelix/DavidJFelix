@@ -22,16 +22,26 @@ Set up automated testing for djf.io with CI gating.
 Configured via `apps/djf.io/playwright.config.ts`:
 
 - Single Chromium project, `webServer` runs `astro preview` on `127.0.0.1:4321`
+- `testMatch: '**/*.e2e.test.ts'`, `testDir: './src'` — tests are co-located next to the source they exercise
 - HTML + GitHub reporters in CI; `list` locally
 - `retries: 2` and `workers: 1` in CI for stability
 
-Smoke coverage in `apps/djf.io/tests/e2e/`:
+Co-located smoke coverage:
 
-- `home.spec.ts` — landing renders, blog link navigates
-- `blog.spec.ts` — index ordering, MDX post rendering, tags index, tag filter
-- `rss.spec.ts` — RSS feed responds with valid XML and post entries
+- `src/pages/_index.e2e.test.ts` — landing renders, blog link navigates
+- `src/pages/blog/_index.e2e.test.ts` — index ordering
+- `src/pages/blog/_[...slug].e2e.test.ts` — MDX post body + headings
+- `src/pages/blog/tags/_index.e2e.test.ts` — tags index
+- `src/pages/blog/tags/_[tag].e2e.test.ts` — tag filter
+- `src/pages/_rss.xml.e2e.test.ts` — RSS feed XML
 
 Scripts: `pnpm test`, `pnpm test:e2e`, `pnpm test:e2e:ui`.
+
+#### Naming convention
+
+- Unit tests: `xxx.test.ts` next to `xxx.ts`
+- E2E tests: `xxx.e2e.test.ts` next to `xxx.astro` / `xxx.ts`
+- Files in `src/pages/` carry a leading `_` (e.g. `_index.e2e.test.ts`) — Astro's filesystem router treats every `.ts` in `src/pages/` as an endpoint, and the underscore prefix is its built-in escape hatch (Astro skips any file whose name starts with `_`). Outside `src/pages/`, no prefix is needed.
 
 ### Vitest (deferred)
 

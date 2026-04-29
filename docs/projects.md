@@ -75,3 +75,15 @@ Refresh the GitHub profile bio in `README.md`.
 Wire PostHog into every app in the repo for product analytics.
 
 **Status**: In Progress
+
+### [ghalint & pinact](./projects/ghalint-pinact/plan.md)
+
+Adopt ghalint and pinact to lint GitHub Actions workflows and pin action references to immutable commit SHAs.
+
+**Status**: In Progress
+
+### [Linter & Formatter Standardization](./projects/linter-formatter-standardization/plan.md)
+
+Converge on a single, consistent set of linters and formatters across the entire monorepo with clear tool-to-file-type ownership.
+
+**Status**: In Progress

@@ -13,7 +13,7 @@ Set up automated testing for djf.io with CI gating.
 ## Status
 
 - [x] Phase 1: Playwright + CI gating (lint, build, E2E)
-- [ ] Phase 2: Vitest — deferred until shared/library logic exists worth unit-testing
+- [x] Phase 2: Vitest unit tests (content schema + components via `experimental_AstroContainer`)
 
 ## Working Notes
 
@@ -43,18 +43,27 @@ Scripts: `pnpm test`, `pnpm test:e2e`, `pnpm test:e2e:ui`.
 - E2E tests: `xxx.e2e.test.ts` next to `xxx.astro` / `xxx.ts`
 - Files in `src/pages/` carry a leading `_` (e.g. `_index.e2e.test.ts`) — Astro's filesystem router treats every `.ts` in `src/pages/` as an endpoint, and the underscore prefix is its built-in escape hatch (Astro skips any file whose name starts with `_`). Outside `src/pages/`, no prefix is needed.
 
-### Vitest (deferred)
+### Vitest
 
-The current djf.io codebase is mostly Astro components and content; there's no shared util/lib code where Vitest would add value today. Adding it would mean either testing trivial helpers we don't have, or fabricating helpers solely to test. Revisit when:
+Configured via `apps/djf.io/vitest.config.ts` using Astro's `getViteConfig` so tests can import `astro:content`, `astro:assets`, and `.astro` components directly.
 
-- A util/lib module appears (date helpers, content transforms, etc.)
-- Or React component logic becomes non-trivial enough to test in isolation
+- `include: ['src/**/*.test.ts']`, `exclude: ['**/*.e2e.test.ts']` so Vitest and Playwright don't fight over files
+- Component tests use `experimental_AstroContainer` from `astro/container` — renders `.astro` components to HTML strings without a browser
+
+Coverage:
+
+- `src/content/config.test.ts` — content collection schema: required fields, date coercion, optional `tags`/`aiAssistants` shape
+- `src/layouts/BaseLayout.test.ts` — title/description meta, default description fallback, nav links, slot, year in footer
+- `src/layouts/BlogPost.test.ts` — H1 title, formatted date, optional author/readingTime, tag links, slot, prop pass-through to `BaseLayout`
+
+Scripts: `pnpm test:unit`, `pnpm test:unit:watch`. `pnpm test` now runs unit then e2e.
 
 ### CI
 
 `.github/workflows/djf-io-ci.yml` — path-filtered to `apps/djf.io/**` and shared config.
 
 - `lint-and-build` job: mise install, `pnpm lint`, `pnpm build`
+- `unit` job: mise install, `pnpm test:unit`
 - `e2e` job: mise install, Playwright browsers (cached by version), build, `pnpm test:e2e`, upload `playwright-report/` artifact
 
 ## Related

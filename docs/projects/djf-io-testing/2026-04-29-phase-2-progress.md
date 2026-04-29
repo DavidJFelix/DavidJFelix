@@ -41,6 +41,9 @@
 - **Container API for component tests**: faster than spinning a browser, and the layout/blog-post components are pure-rendered (no client JS). E2E still owns full-page integration; unit tests own component contracts.
 - **Schema test pattern**: invoke `collections.blog.schema({image: () => z.any()})` to materialize the zod schema for assertions, instead of refactoring the schema out of `config.ts` for testability.
 - **Disjoint test suffixes**: `.test.ts` for unit, `.e2e.test.ts` for e2e, with explicit Vitest `exclude` of `.e2e.test.ts` so the two runners don't collide.
+- **Flat test files, no `describe`** (per [Avoid Nesting When You're Testing](https://kentcdodds.com/blog/avoid-nesting-when-youre-testing)): every `test(...)` is top-level, with the component or subject in the test name (`'BlogPost renders post title as H1'`) instead of as a `describe` group. Recorded in `CLAUDE.md` so it sticks across sessions.
+- **No `before*`/`after*` hooks**: container instances are created with top-level `await`, and per-test fixtures use a small named factory called inline. Hooks hide control flow.
+- **Local-time fixture dates**: `new Date(2025, 11, 7)` instead of `new Date('2025-12-07')`. The string form parses as UTC midnight and `toLocaleDateString` then renders in the local zone, which silently fails for any developer west of UTC. Verified with `TZ=America/Los_Angeles pnpm test:unit`.
 
 ## Notes for future tests
 

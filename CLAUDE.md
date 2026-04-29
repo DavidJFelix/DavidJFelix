@@ -60,6 +60,13 @@ Each progress file should contain:
 - **Formatting**: Biome
 - **Spell Check**: cspell with shared config at `.config/cspell.json`
 
+## Testing Conventions
+
+- **Co-locate tests** with the file under test. Unit: `xxx.test.ts` next to `xxx.ts`. E2E: `xxx.e2e.test.ts` next to the source.
+- **No `describe` blocks**. Flatten tests to top-level — see https://kentcdodds.com/blog/avoid-nesting-when-youre-testing. The user actively dislikes nested tests; do not add `describe` even for "grouping". If a test needs context, put it in the test name.
+- **Avoid `beforeEach`/`beforeAll`/`afterEach`/`afterAll`** unless a framework requires it. Prefer top-level setup (top-level `await` for async), inline setup inside each test, or a small named helper called from each test. Hooks hide control flow and make tests harder to read.
+- **For tests inside `src/pages/` (Astro routing constraint)**: prefix with `_` (e.g. `_index.e2e.test.ts`). Astro treats every `.ts` in `src/pages/` as an endpoint; the underscore is its built-in escape hatch. Outside `src/pages/`, no prefix.
+
 ## Apps
 
 ### djf.io (Personal Site)

@@ -8,7 +8,7 @@ Stand up sites for owned Cloudflare domains. Placeholders are acceptable for mos
 
 | Domain | Stack | Notes |
 |---|---|---|
-| davidjfelix.com | Astro | Index / resume site |
+| davidjfelix.com | Astro | Index / resume site — scaffolded, deploy workflow ready |
 | monicandavid.com | Astro | Basic site |
 | forzamonica.com | TanStack Start | Eventual shop; placeholder for now |
 | onvibes.org | Astro | |

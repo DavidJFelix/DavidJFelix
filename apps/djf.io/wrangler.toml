@@ -1,0 +1,6 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "djf-io"
+compatibility_date = "2026-04-29"
+
+[assets]
+directory = "./dist"

@@ -87,3 +87,33 @@ Adopt ghalint and pinact to lint GitHub Actions workflows and pin action referen
 Converge on a single, consistent set of linters and formatters across the entire monorepo with clear tool-to-file-type ownership.
 
 **Status**: In Progress
+
+### [Setup Hermes](./projects/setup-hermes/plan.md)
+
+Set up Hermes.
+
+**Status**: In Progress
+
+### [Setup OpenClaw](./projects/setup-openclaw/plan.md)
+
+Set up OpenClaw.
+
+**Status**: In Progress
+
+### [Upgrade Astro Versions](./projects/upgrade-astro-versions/plan.md)
+
+Upgrade djf.io from Astro 5 to Astro 6.
+
+**Status**: In Progress
+
+### [Setup Warp](./projects/setup-warp/plan.md)
+
+Install the Warp CLI and explore using it.
+
+**Status**: In Progress
+
+### [Update Warp Config](./projects/update-warp-config/plan.md)
+
+Pull configuration items from dotfiles into Warp and sync Warp-native config back into the repo.
+
+**Status**: In Progress

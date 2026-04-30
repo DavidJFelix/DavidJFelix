@@ -14,9 +14,9 @@ Migrate all Vercel-hosted projects to Cloudflare Pages, deploying via GitHub Act
 
 | App | Type | Status |
 |-----|------|--------|
-| `apps/ravrun` | Static SPA (Vite + React) | In progress |
-| `apps/calendar-visualizer` | TBD | Not started |
-| `apps/djf.io` | Astro SSR/SSG | Not started |
+| `apps/ravrun` | Static SPA (Vite + React) | Done (pending secrets + domain) |
+| `apps/calendar-visualizer` | Static (Astro + React) | Done (pending secrets + domain) |
+| `apps/djf.io` | Static (Astro + MDX + React) | Done (pending secrets + domain) |
 
 ## Migration Playbook (per app)
 

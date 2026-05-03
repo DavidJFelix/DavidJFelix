@@ -32,6 +32,16 @@ docs/
 3. Create initial progress file: `YYYY-MM-DD-progress.md`
 4. Add entry to `docs/projects.md` with link to plan
 
+### Closing a Project
+
+Project directories are working notes, not history. When a project is complete:
+
+1. Ensure the work is captured in `docs/changelog/`
+2. Delete the entire `docs/projects/<project-name>/` directory
+3. Remove the entry from `docs/projects.md`
+
+The changelog is the durable record. `docs/projects.md` should reflect only active work.
+
 ### Progress File Format
 
 Each progress file should contain:

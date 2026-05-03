@@ -21,7 +21,7 @@ type(scope): description
 
 ### Changelog
 
-Add an entry to the current month's file in `docs/changelog/`. See [docs/changelog/README.md](docs/changelog/README.md) for format details.
+Add an entry to the current month's file in `docs/changelog/`. Create the monthly file if it does not exist yet. Months with no changes are skipped entirely -- do not create empty files. See [docs/changelog/README.md](docs/changelog/README.md) for format details.
 
 ## Code conventions
 

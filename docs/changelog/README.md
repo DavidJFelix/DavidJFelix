@@ -6,6 +6,8 @@ Change history for the monorepo, organized as monthly files in reverse chronolog
 
 Each file is named `YYYY-MM.md` and contains entries grouped by date. Entries use [conventional commit](https://www.conventionalcommits.org/) categories.
 
+Months with no changes are skipped -- do not create an empty file. Gaps in the file list are expected and intentional.
+
 ```markdown
 ## YYYY-MM-DD
 
@@ -33,5 +35,6 @@ Published packages may maintain their own `CHANGELOG.md` at `apps/<name>/CHANGEL
 
 ## Files
 
+- [2026-05.md](./2026-05.md)
 - [2026-04.md](./2026-04.md)
 - [2026-02.md](./2026-02.md)

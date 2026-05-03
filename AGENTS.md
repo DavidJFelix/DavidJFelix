@@ -30,6 +30,8 @@ Personal monorepo containing web applications, exercises, and configuration. No 
 - [docs/changelog/](docs/changelog/) -- monthly change history
 - [docs/projects.md](docs/projects.md) -- active project index
 
-## Per-app agent docs
+## Sub-folder agent docs
+
+Folders may define their own `AGENTS.md` when they need additional context or instructions beyond what this top-level file provides. They are optional -- add one only when a folder has guidance worth documenting.
 
 - [apps/calendar-visualizer/AGENTS.md](apps/calendar-visualizer/AGENTS.md)

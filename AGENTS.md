@@ -22,6 +22,7 @@ Personal monorepo containing web applications, exercises, and configuration. No 
 - **Naming:** Lowercase kebab-case for all directories and documentation files
 - **No emojis** in code, commits, or documentation
 - **Tooling:** Biome (JS/TS/CSS/JSON), Oxlint, Prettier (MD/MDX only), cspell
+- **Project docs are ephemeral:** `docs/projects/<name>/` holds working notes for in-flight work. When a project completes, capture it in `docs/changelog/` and delete the directory. The changelog is the durable record.
 
 ## References
 
@@ -30,6 +31,8 @@ Personal monorepo containing web applications, exercises, and configuration. No 
 - [docs/changelog/](docs/changelog/) -- monthly change history
 - [docs/projects.md](docs/projects.md) -- active project index
 
-## Per-app agent docs
+## Sub-folder agent docs
+
+Folders may define their own `AGENTS.md` when they need additional context or instructions beyond what this top-level file provides. They are optional -- add one only when a folder has guidance worth documenting.
 
 - [apps/calendar-visualizer/AGENTS.md](apps/calendar-visualizer/AGENTS.md)

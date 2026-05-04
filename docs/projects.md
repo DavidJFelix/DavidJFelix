@@ -4,39 +4,21 @@ Ongoing projects and their documentation.
 
 ## Active Projects
 
-### [Blog Migration](./projects/blog-migration/plan.md)
-
-Migrating djf.io from Starlight to a custom Astro + MDX + PandaCSS setup for greater control over layout and styling.
-
-**Status**: In Progress (core migration complete, tag pages/search/testing/polish remaining)
-
-### [Dev Tooling Consolidation](./projects/dev-tooling-consolidation/plan.md)
-
-Consolidating dev tooling to root-level mise config. Upgrading Biome (2.0 -> 2.4), Oxlint (0.16 -> 1.x), adding Prettier for Markdown/MDX.
-
-**Status**: In Progress
-
-### [Contribution Docs](./projects/contribution-docs/plan.md)
-
-Adding contribution guidelines, changelog structure, and PR template. Primary audience is AI agents.
-
-**Status**: In Progress
-
 ### [Blog Style Improvement](./projects/blog-style-improvement/plan.md)
 
 Human-directed polish of djf.io: colors, spacing, layout, images, usability, components.
 
 **Status**: In Progress
 
-### [djf.io Testing](./projects/djf-io-testing/plan.md)
+### [djf.io Search](./projects/djf-io-search/plan.md)
 
-Vitest + Playwright coverage for djf.io with CI gating.
+Add Pagefind static search to djf.io with a PandaCSS-styled UI and Cmd/Ctrl+K shortcut.
 
 **Status**: In Progress
 
-### [Cloudflare Migration](./projects/cloudflare-migration/plan.md)
+### [djf.io SEO & Polish](./projects/djf-io-seo/plan.md)
 
-Move all Vercel-hosted apps (djf.io, calendar-visualizer, ravrun) to Cloudflare Workers.
+SEO meta, Open Graph images, sitemap, JSON-LD, Lighthouse >90 for djf.io.
 
 **Status**: In Progress
 

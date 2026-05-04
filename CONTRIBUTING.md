@@ -21,7 +21,7 @@ type(scope): description
 
 ### Changelog
 
-Add an entry to the current month's file in `docs/changelog/`. See [docs/changelog/README.md](docs/changelog/README.md) for format details.
+Add an entry to the current month's file in `docs/changelog/`. Create the monthly file if it does not exist yet. Months with no changes are skipped entirely -- do not create empty files. See [docs/changelog/README.md](docs/changelog/README.md) for format details.
 
 ## Code conventions
 
@@ -29,6 +29,18 @@ Add an entry to the current month's file in `docs/changelog/`. See [docs/changel
 - Follow existing patterns in the codebase
 - Use tooling defined in `.config/mise.toml` (Biome, Oxlint, Prettier)
 - See per-app `package.json` scripts for lint/format/spell commands
+
+## Project lifecycle
+
+Project directories under `docs/projects/<name>/` are working notes -- plan, progress, open questions. They exist to coordinate work in flight, not to serve as history.
+
+When a project is complete:
+
+1. Ensure the work is captured in `docs/changelog/`
+2. Delete the entire `docs/projects/<name>/` directory
+3. Remove the entry from `docs/projects.md`
+
+The changelog is the durable record. Do not retain finished project directories with a "Complete" status -- `docs/projects.md` should reflect only active work.
 
 ## Documentation conventions
 

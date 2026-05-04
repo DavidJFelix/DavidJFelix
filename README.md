@@ -38,11 +38,14 @@ Onion-style middleware framework for Node on AWS Lambda. Minimal core, extensibl
 **[MG4.tv](http://mg4.tv) / iotv**
 Live-streaming utilities aimed at richer interactions around video content.
 
-## Earlier Roles & Community
+**Atumsoft** — Advisor / Mentor
 
-- Advisor / Mentor — Atumsoft
-- Local Event Host / Sponsor — AngelHack Cincinnati 2015, 2016
-- Founding Engineer / DevOps — Instameals
-- First Contract Engineer / Engineering Advisor — MyI, LLC
-- Contract Software Engineer / Technical Writer — E-Gov Link, EC-Link
-- First Employee, DevOps — Swarmfarm, LLC
+**AngelHack Cincinnati 2015, 2016** — Local Event Host / Sponsor
+
+**Instameals** — Founding Engineer / DevOps
+
+**MyI, LLC** — First Contract Engineer / Engineering Advisor
+
+**E-Gov Link, EC-Link** — Contract Software Engineer / Technical Writer
+
+**Swarmfarm, LLC** — First Employee, DevOps

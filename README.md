@@ -13,11 +13,8 @@ I graduated from the University of Dayton College of Engineering with a B.S. in 
 **Brain-CA Technologies** · 20XX–present
 Seed-stage AI hardware company building power-efficient inference chips and learning algorithms. I work across AI research, MLOps, hardware engineering, and team management.
 
-**ServiceNow Cloud Observability (Lightstep)** · 20XX–20XX
-Joined via the Era Software acquisition. Worked on observability and application log management.
-
-**Era Software** · 20XX–20XX
-Series A. Full-stack engineer. Acquired by ServiceNow.
+**Era Software → ServiceNow Cloud Observability (Lightstep)** · 20XX–20XX
+Joined Era Software (Series A) as a full-stack engineer; continued through the ServiceNow acquisition, working on observability and application log management.
 
 **VNDLY** · 20XX–20XX
 Series B. Full-stack engineer. Acquired by Workday.

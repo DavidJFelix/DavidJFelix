@@ -21,7 +21,7 @@ Series B. Full-stack engineer. Acquired by Workday.
 
 ## Founded
 
-**NullServe** · 20XX–present
+**NullServe** · 2019–present
 Company built around leveraging SaaS and serverless platforms as a hosting and scalable execution engine. Delivered custom serverless video pipelines and a web app hosting setup. Still active in a limited capacity.
 
 **Pepperonio** · 2014–2015 (closed)

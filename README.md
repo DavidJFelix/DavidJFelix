@@ -32,7 +32,7 @@ Co-founded. "Ice cream truck for pizza" — an app that sold hot-and-ready pizza
 **Serverless Compose**
 Onion-style middleware framework for Node on AWS Lambda. Minimal core, extensible by composition.
 
-**[MG4.tv](http://mg4.tv) / iotv**
+**MG4.tv / iotv**
 Live-streaming utilities aimed at richer interactions around video content.
 
 **Atumsoft** — Advisor / Mentor

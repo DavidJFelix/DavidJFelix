@@ -46,12 +46,6 @@ mise-based versioning and an ongoing process (skill + cadence) to keep packages 
 
 **Status**: In Progress
 
-### [Profile Bio Refresh](./projects/profile-bio-refresh/plan.md)
-
-Refresh the GitHub profile bio in `README.md`.
-
-**Status**: In Progress
-
 ### [PostHog Integration](./projects/posthog-integration/plan.md)
 
 Wire PostHog into every app in the repo for product analytics.

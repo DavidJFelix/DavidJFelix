@@ -4,28 +4,45 @@ I've been a part of a number of small companies and startups at all stages of th
 
 ## Bio
 
-I am a full-stack software engineer passionate about Serverless, DevOps, and Cloud-first technology.
-I graduated from the University of Dayton College of Engineering with a Bachelor of Science degree in computer engineering.
-I've founded/co-founded a few tech startups and enjoy building new ideas and trying to make them work.
+I deeply enjoy startups. I'm currently at Brain-CA Technologies (seed stage); before that, Era Software (Series A, acquired by ServiceNow and folded into Lightstep) and earlier, VNDLY (Series B, acquired by Workday). I've also founded a couple of my own — NullServe and Pepperonio (AngelHack Cincinnati 2014 winner).
 
-- NullServe
-- Pepperonio (closed)
-- MG4.tv / iotv (closed)
+I graduated from the University of Dayton College of Engineering with a B.S. in Computer Engineering. My interests sit around serverless, DevOps, and cloud-first infrastructure.
 
-I've worked with many startups in the following roles:
+## Companies
 
-- Series A Full Stack Engineer - Era Software (Exited acq. by ServiceNow)
-- Series B Full Stack Engineer - VNDLY, Inc (Exited acq. by Workday)
-- Founder - NullServe
-- Advisor/Mentor - Atumsoft
-- Local Event Host/Sponsor - Angelhack Cincinnati 2015, 2016
-- Founding Engineer/DevOps - Instameals
-- Co-Founding Engineer - Pepperonio
-- Hackathon Winner - Angelhack Cincinnati 2014 (Pepperonio)
-- Founder - MG4.tv / iotv
-- First Contract Engineer / Engineering Advisor - MyI, LLC
-- Contract Software Engineer / Technical Writer - E-Gov Link, EC-Link
-- First Employee DevOps - Swarmfarm, LLC
+**Brain-CA Technologies** · 2024–present
+Seed-stage AI hardware company building power-efficient inference chips and learning algorithms. I work across AI research, MLOps, hardware engineering, and team management.
 
+**Era Software → ServiceNow Cloud Observability (Lightstep)** · 2022–2024
+Joined Era Software (Series A) as a full-stack engineer; continued through the ServiceNow acquisition, working on observability and application log management.
 
-I'm currently working at @lightstep ServiceNow Cloud Observability and working on observability and applicaiton log management.
+**VNDLY** · 2020–2022
+Series B. Full-stack engineer. Acquired by Workday.
+
+## Founded
+
+**NullServe** · 2019–present
+Company built around leveraging SaaS and serverless platforms as a hosting and scalable execution engine. Delivered custom serverless video pipelines and a web app hosting setup. Still active in a limited capacity.
+
+**Pepperonio** · 2014–2015 (closed)
+Co-founded. "Ice cream truck for pizza" — an app that sold hot-and-ready pizzas in real time from trucks routed to high-demand locations. AngelHack Cincinnati 2014 winner.
+
+## Projects
+
+**Serverless Compose**
+Onion-style middleware framework for Node on AWS Lambda. Minimal core, extensible by composition.
+
+**[MG4.tv](http://mg4.tv) / iotv**
+Live-streaming utilities aimed at richer interactions around video content.
+
+**Atumsoft** — Advisor / Mentor
+
+**AngelHack Cincinnati 2015, 2016** — Local Event Host / Sponsor
+
+**Instameals** — Founding Engineer / DevOps
+
+**MyI, LLC** — First Contract Engineer / Engineering Advisor
+
+**E-Gov Link, EC-Link** — Contract Software Engineer / Technical Writer
+
+**Swarmfarm, LLC** — First Employee, DevOps

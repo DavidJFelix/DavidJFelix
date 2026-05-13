@@ -32,6 +32,12 @@ jobs:
           install: true
           cache: true
 
+      - name: Verify mise.lock matches mise.toml
+        # mise install during the previous step updates .config/mise.lock if
+        # mise.toml has gained or bumped a tool. A non-empty diff here means
+        # whoever changed mise.toml forgot to commit the lockfile update.
+        run: git diff --exit-code .config/mise.lock
+
       - name: actionlint
         run: actionlint
 

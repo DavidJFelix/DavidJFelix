@@ -28,10 +28,12 @@ Applies to all JS/TS-based apps (Astro, React, Vue, Svelte, TanStack Start, plai
 
 Open to revisiting Biome later, but it's currently the right tool.
 
-### Rust ecosystem (aspirational — no Rust in repo today)
+### Rust ecosystem
 
-- **Lint**: `clippy` with an extensive ruleset, shared across projects
-- **Format**: `rustfmt` with a shared config
+In repo today: workspace at root (`Cargo.toml`), members under `Advent-of-Code/2022/rust/*`, plus standalone crates under `Exercism/rust/*`.
+
+- **Lint**: `clippy` with an extensive ruleset, shared across projects (root `clippy.toml` + workspace-level lint config in root `Cargo.toml`)
+- **Format**: `rustfmt` with a shared `rustfmt.toml`
 
 ### Go ecosystem (aspirational — no Go in repo today)
 

@@ -1,44 +1,46 @@
-name: djf.io deploy
+name: CD Deploy davidjfelix.com
 
 on:
   push:
     branches: [main]
     paths:
-      - 'apps/djf.io/**'
-      - '.github/workflows/djf-io-deploy.yml'
+      - 'apps/davidjfelix.com/**'
+      - '.github/workflows/cd_deploy_davidjfelix_com.yml'
 
 defaults:
   run:
-    working-directory: apps/djf.io
+    working-directory: apps/davidjfelix.com
 
 jobs:
   deploy:
-    name: Deploy to Cloudflare Workers
+    name: wrangler deploy
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: read
       deployments: write
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           persist-credentials: false
 
-      - uses: jdx/mise-action@c37c93293d6b742fc901e1406b8f764f6fb19dac # v2.4.4
+      - name: mise
+        uses: jdx/mise-action@c37c93293d6b742fc901e1406b8f764f6fb19dac # v2.4.4
         with:
           install: true
           cache: false
 
-      - name: Install dependencies
+      - name: pnpm install
         run: pnpm install --frozen-lockfile
 
-      - name: Build
-        run: pnpm build
+      - name: astro build
+        run: pnpm exec astro build
 
-      - name: Deploy to Cloudflare Workers
+      - name: wrangler deploy
         uses: cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd # v3.15.0
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
-          workingDirectory: apps/djf.io
+          workingDirectory: apps/davidjfelix.com

@@ -4,7 +4,7 @@ Conventions for workflows in `.github/workflows/`.
 
 ## Workflow categories
 
-Every workflow falls into exactly one of these four buckets. The bucket determines the file prefix and how the workflow is triggered.
+Every workflow falls into exactly one of these buckets. The bucket determines the file prefix and how the workflow is triggered.
 
 | Category | Prefix | Triggers |
 | --- | --- | --- |
@@ -12,13 +12,16 @@ Every workflow falls into exactly one of these four buckets. The bucket determin
 | **CD** -- Continuous Delivery | `cd_` | `push` to `main` (after CI), release tags |
 | **Run** -- Manual operations | `run_` | `workflow_dispatch` only |
 | **Cron** -- Scheduled jobs | `cron_` | `schedule` only |
+| **Bot** -- Event-driven third-party integrations | `bot_` | `issue_comment`, `pull_request_review_comment`, `issues`, etc. -- typically responding to a mention or webhook |
 
 If a workflow legitimately spans two categories, combine the prefixes in alphabetical order, space-separated in the display name and underscore-separated in the file name:
 
 - A scheduled deployment is `CD CRON` (display name) / `cd_cron_*.yml` (file).
 - A manually-triggered CI rerun is `CI RUN` / `ci_run_*.yml`.
 
-Do not invent new categories. If a workflow does not fit, it is probably two workflows.
+Do not invent new categories beyond these. If a workflow does not fit, it is probably two workflows.
+
+`Bot` is reserved for integrations whose trigger is a human (or other bot) reacting to repo activity -- comment mentions, label additions, webhook callbacks. A `Bot` workflow does not gate merges and is not on the deploy path. A workflow that automatically runs a quality check on every PR is `CI`, not `Bot`, even if a bot posts the result.
 
 ## File naming
 
@@ -29,13 +32,14 @@ Do not invent new categories. If a workflow does not fit, it is probably two wor
 Good:
 
 ```
-ci_lint.yml
+ci_actions_lint.yml
 ci_djf_io.yml
 cd_deploy_djf_io.yml
 cd_deploy_calendar_visualizer.yml
 run_rotate_secrets.yml
 cron_check_dependency_freshness.yml
 cd_cron_publish_weekly_digest.yml
+bot_claude.yml
 ```
 
 Bad:
@@ -48,6 +52,49 @@ ci.djf-io.yml          # dots, hyphens
 ```
 
 The workflow's `name:` field should match the file: same words, title-cased, with the category in caps. `cd_deploy_djf_io.yml` -> `name: CD Deploy djf.io`.
+
+## Step naming: name each step after the tool it runs
+
+Every step's `name:` should be the CLI tool (or action) that step invokes -- not a paraphrase of what it does. Reading the workflow log should immediately tell you which tool ran. The exception is steps that have no single underlying tool (e.g. a shell script doing repo-specific orchestration); name those after what they produce.
+
+Good:
+
+```yaml
+- name: pnpm install
+  run: pnpm install --frozen-lockfile
+
+- name: biome
+  run: pnpm exec biome check .
+
+- name: oxlint
+  run: pnpm exec oxlint
+
+- name: vitest
+  run: pnpm exec vitest run
+
+- name: playwright
+  run: pnpm exec playwright test
+
+- name: wrangler deploy
+  uses: cloudflare/wrangler-action@...
+```
+
+Bad:
+
+```yaml
+- name: Lint                  # which linter?
+  run: pnpm lint
+
+- name: Run tests             # vitest? playwright? both?
+  run: pnpm test
+
+- name: Deploy                # using what?
+  uses: cloudflare/wrangler-action@...
+```
+
+If a single `pnpm` script wraps multiple tools (e.g. `"lint": "biome check . && oxlint"`), split it into separate steps -- one per tool -- so each has its own name and its own log entry. The example workflow `ci_actions_lint.yml` runs four tools, so it has four steps: `actionlint`, `ghalint`, `zizmor`, `pinact`.
+
+For `uses:` steps, name the action by its tool (`wrangler deploy`, `actions/checkout` -> `checkout`, `actions/cache` -> `cache`, `actions/upload-artifact` -> `upload-artifact`).
 
 ## Path filters: only run when the relevant subtree changes
 
@@ -138,9 +185,10 @@ jobs:
 
 ## Checklist for a new workflow
 
-- [ ] File is lowercase with the correct category prefix (`ci_`, `cd_`, `run_`, `cron_`, or alphabetical combo).
+- [ ] File is lowercase with the correct category prefix (`ci_`, `cd_`, `run_`, `cron_`, `bot_`, or alphabetical combo).
 - [ ] `name:` field matches the file.
 - [ ] `paths:` filter covers the subtree, relevant shared config, and the workflow file itself (CI/CD only).
+- [ ] Every step is named after the tool it runs.
 - [ ] Independent work runs in parallel jobs; matrices are used where they apply.
 - [ ] `needs:` only links jobs with a real dependency.
 - [ ] `timeout-minutes` set on every job.

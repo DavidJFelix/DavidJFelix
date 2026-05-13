@@ -52,9 +52,9 @@ Wire PostHog into every app in the repo for product analytics.
 
 **Status**: In Progress
 
-### [ghalint & pinact](./projects/ghalint-pinact/plan.md)
+### [GitHub Actions Hygiene](./projects/ghalint-pinact/plan.md)
 
-Adopt ghalint and pinact to lint GitHub Actions workflows and pin action references to immutable commit SHAs.
+Adopt actionlint, ghalint, zizmor, and pinact to lint, audit, and pin GitHub Actions workflows across the repo.
 
 **Status**: In Progress
 

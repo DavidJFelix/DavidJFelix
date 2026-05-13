@@ -1,0 +1,11 @@
+# zizmor suppressions.
+#
+# anthropics/claude-code-action runs `git fetch` during setup before
+# configuring its own auth, so the checkout step must keep
+# persist-credentials enabled. Tracked upstream at
+# anthropics/claude-code-action#1236.
+rules:
+  artipacked:
+    ignore:
+      - claude.yml
+      - claude-code-review.yml

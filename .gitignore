@@ -1,1 +1,5 @@
+# Claude likes to create worktrees when using code locally
+.claude/worktrees
+
 /target
+.DS_Store

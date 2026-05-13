@@ -36,7 +36,11 @@ jobs:
         # mise install during the previous step updates .config/mise.lock if
         # mise.toml has gained or bumped a tool. A non-empty diff here means
         # whoever changed mise.toml forgot to commit the lockfile update.
-        run: git diff --exit-code .config/mise.lock
+        run: |
+          if ! git diff --exit-code .config/mise.lock; then
+            echo "::error file=.config/mise.lock::.config/mise.lock is out of date. Run 'mise install' locally (with GITHUB_TOKEN set, or 'gh auth login' first) and commit the updated lockfile. See CONTRIBUTING.md for details."
+            exit 1
+          fi
 
       - name: actionlint
         run: actionlint

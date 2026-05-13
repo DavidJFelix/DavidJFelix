@@ -1,4 +1,4 @@
-name: Claude Code Review
+name: Bot Claude Code Review
 
 on:
   pull_request:
@@ -27,7 +27,7 @@ jobs:
       id-token: write
 
     steps:
-      - name: Checkout repository
+      - name: checkout
         # persist-credentials must stay true: anthropics/claude-code-action runs
         # `git fetch` during setup before configuring its own auth. See
         # anthropics/claude-code-action#1236. ghalint and zizmor are suppressed
@@ -36,7 +36,7 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Run Claude Code Review
+      - name: claude-code-action
         id: claude-review
         uses: anthropics/claude-code-action@f4fb5c6cdccc1ee7af63692f5d08d56efaa64cc8 # v1.0.121
         with:

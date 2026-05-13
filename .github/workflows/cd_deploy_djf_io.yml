@@ -1,44 +1,49 @@
-name: calendar-visualizer deploy
+name: CD Deploy djf.io
 
 on:
   push:
     branches: [main]
     paths:
-      - 'apps/calendar-visualizer/**'
-      - '.github/workflows/calendar-visualizer-deploy.yml'
+      - 'apps/djf.io/**'
+      - '.github/workflows/cd_deploy_djf_io.yml'
 
 defaults:
   run:
-    working-directory: apps/calendar-visualizer
+    working-directory: apps/djf.io
 
 jobs:
   deploy:
-    name: Deploy to Cloudflare Workers
+    name: wrangler deploy
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: read
       deployments: write
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           persist-credentials: false
 
-      - uses: jdx/mise-action@c37c93293d6b742fc901e1406b8f764f6fb19dac # v2.4.4
+      - name: mise
+        uses: jdx/mise-action@c37c93293d6b742fc901e1406b8f764f6fb19dac # v2.4.4
         with:
           install: true
           cache: false
 
-      - name: Install dependencies
+      - name: pnpm install
         run: pnpm install --frozen-lockfile
 
-      - name: Build
-        run: pnpm build
+      - name: panda codegen
+        run: pnpm exec panda codegen
 
-      - name: Deploy to Cloudflare Workers
+      - name: astro build
+        run: pnpm exec astro build
+
+      - name: wrangler deploy
         uses: cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd # v3.15.0
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
-          workingDirectory: apps/calendar-visualizer
+          workingDirectory: apps/djf.io

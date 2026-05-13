@@ -98,12 +98,13 @@ If verification fails on an isolated update, still open the PR but mark it as `d
 
 ### 7. Escalation
 
-Open a follow-up issue (assigned to `@DavidJFelix`) when:
+Default channel is the **`needs-attention` label on the PR**. Open a separate follow-up issue (assigned to `@DavidJFelix`, following the Human Intervention Task format in `CLAUDE.md`) only when:
 
-- A bump cannot be applied automatically (e.g. requires manual code changes the skill is not confident to make).
+- The bump cannot be applied automatically (requires code changes the skill is not confident to make).
 - A package is deprecated upstream and a replacement is needed.
+- The bump is blocked on something outside the repo (a credential, a third-party account decision, etc.).
 
-Follow the Human Intervention Task format in `CLAUDE.md`.
+If the skill can open a draft PR with a clear failure log, prefer the label. Reserve issues for things a PR cannot represent.
 
 ## Discovery details
 

@@ -42,13 +42,13 @@ A Claude skill that:
 
 ### Phase 3: Triggers
 
-- **Cron**: scheduled run (cadence TBD — likely weekly)
-- **Slash command**: `/dependency-freshness` (or similar) for local on-demand runs in Claude Code
+- **Cron**: weekly scheduled run via GitHub Actions, Monday 06:00 UTC (one schedule covers all ecosystems)
+- **Slash command**: `/dependency-freshness` for local on-demand runs in Claude Code
 - Both paths use the same skill
 
-### Phase 4: Cadence and policy
+### Phase 4: Policy
 
-- Define the sweep cadence
+- Cadence: **weekly** across all ecosystems (npm, mise, Cargo)
 - Define an escalation path when a major bump or known-incompatible update lands in a PR
 - Document the policy alongside the skill
 

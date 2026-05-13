@@ -41,7 +41,7 @@ const posts = (await getCollection('blog')).sort(
             })}
           >
             <a
-              href={`/blog/${post.slug}`}
+              href={`/blog/${post.id}`}
               class={css({textDecoration: 'none'})}
             >
               <h2

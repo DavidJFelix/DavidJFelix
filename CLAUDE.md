@@ -51,6 +51,19 @@ Each progress file should contain:
 - Next steps
 - Any blockers or open questions
 
+## Human Intervention Tasks
+
+When a task can't be completed by the agent — it requires David's hands on a local machine, a credential, a third-party account decision, a DNS change, a physical device, etc. — do not bury it in a progress note. Open a GitHub issue and assign it to `@DavidJFelix`.
+
+Each such issue MUST contain:
+
+- **Background** — 1-3 sentences on why this needs a human, and why now.
+- **Steps** — a markdown checklist (`- [ ]`) of concrete actions. One verb per step. Each step independently checkable.
+- **Automation follow-up** — how we avoid doing this manually next time (a tool to install, a script to write, a config to commit, a follow-up issue to file). If it's genuinely one-shot, say so.
+- **Related** — links to the project plan, progress note, PR, or other issue this connects to.
+
+Keep it short. The issue body should fit on one screen. If it doesn't fit, the task is probably two tasks.
+
 ## Related Docs
 
 - [CONTRIBUTING.md](CONTRIBUTING.md) -- PR workflow, changelog process, code conventions

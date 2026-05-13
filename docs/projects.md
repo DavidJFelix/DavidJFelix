@@ -76,12 +76,6 @@ Set up OpenClaw.
 
 **Status**: In Progress
 
-### [Upgrade Astro Versions](./projects/upgrade-astro-versions/plan.md)
-
-Upgrade djf.io from Astro 5 to Astro 6.
-
-**Status**: In Progress
-
 ### [Setup Warp](./projects/setup-warp/plan.md)
 
 Install the Warp CLI and explore using it.

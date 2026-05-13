@@ -10,8 +10,7 @@ const container = await AstroContainer.create()
 // time so assertions are stable across developer machines and CI.
 const fixturePost = (overrides: Partial<CollectionEntry<'blog'>['data']> = {}) =>
   ({
-    id: 'fixture.md',
-    slug: 'fixture',
+    id: 'fixture',
     body: '',
     collection: 'blog' as const,
     data: {

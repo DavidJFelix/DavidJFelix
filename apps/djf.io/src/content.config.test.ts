@@ -1,8 +1,8 @@
-import {z} from 'astro:content'
+import {z} from 'astro/zod'
 import {expect, test} from 'vitest'
-import {collections} from './config'
+import {blogSchema} from './content.config'
 
-const schema = collections.blog.schema({image: () => z.any()})
+const schema = blogSchema({image: () => z.any()} as never)
 
 test('blog schema accepts minimal valid frontmatter', () => {
   const result = schema.safeParse({

@@ -1,0 +1,45 @@
+name: Actions hygiene
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/**'
+      - '.config/mise.toml'
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+      - '.config/mise.toml'
+
+jobs:
+  lint:
+    name: actionlint + ghalint + zizmor + pinact
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+
+      - uses: jdx/mise-action@c37c93293d6b742fc901e1406b8f764f6fb19dac # v2
+        with:
+          install: true
+          cache: true
+
+      - name: actionlint
+        run: actionlint
+
+      - name: ghalint
+        run: ghalint run
+
+      - name: zizmor
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: zizmor .github/workflows/
+
+      - name: pinact verify
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pinact run --check

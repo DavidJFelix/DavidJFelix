@@ -52,12 +52,6 @@ Wire PostHog into every app in the repo for product analytics.
 
 **Status**: In Progress
 
-### [GitHub Actions Hygiene](./projects/ghalint-pinact/plan.md)
-
-Adopt actionlint, ghalint, zizmor, and pinact to lint, audit, and pin GitHub Actions workflows across the repo.
-
-**Status**: In Progress
-
 ### [Linter & Formatter Standardization](./projects/linter-formatter-standardization/plan.md)
 
 Converge on a single, consistent set of linters and formatters across the entire monorepo with clear tool-to-file-type ownership.

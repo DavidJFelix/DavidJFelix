@@ -57,9 +57,21 @@ All project documentation follows the structure defined in [CLAUDE.md](CLAUDE.md
 - Lowercase kebab-case naming for all doc directories and files
 - Progress files named `YYYY-MM-DD-progress.md`
 
+## GitHub Actions
+
+Workflows in `.github/workflows/` follow the conventions in [docs/github-actions-style.md](docs/github-actions-style.md). Key rules:
+
+- File names are lowercase, underscore-separated, and prefixed with the workflow category: `ci_`, `cd_`, `run_` (workflow_dispatch only), or `cron_` (schedule only). Combined categories use alphabetical order (`cd_cron_*.yml`, display name `CD CRON`).
+- Every CI/CD workflow has a `paths:` filter covering its subtree, the shared config it depends on, and the workflow file itself.
+- When you add a new subtree, update the relevant workflows' `paths:` filters (or add new workflows) and verify they fire.
+- Use matrices and parallel jobs wherever the work is independent. Do not chain jobs with `needs:` unless there is a real dependency.
+
+See [docs/github-actions-style.md](docs/github-actions-style.md) for the full guide and the new-workflow checklist.
+
 ## References
 
 - [CLAUDE.md](CLAUDE.md) -- project documentation standards, monorepo structure, tooling
 - [AGENTS.md](AGENTS.md) -- AI agent entry point with repo overview
 - [docs/changelog/](docs/changelog/) -- change history
+- [docs/github-actions-style.md](docs/github-actions-style.md) -- GitHub Actions style guide
 - [.github/PULL_REQUEST_TEMPLATE.md](.github/PULL_REQUEST_TEMPLATE.md) -- PR template

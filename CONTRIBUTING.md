@@ -30,6 +30,14 @@ Add an entry to the current month's file in `docs/changelog/`. Create the monthl
 - Use tooling defined in `.config/mise.toml` (Biome, Oxlint, Prettier)
 - See per-app `package.json` scripts for lint/format/spell commands
 
+## Tool versions: `.config/mise.toml` and `.config/mise.lock`
+
+`.config/mise.toml` declares the tools and version ranges this repo uses; `.config/mise.lock` pins them to exact versions (with per-platform URLs and checksums) so every machine and CI runner installs the same bits.
+
+Whenever you add a tool to `mise.toml` or bump a version, run `mise install` and commit the resulting `mise.lock` changes in the same PR. The Actions hygiene workflow runs `git diff --exit-code .config/mise.lock` after `mise install` and fails if the lockfile is stale.
+
+If `mise install` cannot reach the GitHub releases API (rate limit / sandbox), set `GITHUB_TOKEN` (a no-scope PAT works) and retry. Do not skip the lockfile update — the CI check will catch it.
+
 ## Project lifecycle
 
 Project directories under `docs/projects/<name>/` are working notes -- plan, progress, open questions. They exist to coordinate work in flight, not to serve as history.

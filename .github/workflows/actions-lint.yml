@@ -5,11 +5,15 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/**'
+      - '.github/zizmor.yml'
       - '.config/mise.toml'
+      - 'ghalint.yaml'
   pull_request:
     paths:
       - '.github/workflows/**'
+      - '.github/zizmor.yml'
       - '.config/mise.toml'
+      - 'ghalint.yaml'
 
 jobs:
   lint:

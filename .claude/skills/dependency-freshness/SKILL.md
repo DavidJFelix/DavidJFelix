@@ -121,7 +121,7 @@ While running, verify each project has exactly one lockfile. If both `pnpm-lock.
 ## Triggers
 
 - **Slash command**: `/dependency-freshness` — see `.claude/commands/dependency-freshness.md`.
-- **Cron**: GitHub Action at `.github/workflows/dependency-freshness.yml` (not yet created — see project plan).
+- **Cron**: GitHub Action at `.github/workflows/cron_dependency_freshness.yml`.
 
 ## What this skill is not
 

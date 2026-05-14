@@ -1,6 +1,6 @@
 [tools]
 node = "26"
-pnpm = "10"
+pnpm = "11"
 biome = "2"
 oxlint = "1"
 prettier = "3"

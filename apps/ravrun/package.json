@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsgo --noEmit",
     "dev": "vite --port=3001",
     "build": "vite build",
     "serve": "vite preview",
@@ -21,7 +21,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
     "cspell": "^9.0.0",
-    "typescript": "^6.0.3",
+    "@typescript/native-preview": "latest",
     "vite": "^8.0.13"
   },
   "dependencies": {

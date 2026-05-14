@@ -1,5 +1,5 @@
 [tools]
-node = "24"
+node = "26"
 pnpm = "10"
 biome = "2"
 oxlint = "1"

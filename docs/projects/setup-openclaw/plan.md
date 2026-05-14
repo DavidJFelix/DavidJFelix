@@ -13,7 +13,6 @@ Where should OpenClaw run? Options to evaluate:
 - Self-hosted on a home server / NAS
 - VPS (Hetzner, Fly.io, Railway, etc.)
 - Cloudflare (Workers / Containers)
-- Vercel
 - A dedicated cloud VM
 
 Decision criteria: cost, latency, persistence needs, runtime fit (long-running vs. request/response), ease of updates.

@@ -96,10 +96,12 @@ Keep it short. The issue body should fit on one screen. If it doesn't fit, the t
 - **Rust**: `cargo`.
 - **Go**: `go mod`.
 - **Tasks & scripts**: prefer `mise` tasks. If a task is too complex for a mise
-  task, write it as a `bun` script — not a shell script. Scripts longer than a few
-  lines go in a `bin/` directory, organized as makes sense. Remove `justfile`s when
-  found. Do not introduce new task tooling (moon, Taskfile, etc.) without an
-  explicit ask.
+  task, write it as a `bun` script. Scripts are written in `bun` — not a shell
+  script — unless it is absolutely necessary. Scripts longer than a few lines go
+  in a `bin/` directory, organized as makes sense; a `bin/` directory is not free
+  rein to write bash, the bun-not-bash rule still applies inside it. Remove
+  `justfile`s when found. Do not introduce new task tooling (moon, Taskfile, etc.)
+  without an explicit ask.
 - **Deployment**: Cloudflare. (Vercel has been dropped — remove references when
   encountered.) Pulumi / SST / Alchemy may come in later; not needed yet.
 

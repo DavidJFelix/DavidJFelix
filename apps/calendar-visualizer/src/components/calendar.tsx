@@ -277,25 +277,6 @@ function getDayKey({id, dayIndex}: GetDayKeyParams) {
   return `${id}-day-${dayIndex}`
 }
 
-function getDaysMap(days: Date[]): Record<string, DayFeature[]> {
-  // FIXME:CONSTANTS MOVE ELSEWHERE
-  const PLANNING_WEEKDAY_COUNT = 10
-  const EXECUTION_WEEKDAY_COUNT = 60
-
-  const holidays = new Holidays('US', {types: ['bank', 'public', 'school']})
-  const daysEntries: [string, DayFeature[]][] = []
-
-  for (let i = 0; i < days.length; i++) {
-    const day = days[i]
-    const dayFeatures: DayFeature[] = []
-    if (holidays.isHoliday(day)) {
-      dayFeatures.push({type: 'holiday', name: holidays.getHolidays(day)[0].name})
-    }
-  }
-
-  return Object.fromEntries(daysEntries)
-}
-
 function getCalendarDisplayState(interval: Interval): MonthProps[] {
   const holidays = new Holidays('US', {types: ['bank', 'public', 'school']})
 

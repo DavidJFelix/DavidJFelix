@@ -14,7 +14,7 @@
     "spell": "cspell --config ../../.config/cspell.json \"**\""
   },
   "dependencies": {
-    "@astrojs/react": "^4.4.0",
+    "@astrojs/react": "^5.0.5",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "astro": "^6.1.6",

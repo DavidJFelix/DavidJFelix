@@ -49,7 +49,12 @@ A Claude skill that:
 ### Phase 4: Policy
 
 - Cadence: **weekly** across all ecosystems (npm, mise, Cargo)
-- Define an escalation path when a major bump or known-incompatible update lands in a PR
+- Escalation: a single `deps:needs-attention` label on any PR carrying a major or
+  known-incompatible bump — no companion issues. Anything the skill couldn't apply
+  goes in a `## Skipped` section of the batch PR body. One surface to review.
+- Genuine human-intervention cases (a credential, a deprecated package needing a
+  replacement decision) still follow the Human Intervention Task convention in
+  `CLAUDE.md` — but that's the exception, not the routine path.
 - Document the policy alongside the skill
 
 ## Working Notes

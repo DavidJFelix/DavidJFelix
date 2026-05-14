@@ -1,0 +1,47 @@
+name: Dependency Freshness
+
+on:
+  schedule:
+    # Weekly, Monday 06:00 UTC — one schedule covers all ecosystems.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  freshness:
+    name: dependency-freshness sweep
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+    steps:
+      - name: checkout
+        # persist-credentials must stay true: anthropics/claude-code-action runs
+        # `git fetch` during setup before configuring its own auth. See
+        # anthropics/claude-code-action#1236.
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+
+      - name: mise
+        uses: jdx/mise-action@c37c93293d6b742fc901e1406b8f764f6fb19dac # v2.4.4
+        with:
+          install: true
+          cache: true
+
+      - name: claude-code-action
+        uses: anthropics/claude-code-action@f4fb5c6cdccc1ee7af63692f5d08d56efaa64cc8 # v1.0.121
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          additional_permissions: |
+            actions: read
+          prompt: |
+            Run the dependency-freshness skill for all ecosystems (npm, mise,
+            Cargo). Discover, evaluate, apply, verify, and open PRs exactly as
+            described in .claude/skills/dependency-freshness/SKILL.md. This is
+            the scheduled cron run — there is no human in the loop, so follow
+            the skill's batching and escalation rules without asking for
+            confirmation.

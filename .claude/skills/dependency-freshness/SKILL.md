@@ -92,19 +92,21 @@ Each PR body MUST include:
 
 - Non-semver: `foo@1.2.3 → 1.2.4` — patch version, but `foo` does not follow semver. Review carefully.
 - Major: react 18 → 19 — see migration notes.
+
+## Skipped
+
+- `bar@2 → 3` — not applied: requires code changes the skill is not confident to make.
 ```
 
-If verification fails on an isolated update, still open the PR but mark it as `draft`, add the `needs-attention` label, and put the failure summary at the top.
+The `## Skipped` section is omitted when nothing was skipped.
+
+If verification fails on an isolated update, still open the PR but mark it as `draft`, add the `deps:needs-attention` label, and put the failure summary at the top.
 
 ### 7. Escalation
 
-Default channel is the **`needs-attention` label on the PR**. Open a separate follow-up issue (assigned to `@DavidJFelix`, following the Human Intervention Task format in `CLAUDE.md`) only when:
+Keep it to one surface. The escalation channel is a single **`deps:needs-attention` label on the PR** — applied to any PR carrying a major or known-incompatible bump. Anything the skill could not apply goes in the `## Skipped` section of the batch PR body. No companion issues for routine cases.
 
-- The bump cannot be applied automatically (requires code changes the skill is not confident to make).
-- A package is deprecated upstream and a replacement is needed.
-- The bump is blocked on something outside the repo (a credential, a third-party account decision, etc.).
-
-If the skill can open a draft PR with a clear failure log, prefer the label. Reserve issues for things a PR cannot represent.
+Open a separate follow-up issue (assigned to `@DavidJFelix`, following the Human Intervention Task format in `CLAUDE.md`) **only** when the blocker is genuinely outside a PR's reach — a credential, a third-party account decision, or a deprecated package that needs a human to pick a replacement. That's the exception, not the routine path.
 
 ## Discovery details
 
@@ -114,7 +116,7 @@ If the skill can open a draft PR with a clear failure log, prefer the label. Res
 
 ## Lockfile hygiene
 
-While running, verify each project has exactly one lockfile. If both `pnpm-lock.yaml` and `bun.lock` exist (as in `apps/djf.io` and `apps/ravrun` today), surface this as an escalation issue — do not silently delete either.
+While running, verify each project has exactly one lockfile. If both `pnpm-lock.yaml` and `bun.lock` exist, keep `pnpm-lock.yaml` and delete `bun.lock` — `pnpm` is the accepted Node-ecosystem default; `bun` is preferred only where no Node toolchain is needed. A `yarn.lock` is never acceptable (`yarn` is banned) — flag any project still on yarn for conversion.
 
 ## Triggers
 

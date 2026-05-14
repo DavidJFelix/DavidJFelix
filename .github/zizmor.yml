@@ -9,3 +9,4 @@ rules:
     ignore:
       - bot_claude.yml
       - bot_claude_code_review.yml
+      - dependency-freshness.yml

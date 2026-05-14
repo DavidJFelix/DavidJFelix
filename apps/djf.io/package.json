@@ -37,7 +37,7 @@
     "@pandacss/dev": "1.11.1",
     "@playwright/test": "^1.60.0",
     "cspell": "^9.4.0",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.6"
   },
   "engines": {
     "node": ">=24"

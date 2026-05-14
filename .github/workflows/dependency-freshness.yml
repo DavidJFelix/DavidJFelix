@@ -10,7 +10,7 @@ jobs:
   freshness:
     name: dependency-freshness sweep
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     permissions:
       contents: write
       pull-requests: write
@@ -38,6 +38,14 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           additional_permissions: |
             actions: read
+          # Unattended run on an ephemeral, isolated runner. The skill needs
+          # broad tool access (pnpm, cargo, mise, git, the GitHub MCP tools);
+          # the real boundary is this job's `permissions:` block above, not a
+          # tool allowlist. --max-turns is raised well past a single sweep's
+          # needs since one run can open many PRs.
+          claude_args: |
+            --max-turns 150
+            --dangerously-skip-permissions
           prompt: |
             Run the dependency-freshness skill for all ecosystems (npm, mise,
             Cargo). Discover, evaluate, apply, verify, and open PRs exactly as

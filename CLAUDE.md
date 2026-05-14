@@ -83,6 +83,26 @@ Keep it short. The issue body should fit on one screen. If it doesn't fit, the t
 - **Formatting**: Biome
 - **Spell Check**: cspell with shared config at `.config/cspell.json`
 
+### Ecosystem tool choices
+
+- **JS/TS package manager**: `bun` is preferred when a project does not also need a
+  Node toolchain. `pnpm` is the accepted default for the Node ecosystem; `npm`
+  projects should be converted unless there's a good reason. `yarn` is banned.
+  (Open question: whether Cloudflare Wrangler works bun-only — until confirmed,
+  Wrangler projects stay on pnpm.)
+- **Lockfiles**: one per project. If a project has both `pnpm-lock.yaml` and
+  `bun.lock`, keep `pnpm-lock.yaml` and delete `bun.lock`.
+- **Python**: `uv`. `pip` is banned — never invoke it directly. `poetry` is banned.
+- **Rust**: `cargo`.
+- **Go**: `go mod`.
+- **Tasks & scripts**: prefer `mise` tasks. If a task is too complex for a mise
+  task, write it as a `bun` script — not a shell script. Scripts longer than a few
+  lines go in a `bin/` directory, organized as makes sense. Remove `justfile`s when
+  found. Do not introduce new task tooling (moon, Taskfile, etc.) without an
+  explicit ask.
+- **Deployment**: Cloudflare. (Vercel has been dropped — remove references when
+  encountered.) Pulumi / SST / Alchemy may come in later; not needed yet.
+
 ## Testing Conventions
 
 - **Co-locate tests** with the file under test. Unit: `xxx.test.ts` next to `xxx.ts`. E2E: `xxx.e2e.test.ts` next to the source.

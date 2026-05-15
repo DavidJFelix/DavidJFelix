@@ -1,5 +1,6 @@
-name: Dependency Freshness
+name: Cron Dependency Freshness
 
+# Runs unattended on a weekly cron; also dispatchable on demand.
 on:
   schedule:
     # Weekly, Monday 06:00 UTC — one schedule covers all ecosystems.

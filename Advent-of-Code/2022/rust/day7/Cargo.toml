@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-camino = "1.1.1"
-color-eyre = "0.6.2"
+camino = "1.2.2"
+color-eyre = "0.6.5"
 id_tree = "1.8.0"
 nom = "8.0.0"

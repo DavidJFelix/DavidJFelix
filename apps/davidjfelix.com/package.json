@@ -13,7 +13,7 @@
     "spell": "cspell --config ../../.config/cspell.json \"**\""
   },
   "dependencies": {
-    "astro": "^6.2.1"
+    "astro": "^6.3.3"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",

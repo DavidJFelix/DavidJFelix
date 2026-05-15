@@ -5,7 +5,7 @@ use nom::{
     bytes::complete::{tag, take_while1},
     combinator::{all_consuming, map},
     sequence::{preceded, separated_pair},
-    Finish, IResult,
+    Finish, IResult, Parser,
 };
 use std::fs;
 
@@ -13,21 +13,22 @@ fn parse_path(i: &str) -> IResult<&str, Utf8PathBuf> {
     map(
         take_while1(|c: char| "abcdefghijklmnopqrstuvwxyz./".contains(c)),
         Into::into,
-    )(i)
+    )
+    .parse(i)
 }
 
 #[derive(Debug)]
 struct Ls;
 
 fn parse_ls(i: &str) -> IResult<&str, Ls> {
-    map(tag("ls"), |_| Ls)(i)
+    map(tag("ls"), |_| Ls).parse(i)
 }
 
 #[derive(Debug)]
 struct Cd(Utf8PathBuf);
 
 fn parse_cd(i: &str) -> IResult<&str, Cd> {
-    map(preceded(tag("cd "), parse_path), Cd)(i)
+    map(preceded(tag("cd "), parse_path), Cd).parse(i)
 }
 
 #[derive(Debug)]
@@ -49,8 +50,8 @@ impl From<Cd> for Command {
 }
 
 fn parse_command(i: &str) -> IResult<&str, Command> {
-    let (i, _) = tag("$ ")(i)?;
-    alt((map(parse_ls, Into::into), map(parse_cd, Into::into)))(i)
+    let (i, _) = tag("$ ").parse(i)?;
+    alt((map(parse_ls, Into::into), map(parse_cd, Into::into))).parse(i)
 }
 
 #[derive(Debug)]
@@ -66,7 +67,7 @@ fn parse_output(i: &str) -> IResult<&str, Output> {
     );
     let parse_dir = map(preceded(tag("dir "), parse_path), Output::Dir);
 
-    alt((parse_file, parse_dir))(i)
+    alt((parse_file, parse_dir)).parse(i)
 }
 
 #[derive(Debug)]
@@ -79,7 +80,8 @@ fn parse_line(i: &str) -> IResult<&str, Line> {
     alt((
         map(parse_command, Line::Command),
         map(parse_output, Line::Output),
-    ))(i)
+    ))
+    .parse(i)
 }
 
 #[derive(Debug)]
@@ -102,7 +104,7 @@ fn main() -> color_eyre::Result<()> {
     let contents: String = fs::read_to_string("../../inputs/day7.txt").unwrap();
     let lines = contents
         .lines()
-        .map(|l| all_consuming(parse_line)(l).finish().unwrap().1);
+        .map(|l| all_consuming(parse_line).parse(l).finish().unwrap().1);
 
     let mut tree = Tree::<FileNode>::new();
     let root = tree.insert(

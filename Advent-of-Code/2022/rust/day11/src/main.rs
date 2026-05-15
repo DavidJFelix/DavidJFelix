@@ -10,7 +10,7 @@ use nom::{
     combinator::map_res,
     multi::separated_list0,
     sequence::tuple,
-    IResult,
+    IResult, Parser,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -21,7 +21,7 @@ fn parse_monkey(input: &str) -> IResult<&str, Monkey> {
     let space = tag(" ");
     let number = map_res(digit1, |res: &str| res.parse::<u64>());
 
-    let (input, (_, _, number)) = tuple((monkey, space, number))(input)?;
+    let (input, (_, _, number)) = tuple((monkey, space, number)).parse(input)?;
 
     Ok((input, Monkey(number)))
 }
@@ -41,7 +41,7 @@ fn parse_starting_items(input: &str) -> IResult<&str, Vec<ItemWorryLevel>> {
     );
     let items = separated_list0(comma, item);
 
-    let (input, (_, items)) = tuple((starting_items, items))(input)?;
+    let (input, (_, items)) = tuple((starting_items, items)).parse(input)?;
     Ok((input, items))
 }
 
@@ -60,7 +60,7 @@ fn parse_operand(input: &str) -> IResult<&str, Operand> {
         Ok(Operand::Value(number))
     });
 
-    alt((old, value))(input)
+    alt((old, value)).parse(input)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -77,7 +77,7 @@ fn parse_operation(input: &str) -> IResult<&str, Operation> {
         Ok(Operation::Add)
     });
 
-    alt((multiply, add))(input)
+    alt((multiply, add)).parse(input)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -98,7 +98,8 @@ fn parse_worry_level_response_equation(input: &str) -> IResult<&str, WorryLevelR
         parse_operation,
         space1,
         parse_operand,
-    ))(input)?;
+    ))
+    .parse(input)?;
 
     Ok((
         input,
@@ -137,7 +138,8 @@ fn parse_conditional_monkey_response(input: &str) -> IResult<&str, ConditionalMo
         false_intro,
         space1,
         parse_monkey,
-    ))(input)?;
+    ))
+    .parse(input)?;
     Ok((
         input,
         ConditionalMonkeyResponse {
@@ -162,7 +164,8 @@ fn parse_monkey_state(input: &str) -> IResult<&str, MonkeyState> {
         parse_worry_level_response_equation,
         multispace1,
         parse_conditional_monkey_response,
-    ))(input)?;
+    ))
+    .parse(input)?;
     Ok((
         input,
         MonkeyState {
@@ -186,7 +189,8 @@ fn parse_monkey_rule_hashmap(input: &str) -> IResult<&str, HashMap<Monkey, Monke
             ),
         ),
         line_ending,
-    ))(input)?;
+    ))
+    .parse(input)?;
     let res: HashMap<Monkey, MonkeyState> = entries.into_iter().collect();
     Ok((input, res))
 }

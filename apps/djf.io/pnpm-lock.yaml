@@ -10,7 +10,7 @@ importers:
     dependencies:
       '@astrojs/check':
         specifier: ^0.9.9
-        version: 0.9.9(prettier-plugin-astro@0.14.1)(prettier@3.7.3)(typescript@5.9.3)
+        version: 0.9.9(prettier-plugin-astro@0.14.1)(prettier@3.7.3)(typescript@6.0.2)
       '@astrojs/mdx':
         specifier: ^5.0.4
         version: 5.0.4(astro@6.3.1(@types/node@25.0.3)(jiti@2.4.2)(lightningcss@1.31.1)(rollup@4.60.0)(yaml@2.8.2))
@@ -26,6 +26,9 @@ importers:
       '@types/react-dom':
         specifier: ^19.2.3
         version: 19.2.3(@types/react@19.2.14)
+      '@typescript/native-preview':
+        specifier: latest
+        version: 7.0.0-dev.20260514.1
       astro:
         specifier: ^6.3.1
         version: 6.3.1(@types/node@25.0.3)(jiti@2.4.2)(lightningcss@1.31.1)(rollup@4.60.0)(yaml@2.8.2)
@@ -38,16 +41,13 @@ importers:
       sharp:
         specifier: ^0.34.5
         version: 0.34.5
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
     devDependencies:
       '@cspell/dict-typescript':
         specifier: ^3.2.3
         version: 3.2.3
       '@pandacss/dev':
         specifier: 1.11.1
-        version: 1.11.1(typescript@5.9.3)
+        version: 1.11.1(typescript@6.0.2)
       '@playwright/test':
         specifier: ^1.60.0
         version: 1.60.0
@@ -1318,6 +1318,53 @@ packages:
 
   '@types/unist@3.0.3':
     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
+
+  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260514.1':
+    resolution: {integrity: sha512-mA/BLJumVJ8JrJaUgl1wTzMbelXl/vuXc2AglltWSxQEL7+NtU3uG1gO+lT6igsFks7378zjEukSMmxv8FEPNw==}
+    engines: {node: '>=16.20.0'}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260514.1':
+    resolution: {integrity: sha512-ol5OctuUZDLzQrqDUfR758p3p4x7FDzbIzu6H0XffWi7FXj0eEyDthDfULyTQmTlE8dizxCmbzC7Uv0COeedrQ==}
+    engines: {node: '>=16.20.0'}
+    cpu: [x64]
+    os: [darwin]
+
+  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260514.1':
+    resolution: {integrity: sha512-7bz4QVWdlYm2BsDhqzpmUFSAA/l0W8+1hFto3Ssl/FADEWGIqwLk8/nEzZRMYtnCYjQx5KnRwmrcxnnZtD25jA==}
+    engines: {node: '>=16.20.0'}
+    cpu: [arm64]
+    os: [linux]
+
+  '@typescript/native-preview-linux-arm@7.0.0-dev.20260514.1':
+    resolution: {integrity: sha512-65TQUASi7+t81P94kyQopWchsVovWSfeXh5cPK2D5Oziga5of1Zzi6FQR1XUe48DYw5IBYN6DPXabcYG5Bd09A==}
+    engines: {node: '>=16.20.0'}
+    cpu: [arm]
+    os: [linux]
+
+  '@typescript/native-preview-linux-x64@7.0.0-dev.20260514.1':
+    resolution: {integrity: sha512-tdnkRgD+AUw+aJ2Uz1B/sAGcqCt7FgrQMyIdEmjJUiSneIb3PeS4oxsQKp7wnPsiqOcfUlpOp7/ZEJc1oJ5ySA==}
+    engines: {node: '>=16.20.0'}
+    cpu: [x64]
+    os: [linux]
+
+  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260514.1':
+    resolution: {integrity: sha512-9nERcpvv1Ok+IlBdCa9XNvcmNaV9HO3lSTPL1heyrgKFkOyNMxycej/FYRodXFcqZE/FMJCZ5U4lpI5MvivQXQ==}
+    engines: {node: '>=16.20.0'}
+    cpu: [arm64]
+    os: [win32]
+
+  '@typescript/native-preview-win32-x64@7.0.0-dev.20260514.1':
+    resolution: {integrity: sha512-BFZ7ddWmFwpO+/zFEIsS2nZTD5jqixchvqeQGrPZMzd8y49RUfL5ztJm6h/jSUS8W3s/UGhQ2ibGfN0+rvfO+w==}
+    engines: {node: '>=16.20.0'}
+    cpu: [x64]
+    os: [win32]
+
+  '@typescript/native-preview@7.0.0-dev.20260514.1':
+    resolution: {integrity: sha512-gHvZOIbpls1d7Ly0wbVQxMX0EzJU+RBjsCX+AdbyMg3dfk+ET00HksIxn8E0W9+TH6z3ipW7Iitja3VgrgZaSA==}
+    engines: {node: '>=16.20.0'}
+    hasBin: true
 
   '@ungap/structured-clone@1.3.0':
     resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
@@ -3179,11 +3226,6 @@ packages:
   typescript-auto-import-cache@0.3.6:
     resolution: {integrity: sha512-RpuHXrknHdVdK7wv/8ug3Fr0WNsNi5l5aB8MYYuXhq2UH5lnEB1htJ1smhtD5VeCsGr2p8mUDtd83LCQDFVgjQ==}
 
-  typescript@5.9.3:
-    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
-    engines: {node: '>=14.17'}
-    hasBin: true
-
   typescript@6.0.2:
     resolution: {integrity: sha512-bGdAIrZ0wiGDo5l8c++HWtbaNCWTS4UTv7RaTH/ThVIgjkveJt83m74bBHMJkuCbslY8ixgLBVZJIOiQlQTjfQ==}
     engines: {node: '>=14.17'}
@@ -3605,12 +3647,12 @@ packages:
 
 snapshots:
 
-  '@astrojs/check@0.9.9(prettier-plugin-astro@0.14.1)(prettier@3.7.3)(typescript@5.9.3)':
+  '@astrojs/check@0.9.9(prettier-plugin-astro@0.14.1)(prettier@3.7.3)(typescript@6.0.2)':
     dependencies:
-      '@astrojs/language-server': 2.16.8(prettier-plugin-astro@0.14.1)(prettier@3.7.3)(typescript@5.9.3)
+      '@astrojs/language-server': 2.16.8(prettier-plugin-astro@0.14.1)(prettier@3.7.3)(typescript@6.0.2)
       chokidar: 4.0.3
       kleur: 4.1.5
-      typescript: 5.9.3
+      typescript: 6.0.2
       yargs: 17.7.2
     transitivePeerDependencies:
       - prettier
@@ -3624,12 +3666,12 @@ snapshots:
     dependencies:
       picomatch: 4.0.4
 
-  '@astrojs/language-server@2.16.8(prettier-plugin-astro@0.14.1)(prettier@3.7.3)(typescript@5.9.3)':
+  '@astrojs/language-server@2.16.8(prettier-plugin-astro@0.14.1)(prettier@3.7.3)(typescript@6.0.2)':
     dependencies:
       '@astrojs/compiler': 2.13.1
       '@astrojs/yaml2ts': 0.2.3
       '@jridgewell/sourcemap-codec': 1.5.5
-      '@volar/kit': 2.4.28(typescript@5.9.3)
+      '@volar/kit': 2.4.28(typescript@6.0.2)
       '@volar/language-core': 2.4.28
       '@volar/language-server': 2.4.28
       '@volar/language-service': 2.4.28
@@ -4514,14 +4556,14 @@ snapshots:
       postcss-selector-parser: 7.1.1
       ts-pattern: 5.9.0
 
-  '@pandacss/dev@1.11.1(typescript@5.9.3)':
+  '@pandacss/dev@1.11.1(typescript@6.0.2)':
     dependencies:
       '@clack/prompts': 0.11.0
       '@pandacss/config': 1.11.1
       '@pandacss/logger': 1.11.1
-      '@pandacss/mcp': 1.11.1(typescript@5.9.3)
-      '@pandacss/node': 1.11.1(typescript@5.9.3)
-      '@pandacss/postcss': 1.11.1(typescript@5.9.3)
+      '@pandacss/mcp': 1.11.1(typescript@6.0.2)
+      '@pandacss/node': 1.11.1(typescript@6.0.2)
+      '@pandacss/postcss': 1.11.1(typescript@6.0.2)
       '@pandacss/preset-base': 1.11.1
       '@pandacss/preset-panda': 1.11.1
       '@pandacss/shared': 1.11.1
@@ -4534,10 +4576,10 @@ snapshots:
       - supports-color
       - typescript
 
-  '@pandacss/extractor@1.11.1(typescript@5.9.3)':
+  '@pandacss/extractor@1.11.1(typescript@6.0.2)':
     dependencies:
       '@pandacss/shared': 1.11.1
-      ts-evaluator: 1.2.0(typescript@5.9.3)
+      ts-evaluator: 1.2.0(typescript@6.0.2)
       ts-morph: 28.0.0
     transitivePeerDependencies:
       - jsdom
@@ -4564,12 +4606,12 @@ snapshots:
       '@pandacss/types': 1.11.1
       kleur: 4.1.5
 
-  '@pandacss/mcp@1.11.1(typescript@5.9.3)':
+  '@pandacss/mcp@1.11.1(typescript@6.0.2)':
     dependencies:
       '@clack/prompts': 0.11.0
       '@modelcontextprotocol/sdk': 1.29.0(zod@4.4.3)
       '@pandacss/logger': 1.11.1
-      '@pandacss/node': 1.11.1(typescript@5.9.3)
+      '@pandacss/node': 1.11.1(typescript@6.0.2)
       '@pandacss/token-dictionary': 1.11.1
       '@pandacss/types': 1.11.1
       zod: 4.4.3
@@ -4579,13 +4621,13 @@ snapshots:
       - supports-color
       - typescript
 
-  '@pandacss/node@1.11.1(typescript@5.9.3)':
+  '@pandacss/node@1.11.1(typescript@6.0.2)':
     dependencies:
       '@pandacss/config': 1.11.1
       '@pandacss/core': 1.11.1
       '@pandacss/generator': 1.11.1
       '@pandacss/logger': 1.11.1
-      '@pandacss/parser': 1.11.1(typescript@5.9.3)
+      '@pandacss/parser': 1.11.1(typescript@6.0.2)
       '@pandacss/plugin-lightningcss': 1.11.1
       '@pandacss/plugin-svelte': 1.11.1
       '@pandacss/plugin-vue': 1.11.1
@@ -4617,11 +4659,11 @@ snapshots:
       - jsdom
       - typescript
 
-  '@pandacss/parser@1.11.1(typescript@5.9.3)':
+  '@pandacss/parser@1.11.1(typescript@6.0.2)':
     dependencies:
       '@pandacss/config': 1.11.1
       '@pandacss/core': 1.11.1
-      '@pandacss/extractor': 1.11.1(typescript@5.9.3)
+      '@pandacss/extractor': 1.11.1(typescript@6.0.2)
       '@pandacss/logger': 1.11.1
       '@pandacss/shared': 1.11.1
       '@pandacss/types': 1.11.1
@@ -4649,9 +4691,9 @@ snapshots:
       '@vue/compiler-sfc': 3.5.25
       magic-string: 0.30.21
 
-  '@pandacss/postcss@1.11.1(typescript@5.9.3)':
+  '@pandacss/postcss@1.11.1(typescript@6.0.2)':
     dependencies:
-      '@pandacss/node': 1.11.1(typescript@5.9.3)
+      '@pandacss/node': 1.11.1(typescript@6.0.2)
       postcss: 8.5.14
     transitivePeerDependencies:
       - jsdom
@@ -4897,6 +4939,37 @@ snapshots:
 
   '@types/unist@3.0.3': {}
 
+  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260514.1':
+    optional: true
+
+  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260514.1':
+    optional: true
+
+  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260514.1':
+    optional: true
+
+  '@typescript/native-preview-linux-arm@7.0.0-dev.20260514.1':
+    optional: true
+
+  '@typescript/native-preview-linux-x64@7.0.0-dev.20260514.1':
+    optional: true
+
+  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260514.1':
+    optional: true
+
+  '@typescript/native-preview-win32-x64@7.0.0-dev.20260514.1':
+    optional: true
+
+  '@typescript/native-preview@7.0.0-dev.20260514.1':
+    optionalDependencies:
+      '@typescript/native-preview-darwin-arm64': 7.0.0-dev.20260514.1
+      '@typescript/native-preview-darwin-x64': 7.0.0-dev.20260514.1
+      '@typescript/native-preview-linux-arm': 7.0.0-dev.20260514.1
+      '@typescript/native-preview-linux-arm64': 7.0.0-dev.20260514.1
+      '@typescript/native-preview-linux-x64': 7.0.0-dev.20260514.1
+      '@typescript/native-preview-win32-arm64': 7.0.0-dev.20260514.1
+      '@typescript/native-preview-win32-x64': 7.0.0-dev.20260514.1
+
   '@ungap/structured-clone@1.3.0': {}
 
   '@vitejs/plugin-react@5.2.0(vite@7.3.3(@types/node@25.0.3)(jiti@2.4.2)(lightningcss@1.31.1)(yaml@2.8.2))':
@@ -4952,12 +5025,12 @@ snapshots:
       convert-source-map: 2.0.0
       tinyrainbow: 3.1.0
 
-  '@volar/kit@2.4.28(typescript@5.9.3)':
+  '@volar/kit@2.4.28(typescript@6.0.2)':
     dependencies:
       '@volar/language-service': 2.4.28
       '@volar/typescript': 2.4.28
       typesafe-path: 0.2.2
-      typescript: 5.9.3
+      typescript: 6.0.2
       vscode-languageserver-textdocument: 1.0.12
       vscode-uri: 3.1.0
 
@@ -7331,12 +7404,12 @@ snapshots:
 
   trough@2.2.0: {}
 
-  ts-evaluator@1.2.0(typescript@5.9.3):
+  ts-evaluator@1.2.0(typescript@6.0.2):
     dependencies:
       ansi-colors: 4.1.3
       crosspath: 2.0.0
       object-path: 0.11.8
-      typescript: 5.9.3
+      typescript: 6.0.2
 
   ts-morph@28.0.0:
     dependencies:
@@ -7359,8 +7432,6 @@ snapshots:
   typescript-auto-import-cache@0.3.6:
     dependencies:
       semver: 7.7.4
-
-  typescript@5.9.3: {}
 
   typescript@6.0.2: {}
 

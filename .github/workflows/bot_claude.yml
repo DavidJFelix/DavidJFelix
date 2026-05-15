@@ -13,14 +13,18 @@ on:
 jobs:
   claude:
     # Only the repo owner — or the bots listed in `allowed_bots` below — may
-    # summon the bot. github.actor is the user/bot that triggered the event
-    # (commenter / issue author / reviewer), so this one check covers every
-    # trigger type below.
+    # summon the bot. The triggering actor is matched by numeric account ID,
+    # not login: `github.actor` is a spoofable string, `github.actor_id` is
+    # not (zizmor bot-conditions). One check covers every trigger type below.
+    #   263432    = DavidJFelix
+    #   209825114 = claude[bot]
+    #   49699333  = dependabot[bot]
+    #   29139614  = renovate[bot]
     if: |
-      (github.actor == 'DavidJFelix' ||
-       github.actor == 'claude[bot]' ||
-       github.actor == 'dependabot[bot]' ||
-       github.actor == 'renovate[bot]') && (
+      (github.actor_id == '263432' ||
+       github.actor_id == '209825114' ||
+       github.actor_id == '49699333' ||
+       github.actor_id == '29139614') && (
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||

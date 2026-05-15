@@ -12,11 +12,15 @@ on:
 
 jobs:
   claude:
-    # Only the repo owner may summon the bot. github.actor is the user who
-    # triggered the event (commenter / issue author / reviewer), so this one
-    # check covers every trigger type below.
+    # Only the repo owner — or the bots listed in `allowed_bots` below — may
+    # summon the bot. github.actor is the user/bot that triggered the event
+    # (commenter / issue author / reviewer), so this one check covers every
+    # trigger type below.
     if: |
-      github.actor == 'DavidJFelix' && (
+      (github.actor == 'DavidJFelix' ||
+       github.actor == 'claude[bot]' ||
+       github.actor == 'dependabot[bot]' ||
+       github.actor == 'renovate[bot]') && (
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||

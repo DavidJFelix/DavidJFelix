@@ -78,7 +78,7 @@ Keep it short. The issue body should fit on one screen. If it doesn't fit, the t
 
 ## Tooling
 
-- **Runtime**: Node 22, pnpm 10 (managed via mise)
+- **Runtime**: Node 26, pnpm 10 (managed via mise)
 - **Linting**: Biome, Oxlint
 - **Formatting**: Biome
 - **Spell Check**: cspell with shared config at `.config/cspell.json`

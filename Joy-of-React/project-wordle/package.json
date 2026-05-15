@@ -27,8 +27,11 @@
     "spell": "cspell --config ../../.config/cspell.json \"**\""
   },
   "browserslist": "> 0.5%, last 2 versions, not dead",
-  "packageManager": "pnpm@10.0.0",
+  "packageManager": "pnpm@11.1.2",
   "engines": {
     "node": ">=22"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["@parcel/watcher", "@swc/core", "lmdb", "msgpackr-extract"]
   }
 }

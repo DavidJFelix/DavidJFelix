@@ -5,48 +5,61 @@
 // loaded by the Alchemy CLI, not by `tsc`, so it lives outside the
 // project tsconfig include set.
 //
-// TODO: Vectorize is not (yet) a first-class Alchemy v2 resource. Until
-// it is, provision the index out-of-band (via `wrangler vectorize create`
-// or the Cloudflare API) and bind it through wrangler.toml.
-// TODO: Confirm the CLI entry contract once v2 stabilizes -- exporting a
-// `Stack.make(...)` value or a default `Effect` are both candidates.
+// VectorizeIndex is provided by an in-repo custom Alchemy resource
+// (src/alchemy/Vectorize/) since v2 doesn't yet ship a first-party
+// Vectorize provider.
 
+import * as Alchemy from 'alchemy'
 import * as Cloudflare from 'alchemy/Cloudflare'
-import { Effect } from 'effect'
+import * as Effect from 'effect/Effect'
+import * as Layer from 'effect/Layer'
+import * as Vectorize from './src/alchemy/Vectorize/index.ts'
 
-export default Effect.gen(function* () {
-  // --- R2 -----------------------------------------------------------
-  const uploads = yield* Cloudflare.R2Bucket('f311x-uploads')
-  const workspace = yield* Cloudflare.R2Bucket('f311x-agent-workspace')
+export default Alchemy.Stack(
+  'f311x',
+  {
+    providers: Layer.mergeAll(Cloudflare.providers(), Vectorize.providers()),
+  },
+  Effect.gen(function* () {
+    // --- R2 -----------------------------------------------------------
+    const uploads = yield* Cloudflare.R2Bucket('Uploads')
+    const workspace = yield* Cloudflare.R2Bucket('AgentWorkspace')
 
-  // --- AI Gateway ---------------------------------------------------
-  const gateway = yield* Cloudflare.AiGateway('f311x-gateway')
+    // --- Vectorize (custom provider) ----------------------------------
+    const knowledge = yield* Vectorize.VectorizeIndex('Knowledge', {
+      config: { dimensions: 768, metric: 'cosine' },
+      description: 'Knowledge index for the f311x chat agent',
+    })
 
-  // --- Worker Loader (Dynamic Workflows) ----------------------------
-  const dynamicPlans = yield* Cloudflare.DynamicWorkerLoader('f311x-dynamic-plans')
+    // --- AI Gateway ---------------------------------------------------
+    const gateway = yield* Cloudflare.AiGateway('Gateway')
 
-  // --- Worker -------------------------------------------------------
-  // DO classes (ChatAgent, Sandbox) and Workflow classes (ResearchWorkflow,
-  // DynamicPlanWorkflow) are picked up from `src/server.ts` exports.
-  const worker = yield* Cloudflare.Worker('f311x-worker', {
-    main: './src/server.ts',
-    compatibilityDate: '2026-05-01',
-    compatibilityFlags: ['nodejs_compat'],
-    bindings: {
-      UPLOADS: uploads,
-      WORKSPACE: workspace,
-      GATEWAY: gateway,
-      DYNAMIC_PLANS: dynamicPlans,
-      // Secrets (set via `alchemy secrets set` or env at deploy time)
-      OPENROUTER_API_KEY: Cloudflare.secret('OPENROUTER_API_KEY'),
-      ANTHROPIC_API_KEY: Cloudflare.secret('ANTHROPIC_API_KEY'),
-      // TODO: KNOWLEDGE (Vectorize), AI (Workers AI), CHAT_AGENT + SANDBOX
-      // (DO namespaces), RESEARCH_WORKFLOW (Workflow binding) -- wire once
-      // the corresponding Alchemy v2 resources / patterns are confirmed.
-    },
-  })
+    // --- Worker Loader (Dynamic Workflows) ----------------------------
+    const dynamicPlans = yield* Cloudflare.DynamicWorkerLoader('DynamicPlans')
 
-  return { uploads, workspace, gateway, dynamicPlans, worker }
-})
+    // --- Worker -------------------------------------------------------
+    // DO classes (ChatAgent, Sandbox) and Workflow classes
+    // (ResearchWorkflow, DynamicPlanWorkflow) are picked up from
+    // `src/server.ts` exports.
+    const worker = yield* Cloudflare.Worker('Worker', {
+      main: './src/server.ts',
+      compatibilityDate: '2026-05-01',
+      compatibilityFlags: ['nodejs_compat'],
+      bindings: {
+        UPLOADS: uploads,
+        WORKSPACE: workspace,
+        KNOWLEDGE: knowledge,
+        GATEWAY: gateway,
+        DYNAMIC_PLANS: dynamicPlans,
+        // Secrets (set via `alchemy secrets set` or env at deploy time)
+        OPENROUTER_API_KEY: Cloudflare.secret('OPENROUTER_API_KEY'),
+        ANTHROPIC_API_KEY: Cloudflare.secret('ANTHROPIC_API_KEY'),
+        // TODO: AI (Workers AI), CHAT_AGENT + SANDBOX (DO namespaces),
+        // RESEARCH_WORKFLOW (Workflow binding) -- wire once the
+        // corresponding Alchemy v2 binding helpers are confirmed.
+      },
+    })
 
-export type WorkerEnv = Cloudflare.InferEnv<typeof Cloudflare.Worker>
+    return { uploads, workspace, knowledge, gateway, dynamicPlans, worker }
+  }),
+)

@@ -1,7 +1,13 @@
 {
   "extends": "agents/tsconfig",
   "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules", "dist", ".alchemy", "alchemy.run.ts"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    ".alchemy",
+    "alchemy.run.ts",
+    "src/alchemy/**"
+  ],
   "compilerOptions": {
     "target": "ES2022",
     "jsx": "react-jsx",

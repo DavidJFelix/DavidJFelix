@@ -64,3 +64,59 @@ skills:
   - when: "Programmatic route tree building as an alternative to filesystem conventions: rootRoute, index, route, layout, physical, defineVirtualSubtreeConfig. Use with TanStack Router plugin's virtualRouteConfig option."
     use: "@tanstack/virtual-file-routes#virtual-file-routes"
 <!-- intent-skills:end -->
+
+# f311x
+
+Effect-native AI agent app on Cloudflare. See [docs/projects/f311x/plan.md](../../docs/projects/f311x/plan.md) for the full plan.
+
+## Stack at a glance
+
+- TanStack Start on Cloudflare Workers
+- Alchemy v2 owns provisioning (`alchemy.run.ts`)
+- Cloudflare Agents SDK for persistent agents (`AIChatAgent` DO subclass)
+- Effect-TS owns async orchestration -- typed errors, retries, timeouts, cancellation
+- TanStack AI for in-app tools (`createServerFnTool`); Vercel AI SDK only inside `onChatMessage`
+- OpenRouter primary, Anthropic direct fallback
+- R2 + Vectorize + Workflows + Dynamic Workflows + Sandboxes + AI Gateway
+
+## Conventions
+
+- **Package manager**: pnpm. The repo policy keeps Wrangler-touching projects on pnpm until bun-with-Wrangler is confirmed. `bun` is used for scripts under `scripts/`.
+- **Effect owns async**. No naked `fetch` / `await` outside service implementations in `src/effects/services/`.
+- **One model abstraction per call site**. Vercel AI SDK inside `AIChatAgent.onChatMessage`; TanStack AI everywhere else. Both wrapped in Effect at the boundary.
+- **Tool definitions live in `src/agents/tools/*.ts`** -- both the React app (as server functions) and the agent (as LLM tools via adapter) consume the same exports.
+- **Schemas are Zod by default**. Convert to Effect Schema only at the runtime boundary if a service demands it.
+- **Cancellation propagates**. Every `Effect.runPromise` carries the upstream `AbortSignal`.
+- **`MIGRATION-MARKER: @effect/ai`** comments mark candidate sites for migration if/when multi-provider routing becomes essential.
+
+## Layout
+
+```
+alchemy.run.ts            # Alchemy v2 stack
+src/
+  server.ts               # Worker entrypoint
+  agents/chat-agent.ts    # AIChatAgent subclass
+  agents/tools/           # createServerFnTool definitions
+  effects/runtime.ts      # makeFetchRuntime(env) -> ManagedRuntime
+  effects/layers.ts       # liveLayer(env)
+  effects/services/       # ObjectStore, VectorStore, ModelClient, Sandbox, WorkflowDispatcher
+  workflows/research.ts   # Static WorkflowEntrypoint
+  workflows/dynamic-plan.ts
+  routes/                 # TanStack Start file-based routes
+  lib/                    # schemas.ts (Zod), env.ts (typed bindings)
+scripts/ingest.ts         # Bun script -- same Effects, different layer
+```
+
+## Scripts
+
+| Script | What it does |
+|---|---|
+| `pnpm dev` | Vite dev server on :3000 |
+| `pnpm build` | Vite build |
+| `pnpm preview` | Vite preview |
+| `pnpm deploy` | Alchemy v2 deploy |
+| `pnpm destroy` | Alchemy v2 destroy |
+| `pnpm ingest` | Run `scripts/ingest.ts` under Bun |
+| `pnpm lint` | Biome + Oxlint |
+| `pnpm typecheck` | `tsc --noEmit` |
+| `pnpm test` | Vitest |

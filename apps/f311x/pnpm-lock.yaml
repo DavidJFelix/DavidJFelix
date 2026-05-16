@@ -14,6 +14,9 @@ importers:
       '@cloudflare/ai-chat':
         specifier: ^0.6.1
         version: 0.6.2(@ai-sdk/react@3.0.186(react@19.2.6)(zod@4.4.3))(agents@0.12.4)(ai@6.0.184(zod@4.4.3))(react@19.2.6)(zod@4.4.3)
+      '@cloudflare/sandbox':
+        specifier: ^0.10.1
+        version: 0.10.1
       '@cloudflare/vite-plugin':
         specifier: ^1.37.0
         version: 1.37.1(vite@8.0.13(@types/node@22.19.19)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0))(workerd@1.20260515.1)(wrangler@4.92.0(@cloudflare/workers-types@4.20260516.1))
@@ -428,9 +431,26 @@ packages:
       react: ^19.0.0
       zod: ^4.0.0
 
+  '@cloudflare/containers@0.3.4':
+    resolution: {integrity: sha512-6kWodmgBSug/rr9fjcWrZcKhxmWTEc1BTKC6nVv7yvYaRRvV3rZPZjq9R17eN0l9cl2LNc03wp/Z6OV+0uDwXA==}
+
   '@cloudflare/kv-asset-handler@0.5.0':
     resolution: {integrity: sha512-jxQYkj8dSIzc0cD6cMMNdOc1UVjqSqu8BZdor5s8cGjW2I8BjODt/kWPVdY+u9zj3ms75Q5qaZgnxUad83+eAg==}
     engines: {node: '>=22.0.0'}
+
+  '@cloudflare/sandbox@0.10.1':
+    resolution: {integrity: sha512-l5QH0zemshvsYGvF5K/Lee1WydL93Oc1jZlVC2gRQkRwsNxNvHpfNn59B4/u68lax6iLGemWGd/TdJHzoq6MiQ==}
+    peerDependencies:
+      '@openai/agents': ^0.3.3
+      '@opencode-ai/sdk': ^1.1.40
+      '@xterm/xterm': '>=5.0.0'
+    peerDependenciesMeta:
+      '@openai/agents':
+        optional: true
+      '@opencode-ai/sdk':
+        optional: true
+      '@xterm/xterm':
+        optional: true
 
   '@cloudflare/unenv-preset@2.16.1':
     resolution: {integrity: sha512-ECxObrMfyTl5bhQf/lZCXwo5G6xX9IAUo+nDMKK4SZ8m4Jvvxp52vilxyySSWh2YTZz8+HQ07qGH/2rEom1vDw==}
@@ -4329,7 +4349,16 @@ snapshots:
       react: 19.2.6
       zod: 4.4.3
 
+  '@cloudflare/containers@0.3.4': {}
+
   '@cloudflare/kv-asset-handler@0.5.0': {}
+
+  '@cloudflare/sandbox@0.10.1':
+    dependencies:
+      '@cloudflare/containers': 0.3.4
+      aws4fetch: 1.0.20
+      capnweb: 0.6.1
+      hono: 4.12.19
 
   '@cloudflare/unenv-preset@2.16.1(unenv@2.0.0-rc.24)(workerd@1.20260515.1)':
     dependencies:

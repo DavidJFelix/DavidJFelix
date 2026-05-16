@@ -3,14 +3,17 @@
 // Once `alchemy.run.ts` is wired up, prefer `typeof worker.Env` from the
 // Alchemy v2 output so this stays in sync automatically.
 
+import type { Sandbox as CfSandbox } from '@cloudflare/sandbox'
+
 export type Env = {
   UPLOADS: R2Bucket
   WORKSPACE: R2Bucket
   KNOWLEDGE: VectorizeIndex
+  AI: Ai
   GATEWAY: Fetcher
   DYNAMIC_PLANS: unknown
   CHAT_AGENT: DurableObjectNamespace
-  SANDBOX: DurableObjectNamespace
+  SANDBOX: DurableObjectNamespace<CfSandbox>
   RESEARCH_WORKFLOW: WorkflowNamespace
   OPENROUTER_API_KEY: string
   ANTHROPIC_API_KEY: string
@@ -33,5 +36,8 @@ declare global {
     upsert(
       vectors: Array<{ id: string; values: number[]; metadata?: unknown }>,
     ): Promise<{ count: number }>
+  }
+  interface Ai {
+    run(model: string, input: unknown): Promise<unknown>
   }
 }

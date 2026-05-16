@@ -23,6 +23,7 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.0",
     "@cloudflare/ai-chat": "^0.6.1",
+    "@cloudflare/sandbox": "^0.10.1",
     "@cloudflare/vite-plugin": "^1.37.0",
     "@openrouter/ai-sdk-provider": "^2.9.0",
     "@tailwindcss/vite": "^4.1.18",
@@ -62,6 +63,10 @@
     "wrangler": "^4.92.0"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild", "lightningcss", "workerd"]
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "lightningcss",
+      "workerd"
+    ]
   }
 }

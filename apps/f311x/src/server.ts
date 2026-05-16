@@ -1,13 +1,17 @@
 // Worker entrypoint.
-//   1. Try `routeAgentRequest` first -- Agents SDK owns WS + HTTP routing
-//      for the Durable Object backing each chat session.
-//   2. Fall back to the TanStack Start handler for everything else.
-//   3. Per-request Env is stashed so TanStack Start server functions (which
-//      don't receive `env`) can read Cloudflare bindings via `getRequestEnv`.
+//   1. `routeAgentRequest` first -- Agents SDK owns WS + HTTP routing for
+//      the Durable Object backing each chat session.
+//   2. TanStack Start handler for everything else, via the default server
+//      entry exposed by @tanstack/react-start.
+//   3. Per-request Env is stashed so TanStack Start server functions
+//      (which don't receive `env`) can read Cloudflare bindings via
+//      `getRequestEnv`.
 
+import startEntry from '@tanstack/react-start/server-entry'
 import { routeAgentRequest } from 'agents'
 import type { Env } from '#/lib/env'
 
+export { Sandbox } from '@cloudflare/sandbox'
 export { ChatAgent } from '#/agents/chat-agent'
 export { ResearchWorkflow } from '#/workflows/research'
 export { DynamicPlanWorkflow } from '#/workflows/dynamic-plan'
@@ -26,14 +30,7 @@ export default {
     try {
       const agentResponse = await routeAgentRequest(request, env)
       if (agentResponse) return agentResponse
-
-      // TODO: forward non-agent requests to the TanStack Start handler.
-      // The current shape of `createStartHandler` on Workers depends on
-      // whether `@cloudflare/vite-plugin` injects the server entry. Confirm
-      // and wire once the build pipeline is verified.
-      return new Response('f311x worker is running', {
-        headers: { 'content-type': 'text/plain; charset=utf-8' },
-      })
+      return startEntry.fetch(request)
     } finally {
       currentEnv = null
     }

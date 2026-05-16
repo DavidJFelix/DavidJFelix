@@ -1,69 +1,52 @@
 // Alchemy v2 stack for f311x. Effect-native -- infrastructure and runtime
 // composed as Effects. See docs/projects/f311x/plan.md for the full layout.
 //
-// TODO: confirm the v2 API surface against https://v2.alchemy.run before
-// fleshing this out -- the beta channel has moved recently. The structure
-// below sketches intent.
+// Run with `pnpm deploy` (which invokes `alchemy deploy`). This file is
+// loaded by the Alchemy CLI, not by `tsc`, so it lives outside the
+// project tsconfig include set.
+//
+// TODO: Vectorize is not (yet) a first-class Alchemy v2 resource. Until
+// it is, provision the index out-of-band (via `wrangler vectorize create`
+// or the Cloudflare API) and bind it through wrangler.toml.
+// TODO: Confirm the CLI entry contract once v2 stabilizes -- exporting a
+// `Stack.make(...)` value or a default `Effect` are both candidates.
 
+import * as Cloudflare from 'alchemy/Cloudflare'
 import { Effect } from 'effect'
 
-// Placeholder type-only shim. Replace with the real Alchemy v2 imports
-// once the install is verified.
-type ResourceHandle<T> = Effect.Effect<T, never, never>
+export default Effect.gen(function* () {
+  // --- R2 -----------------------------------------------------------
+  const uploads = yield* Cloudflare.R2Bucket('f311x-uploads')
+  const workspace = yield* Cloudflare.R2Bucket('f311x-agent-workspace')
 
-const program = Effect.gen(function* () {
-  // R2 buckets
-  const uploads = yield* r2Bucket('f311x-uploads')
-  const workspace = yield* r2Bucket('f311x-agent-workspace')
+  // --- AI Gateway ---------------------------------------------------
+  const gateway = yield* Cloudflare.AiGateway('f311x-gateway')
 
-  // Vectorize
-  const knowledge = yield* vectorize('f311x-knowledge', {
-    dimensions: 1536,
-    metric: 'cosine',
-  })
+  // --- Worker Loader (Dynamic Workflows) ----------------------------
+  const dynamicPlans = yield* Cloudflare.DynamicWorkerLoader('f311x-dynamic-plans')
 
-  // AI Gateway (caching, rate-limiting, observability)
-  const gateway = yield* aiGateway('f311x-gateway')
-
-  // Worker Loader binding for Dynamic Workflows
-  const workerLoader = yield* workerLoaderBinding('DYNAMIC_PLANS')
-
-  // Main Worker
-  yield* worker('f311x', {
-    entrypoint: './src/server.ts',
+  // --- Worker -------------------------------------------------------
+  // DO classes (ChatAgent, Sandbox) and Workflow classes (ResearchWorkflow,
+  // DynamicPlanWorkflow) are picked up from `src/server.ts` exports.
+  const worker = yield* Cloudflare.Worker('f311x-worker', {
+    main: './src/server.ts',
+    compatibilityDate: '2026-05-01',
+    compatibilityFlags: ['nodejs_compat'],
     bindings: {
       UPLOADS: uploads,
       WORKSPACE: workspace,
-      KNOWLEDGE: knowledge,
       GATEWAY: gateway,
-      DYNAMIC_PLANS: workerLoader,
-      // Durable Object namespaces -- ChatAgent + Sandbox
-      CHAT_AGENT: durableObjectNamespace('ChatAgent'),
-      SANDBOX: durableObjectNamespace('Sandbox'),
-      // Static Workflow binding
-      RESEARCH_WORKFLOW: workflow('research', './src/workflows/research.ts'),
-      // Secrets
-      OPENROUTER_API_KEY: secret('OPENROUTER_API_KEY'),
-      ANTHROPIC_API_KEY: secret('ANTHROPIC_API_KEY'),
+      DYNAMIC_PLANS: dynamicPlans,
+      // Secrets (set via `alchemy secrets set` or env at deploy time)
+      OPENROUTER_API_KEY: Cloudflare.secret('OPENROUTER_API_KEY'),
+      ANTHROPIC_API_KEY: Cloudflare.secret('ANTHROPIC_API_KEY'),
+      // TODO: KNOWLEDGE (Vectorize), AI (Workers AI), CHAT_AGENT + SANDBOX
+      // (DO namespaces), RESEARCH_WORKFLOW (Workflow binding) -- wire once
+      // the corresponding Alchemy v2 resources / patterns are confirmed.
     },
   })
+
+  return { uploads, workspace, gateway, dynamicPlans, worker }
 })
 
-// --- TODO: replace these stubs with real Alchemy v2 resource constructors ---
-
-declare function r2Bucket(name: string): ResourceHandle<unknown>
-declare function vectorize(
-  name: string,
-  opts: { dimensions: number; metric: 'cosine' | 'dot' | 'euclidean' },
-): ResourceHandle<unknown>
-declare function aiGateway(name: string): ResourceHandle<unknown>
-declare function workerLoaderBinding(name: string): ResourceHandle<unknown>
-declare function worker(
-  name: string,
-  opts: { entrypoint: string; bindings: Record<string, unknown> },
-): ResourceHandle<unknown>
-declare function durableObjectNamespace(className: string): unknown
-declare function workflow(name: string, entrypoint: string): unknown
-declare function secret(name: string): unknown
-
-export default program
+export type WorkerEnv = Cloudflare.InferEnv<typeof Cloudflare.Worker>

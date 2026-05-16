@@ -15,7 +15,7 @@ Stand up sites for owned Cloudflare domains. Placeholders are acceptable for mos
 | revision.city | TanStack Start | |
 | pkg.dog / pkgdog.com | Vue | |
 | startchi.com | TanStack Start | |
-| f311x.com | SvelteKit | |
+| f311x.com | TanStack Start | Effect-native AI agent app -- see [f311x](../f311x/plan.md) |
 
 ## Related
 

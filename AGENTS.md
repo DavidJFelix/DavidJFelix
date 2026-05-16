@@ -19,7 +19,7 @@ Personal monorepo containing web applications, exercises, and configuration. No 
 ## Conventions
 
 - **Commits/PRs:** [Conventional commits](https://www.conventionalcommits.org/) for PR titles
-- **Naming:** Lowercase kebab-case for all directories and documentation files
+- **Naming:** Lowercase kebab-case for all directories and files (source, config, docs). React / Astro components and a few framework-mandated names (e.g. `__root.tsx`, generated `*.gen.ts`) are the documented exceptions -- see [CLAUDE.md](CLAUDE.md#file-naming)
 - **No emojis** in code, commits, or documentation
 - **Tooling:** Biome (JS/TS/CSS/JSON), Oxlint, Prettier (MD/MDX only), cspell
 - **Project docs are ephemeral:** `docs/projects/<name>/` holds working notes for in-flight work. When a project completes, capture it in `docs/changelog/` and delete the directory. The changelog is the durable record.

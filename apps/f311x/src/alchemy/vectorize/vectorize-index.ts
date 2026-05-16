@@ -20,7 +20,7 @@ import { Resource } from 'alchemy/Resource'
 import { CloudflareEnvironment } from 'alchemy/Cloudflare'
 import type { Providers } from 'alchemy/Cloudflare'
 
-import { VectorizeIndexBinding } from './VectorizeIndexBinding.ts'
+import { VectorizeIndexBinding } from './vectorize-index-binding.ts'
 
 export type VectorizeMetric = 'cosine' | 'euclidean' | 'dot-product'
 

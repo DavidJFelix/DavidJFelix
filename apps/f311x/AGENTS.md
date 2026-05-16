@@ -105,13 +105,13 @@ src/
   routes/                 # TanStack Start file-based routes
   lib/                    # schemas.ts (Zod), env.ts (typed bindings)
   alchemy/                # Custom Alchemy v2 resources (excluded from tsc)
-    Vectorize/            # VectorizeIndex resource + binding + providers
+    vectorize/            # VectorizeIndex resource + binding + providers
 scripts/ingest.ts         # Bun script -- same Effects, different layer
 ```
 
 ## Custom Alchemy resources
 
-`src/alchemy/Vectorize/` is an in-repo custom Alchemy v2 provider for Cloudflare Vectorize. Follows the pattern at https://v2.alchemy.run/guides/custom-provider/ and mirrors the structure of `alchemy/Cloudflare/KV/`. Both this directory and `alchemy.run.ts` are excluded from `tsc` because Alchemy v2 peer-deps `effect@>=4.0.0-beta.66` while the app runtime is still on `effect@3.21`. Drop the exclude once we move to Effect 4.
+`src/alchemy/vectorize/` is an in-repo custom Alchemy v2 provider for Cloudflare Vectorize. Follows the pattern at https://v2.alchemy.run/guides/custom-provider/ and mirrors the structure of `alchemy/Cloudflare/KV/`. Both this directory and `alchemy.run.ts` are excluded from `tsc` because Alchemy v2 peer-deps `effect@>=4.0.0-beta.66` while the app runtime is still on `effect@3.21`. Drop the exclude once we move to Effect 4.
 
 ## Scripts
 

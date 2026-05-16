@@ -8,7 +8,7 @@ import * as Layer from 'effect/Layer'
 import * as Binding from 'alchemy/Binding'
 import type { ResourceLike } from 'alchemy/Resource'
 import { isWorker, WorkerEnvironment } from 'alchemy/Cloudflare'
-import type { VectorizeIndex } from './VectorizeIndex.ts'
+import type { VectorizeIndex } from './vectorize-index.ts'
 
 export class VectorizeIndexError extends Data.TaggedError('VectorizeIndexError')<{
   message: string

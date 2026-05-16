@@ -6,14 +6,14 @@
 // project tsconfig include set.
 //
 // VectorizeIndex is provided by an in-repo custom Alchemy resource
-// (src/alchemy/Vectorize/) since v2 doesn't yet ship a first-party
+// (src/alchemy/vectorize/) since v2 doesn't yet ship a first-party
 // Vectorize provider.
 
 import * as Alchemy from 'alchemy'
 import * as Cloudflare from 'alchemy/Cloudflare'
 import * as Effect from 'effect/Effect'
 import * as Layer from 'effect/Layer'
-import * as Vectorize from './src/alchemy/Vectorize/index.ts'
+import * as Vectorize from './src/alchemy/vectorize/index.ts'
 
 export default Alchemy.Stack(
   'f311x',

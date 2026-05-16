@@ -10,12 +10,12 @@
 
 import * as Layer from 'effect/Layer'
 import * as Provider from 'alchemy/Provider'
-import { VectorizeIndex, VectorizeIndexProvider } from './VectorizeIndex.ts'
+import { VectorizeIndex, VectorizeIndexProvider } from './vectorize-index.ts'
 import {
   VectorizeIndexBindingLive,
   VectorizeIndexBindingPolicy,
   VectorizeIndexBindingPolicyLive,
-} from './VectorizeIndexBinding.ts'
+} from './vectorize-index-binding.ts'
 
 export class VectorizeProviders extends Provider.ProviderCollection<VectorizeProviders>()(
   'F311x.Cloudflare.Vectorize',

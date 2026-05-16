@@ -1,0 +1,35 @@
+name: Cron Renovate
+
+# Self-hosted Renovate runner. Reads .github/renovate.json for repo config
+# (batching, schedule, lockFileMaintenance, vulnerability handling).
+on:
+  schedule:
+    # Hourly wake-up. Actual PR cadence is controlled by the `schedule:`
+    # field inside .github/renovate.json (weekly, Monday); this cron just
+    # keeps Renovate responsive between sweeps for dashboard checkboxes,
+    # PR rebases, and security alerts.
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+jobs:
+  renovate:
+    name: renovate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      # Renovate authenticates via RENOVATE_TOKEN (PAT or GitHub-App-minted
+      # token) for all git and API operations, so the workflow's
+      # GITHUB_TOKEN only needs read access for the checkout.
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+
+      - name: renovate
+        uses: renovatebot/github-action@693b9ef15eec82123529a37c782242f091365961 # v46.1.14
+        with:
+          token: ${{ secrets.RENOVATE_TOKEN }}
+          # Per-repo config is auto-discovered from .github/renovate.json;
+          # no configurationFile needed.

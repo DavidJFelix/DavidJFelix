@@ -57,6 +57,18 @@ A Claude skill that:
   `CLAUDE.md` — but that's the exception, not the routine path.
 - Document the policy alongside the skill
 
+## Open: transitive dependency drift
+
+Current gap: Renovate is pinning newer versions of transitive deps in lockfiles, and our sweep doesn't see them. The skill only inspects manifests.
+
+Don't build a new tool for this. The canonical answer is **Renovate's `lockFileMaintenance`** — enabling it on a schedule produces lockfile-only PRs that refresh transitives within manifest constraints. `config:best-practices` (what `apps/djf.io/.github/renovate.json` extends today) does **not** include it.
+
+Decision items:
+
+- Roll `lockFileMaintenance` onto every project with a Renovate config (currently only djf.io has one — extend coverage first)
+- Define the division of labor: Renovate owns transitive/lockfile freshness, our skill owns manifest bumps + non-npm ecosystems (mise, Cargo) + cross-ecosystem batching
+- Confirm Dependabot is off where Renovate is on (avoid double-PR churn)
+
 ## Working Notes
 
 - Collaborative project — proposals and tradeoffs go to user before execution.

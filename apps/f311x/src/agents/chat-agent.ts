@@ -7,7 +7,7 @@ import {
   type ToolSet,
   type UIMessage,
 } from 'ai'
-import { Effect, Schedule } from 'effect'
+import { Effect } from 'effect'
 import type { Env } from '#/lib/env'
 import { makeFetchRuntime } from '#/effects/runtime'
 import { Embedder } from '#/effects/services/embedder'
@@ -36,6 +36,11 @@ export class ChatAgent extends AIChatAgent<Env> {
         convertToModelMessages(this.messages),
       )
 
+      // `streamText` returns synchronously -- the LLM request lives inside
+      // the returned `StreamTextResult`. Effect.timeout / Effect.retry
+      // would wrap an already-resolved value and never fire. Resilience
+      // for the underlying HTTP call lives in the AI SDK's own
+      // `maxRetries` and the abort signal we thread through.
       const result = yield* Effect.try({
         try: () =>
           streamText({
@@ -44,16 +49,11 @@ export class ChatAgent extends AIChatAgent<Env> {
             tools: toAiSdkToolSet(tools as never),
             system: this.systemPrompt(matches),
             abortSignal: signal,
+            maxRetries: 2,
             onFinish,
           }),
         catch: (cause) => cause,
-      }).pipe(
-        Effect.timeout('120 seconds'),
-        Effect.retry({
-          schedule: Schedule.jittered(Schedule.exponential('500 millis', 2.0)),
-          times: 2,
-        }),
-      )
+      })
 
       return result.toUIMessageStreamResponse()
     })

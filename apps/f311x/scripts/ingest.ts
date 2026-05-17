@@ -31,7 +31,7 @@ const VectorStoreBunLive = Layer.succeed(
 const program = Effect.gen(function* () {
   const store = yield* VectorStore
   const docs = [
-    { id: 'doc-1', values: new Array(1536).fill(0), metadata: { source: 'cli' } },
+    { id: 'doc-1', values: new Array(768).fill(0), metadata: { source: 'cli' } },
   ]
   const res = yield* store.upsert(docs)
   console.log(`[ingest] upserted ${res.count}`)

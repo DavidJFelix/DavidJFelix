@@ -1,29 +1,32 @@
-import React from 'react';
+import React from 'react'
 
-const matchNotUppercaseAlphabetRegex =  /[^A-Z]/g
-const validGuessRegex = "[A-Z]{5}"
-
+const matchNotUppercaseAlphabetRegex = /[^A-Z]/g
+const validGuessRegex = '[A-Z]{5}'
 
 function GuessInput({onSubmit}) {
-  const [guess, setGuess] = React.useState('');
-  const onGuessChange = React.useCallback((event) => {
-    const nextGuess = event
-      .target
-      .value
-      .toUpperCase()
-      .replaceAll(matchNotUppercaseAlphabetRegex, "")
-      .slice(0,5)
-    setGuess(nextGuess);
-  }, [setGuess])
-  const onGuessSubmit = React.useCallback((event) => {
-    event.preventDefault();
-    if (guess.length !== 5) {
-      return
-    }
+  const [guess, setGuess] = React.useState('')
+  const onGuessChange = React.useCallback(
+    (event) => {
+      const nextGuess = event.target.value
+        .toUpperCase()
+        .replaceAll(matchNotUppercaseAlphabetRegex, '')
+        .slice(0, 5)
+      setGuess(nextGuess)
+    },
+    [setGuess],
+  )
+  const onGuessSubmit = React.useCallback(
+    (event) => {
+      event.preventDefault()
+      if (guess.length !== 5) {
+        return
+      }
 
-    onSubmit(guess)
-    setGuess('')
-  }, [guess, setGuess, onSubmit]);
+      onSubmit(guess)
+      setGuess('')
+    },
+    [guess, setGuess, onSubmit],
+  )
 
   return (
     <form className="guess-input-wrapper" onSubmit={onGuessSubmit}>
@@ -43,4 +46,4 @@ function GuessInput({onSubmit}) {
   )
 }
 
-export default GuessInput;
+export default GuessInput

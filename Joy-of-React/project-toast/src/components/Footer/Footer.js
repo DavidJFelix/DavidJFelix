@@ -1,6 +1,6 @@
-import React from 'react';
+import React from 'react'
 
-import styles from './Footer.module.css';
+import styles from './Footer.module.css'
 
 function Footer() {
   return (
@@ -14,7 +14,7 @@ function Footer() {
       </p>
       <p>© 2022-present Joshua Comeau. All rights reserved.</p>
     </footer>
-  );
+  )
 }
 
-export default Footer;
+export default Footer

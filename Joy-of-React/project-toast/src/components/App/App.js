@@ -1,8 +1,8 @@
-import React from 'react';
+import React from 'react'
 
-import Footer from '../Footer';
-import ToastPlayground from '../ToastPlayground';
-import ToastProvider from '../ToastProvider';
+import Footer from '../Footer'
+import ToastPlayground from '../ToastPlayground'
+import ToastProvider from '../ToastProvider'
 
 function App() {
   return (
@@ -10,7 +10,7 @@ function App() {
       <ToastPlayground />
       <Footer />
     </ToastProvider>
-  );
+  )
 }
 
-export default App;
+export default App

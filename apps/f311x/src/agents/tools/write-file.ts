@@ -3,7 +3,7 @@ import {Effect} from 'effect'
 import {makeFetchRuntime} from '#/effects/runtime'
 import {ObjectStore} from '#/effects/services/object-store'
 import {writeFileInput} from '#/lib/schemas'
-import {getRequestEnv} from '#/server'
+import {getRequestEnv} from '#/lib/request-context'
 
 export const writeFileDef = toolDefinition({
   name: 'writeFile',

@@ -15,7 +15,6 @@ import {runWithEnv} from '#/lib/request-context'
 
 export {Sandbox} from '@cloudflare/sandbox'
 export {ChatAgent} from '#/agents/chat-agent'
-export {getRequestEnv} from '#/lib/request-context'
 export {DynamicPlanWorkflow} from '#/workflows/dynamic-plan'
 export {ResearchWorkflow} from '#/workflows/research'
 

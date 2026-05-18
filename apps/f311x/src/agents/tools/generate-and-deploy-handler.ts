@@ -4,7 +4,7 @@ import {makeFetchRuntime} from '#/effects/runtime'
 import {ObjectStore} from '#/effects/services/object-store'
 import {WorkflowDispatcher} from '#/effects/services/workflow-dispatcher'
 import {generateAndDeployHandlerInput} from '#/lib/schemas'
-import {getRequestEnv} from '#/server'
+import {getRequestEnv} from '#/lib/request-context'
 
 export const generateAndDeployHandlerDef = toolDefinition({
   name: 'generateAndDeployHandler',

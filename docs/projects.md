@@ -20,6 +20,12 @@ Converge on a single, consistent set of linters and formatters across the entire
 
 **Status**: In Progress
 
+### [LLM Automation Migration](./projects/llm-automation-migration/plan.md)
+
+Move unattended LLM-driven GitHub Actions (freshness cron, PR review) off Anthropic-billed Claude onto a cheaper runtime (pi-core on bun, or opencode).
+
+**Status**: In Progress
+
 ## Priority 2 — djf.io Cluster
 
 All touching the same app; sequence together.

@@ -64,6 +64,15 @@ Same ecosystem → same config. Per-project overrides only when there's a real, 
 - Single CI job that runs the full lint + format + check + spell suite
 - VS Code / editor settings that match the standard (format-on-save, correct formatter per language)
 
+### Phase 3b: Per-project subtree checks
+
+When a project's subtree changes (or its build is triggered), CI runs that project's own linters, format checks, tests, and build — not just the repo-wide suite.
+
+- Each app declares its check commands (lint, format, test, build) in a known, discoverable form (mise tasks preferred)
+- CI detects which project subtrees changed in a PR and runs only those projects' checks
+- Repo-wide checks (cspell, root Biome/Oxlint) continue to run on every PR
+- One canonical entry point per app so contributors (human and AI) don't have to memorize per-app conventions
+
 ### Phase 4: Document
 
 - Short reference doc (e.g. `docs/tooling-standard.md` or a section in CLAUDE.md) listing the ownership map per ecosystem

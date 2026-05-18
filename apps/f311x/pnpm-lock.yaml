@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@ai-sdk/anthropic':
-        specifier: ^3.0.0
-        version: 3.0.78(zod@4.4.3)
       '@cloudflare/ai-chat':
         specifier: ^0.6.1
         version: 0.6.2(@ai-sdk/react@3.0.186(react@19.2.6)(zod@4.4.3))(agents@0.12.4)(ai@6.0.184(zod@4.4.3))(react@19.2.6)(zod@4.4.3)
@@ -32,9 +29,6 @@ importers:
       '@tanstack/ai':
         specifier: ^0.18.0
         version: 0.18.0(@opentelemetry/api@1.9.1)
-      '@tanstack/ai-openrouter':
-        specifier: ^0.9.0
-        version: 0.9.1(@tanstack/ai@0.18.0(@opentelemetry/api@1.9.1))
       '@tanstack/ai-react':
         specifier: ^0.10.0
         version: 0.10.0(@opentelemetry/api@1.9.1)(@tanstack/ai@0.18.0(@opentelemetry/api@1.9.1))(@types/react@19.2.14)(react@19.2.6)
@@ -65,9 +59,6 @@ importers:
       effect:
         specifier: ^3.21.0
         version: 3.21.2
-      lucide-react:
-        specifier: ^0.545.0
-        version: 0.545.0(react@19.2.6)
       react:
         specifier: ^19.2.0
         version: 19.2.6
@@ -131,12 +122,6 @@ packages:
 
   '@ag-ui/core@0.0.52':
     resolution: {integrity: sha512-Xo0bUaNV56EqylzcrAuhUkQX7et7+SZIrqZZtEByGwEq/I1EHny6ZMkWHLkKR7UNi0FJZwJyhKYmKJS3B2SEgA==}
-
-  '@ai-sdk/anthropic@3.0.78':
-    resolution: {integrity: sha512-0OY12G20cUt6iU6htpEA1491Oz++NVxZxlmWGX4B7rSbeZ5pnDmOu6YtW9BKzdZlNx5Gn23i6WMxyZFoMKNcgA==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4.1.8
 
   '@ai-sdk/gateway@3.0.115':
     resolution: {integrity: sha512-xonmGfN9pt54WdKqMzWe68BRYS3rsYvraBzioyA0gfNcecHs8Ir5qk/X8grJSyZ95hghjWiOphrK6bAc11E6SA==}
@@ -1152,9 +1137,6 @@ packages:
       ai: ^6.0.0
       zod: ^3.25.0 || ^4.0.0
 
-  '@openrouter/sdk@0.12.14':
-    resolution: {integrity: sha512-G32CZ1IkmtsGfQF7/mzcvt7W0Lmd6HUHFGjDWv5knBvL6sJcMmX6i3VPSIpHQYSgEqRQSxFuDROP6iErTu7XcA==}
-
   '@opentelemetry/api@1.9.1':
     resolution: {integrity: sha512-gLyJlPHPZYdAk1JENA9LeHejZe1Ti77/pTeFm/nMXmQH/HFZlcS/O2XJB+L8fkbrNSqhdtlvjBVjxwUYanNH5Q==}
     engines: {node: '>=8.0.0'}
@@ -1715,20 +1697,12 @@ packages:
     peerDependencies:
       '@tanstack/ai': 0.18.0
 
-  '@tanstack/ai-openrouter@0.9.1':
-    resolution: {integrity: sha512-dPcX4Dqy1e3na/M31WDLQ769JRAhtjx2/VqMZvEJZBgnG1bt2h2iY28gC0uXqxSmoCm4UMxWDwZ/HSb4R/oisg==}
-    peerDependencies:
-      '@tanstack/ai': ^0.18.0
-
   '@tanstack/ai-react@0.10.0':
     resolution: {integrity: sha512-OmY0buHaHG0GxL0xvDQ4yUtI2JAE0A2b/hlxOQq6qKOsWMgECZ/QiEXyXGwgkLgMS9xQ30LXSVYZ3AnXolfU/w==}
     peerDependencies:
       '@tanstack/ai': ^0.18.0
       '@types/react': '>=18.0.0'
       react: '>=18.0.0'
-
-  '@tanstack/ai-utils@0.2.0':
-    resolution: {integrity: sha512-ttFkUEg60sAUHPZZ9bwDuJS0K2pcI6JLpRcJS7FAiqD3+h3CtJZaF38eWG5nBy1w6fJ9zfaG7ExZf2AQpcyzDw==}
 
   '@tanstack/ai@0.18.0':
     resolution: {integrity: sha512-RIS9dwPBOErob2i62ppie5GnxvzzI+PNZY8yy5bv2mmwPCoJp82qLdDxDC9T+GHQv+63g/xQUH69st+fK1u5lA==}
@@ -2930,11 +2904,6 @@ packages:
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
-  lucide-react@0.545.0:
-    resolution: {integrity: sha512-7r1/yUuflQDSt4f1bpn5ZAocyIxcTyVyBBChSVtBKn5M+392cPmI5YJMWOJKk/HUWGm5wg83chlAZtCcGbEZtw==}
-    peerDependencies:
-      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
-
   lz-string@1.5.0:
     resolution: {integrity: sha512-h5bgJWpxJNswbU7qCrV0tIKQCaS3blPDrqKWx+QxzuzL1zGUzij9XCWLrSLsJPu5t+eWA/ycetzYAO5IOMcWAQ==}
     hasBin: true
@@ -3839,12 +3808,6 @@ snapshots:
   '@ag-ui/core@0.0.52':
     dependencies:
       zod: 3.25.76
-
-  '@ai-sdk/anthropic@3.0.78(zod@4.4.3)':
-    dependencies:
-      '@ai-sdk/provider': 3.0.10
-      '@ai-sdk/provider-utils': 4.0.27(zod@4.4.3)
-      zod: 4.4.3
 
   '@ai-sdk/gateway@3.0.115(zod@4.4.3)':
     dependencies:
@@ -4893,10 +4856,6 @@ snapshots:
       ai: 6.0.184(zod@4.4.3)
       zod: 4.4.3
 
-  '@openrouter/sdk@0.12.14':
-    dependencies:
-      zod: 4.4.3
-
   '@opentelemetry/api@1.9.1': {}
 
   '@oxc-parser/binding-android-arm-eabi@0.120.0':
@@ -5283,12 +5242,6 @@ snapshots:
       '@tanstack/ai': 0.18.0(@opentelemetry/api@1.9.1)
       '@tanstack/devtools-event-client': 0.4.3
 
-  '@tanstack/ai-openrouter@0.9.1(@tanstack/ai@0.18.0(@opentelemetry/api@1.9.1))':
-    dependencies:
-      '@openrouter/sdk': 0.12.14
-      '@tanstack/ai': 0.18.0(@opentelemetry/api@1.9.1)
-      '@tanstack/ai-utils': 0.2.0
-
   '@tanstack/ai-react@0.10.0(@opentelemetry/api@1.9.1)(@tanstack/ai@0.18.0(@opentelemetry/api@1.9.1))(@types/react@19.2.14)(react@19.2.6)':
     dependencies:
       '@tanstack/ai': 0.18.0(@opentelemetry/api@1.9.1)
@@ -5297,8 +5250,6 @@ snapshots:
       react: 19.2.6
     transitivePeerDependencies:
       - '@opentelemetry/api'
-
-  '@tanstack/ai-utils@0.2.0': {}
 
   '@tanstack/ai@0.18.0(@opentelemetry/api@1.9.1)':
     dependencies:
@@ -6628,10 +6579,6 @@ snapshots:
   lru-cache@5.1.1:
     dependencies:
       yallist: 3.1.1
-
-  lucide-react@0.545.0(react@19.2.6):
-    dependencies:
-      react: 19.2.6
 
   lz-string@1.5.0: {}
 

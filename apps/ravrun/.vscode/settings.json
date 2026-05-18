@@ -9,8 +9,7 @@
   },
   "files.readonlyInclude": {
     "**/routeTree.gen.ts": true
-  }
-  ,
+  },
   "[html]": {
     "editor.defaultFormatter": "vscode.html-language-features"
   }

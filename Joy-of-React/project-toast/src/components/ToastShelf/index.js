@@ -1,2 +1,2 @@
-export * from "./ToastShelf";
-export { default } from "./ToastShelf";
+export * from './ToastShelf'
+export {default} from './ToastShelf'

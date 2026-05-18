@@ -174,7 +174,7 @@ function Week({programIndex, programWeek, start}: WeekProps) {
 
   return (
     <>
-      <div className='p-2 text-center'>Week {programIndex + 1}</div>
+      <div className="p-2 text-center">Week {programIndex + 1}</div>
       {programWeek.days.map((programDay, i) => {
         const date = addDays(start, i)
         const {id: dayId} = programDay
@@ -195,7 +195,7 @@ function ProgramCalendar() {
 
   const {id} = demoSchedule
   return (
-    <div className='p-2 grid grid-cols-8 gap-2'>
+    <div className="p-2 grid grid-cols-8 gap-2">
       {demoSchedule.weeks.map((programWeek, i) => {
         const weekStart = addDays(start, i * 7)
         const {id: weekId} = programWeek

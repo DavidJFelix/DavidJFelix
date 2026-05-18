@@ -2,18 +2,23 @@ import {type Layer, ManagedRuntime} from 'effect'
 import type {Env} from '#/lib/env'
 import {liveLayer} from './layers'
 
-// Cloudflare bindings are only available inside the `fetch` handler, so
-// `ManagedRuntime` is constructed per request from env-derived live layers.
-// Callers must dispose the runtime when the request ends (or pin it to the
-// request lifetime via `using`).
-export const makeFetchRuntime = (env: Env) => ManagedRuntime.make(liveLayer(env))
+// Cloudflare bindings live inside `env`, which is stable for the lifetime
+// of a Worker isolate / DO instance -- every request in that isolate gets
+// back the same `env` reference. Memoize the per-Env runtime so we build
+// the layer graph once instead of on every request / tool call, and so
+// we never leak undisposed `ManagedRuntime` scopes.
+const runtimes = new WeakMap<Env, FetchRuntime>()
 
-export type FetchRuntime = ReturnType<typeof makeFetchRuntime>
+export const makeFetchRuntime = (env: Env): FetchRuntime => {
+  let runtime = runtimes.get(env)
+  if (!runtime) {
+    runtime = ManagedRuntime.make(liveLayer(env))
+    runtimes.set(env, runtime)
+  }
+  return runtime
+}
 
-// Convenience: run an Effect with the request's AbortSignal so client
-// disconnects propagate as cancellation.
-export const runWithSignal = <A, E>(
-  runtime: FetchRuntime,
-  program: import('effect').Effect.Effect<A, E, Layer.Layer.Success<ReturnType<typeof liveLayer>>>,
-  signal: AbortSignal,
-): Promise<A> => runtime.runPromise(program, {signal})
+export type FetchRuntime = ManagedRuntime.ManagedRuntime<
+  Layer.Layer.Success<ReturnType<typeof liveLayer>>,
+  never
+>

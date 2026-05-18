@@ -12,6 +12,7 @@ import {makeFetchRuntime} from '#/effects/runtime'
 import {Embedder} from '#/effects/services/embedder'
 import {VectorStore} from '#/effects/services/vector-store'
 import type {Env} from '#/lib/env'
+import {runWithEnv} from '#/lib/request-context'
 import {tools} from './tools'
 import {toAiSdkToolSet} from './tools/adapter'
 
@@ -24,6 +25,17 @@ const DEFAULT_MODEL = 'anthropic/claude-sonnet-4-6'
 
 export class ChatAgent extends AIChatAgent<Env> {
   async onChatMessage(
+    onFinish: StreamTextOnFinishCallback<ToolSet>,
+    options?: {abortSignal?: AbortSignal},
+  ): Promise<Response | undefined> {
+    // Seed the per-request env so tool callbacks invoked by streamText
+    // (running in this DO's execution context, not the Worker's) can
+    // resolve `getRequestEnv()`. Without this, every LLM-driven tool
+    // call throws "called outside of a request scope".
+    return runWithEnv(this.env, async () => this.runTurn(onFinish, options))
+  }
+
+  private async runTurn(
     onFinish: StreamTextOnFinishCallback<ToolSet>,
     options?: {abortSignal?: AbortSignal},
   ): Promise<Response | undefined> {

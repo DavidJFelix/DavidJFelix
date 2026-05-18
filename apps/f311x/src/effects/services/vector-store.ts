@@ -1,5 +1,5 @@
-import { Context, Data, Effect, Layer } from 'effect'
-import type { Env } from '#/lib/env'
+import {Context, Data, Effect, Layer} from 'effect'
+import type {Env} from '#/lib/env'
 
 export class VectorStoreError extends Data.TaggedError('VectorStoreError')<{
   readonly op: 'query' | 'upsert'
@@ -15,11 +15,11 @@ export interface VectorMatch {
 export interface VectorStore {
   readonly query: (
     vector: number[],
-    opts?: { topK?: number; filter?: Record<string, unknown> },
+    opts?: {topK?: number; filter?: Record<string, unknown>},
   ) => Effect.Effect<ReadonlyArray<VectorMatch>, VectorStoreError>
   readonly upsert: (
-    vectors: ReadonlyArray<{ id: string; values: number[]; metadata?: unknown }>,
-  ) => Effect.Effect<{ count: number }, VectorStoreError>
+    vectors: ReadonlyArray<{id: string; values: number[]; metadata?: unknown}>,
+  ) => Effect.Effect<{count: number}, VectorStoreError>
 }
 
 export const VectorStore = Context.GenericTag<VectorStore>('@f311x/VectorStore')
@@ -34,12 +34,12 @@ export const VectorStoreLive = (env: Env) =>
             const res = await env.KNOWLEDGE.query(vector, opts)
             return res.matches
           },
-          catch: (cause) => new VectorStoreError({ op: 'query', cause }),
+          catch: (cause) => new VectorStoreError({op: 'query', cause}),
         }),
       upsert: (vectors) =>
         Effect.tryPromise({
           try: () => env.KNOWLEDGE.upsert([...vectors]),
-          catch: (cause) => new VectorStoreError({ op: 'upsert', cause }),
+          catch: (cause) => new VectorStoreError({op: 'upsert', cause}),
         }),
     }),
   )

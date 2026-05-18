@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import {z} from 'zod'
 
 export const searchKnowledgeInput = z.object({
   query: z.string().min(1),
@@ -37,6 +37,4 @@ export const generateAndDeployHandlerInput = z.object({
   planId: z.string().min(1),
   source: z.string().min(1),
 })
-export type GenerateAndDeployHandlerInput = z.infer<
-  typeof generateAndDeployHandlerInput
->
+export type GenerateAndDeployHandlerInput = z.infer<typeof generateAndDeployHandlerInput>

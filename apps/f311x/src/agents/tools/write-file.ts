@@ -1,9 +1,9 @@
-import { toolDefinition } from '@tanstack/ai'
-import { Effect } from 'effect'
-import { writeFileInput } from '#/lib/schemas'
-import { makeFetchRuntime } from '#/effects/runtime'
-import { ObjectStore } from '#/effects/services/object-store'
-import { getRequestEnv } from '#/server'
+import {toolDefinition} from '@tanstack/ai'
+import {Effect} from 'effect'
+import {makeFetchRuntime} from '#/effects/runtime'
+import {ObjectStore} from '#/effects/services/object-store'
+import {writeFileInput} from '#/lib/schemas'
+import {getRequestEnv} from '#/server'
 
 export const writeFileDef = toolDefinition({
   name: 'writeFile',
@@ -16,7 +16,7 @@ export const writeFile = writeFileDef.server(async (input) => {
   const program = Effect.gen(function* () {
     const store = yield* ObjectStore
     yield* store.put(input.bucket, input.key, input.contents, input.contentType)
-    return { ok: true as const, key: input.key }
+    return {ok: true as const, key: input.key}
   })
   return runtime.runPromise(program)
 })

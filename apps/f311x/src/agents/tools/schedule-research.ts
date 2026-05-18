@@ -1,9 +1,9 @@
-import { toolDefinition } from '@tanstack/ai'
-import { Effect } from 'effect'
-import { scheduleResearchInput } from '#/lib/schemas'
-import { makeFetchRuntime } from '#/effects/runtime'
-import { WorkflowDispatcher } from '#/effects/services/workflow-dispatcher'
-import { getRequestEnv } from '#/server'
+import {toolDefinition} from '@tanstack/ai'
+import {Effect} from 'effect'
+import {makeFetchRuntime} from '#/effects/runtime'
+import {WorkflowDispatcher} from '#/effects/services/workflow-dispatcher'
+import {scheduleResearchInput} from '#/lib/schemas'
+import {getRequestEnv} from '#/server'
 
 export const scheduleResearchDef = toolDefinition({
   name: 'scheduleResearch',
@@ -20,7 +20,7 @@ export const scheduleResearch = scheduleResearchDef.server(async (input) => {
       topic: input.topic,
       depth: input.depth,
     })
-    return { id: handle.id }
+    return {id: handle.id}
   })
   return runtime.runPromise(program)
 })

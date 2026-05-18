@@ -1,19 +1,19 @@
-import { createOpenRouter } from '@openrouter/ai-sdk-provider'
-import { AIChatAgent } from 'agents/ai-chat-agent'
+import {createOpenRouter} from '@openrouter/ai-sdk-provider'
+import {AIChatAgent} from 'agents/ai-chat-agent'
 import {
   convertToModelMessages,
-  streamText,
   type StreamTextOnFinishCallback,
+  streamText,
   type ToolSet,
   type UIMessage,
 } from 'ai'
-import { Effect } from 'effect'
-import type { Env } from '#/lib/env'
-import { makeFetchRuntime } from '#/effects/runtime'
-import { Embedder } from '#/effects/services/embedder'
-import { VectorStore } from '#/effects/services/vector-store'
-import { toAiSdkToolSet } from './tools/adapter'
-import { tools } from './tools'
+import {Effect} from 'effect'
+import {makeFetchRuntime} from '#/effects/runtime'
+import {Embedder} from '#/effects/services/embedder'
+import {VectorStore} from '#/effects/services/vector-store'
+import type {Env} from '#/lib/env'
+import {tools} from './tools'
+import {toAiSdkToolSet} from './tools/adapter'
 
 // MIGRATION-MARKER: @effect/ai
 // `streamText` from the Vercel AI SDK is the model-call surface AIChatAgent
@@ -25,16 +25,14 @@ const DEFAULT_MODEL = 'anthropic/claude-sonnet-4-6'
 export class ChatAgent extends AIChatAgent<Env> {
   async onChatMessage(
     onFinish: StreamTextOnFinishCallback<ToolSet>,
-    options?: { abortSignal?: AbortSignal },
+    options?: {abortSignal?: AbortSignal},
   ): Promise<Response | undefined> {
     const runtime = makeFetchRuntime(this.env)
     const signal = options?.abortSignal ?? new AbortController().signal
 
     const program = Effect.gen(this, function* () {
       const matches = yield* this.loadContext()
-      const modelMessages = yield* Effect.promise(() =>
-        convertToModelMessages(this.messages),
-      )
+      const modelMessages = yield* Effect.promise(() => convertToModelMessages(this.messages))
 
       // `streamText` returns synchronously -- the LLM request lives inside
       // the returned `StreamTextResult`. Effect.timeout / Effect.retry
@@ -58,7 +56,7 @@ export class ChatAgent extends AIChatAgent<Env> {
       return result.toUIMessageStreamResponse()
     })
 
-    return runtime.runPromise(program, { signal })
+    return runtime.runPromise(program, {signal})
   }
 
   private loadContext() {
@@ -69,7 +67,7 @@ export class ChatAgent extends AIChatAgent<Env> {
       const embedder = yield* Embedder
       const store = yield* VectorStore
       const vector = yield* embedder.embed(text)
-      return yield* store.query(vector, { topK: 4 })
+      return yield* store.query(vector, {topK: 4})
     }).pipe(Effect.catchAll(() => Effect.succeed([] as const)))
   }
 
@@ -82,16 +80,11 @@ export class ChatAgent extends AIChatAgent<Env> {
     return openrouter(DEFAULT_MODEL)
   }
 
-  private systemPrompt(
-    matches: ReadonlyArray<{ id: string; score: number; metadata?: unknown }>,
-  ) {
+  private systemPrompt(matches: ReadonlyArray<{id: string; score: number; metadata?: unknown}>) {
     const context = matches.length
       ? `\n\nRelevant context (top ${matches.length}):\n` +
         matches
-          .map(
-            (m) =>
-              `- [${m.id}] (score ${m.score.toFixed(3)}) ${JSON.stringify(m.metadata)}`,
-          )
+          .map((m) => `- [${m.id}] (score ${m.score.toFixed(3)}) ${JSON.stringify(m.metadata)}`)
           .join('\n')
       : ''
     return (
@@ -110,7 +103,7 @@ const lastUserText = (messages: ReadonlyArray<UIMessage>): string => {
     const m = messages[i]
     if (!m || m.role !== 'user') continue
     return (m.parts ?? [])
-      .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
+      .filter((p): p is {type: 'text'; text: string} => p.type === 'text')
       .map((p) => p.text)
       .join('\n')
   }

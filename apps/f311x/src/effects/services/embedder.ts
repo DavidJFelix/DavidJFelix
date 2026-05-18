@@ -1,5 +1,5 @@
-import { Context, Data, Effect, Layer } from 'effect'
-import type { Env } from '#/lib/env'
+import {Context, Data, Effect, Layer} from 'effect'
+import type {Env} from '#/lib/env'
 
 export class EmbedderError extends Data.TaggedError('EmbedderError')<{
   readonly cause: unknown
@@ -24,12 +24,12 @@ export const EmbedderLive = (env: Env) =>
           try: async () => {
             const res = (await env.AI.run(EMBEDDING_MODEL, {
               text: [text],
-            })) as { data: number[][] }
+            })) as {data: number[][]}
             const vector = res.data[0]
             if (!vector) throw new Error('Workers AI returned no embedding')
             return vector
           },
-          catch: (cause) => new EmbedderError({ cause }),
+          catch: (cause) => new EmbedderError({cause}),
         }),
     }),
   )

@@ -2,7 +2,12 @@
   "$schema": "https://biomejs.dev/schemas/2.4.15/schema.json",
   "extends": ["../../biome.jsonc"],
   "files": {
-    "ignore": ["src/routeTree.gen.ts", ".alchemy/**", ".wrangler/**"]
+    "includes": ["**", "!src/routeTree.gen.ts", "!.alchemy", "!.wrangler", "!dist", "!node_modules"]
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
   },
   "linter": {
     "rules": {

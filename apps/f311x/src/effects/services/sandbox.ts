@@ -1,6 +1,6 @@
-import { getSandbox, type ExecResult } from '@cloudflare/sandbox'
-import { Context, Data, Effect, Layer } from 'effect'
-import type { Env } from '#/lib/env'
+import {type ExecResult, getSandbox} from '@cloudflare/sandbox'
+import {Context, Data, Effect, Layer} from 'effect'
+import type {Env} from '#/lib/env'
 
 export class SandboxError extends Data.TaggedError('SandboxError')<{
   readonly cmd: string
@@ -17,7 +17,7 @@ export interface SandboxExec {
 export interface Sandbox {
   readonly exec: (
     cmd: string,
-    opts?: { cwd?: string; timeoutMs?: number; sessionId?: string },
+    opts?: {cwd?: string; timeoutMs?: number; sessionId?: string},
   ) => Effect.Effect<SandboxExec, SandboxError>
 }
 
@@ -42,17 +42,14 @@ export const SandboxLive = (env: Env) =>
       exec: (cmd, opts) =>
         Effect.tryPromise({
           try: async () => {
-            const sandbox = getSandbox(
-              env.SANDBOX,
-              opts?.sessionId ?? DEFAULT_SANDBOX_ID,
-            )
+            const sandbox = getSandbox(env.SANDBOX, opts?.sessionId ?? DEFAULT_SANDBOX_ID)
             const res = await sandbox.exec(cmd, {
               cwd: opts?.cwd,
               timeout: opts?.timeoutMs,
             })
             return normalize(res)
           },
-          catch: (cause) => new SandboxError({ cmd, cause }),
+          catch: (cause) => new SandboxError({cmd, cause}),
         }),
     }),
   )

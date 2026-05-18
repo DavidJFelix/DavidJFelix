@@ -27,7 +27,7 @@ export default Alchemy.Stack(
 
     // --- Vectorize (custom provider) ----------------------------------
     const knowledge = yield* Vectorize.VectorizeIndex('Knowledge', {
-      config: { dimensions: 768, metric: 'cosine' },
+      config: {dimensions: 768, metric: 'cosine'},
       description: 'Knowledge index for the f311x chat agent',
     })
 
@@ -60,6 +60,6 @@ export default Alchemy.Stack(
       },
     })
 
-    return { uploads, workspace, knowledge, gateway, dynamicPlans, worker }
+    return {uploads, workspace, knowledge, gateway, dynamicPlans, worker}
   }),
 )

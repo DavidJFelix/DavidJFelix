@@ -1,8 +1,8 @@
-import { fetchServerSentEvents, useChat } from '@tanstack/ai-react'
-import { createFileRoute } from '@tanstack/react-router'
-import { useState } from 'react'
+import {fetchServerSentEvents, useChat} from '@tanstack/ai-react'
+import {createFileRoute} from '@tanstack/react-router'
+import {useState} from 'react'
 
-export const Route = createFileRoute('/')({ component: ChatPage })
+export const Route = createFileRoute('/')({component: ChatPage})
 
 // Day-one transport: HTTP/SSE pointed at the Agents SDK's routed endpoint
 // for the default ChatAgent instance. The Agents SDK also supports a WS
@@ -29,8 +29,8 @@ function ChatPage() {
       <header>
         <h1 className="text-3xl font-bold tracking-tight">f311x</h1>
         <p className="mt-2 text-sm text-neutral-500">
-          Chat with an Effect-native agent backed by Cloudflare Workers,
-          Vectorize, R2, and Durable Objects.
+          Chat with an Effect-native agent backed by Cloudflare Workers, Vectorize, R2, and Durable
+          Objects.
         </p>
       </header>
 
@@ -39,16 +39,9 @@ function ChatPage() {
           <p className="text-sm text-neutral-500">No messages yet.</p>
         ) : (
           chat.messages.map((m) => (
-            <article
-              key={m.id}
-              className="rounded-xl border border-neutral-100 p-3"
-            >
-              <p className="mb-1 text-xs uppercase tracking-wide text-neutral-400">
-                {m.role}
-              </p>
-              <div className="whitespace-pre-wrap text-sm">
-                {renderMessageBody(m)}
-              </div>
+            <article key={m.id} className="rounded-xl border border-neutral-100 p-3">
+              <p className="mb-1 text-xs uppercase tracking-wide text-neutral-400">{m.role}</p>
+              <div className="whitespace-pre-wrap text-sm">{renderMessageBody(m)}</div>
             </article>
           ))
         )}
@@ -74,7 +67,7 @@ function ChatPage() {
   )
 }
 
-const renderMessageBody = (m: { parts?: Array<{ type: string; text?: string }> }) =>
+const renderMessageBody = (m: {parts?: Array<{type: string; text?: string}>}) =>
   (m.parts ?? [])
     .filter((p) => p.type === 'text')
     .map((p) => p.text ?? '')

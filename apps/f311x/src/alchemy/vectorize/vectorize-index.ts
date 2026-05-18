@@ -10,22 +10,22 @@
 // hook therefore returns `{ action: "replace" }` on any prop drift.
 
 import * as vectorize from '@distilled.cloud/cloudflare/vectorize'
+import type {Providers} from 'alchemy/Cloudflare'
+import {CloudflareEnvironment} from 'alchemy/Cloudflare'
+import {isResolved} from 'alchemy/Diff'
+import {createPhysicalName} from 'alchemy/PhysicalName'
+import * as Provider from 'alchemy/Provider'
+import {Resource} from 'alchemy/Resource'
 import * as Effect from 'effect/Effect'
 import * as Option from 'effect/Option'
 import * as Stream from 'effect/Stream'
-import { isResolved } from 'alchemy/Diff'
-import { createPhysicalName } from 'alchemy/PhysicalName'
-import * as Provider from 'alchemy/Provider'
-import { Resource } from 'alchemy/Resource'
-import { CloudflareEnvironment } from 'alchemy/Cloudflare'
-import type { Providers } from 'alchemy/Cloudflare'
 
-import { VectorizeIndexBinding } from './vectorize-index-binding.ts'
+import {VectorizeIndexBinding} from './vectorize-index-binding.ts'
 
 export type VectorizeMetric = 'cosine' | 'euclidean' | 'dot-product'
 
 export type VectorizeConfig =
-  | { dimensions: number; metric: VectorizeMetric }
+  | {dimensions: number; metric: VectorizeMetric}
   | {
       preset:
         | '@cf/baai/bge-small-en-v1.5'
@@ -85,9 +85,7 @@ export type VectorizeIndex = Resource<
  * })
  * ```
  */
-export const VectorizeIndex = Resource<VectorizeIndex>(
-  'F311x.Cloudflare.VectorizeIndex',
-)({
+export const VectorizeIndex = Resource<VectorizeIndex>('F311x.Cloudflare.VectorizeIndex')({
   bind: VectorizeIndexBinding.bind,
 })
 
@@ -102,7 +100,7 @@ export const VectorizeIndexProvider = () =>
   Provider.effect(
     VectorizeIndex,
     Effect.gen(function* () {
-      const { accountId } = yield* CloudflareEnvironment
+      const {accountId} = yield* CloudflareEnvironment
       const createIndex = yield* vectorize.createIndex
       const getIndex = yield* vectorize.getIndex
       const deleteIndex = yield* vectorize.deleteIndex
@@ -111,7 +109,7 @@ export const VectorizeIndexProvider = () =>
       // so adoption-by-name has to scan. Same pattern as KV's
       // `findNamespaceByTitle`.
       const findIndexByName = (name: string) =>
-        vectorize.listIndexes.items({ accountId }).pipe(
+        vectorize.listIndexes.items({accountId}).pipe(
           Stream.filter((idx) => idx.name === name),
           Stream.runHead,
           Effect.map(Option.getOrUndefined),
@@ -119,7 +117,7 @@ export const VectorizeIndexProvider = () =>
 
       const resolveName = (id: string, name: string | undefined) =>
         Effect.gen(function* () {
-          return name ?? (yield* createPhysicalName({ id }))
+          return name ?? (yield* createPhysicalName({id}))
         })
 
       const toAttrs = (
@@ -127,7 +125,7 @@ export const VectorizeIndexProvider = () =>
           name?: string | null
           createdOn?: string | null
           modifiedOn?: string | null
-          config?: { dimensions: number; metric: VectorizeMetric } | null
+          config?: {dimensions: number; metric: VectorizeMetric} | null
         },
         acct: string,
       ) => ({
@@ -143,24 +141,24 @@ export const VectorizeIndexProvider = () =>
         stables: ['indexName', 'accountId', 'dimensions', 'metric'],
 
         // Vectorize indexes are immutable. Any drift => destroy + recreate.
-        diff: Effect.fn(function* ({ id, news = {}, olds = {}, output }) {
+        diff: Effect.fn(function* ({id, news = {}, olds = {}, output}) {
           if (!isResolved(news)) return undefined
           if ((output?.accountId ?? accountId) !== accountId) {
-            return { action: 'replace' } as const
+            return {action: 'replace'} as const
           }
           const newName = yield* resolveName(id, news.name)
           const oldName = output?.indexName ?? (yield* resolveName(id, olds.name))
-          if (newName !== oldName) return { action: 'replace' } as const
+          if (newName !== oldName) return {action: 'replace'} as const
           if (news.description !== olds.description) {
-            return { action: 'replace' } as const
+            return {action: 'replace'} as const
           }
           if (news.config && olds.config && !sameConfig(news.config, olds.config)) {
-            return { action: 'replace' } as const
+            return {action: 'replace'} as const
           }
           return undefined
         }),
 
-        reconcile: Effect.fn(function* ({ id, news = {}, output }) {
+        reconcile: Effect.fn(function* ({id, news = {}, output}) {
           const name = yield* resolveName(id, news.name)
           const acct = output?.accountId ?? accountId
 
@@ -168,7 +166,7 @@ export const VectorizeIndexProvider = () =>
           // scan so we recover from out-of-band deletes or partial state
           // persistence failures.
           let observed = output?.indexName
-            ? yield* getIndex({ accountId: acct, indexName: output.indexName }).pipe(
+            ? yield* getIndex({accountId: acct, indexName: output.indexName}).pipe(
                 Effect.catchTag('NotFound', () => Effect.succeed(undefined)),
               )
             : undefined
@@ -202,14 +200,14 @@ export const VectorizeIndexProvider = () =>
           return toAttrs(observed, acct)
         }),
 
-        delete: Effect.fn(function* ({ output }) {
+        delete: Effect.fn(function* ({output}) {
           yield* deleteIndex({
             accountId: output.accountId,
             indexName: output.indexName,
           }).pipe(Effect.catchTag('NotFound', () => Effect.void))
         }),
 
-        read: Effect.fn(function* ({ id, olds, output }) {
+        read: Effect.fn(function* ({id, olds, output}) {
           if (output?.indexName) {
             return yield* getIndex({
               accountId: output.accountId,

@@ -8,12 +8,8 @@
 // below is intentionally typed as `unknown` until the binding contract
 // is confirmed.
 
-import {
-  WorkflowEntrypoint,
-  type WorkflowEvent,
-  type WorkflowStep,
-} from 'cloudflare:workers'
-import type { Env } from '#/lib/env'
+import {WorkflowEntrypoint, type WorkflowEvent, type WorkflowStep} from 'cloudflare:workers'
+import type {Env} from '#/lib/env'
 
 export interface DynamicPlanPayload {
   planId: string
@@ -21,14 +17,11 @@ export interface DynamicPlanPayload {
 }
 
 export class DynamicPlanWorkflow extends WorkflowEntrypoint<Env, DynamicPlanPayload> {
-  async run(
-    event: Readonly<WorkflowEvent<DynamicPlanPayload>>,
-    step: WorkflowStep,
-  ) {
+  async run(event: Readonly<WorkflowEvent<DynamicPlanPayload>>, step: WorkflowStep) {
     return step.do(`load-${event.payload.planId}`, async () => {
       // const mod = await this.env.DYNAMIC_PLANS.load(event.payload.planId)
       // return mod.run(event, step)
-      return { status: 'not-implemented', planId: event.payload.planId }
+      return {status: 'not-implemented', planId: event.payload.planId}
     })
   }
 }

@@ -1,5 +1,5 @@
-import { Context, Data, Effect, Layer } from 'effect'
-import type { Env } from '#/lib/env'
+import {Context, Data, Effect, Layer} from 'effect'
+import type {Env} from '#/lib/env'
 
 export class ObjectStoreError extends Data.TaggedError('ObjectStoreError')<{
   readonly bucket: 'uploads' | 'workspace'
@@ -41,11 +41,11 @@ export const ObjectStoreLive = (env: Env) =>
             if (!obj) return null
             return obj.text()
           },
-          catch: (cause) => new ObjectStoreError({ bucket, key, cause }),
+          catch: (cause) => new ObjectStoreError({bucket, key, cause}),
         }).pipe(
           Effect.flatMap((text) =>
             text === null
-              ? Effect.fail(new ObjectNotFoundError({ bucket, key }))
+              ? Effect.fail(new ObjectNotFoundError({bucket, key}))
               : Effect.succeed(text),
           ),
         ),
@@ -53,11 +53,9 @@ export const ObjectStoreLive = (env: Env) =>
         Effect.tryPromise({
           try: () =>
             bucketOf(env, bucket).put(key, contents, {
-              httpMetadata: contentType
-                ? { contentType }
-                : undefined,
+              httpMetadata: contentType ? {contentType} : undefined,
             }),
-          catch: (cause) => new ObjectStoreError({ bucket, key, cause }),
+          catch: (cause) => new ObjectStoreError({bucket, key, cause}),
         }).pipe(Effect.asVoid),
     }),
   )

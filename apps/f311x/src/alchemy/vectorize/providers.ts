@@ -8,9 +8,9 @@
 //     Vectorize.providers(),
 //   )
 
-import * as Layer from 'effect/Layer'
 import * as Provider from 'alchemy/Provider'
-import { VectorizeIndex, VectorizeIndexProvider } from './vectorize-index.ts'
+import * as Layer from 'effect/Layer'
+import {VectorizeIndex, VectorizeIndexProvider} from './vectorize-index.ts'
 import {
   VectorizeIndexBindingLive,
   VectorizeIndexBindingPolicy,

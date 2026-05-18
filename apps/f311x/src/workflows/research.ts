@@ -2,13 +2,9 @@
 // Each `step.do` runs a small Effect via `Effect.runPromise`. Uses
 // `step.sleep` and `step.waitForEvent` for pacing and approval gates.
 
-import {
-  WorkflowEntrypoint,
-  type WorkflowEvent,
-  type WorkflowStep,
-} from 'cloudflare:workers'
-import { Effect } from 'effect'
-import type { Env } from '#/lib/env'
+import {WorkflowEntrypoint, type WorkflowEvent, type WorkflowStep} from 'cloudflare:workers'
+import {Effect} from 'effect'
+import type {Env} from '#/lib/env'
 
 interface ResearchPayload {
   topic: string
@@ -44,9 +40,7 @@ export class ResearchWorkflow extends WorkflowEntrypoint<Env, ResearchPayload> {
       })
     }
 
-    return step.do('synthesize', () =>
-      Effect.runPromise(synthesize(event.payload.topic, notes)),
-    )
+    return step.do('synthesize', () => Effect.runPromise(synthesize(event.payload.topic, notes)))
   }
 }
 
@@ -59,11 +53,10 @@ interface Source {
 
 const discoverSources = (topic: string) =>
   Effect.succeed<Source[]>([
-    { id: 'placeholder-1', url: `https://example.com/${encodeURIComponent(topic)}` },
+    {id: 'placeholder-1', url: `https://example.com/${encodeURIComponent(topic)}`},
   ])
 
-const summarize = (source: Source) =>
-  Effect.succeed(`summary of ${source.url}`)
+const summarize = (source: Source) => Effect.succeed(`summary of ${source.url}`)
 
 const synthesize = (topic: string, notes: ReadonlyArray<string>): Effect.Effect<ResearchResult> =>
-  Effect.succeed({ topic, notes: [...notes] })
+  Effect.succeed({topic, notes: [...notes]})

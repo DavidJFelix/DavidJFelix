@@ -1,14 +1,13 @@
-import { toolDefinition } from '@tanstack/ai'
-import { Effect } from 'effect'
-import { runCommandInput } from '#/lib/schemas'
-import { makeFetchRuntime } from '#/effects/runtime'
-import { Sandbox } from '#/effects/services/sandbox'
-import { getRequestEnv } from '#/server'
+import {toolDefinition} from '@tanstack/ai'
+import {Effect} from 'effect'
+import {makeFetchRuntime} from '#/effects/runtime'
+import {Sandbox} from '#/effects/services/sandbox'
+import {runCommandInput} from '#/lib/schemas'
+import {getRequestEnv} from '#/server'
 
 export const runCommandDef = toolDefinition({
   name: 'runCommand',
-  description:
-    'Execute a shell command inside the Cloudflare Sandbox DO. Output is captured.',
+  description: 'Execute a shell command inside the Cloudflare Sandbox DO. Output is captured.',
   inputSchema: runCommandInput,
 })
 

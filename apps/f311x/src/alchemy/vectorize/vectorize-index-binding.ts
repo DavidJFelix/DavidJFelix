@@ -2,13 +2,13 @@
 // shape of `Cloudflare.KVNamespaceBinding` / `Cloudflare.HyperdriveBinding`.
 
 import type * as runtime from '@cloudflare/workers-types'
+import * as Binding from 'alchemy/Binding'
+import {isWorker, WorkerEnvironment} from 'alchemy/Cloudflare'
+import type {ResourceLike} from 'alchemy/Resource'
 import * as Data from 'effect/Data'
 import * as Effect from 'effect/Effect'
 import * as Layer from 'effect/Layer'
-import * as Binding from 'alchemy/Binding'
-import type { ResourceLike } from 'alchemy/Resource'
-import { isWorker, WorkerEnvironment } from 'alchemy/Cloudflare'
-import type { VectorizeIndex } from './vectorize-index.ts'
+import type {VectorizeIndex} from './vectorize-index.ts'
 
 export class VectorizeIndexError extends Data.TaggedError('VectorizeIndexError')<{
   message: string
@@ -22,52 +22,28 @@ export interface VectorizeIndexClient {
    */
   raw: Effect.Effect<runtime.Vectorize, never, WorkerEnvironment>
 
-  describe: () => Effect.Effect<
-    runtime.VectorizeIndexInfo,
-    VectorizeIndexError,
-    WorkerEnvironment
-  >
+  describe: () => Effect.Effect<runtime.VectorizeIndexInfo, VectorizeIndexError, WorkerEnvironment>
 
   query: (
     vector: number[] | runtime.VectorFloatArray,
     options?: runtime.VectorizeQueryOptions,
-  ) => Effect.Effect<
-    runtime.VectorizeMatches,
-    VectorizeIndexError,
-    WorkerEnvironment
-  >
+  ) => Effect.Effect<runtime.VectorizeMatches, VectorizeIndexError, WorkerEnvironment>
 
   insert: (
     vectors: runtime.VectorizeVector[],
-  ) => Effect.Effect<
-    runtime.VectorizeAsyncMutation,
-    VectorizeIndexError,
-    WorkerEnvironment
-  >
+  ) => Effect.Effect<runtime.VectorizeAsyncMutation, VectorizeIndexError, WorkerEnvironment>
 
   upsert: (
     vectors: runtime.VectorizeVector[],
-  ) => Effect.Effect<
-    runtime.VectorizeAsyncMutation,
-    VectorizeIndexError,
-    WorkerEnvironment
-  >
+  ) => Effect.Effect<runtime.VectorizeAsyncMutation, VectorizeIndexError, WorkerEnvironment>
 
   deleteByIds: (
     ids: string[],
-  ) => Effect.Effect<
-    runtime.VectorizeAsyncMutation,
-    VectorizeIndexError,
-    WorkerEnvironment
-  >
+  ) => Effect.Effect<runtime.VectorizeAsyncMutation, VectorizeIndexError, WorkerEnvironment>
 
   getByIds: (
     ids: string[],
-  ) => Effect.Effect<
-    runtime.VectorizeVector[],
-    VectorizeIndexError,
-    WorkerEnvironment
-  >
+  ) => Effect.Effect<runtime.VectorizeVector[], VectorizeIndexError, WorkerEnvironment>
 }
 
 export class VectorizeIndexBinding extends Binding.Service<
@@ -84,19 +60,21 @@ export const VectorizeIndexBindingLive = Layer.effect(
       yield* bind(index)
 
       const raw = WorkerEnvironment.pipe(
-        Effect.map(
-          (env) => (env as Record<string, runtime.Vectorize>)[index.LogicalId]!,
-        ),
+        Effect.map((env) => {
+          const binding = (env as Record<string, runtime.Vectorize | undefined>)[index.LogicalId]
+          if (!binding) {
+            throw new Error(`Vectorize binding "${index.LogicalId}" missing from Worker env`)
+          }
+          return binding
+        }),
       )
 
-      const tryPromise = <T>(
-        fn: () => Promise<T>,
-      ): Effect.Effect<T, VectorizeIndexError> =>
+      const tryPromise = <T>(fn: () => Promise<T>): Effect.Effect<T, VectorizeIndexError> =>
         Effect.tryPromise({
           try: fn,
-          catch: (error: any) =>
+          catch: (error: unknown) =>
             new VectorizeIndexError({
-              message: error?.message ?? 'Unknown Vectorize error',
+              message: error instanceof Error ? error.message : 'Unknown Vectorize error',
               cause: error,
             }),
         })
@@ -124,24 +102,21 @@ export class VectorizeIndexBindingPolicy extends Binding.Policy<
   (index: VectorizeIndex) => Effect.Effect<void>
 >()('F311x.Cloudflare.VectorizeIndex') {}
 
-export const VectorizeIndexBindingPolicyLive =
-  VectorizeIndexBindingPolicy.layer.succeed(
-    Effect.fn(function* (host: ResourceLike, index: VectorizeIndex) {
-      if (!isWorker(host)) {
-        return yield* Effect.die(
-          new Error(
-            `VectorizeIndexBinding does not support runtime '${host.Type}'`,
-          ),
-        )
-      }
-      yield* host.bind`${index}`({
-        bindings: [
-          {
-            type: 'vectorize',
-            name: index.LogicalId,
-            indexName: index.indexName as unknown as string,
-          },
-        ],
-      })
-    }),
-  )
+export const VectorizeIndexBindingPolicyLive = VectorizeIndexBindingPolicy.layer.succeed(
+  Effect.fn(function* (host: ResourceLike, index: VectorizeIndex) {
+    if (!isWorker(host)) {
+      return yield* Effect.die(
+        new Error(`VectorizeIndexBinding does not support runtime '${host.Type}'`),
+      )
+    }
+    yield* host.bind`${index}`({
+      bindings: [
+        {
+          type: 'vectorize',
+          name: index.LogicalId,
+          indexName: index.indexName as unknown as string,
+        },
+      ],
+    })
+  }),
+)

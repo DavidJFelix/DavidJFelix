@@ -1,5 +1,5 @@
-import { tool, type Tool, type ToolSet } from 'ai'
-import type { SchemaInput, ServerTool } from '@tanstack/ai'
+import type {SchemaInput, ServerTool} from '@tanstack/ai'
+import {type Tool, type ToolSet, tool} from 'ai'
 
 // Bridge TanStack AI's `toolDefinition(...).server(execute)` output (a
 // `ServerTool`) into the Vercel AI SDK's `tool({...})` shape. Both speak
@@ -8,9 +8,7 @@ import type { SchemaInput, ServerTool } from '@tanstack/ai'
 // Used inside `AIChatAgent.onChatMessage` to expose the same tool defs
 // that React server-function callers use.
 
-export const toAiSdkTool = (
-  serverTool: ServerTool<SchemaInput, SchemaInput, string>,
-): Tool => {
+export const toAiSdkTool = (serverTool: ServerTool<SchemaInput, SchemaInput, string>): Tool => {
   return tool({
     description: serverTool.description,
     inputSchema: serverTool.inputSchema as never,

@@ -1,0 +1,8 @@
+name = "f311x"
+main = "src/server.ts"
+compatibility_date = "2026-05-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Bindings are provisioned by Alchemy v2 (see alchemy.run.ts).
+# This file exists so `wrangler types` and `wrangler dev` work as a
+# fallback when the Alchemy v2 dev loop is not available.

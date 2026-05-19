@@ -1,0 +1,22 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.4.15/schema.json",
+  "extends": ["../../biome.jsonc"],
+  "files": {
+    "includes": ["**", "!src/routeTree.gen.ts", "!.alchemy", "!.wrangler", "!dist", "!node_modules"]
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
+  "linter": {
+    "rules": {
+      "style": {
+        "useFragmentSyntax": "error"
+      },
+      "correctness": {
+        "useHookAtTopLevel": "error"
+      }
+    }
+  }
+}

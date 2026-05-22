@@ -105,9 +105,6 @@ importers:
       jsdom:
         specifier: ^28.1.0
         version: 28.1.0
-      typescript:
-        specifier: ^6.0.2
-        version: 6.0.3
       vite:
         specifier: ^8.0.0
         version: 8.0.13(@types/node@22.19.19)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0)
@@ -3543,11 +3540,6 @@ packages:
   type-is@2.1.0:
     resolution: {integrity: sha512-faYHw0anBbc/kWF3zFTEnxSFOAGUX9GFbOBthvDdLsIlEoWOFOtS0zgCiQYwIskL9iGXZL3kAXD8OoZ4GmMATA==}
     engines: {node: '>= 18'}
-
-  typescript@6.0.3:
-    resolution: {integrity: sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==}
-    engines: {node: '>=14.17'}
-    hasBin: true
 
   ufo@1.6.4:
     resolution: {integrity: sha512-JFNbkD1Svwe0KvGi8GOeLcP4kAWQ609twvCdcHxq1oSL8svv39ZuSvajcD8B+5D0eL4+s1Is2D/O6KN3qcTeRA==}
@@ -7278,8 +7270,6 @@ snapshots:
       content-type: 2.0.0
       media-typer: 1.1.0
       mime-types: 3.0.2
-
-  typescript@6.0.3: {}
 
   ufo@1.6.4: {}
 

@@ -55,7 +55,6 @@
     "@typescript/native-preview": "latest",
     "@vitejs/plugin-react": "^6.0.1",
     "jsdom": "^28.1.0",
-    "typescript": "^6.0.2",
     "vite": "^8.0.0",
     "vitest": "^4.1.5",
     "wrangler": "^4.92.0"

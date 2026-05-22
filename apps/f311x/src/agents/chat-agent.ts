@@ -8,11 +8,11 @@ import {
   type UIMessage,
 } from 'ai'
 import {Effect} from 'effect'
-import {makeFetchRuntime} from '#/effects/runtime'
-import {Embedder} from '#/effects/services/embedder'
-import {VectorStore} from '#/effects/services/vector-store'
-import type {Env} from '#/lib/env'
-import {runWithEnv} from '#/lib/request-context'
+import {makeFetchRuntime} from '@/effects/runtime'
+import {Embedder} from '@/effects/services/embedder'
+import {VectorStore} from '@/effects/services/vector-store'
+import type {Env} from '@/lib/env'
+import {runWithEnv} from '@/lib/request-context'
 import {tools} from './tools'
 import {toAiSdkToolSet} from './tools/adapter'
 

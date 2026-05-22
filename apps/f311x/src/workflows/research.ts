@@ -4,7 +4,7 @@
 
 import {WorkflowEntrypoint, type WorkflowEvent, type WorkflowStep} from 'cloudflare:workers'
 import {Effect} from 'effect'
-import type {Env} from '#/lib/env'
+import type {Env} from '@/lib/env'
 
 interface ResearchPayload {
   topic: string

@@ -1,5 +1,5 @@
 import {Context, Data, Effect, Layer} from 'effect'
-import type {Env} from '#/lib/env'
+import type {Env} from '@/lib/env'
 
 // MIGRATION-MARKER: @effect/ai
 // ModelClient is the call site where multi-provider fallback lives. If/when

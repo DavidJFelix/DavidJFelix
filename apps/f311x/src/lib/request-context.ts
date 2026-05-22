@@ -13,7 +13,7 @@
 //      `getRequestEnv()` throws on every LLM tool call.
 
 import {AsyncLocalStorage} from 'node:async_hooks'
-import type {Env} from '#/lib/env'
+import type {Env} from '@/lib/env'
 
 const envStorage = new AsyncLocalStorage<Env>()
 

@@ -12,54 +12,33 @@
 import * as Alchemy from 'alchemy'
 import * as Cloudflare from 'alchemy/Cloudflare'
 import * as Effect from 'effect/Effect'
-import * as Layer from 'effect/Layer'
-import * as Vectorize from './src/alchemy/vectorize/index.ts'
+
+const UploadsBucket = Cloudflare.R2Bucket('Uploads')
+const WorkspaceBucket = Cloudflare.R2Bucket('AgentWorkspace')
+const Gateway = Cloudflare.AiGateway('Gateway')
+
+
+export const Website = Cloudflare.Vite("Website", {
+  compatibility: {
+    date: '2026-05-01',
+    flags: ['nodejs_compat'],
+  },
+  bindings: {
+    UPLOADS: UploadsBucket,
+    WORKSPACE: WorkspaceBucket,
+    GATEWAY: Gateway,
+  },
+})
 
 export default Alchemy.Stack(
   'f311x',
   {
-    providers: Layer.mergeAll(Cloudflare.providers(), Vectorize.providers()),
+    providers: Cloudflare.providers(),
+    state: Cloudflare.state(),
   },
   Effect.gen(function* () {
-    // --- R2 -----------------------------------------------------------
-    const uploads = yield* Cloudflare.R2Bucket('Uploads')
-    const workspace = yield* Cloudflare.R2Bucket('AgentWorkspace')
 
-    // --- Vectorize (custom provider) ----------------------------------
-    const knowledge = yield* Vectorize.VectorizeIndex('Knowledge', {
-      config: {dimensions: 768, metric: 'cosine'},
-      description: 'Knowledge index for the f311x chat agent',
-    })
-
-    // --- AI Gateway ---------------------------------------------------
-    const gateway = yield* Cloudflare.AiGateway('Gateway')
-
-    // --- Worker Loader (Dynamic Workflows) ----------------------------
-    const dynamicPlans = yield* Cloudflare.DynamicWorkerLoader('DynamicPlans')
-
-    // --- Worker -------------------------------------------------------
-    // DO classes (ChatAgent, Sandbox) and Workflow classes
-    // (ResearchWorkflow, DynamicPlanWorkflow) are picked up from
-    // `src/server.ts` exports.
-    const worker = yield* Cloudflare.Worker('Worker', {
-      main: './src/server.ts',
-      compatibilityDate: '2026-05-01',
-      compatibilityFlags: ['nodejs_compat'],
-      bindings: {
-        UPLOADS: uploads,
-        WORKSPACE: workspace,
-        KNOWLEDGE: knowledge,
-        GATEWAY: gateway,
-        DYNAMIC_PLANS: dynamicPlans,
-        // Secrets (set via `alchemy secrets set` or env at deploy time)
-        OPENROUTER_API_KEY: Cloudflare.secret('OPENROUTER_API_KEY'),
-        ANTHROPIC_API_KEY: Cloudflare.secret('ANTHROPIC_API_KEY'),
-        // TODO: AI (Workers AI), CHAT_AGENT + SANDBOX (DO namespaces),
-        // RESEARCH_WORKFLOW (Workflow binding) -- wire once the
-        // corresponding Alchemy v2 binding helpers are confirmed.
-      },
-    })
-
-    return {uploads, workspace, knowledge, gateway, dynamicPlans, worker}
+    const website = yield* Website
+    return {website}
   }),
 )

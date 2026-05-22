@@ -1,9 +1,9 @@
 import {toolDefinition} from '@tanstack/ai'
 import {Effect} from 'effect'
-import {makeFetchRuntime} from '#/effects/runtime'
-import {Sandbox} from '#/effects/services/sandbox'
-import {runCommandInput} from '#/lib/schemas'
-import {getRequestEnv} from '#/lib/request-context'
+import {makeFetchRuntime} from '@/effects/runtime'
+import {Sandbox} from '@/effects/services/sandbox'
+import {runCommandInput} from '@/lib/schemas'
+import {getRequestEnv} from '@/lib/request-context'
 
 export const runCommandDef = toolDefinition({
   name: 'runCommand',

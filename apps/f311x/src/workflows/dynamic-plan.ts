@@ -9,7 +9,7 @@
 // is confirmed.
 
 import {WorkflowEntrypoint, type WorkflowEvent, type WorkflowStep} from 'cloudflare:workers'
-import type {Env} from '#/lib/env'
+import type {Env} from '@/lib/env'
 
 export interface DynamicPlanPayload {
   planId: string

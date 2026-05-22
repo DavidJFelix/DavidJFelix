@@ -1,9 +1,7 @@
-import {cloudflare} from '@cloudflare/vite-plugin'
 import tailwindcss from '@tailwindcss/vite'
 import {devtools} from '@tanstack/devtools-vite'
 import {tanstackStart} from '@tanstack/react-start/plugin/vite'
 import viteReact from '@vitejs/plugin-react'
-import agents from 'agents/vite'
 import {defineConfig} from 'vite'
 
 // `cloudflare:workers` is the Workers runtime virtual import -- only the
@@ -25,7 +23,7 @@ const config = defineConfig({
       },
     },
   },
-  plugins: [devtools(), agents(), tanstackStart(), viteReact(), tailwindcss(), cloudflare()],
+  plugins: [devtools(), tanstackStart(), viteReact(), tailwindcss()],
 })
 
 export default config

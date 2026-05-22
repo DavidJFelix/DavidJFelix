@@ -1,9 +1,9 @@
 import {toolDefinition} from '@tanstack/ai'
 import {Effect} from 'effect'
-import {makeFetchRuntime} from '#/effects/runtime'
-import {WorkflowDispatcher} from '#/effects/services/workflow-dispatcher'
-import {scheduleResearchInput} from '#/lib/schemas'
-import {getRequestEnv} from '#/lib/request-context'
+import {makeFetchRuntime} from '@/effects/runtime'
+import {WorkflowDispatcher} from '@/effects/services/workflow-dispatcher'
+import {scheduleResearchInput} from '@/lib/schemas'
+import {getRequestEnv} from '@/lib/request-context'
 
 export const scheduleResearchDef = toolDefinition({
   name: 'scheduleResearch',

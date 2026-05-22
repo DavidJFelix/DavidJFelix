@@ -1,5 +1,5 @@
 import {Context, Data, Effect, Layer} from 'effect'
-import type {Env} from '#/lib/env'
+import type {Env} from '@/lib/env'
 
 export class ObjectStoreError extends Data.TaggedError('ObjectStoreError')<{
   readonly bucket: 'uploads' | 'workspace'

@@ -1,6 +1,6 @@
 import {type ExecResult, getSandbox} from '@cloudflare/sandbox'
 import {Context, Data, Effect, Layer} from 'effect'
-import type {Env} from '#/lib/env'
+import type {Env} from '@/lib/env'
 
 export class SandboxError extends Data.TaggedError('SandboxError')<{
   readonly cmd: string

@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "imports": {
-    "#/*": "./src/*"
+    "@/*": "./src/*"
   },
   "scripts": {
     "dev": "vite dev --port 3000",
@@ -25,6 +25,8 @@
     "@cloudflare/sandbox": "^0.10.1",
     "@cloudflare/vite-plugin": "^1.37.0",
     "@distilled.cloud/cloudflare": "0.21.0",
+    "@effect/platform-bun": "4.0.0-beta.67",
+    "@effect/platform-node": "4.0.0-beta.67",
     "@openrouter/ai-sdk-provider": "^2.9.0",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/ai": "^0.18.0",
@@ -36,8 +38,8 @@
     "@tanstack/router-plugin": "^1.132.0",
     "agents": "^0.12.0",
     "ai": "^6.0.0",
-    "alchemy": "next",
-    "effect": "^3.21.0",
+    "alchemy": "2.0.0-beta.42",
+    "effect": "4.0.0-beta.67",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "tailwindcss": "^4.1.18",

@@ -1,5 +1,5 @@
 import {Context, Data, Effect, Layer} from 'effect'
-import type {Env} from '#/lib/env'
+import type {Env} from '@/lib/env'
 
 export class EmbedderError extends Data.TaggedError('EmbedderError')<{
   readonly cause: unknown

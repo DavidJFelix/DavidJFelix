@@ -1,5 +1,5 @@
 import {type Layer, ManagedRuntime} from 'effect'
-import type {Env} from '#/lib/env'
+import type {Env} from '@/lib/env'
 import {liveLayer} from './layers'
 
 // Cloudflare bindings live inside `env`, which is stable for the lifetime

@@ -1,5 +1,5 @@
 import {Layer} from 'effect'
-import type {Env} from '#/lib/env'
+import type {Env} from '@/lib/env'
 import {EmbedderLive} from './services/embedder'
 import {ModelClientLive} from './services/model-client'
 import {ObjectStoreLive} from './services/object-store'

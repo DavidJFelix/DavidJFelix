@@ -1,73 +1,143 @@
 import {fetchServerSentEvents, useChat} from '@tanstack/ai-react'
 import {createFileRoute} from '@tanstack/react-router'
+import {ArrowUp, Square} from 'lucide-react'
 import {useState} from 'react'
+import {Button} from '@/components/ui/button'
+import {
+  ChatContainerContent,
+  ChatContainerRoot,
+  ChatContainerScrollAnchor,
+} from '@/components/ui/chat-container'
+import {Loader} from '@/components/ui/loader'
+import {Message, MessageAvatar, MessageContent} from '@/components/ui/message'
+import {
+  PromptInput,
+  PromptInputActions,
+  PromptInputTextarea,
+} from '@/components/ui/prompt-input'
+import {ScrollButton} from '@/components/ui/scroll-button'
 
 export const Route = createFileRoute('/')({component: ChatPage})
 
-// Day-one transport: HTTP/SSE pointed at the Agents SDK's routed endpoint
-// for the default ChatAgent instance. The Agents SDK also supports a WS
-// `useAgent` hook -- migration is a transport swap once flows are stable.
 const AGENT_ENDPOINT = '/agents/chat-agent/default'
+
+type ChatMessagePart = {type: string; text?: string}
 
 function ChatPage() {
   const chat = useChat({
     connection: fetchServerSentEvents(AGENT_ENDPOINT),
   })
-
   const [draft, setDraft] = useState('')
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const isStreaming = chat.status === 'streaming'
+
+  const handleSubmit = async () => {
     const text = draft.trim()
-    if (!text) return
+    if (!text || isStreaming) return
     setDraft('')
     await chat.sendMessage(text)
   }
 
+  const handleButtonClick = () => {
+    if (isStreaming) {
+      chat.stop()
+      return
+    }
+    void handleSubmit()
+  }
+
   return (
-    <main className="mx-auto flex min-h-dvh max-w-3xl flex-col gap-6 px-4 py-12">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight">f311x</h1>
-        <p className="mt-2 text-sm text-neutral-500">
-          Chat with an Effect-native agent backed by Cloudflare Workers, Vectorize, R2, and Durable
-          Objects.
-        </p>
+    <main className="flex h-dvh flex-col">
+      <header className="border-border flex items-center justify-between border-b px-6 py-4">
+        <div>
+          <h1 className="text-base font-semibold tracking-tight">f311x</h1>
+          <p className="text-muted-foreground text-xs">
+            Effect-native agent on Cloudflare Workers
+          </p>
+        </div>
       </header>
 
-      <section className="flex-1 space-y-4 rounded-2xl border border-neutral-200 bg-white/50 p-6 shadow-sm">
-        {chat.messages.length === 0 ? (
-          <p className="text-sm text-neutral-500">No messages yet.</p>
-        ) : (
-          chat.messages.map((m) => (
-            <article key={m.id} className="rounded-xl border border-neutral-100 p-3">
-              <p className="mb-1 text-xs uppercase tracking-wide text-neutral-400">{m.role}</p>
-              <div className="whitespace-pre-wrap text-sm">{renderMessageBody(m)}</div>
-            </article>
-          ))
-        )}
-      </section>
+      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col overflow-hidden">
+        <ChatContainerRoot className="relative flex-1 px-4 py-6">
+          <ChatContainerContent className="space-y-6">
+            {chat.messages.length === 0 ? (
+              <div className="text-muted-foreground flex flex-col items-center justify-center gap-2 py-20 text-sm">
+                <p>Start a conversation with the agent.</p>
+              </div>
+            ) : (
+              chat.messages.map((m) => {
+                const body = renderMessageBody(m)
+                const isUser = m.role === 'user'
+                return (
+                  <Message
+                    key={m.id}
+                    className={isUser ? 'flex-row-reverse' : ''}
+                  >
+                    <MessageAvatar
+                      src=""
+                      alt={m.role}
+                      fallback={isUser ? 'U' : 'A'}
+                    />
+                    <MessageContent
+                      markdown={!isUser}
+                      className={
+                        isUser
+                          ? 'bg-primary text-primary-foreground max-w-[80%]'
+                          : 'max-w-[80%]'
+                      }
+                    >
+                      {body || (isStreaming ? '…' : '')}
+                    </MessageContent>
+                  </Message>
+                )
+              })
+            )}
+            {isStreaming && (
+              <div className="text-muted-foreground flex items-center gap-2 pl-11 text-xs">
+                <Loader variant="typing" />
+                <span>Thinking…</span>
+              </div>
+            )}
+            <ChatContainerScrollAnchor />
+          </ChatContainerContent>
+          <div className="pointer-events-none absolute right-4 bottom-4 flex justify-end">
+            <div className="pointer-events-auto">
+              <ScrollButton />
+            </div>
+          </div>
+        </ChatContainerRoot>
 
-      <form onSubmit={onSubmit} className="flex gap-2">
-        <input
-          type="text"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder="Say something..."
-          className="flex-1 rounded-xl border border-neutral-300 px-3 py-2"
-        />
-        <button
-          type="submit"
-          disabled={chat.status === 'streaming' || !draft.trim()}
-          className="rounded-xl bg-neutral-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-        >
-          Send
-        </button>
-      </form>
+        <div className="border-border border-t px-4 py-4">
+          <PromptInput
+            value={draft}
+            onValueChange={setDraft}
+            isLoading={isStreaming}
+            onSubmit={handleSubmit}
+          >
+            <PromptInputTextarea placeholder="Message the agent…" />
+            <PromptInputActions className="justify-end pt-2">
+              <Button
+                size="icon"
+                className="size-9 rounded-full"
+                onClick={handleButtonClick}
+                disabled={!isStreaming && draft.trim().length === 0}
+                aria-label={isStreaming ? 'Stop' : 'Send'}
+              >
+                {isStreaming ? (
+                  <Square className="size-4 fill-current" />
+                ) : (
+                  <ArrowUp className="size-4" />
+                )}
+              </Button>
+            </PromptInputActions>
+          </PromptInput>
+        </div>
+      </div>
     </main>
   )
 }
 
-const renderMessageBody = (m: {parts?: Array<{type: string; text?: string}>}) =>
+const renderMessageBody = (m: {parts?: Array<ChatMessagePart>}) =>
   (m.parts ?? [])
     .filter((p) => p.type === 'text')
     .map((p) => p.text ?? '')

@@ -38,6 +38,14 @@ function ChatPage() {
     await chat.sendMessage(text)
   }
 
+  const handleButtonClick = () => {
+    if (isStreaming) {
+      chat.stop()
+      return
+    }
+    void handleSubmit()
+  }
+
   return (
     <main className="flex h-dvh flex-col">
       <header className="border-border flex items-center justify-between border-b px-6 py-4">
@@ -111,7 +119,7 @@ function ChatPage() {
               <Button
                 size="icon"
                 className="size-9 rounded-full"
-                onClick={handleSubmit}
+                onClick={handleButtonClick}
                 disabled={!isStreaming && draft.trim().length === 0}
                 aria-label={isStreaming ? 'Stop' : 'Send'}
               >

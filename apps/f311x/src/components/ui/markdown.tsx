@@ -1,10 +1,10 @@
-import { cn } from "@/lib/utils"
-import { marked } from "marked"
-import { memo, useId, useMemo } from "react"
-import ReactMarkdown, { type Components } from "react-markdown"
-import remarkBreaks from "remark-breaks"
-import remarkGfm from "remark-gfm"
-import { CodeBlock, CodeBlockCode } from "./code-block"
+import {marked} from 'marked'
+import {memo, useId, useMemo} from 'react'
+import ReactMarkdown, {type Components} from 'react-markdown'
+import remarkBreaks from 'remark-breaks'
+import remarkGfm from 'remark-gfm'
+import {cn} from '@/lib/utils'
+import {CodeBlock, CodeBlockCode} from './code-block'
 
 export type MarkdownProps = {
   children: string
@@ -19,13 +19,13 @@ function parseMarkdownIntoBlocks(markdown: string): string[] {
 }
 
 function extractLanguage(className?: string): string {
-  if (!className) return "plaintext"
+  if (!className) return 'plaintext'
   const match = className.match(/language-(\w+)/)
-  return match ? match[1] : "plaintext"
+  return match ? match[1] : 'plaintext'
 }
 
 const INITIAL_COMPONENTS: Partial<Components> = {
-  code: function CodeComponent({ className, children, ...props }) {
+  code: function CodeComponent({className, children, ...props}) {
     const isInline =
       !props.node?.position?.start.line ||
       props.node?.position?.start.line === props.node?.position?.end.line
@@ -33,10 +33,7 @@ const INITIAL_COMPONENTS: Partial<Components> = {
     if (isInline) {
       return (
         <span
-          className={cn(
-            "bg-primary-foreground rounded-sm px-1 font-mono text-sm",
-            className
-          )}
+          className={cn('bg-primary-foreground rounded-sm px-1 font-mono text-sm', className)}
           {...props}
         >
           {children}
@@ -52,7 +49,7 @@ const INITIAL_COMPONENTS: Partial<Components> = {
       </CodeBlock>
     )
   },
-  pre: function PreComponent({ children }) {
+  pre: function PreComponent({children}) {
     return <>{children}</>
   },
 }
@@ -66,20 +63,17 @@ const MemoizedMarkdownBlock = memo(
     components?: Partial<Components>
   }) {
     return (
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkBreaks]}
-        components={components}
-      >
+      <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]} components={components}>
         {content}
       </ReactMarkdown>
     )
   },
   function propsAreEqual(prevProps, nextProps) {
     return prevProps.content === nextProps.content
-  }
+  },
 )
 
-MemoizedMarkdownBlock.displayName = "MemoizedMarkdownBlock"
+MemoizedMarkdownBlock.displayName = 'MemoizedMarkdownBlock'
 
 function MarkdownComponent({
   children,
@@ -105,6 +99,6 @@ function MarkdownComponent({
 }
 
 const Markdown = memo(MarkdownComponent)
-Markdown.displayName = "Markdown"
+Markdown.displayName = 'Markdown'
 
-export { Markdown }
+export {Markdown}

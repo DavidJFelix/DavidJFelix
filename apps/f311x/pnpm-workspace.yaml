@@ -2,5 +2,6 @@ allowBuilds:
   core-js-pure: false
   esbuild: true
   msgpackr-extract: true
+  msw: true
   sharp: true
   workerd: true

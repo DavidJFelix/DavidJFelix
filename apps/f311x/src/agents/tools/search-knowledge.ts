@@ -3,8 +3,8 @@ import {Effect} from 'effect'
 import {makeFetchRuntime} from '@/effects/runtime'
 import {Embedder} from '@/effects/services/embedder'
 import {VectorStore} from '@/effects/services/vector-store'
-import {searchKnowledgeInput} from '@/lib/schemas'
 import {getRequestEnv} from '@/lib/request-context'
+import {searchKnowledgeInput} from '@/lib/schemas'
 
 export const searchKnowledgeDef = toolDefinition({
   name: 'searchKnowledge',

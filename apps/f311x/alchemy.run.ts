@@ -17,8 +17,7 @@ const UploadsBucket = Cloudflare.R2Bucket('Uploads')
 const WorkspaceBucket = Cloudflare.R2Bucket('AgentWorkspace')
 const Gateway = Cloudflare.AiGateway('Gateway')
 
-
-export const Website = Cloudflare.Vite("Website", {
+export const Website = Cloudflare.Vite('Website', {
   compatibility: {
     date: '2026-05-01',
     flags: ['nodejs_compat'],
@@ -37,7 +36,6 @@ export default Alchemy.Stack(
     state: Cloudflare.state(),
   },
   Effect.gen(function* () {
-
     const website = yield* Website
     return {website}
   }),

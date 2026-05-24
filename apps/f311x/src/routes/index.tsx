@@ -10,11 +10,7 @@ import {
 } from '@/components/ui/chat-container'
 import {Loader} from '@/components/ui/loader'
 import {Message, MessageAvatar, MessageContent} from '@/components/ui/message'
-import {
-  PromptInput,
-  PromptInputActions,
-  PromptInputTextarea,
-} from '@/components/ui/prompt-input'
+import {PromptInput, PromptInputActions, PromptInputTextarea} from '@/components/ui/prompt-input'
 import {ScrollButton} from '@/components/ui/scroll-button'
 
 export const Route = createFileRoute('/')({component: ChatPage})
@@ -51,9 +47,6 @@ function ChatPage() {
       <header className="border-border flex items-center justify-between border-b px-6 py-4">
         <div>
           <h1 className="text-base font-semibold tracking-tight">f311x</h1>
-          <p className="text-muted-foreground text-xs">
-            Effect-native agent on Cloudflare Workers
-          </p>
         </div>
       </header>
 
@@ -69,21 +62,12 @@ function ChatPage() {
                 const body = renderMessageBody(m)
                 const isUser = m.role === 'user'
                 return (
-                  <Message
-                    key={m.id}
-                    className={isUser ? 'flex-row-reverse' : ''}
-                  >
-                    <MessageAvatar
-                      src=""
-                      alt={m.role}
-                      fallback={isUser ? 'U' : 'A'}
-                    />
+                  <Message key={m.id} className={isUser ? 'flex-row-reverse' : ''}>
+                    <MessageAvatar src="" alt={m.role} fallback={isUser ? 'U' : 'A'} />
                     <MessageContent
                       markdown={!isUser}
                       className={
-                        isUser
-                          ? 'bg-primary text-primary-foreground max-w-[80%]'
-                          : 'max-w-[80%]'
+                        isUser ? 'bg-primary text-primary-foreground max-w-[80%]' : 'max-w-[80%]'
                       }
                     >
                       {body || (isStreaming ? '…' : '')}

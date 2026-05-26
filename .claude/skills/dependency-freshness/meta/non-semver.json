@@ -1,0 +1,12 @@
+{
+  "packages": [
+    {
+      "name": "@typescript/native-preview",
+      "reason": "Nightly TypeScript build with date-stamped versions (e.g. 7.0.0-dev.20260523.1). Not semver; breaks may appear in any release."
+    },
+    {
+      "name": "@cloudflare/workers-types",
+      "reason": "Date-based versioning scheme (4.YYYYMMDD.patch). Types-only package; low breakage risk but not semver."
+    }
+  ]
+}

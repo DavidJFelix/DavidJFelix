@@ -13,12 +13,12 @@
     "spell": "cspell --config ../../.config/cspell.json \"**\""
   },
   "dependencies": {
-    "astro": "^6.3.3"
+    "astro": "^6.3.7"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
     "@cspell/dict-typescript": "^3.2.0",
-    "cspell": "^10.0.0",
-    "@typescript/native-preview": "latest"
+    "@typescript/native-preview": "latest",
+    "cspell": "^10.0.0"
   }
 }

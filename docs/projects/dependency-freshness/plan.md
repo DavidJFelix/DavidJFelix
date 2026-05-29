@@ -57,6 +57,43 @@ A Claude skill that:
   `CLAUDE.md` — but that's the exception, not the routine path.
 - Document the policy alongside the skill
 
+### Phase 5: Full automation — gated auto-merge
+
+The current state produces PRs but still relies on a human to merge them, so the
+loop isn't actually unattended. Close that gap.
+
+- **Per-package verification on every update PR.** Each package touched by an
+  update PR (Renovate batches *and* skill batches) must run the full check set
+  for the affected subtree(s): **typecheck, lint, format, and tests**. A package
+  is only eligible for automation once it declares all four in a discoverable
+  form (mise task preferred). Packages missing a check are surfaced, not silently
+  skipped.
+- **Green gates the merge.** When all required checks pass on a patch/minor batch
+  PR, enable Renovate `automerge` (and matching auto-merge for skill-produced
+  PRs) so it lands without human action.
+- **Red blocks automatically.** Any failing check holds the PR open and applies
+  `deps:needs-attention` for human review — never auto-merge on red.
+- **Majors and known-incompatible bumps never auto-merge**, regardless of check
+  status — they stay human-reviewed per Phase 4.
+- **Coverage gate:** auto-merge only turns on for a package once its subtree
+  check set exists. This depends on the per-project subtree checks from the
+  [Linter & Formatter Standardization](../linter-formatter-standardization/plan.md)
+  project (Phase 3b) — that work defines how each app declares its checks and how
+  CI runs them on subtree changes. Sequence behind it.
+
+## Open: full automation (auto-merge + comprehensive checks)
+
+Tracked as Phase 5 above. Two gaps the user flagged 2026-05-29:
+
+1. It doesn't feel fully automated — PRs still need a human merge. Need gated
+   auto-merge (Renovate `automerge` + auto-merge on skill PRs) on green.
+2. Checks aren't comprehensive enough to safely gate. Every package in an update
+   PR needs typecheck + lint + format + tests run so the result can block (red)
+   or approve (green) the change automatically.
+
+Hard dependency on Linter/Formatter Phase 3b (per-project subtree checks) for the
+"each app declares its checks" mechanism. Don't enable auto-merge ahead of that.
+
 ## Open: transitive dependency drift
 
 Current gap: Renovate is pinning newer versions of transitive deps in lockfiles, and our sweep doesn't see them. The skill only inspects manifests.

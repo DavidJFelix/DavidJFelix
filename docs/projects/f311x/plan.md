@@ -126,6 +126,45 @@ apps/f311x/
 - One static Workflow (research) and one Dynamic Workflow path wired (stubs OK)
 - A Bun script demonstrates runtime-agnostic Effect code calling the same services with different layers
 
+## Status (2026-05-29)
+
+Scaffold milestone is hit (typecheck + build pass, chat UI + tools/embeddings/
+workflows/sandbox wired) but **the app is not functional** — most surfaces are
+stubs or unverified against a real Cloudflare account. Two headline gaps remain
+before this is more than a skeleton:
+
+### Phase 9 — Make it actually work (functionality)
+
+Most behavior is stubbed or unverified. Turn the scaffold into a working agent.
+
+- [ ] Verify the Alchemy v2 CLI entry contract; finish wiring DO / Workflow /
+      Vectorize bindings (currently `declare`-only stubs)
+- [ ] Provision the Vectorize index and bind it; replace stub vector paths
+- [ ] Implement `WorkflowDispatcher.startDynamicPlan` against the real Worker
+      Loader binding (`DynamicPlanWorkflow.run`) — currently skeleton only
+- [ ] Real Sandbox execution path verified end-to-end (not just compiling)
+- [ ] Route OpenRouter through AI Gateway once the binding URL shape is confirmed
+- [ ] Chat transport decision (HTTP/SSE vs WS via `useAgent`) and finish the UI
+- [ ] Exercise each tool (`searchKnowledge`, `readFile`/`writeFile`,
+      `runCommand`, `scheduleResearch`, `generateAndDeployHandler`) against live
+      bindings — the bodies exist but are unverified
+
+### Phase 10 — Continuous delivery
+
+Deploy must be automated, not a manual `pnpm deploy` from a laptop.
+
+- [ ] `cd_deploy_f311x.yml` GitHub Actions workflow, path-filtered to `apps/f311x/`,
+      following the repo's CD style guide (`docs/github-actions-style.md`) and the
+      existing `cd_deploy_*` workflows
+- [ ] Deploy via Alchemy v2 (or `wrangler deploy` until the v2 CLI contract is
+      confirmed) on push to the default branch
+- [ ] Cloudflare auth via repo secrets (account ID + API token), no persisted creds
+- [ ] Provision/confirm out-of-band resources (Vectorize index, secrets) so the
+      automated deploy is reproducible — file human-intervention issues for anything
+      needing the dashboard/credentials
+- [ ] First successful automated deploy to a real Cloudflare account is the
+      done-bar for this phase
+
 ## Open questions
 
 - Alchemy v2 + TanStack Start: first-party integration vs plain Worker fallback

@@ -107,6 +107,38 @@ apps/f311x/
 - [ ] `bun run dev` runs locally with hot reload
 - [ ] `alchemy deploy` (or v2 equivalent) provisions end-to-end
 
+### Phase 9 — Make it actually work (functionality)
+
+Most behavior is stubbed or unverified. Turn the scaffold into a working agent.
+
+- [ ] Verify the Alchemy v2 CLI entry contract; finish wiring DO / Workflow /
+      Vectorize bindings (currently `declare`-only stubs)
+- [ ] Provision the Vectorize index and bind it; replace stub vector paths
+- [ ] Implement `WorkflowDispatcher.startDynamicPlan` against the real Worker
+      Loader binding (`DynamicPlanWorkflow.run`) — currently skeleton only
+- [ ] Real Sandbox execution path verified end-to-end (not just compiling)
+- [ ] Route OpenRouter through AI Gateway once the binding URL shape is confirmed
+- [ ] Chat transport decision (HTTP/SSE vs WS via `useAgent`) and finish the UI
+- [ ] Exercise each tool (`searchKnowledge`, `readFile`/`writeFile`,
+      `runCommand`, `scheduleResearch`, `generateAndDeployHandler`) against live
+      bindings — the bodies exist but are unverified
+
+### Phase 10 — Continuous delivery
+
+Deploy must be automated, not a manual `pnpm deploy` from a laptop.
+
+- [ ] `cd_deploy_f311x.yml` GitHub Actions workflow, path-filtered to `apps/f311x/`,
+      following the repo's CD style guide (`docs/github-actions-style.md`) and the
+      existing `cd_deploy_*` workflows
+- [ ] Deploy via Alchemy v2 (or `wrangler deploy` until the v2 CLI contract is
+      confirmed) on push to the default branch
+- [ ] Cloudflare auth via repo secrets (account ID + API token), no persisted creds
+- [ ] Provision/confirm out-of-band resources (Vectorize index, secrets) so the
+      automated deploy is reproducible — file human-intervention issues for anything
+      needing the dashboard/credentials
+- [ ] First successful automated deploy to a real Cloudflare account is the
+      done-bar for this phase
+
 ## Constraints
 
 - Effect owns async. No naked `fetch`/`await` outside service implementations
@@ -126,6 +158,14 @@ apps/f311x/
 - One static Workflow (research) and one Dynamic Workflow path wired (stubs OK)
 - A Bun script demonstrates runtime-agnostic Effect code calling the same services with different layers
 
+## Status (2026-05-29)
+
+Scaffold milestone is hit (typecheck + build pass, chat UI + tools/embeddings/
+workflows/sandbox wired) but **the app is not functional** — most surfaces are
+stubs or unverified against a real Cloudflare account. The remaining work is
+tracked as **Phase 9 (functionality)** and **Phase 10 (continuous delivery)** in
+the Phases section above.
+
 ## Open questions
 
 - Alchemy v2 + TanStack Start: first-party integration vs plain Worker fallback
@@ -137,3 +177,24 @@ apps/f311x/
 ## Related
 
 - [New Domain Sites](../new-domain-sites/plan.md) -- f311x.com row updated from SvelteKit to TanStack Start; this project supersedes that row
+
+## Agent self-hosting (folded in from Setup Hermes / Setup OpenClaw)
+
+The standalone **Setup Hermes** and **Setup OpenClaw** projects were dropped
+(2026-05-29) — David is no longer setting up those two products. The underlying
+intent (self-hosting an AI agent that's reachable securely from anywhere) lives
+here, since f311x is the agent-hosting effort. Carried-over thinking to revisit
+when f311x deployment matures:
+
+- **Hosting**: f311x's answer is Cloudflare (Workers + Agents DO). The earlier
+  research had also weighed home server/NAS, VPS (Hetzner/Fly/Railway), and a
+  dedicated cloud VM — keep as fallbacks if a long-running runtime is ever needed
+  beyond what Workers/Containers provide.
+- **Secure remote access**: Tailscale was the plan for the self-hosted variants
+  (host vs. sidecar/subnet router, Funnel/Serve vs. tailnet-only, ACLs/tags,
+  MagicDNS). Not needed for the Cloudflare deployment, but relevant if any piece
+  ever runs off-Cloudflare.
+- **Providers / gateways**: same shortlist f311x already adopts — OpenRouter
+  (multi-model routing), Cloudflare AI Gateway (caching/limits/observability),
+  direct provider APIs (Anthropic fallback), plus sandboxed execution (Daytona /
+  Vercel Sandboxes were candidates; f311x uses Cloudflare Sandbox).

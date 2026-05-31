@@ -176,3 +176,24 @@ Deploy must be automated, not a manual `pnpm deploy` from a laptop.
 ## Related
 
 - [New Domain Sites](../new-domain-sites/plan.md) -- f311x.com row updated from SvelteKit to TanStack Start; this project supersedes that row
+
+## Agent self-hosting (folded in from Setup Hermes / Setup OpenClaw)
+
+The standalone **Setup Hermes** and **Setup OpenClaw** projects were dropped
+(2026-05-29) — David is no longer setting up those two products. The underlying
+intent (self-hosting an AI agent that's reachable securely from anywhere) lives
+here, since f311x is the agent-hosting effort. Carried-over thinking to revisit
+when f311x deployment matures:
+
+- **Hosting**: f311x's answer is Cloudflare (Workers + Agents DO). The earlier
+  research had also weighed home server/NAS, VPS (Hetzner/Fly/Railway), and a
+  dedicated cloud VM — keep as fallbacks if a long-running runtime is ever needed
+  beyond what Workers/Containers provide.
+- **Secure remote access**: Tailscale was the plan for the self-hosted variants
+  (host vs. sidecar/subnet router, Funnel/Serve vs. tailnet-only, ACLs/tags,
+  MagicDNS). Not needed for the Cloudflare deployment, but relevant if any piece
+  ever runs off-Cloudflare.
+- **Providers / gateways**: same shortlist f311x already adopts — OpenRouter
+  (multi-model routing), Cloudflare AI Gateway (caching/limits/observability),
+  direct provider APIs (Anthropic fallback), plus sandboxed execution (Daytona /
+  Vercel Sandboxes were candidates; f311x uses Cloudflare Sandbox).

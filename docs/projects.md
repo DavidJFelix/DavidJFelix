@@ -88,18 +88,6 @@ Migrate shell from omz to fish, add nushell/jj/starship config, sync local state
 
 **Status**: In Progress
 
-### [Setup Hermes](./projects/setup-hermes/plan.md)
-
-Set up Hermes.
-
-**Status**: In Progress
-
-### [Setup OpenClaw](./projects/setup-openclaw/plan.md)
-
-Set up OpenClaw.
-
-**Status**: In Progress
-
 ### [Setup Warp](./projects/setup-warp/plan.md)
 
 Install the Warp CLI and explore using it.

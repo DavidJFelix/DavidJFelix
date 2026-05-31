@@ -3,11 +3,11 @@ name: Cron Renovate
 # Self-hosted Renovate runner. Reads .github/renovate.json for repo config
 # (batching, schedule, lockFileMaintenance, vulnerability handling).
 #
-# Authenticates as a GitHub App via RENOVATE_APP_ID + RENOVATE_APP_PRIVATE_KEY
+# Authenticates as a GitHub App via RENOVATE_CLIENT_ID + RENOVATE_APP_PRIVATE_KEY
 # secrets. The App pattern (vs. a PAT) gets higher API rate limits, lets
 # Renovate PRs trigger downstream CI workflows, and is portable to the
 # closed-source repos that want to copy this setup. App setup is tracked
-# in #140.
+# in #141.
 on:
   schedule:
     # Hourly wake-up. Actual PR cadence is controlled by the `schedule:`
@@ -37,7 +37,7 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          app-id: ${{ secrets.RENOVATE_APP_ID }}
+          client-id: ${{ secrets.RENOVATE_CLIENT_ID }}
           private-key: ${{ secrets.RENOVATE_APP_PRIVATE_KEY }}
           # Scope the minted token to least privilege — without these the
           # token inherits the App's full installation permissions.
@@ -46,7 +46,7 @@ jobs:
           permission-issues: write
           permission-workflows: write
           permission-checks: read
-          permission-dependabot-alerts: read
+          permission-vulnerability-alerts: read
 
       - name: renovate
         uses: renovatebot/github-action@693b9ef15eec82123529a37c782242f091365961 # v46.1.14

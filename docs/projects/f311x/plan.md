@@ -107,32 +107,6 @@ apps/f311x/
 - [ ] `bun run dev` runs locally with hot reload
 - [ ] `alchemy deploy` (or v2 equivalent) provisions end-to-end
 
-## Constraints
-
-- Effect owns async. No naked `fetch`/`await` outside service implementations
-- Zod by default; Effect Schema only at the boundary if a service demands it
-- One model abstraction per call site (Vercel AI SDK inside `onChatMessage`; TanStack AI everywhere else)
-- Tool defs live only in `src/agents/tools/*.ts`
-- Every `Effect.runPromise` carries the upstream `AbortSignal`
-- No premature `@effect/ai`; leave a marker comment at each model-call site
-- Pre-1.0 SDKs (Alchemy v2, Dynamic Workflows, TanStack AI): keep the Effect service layer thin enough that an SDK swap is layer-level
-
-## Done definition (scaffold)
-
-- `bun run dev` brings up app locally with hot reload
-- `/` shows chat UI; messages stream from an agent DO
-- A built-in tool (e.g. `searchKnowledge`) is callable from chat and from a React component as a server fn -- one shared definition
-- `alchemy deploy` provisions everything end-to-end
-- One static Workflow (research) and one Dynamic Workflow path wired (stubs OK)
-- A Bun script demonstrates runtime-agnostic Effect code calling the same services with different layers
-
-## Status (2026-05-29)
-
-Scaffold milestone is hit (typecheck + build pass, chat UI + tools/embeddings/
-workflows/sandbox wired) but **the app is not functional** — most surfaces are
-stubs or unverified against a real Cloudflare account. Two headline gaps remain
-before this is more than a skeleton:
-
 ### Phase 9 — Make it actually work (functionality)
 
 Most behavior is stubbed or unverified. Turn the scaffold into a working agent.
@@ -164,6 +138,33 @@ Deploy must be automated, not a manual `pnpm deploy` from a laptop.
       needing the dashboard/credentials
 - [ ] First successful automated deploy to a real Cloudflare account is the
       done-bar for this phase
+
+## Constraints
+
+- Effect owns async. No naked `fetch`/`await` outside service implementations
+- Zod by default; Effect Schema only at the boundary if a service demands it
+- One model abstraction per call site (Vercel AI SDK inside `onChatMessage`; TanStack AI everywhere else)
+- Tool defs live only in `src/agents/tools/*.ts`
+- Every `Effect.runPromise` carries the upstream `AbortSignal`
+- No premature `@effect/ai`; leave a marker comment at each model-call site
+- Pre-1.0 SDKs (Alchemy v2, Dynamic Workflows, TanStack AI): keep the Effect service layer thin enough that an SDK swap is layer-level
+
+## Done definition (scaffold)
+
+- `bun run dev` brings up app locally with hot reload
+- `/` shows chat UI; messages stream from an agent DO
+- A built-in tool (e.g. `searchKnowledge`) is callable from chat and from a React component as a server fn -- one shared definition
+- `alchemy deploy` provisions everything end-to-end
+- One static Workflow (research) and one Dynamic Workflow path wired (stubs OK)
+- A Bun script demonstrates runtime-agnostic Effect code calling the same services with different layers
+
+## Status (2026-05-29)
+
+Scaffold milestone is hit (typecheck + build pass, chat UI + tools/embeddings/
+workflows/sandbox wired) but **the app is not functional** — most surfaces are
+stubs or unverified against a real Cloudflare account. The remaining work is
+tracked as **Phase 9 (functionality)** and **Phase 10 (continuous delivery)** in
+the Phases section above.
 
 ## Open questions
 

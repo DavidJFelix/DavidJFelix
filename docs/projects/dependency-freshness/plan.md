@@ -64,10 +64,10 @@ loop isn't actually unattended. Close that gap.
 
 - **Per-package verification on every update PR.** Each package touched by an
   update PR (Renovate batches *and* skill batches) must run the full check set
-  for the affected subtree(s): **typecheck, lint, format, and tests**. A package
-  is only eligible for automation once it declares all four in a discoverable
-  form (mise task preferred). Packages missing a check are surfaced, not silently
-  skipped.
+  for the affected subtree(s): **typecheck, lint, format, test, and build** —
+  the same five-check set Phase 3b has each app declare. A package is only
+  eligible for automation once it declares all five in a discoverable form (mise
+  task preferred). Packages missing a check are surfaced, not silently skipped.
 - **Green gates the merge.** When all required checks pass on a patch/minor batch
   PR, enable Renovate `automerge` (and matching auto-merge for skill-produced
   PRs) so it lands without human action.
@@ -88,8 +88,8 @@ Tracked as Phase 5 above. Two gaps the user flagged 2026-05-29:
 1. It doesn't feel fully automated — PRs still need a human merge. Need gated
    auto-merge (Renovate `automerge` + auto-merge on skill PRs) on green.
 2. Checks aren't comprehensive enough to safely gate. Every package in an update
-   PR needs typecheck + lint + format + tests run so the result can block (red)
-   or approve (green) the change automatically.
+   PR needs typecheck + lint + format + test + build run so the result can block
+   (red) or approve (green) the change automatically.
 
 Hard dependency on Linter/Formatter Phase 3b (per-project subtree checks) for the
 "each app declares its checks" mechanism. Don't enable auto-merge ahead of that.

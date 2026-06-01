@@ -3,8 +3,10 @@ name: Cron Dependency Freshness
 # Runs unattended on a weekly cron; also dispatchable on demand.
 on:
   schedule:
-    # Weekly, Monday 06:00 UTC — one schedule covers all ecosystems.
-    - cron: '0 6 * * 1'
+    # Weekly, Thursday 06:00 UTC — one schedule covers all ecosystems.
+    # Staggered from Renovate (Monday) to avoid "repository-changed" aborts
+    # when both tools push branches in the same window.
+    - cron: '0 6 * * 4'
   workflow_dispatch:
 
 jobs:

@@ -40,42 +40,42 @@ url = "https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_
 provenance = "github-attestations"
 
 [[tools.biome]]
-version = "2.4.15"
+version = "2.4.16"
 backend = "aqua:biomejs/biome"
 
 [tools.biome."platforms.linux-arm64"]
-checksum = "sha256:7eb8d592da36b990a43f00545469c29b149e665ff0eb1fcd45e37f0d6153e2ae"
-url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.4.15/biome-linux-arm64"
+checksum = "sha256:e81067782ddd9a9d45e13b8fe18bbef54c490cf26126f05d67bb370caf47502a"
+url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.4.16/biome-linux-arm64"
 provenance = "github-attestations"
 
 [tools.biome."platforms.linux-arm64-musl"]
-checksum = "sha256:9dfd5ab51e493864777fc77447d8416cc19d70d644d900048e703aad95afe9d2"
-url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.4.15/biome-linux-arm64-musl"
+checksum = "sha256:f288ac4e33d35ef08ee333419525df8cf9e74a617447d651a3fad052a9612731"
+url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.4.16/biome-linux-arm64-musl"
 provenance = "github-attestations"
 
 [tools.biome."platforms.linux-x64"]
-checksum = "sha256:8dafe2739eafd03230ea1bd3be1a8aa036cf3dc1ab385987f4c2c72c7c2f3500"
-url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.4.15/biome-linux-x64"
+checksum = "sha256:f6904c208ce8884cf859460178f32f885250b375da1810c551912a029f4abf79"
+url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.4.16/biome-linux-x64"
 provenance = "github-attestations"
 
 [tools.biome."platforms.linux-x64-musl"]
-checksum = "sha256:60b19c9c7e611e1b18268b3d9baf9ec903f6ca184c3a8e81845f68fd3b621f49"
-url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.4.15/biome-linux-x64-musl"
+checksum = "sha256:e7102113e10c57772ce969ce088f54ec2cc37331bb4601e5f5369fd94a6fe1d9"
+url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.4.16/biome-linux-x64-musl"
 provenance = "github-attestations"
 
 [tools.biome."platforms.macos-arm64"]
-checksum = "sha256:b2c65601b3b0fcd0606c4152f20e3774aadf0b73ba791b8dbcff7e6f1a4fa17a"
-url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.4.15/biome-darwin-arm64"
+checksum = "sha256:8cf9e92a161e26bdbfc0896c208864e1de8b160dfb90f61040609c2743cf433b"
+url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.4.16/biome-darwin-arm64"
 provenance = "github-attestations"
 
 [tools.biome."platforms.macos-x64"]
-checksum = "sha256:fab8a39dc54a38f820b2952f7f80e7e8993483b7501a4f19d1cbf4361128a07d"
-url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.4.15/biome-darwin-x64"
+checksum = "sha256:42329e159a2f35b3776a01e7a16a53582d53e126fbc55bfdd5825e873a87b338"
+url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.4.16/biome-darwin-x64"
 provenance = "github-attestations"
 
 [tools.biome."platforms.windows-x64"]
-checksum = "sha256:a77a61537dfc6f923b5b1fc912bc2e0ed46a83c3303ca973695d7f4f8351c71e"
-url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.4.15/biome-win32-x64.exe"
+checksum = "sha256:1247239dae8f57aafeaeb9914e30b92efcc51c632eee3be4463a95969558f6a3"
+url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.4.16/biome-win32-x64.exe"
 provenance = "github-attestations"
 
 [[tools.ghalint]]
@@ -164,7 +164,7 @@ checksum = "sha256:371071a4f7e2c8a5dd280730049c685911feecc59f50ebc488d675dc1087c
 url = "https://nodejs.org/dist/v26.2.0/node-v26.2.0-win-x64.zip"
 
 [[tools.oxlint]]
-version = "1.66.0"
+version = "1.67.0"
 backend = "npm:oxlint"
 
 [[tools.pinact]]
@@ -207,37 +207,37 @@ url = "https://github.com/suzuki-shunsuke/pinact/releases/download/v3.10.1/pinac
 provenance = "github-attestations"
 
 [[tools.pnpm]]
-version = "11.3.0"
+version = "11.5.0"
 backend = "aqua:pnpm/pnpm"
 
 [tools.pnpm."platforms.linux-arm64"]
-checksum = "sha256:383f644f50667e9c1752791173d274ba414117262b09c1b027c2d297bf520662"
-url = "https://github.com/pnpm/pnpm/releases/download/v11.3.0/pnpm-linux-arm64.tar.gz"
+checksum = "sha256:f817841be043e2be465cb8b8c7ddd19dcedf3120214783dc473a6da7f8c84da9"
+url = "https://github.com/pnpm/pnpm/releases/download/v11.5.0/pnpm-linux-arm64.tar.gz"
 provenance = "github-attestations"
 
 [tools.pnpm."platforms.linux-arm64-musl"]
-checksum = "sha256:b489128f5e9a6ef56c1c5ff02c03118635bef7726ef9bb2d44e0ccd16d191883"
-url = "https://github.com/pnpm/pnpm/releases/download/v11.3.0/pnpm-linux-arm64-musl.tar.gz"
+checksum = "sha256:6733e0f4295a09e3465224639d212cb0c01cc438e3db1b2e47d61e49fd3f4d0a"
+url = "https://github.com/pnpm/pnpm/releases/download/v11.5.0/pnpm-linux-arm64-musl.tar.gz"
 provenance = "github-attestations"
 
 [tools.pnpm."platforms.linux-x64"]
-checksum = "sha256:6eb506b53297eb1186ba0cbff1577bb26d17713835a01a5342dcafae550827ce"
-url = "https://github.com/pnpm/pnpm/releases/download/v11.3.0/pnpm-linux-x64.tar.gz"
+checksum = "sha256:d45c4338299cae5b7fcaf5e95294643edb10de98258fc0b1d566ffa00b0c353c"
+url = "https://github.com/pnpm/pnpm/releases/download/v11.5.0/pnpm-linux-x64.tar.gz"
 provenance = "github-attestations"
 
 [tools.pnpm."platforms.linux-x64-musl"]
-checksum = "sha256:d728c510e04ac218091ce5dc591b28706bb154a14bd9741a146a0defd3ad466b"
-url = "https://github.com/pnpm/pnpm/releases/download/v11.3.0/pnpm-linux-x64-musl.tar.gz"
+checksum = "sha256:f114fa068bb5b45472e3389b19722feb9cb47b72ca656fb5a5cbb7d5fbb7ed06"
+url = "https://github.com/pnpm/pnpm/releases/download/v11.5.0/pnpm-linux-x64-musl.tar.gz"
 provenance = "github-attestations"
 
 [tools.pnpm."platforms.macos-arm64"]
-checksum = "sha256:788958f77b44d7ac05f05f08ccdd520f1b2253d834df2a5eb0cf5ab9b84d40f6"
-url = "https://github.com/pnpm/pnpm/releases/download/v11.3.0/pnpm-darwin-arm64.tar.gz"
+checksum = "sha256:966f2ed3587457e1135b7102569b08f21c717f49d5676d63f9435bac9682c45b"
+url = "https://github.com/pnpm/pnpm/releases/download/v11.5.0/pnpm-darwin-arm64.tar.gz"
 provenance = "github-attestations"
 
 [tools.pnpm."platforms.windows-x64"]
-checksum = "sha256:1264caa0dcad06849cfd04b939f19a64c5349d5dd49f14dadbc06703c6e42653"
-url = "https://github.com/pnpm/pnpm/releases/download/v11.3.0/pnpm-win32-x64.zip"
+checksum = "sha256:f85f5c399caa41e2fbce8a2127b69ea4d2ab9b45296756a557b26110d01dcefd"
+url = "https://github.com/pnpm/pnpm/releases/download/v11.5.0/pnpm-win32-x64.zip"
 provenance = "github-attestations"
 
 [[tools.prettier]]

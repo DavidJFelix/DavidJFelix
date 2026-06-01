@@ -25,10 +25,10 @@ importers:
         version: 19.2.6(react@19.2.6)
     devDependencies:
       '@cspell/dict-typescript':
-        specifier: ^3.2.0
+        specifier: 3.2.3
         version: 3.2.3
       '@tanstack/router-plugin':
-        specifier: ^1.168.11
+        specifier: 1.168.11
         version: 1.168.11(@tanstack/react-router@1.170.8(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(vite@8.0.14(jiti@2.7.0)(yaml@2.9.0))
       '@types/react':
         specifier: ^19.2.15
@@ -40,13 +40,13 @@ importers:
         specifier: latest
         version: 7.0.0-dev.20260527.2
       '@vitejs/plugin-react':
-        specifier: ^6.0.1
+        specifier: 6.0.2
         version: 6.0.2(vite@8.0.14(jiti@2.7.0)(yaml@2.9.0))
       cspell:
-        specifier: ^10.0.0
+        specifier: 10.0.0
         version: 10.0.0
       vite:
-        specifier: ^8.0.14
+        specifier: 8.0.14
         version: 8.0.14(jiti@2.7.0)(yaml@2.9.0)
 
 packages:

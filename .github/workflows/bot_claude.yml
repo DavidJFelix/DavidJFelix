@@ -69,8 +69,8 @@ jobs:
           # prompt: 'Update the pull request description to include a summary of changes.'
 
           # Triggering is gated to the repo owner via the job `if:` above, so the
-          # bot gets the same broad tool access as the dependency-freshness
-          # sweep (pnpm, cargo, mise, git, GitHub MCP). The real boundary is the
-          # job `permissions:` block, not a tool allowlist.
+          # The bot gets broad tool access (pnpm, cargo, mise, git, GitHub
+          # MCP). The real boundary is the job `permissions:` block, not a
+          # tool allowlist.
           claude_args: |
             --dangerously-skip-permissions

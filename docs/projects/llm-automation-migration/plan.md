@@ -14,9 +14,9 @@ Interactive work (David ↔ Claude in Claude Code) stays on Claude. This is abou
 
 ## In-scope workflows
 
-- `.github/workflows/cron_dependency_freshness.yml` — weekly freshness sweep
+- ~~`.github/workflows/cron_dependency_freshness.yml`~~ — removed; Renovate handles dependency updates now
 - `.github/workflows/bot_claude_code_review.yml` — PR review on open/update
-- `.github/workflows/bot_claude.yml` — keep on Claude for now (interactive mention bot); revisit after the other two land
+- `.github/workflows/bot_claude.yml` — keep on Claude for now (interactive mention bot); revisit after the review action lands
 
 ## Implementation
 
@@ -32,19 +32,13 @@ Evaluate `pi-core` (bun) vs `opencode` vs other viable options. Criteria:
 
 Pick one. Document the tradeoffs.
 
-### Phase 2: Port the dependency-freshness skill
-
-- Port `.claude/skills/dependency-freshness/SKILL.md` to the chosen runtime's skill format
-- Verify the port end-to-end against a single ecosystem first (npm, since djf.io is the most active)
-- Migrate the cron workflow
-
-### Phase 3: Port the review action
+### Phase 2: Port the review action
 
 - Replicate the current PR-review prompt/skill on the new runtime
 - Migrate `bot_claude_code_review.yml`
 - Keep behavior parity: same trigger, same review style, similar latency
 
-### Phase 4: Document
+### Phase 3: Document
 
 - Update `CLAUDE.md` / `AGENTS.md` so the next person knows which runtime owns which workflow
 - Note which workflows stayed on Claude and why
@@ -52,5 +46,6 @@ Pick one. Document the tradeoffs.
 ## Working Notes
 
 - David is migrating off Claude for cost reasons, not capability reasons. Direction is "good enough on a cheaper runner", not "best agent for the job".
-- Skills are the portable unit. The freshness skill in particular was written to be runtime-agnostic; treat that as the canary.
+- Skills are the portable unit.
 - Claude (this assistant) is helping with the migration even though the destination isn't Claude — the irony is acknowledged.
+- Dependency freshness was removed as an LLM workflow — Renovate handles it natively without LLM cost.

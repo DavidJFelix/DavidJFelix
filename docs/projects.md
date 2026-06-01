@@ -8,12 +8,6 @@ Active work is grouped and ordered by priority. Dev environment projects run asy
 
 Foundation work. Stabilize the toolchain before piling new features on top.
 
-### [Dependency Freshness](./projects/dependency-freshness/plan.md)
-
-mise-based versioning and an ongoing process (skill + cadence) to keep packages across the monorepo current.
-
-**Status**: In Progress
-
 ### [Linter & Formatter Standardization](./projects/linter-formatter-standardization/plan.md)
 
 Converge on a single, consistent set of linters and formatters across the entire monorepo with clear tool-to-file-type ownership.

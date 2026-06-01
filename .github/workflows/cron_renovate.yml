@@ -44,6 +44,13 @@ jobs:
           permission-contents: write
           permission-pull-requests: write
           permission-issues: write
+          # Renovate posts commit statuses (e.g. renovate/stability-days, from
+          # minimumReleaseAge in config:best-practices). Without statuses:write
+          # the POST /statuses/{sha} 403s with "integration-unauthorized" and
+          # Renovate aborts the whole run, surfacing it misleadingly as
+          # "repository-changed". Requires the GitHub App to also grant
+          # "Commit statuses: Read & write" (see #141).
+          permission-statuses: write
           permission-workflows: write
           permission-checks: read
           permission-vulnerability-alerts: read

@@ -31,10 +31,10 @@ importers:
         specifier: 1.168.11
         version: 1.168.11(@tanstack/react-router@1.170.8(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(vite@8.0.14(jiti@2.7.0)(yaml@2.9.0))
       '@types/react':
-        specifier: ^19.2.15
+        specifier: 19.2.15
         version: 19.2.15
       '@types/react-dom':
-        specifier: ^19.2.3
+        specifier: 19.2.3
         version: 19.2.3(@types/react@19.2.15)
       '@typescript/native-preview':
         specifier: latest

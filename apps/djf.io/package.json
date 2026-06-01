@@ -33,11 +33,11 @@
     "sharp": "^0.34.5"
   },
   "devDependencies": {
-    "@cspell/dict-typescript": "^3.2.3",
+    "@cspell/dict-typescript": "3.2.3",
     "@pandacss/dev": "1.11.1",
-    "@playwright/test": "^1.60.0",
-    "cspell": "^10.0.0",
-    "vitest": "^4.1.7"
+    "@playwright/test": "1.60.0",
+    "cspell": "10.0.0",
+    "vitest": "4.1.7"
   },
   "engines": {
     "node": ">=24"

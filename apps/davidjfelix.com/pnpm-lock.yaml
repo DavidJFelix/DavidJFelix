@@ -13,16 +13,16 @@ importers:
         version: 6.3.7(rollup@4.60.4)(yaml@2.9.0)
     devDependencies:
       '@astrojs/check':
-        specifier: ^0.9.9
+        specifier: 0.9.9
         version: 0.9.9(prettier@3.8.3)(typescript@6.0.3)
       '@cspell/dict-typescript':
-        specifier: ^3.2.0
+        specifier: 3.2.3
         version: 3.2.3
       '@typescript/native-preview':
         specifier: latest
         version: 7.0.0-dev.20260527.2
       cspell:
-        specifier: ^10.0.0
+        specifier: 10.0.0
         version: 10.0.0
 
 packages:

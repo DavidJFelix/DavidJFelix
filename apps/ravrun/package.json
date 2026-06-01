@@ -15,14 +15,14 @@
     "spell": "cspell --config ../../.config/cspell.json \"**\""
   },
   "devDependencies": {
-    "@cspell/dict-typescript": "^3.2.0",
-    "@tanstack/router-plugin": "^1.168.11",
+    "@cspell/dict-typescript": "3.2.3",
+    "@tanstack/router-plugin": "1.168.11",
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
     "@typescript/native-preview": "latest",
-    "@vitejs/plugin-react": "^6.0.1",
-    "cspell": "^10.0.0",
-    "vite": "^8.0.14"
+    "@vitejs/plugin-react": "6.0.2",
+    "cspell": "10.0.0",
+    "vite": "8.0.14"
   },
   "dependencies": {
     "@tanstack/react-router": "^1.170.8",

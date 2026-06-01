@@ -54,3 +54,10 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
           # Per-repo config is auto-discovered from .github/renovate.json;
           # no configurationFile needed.
+        env:
+          # The minted App token behaves like a PAT, so Renovate has no
+          # implicit repo to act on — without this it logs "No repositories
+          # found" and exits. Scope it to just this repo, which also keeps
+          # the one-App-across-N-repos pattern clean: each repo's workflow
+          # runs Renovate only against itself.
+          RENOVATE_REPOSITORIES: ${{ github.repository }}

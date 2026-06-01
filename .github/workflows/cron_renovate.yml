@@ -61,3 +61,4 @@ jobs:
           # the one-App-across-N-repos pattern clean: each repo's workflow
           # runs Renovate only against itself.
           RENOVATE_REPOSITORIES: ${{ github.repository }}
+          LOG_LEVEL: debug

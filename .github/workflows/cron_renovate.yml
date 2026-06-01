@@ -44,6 +44,7 @@ jobs:
           permission-contents: write
           permission-pull-requests: write
           permission-issues: write
+          permission-statuses: write
           permission-workflows: write
           permission-checks: read
           permission-vulnerability-alerts: read

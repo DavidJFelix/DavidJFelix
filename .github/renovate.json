@@ -15,22 +15,31 @@
     {
       "matchUpdateTypes": ["patch", "minor"],
       "matchManagers": ["npm"],
-      "groupName": "npm patch/minor"
+      "groupName": "npm patch/minor",
+      "minimumReleaseAge": "7 days"
     },
     {
       "matchUpdateTypes": ["patch", "minor"],
       "matchManagers": ["cargo"],
-      "groupName": "cargo patch/minor"
+      "groupName": "cargo patch/minor",
+      "minimumReleaseAge": "7 days"
     },
     {
-      "matchUpdateTypes": ["patch", "minor"],
+      "matchUpdateTypes": ["patch", "minor", "digest"],
       "matchManagers": ["github-actions"],
-      "groupName": "github-actions patch/minor"
+      "groupName": "github-actions patch/minor",
+      "minimumReleaseAge": "7 days"
     },
     {
       "matchUpdateTypes": ["patch", "minor"],
       "matchManagers": ["mise"],
-      "groupName": "mise patch/minor"
+      "groupName": "mise patch/minor",
+      "minimumReleaseAge": "7 days"
+    },
+    {
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true,
+      "labels": ["major"]
     }
   ]
 }

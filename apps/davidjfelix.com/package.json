@@ -20,6 +20,6 @@
     "@cspell/dict-typescript": "3.2.3",
     "@typescript/native-preview": "latest",
     "cspell": "10.0.0",
-    "wrangler": "^4.95.0"
+    "wrangler": "4.96.0"
   }
 }

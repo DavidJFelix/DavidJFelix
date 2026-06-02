@@ -62,3 +62,6 @@ jobs:
           # the one-App-across-N-repos pattern clean: each repo's workflow
           # runs Renovate only against itself.
           RENOVATE_REPOSITORIES: ${{ github.repository }}
+          # Auto-trust mise config files in Renovate's ephemeral checkout
+          # so `mise lock` doesn't fail on untrusted paths.
+          MISE_YES: '1'

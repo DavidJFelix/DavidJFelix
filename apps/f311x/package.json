@@ -24,14 +24,14 @@
     "@cloudflare/ai-chat": "^0.7.1",
     "@cloudflare/sandbox": "^0.10.2",
     "@cloudflare/vite-plugin": "^1.38.0",
-    "@distilled.cloud/cloudflare": "0.21.5",
-    "@effect/platform-bun": "4.0.0-beta.70",
-    "@effect/platform-node": "4.0.0-beta.70",
+    "@distilled.cloud/cloudflare": "0.22.1",
+    "@effect/platform-bun": "4.0.0-beta.74",
+    "@effect/platform-node": "4.0.0-beta.74",
     "@fontsource-variable/geist": "^5.2.9",
     "@openrouter/ai-sdk-provider": "^2.9.0",
     "@tailwindcss/vite": "^4.3.0",
-    "@tanstack/ai": "^0.21.3",
-    "@tanstack/ai-react": "^0.11.7",
+    "@tanstack/ai": "^0.23.0",
+    "@tanstack/ai-react": "^0.13.0",
     "@tanstack/react-devtools": "latest",
     "@tanstack/react-router": "latest",
     "@tanstack/react-router-devtools": "latest",
@@ -39,10 +39,10 @@
     "@tanstack/router-plugin": "^1.168.11",
     "agents": "^0.13.2",
     "ai": "^6.0.191",
-    "alchemy": "2.0.0-beta.42",
+    "alchemy": "2.0.0-beta.45",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "effect": "4.0.0-beta.70",
+    "effect": "4.0.0-beta.74",
     "lucide-react": "^1.16.0",
     "marked": "^18.0.4",
     "radix-ui": "^1.4.3",
@@ -60,7 +60,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "4.20260524.1",
+    "@cloudflare/workers-types": "4.20260530.1",
     "@tailwindcss/typography": "0.5.19",
     "@tanstack/devtools-vite": "latest",
     "@testing-library/dom": "10.4.1",
@@ -73,7 +73,7 @@
     "jsdom": "29.1.1",
     "vite": "8.0.14",
     "vitest": "4.1.7",
-    "wrangler": "4.94.0"
+    "wrangler": "4.95.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

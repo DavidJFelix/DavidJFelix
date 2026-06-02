@@ -1,9 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:best-practices"],
-  "customEnvVariables": {
-    "MISE_YES": "1"
-  },
   "timezone": "UTC",
   "schedule": ["before 5am on monday"],
   "lockFileMaintenance": {

@@ -39,7 +39,7 @@
     "@playwright/test": "1.60.0",
     "cspell": "10.0.0",
     "vitest": "4.1.7",
-    "wrangler": "^4.95.0"
+    "wrangler": "4.96.0"
   },
   "engines": {
     "node": ">=24"

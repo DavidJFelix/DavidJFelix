@@ -24,7 +24,7 @@
     "@cloudflare/ai-chat": "^0.7.1",
     "@cloudflare/sandbox": "^0.10.2",
     "@cloudflare/vite-plugin": "^1.38.0",
-    "@distilled.cloud/cloudflare": "0.22.1",
+    "@distilled.cloud/cloudflare": "0.22.2",
     "@effect/platform-bun": "4.0.0-beta.74",
     "@effect/platform-node": "4.0.0-beta.74",
     "@fontsource-variable/geist": "^5.2.9",

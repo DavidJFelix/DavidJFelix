@@ -1,8 +1,7 @@
 name = "f311x"
-main = "src/server.ts"
 compatibility_date = "2026-05-01"
 compatibility_flags = ["nodejs_compat"]
 
-# Bindings are provisioned by Alchemy v2 (see alchemy.run.ts).
-# This file exists so `wrangler types` and `wrangler dev` work as a
-# fallback when the Alchemy v2 dev loop is not available.
+# Deploy and bindings are managed by Alchemy v2 (see alchemy.run.ts); the app is
+# built by Vite / TanStack Start, so there is no standalone worker entry here.
+# This file is kept only as a fallback for `wrangler types` / `wrangler dev`.

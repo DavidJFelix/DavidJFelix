@@ -67,62 +67,62 @@ skills:
 
 # f311x
 
-Effect-native AI agent app on Cloudflare. See [docs/projects/f311x/plan.md](../../docs/projects/f311x/plan.md) for the full plan.
+A small chat app on Cloudflare — TanStack Start front end, deployed via Alchemy v2.
+It builds and deploys today; the chat backend isn't wired yet (the UI posts to
+`/agents/chat-agent/default`, which has no handler). See
+[docs/projects/f311x/plan.md](../../docs/projects/f311x/plan.md).
+
+> **History:** the earlier Effect-native agent scaffold (Agents SDK, Effect service
+> layer, a custom Vectorize provider, Workflows, Sandbox, agent tools) was removed
+> in June 2026 — it never deployed and had drifted into a non-building state. See
+> #202. Don't reintroduce that layout without a deliberate decision.
 
 ## Stack at a glance
 
-- TanStack Start on Cloudflare Workers
-- Alchemy v2 owns provisioning (`alchemy.run.ts`)
-- Cloudflare Agents SDK for persistent agents (`AIChatAgent` DO subclass)
-- Effect-TS owns async orchestration -- typed errors, retries, timeouts, cancellation
-- TanStack AI for in-app tools (`createServerFnTool`); Vercel AI SDK only inside `onChatMessage`
-- OpenRouter primary, Anthropic direct fallback
-- R2 + Vectorize + Workflows + Dynamic Workflows + Sandboxes + AI Gateway
+- TanStack Start (Vite, file-based routing) + React 19
+- Tailwind v4 + shadcn-style components (`src/components/ui`)
+- Alchemy v2 owns provisioning + deploy (`alchemy.run.ts`, which uses `effect`)
+- Vitest + Testing Library + jsdom for tests
 
 ## Conventions
 
-- **Package manager**: pnpm. The repo policy keeps Wrangler-touching projects on pnpm until bun-with-Wrangler is confirmed. `bun` is used for scripts under `scripts/`.
-- **Effect owns async**. No naked `fetch` / `await` outside service implementations in `src/effects/services/`.
-- **One model abstraction per call site**. Vercel AI SDK inside `AIChatAgent.onChatMessage`; TanStack AI everywhere else. Both wrapped in Effect at the boundary.
-- **Tool definitions live in `src/agents/tools/*.ts`** -- both the React app (as server functions) and the agent (as LLM tools via adapter) consume the same exports.
-- **Schemas are Zod by default**. Convert to Effect Schema only at the runtime boundary if a service demands it.
-- **Cancellation propagates**. Every `Effect.runPromise` carries the upstream `AbortSignal`.
-- **`MIGRATION-MARKER: @effect/ai`** comments mark candidate sites for migration if/when multi-provider routing becomes essential.
+- **Package manager**: pnpm (mise pins the version). Wrangler-touching projects stay on pnpm.
+- **Keep it small.** Add a binding or dependency only when something actually uses it.
+- **Every new surface ships with a test.** typecheck + build + vitest gate every PR
+  via `.github/workflows/ci_f311x.yml`; keep them green.
+- **Components** follow shadcn conventions; use `cn()` (clsx + tailwind-merge) for class merging.
 
 ## Layout
 
 ```
 alchemy.run.ts            # Alchemy v2 stack (excluded from tsc)
+vitest.config.ts          # standalone test config (jsdom)
 src/
-  server.ts               # Worker entrypoint
-  agents/chat-agent.ts    # AIChatAgent subclass
-  agents/tools/           # toolDefinition(...).server(...) tools
-  effects/runtime.ts      # makeFetchRuntime(env) -> ManagedRuntime
-  effects/layers.ts       # liveLayer(env)
-  effects/services/       # Embedder, ObjectStore, VectorStore, ModelClient, Sandbox, WorkflowDispatcher
-  workflows/research.ts   # Static WorkflowEntrypoint
-  workflows/dynamic-plan.ts
-  routes/                 # TanStack Start file-based routes
-  lib/                    # schemas.ts (Zod), env.ts (typed bindings)
-  alchemy/                # Custom Alchemy v2 resources (excluded from tsc)
-    vectorize/            # VectorizeIndex resource + binding + providers
-scripts/ingest.ts         # Bun script -- same Effects, different layer
+  router.tsx              # TanStack Router setup
+  routes/                 # file-based routes (__root.tsx, index.tsx = chat UI)
+  components/ui/          # shadcn-style components
+  lib/utils.ts            # cn() helper
 ```
 
-## Custom Alchemy resources
+## Deploy
 
-`src/alchemy/vectorize/` is an in-repo custom Alchemy v2 provider for Cloudflare Vectorize. Follows the pattern at https://v2.alchemy.run/guides/custom-provider/ and mirrors the structure of `alchemy/Cloudflare/KV/`. Both this directory and `alchemy.run.ts` are excluded from `tsc` because Alchemy v2 peer-deps `effect@>=4.0.0-beta.66` while the app runtime is still on `effect@3.21`. Drop the exclude once we move to Effect 4.
+`alchemy deploy` builds the client + server bundle itself (via Alchemy's
+`Cloudflare.Vite`) and deploys in one step — there is no separate build command.
+
+- `ci_f311x.yml` — lint / typecheck / build / vitest on PRs + main.
+- `cd_deploy_f311x.yml` — `alchemy deploy --stage prod` on push to main, using the
+  `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` repo secrets. The stage is pinned
+  because `alchemy deploy` otherwise defaults to `dev_${USER}`.
 
 ## Scripts
 
 | Script | What it does |
 |---|---|
 | `pnpm dev` | Vite dev server on :3000 |
-| `pnpm build` | Vite build |
+| `pnpm build` | Vite build (app bundle; the deploy build runs inside `alchemy deploy`) |
 | `pnpm preview` | Vite preview |
 | `pnpm deploy` | Alchemy v2 deploy |
 | `pnpm destroy` | Alchemy v2 destroy |
-| `pnpm ingest` | Run `scripts/ingest.ts` under Bun |
 | `pnpm lint` | Biome + Oxlint |
-| `pnpm typecheck` | `tsc --noEmit` |
+| `pnpm typecheck` | `tsgo --noEmit` |
 | `pnpm test` | Vitest |

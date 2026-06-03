@@ -158,6 +158,18 @@ Deploy must be automated, not a manual `pnpm deploy` from a laptop.
 - One static Workflow (research) and one Dynamic Workflow path wired (stubs OK)
 - A Bun script demonstrates runtime-agnostic Effect code calling the same services with different layers
 
+## Status (2026-06-03)
+
+⚠️ **Regression — see [2026-06-03 progress](./2026-06-03-progress.md) and #202.**
+The runtime layer was deleted across `3613624` and `c9f2353` (the latter mislabeled
+"fix: run biome"): `src/server.ts`, `src/effects/**`, `src/workflows/**`,
+`src/lib/schemas.ts`, and `src/alchemy/vectorize/**` are gone, but `chat-agent.ts`
++ `agents/tools/**` still import them. As committed, f311x **does not typecheck or
+build**, and the chat agent is not deployed (`alchemy.run.ts` ships only the Vite
+site + R2 ×2 + AI Gateway). The 2026-05-29 "typecheck + build pass" status below is
+**no longer accurate**. Repair is tracked in #202; the direction (restore vs. strip)
+is an open decision, and the Phase 9 issues are blocked on it.
+
 ## Status (2026-05-29)
 
 Scaffold milestone is hit (typecheck + build pass, chat UI + tools/embeddings/

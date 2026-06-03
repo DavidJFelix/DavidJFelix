@@ -665,18 +665,8 @@ packages:
       '@effect/platform-node':
         optional: true
 
-  '@distilled.cloud/cloudflare@0.22.1':
-    resolution: {integrity: sha512-XQ0WfswXAhJrTSWcHpHPNNZBFRd67WlcsV2AddGPeWFEZCXutNDaYM7qZepAZpbLeeEBEdzHnxwrOeA/AEJjBQ==}
-    peerDependencies:
-      effect: '>=4.0.0-beta.66 || >=4.0.0'
-
   '@distilled.cloud/cloudflare@0.22.2':
     resolution: {integrity: sha512-OrRlMyjpD2urfaxquLt9zsO9e/mo5TtBDt0iqib5DrXLfxpfaVIFdhAXptBXDG5HV//jOyIuPN6MzPQBPWqT6A==}
-    peerDependencies:
-      effect: '>=4.0.0-beta.66 || >=4.0.0'
-
-  '@distilled.cloud/core@0.22.1':
-    resolution: {integrity: sha512-h8FSkB+Cyb+KpD2Rn84Vk26fNr3QzMrsmt54KC0LzGjAhEI+HdHSTAKURKOin+15QCBk+7NDbY4byffxH7SFvQ==}
     peerDependencies:
       effect: '>=4.0.0-beta.66 || >=4.0.0'
 
@@ -3815,8 +3805,8 @@ packages:
   graceful-fs@4.2.11:
     resolution: {integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==}
 
-  graphql@16.14.0:
-    resolution: {integrity: sha512-BBvQ/406p+4CZbTpCbVPSxfzrZrbnuWSP1ELYgyS6B+hNeKzgrdB4JczCa5VZUBQrDa9hUngm0KnexY6pJRN5Q==}
+  graphql@16.14.1:
+    resolution: {integrity: sha512-cQOsSMS/IrDz82PVyRDvf/Q1F/bRbBVjJlh+xYOkI1qw2bWRvWGiWc+m2O0d6l4Bt1fyY+8kzJ8JFWGJqNeDBg==}
     engines: {node: ^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0}
 
   h3@2.0.1-rc.20:
@@ -6337,9 +6327,9 @@ snapshots:
       '@effect/platform-bun': 4.0.0-beta.74(effect@4.0.0-beta.74)
       '@effect/platform-node': 4.0.0-beta.74(effect@4.0.0-beta.74)(ioredis@5.11.0)
 
-  '@distilled.cloud/cloudflare-vite-plugin@0.10.1(@distilled.cloud/cloudflare-runtime@0.10.1(@distilled.cloud/cloudflare@0.22.1(effect@4.0.0-beta.74))(@effect/platform-bun@4.0.0-beta.74(effect@4.0.0-beta.74))(@effect/platform-node@4.0.0-beta.74(effect@4.0.0-beta.74)(ioredis@5.11.0))(effect@4.0.0-beta.74))(@distilled.cloud/cloudflare@0.22.1(effect@4.0.0-beta.74))(@effect/platform-bun@4.0.0-beta.74(effect@4.0.0-beta.74))(@effect/platform-node@4.0.0-beta.74(effect@4.0.0-beta.74)(ioredis@5.11.0))(effect@4.0.0-beta.74)(rolldown@1.0.1)(vite@8.0.14(@types/node@25.9.1)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0))(workerd@1.20260526.1)':
+  '@distilled.cloud/cloudflare-vite-plugin@0.10.1(@distilled.cloud/cloudflare-runtime@0.10.1(@distilled.cloud/cloudflare@0.22.2(effect@4.0.0-beta.74))(@effect/platform-bun@4.0.0-beta.74(effect@4.0.0-beta.74))(@effect/platform-node@4.0.0-beta.74(effect@4.0.0-beta.74)(ioredis@5.11.0))(effect@4.0.0-beta.74))(@distilled.cloud/cloudflare@0.22.2(effect@4.0.0-beta.74))(@effect/platform-bun@4.0.0-beta.74(effect@4.0.0-beta.74))(@effect/platform-node@4.0.0-beta.74(effect@4.0.0-beta.74)(ioredis@5.11.0))(effect@4.0.0-beta.74)(rolldown@1.0.1)(vite@8.0.14(@types/node@25.9.1)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0))(workerd@1.20260526.1)':
     dependencies:
-      '@distilled.cloud/cloudflare': 0.22.1(effect@4.0.0-beta.74)
+      '@distilled.cloud/cloudflare': 0.22.2(effect@4.0.0-beta.74)
       '@distilled.cloud/cloudflare-rolldown-plugin': 0.10.1(rolldown@1.0.1)(workerd@1.20260526.1)
       '@distilled.cloud/cloudflare-runtime': 0.10.1(@distilled.cloud/cloudflare@0.22.2(effect@4.0.0-beta.74))(@effect/platform-bun@4.0.0-beta.74(effect@4.0.0-beta.74))(@effect/platform-node@4.0.0-beta.74(effect@4.0.0-beta.74)(ioredis@5.11.0))(effect@4.0.0-beta.74)
       effect: 4.0.0-beta.74
@@ -6351,18 +6341,9 @@ snapshots:
       - rolldown
       - workerd
 
-  '@distilled.cloud/cloudflare@0.22.1(effect@4.0.0-beta.74)':
-    dependencies:
-      '@distilled.cloud/core': 0.22.1(effect@4.0.0-beta.74)
-      effect: 4.0.0-beta.74
-
   '@distilled.cloud/cloudflare@0.22.2(effect@4.0.0-beta.74)':
     dependencies:
       '@distilled.cloud/core': 0.22.2(effect@4.0.0-beta.74)
-      effect: 4.0.0-beta.74
-
-  '@distilled.cloud/core@0.22.1(effect@4.0.0-beta.74)':
-    dependencies:
       effect: 4.0.0-beta.74
 
   '@distilled.cloud/core@0.22.2(effect@4.0.0-beta.74)':
@@ -8676,10 +8657,10 @@ snapshots:
       '@clack/prompts': 0.11.0
       '@distilled.cloud/aws': 0.22.4(effect@4.0.0-beta.74)
       '@distilled.cloud/axiom': 0.22.4(effect@4.0.0-beta.74)
-      '@distilled.cloud/cloudflare': 0.22.1(effect@4.0.0-beta.74)
+      '@distilled.cloud/cloudflare': 0.22.2(effect@4.0.0-beta.74)
       '@distilled.cloud/cloudflare-rolldown-plugin': 0.10.1(rolldown@1.0.1)(workerd@1.20260526.1)
       '@distilled.cloud/cloudflare-runtime': 0.10.1(@distilled.cloud/cloudflare@0.22.2(effect@4.0.0-beta.74))(@effect/platform-bun@4.0.0-beta.74(effect@4.0.0-beta.74))(@effect/platform-node@4.0.0-beta.74(effect@4.0.0-beta.74)(ioredis@5.11.0))(effect@4.0.0-beta.74)
-      '@distilled.cloud/cloudflare-vite-plugin': 0.10.1(@distilled.cloud/cloudflare-runtime@0.10.1(@distilled.cloud/cloudflare@0.22.1(effect@4.0.0-beta.74))(@effect/platform-bun@4.0.0-beta.74(effect@4.0.0-beta.74))(@effect/platform-node@4.0.0-beta.74(effect@4.0.0-beta.74)(ioredis@5.11.0))(effect@4.0.0-beta.74))(@distilled.cloud/cloudflare@0.22.1(effect@4.0.0-beta.74))(@effect/platform-bun@4.0.0-beta.74(effect@4.0.0-beta.74))(@effect/platform-node@4.0.0-beta.74(effect@4.0.0-beta.74)(ioredis@5.11.0))(effect@4.0.0-beta.74)(rolldown@1.0.1)(vite@8.0.14(@types/node@25.9.1)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0))(workerd@1.20260526.1)
+      '@distilled.cloud/cloudflare-vite-plugin': 0.10.1(@distilled.cloud/cloudflare-runtime@0.10.1(@distilled.cloud/cloudflare@0.22.2(effect@4.0.0-beta.74))(@effect/platform-bun@4.0.0-beta.74(effect@4.0.0-beta.74))(@effect/platform-node@4.0.0-beta.74(effect@4.0.0-beta.74)(ioredis@5.11.0))(effect@4.0.0-beta.74))(@distilled.cloud/cloudflare@0.22.2(effect@4.0.0-beta.74))(@effect/platform-bun@4.0.0-beta.74(effect@4.0.0-beta.74))(@effect/platform-node@4.0.0-beta.74(effect@4.0.0-beta.74)(ioredis@5.11.0))(effect@4.0.0-beta.74)(rolldown@1.0.1)(vite@8.0.14(@types/node@25.9.1)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0))(workerd@1.20260526.1)
       '@distilled.cloud/core': 0.22.4(effect@4.0.0-beta.74)
       '@distilled.cloud/neon': 0.22.4(effect@4.0.0-beta.74)
       '@distilled.cloud/planetscale': 0.22.4(effect@4.0.0-beta.74)
@@ -9381,7 +9362,7 @@ snapshots:
 
   graceful-fs@4.2.11: {}
 
-  graphql@16.14.0: {}
+  graphql@16.14.1: {}
 
   h3@2.0.1-rc.20:
     dependencies:
@@ -10241,7 +10222,7 @@ snapshots:
       '@open-draft/deferred-promise': 3.0.0
       '@types/statuses': 2.0.6
       cookie: 1.1.1
-      graphql: 16.14.0
+      graphql: 16.14.1
       headers-polyfill: 5.0.1
       is-node-process: 1.2.0
       outvariant: 1.4.3

@@ -49,7 +49,6 @@ function PromptInput({
   onSubmit,
   children,
   disabled = false,
-  onClick,
   ...props
 }: PromptInputProps) {
   const [internalValue, setInternalValue] = useState(value || '')
@@ -58,11 +57,6 @@ function PromptInput({
   const handleChange = (newValue: string) => {
     setInternalValue(newValue)
     onValueChange?.(newValue)
-  }
-
-  const handleClick: React.MouseEventHandler<HTMLDivElement> = (e) => {
-    if (!disabled) textareaRef.current?.focus()
-    onClick?.(e)
   }
 
   return (
@@ -79,7 +73,6 @@ function PromptInput({
         }}
       >
         <div
-          onClick={handleClick}
           className={cn(
             'border-input bg-background cursor-text rounded-3xl border p-2 shadow-xs',
             disabled && 'cursor-not-allowed opacity-60',
@@ -123,6 +116,7 @@ function PromptInputTextarea({
     adjustHeight(el)
   }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: value is the resize trigger -- the effect reads scrollHeight (not value), but must re-run whenever value changes
   useLayoutEffect(() => {
     if (!textareaRef.current || disableAutosize) return
 
@@ -134,7 +128,6 @@ function PromptInputTextarea({
     } else {
       el.style.height = `min(${el.scrollHeight}px, ${maxHeight})`
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, maxHeight, disableAutosize])
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {

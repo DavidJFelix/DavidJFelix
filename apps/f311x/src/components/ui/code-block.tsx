@@ -60,6 +60,7 @@ function CodeBlockCode({
 
   // SSR fallback: render plain code if not hydrated yet
   return highlightedHtml ? (
+    // biome-ignore lint/security/noDangerouslySetInnerHtml: Shiki returns escaped, syntax-highlighted HTML from a trusted highlighter, not user-authored markup
     <div className={classNames} dangerouslySetInnerHTML={{__html: highlightedHtml}} {...props} />
   ) : (
     <div className={classNames} {...props}>

@@ -2,6 +2,18 @@
 
 import {cn} from '@/lib/utils'
 
+// The decorative loaders below render fixed-length lists that never reorder.
+// Precompute stable keys so each item has a constant identity instead of being
+// keyed on its map index.
+const stableKeys = (prefix: string, count: number): string[] =>
+  Array.from({length: count}, (_, i) => `${prefix}-${i}`)
+
+const CLASSIC_BAR_KEYS = stableKeys('classic-bar', 12)
+const DOTS_DOT_KEYS = stableKeys('dots-dot', 3)
+const TYPING_DOT_KEYS = stableKeys('typing-dot', 3)
+const WAVE_BAR_KEYS = stableKeys('wave-bar', 5)
+const BARS_BAR_KEYS = stableKeys('bars-bar', 3)
+
 export interface LoaderProps {
   variant?:
     | 'circular'
@@ -69,9 +81,9 @@ export function ClassicLoader({
   return (
     <div className={cn('relative', sizeClasses[size], className)}>
       <div className="absolute h-full w-full">
-        {[...Array(12)].map((_, i) => (
+        {CLASSIC_BAR_KEYS.map((key, i) => (
           <div
-            key={i}
+            key={key}
             className="bg-primary absolute animate-[spinner-fade_1.2s_linear_infinite] rounded-full"
             style={{
               top: '0',
@@ -160,9 +172,9 @@ export function DotsLoader({
 
   return (
     <div className={cn('flex items-center space-x-1', containerSizes[size], className)}>
-      {[...Array(3)].map((_, i) => (
+      {DOTS_DOT_KEYS.map((key, i) => (
         <div
-          key={i}
+          key={key}
           className={cn(
             'bg-primary animate-[bounce-dots_1.4s_ease-in-out_infinite] rounded-full',
             dotSizes[size],
@@ -198,9 +210,9 @@ export function TypingLoader({
 
   return (
     <div className={cn('flex items-center space-x-1', containerSizes[size], className)}>
-      {[...Array(3)].map((_, i) => (
+      {TYPING_DOT_KEYS.map((key, i) => (
         <div
-          key={i}
+          key={key}
           className={cn('bg-primary animate-[typing_1s_infinite] rounded-full', dotSizes[size])}
           style={{
             animationDelay: `${i * 250}ms`,
@@ -239,9 +251,9 @@ export function WaveLoader({
 
   return (
     <div className={cn('flex items-center gap-0.5', containerSizes[size], className)}>
-      {[...Array(5)].map((_, i) => (
+      {WAVE_BAR_KEYS.map((key, i) => (
         <div
-          key={i}
+          key={key}
           className={cn(
             'bg-primary animate-[wave_1s_ease-in-out_infinite] rounded-full',
             barWidths[size],
@@ -278,9 +290,9 @@ export function BarsLoader({
 
   return (
     <div className={cn('flex', containerSizes[size], className)}>
-      {[...Array(3)].map((_, i) => (
+      {BARS_BAR_KEYS.map((key, i) => (
         <div
-          key={i}
+          key={key}
           className={cn(
             'bg-primary h-full animate-[wave-bars_1.2s_ease-in-out_infinite]',
             barWidths[size],

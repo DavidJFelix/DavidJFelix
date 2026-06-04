@@ -9,8 +9,9 @@ A small chat app on Cloudflare — TanStack Start front end, deployed via Alchem
   `pnpm typecheck`, `pnpm build`, and `pnpm test` are green, and CI gates all of
   them (`.github/workflows/ci_f311x.yml`).
 - **CD wired.** `.github/workflows/cd_deploy_f311x.yml` runs `alchemy deploy
-  --stage prod` after CI succeeds on main, using the shared `CLOUDFLARE_*` secrets. The
-  first real run is still pending — see the 2026-06-03 progress note.
+  --stage prod` on push to main, using the shared `CLOUDFLARE_*` secrets (CI is
+  gated at merge via branch protection, not the deploy workflow). The first real
+  run is still pending — see the 2026-06-03 progress note.
 - **Chat is a shell.** `src/routes/index.tsx` posts to `/agents/chat-agent/default`,
   which has no backend — sending a message goes nowhere yet.
 - The earlier Effect-native scaffold (effects services, a custom Vectorize provider,

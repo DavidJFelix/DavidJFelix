@@ -110,7 +110,7 @@ src/
 `Cloudflare.Vite`) and deploys in one step — there is no separate build command.
 
 - `ci_f311x.yml` — lint / typecheck / build / vitest on PRs + main.
-- `cd_deploy_f311x.yml` — `alchemy deploy --stage prod` on push to main, using the
+- `cd_deploy_f311x.yml` — `alchemy deploy --stage prod` after CI succeeds on main, using the
   `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` repo secrets. The stage is pinned
   because `alchemy deploy` otherwise defaults to `dev_${USER}`.
 

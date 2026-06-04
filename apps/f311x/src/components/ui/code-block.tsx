@@ -1,6 +1,4 @@
 import type React from 'react'
-import {useEffect, useState} from 'react'
-import {codeToHtml} from 'shiki'
 import {cn} from '@/lib/utils'
 
 export type CodeBlockProps = {
@@ -26,46 +24,21 @@ function CodeBlock({children, className, ...props}: CodeBlockProps) {
 export type CodeBlockCodeProps = {
   code: string
   language?: string
-  theme?: string
   className?: string
 } & React.HTMLProps<HTMLDivElement>
 
 function CodeBlockCode({
   code,
-  language = 'tsx',
-  theme = 'github-light',
+  language = 'plaintext',
   className,
   ...props
 }: CodeBlockCodeProps) {
-  const [highlightedHtml, setHighlightedHtml] = useState<string | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    async function highlight() {
-      if (!code) {
-        if (!cancelled) setHighlightedHtml('<pre><code></code></pre>')
-        return
-      }
-
-      const html = await codeToHtml(code, {lang: language, theme})
-      if (!cancelled) setHighlightedHtml(html)
-    }
-    highlight()
-    return () => {
-      cancelled = true
-    }
-  }, [code, language, theme])
-
   const classNames = cn('w-full overflow-x-auto text-[13px] [&>pre]:px-4 [&>pre]:py-4', className)
 
-  // SSR fallback: render plain code if not hydrated yet
-  return highlightedHtml ? (
-    // biome-ignore lint/security/noDangerouslySetInnerHtml: Shiki returns escaped, syntax-highlighted HTML from a trusted highlighter, not user-authored markup
-    <div className={classNames} dangerouslySetInnerHTML={{__html: highlightedHtml}} {...props} />
-  ) : (
+  return (
     <div className={classNames} {...props}>
       <pre>
-        <code>{code}</code>
+        <code className={`language-${language}`}>{code}</code>
       </pre>
     </div>
   )

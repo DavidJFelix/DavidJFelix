@@ -9,6 +9,7 @@ on:
       - '.config/mise.toml'
       - 'biome.jsonc'
       - '.github/workflows/ci_f311x.yml'
+      - '.github/workflows/cd_deploy_f311x.yml'
   pull_request:
     paths:
       - 'apps/f311x/**'
@@ -16,6 +17,7 @@ on:
       - '.config/mise.toml'
       - 'biome.jsonc'
       - '.github/workflows/ci_f311x.yml'
+      - '.github/workflows/cd_deploy_f311x.yml'
 
 defaults:
   run:

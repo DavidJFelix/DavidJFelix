@@ -83,20 +83,13 @@ function MarkdownComponent({
 }: MarkdownProps) {
   const generatedId = useId()
   const blockId = id ?? generatedId
-  const blocks = useMemo(() => {
-    const seen = new Map<string, number>()
-    return parseMarkdownIntoBlocks(children).map((content) => {
-      const occurrence = seen.get(content) ?? 0
-      seen.set(content, occurrence + 1)
-      return {content, key: `${content}#${occurrence}`}
-    })
-  }, [children])
+  const blocks = useMemo(() => parseMarkdownIntoBlocks(children), [children])
 
   return (
     <div className={className}>
-      {blocks.map(({content, key}) => (
+      {blocks.map((content, index) => (
         <MemoizedMarkdownBlock
-          key={`${blockId}-${key}`}
+          key={`${blockId}-${index}`}
           content={content}
           components={components}
         />

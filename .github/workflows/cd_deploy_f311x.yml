@@ -1,11 +1,10 @@
 name: CD Deploy f311x
 
 on:
-  push:
+  workflow_run:
+    workflows: ['CI f311x']
+    types: [completed]
     branches: [main]
-    paths:
-      - 'apps/f311x/**'
-      - '.github/workflows/cd_deploy_f311x.yml'
 
 defaults:
   run:
@@ -14,6 +13,7 @@ defaults:
 jobs:
   deploy:
     name: alchemy deploy
+    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:

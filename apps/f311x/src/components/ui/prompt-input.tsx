@@ -92,10 +92,21 @@ function PromptInputTextarea({
   className,
   onKeyDown,
   disableAutosize = false,
-  style,
   ...props
 }: PromptInputTextareaProps) {
   const {value, setValue, maxHeight, onSubmit, disabled} = usePromptInput()
+
+  // Fit the textarea to its content. This is a callback ref, not an effect: it
+  // runs on every commit -- after the DOM holds the latest value -- and depends
+  // only on the node React hands it, never on `value`.
+  const autosize = (el: HTMLTextAreaElement | null) => {
+    if (!el || disableAutosize) return
+    el.style.height = 'auto'
+    el.style.height =
+      typeof maxHeight === 'number'
+        ? `${Math.min(el.scrollHeight, maxHeight)}px`
+        : `min(${el.scrollHeight}px, ${maxHeight})`
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setValue(e.target.value)
@@ -109,25 +120,16 @@ function PromptInputTextarea({
     onKeyDown?.(e)
   }
 
-  // Autosize via the platform's `field-sizing: content`: the textarea grows with
-  // its content up to maxHeight, then scrolls -- no measurement effect or ref.
-  // Browsers without field-sizing (Firefox, currently) keep a fixed single-row
-  // box that scrolls instead.
   return (
     <Textarea
+      ref={autosize}
       value={value}
       onChange={handleChange}
       onKeyDown={handleKeyDown}
       className={cn(
-        'text-primary min-h-[44px] w-full resize-none overflow-y-auto border-none bg-transparent shadow-none outline-none focus-visible:ring-0 focus-visible:ring-offset-0',
-        !disableAutosize && 'field-sizing-content',
+        'text-primary min-h-[44px] w-full resize-none border-none bg-transparent shadow-none outline-none focus-visible:ring-0 focus-visible:ring-offset-0',
         className,
       )}
-      style={
-        disableAutosize
-          ? style
-          : {maxHeight: typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight, ...style}
-      }
       rows={1}
       disabled={disabled}
       {...props}

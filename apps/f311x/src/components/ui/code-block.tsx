@@ -27,12 +27,7 @@ export type CodeBlockCodeProps = {
   className?: string
 } & React.HTMLProps<HTMLDivElement>
 
-function CodeBlockCode({
-  code,
-  language = 'plaintext',
-  className,
-  ...props
-}: CodeBlockCodeProps) {
+function CodeBlockCode({code, language = 'plaintext', className, ...props}: CodeBlockCodeProps) {
   const classNames = cn('w-full overflow-x-auto text-[13px] [&>pre]:px-4 [&>pre]:py-4', className)
 
   return (

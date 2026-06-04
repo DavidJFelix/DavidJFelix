@@ -13,9 +13,22 @@ export type MarkdownProps = {
   components?: Partial<Components>
 }
 
-function parseMarkdownIntoBlocks(markdown: string): string[] {
+type MarkdownBlock = {
+  content: string
+  key: string
+}
+
+function parseMarkdownIntoBlocks(markdown: string): MarkdownBlock[] {
   const tokens = marked.lexer(markdown)
-  return tokens.map((token) => token.raw)
+  let cursor = 0
+
+  return tokens.map((token) => {
+    const start = markdown.indexOf(token.raw, cursor)
+    const offset = start === -1 ? cursor : start
+    cursor = offset + token.raw.length
+
+    return {content: token.raw, key: `offset-${offset}`}
+  })
 }
 
 function extractLanguage(className?: string): string {
@@ -87,9 +100,9 @@ function MarkdownComponent({
 
   return (
     <div className={className}>
-      {blocks.map((content, index) => (
+      {blocks.map(({content, key}) => (
         <MemoizedMarkdownBlock
-          key={`${blockId}-${index}`}
+          key={`${blockId}-${key}`}
           content={content}
           components={components}
         />

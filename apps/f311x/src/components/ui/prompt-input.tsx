@@ -1,7 +1,7 @@
 'use client'
 
 import type React from 'react'
-import {createContext, useContext, useLayoutEffect, useRef, useState} from 'react'
+import {createContext, useContext, useState} from 'react'
 import {Textarea} from '@/components/ui/textarea'
 import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from '@/components/ui/tooltip'
 import {cn} from '@/lib/utils'
@@ -92,44 +92,12 @@ function PromptInputTextarea({
   className,
   onKeyDown,
   disableAutosize = false,
+  style,
   ...props
 }: PromptInputTextareaProps) {
   const {value, setValue, maxHeight, onSubmit, disabled} = usePromptInput()
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-
-  const adjustHeight = (el: HTMLTextAreaElement | null) => {
-    if (!el || disableAutosize) return
-
-    el.style.height = 'auto'
-
-    if (typeof maxHeight === 'number') {
-      el.style.height = `${Math.min(el.scrollHeight, maxHeight)}px`
-    } else {
-      el.style.height = `min(${el.scrollHeight}px, ${maxHeight})`
-    }
-  }
-
-  const handleRef = (el: HTMLTextAreaElement | null) => {
-    textareaRef.current = el
-    adjustHeight(el)
-  }
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: value is the resize trigger -- the effect reads scrollHeight (not value), but must re-run whenever value changes
-  useLayoutEffect(() => {
-    if (!textareaRef.current || disableAutosize) return
-
-    const el = textareaRef.current
-    el.style.height = 'auto'
-
-    if (typeof maxHeight === 'number') {
-      el.style.height = `${Math.min(el.scrollHeight, maxHeight)}px`
-    } else {
-      el.style.height = `min(${el.scrollHeight}px, ${maxHeight})`
-    }
-  }, [value, maxHeight, disableAutosize])
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    adjustHeight(e.target)
     setValue(e.target.value)
   }
 
@@ -141,16 +109,25 @@ function PromptInputTextarea({
     onKeyDown?.(e)
   }
 
+  // Autosize via the platform's `field-sizing: content`: the textarea grows with
+  // its content up to maxHeight, then scrolls -- no measurement effect or ref.
+  // Browsers without field-sizing (Firefox, currently) keep a fixed single-row
+  // box that scrolls instead.
   return (
     <Textarea
-      ref={handleRef}
       value={value}
       onChange={handleChange}
       onKeyDown={handleKeyDown}
       className={cn(
-        'text-primary min-h-[44px] w-full resize-none border-none bg-transparent shadow-none outline-none focus-visible:ring-0 focus-visible:ring-offset-0',
+        'text-primary min-h-[44px] w-full resize-none overflow-y-auto border-none bg-transparent shadow-none outline-none focus-visible:ring-0 focus-visible:ring-offset-0',
+        !disableAutosize && 'field-sizing-content',
         className,
       )}
+      style={
+        disableAutosize
+          ? style
+          : {maxHeight: typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight, ...style}
+      }
       rows={1}
       disabled={disabled}
       {...props}

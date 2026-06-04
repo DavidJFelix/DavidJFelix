@@ -1,6 +1,7 @@
 'use client'
 
-import React, {createContext, useContext, useLayoutEffect, useRef, useState} from 'react'
+import type React from 'react'
+import {createContext, useContext, useState} from 'react'
 import {Textarea} from '@/components/ui/textarea'
 import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from '@/components/ui/tooltip'
 import {cn} from '@/lib/utils'
@@ -12,7 +13,6 @@ type PromptInputContextType = {
   maxHeight: number | string
   onSubmit?: () => void
   disabled?: boolean
-  textareaRef: React.RefObject<HTMLTextAreaElement | null>
 }
 
 const PromptInputContext = createContext<PromptInputContextType>({
@@ -22,7 +22,6 @@ const PromptInputContext = createContext<PromptInputContextType>({
   maxHeight: 240,
   onSubmit: undefined,
   disabled: false,
-  textareaRef: React.createRef<HTMLTextAreaElement>(),
 })
 
 function usePromptInput() {
@@ -49,20 +48,13 @@ function PromptInput({
   onSubmit,
   children,
   disabled = false,
-  onClick,
   ...props
 }: PromptInputProps) {
   const [internalValue, setInternalValue] = useState(value || '')
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const handleChange = (newValue: string) => {
     setInternalValue(newValue)
     onValueChange?.(newValue)
-  }
-
-  const handleClick: React.MouseEventHandler<HTMLDivElement> = (e) => {
-    if (!disabled) textareaRef.current?.focus()
-    onClick?.(e)
   }
 
   return (
@@ -75,11 +67,9 @@ function PromptInput({
           maxHeight,
           onSubmit,
           disabled,
-          textareaRef,
         }}
       >
         <div
-          onClick={handleClick}
           className={cn(
             'border-input bg-background cursor-text rounded-3xl border p-2 shadow-xs',
             disabled && 'cursor-not-allowed opacity-60',
@@ -104,41 +94,21 @@ function PromptInputTextarea({
   disableAutosize = false,
   ...props
 }: PromptInputTextareaProps) {
-  const {value, setValue, maxHeight, onSubmit, disabled, textareaRef} = usePromptInput()
+  const {value, setValue, maxHeight, onSubmit, disabled} = usePromptInput()
 
-  const adjustHeight = (el: HTMLTextAreaElement | null) => {
+  // Fit the textarea to its content. This is a callback ref, not an effect: it
+  // runs on every commit -- after the DOM holds the latest value -- and depends
+  // only on the node React hands it, never on `value`.
+  const autosize = (el: HTMLTextAreaElement | null) => {
     if (!el || disableAutosize) return
-
     el.style.height = 'auto'
-
-    if (typeof maxHeight === 'number') {
-      el.style.height = `${Math.min(el.scrollHeight, maxHeight)}px`
-    } else {
-      el.style.height = `min(${el.scrollHeight}px, ${maxHeight})`
-    }
+    el.style.height =
+      typeof maxHeight === 'number'
+        ? `${Math.min(el.scrollHeight, maxHeight)}px`
+        : `min(${el.scrollHeight}px, ${maxHeight})`
   }
-
-  const handleRef = (el: HTMLTextAreaElement | null) => {
-    textareaRef.current = el
-    adjustHeight(el)
-  }
-
-  useLayoutEffect(() => {
-    if (!textareaRef.current || disableAutosize) return
-
-    const el = textareaRef.current
-    el.style.height = 'auto'
-
-    if (typeof maxHeight === 'number') {
-      el.style.height = `${Math.min(el.scrollHeight, maxHeight)}px`
-    } else {
-      el.style.height = `min(${el.scrollHeight}px, ${maxHeight})`
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value, maxHeight, disableAutosize])
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    adjustHeight(e.target)
     setValue(e.target.value)
   }
 
@@ -152,7 +122,7 @@ function PromptInputTextarea({
 
   return (
     <Textarea
-      ref={handleRef}
+      ref={autosize}
       value={value}
       onChange={handleChange}
       onKeyDown={handleKeyDown}

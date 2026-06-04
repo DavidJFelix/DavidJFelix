@@ -1,6 +1,7 @@
 'use client'
 
-import React, {createContext, useContext, useLayoutEffect, useRef, useState} from 'react'
+import type React from 'react'
+import {createContext, useContext, useLayoutEffect, useRef, useState} from 'react'
 import {Textarea} from '@/components/ui/textarea'
 import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from '@/components/ui/tooltip'
 import {cn} from '@/lib/utils'
@@ -12,7 +13,6 @@ type PromptInputContextType = {
   maxHeight: number | string
   onSubmit?: () => void
   disabled?: boolean
-  textareaRef: React.RefObject<HTMLTextAreaElement | null>
 }
 
 const PromptInputContext = createContext<PromptInputContextType>({
@@ -22,7 +22,6 @@ const PromptInputContext = createContext<PromptInputContextType>({
   maxHeight: 240,
   onSubmit: undefined,
   disabled: false,
-  textareaRef: React.createRef<HTMLTextAreaElement>(),
 })
 
 function usePromptInput() {
@@ -52,7 +51,6 @@ function PromptInput({
   ...props
 }: PromptInputProps) {
   const [internalValue, setInternalValue] = useState(value || '')
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const handleChange = (newValue: string) => {
     setInternalValue(newValue)
@@ -69,7 +67,6 @@ function PromptInput({
           maxHeight,
           onSubmit,
           disabled,
-          textareaRef,
         }}
       >
         <div
@@ -97,7 +94,8 @@ function PromptInputTextarea({
   disableAutosize = false,
   ...props
 }: PromptInputTextareaProps) {
-  const {value, setValue, maxHeight, onSubmit, disabled, textareaRef} = usePromptInput()
+  const {value, setValue, maxHeight, onSubmit, disabled} = usePromptInput()
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const adjustHeight = (el: HTMLTextAreaElement | null) => {
     if (!el || disableAutosize) return

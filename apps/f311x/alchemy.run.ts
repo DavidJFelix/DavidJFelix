@@ -13,19 +13,14 @@ import * as Alchemy from 'alchemy'
 import * as Cloudflare from 'alchemy/Cloudflare'
 import * as Effect from 'effect/Effect'
 
-const UploadsBucket = Cloudflare.R2Bucket('Uploads')
-const WorkspaceBucket = Cloudflare.R2Bucket('AgentWorkspace')
-const Gateway = Cloudflare.AiGateway('Gateway')
+// const UploadsBucket = Cloudflare.R2Bucket('Uploads')
+// const WorkspaceBucket = Cloudflare.R2Bucket('AgentWorkspace')
+// const Gateway = Cloudflare.AiGateway('Gateway')
 
 export const Website = Cloudflare.Vite('Website', {
   compatibility: {
     date: '2026-05-01',
     flags: ['nodejs_compat'],
-  },
-  bindings: {
-    UPLOADS: UploadsBucket,
-    WORKSPACE: WorkspaceBucket,
-    GATEWAY: Gateway,
   },
 })
 

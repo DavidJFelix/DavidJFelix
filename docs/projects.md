@@ -58,7 +58,7 @@ Stand up sites for 8 owned domains across Astro, TanStack Start, Vue, and Svelte
 
 ### [f311x.com](./projects/f311x/plan.md)
 
-Effect-native AI agent app on Cloudflare: TanStack Start + Cloudflare Agents SDK + Alchemy v2, with Effect-TS owning async orchestration.
+A small chat app on Cloudflare — TanStack Start front end, deployed via Alchemy v2. Builds and deploys today (CD live as of 2026-06-06); the chat backend isn't wired yet.
 
 **Status**: In Progress
 

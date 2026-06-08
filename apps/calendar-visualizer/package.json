@@ -25,8 +25,8 @@
   },
   "devDependencies": {
     "@cspell/dict-typescript": "3.2.3",
-    "@pandacss/dev": "1.11.1",
-    "cspell": "10.0.0",
-    "wrangler": "4.96.0"
+    "@pandacss/dev": "1.11.2",
+    "cspell": "10.0.1",
+    "wrangler": "4.98.0"
   }
 }

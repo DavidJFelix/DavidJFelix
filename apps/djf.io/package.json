@@ -35,11 +35,11 @@
   },
   "devDependencies": {
     "@cspell/dict-typescript": "3.2.3",
-    "@pandacss/dev": "1.11.1",
+    "@pandacss/dev": "1.11.2",
     "@playwright/test": "1.60.0",
-    "cspell": "10.0.0",
-    "vitest": "4.1.7",
-    "wrangler": "4.96.0"
+    "cspell": "10.0.1",
+    "vitest": "4.1.8",
+    "wrangler": "4.98.0"
   },
   "engines": {
     "node": ">=24"

@@ -3,7 +3,7 @@
 A small chat app on Cloudflare — TanStack Start front end, deployed via Alchemy v2.
 "f311x" is the agent. Today it builds and deploys; the chat backend isn't wired yet.
 
-## Current state (2026-06-06)
+## Current state (2026-06-08)
 
 - **Builds + deploys.** TanStack Start client app (`src/routes`, `src/components/ui`).
   `pnpm typecheck`, `pnpm build`, and `pnpm test` are green, and CI gates all of
@@ -14,8 +14,12 @@ A small chat app on Cloudflare — TanStack Start front end, deployed via Alchem
   deploy succeeded on 2026-06-06, after granting the CI token **Secrets Store:
   Edit** — the Alchemy CLI needs it to read/write `Cloudflare.state()`, which is a
   CLI state scope, not a resource scope. See the 2026-06-06 progress note.
-- **Chat is a shell.** `src/routes/index.tsx` posts to `/agents/chat-agent/default`,
-  which has no backend — sending a message goes nowhere yet.
+- **Chat echoes.** `src/routes/index.tsx` posts an AG-UI `RunAgentInput` to
+  `/agents/chat-agent/default`; a TanStack Start server route
+  (`src/routes/agents/chat-agent/default.ts`) answers with a Server-Sent Events
+  stream that echoes the message back, token by token. No model is wired yet —
+  the reply is a stub built in `src/lib/chat-agent.ts` (unit-tested). See the
+  2026-06-08 progress note.
 - The earlier Effect-native scaffold (effects services, a custom Vectorize provider,
   Workflows, Sandbox, agent tools) was removed: it never deployed and had drifted
   into a non-building state. See #202 and the 2026-06-03 progress note for the
@@ -23,10 +27,13 @@ A small chat app on Cloudflare — TanStack Start front end, deployed via Alchem
 
 ## Next — make the chat actually work
 
-- [ ] Wire the smallest agent backend the UI can talk to — something that answers
-      `/agents/chat-agent/default` and streams a reply.
-- [ ] Choose the model path (direct provider vs. a gateway) once there's a working
-      loop to put behind it.
+- [x] Wire the smallest agent backend the UI can talk to — an echo stub answers
+      `/agents/chat-agent/default` and streams the reply as AG-UI SSE events
+      (`RUN_STARTED` → `TEXT_MESSAGE_*` → `RUN_FINISHED`). Backed by
+      `src/lib/chat-agent.ts`; the route is `src/routes/agents/chat-agent/default.ts`.
+- [ ] Swap the echo for a real model. Choose the model path (direct provider vs.
+      AI Gateway) now that there's a working loop to put behind it. The wire
+      contract and route stay the same — only `chatAgentStream` changes.
 - [ ] Add a test with each new surface. typecheck + build + vitest already gate
       every PR; keep them green.
 

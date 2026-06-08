@@ -10,33 +10,43 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AgentsChatAgentDefaultRouteImport } from './routes/agents/chat-agent/default'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AgentsChatAgentDefaultRoute = AgentsChatAgentDefaultRouteImport.update({
+  id: '/agents/chat-agent/default',
+  path: '/agents/chat-agent/default',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/agents/chat-agent/default': typeof AgentsChatAgentDefaultRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/agents/chat-agent/default': typeof AgentsChatAgentDefaultRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/agents/chat-agent/default': typeof AgentsChatAgentDefaultRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/agents/chat-agent/default'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/agents/chat-agent/default'
+  id: '__root__' | '/' | '/agents/chat-agent/default'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AgentsChatAgentDefaultRoute: typeof AgentsChatAgentDefaultRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +58,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/agents/chat-agent/default': {
+      id: '/agents/chat-agent/default'
+      path: '/agents/chat-agent/default'
+      fullPath: '/agents/chat-agent/default'
+      preLoaderRoute: typeof AgentsChatAgentDefaultRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AgentsChatAgentDefaultRoute: AgentsChatAgentDefaultRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

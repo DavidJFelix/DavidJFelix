@@ -28,13 +28,13 @@ jobs:
           fetch-depth: 0
 
       - name: mise
-        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
+        uses: jdx/mise-action@dba19683ed58901619b14f395a24841710cb4925 # v4.1.0
         with:
           install: true
           cache: true
 
       - name: claude-code-action
-        uses: anthropics/claude-code-action@36a69b6a90b850823f86de06fdfd56264772ad98 # v1.0.134
+        uses: anthropics/claude-code-action@593d7a5c4e0073569f74772c2b7b64c30ec14707 # v1.0.141
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           additional_permissions: |

@@ -4,9 +4,11 @@
 
 ### Fixed
 
-- Fixed Vercel build by adding `bun.lock` — Vercel was running `bun install --frozen-lockfile` but only a `pnpm-lock.yaml` existed, causing bun's lockfile migration to fail in frozen mode
+- Fixed Vercel build by adding `bun.lock` — Vercel was running `bun install --frozen-lockfile` but
+  only a `pnpm-lock.yaml` existed, causing bun's lockfile migration to fail in frozen mode
 - Removed `"packageManager": "pnpm@10.0.0"` field that conflicted with bun usage on Vercel
-- Fixed build script to run `panda codegen` before `astro build` so generated styles are available at build time
+- Fixed build script to run `panda codegen` before `astro build` so generated styles are available
+  at build time
 
 ### Changed
 

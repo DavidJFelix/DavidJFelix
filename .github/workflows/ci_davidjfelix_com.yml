@@ -1,38 +1,36 @@
-name: CI f311x
+name: CI davidjfelix.com
 
 on:
   push:
     branches: [main]
     paths:
-      - 'apps/f311x/**'
+      - 'apps/davidjfelix.com/**'
       - '.config/cspell.json'
       - '.config/mise.toml'
       - 'biome.jsonc'
       - '.oxlintrc.json'
       - '.prettierrc.json'
-      - '.github/workflows/ci_f311x.yml'
-      - '.github/workflows/cd_deploy_f311x.yml'
+      - '.github/workflows/ci_davidjfelix_com.yml'
   pull_request:
     paths:
-      - 'apps/f311x/**'
+      - 'apps/davidjfelix.com/**'
       - '.config/cspell.json'
       - '.config/mise.toml'
       - 'biome.jsonc'
       - '.oxlintrc.json'
       - '.prettierrc.json'
-      - '.github/workflows/ci_f311x.yml'
-      - '.github/workflows/cd_deploy_f311x.yml'
+      - '.github/workflows/ci_davidjfelix_com.yml'
 
 env:
   MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
 
 defaults:
   run:
-    working-directory: apps/f311x
+    working-directory: apps/davidjfelix.com
 
 jobs:
   typecheck:
-    name: tsgo
+    name: astro check
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -104,7 +102,7 @@ jobs:
         run: mise run format
 
   build:
-    name: vite build
+    name: astro build
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -126,27 +124,3 @@ jobs:
 
       - name: build
         run: mise run build
-
-  vitest:
-    name: vitest
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - name: checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-        with:
-          persist-credentials: false
-
-      - name: mise
-        uses: jdx/mise-action@dba19683ed58901619b14f395a24841710cb4925 # v4.1.0
-        with:
-          install: true
-          cache: true
-
-      - name: pnpm install
-        run: pnpm install --frozen-lockfile
-
-      - name: vitest
-        run: mise run test

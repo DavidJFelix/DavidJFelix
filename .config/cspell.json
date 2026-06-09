@@ -44,6 +44,14 @@
     "editorconfig",
     "prosewrap",
     "frontmatter",
-    "shipposting"
+    "shipposting",
+    "actionlint",
+    "ghalint",
+    "zizmor",
+    "pinact",
+    "oxlintrc",
+    "codegen",
+    "ravrun",
+    "tsgo"
   ]
 }

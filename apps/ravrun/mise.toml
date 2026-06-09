@@ -1,0 +1,27 @@
+# Canonical check tasks for this app. CI and automation discover checks here;
+# tasks delegate to package.json scripts. Assumes `pnpm install` has run.
+# Missing checks: test (no test suite yet).
+
+[tasks.typecheck]
+description = "Type-check with tsgo"
+run = "pnpm run typecheck"
+
+[tasks.lint]
+description = "Lint with Biome + Oxlint"
+run = "pnpm run lint"
+
+[tasks.format]
+description = "Check formatting (Biome; Prettier for md/mdx)"
+run = "pnpm run format"
+
+[tasks."format:fix"]
+description = "Apply formatting fixes"
+run = "pnpm run format:fix"
+
+[tasks.build]
+description = "Build with Vite"
+run = "pnpm run build"
+
+[tasks.check]
+description = "Run all checks"
+depends = ["typecheck", "lint", "format", "build"]

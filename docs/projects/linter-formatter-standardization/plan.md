@@ -24,7 +24,7 @@ Applies to all JS/TS-based apps (Astro, React, Vue, Svelte, TanStack Start, plai
 - **Lint + format** (JS/TS/JSX/TSX, JSON/JSONC, CSS, framework files): **Biome**
 - **Additional lint rules**: **Oxlint**
 - **Type checking**: **tsgo** (the Go port of TypeScript v7) — part of the checks suite, not the lint suite
-- **Markdown / MDX formatting**: **Biome** if/when it supports MD/MDX. Until then, MD/MDX is unformatted by automation. We do **not** add Prettier.
+- **Markdown / MDX formatting**: **Prettier**, scoped to md/mdx only (root `.prettierrc.json`, `proseWrap: always`; app scripts pass explicit `**/*.{md,mdx}` globs). Biome owns every other file type. Revisit if Biome gains MD/MDX support. Exception: `apps/djf.io/src/content/` is excluded (app-level `.prettierignore`) — blog posts are authored with semantic line breaks and should not be rewrapped.
 
 Open to revisiting Biome later, but it's currently the right tool.
 
@@ -64,9 +64,11 @@ Same ecosystem → same config. Per-project overrides only when there's a real, 
 - Single CI job that runs the full lint + format + check + spell suite
 - VS Code / editor settings that match the standard (format-on-save, correct formatter per language)
 
-### Phase 3b: Per-project subtree checks
+### Phase 3b: Per-project subtree checks — DONE 2026-06-09
 
 When a project's subtree changes (or its build is triggered), CI runs that project's own type checks, linters, format checks, tests, and build — not just the repo-wide suite.
+
+Landed: per-app `mise.toml` task declarations (`typecheck`, `lint`, `format`, `test`, `build`, `check` umbrella) in all five apps, per-app CI workflows for all five apps (calendar-visualizer, davidjfelix.com, and ravrun had none before), CI jobs invoke `mise run <task>`. Change detection is the per-app workflow paths-filter pattern. See [2026-06-09-progress.md](./2026-06-09-progress.md) for the check coverage matrix — calendar-visualizer, davidjfelix.com, and ravrun still lack test suites.
 
 - Each app declares its check commands (typecheck, lint, format, test, build) in a known, discoverable form (mise tasks preferred)
 - CI detects which project subtrees changed in a PR and runs only those projects' checks

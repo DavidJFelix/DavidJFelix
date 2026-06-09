@@ -1,6 +1,7 @@
 # f311x
 
-Effect-native AI agent app on Cloudflare. Source of truth for scope and decisions: [`docs/projects/f311x/plan.md`](../../docs/projects/f311x/plan.md).
+Effect-native AI agent app on Cloudflare. Source of truth for scope and decisions:
+[`docs/projects/f311x/plan.md`](../../docs/projects/f311x/plan.md).
 
 ## Stack
 
@@ -24,16 +25,17 @@ App boots on `http://localhost:3000`.
 
 See [AGENTS.md](./AGENTS.md) for the full table.
 
-| | |
-|---|---|
-| `pnpm dev` | Vite dev server |
-| `pnpm build` | Production build |
-| `pnpm deploy` | Alchemy v2 deploy |
-| `pnpm ingest` | Run `scripts/ingest.ts` under Bun |
-| `pnpm lint` | Biome + Oxlint |
-| `pnpm typecheck` | `tsc --noEmit` |
-| `pnpm test` | Vitest |
+|                  |                                   |
+| ---------------- | --------------------------------- |
+| `pnpm dev`       | Vite dev server                   |
+| `pnpm build`     | Production build                  |
+| `pnpm deploy`    | Alchemy v2 deploy                 |
+| `pnpm ingest`    | Run `scripts/ingest.ts` under Bun |
+| `pnpm lint`      | Biome + Oxlint                    |
+| `pnpm typecheck` | `tsc --noEmit`                    |
+| `pnpm test`      | Vitest                            |
 
 ## Status
 
-Scaffold in progress. Most of the Cloudflare bindings and tool wiring are stubbed -- search for `TODO:` and `MIGRATION-MARKER:` comments. See the project plan for sequencing.
+Scaffold in progress. Most of the Cloudflare bindings and tool wiring are stubbed -- search for
+`TODO:` and `MIGRATION-MARKER:` comments. See the project plan for sequencing.

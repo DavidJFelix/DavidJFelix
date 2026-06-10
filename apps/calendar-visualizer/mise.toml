@@ -21,7 +21,7 @@ description = "Apply formatting fixes"
 run = "pnpm run format:fix"
 
 [tasks.test]
-description = "Unit tests with Vitest (passWithNoTests until the first test lands)"
+description = "Unit tests with Vitest"
 run = "pnpm run test"
 
 [tasks.build]

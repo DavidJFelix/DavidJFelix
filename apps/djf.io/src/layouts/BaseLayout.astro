@@ -5,9 +5,22 @@ import {css} from 'styled-system/css'
 interface Props {
   title: string
   description?: string
+  ogType?: 'website' | 'article'
+  ogImage?: string
 }
 
-const {title, description = 'Personal blog of David J Felix'} = Astro.props
+const {
+  title,
+  description = 'Personal blog of David J Felix',
+  ogType = 'website',
+  ogImage = '/og/default.png',
+} = Astro.props
+
+// Pages build with the default directory format, so published URLs end with a
+// trailing slash; normalize the canonical to match what the sitemap emits.
+const pathname = Astro.url.pathname.endsWith('/') ? Astro.url.pathname : `${Astro.url.pathname}/`
+const canonicalUrl = Astro.site ? new URL(pathname, Astro.site) : undefined
+const ogImageUrl = Astro.site ? new URL(ogImage, Astro.site) : undefined
 ---
 
 <!doctype html>
@@ -18,6 +31,28 @@ const {title, description = 'Personal blog of David J Felix'} = Astro.props
     <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title} | djf.io</title>
+    {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:site_name" content="djf.io" />
+    {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
+    {ogImageUrl && <meta property="og:image" content={ogImageUrl} />}
+    {ogImageUrl && <meta property="og:image:width" content="1200" />}
+    {ogImageUrl && <meta property="og:image:height" content="630" />}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@davidjfelix" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    {ogImageUrl && <meta name="twitter:image" content={ogImageUrl} />}
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title="David J. Felix's Blog"
+      href="/rss.xml"
+    />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <slot name="head" />
   </head>
   <body
     class={css({
@@ -117,7 +152,7 @@ const {title, description = 'Personal blog of David J Felix'} = Astro.props
           mx: 'auto',
           px: '4',
           textAlign: 'center',
-          color: 'zinc.500',
+          color: 'zinc.400',
           fontSize: 'sm',
         })}
       >

@@ -25,12 +25,15 @@
     "@astrojs/mdx": "^6.0.0",
     "@astrojs/react": "^5.0.5",
     "@astrojs/rss": "^4.0.18",
+    "@astrojs/sitemap": "^3.7.3",
+    "@fontsource/inter": "^5.2.8",
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
     "@typescript/native-preview": "latest",
     "astro": "^6.4.2",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
+    "satori": "^0.26.0",
     "sharp": "^0.34.5"
   },
   "devDependencies": {

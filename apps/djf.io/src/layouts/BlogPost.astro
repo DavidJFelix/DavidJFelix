@@ -41,10 +41,13 @@ const jsonLd = {
         <Image
           src={hero.image.file}
           alt={hero.image.alt}
+          width={400}
+          height={400}
+          densities={[1, 2]}
           loading="eager"
           fetchpriority="high"
           class={css({
-            w: 'full',
+            maxW: 'full',
             h: 'auto',
             borderRadius: 'lg',
             mb: '8',

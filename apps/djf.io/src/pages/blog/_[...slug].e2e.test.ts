@@ -17,5 +17,6 @@ test('a blog post with a hero image in frontmatter displays it', async ({page}) 
     name: /animated style illustration a software engineer/,
   })
   await expect(hero).toBeVisible()
-  await expect(hero).toHaveJSProperty('naturalWidth', 1024)
+  const naturalWidth = await hero.evaluate((img) => (img as HTMLImageElement).naturalWidth)
+  expect(naturalWidth).toBeGreaterThan(0)
 })

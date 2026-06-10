@@ -161,7 +161,7 @@ has no handler). See [docs/projects/f311x/plan.md](../../docs/projects/f311x/pla
 - **Package manager**: pnpm (mise pins the version). Wrangler-touching projects stay on pnpm.
 - **Keep it small.** Add a binding or dependency only when something actually uses it.
 - **Every new surface ships with a test.** typecheck + build + vitest gate every PR via
-  `.github/workflows/ci_f311x.yml`; keep them green.
+  `.github/workflows/ci-f311x.yml`; keep them green.
 - **Components** follow shadcn conventions; use `cn()` (clsx + tailwind-merge) for class merging.
 
 ## Layout
@@ -181,8 +181,8 @@ src/
 `alchemy deploy` builds the client + server bundle itself (via Alchemy's `Cloudflare.Vite`) and
 deploys in one step — there is no separate build command.
 
-- `ci_f311x.yml` — lint / typecheck / build / vitest on PRs + main.
-- `cd_deploy_f311x.yml` — `alchemy deploy --stage prod` after CI succeeds on main, using the
+- `ci-f311x.yml` — lint / typecheck / build / vitest on PRs + main.
+- `cd-deploy-f311x.yml` — `alchemy deploy --stage prod` after CI succeeds on main, using the
   `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` repo secrets. The stage is pinned because
   `alchemy deploy` otherwise defaults to `dev_${USER}`.
 

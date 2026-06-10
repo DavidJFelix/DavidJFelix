@@ -7,8 +7,8 @@ A small chat app on Cloudflare — TanStack Start front end, deployed via Alchem
 
 - **Builds + deploys.** TanStack Start client app (`src/routes`, `src/components/ui`).
   `pnpm typecheck`, `pnpm build`, and `pnpm test` are green, and CI gates all of
-  them (`.github/workflows/ci_f311x.yml`).
-- **CD wired.** `.github/workflows/cd_deploy_f311x.yml` runs `alchemy deploy
+  them (`.github/workflows/ci-f311x.yml`).
+- **CD wired.** `.github/workflows/cd-deploy-f311x.yml` runs `alchemy deploy
   --stage prod` on push to main, using the shared `CLOUDFLARE_*` secrets (CI is
   gated at merge via branch protection, not the deploy workflow). The first prod
   deploy succeeded on 2026-06-06, after granting the CI token **Secrets Store:
@@ -46,7 +46,7 @@ A small chat app on Cloudflare — TanStack Start front end, deployed via Alchem
 
 ## CI deploy — required Cloudflare token scopes
 
-`cd_deploy_f311x.yml` runs `alchemy deploy --stage prod` with the shared
+`cd-deploy-f311x.yml` runs `alchemy deploy --stage prod` with the shared
 `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` secrets (account
 `184b85b87e2289c4b18d7aaf41cd53cd`). The token must carry:
 

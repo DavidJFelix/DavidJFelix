@@ -1,15 +1,15 @@
-name: CD Deploy djf.io
+name: CD Deploy davidjfelix.com
 
 on:
   push:
     branches: [main]
     paths:
-      - 'apps/djf.io/**'
-      - '.github/workflows/cd_deploy_djf_io.yml'
+      - 'apps/davidjfelix.com/**'
+      - '.github/workflows/cd-deploy-davidjfelix-com.yml'
 
 defaults:
   run:
-    working-directory: apps/djf.io
+    working-directory: apps/davidjfelix.com
 
 jobs:
   deploy:
@@ -34,9 +34,6 @@ jobs:
       - name: pnpm install
         run: pnpm install --frozen-lockfile
 
-      - name: panda codegen
-        run: pnpm exec panda codegen
-
       - name: astro build
         run: pnpm exec astro build
 
@@ -46,4 +43,4 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
-          workingDirectory: apps/djf.io
+          workingDirectory: apps/davidjfelix.com

@@ -1,15 +1,15 @@
-name: CD Deploy davidjfelix.com
+name: CD Deploy calendar-visualizer
 
 on:
   push:
     branches: [main]
     paths:
-      - 'apps/davidjfelix.com/**'
-      - '.github/workflows/cd_deploy_davidjfelix_com.yml'
+      - 'apps/calendar-visualizer/**'
+      - '.github/workflows/cd-deploy-calendar-visualizer.yml'
 
 defaults:
   run:
-    working-directory: apps/davidjfelix.com
+    working-directory: apps/calendar-visualizer
 
 jobs:
   deploy:
@@ -34,6 +34,9 @@ jobs:
       - name: pnpm install
         run: pnpm install --frozen-lockfile
 
+      - name: panda codegen
+        run: pnpm exec panda codegen
+
       - name: astro build
         run: pnpm exec astro build
 
@@ -43,4 +46,4 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
-          workingDirectory: apps/davidjfelix.com
+          workingDirectory: apps/calendar-visualizer

@@ -1,36 +1,38 @@
-name: CI djf.io
+name: CI f311x
 
 on:
   push:
     branches: [main]
     paths:
-      - 'apps/djf.io/**'
+      - 'apps/f311x/**'
       - '.config/cspell.json'
       - '.config/mise.toml'
       - 'biome.jsonc'
       - '.oxlintrc.json'
       - '.prettierrc.json'
-      - '.github/workflows/ci_djf_io.yml'
+      - '.github/workflows/ci-f311x.yml'
+      - '.github/workflows/cd-deploy-f311x.yml'
   pull_request:
     paths:
-      - 'apps/djf.io/**'
+      - 'apps/f311x/**'
       - '.config/cspell.json'
       - '.config/mise.toml'
       - 'biome.jsonc'
       - '.oxlintrc.json'
       - '.prettierrc.json'
-      - '.github/workflows/ci_djf_io.yml'
+      - '.github/workflows/ci-f311x.yml'
+      - '.github/workflows/cd-deploy-f311x.yml'
 
 env:
   MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
 
 defaults:
   run:
-    working-directory: apps/djf.io
+    working-directory: apps/f311x
 
 jobs:
   typecheck:
-    name: astro check
+    name: tsgo
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -102,7 +104,7 @@ jobs:
         run: mise run format
 
   build:
-    name: astro build
+    name: vite build
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -147,57 +149,4 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: vitest
-        run: mise run test:unit
-
-  playwright:
-    name: playwright
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      contents: read
-    steps:
-      - name: checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-        with:
-          persist-credentials: false
-
-      - name: mise
-        uses: jdx/mise-action@dba19683ed58901619b14f395a24841710cb4925 # v4.1.0
-        with:
-          install: true
-          cache: true
-
-      - name: pnpm install
-        run: pnpm install --frozen-lockfile
-
-      - name: resolve playwright version
-        id: pw-version
-        run: |
-          version=$(node -p "require('@playwright/test/package.json').version")
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-
-      - name: cache playwright browsers
-        id: pw-cache
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.pw-version.outputs.version }}
-
-      - name: playwright install
-        if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install --with-deps chromium
-
-      - name: playwright install-deps
-        if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: pnpm exec playwright install-deps chromium
-
-      - name: playwright
-        run: mise run test:e2e
-
-      - name: upload-artifact
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: playwright-report
-          path: apps/djf.io/playwright-report/
-          retention-days: 14
+        run: mise run test

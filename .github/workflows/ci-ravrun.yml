@@ -1,36 +1,36 @@
-name: CI calendar-visualizer
+name: CI ravrun
 
 on:
   push:
     branches: [main]
     paths:
-      - 'apps/calendar-visualizer/**'
+      - 'apps/ravrun/**'
       - '.config/cspell.json'
       - '.config/mise.toml'
       - 'biome.jsonc'
       - '.oxlintrc.json'
       - '.prettierrc.json'
-      - '.github/workflows/ci_calendar_visualizer.yml'
+      - '.github/workflows/ci-ravrun.yml'
   pull_request:
     paths:
-      - 'apps/calendar-visualizer/**'
+      - 'apps/ravrun/**'
       - '.config/cspell.json'
       - '.config/mise.toml'
       - 'biome.jsonc'
       - '.oxlintrc.json'
       - '.prettierrc.json'
-      - '.github/workflows/ci_calendar_visualizer.yml'
+      - '.github/workflows/ci-ravrun.yml'
 
 env:
   MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
 
 defaults:
   run:
-    working-directory: apps/calendar-visualizer
+    working-directory: apps/ravrun
 
 jobs:
   typecheck:
-    name: astro check
+    name: tsgo
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -102,7 +102,7 @@ jobs:
         run: mise run format
 
   build:
-    name: astro build
+    name: vite build
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

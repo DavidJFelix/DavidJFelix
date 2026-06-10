@@ -42,12 +42,6 @@ Add Pagefind static search to djf.io with a PandaCSS-styled UI and Cmd/Ctrl+K sh
 
 **Status**: In Progress
 
-### [djf.io SEO & Polish](./projects/djf-io-seo/plan.md)
-
-SEO meta, Open Graph images, sitemap, JSON-LD, Lighthouse >90 for djf.io.
-
-**Status**: In Progress
-
 ## Priority 3 — Greenfield
 
 ### [New Domain Sites](./projects/new-domain-sites/plan.md)

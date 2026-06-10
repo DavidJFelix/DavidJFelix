@@ -3,6 +3,9 @@ import {experimental_AstroContainer as AstroContainer} from 'astro/container'
 import {expect, test} from 'vitest'
 import BlogPost from './BlogPost.astro'
 
+// The container API does not carry `site` config through to `Astro.site`, so
+// JSON-LD url/image and og:image absolute URLs are asserted against the real
+// build in seo.e2e.test.ts instead.
 const container = await AstroContainer.create()
 
 // `new Date('YYYY-MM-DD')` parses as UTC midnight, then `toLocaleDateString`
@@ -78,4 +81,63 @@ test('BlogPost passes title and description through to BaseLayout', async () => 
   })
   expect(html).toContain('<title>A Real Title | djf.io</title>')
   expect(html).toMatch(/<meta name="description" content="This is the description"/)
+})
+
+test('BlogPost sets og:type article', async () => {
+  const html = await container.renderToString(BlogPost, {
+    props: {post: fixturePost()},
+  })
+  expect(html).toMatch(/<meta property="og:type" content="article"/)
+})
+
+const jsonLdFrom = (html: string) => {
+  const match = html.match(/<script type="application\/ld\+json">(.*?)<\/script>/s)
+  expect(match).not.toBeNull()
+  // biome-ignore lint/style/noNonNullAssertion: asserted non-null above
+  return JSON.parse(match![1])
+}
+
+test('BlogPost embeds BlogPosting JSON-LD with headline and publish date', async () => {
+  const date = new Date(2025, 11, 7)
+  const html = await container.renderToString(BlogPost, {
+    props: {post: fixturePost({date})},
+  })
+  const jsonLd = jsonLdFrom(html)
+  expect(jsonLd['@context']).toBe('https://schema.org')
+  expect(jsonLd['@type']).toBe('BlogPosting')
+  expect(jsonLd.headline).toBe('A Real Title')
+  expect(jsonLd.description).toBe('A real description')
+  expect(jsonLd.datePublished).toBe(date.toISOString())
+})
+
+test('BlogPost JSON-LD uses the post author and falls back to David J Felix', async () => {
+  const withAuthor = jsonLdFrom(
+    await container.renderToString(BlogPost, {
+      props: {post: fixturePost({author: 'DavidJFelix'})},
+    }),
+  )
+  expect(withAuthor.author).toEqual({'@type': 'Person', name: 'DavidJFelix'})
+
+  const withoutAuthor = jsonLdFrom(
+    await container.renderToString(BlogPost, {
+      props: {post: fixturePost()},
+    }),
+  )
+  expect(withoutAuthor.author).toEqual({'@type': 'Person', name: 'David J Felix'})
+})
+
+test('BlogPost JSON-LD joins tags into keywords and omits them when absent', async () => {
+  const withTags = jsonLdFrom(
+    await container.renderToString(BlogPost, {
+      props: {post: fixturePost({tags: ['running', 'meta-blog']})},
+    }),
+  )
+  expect(withTags.keywords).toBe('running, meta-blog')
+
+  const withoutTags = jsonLdFrom(
+    await container.renderToString(BlogPost, {
+      props: {post: fixturePost()},
+    }),
+  )
+  expect(withoutTags).not.toHaveProperty('keywords')
 })

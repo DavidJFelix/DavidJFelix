@@ -7,6 +7,9 @@ import {defineConfig} from 'astro/config'
 // https://astro.build/config
 export default defineConfig({
   site: 'https://djf.io',
+  redirects: {
+    '/blog/2024-4-26-on-positivity': '/blog/2024-04-26-on-positivity',
+  },
   markdown: {
     processor: unified(),
   },

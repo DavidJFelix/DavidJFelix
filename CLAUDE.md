@@ -132,4 +132,4 @@ When in doubt, prefer kebab-case. If a third-party tool requires a different cas
 
 - Location: `apps/djf.io`
 - Stack: Astro, MDX, PandaCSS, React
-- Content: Blog posts in `src/content/docs/blog/`
+- Content: Blog posts in `src/content/blog/`

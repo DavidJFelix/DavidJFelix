@@ -1,4 +1,5 @@
 ---
+import {Image} from 'astro:assets'
 import type {CollectionEntry} from 'astro:content'
 import {css} from 'styled-system/css'
 import BaseLayout from './BaseLayout.astro'
@@ -8,7 +9,7 @@ interface Props {
 }
 
 const {post} = Astro.props
-const {title, description, date, author, tags, readingTime} = post.data
+const {title, description, date, author, tags, readingTime, hero} = post.data
 
 const formattedDate = new Date(date).toLocaleDateString('en-US', {
   year: 'numeric',
@@ -35,6 +36,22 @@ const jsonLd = {
 <BaseLayout title={title} description={description} ogType="article" ogImage={ogImage}>
   <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} slot="head" />
   <article>
+    {
+      hero?.image && (
+        <Image
+          src={hero.image.file}
+          alt={hero.image.alt}
+          loading="eager"
+          fetchpriority="high"
+          class={css({
+            w: 'full',
+            h: 'auto',
+            borderRadius: 'lg',
+            mb: '8',
+          })}
+        />
+      )
+    }
     <header class={css({mb: '8'})}>
       <h1
         class={css({

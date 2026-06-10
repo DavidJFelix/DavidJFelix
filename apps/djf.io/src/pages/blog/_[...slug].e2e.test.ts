@@ -9,3 +9,13 @@ test('a blog post page renders MDX content and frontmatter', async ({page}) => {
   await expect(page.getByText(/running about four to five times a week/)).toBeVisible()
   await expect(page.getByRole('heading', {level: 2, name: 'Finding your pace'})).toBeVisible()
 })
+
+test('a blog post with a hero image in frontmatter displays it', async ({page}) => {
+  await page.goto('/blog/2023-12-30-shipposting')
+
+  const hero = page.getByRole('img', {
+    name: /animated style illustration a software engineer/,
+  })
+  await expect(hero).toBeVisible()
+  await expect(hero).toHaveJSProperty('naturalWidth', 1024)
+})

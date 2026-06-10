@@ -42,6 +42,8 @@
     "prettierrc",
     "prettierignore",
     "editorconfig",
-    "prosewrap"
+    "prosewrap",
+    "frontmatter",
+    "shipposting"
   ]
 }

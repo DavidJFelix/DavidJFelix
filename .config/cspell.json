@@ -51,6 +51,8 @@
     "pinact",
     "oxlintrc",
     "codegen",
+    "lockfile",
+    "lockfiles",
     "ravrun",
     "tsgo"
   ]

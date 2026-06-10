@@ -1,6 +1,5 @@
 # Canonical check tasks for this app. CI and automation discover checks here;
 # tasks delegate to package.json scripts. Assumes `pnpm install` has run.
-# Missing checks: test (no test suite yet).
 
 [tasks.typecheck]
 description = "Type-check with astro check"
@@ -21,10 +20,14 @@ run = "pnpm run format"
 description = "Apply formatting fixes"
 run = "pnpm run format:fix"
 
+[tasks.test]
+description = "Unit tests with Vitest (passWithNoTests until the first test lands)"
+run = "pnpm run test"
+
 [tasks.build]
 description = "Build with Astro"
 run = "pnpm run build"
 
 [tasks.check]
 description = "Run all checks"
-depends = ["typecheck", "lint", "format", "build"]
+depends = ["typecheck", "lint", "format", "test", "build"]

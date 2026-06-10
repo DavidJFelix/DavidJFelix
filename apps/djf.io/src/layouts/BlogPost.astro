@@ -1,4 +1,5 @@
 ---
+import {Image} from 'astro:assets'
 import type {CollectionEntry} from 'astro:content'
 import {css} from 'styled-system/css'
 import BaseLayout from './BaseLayout.astro'
@@ -8,7 +9,7 @@ interface Props {
 }
 
 const {post} = Astro.props
-const {title, description, date, author, tags, readingTime} = post.data
+const {title, description, date, author, tags, readingTime, hero} = post.data
 
 const formattedDate = new Date(date).toLocaleDateString('en-US', {
   year: 'numeric',
@@ -35,54 +36,83 @@ const jsonLd = {
 <BaseLayout title={title} description={description} ogType="article" ogImage={ogImage}>
   <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} slot="head" />
   <article>
-    <header class={css({mb: '8'})}>
-      <h1
-        class={css({
-          fontSize: '4xl',
-          fontWeight: 'bold',
-          mb: '4',
-          lineHeight: '1.2',
-        })}
-      >
-        {title}
-      </h1>
+    <header
+      class={css({
+        mb: '8',
+        display: 'flex',
+        flexDirection: {base: 'column-reverse', md: 'row'},
+        alignItems: {base: 'flex-start', md: 'center'},
+        justifyContent: 'space-between',
+        gap: '6',
+      })}
+    >
+      <div>
+        <h1
+          class={css({
+            fontSize: '4xl',
+            fontWeight: 'bold',
+            mb: '4',
+            lineHeight: '1.2',
+          })}
+        >
+          {title}
+        </h1>
 
-      <div
-        class={css({
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '4',
-          color: 'zinc.400',
-          fontSize: 'sm',
-          mb: '4',
-        })}
-      >
-        <span>{formattedDate}</span>
-        {author && <span>by {author}</span>}
-        {readingTime && <span>{readingTime} read</span>}
+        <div
+          class={css({
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '4',
+            color: 'zinc.400',
+            fontSize: 'sm',
+            mb: '4',
+          })}
+        >
+          <span>{formattedDate}</span>
+          {author && <span>by {author}</span>}
+          {readingTime && <span>{readingTime} read</span>}
+        </div>
+
+        {
+          tags && tags.length > 0 && (
+            <div class={css({display: 'flex', flexWrap: 'wrap', gap: '2'})}>
+              {tags.map((tag: string) => (
+                <a
+                  href={`/blog/tags/${tag}`}
+                  class={css({
+                    bg: 'zinc.800',
+                    color: 'zinc.300',
+                    px: '2',
+                    py: '1',
+                    borderRadius: 'md',
+                    fontSize: 'xs',
+                    textDecoration: 'none',
+                    _hover: {bg: 'zinc.700', color: 'zinc.100'},
+                  })}
+                >
+                  {tag}
+                </a>
+              ))}
+            </div>
+          )
+        }
       </div>
 
       {
-        tags && tags.length > 0 && (
-          <div class={css({display: 'flex', flexWrap: 'wrap', gap: '2'})}>
-            {tags.map((tag: string) => (
-              <a
-                href={`/blog/tags/${tag}`}
-                class={css({
-                  bg: 'zinc.800',
-                  color: 'zinc.300',
-                  px: '2',
-                  py: '1',
-                  borderRadius: 'md',
-                  fontSize: 'xs',
-                  textDecoration: 'none',
-                  _hover: {bg: 'zinc.700', color: 'zinc.100'},
-                })}
-              >
-                {tag}
-              </a>
-            ))}
-          </div>
+        hero?.image && (
+          <Image
+            src={hero.image.file}
+            alt={hero.image.alt}
+            width={160}
+            height={160}
+            densities={[1, 2]}
+            loading="eager"
+            fetchpriority="high"
+            class={css({
+              flexShrink: 0,
+              borderRadius: 'lg',
+            })}
+          />
         )
       }
     </header>

@@ -66,16 +66,5 @@
     "vite": "8.0.16",
     "vitest": "4.1.8",
     "wrangler": "4.98.0"
-  },
-  "pnpm": {
-    "overrides": {
-      "@distilled.cloud/aws": "0.24.8",
-      "@distilled.cloud/axiom": "0.24.8",
-      "@distilled.cloud/cloudflare": "0.24.8",
-      "@distilled.cloud/core": "0.24.8",
-      "@distilled.cloud/neon": "0.24.8",
-      "@distilled.cloud/planetscale": "0.24.8",
-      "@effect/platform-node-shared": "4.0.0-beta.78"
-    }
   }
 }

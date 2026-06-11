@@ -22,7 +22,6 @@
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.38.0",
-    "@distilled.cloud/cloudflare": "0.23.1",
     "@fontsource-variable/geist": "^5.2.9",
     "@tailwindcss/vite": "^4.3.0",
     "@tanstack/ai": "^0.28.0",
@@ -32,7 +31,7 @@
     "@tanstack/react-router-devtools": "latest",
     "@tanstack/react-start": "latest",
     "@tanstack/router-plugin": "^1.168.11",
-    "alchemy": "2.0.0-beta.55",
+    "alchemy": "2.0.0-beta.54",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "effect": "4.0.0-beta.78",
@@ -67,5 +66,16 @@
     "vite": "8.0.16",
     "vitest": "4.1.8",
     "wrangler": "4.98.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "@distilled.cloud/aws": "0.24.8",
+      "@distilled.cloud/axiom": "0.24.8",
+      "@distilled.cloud/cloudflare": "0.24.8",
+      "@distilled.cloud/core": "0.24.8",
+      "@distilled.cloud/neon": "0.24.8",
+      "@distilled.cloud/planetscale": "0.24.8",
+      "@effect/platform-node-shared": "4.0.0-beta.78"
+    }
   }
 }

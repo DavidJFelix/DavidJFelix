@@ -14,9 +14,11 @@ A small chat app on Cloudflare — TanStack Start front end, deployed via Alchem
      TypeError); #208's lockfile maintenance then removed
      `@effect/platform-node` (an optional peer alchemy's `WorkerBridge.js`
      imports unconditionally), changing the crash to `ERR_MODULE_NOT_FOUND`.
-     The echo backend (#211) never reached prod. Fixed: alchemy → beta.55 plus
+     The echo backend (#211) never reached prod. Fixed: alchemy → beta.54 plus
      an explicit `@effect/platform-node` devDependency pinned to effect's
-     version; the CLI now reaches Cloudflare auth cleanly.
+     version; the CLI now reaches Cloudflare auth cleanly. (beta.55 worked too
+     but is <24h old and pnpm's release-age policy rejects it in CI; pnpm
+     overrides pin the too-fresh transitives to ≥24h-old releases.)
   3. **The artifact prod is serving is a dev-mode build** (the only successful
      deploy, 2026-06-06, alchemy beta.45 + floating `@tanstack/react-start`).
      Its SSR HTML references `/@id/virtual:tanstack-start-dev-client-entry`,

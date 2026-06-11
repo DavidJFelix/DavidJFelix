@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths:
       - 'apps/f311x/**'
-      - '.github/workflows/cd_deploy_f311x.yml'
+      - '.github/workflows/cd-deploy-f311x.yml'
 
 defaults:
   run:

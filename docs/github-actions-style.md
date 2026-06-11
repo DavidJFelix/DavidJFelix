@@ -8,16 +8,16 @@ Every workflow falls into exactly one of these buckets. The bucket determines th
 
 | Category | Prefix | Triggers |
 | --- | --- | --- |
-| **CI** -- Continuous Integration | `ci_` | `push` to `main`, `pull_request` |
-| **CD** -- Continuous Delivery | `cd_` | `push` to `main` (after CI), release tags |
-| **Run** -- Manual operations | `run_` | `workflow_dispatch` only |
-| **Cron** -- Scheduled jobs | `cron_` | `schedule` only |
-| **Bot** -- Event-driven third-party integrations | `bot_` | `issue_comment`, `pull_request_review_comment`, `issues`, etc. -- typically responding to a mention or webhook |
+| **CI** -- Continuous Integration | `ci-` | `push` to `main`, `pull_request` |
+| **CD** -- Continuous Delivery | `cd-` | `push` to `main` (after CI), release tags |
+| **Run** -- Manual operations | `run-` | `workflow_dispatch` only |
+| **Cron** -- Scheduled jobs | `cron-` | `schedule` only |
+| **Bot** -- Event-driven third-party integrations | `bot-` | `issue_comment`, `pull_request_review_comment`, `issues`, etc. -- typically responding to a mention or webhook |
 
-If a workflow legitimately spans two categories, combine the prefixes in alphabetical order, space-separated in the display name and underscore-separated in the file name:
+If a workflow legitimately spans two categories, combine the prefixes in alphabetical order, space-separated in the display name and hyphen-separated in the file name:
 
-- A scheduled deployment is `CD CRON` (display name) / `cd_cron_*.yml` (file).
-- A manually-triggered CI rerun is `CI RUN` / `ci_run_*.yml`.
+- A scheduled deployment is `CD CRON` (display name) / `cd-cron-*.yml` (file).
+- A manually-triggered CI rerun is `CI RUN` / `ci-run-*.yml`.
 
 Do not invent new categories beyond these. If a workflow does not fit, it is probably two workflows.
 
@@ -26,32 +26,33 @@ Do not invent new categories beyond these. If a workflow does not fit, it is pro
 ## File naming
 
 - All workflow files are lowercase.
-- Use underscores (`_`) as the separator -- not hyphens, not dots.
+- Use hyphens (`-`) as the separator -- kebab-case, per the repo-wide file naming rule in CLAUDE.md. Not underscores, not dots.
 - The file name starts with the category prefix, then describes what the workflow does.
 
 Good:
 
 ```
-ci_actions_lint.yml
-ci_djf_io.yml
-cd_deploy_djf_io.yml
-cd_deploy_calendar_visualizer.yml
-run_rotate_secrets.yml
-cron_check_dependency_freshness.yml
-cd_cron_publish_weekly_digest.yml
-bot_claude.yml
+ci-actions-lint.yml
+ci-djf-io.yml
+cd-deploy-djf-io.yml
+cd-deploy-calendar-visualizer.yml
+run-rotate-secrets.yml
+cron-check-dependency-freshness.yml
+cd-cron-publish-weekly-digest.yml
+bot-claude.yml
 ```
 
 Bad:
 
 ```
-djf-io-ci.yml          # missing prefix, uses hyphens
+djf-io-ci.yml          # category prefix goes first
+ci_djf_io.yml          # underscores; use hyphens
 deploy.yml             # missing prefix, ambiguous scope
 DjfIoDeploy.yml        # not lowercase
-ci.djf-io.yml          # dots, hyphens
+ci.djf-io.yml          # dots
 ```
 
-The workflow's `name:` field should match the file: same words, title-cased, with the category in caps. `cd_deploy_djf_io.yml` -> `name: CD Deploy djf.io`.
+The workflow's `name:` field should match the file: same words, title-cased, with the category in caps. `cd-deploy-djf-io.yml` -> `name: CD Deploy djf.io`.
 
 ## Step naming: name each step after the tool it runs
 
@@ -92,7 +93,7 @@ Bad:
   uses: cloudflare/wrangler-action@...
 ```
 
-If a single `pnpm` script wraps multiple tools (e.g. `"lint": "biome check . && oxlint"`), split it into separate steps -- one per tool -- so each has its own name and its own log entry. The example workflow `ci_actions_lint.yml` runs four tools, so it has four steps: `actionlint`, `ghalint`, `zizmor`, `pinact`.
+If a single `pnpm` script wraps multiple tools (e.g. `"lint": "biome check . && oxlint"`), split it into separate steps -- one per tool -- so each has its own name and its own log entry. The example workflow `ci-actions-lint.yml` runs four tools, so it has four steps: `actionlint`, `ghalint`, `zizmor`, `pinact`.
 
 For `uses:` steps, name the action by its tool (`wrangler deploy`, `actions/checkout` -> `checkout`, `actions/cache` -> `cache`, `actions/upload-artifact` -> `upload-artifact`).
 
@@ -117,14 +118,14 @@ on:
       - '.config/cspell.json'
       - '.config/mise.toml'
       - 'biome.jsonc'
-      - '.github/workflows/ci_djf_io.yml'
+      - '.github/workflows/ci-djf-io.yml'
   pull_request:
     paths:
       - 'apps/djf.io/**'
       - '.config/cspell.json'
       - '.config/mise.toml'
       - 'biome.jsonc'
-      - '.github/workflows/ci_djf_io.yml'
+      - '.github/workflows/ci-djf-io.yml'
 ```
 
 `Run` and `Cron` workflows do not need path filters -- they are dispatched explicitly or on a schedule.
@@ -135,7 +136,7 @@ When you introduce a new app, package, or top-level subtree, you are responsible
 
 - [ ] Identify which existing workflows should cover the new subtree (lint, typecheck, deploy, etc.).
 - [ ] Add the new path(s) to each of those workflows' `paths:` filters.
-- [ ] If no existing workflow covers it, add new `ci_<subtree>.yml` (and `cd_deploy_<subtree>.yml` if it deploys).
+- [ ] If no existing workflow covers it, add new `ci-<subtree>.yml` (and `cd-deploy-<subtree>.yml` if it deploys).
 - [ ] Verify by pushing a no-op change inside the subtree and confirming the expected workflows ran. A workflow that does not trigger is worse than no workflow at all -- it gives false confidence.
 
 The reverse is also true: when you delete a subtree, remove its path filters and any now-orphaned workflows.
@@ -185,7 +186,7 @@ jobs:
 
 ## Checklist for a new workflow
 
-- [ ] File is lowercase with the correct category prefix (`ci_`, `cd_`, `run_`, `cron_`, `bot_`, or alphabetical combo).
+- [ ] File is lowercase kebab-case with the correct category prefix (`ci-`, `cd-`, `run-`, `cron-`, `bot-`, or alphabetical combo).
 - [ ] `name:` field matches the file.
 - [ ] `paths:` filter covers the subtree, relevant shared config, and the workflow file itself (CI/CD only).
 - [ ] Every step is named after the tool it runs.

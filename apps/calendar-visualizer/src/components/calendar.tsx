@@ -1,67 +1,11 @@
-import type {Interval} from 'date-fns'
-import {eachDayOfInterval} from 'date-fns/eachDayOfInterval'
-import {eachMonthOfInterval} from 'date-fns/eachMonthOfInterval'
-import {subDays} from 'date-fns/subDays'
-import Holidays from 'date-holidays'
 import {type ReactNode, useId} from 'react'
 
 import {css, cva, cx} from '../../styled-system/css'
 import {grid, hstack, stack, vstack} from '../../styled-system/patterns'
-
-interface DayFeatureBase {
-  type: string
-}
-
-interface WeekendFeature extends DayFeatureBase {
-  type: 'weekend'
-}
-
-interface HolidayFeature extends DayFeatureBase {
-  type: 'holiday'
-  name: string
-}
-
-interface PlanningFeature extends DayFeatureBase {
-  type: 'planning'
-  name: string
-}
-
-interface ExecutionFeature extends DayFeatureBase {
-  type: 'execution'
-  name: string
-}
-
-interface HIPSprintFeature extends DayFeatureBase {
-  type: 'hips-sprint'
-  name: string
-}
-
-type DayFeature =
-  | WeekendFeature
-  | HolidayFeature
-  | PlanningFeature
-  | HIPSprintFeature
-  | ExecutionFeature
-
-interface GridSlot {
-  type: string
-  index: number
-}
-
-interface GridSpacer extends GridSlot {
-  type: 'spacer'
-}
-
-interface GridDay extends GridSlot {
-  type: 'day'
-  date: Date
-  dayFeatures: DayFeature[]
-}
-
-type DayDisplayState = GridDay | GridSpacer
+import {type DayDisplayState, getCalendarDisplayState, type MonthState} from './calendar-state'
 
 interface CalendarDisplayProps {
-  months: MonthProps[]
+  months: MonthState[]
 }
 
 export function CalendarDisplay({months}: CalendarDisplayProps) {
@@ -80,11 +24,7 @@ export function CalendarDisplay({months}: CalendarDisplayProps) {
   )
 }
 
-interface MonthProps {
-  monthName: string
-  slottedDays: DayDisplayState[]
-}
-function Month({monthName, slottedDays}: MonthProps) {
+function Month({monthName, slottedDays}: MonthState) {
   const id = useId()
   const weekDayHeaders = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
@@ -275,69 +215,4 @@ interface GetDayKeyParams {
 
 function getDayKey({id, dayIndex}: GetDayKeyParams) {
   return `${id}-day-${dayIndex}`
-}
-
-function getCalendarDisplayState(interval: Interval): MonthProps[] {
-  const holidays = new Holidays('US', {types: ['bank', 'public', 'school']})
-
-  const days = eachDayOfInterval(interval)
-  const daysMap: Record<string, DayFeature[]> = Object.fromEntries(
-    days.map((day) => {
-      const isHoliday = holidays.isHoliday(day)
-      const isWeekend = day.getDay() === 0 || day.getDay() === 6
-
-      return [
-        day.toISOString(),
-        [
-          ...(isHoliday
-            ? (holidays
-                .getHolidays(day)
-                .map((holiday) => ({type: 'holiday', name: holiday.name})) as HolidayFeature[])
-            : []),
-          ...(isWeekend ? ([{type: 'weekend'}] as WeekendFeature[]) : []),
-        ],
-      ]
-    }),
-  )
-
-  const months = eachMonthOfInterval(interval).map((month, monthIndex, months) => {
-    const slottedDays: DayDisplayState[] = []
-    let start: Date
-    let end: Date
-    if (monthIndex === 0) {
-      start = interval.start as Date
-    } else {
-      start = month
-    }
-    if (monthIndex === months.length - 1) {
-      end = interval.end as Date
-    } else {
-      end = subDays(months[monthIndex + 1], 1)
-    }
-
-    eachDayOfInterval({
-      start,
-      end,
-    }).forEach((day) => {
-      const dayColumn = day.getDay()
-      while (slottedDays.length < dayColumn) {
-        slottedDays.push({index: slottedDays.length, type: 'spacer'})
-      }
-      const dayFeatures: DayFeature[] = daysMap[day.toISOString()] ?? []
-
-      slottedDays.push({
-        index: slottedDays.length,
-        type: 'day',
-        date: day,
-        dayFeatures,
-      })
-    })
-
-    return {
-      monthName: month.toLocaleString('en-US', {month: 'long'}),
-      slottedDays,
-    }
-  })
-
-  return months
 }

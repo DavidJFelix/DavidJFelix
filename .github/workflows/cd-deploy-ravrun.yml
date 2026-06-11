@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths:
       - 'apps/ravrun/**'
-      - '.github/workflows/cd_deploy_ravrun.yml'
+      - '.github/workflows/cd-deploy-ravrun.yml'
 
 defaults:
   run:

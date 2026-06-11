@@ -16,11 +16,6 @@
     "google",
     "fullstack"
   ],
-  "words": [
-    "codegen",
-    "hstack",
-    "pandacss",
-    "vstack"
-  ],
+  "words": ["codegen", "hstack", "pandacss", "vstack"],
   "dictionaryDefinitions": []
 }

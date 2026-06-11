@@ -8,3 +8,16 @@ actionlint = "1"
 ghalint = "1"
 zizmor = "1"
 pinact = "4"
+
+# Repo-root checks, scoped to the config files the root owns. Legacy project
+# dirs (Advent-of-Code, Exercism, etc.) are intentionally out of scope, and
+# apps/* shadow these tasks with their own.
+[tasks.format]
+description = "Check formatting of repo-root config files (Biome)"
+run = "biome check biome.jsonc .oxlintrc.json .prettierrc.json .config/cspell.json .github/renovate.json .vscode/settings.json .vscode/extensions.json"
+dir = "{{config_root}}"
+
+[tasks."format:fix"]
+description = "Apply formatting fixes to repo-root config files"
+run = "biome check --write biome.jsonc .oxlintrc.json .prettierrc.json .config/cspell.json .github/renovate.json .vscode/settings.json .vscode/extensions.json"
+dir = "{{config_root}}"

@@ -94,6 +94,13 @@ Tracked as Phase 5 above. Two gaps the user flagged 2026-05-29:
 Hard dependency on Linter/Formatter Phase 3b (per-project subtree checks) for the
 "each app declares its checks" mechanism. Don't enable auto-merge ahead of that.
 
+**Update 2026-06-09/10**: Phase 3b landed — every app declares its checks as
+mise tasks (`apps/<name>/mise.toml`) and has per-app CI running them. All five
+apps now declare the full five-check contract; in calendar-visualizer,
+davidjfelix.com, and ravrun the test suite is Vitest wired with
+`passWithNoTests` (trivially green until real tests land), so weigh that when
+deciding whether they qualify for auto-merge or only djf.io and f311x do.
+
 ## Open: transitive dependency drift
 
 Current gap: Renovate is pinning newer versions of transitive deps in lockfiles, and our sweep doesn't see them. The skill only inspects manifests.

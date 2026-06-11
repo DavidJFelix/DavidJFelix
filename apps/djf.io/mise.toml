@@ -1,0 +1,42 @@
+# Canonical check tasks for this app. CI and automation discover checks here;
+# tasks delegate to package.json scripts. Assumes `pnpm install` has run.
+
+[tasks.typecheck]
+description = "Type-check with astro check"
+run = "pnpm run typecheck"
+# astro check and astro build both regenerate .astro/ types; serialize them
+# when both are scheduled (e.g. via the check umbrella task)
+wait_for = ["build"]
+
+[tasks.lint]
+description = "Lint with Biome + Oxlint"
+run = "pnpm run lint"
+
+[tasks.format]
+description = "Check formatting (Biome; Prettier for md/mdx)"
+run = "pnpm run format"
+
+[tasks."format:fix"]
+description = "Apply formatting fixes"
+run = "pnpm run format:fix"
+
+[tasks."test:unit"]
+description = "Unit tests with Vitest"
+run = "pnpm run test:unit"
+
+[tasks."test:e2e"]
+description = "E2E tests with Playwright (builds first)"
+run = "pnpm run test:e2e"
+depends = ["build"]
+
+[tasks.test]
+description = "All tests"
+depends = ["test:unit", "test:e2e"]
+
+[tasks.build]
+description = "Build with Panda codegen + Astro"
+run = "pnpm run build"
+
+[tasks.check]
+description = "Run all checks"
+depends = ["typecheck", "lint", "format", "test", "build"]

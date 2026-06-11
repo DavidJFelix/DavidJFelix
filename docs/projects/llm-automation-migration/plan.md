@@ -14,9 +14,9 @@ Interactive work (David ↔ Claude in Claude Code) stays on Claude. This is abou
 
 ## In-scope workflows
 
-- `.github/workflows/cron_dependency_freshness.yml` — weekly freshness sweep
-- `.github/workflows/bot_claude_code_review.yml` — PR review on open/update
-- `.github/workflows/bot_claude.yml` — keep on Claude for now (interactive mention bot); revisit after the other two land
+- `.github/workflows/cron-dependency-freshness.yml` — weekly freshness sweep
+- `.github/workflows/bot-claude-code-review.yml` — PR review on open/update
+- `.github/workflows/bot-claude.yml` — keep on Claude for now (interactive mention bot); revisit after the other two land
 
 ## Implementation
 
@@ -41,7 +41,7 @@ Pick one. Document the tradeoffs.
 ### Phase 3: Port the review action
 
 - Replicate the current PR-review prompt/skill on the new runtime
-- Migrate `bot_claude_code_review.yml`
+- Migrate `bot-claude-code-review.yml`
 - Keep behavior parity: same trigger, same review style, similar latency
 
 ### Phase 4: Document

@@ -8,20 +8,51 @@ on:
       - '.config/cspell.json'
       - '.config/mise.toml'
       - 'biome.jsonc'
-      - '.github/workflows/ci_djf_io.yml'
+      - '.oxlintrc.json'
+      - '.prettierrc.json'
+      - '.github/workflows/ci-djf-io.yml'
   pull_request:
     paths:
       - 'apps/djf.io/**'
       - '.config/cspell.json'
       - '.config/mise.toml'
       - 'biome.jsonc'
-      - '.github/workflows/ci_djf_io.yml'
+      - '.oxlintrc.json'
+      - '.prettierrc.json'
+      - '.github/workflows/ci-djf-io.yml'
+
+env:
+  MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
 
 defaults:
   run:
     working-directory: apps/djf.io
 
 jobs:
+  typecheck:
+    name: astro check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: mise
+        uses: jdx/mise-action@dba19683ed58901619b14f395a24841710cb4925 # v4.1.0
+        with:
+          install: true
+          cache: true
+
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+
+      - name: typecheck
+        run: mise run typecheck
+
   lint:
     name: biome + oxlint
     runs-on: ubuntu-latest
@@ -43,11 +74,32 @@ jobs:
       - name: pnpm install
         run: pnpm install --frozen-lockfile
 
-      - name: biome
-        run: pnpm exec biome check .
+      - name: lint
+        run: mise run lint
 
-      - name: oxlint
-        run: pnpm exec oxlint
+  format:
+    name: format check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: mise
+        uses: jdx/mise-action@dba19683ed58901619b14f395a24841710cb4925 # v4.1.0
+        with:
+          install: true
+          cache: true
+
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+
+      - name: format
+        run: mise run format
 
   build:
     name: astro build
@@ -70,11 +122,8 @@ jobs:
       - name: pnpm install
         run: pnpm install --frozen-lockfile
 
-      - name: panda codegen
-        run: pnpm exec panda codegen
-
-      - name: astro build
-        run: pnpm exec astro build
+      - name: build
+        run: mise run build
 
   vitest:
     name: vitest
@@ -98,7 +147,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: vitest
-        run: pnpm exec vitest run
+        run: mise run test:unit
 
   playwright:
     name: playwright
@@ -142,14 +191,8 @@ jobs:
         if: steps.pw-cache.outputs.cache-hit == 'true'
         run: pnpm exec playwright install-deps chromium
 
-      - name: panda codegen
-        run: pnpm exec panda codegen
-
-      - name: astro build
-        run: pnpm exec astro build
-
       - name: playwright
-        run: pnpm exec playwright test
+        run: mise run test:e2e
 
       - name: upload-artifact
         if: ${{ !cancelled() }}

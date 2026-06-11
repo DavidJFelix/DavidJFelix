@@ -80,8 +80,9 @@ Keep it short. The issue body should fit on one screen. If it doesn't fit, the t
 
 - **Runtime**: Node 26, pnpm 10 (managed via mise)
 - **Linting**: Biome, Oxlint
-- **Formatting**: Biome
+- **Formatting**: Biome (code); Prettier (Markdown/MDX only)
 - **Spell Check**: cspell with shared config at `.config/cspell.json`
+- **Per-app checks**: each app declares `typecheck` / `lint` / `format` / `test` / `build` as mise tasks in `apps/<name>/mise.toml` (`mise run check` runs them all); CI runs the same tasks
 
 ### Ecosystem tool choices
 

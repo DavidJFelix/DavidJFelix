@@ -48,13 +48,18 @@ test('escape closes the search dialog', async ({page}) => {
   await expect(dialog).not.toBeVisible()
 })
 
-test('search reports when nothing matches', async ({page}) => {
+test('search reports when nothing matches and recovers when the query changes', async ({page}) => {
   await gotoHydrated(page, '/')
 
   await page.keyboard.press('ControlOrMeta+k')
   const dialog = page.getByRole('dialog', {name: 'Search posts'})
   await dialog.getByRole('searchbox').fill('zebra')
   await expect(dialog.getByText(/No results for/)).toBeVisible()
+
+  // editing the query withdraws the stale empty-state verdict
+  await dialog.getByRole('searchbox').fill('shipposting')
+  await expect(dialog.getByRole('link', {name: /Shipposting/}).first()).toBeVisible()
+  await expect(dialog.getByText(/No results for/)).not.toBeVisible()
 })
 
 test('search works from a blog post page', async ({page}) => {

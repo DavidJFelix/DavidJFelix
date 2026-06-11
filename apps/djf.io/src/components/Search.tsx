@@ -88,6 +88,10 @@ export default function Search() {
       setSearched(false)
       return
     }
+    // A new query invalidates the previous empty-state verdict; previous
+    // results stay visible while the search is in flight to avoid flicker,
+    // but "No results" must never name a query it didn't actually check.
+    setSearched(false)
     let stale = false
     void (async () => {
       const pagefind = await loadPagefind()

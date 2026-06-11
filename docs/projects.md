@@ -36,12 +36,6 @@ Human-directed polish of djf.io: colors, spacing, layout, images, usability, com
 
 **Status**: In Progress
 
-### [djf.io Search](./projects/djf-io-search/plan.md)
-
-Add Pagefind static search to djf.io with a PandaCSS-styled UI and Cmd/Ctrl+K shortcut.
-
-**Status**: In Progress
-
 ## Priority 3 — Greenfield
 
 ### [New Domain Sites](./projects/new-domain-sites/plan.md)

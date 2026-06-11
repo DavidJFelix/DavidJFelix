@@ -1,6 +1,7 @@
 ---
 import '../index.css'
 import {css} from 'styled-system/css'
+import Search from '../components/Search'
 
 interface Props {
   title: string
@@ -92,7 +93,8 @@ const ogImageUrl = Astro.site ? new URL(ogImage, Astro.site) : undefined
         >
           djf.io
         </a>
-        <div class={css({display: 'flex', gap: '6'})}>
+        <div class={css({display: 'flex', alignItems: 'center', gap: '6'})}>
+          <Search client:load />
           <a
             href="/blog"
             class={css({

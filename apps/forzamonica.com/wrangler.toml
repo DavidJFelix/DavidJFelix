@@ -1,0 +1,20 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "forzamonica-com"
+main = "@tanstack/react-start/server-entry"
+compatibility_date = "2026-06-01"
+compatibility_flags = ["nodejs_compat"]
+
+routes = [
+  { pattern = "forzamonica.com", custom_domain = true },
+  { pattern = "www.forzamonica.com", custom_domain = true },
+]
+
+[observability]
+enabled = true
+
+[vars]
+# mock.shop is Shopify's hosted mock Storefront API -- full schema, no store or
+# token required. Cutover to the real store is config-only: point this at
+# https://<store>.myshopify.com/api/<version>/graphql.json and set the
+# SHOPIFY_STOREFRONT_PUBLIC_TOKEN secret (`wrangler secret put`).
+SHOPIFY_STOREFRONT_API_URL = "https://mock.shop/api"

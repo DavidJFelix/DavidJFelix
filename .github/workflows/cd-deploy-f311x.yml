@@ -6,6 +6,7 @@ on:
     paths:
       - 'apps/f311x/**'
       - '.github/workflows/cd-deploy-f311x.yml'
+  workflow_dispatch:
 
 defaults:
   run:

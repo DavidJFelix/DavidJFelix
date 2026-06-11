@@ -22,6 +22,10 @@ export const Website = Cloudflare.Vite('Website', {
     date: '2026-05-01',
     flags: ['nodejs_compat'],
   },
+  // Custom domains are the Worker's only ingress: Alchemy attaches them on
+  // deploy and Cloudflare materializes the DNS records. The f311x.com zone
+  // must already exist in this account.
+  domain: ['f311x.com', 'www.f311x.com'],
 })
 
 export default Alchemy.Stack(

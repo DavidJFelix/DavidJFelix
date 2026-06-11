@@ -5,12 +5,17 @@ A small chat app on Cloudflare — TanStack Start front end, deployed via Alchem
 
 ## Current state (2026-06-11)
 
-- **Broken in production.** Reported by David 2026-06-11; cause not yet
-  diagnosed, symptom not yet captured. CI was green and the deploy pipeline
-  succeeded, so this is runtime breakage the current checks cannot see — which
-  is exactly the gap the new
-  [preview-deployments](../preview-deployments/plan.md) project exists to
-  close. Diagnosis comes before any new feature work.
+- **Diagnosed: the app has no ingress — f311x.com was never wired to the
+  Worker.** The prod Worker (`f311x-website-prod-…`) deployed fine on
+  2026-06-06, but `alchemy.run.ts` never set the `domain` option, so no custom
+  domain is attached, the f311x.com zone (on Cloudflare, same account) has zero
+  DNS records, and the site never resolves. Not a runtime crash — requests
+  never reach the Worker. "Green deploy, broken prod" because the pipeline
+  verifies upload, not reachability. Fix in flight: `domain: ['f311x.com',
+  'www.f311x.com']` on the `Cloudflare.Vite` resource; Cloudflare materializes
+  the DNS records when the custom domains attach on the next prod deploy. One
+  open risk: the deploy token may need a zone scope to attach domains — see the
+  token-scopes section. Details in the 2026-06-11 progress note.
 
 ## Earlier state (2026-06-08)
 
@@ -38,8 +43,12 @@ A small chat app on Cloudflare — TanStack Start front end, deployed via Alchem
 
 Stabilize before building (reprioritized 2026-06-11).
 
-- [ ] Diagnose why prod is broken; capture the symptom and root cause in a
-      progress note.
+- [x] Diagnose why prod is broken; capture the symptom and root cause in a
+      progress note. (2026-06-11: no ingress — no custom domain on the Worker,
+      no DNS records in the zone. See the progress note.)
+- [ ] Restore ingress: deploy the `domain` binding (merge to main triggers CD,
+      or `workflow_dispatch` re-runs it) and verify https://f311x.com loads.
+      May require granting the deploy token a zone scope first.
 - [ ] Make breakage readable: error visibility for the Worker (Cloudflare
       logs/tail and/or the f311x slice of
       [Sentry Integration](../sentry-integration/plan.md) pulled forward) so
@@ -83,6 +92,14 @@ Stabilize before building (reprioritized 2026-06-11).
 
 Only **Secrets Store: Edit** was missing on the first run; the resource scopes were
 already granted. See the Alchemy CI/CD guide and the 2026-06-06 progress note.
+
+**Custom domains (unverified scope)**: attaching `f311x.com` / `www.f311x.com`
+to the Worker creates DNS records in the zone. Cloudflare doesn't document the
+exact token permission for `PUT /accounts/:id/workers/domains`; if the deploy
+fails with another generic `10000 "Authentication error"`, grant the token
+**Zone · Workers Routes · Edit** and/or **Zone · DNS · Edit** scoped to
+f311x.com. Note the f311x workflow uses its own `F311X_CLOUDFLARE_API_TOKEN`
+secret, not the shared `CLOUDFLARE_API_TOKEN` the wrangler apps use.
 
 ## Constraints
 

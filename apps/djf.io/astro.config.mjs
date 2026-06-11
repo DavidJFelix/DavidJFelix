@@ -14,20 +14,26 @@ function pagefindIntegration() {
     hooks: {
       'astro:build:done': async ({dir, logger}) => {
         const outDir = fileURLToPath(dir)
-        const {index, errors: createErrors} = await pagefind.createIndex()
-        if (!index) {
-          throw new Error(`pagefind could not create an index: ${createErrors.join(', ')}`)
+        try {
+          const {index, errors: createErrors} = await pagefind.createIndex()
+          if (!index) {
+            throw new Error(`pagefind could not create an index: ${createErrors.join(', ')}`)
+          }
+          const {errors: addErrors, page_count: pageCount} = await index.addDirectory({
+            path: outDir,
+          })
+          if (addErrors.length > 0) {
+            throw new Error(`pagefind could not index ${outDir}: ${addErrors.join(', ')}`)
+          }
+          const {errors: writeErrors} = await index.writeFiles({outputPath: `${outDir}/pagefind`})
+          if (writeErrors.length > 0) {
+            throw new Error(`pagefind could not write the index: ${writeErrors.join(', ')}`)
+          }
+          logger.info(`indexed ${pageCount} pages`)
+        } finally {
+          // release the pagefind backing service even when indexing fails
+          await pagefind.close()
         }
-        const {errors: addErrors, page_count: pageCount} = await index.addDirectory({path: outDir})
-        if (addErrors.length > 0) {
-          throw new Error(`pagefind could not index ${outDir}: ${addErrors.join(', ')}`)
-        }
-        const {errors: writeErrors} = await index.writeFiles({outputPath: `${outDir}/pagefind`})
-        if (writeErrors.length > 0) {
-          throw new Error(`pagefind could not write the index: ${writeErrors.join(', ')}`)
-        }
-        await pagefind.close()
-        logger.info(`indexed ${pageCount} pages`)
       },
     },
   }

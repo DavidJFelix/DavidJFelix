@@ -40,6 +40,7 @@ export default function Search() {
   const [searched, setSearched] = useState(false)
   const [indexMissing, setIndexMissing] = useState(false)
   const [shortcutHint, setShortcutHint] = useState('Ctrl K')
+  const [hotkeyReady, setHotkeyReady] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -60,6 +61,15 @@ export default function Search() {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
+
+  // Declared after the keydown effect: effects run in declaration order, so
+  // when the data-hotkey-ready attribute reaches the DOM the Cmd/Ctrl+K
+  // listener is already attached. E2E tests wait on it before sending keys —
+  // hydration markers alone (astro-island ssr removal) fire before React
+  // commits, so keystrokes sent then are dropped.
+  useEffect(() => {
+    setHotkeyReady(true)
   }, [])
 
   useEffect(() => {
@@ -111,6 +121,7 @@ export default function Search() {
       <button
         type="button"
         onClick={() => setOpen(true)}
+        data-hotkey-ready={hotkeyReady ? 'true' : undefined}
         className={css({
           display: 'flex',
           alignItems: 'center',

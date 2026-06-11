@@ -1,11 +1,13 @@
 import {expect, type Page, test} from '@playwright/test'
 
-// client:load islands attach their event listeners only after hydration, and
-// astro-island removes its ssr attribute once that completes — interacting
-// before then drops clicks and keystrokes on the floor.
+// client:load islands attach their listeners only after React hydrates and
+// flushes effects — interacting before then drops clicks and keystrokes on
+// the floor. astro-island's ssr-attribute removal is not a safe signal (the
+// React client hydrates inside startTransition and returns immediately), so
+// the component sets data-hotkey-ready once its keydown listener is attached.
 const gotoHydrated = async (page: Page, path: string) => {
   await page.goto(path)
-  await expect(page.locator('astro-island[ssr]')).toHaveCount(0)
+  await expect(page.locator('button[data-hotkey-ready]')).toBeVisible()
 }
 
 test('nav search button opens the dialog and finds a post by title', async ({page}) => {

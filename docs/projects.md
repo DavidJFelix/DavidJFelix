@@ -2,41 +2,53 @@
 
 Ongoing projects and their documentation.
 
-Active work is grouped and ordered by priority. Dev environment projects run async to the main sequence.
+Active work is grouped and ordered by priority (reprioritized 2026-06-11). Dev environment projects run async to the main sequence.
 
-## Priority 1 — Monorepo Hygiene
+## Priority 1 — App Health & Preview Infrastructure
 
-Foundation work. Stabilize the toolchain before piling new features on top.
+f311x is broken in production despite green CI and a successful deploy. Restoring it — and building the preview/observability infrastructure that makes that class of breakage visible — is the current top concern.
 
-### [Dependency Freshness](./projects/dependency-freshness/plan.md)
+### [f311x.com](./projects/f311x/plan.md)
 
-mise-based versioning and an ongoing process (skill + cadence) to keep packages across the monorepo current.
+A small chat app on Cloudflare — TanStack Start front end, deployed via Alchemy v2. Currently broken in production (reported 2026-06-11); diagnose and restore first, then swap the echo stub for a real model.
 
 **Status**: In Progress
 
+### [Preview Deployments & Visual Testing](./projects/preview-deployments/plan.md)
+
+Per-PR preview deployments, smoke tests, and screenshot testing for every deployed web app, so breakage is visible at review time instead of in production. Also the new bar for dependency auto-merge. f311x is the proving ground.
+
+**Status**: In Progress
+
+## Priority 2 — Monorepo Hygiene
+
 ### [Linter & Formatter Standardization](./projects/linter-formatter-standardization/plan.md)
 
-Converge on a single, consistent set of linters and formatters across the entire monorepo with clear tool-to-file-type ownership.
+Converge on a single, consistent set of linters and formatters across the entire monorepo with clear tool-to-file-type ownership. A 2026-06-11 audit found 2–4 sessions of real work remaining (Rust at 0%, cspell unwired, unscoped directories); three scope decisions pending.
+
+**Status**: In Progress
+
+### [Dependency Freshness](./projects/dependency-freshness/plan.md)
+
+mise-based versioning and an ongoing process to keep packages across the monorepo current. Renovate now owns all ecosystems (npm, mise, Cargo); gated auto-merge is deprioritized and waits on preview verification plus real test suites.
 
 **Status**: In Progress
 
 ### [LLM Automation Migration](./projects/llm-automation-migration/plan.md)
 
-Move unattended LLM-driven GitHub Actions (freshness cron, PR review) off Anthropic-billed Claude onto a cheaper runtime (pi-core on bun, or opencode).
+Move unattended LLM-driven GitHub Actions off Anthropic-billed Claude onto a cheaper runtime. Deferred — not a now thing; scope shrinks if Renovate replaces the freshness cron.
 
-**Status**: In Progress
+**Status**: Deferred
 
-## Priority 2 — djf.io Cluster
-
-All touching the same app; sequence together.
+## Priority 3 — djf.io Cluster
 
 ### [Blog Style Improvement](./projects/blog-style-improvement/plan.md)
 
-Human-directed polish of djf.io: colors, spacing, layout, images, usability, components.
+Human-directed polish of djf.io: colors, spacing, layout, images, usability, components. Advances when David sits down to direct; preview URLs from the preview-deployments project will feed this workflow.
 
 **Status**: In Progress
 
-## Priority 3 — Greenfield
+## Priority 4 — Greenfield
 
 ### [New Domain Sites](./projects/new-domain-sites/plan.md)
 
@@ -44,15 +56,9 @@ Stand up sites for 8 owned domains across Astro, TanStack Start, Vue, and Svelte
 
 **Status**: In Progress
 
-### [f311x.com](./projects/f311x/plan.md)
+## Priority 5 — Cross-App Instrumentation
 
-A small chat app on Cloudflare — TanStack Start front end, deployed via Alchemy v2. Builds and deploys (CD live as of 2026-06-06); the chat loop is wired end to end with an echo stub (2026-06-08) — a real model is the next step.
-
-**Status**: In Progress
-
-## Priority 4 — Cross-App Instrumentation
-
-Similar shape of work; do them back-to-back once apps exist.
+Similar shape of work; do them back-to-back once apps exist. The f311x slice of Sentry may be pulled forward as part of Priority 1 (production observability for the broken app).
 
 ### [Sentry Integration](./projects/sentry-integration/plan.md)
 

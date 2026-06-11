@@ -5,17 +5,28 @@ A small chat app on Cloudflare — TanStack Start front end, deployed via Alchem
 
 ## Current state (2026-06-11)
 
-- **Diagnosed: the app has no ingress — f311x.com was never wired to the
-  Worker.** The prod Worker (`f311x-website-prod-…`) deployed fine on
-  2026-06-06, but `alchemy.run.ts` never set the `domain` option, so no custom
-  domain is attached, the f311x.com zone (on Cloudflare, same account) has zero
-  DNS records, and the site never resolves. Not a runtime crash — requests
-  never reach the Worker. "Green deploy, broken prod" because the pipeline
-  verifies upload, not reachability. Fix in flight: `domain: ['f311x.com',
-  'www.f311x.com']` on the `Cloudflare.Vite` resource; Cloudflare materializes
-  the DNS records when the custom domains attach on the next prod deploy. One
-  open risk: the deploy token may need a zone scope to attach domains — see the
-  token-scopes section. Details in the 2026-06-11 progress note.
+- **Diagnosed — three stacked failures, fixes in flight on `claude/relaxed-tesla-4bwmbj`:**
+  1. **No ingress**: `alchemy.run.ts` never set `domain`, so f311x.com has zero
+     DNS records and no custom domain is attached to the Worker. Fixed by
+     binding `f311x.com` / `www.f311x.com`.
+  2. **Every deploy since 2026-06-08 has failed.** #207 bumped alchemy
+     beta.45→51, which crashed the CLI at startup (effect `SchemaAST`
+     TypeError); #208's lockfile maintenance then removed
+     `@effect/platform-node` (an optional peer alchemy's `WorkerBridge.js`
+     imports unconditionally), changing the crash to `ERR_MODULE_NOT_FOUND`.
+     The echo backend (#211) never reached prod. Fixed: alchemy → beta.55 plus
+     an explicit `@effect/platform-node` devDependency pinned to effect's
+     version; the CLI now reaches Cloudflare auth cleanly.
+  3. **The artifact prod is serving is a dev-mode build** (the only successful
+     deploy, 2026-06-06, alchemy beta.45 + floating `@tanstack/react-start`).
+     Its SSR HTML references `/@id/virtual:tanstack-start-dev-client-entry`,
+     which 404s — page shell loads, app never hydrates. Verified the current
+     toolchain builds a correct production bundle (real hashed assets, echo
+     SSE works under workerd via `vite preview`). A fresh deploy replaces the
+     artifact.
+- One open risk: the deploy token may need a zone scope to attach the custom
+  domains — see the token-scopes section. Full details in the 2026-06-11
+  progress note.
 
 ## Earlier state (2026-06-08)
 
@@ -46,9 +57,11 @@ Stabilize before building (reprioritized 2026-06-11).
 - [x] Diagnose why prod is broken; capture the symptom and root cause in a
       progress note. (2026-06-11: no ingress — no custom domain on the Worker,
       no DNS records in the zone. See the progress note.)
-- [ ] Restore ingress: deploy the `domain` binding (merge to main triggers CD,
-      or `workflow_dispatch` re-runs it) and verify https://f311x.com loads.
-      May require granting the deploy token a zone scope first.
+- [ ] Restore prod: merge the fix branch (CD deploys on merge, or
+      `workflow_dispatch` re-runs it). The deploy rebuilds with the repaired
+      toolchain (replacing the dev-mode artifact) and attaches the custom
+      domains. Verify https://f311x.com loads, hydrates, and the chat echo
+      streams. May require granting the deploy token a zone scope first.
 - [ ] Make breakage readable: error visibility for the Worker (Cloudflare
       logs/tail and/or the f311x slice of
       [Sentry Integration](../sentry-integration/plan.md) pulled forward) so

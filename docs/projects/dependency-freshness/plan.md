@@ -101,19 +101,49 @@ davidjfelix.com, and ravrun the test suite is Vitest wired with
 `passWithNoTests` (trivially green until real tests land), so weigh that when
 deciding whether they qualify for auto-merge or only djf.io and f311x do.
 
+**Update 2026-06-11**: Priority lowered and the bar raised.
+
+- *Priority*: PR volume is currently manageable, so unattended merging is
+  desirable but not urgent. Phase 5 is parked behind the
+  [preview-deployments](../preview-deployments/plan.md) project.
+- *The bar*: green typecheck/lint/format/build plus a trivially-green
+  (`passWithNoTests`) suite is not enough. Auto-merge for a web app requires a
+  real test suite **and** preview verification — a per-PR preview deployment
+  with smoke and screenshot tests. f311x shipping broken on green CI
+  (2026-06-11) is the motivating example.
+- *Mechanism*: GitHub branch-protection required checks are out — the per-app
+  CI workflows are paths-filtered, so untouched apps never report a status and
+  required checks would block forever. Gate per-PR via Renovate `automerge` /
+  GitHub auto-merge on the checks that actually ran.
+
 ## Open: transitive dependency drift
 
 Current gap: Renovate is pinning newer versions of transitive deps in lockfiles, and our sweep doesn't see them. The skill only inspects manifests.
 
 Don't build a new tool for this. The canonical answer is **Renovate's `lockFileMaintenance`** — enabling it on a schedule produces lockfile-only PRs that refresh transitives within manifest constraints. `config:best-practices` (what `apps/djf.io/.github/renovate.json` extends today) does **not** include it.
 
-Decision items:
+**Decision 2026-06-11 — Renovate owns everything.** David's call: Renovate
+handles all ecosystems — npm, mise, and Cargo (native Renovate managers exist
+for all three) — plus `lockFileMaintenance` for transitives. The skill no
+longer owns manifest bumps for any ecosystem. What remains for the skill
+(changelog summarization on Renovate PRs? cross-ecosystem batching? nothing?)
+is an open question; it may retire. This also shrinks the
+[LLM Automation Migration](../llm-automation-migration/plan.md) scope: if
+Renovate replaces the freshness cron, only the PR-review bot remains to
+migrate.
 
-- Roll `lockFileMaintenance` onto every project with a Renovate config (currently only djf.io has one — extend coverage first)
-- Define the division of labor: Renovate owns transitive/lockfile freshness, our skill owns manifest bumps + non-npm ecosystems (mise, Cargo) + cross-ecosystem batching
+Remaining work items under that decision:
+
+- Extend Renovate config from djf.io to the whole repo (npm + mise + Cargo
+  managers), with `lockFileMaintenance` enabled
 - Confirm Dependabot is off where Renovate is on (avoid double-PR churn)
+- Decide the skill's residual role (or retire it) and update the cron workflow
+  accordingly
 
 ## Working Notes
 
 - Collaborative project — proposals and tradeoffs go to user before execution.
 - This is the ongoing-maintenance layer on top of the (now-completed) mise tool consolidation work.
+- Found 2026-06-11: `@typescript/native-preview` (tsgo) is pinned to `latest`
+  in davidjfelix.com, djf.io, f311x, and ravrun — unreproducible and invisible
+  to Renovate. Pin real versions when Renovate coverage is extended.

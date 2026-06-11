@@ -1,5 +1,16 @@
 # LLM Automation Migration
 
+## Status (2026-06-11)
+
+**Deferred — worth doing, not now.** The motivation stands (avoid running
+Claude Code in CI tasks), but this sits behind app health / preview
+infrastructure and the active hygiene work.
+
+Scope change: dependency-freshness decided 2026-06-11 that Renovate owns all
+ecosystems (npm, mise, Cargo). If Renovate replaces the freshness cron,
+`cron-dependency-freshness.yml` drops out of scope here and
+`bot-claude-code-review.yml` becomes the primary migration target.
+
 ## Goal
 
 Move the repo's unattended LLM-driven GitHub Actions off `anthropics/claude-code-action` and onto a cheaper runtime — `pi-core` (on bun) or `opencode` — so programmatic invocations don't run on Anthropic-billed Claude.

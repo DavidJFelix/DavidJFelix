@@ -3,7 +3,16 @@
 A small chat app on Cloudflare — TanStack Start front end, deployed via Alchemy v2.
 "f311x" is the agent. Today it builds and deploys; the chat backend isn't wired yet.
 
-## Current state (2026-06-08)
+## Current state (2026-06-11)
+
+- **Broken in production.** Reported by David 2026-06-11; cause not yet
+  diagnosed, symptom not yet captured. CI was green and the deploy pipeline
+  succeeded, so this is runtime breakage the current checks cannot see — which
+  is exactly the gap the new
+  [preview-deployments](../preview-deployments/plan.md) project exists to
+  close. Diagnosis comes before any new feature work.
+
+## Earlier state (2026-06-08)
 
 - **Builds + deploys.** TanStack Start client app (`src/routes`, `src/components/ui`).
   `pnpm typecheck`, `pnpm build`, and `pnpm test` are green, and CI gates all of
@@ -25,8 +34,19 @@ A small chat app on Cloudflare — TanStack Start front end, deployed via Alchem
   into a non-building state. See #202 and the 2026-06-03 progress note for the
   teardown.
 
-## Next — make the chat actually work
+## Next — restore the app, then make the chat real
 
+Stabilize before building (reprioritized 2026-06-11).
+
+- [ ] Diagnose why prod is broken; capture the symptom and root cause in a
+      progress note.
+- [ ] Make breakage readable: error visibility for the Worker (Cloudflare
+      logs/tail and/or the f311x slice of
+      [Sentry Integration](../sentry-integration/plan.md) pulled forward) so
+      "why is it broken" doesn't require a local repro.
+- [ ] Make breakage visible pre-merge: per-PR preview deploy + smoke test —
+      f311x is the first target of the
+      [preview-deployments](../preview-deployments/plan.md) project.
 - [x] Wire the smallest agent backend the UI can talk to — an echo stub answers
       `/agents/chat-agent/default` and streams the reply as AG-UI SSE events
       (`RUN_STARTED` → `TEXT_MESSAGE_*` → `RUN_FINISHED`). Backed by
@@ -34,6 +54,7 @@ A small chat app on Cloudflare — TanStack Start front end, deployed via Alchem
 - [ ] Swap the echo for a real model. Choose the model path (direct provider vs.
       AI Gateway) now that there's a working loop to put behind it. The wire
       contract and route stay the same — only `chatAgentStream` changes.
+      Behind stabilization as of 2026-06-11.
 - [ ] Add a test with each new surface. typecheck + build + vitest already gate
       every PR; keep them green.
 

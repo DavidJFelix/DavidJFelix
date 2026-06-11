@@ -1,3 +1,5 @@
+import {loadRenderers} from 'astro:container'
+import {getContainerRenderer} from '@astrojs/react'
 import {experimental_AstroContainer as AstroContainer} from 'astro/container'
 import {expect, test} from 'vitest'
 import BaseLayout from './BaseLayout.astro'
@@ -5,7 +7,10 @@ import BaseLayout from './BaseLayout.astro'
 // The container API does not carry `site` config through to `Astro.site`, so
 // absolute-URL tags (canonical, og:url, og:image) are conditionally skipped
 // here and asserted against the real build in seo.e2e.test.ts instead.
-const container = await AstroContainer.create()
+// The React renderer is needed to server-render the Search island in the nav.
+const container = await AstroContainer.create({
+  renderers: await loadRenderers([getContainerRenderer()]),
+})
 
 test('BaseLayout renders title prop suffixed with site name', async () => {
   const html = await container.renderToString(BaseLayout, {
@@ -82,6 +87,13 @@ test('BaseLayout renders nav links to home, blog, github, twitter', async () => 
   expect(html).toMatch(/href="\/blog"/)
   expect(html).toMatch(/href="https:\/\/github\.com\/davidjfelix"/)
   expect(html).toMatch(/href="https:\/\/twitter\.com\/davidjfelix"/)
+})
+
+test('BaseLayout renders the search trigger button in nav', async () => {
+  const html = await container.renderToString(BaseLayout, {
+    props: {title: 'x'},
+  })
+  expect(html).toMatch(/<button type="button"[^>]*>Search/)
 })
 
 test('BaseLayout renders default slot content inside <main>', async () => {

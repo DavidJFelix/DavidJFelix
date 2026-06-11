@@ -46,6 +46,7 @@
     "lockfile",
     "lockfiles",
     "ravrun",
-    "tsgo"
+    "tsgo",
+    "pagefind"
   ]
 }

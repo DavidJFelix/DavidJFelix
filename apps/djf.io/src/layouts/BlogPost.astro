@@ -35,7 +35,7 @@ const jsonLd = {
 
 <BaseLayout title={title} description={description} ogType="article" ogImage={ogImage}>
   <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} slot="head" />
-  <article>
+  <article data-pagefind-body>
     <header
       class={css({
         mb: '8',

@@ -4,10 +4,13 @@ main = "@tanstack/react-start/server-entry"
 compatibility_date = "2026-06-01"
 compatibility_flags = ["nodejs_compat"]
 
-routes = [
-  { pattern = "forzamonica.com", custom_domain = true },
-  { pattern = "www.forzamonica.com", custom_domain = true },
-]
+# forzamonica.com is not registered yet, so the worker serves from its
+# workers.dev URL. Once the domain is owned and its zone is in the account
+# (see GitHub issue #223), add:
+# routes = [
+#   { pattern = "forzamonica.com", custom_domain = true },
+#   { pattern = "www.forzamonica.com", custom_domain = true },
+# ]
 
 [observability]
 enabled = true

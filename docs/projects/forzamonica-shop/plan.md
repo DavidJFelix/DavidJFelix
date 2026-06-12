@@ -35,9 +35,12 @@ Shopify-hosted checkout. This replaces the "placeholder for now" line item in
 
 ### Phase 2 — Accounts & plumbing (human)
 
+- [x] Cloudflare deploys use the shared `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID`
+      secrets like the other apps (decided 2026-06-12); no per-app secrets
 - [ ] Shopify store + Headless channel + Storefront API token (GitHub issue)
-- [ ] Cloudflare secrets in GitHub + forzamonica.com zone/account confirmation (GitHub
-      issue)
+- [ ] Register forzamonica.com and add the zone to the account, then restore the
+      `routes` block in `wrangler.toml` (GitHub issue; worker serves from workers.dev
+      until then)
 - [ ] First production deploy on merge to main
 
 ### Phase 3 — Real store cutover

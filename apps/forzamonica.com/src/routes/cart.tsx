@@ -82,7 +82,12 @@ function CartLineRow({line}: {line: CartLine}) {
   // loader refreshes server truth.
   useEffect(() => {
     setQuantity(line.quantity)
-    return cancelScheduledCommit
+    return () => {
+      if (commitTimer.current) {
+        clearTimeout(commitTimer.current)
+        commitTimer.current = null
+      }
+    }
   }, [line.quantity])
 
   // Invalidate in finally so the loader re-runs on every outcome: success,

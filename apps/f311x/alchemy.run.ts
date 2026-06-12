@@ -31,9 +31,7 @@ export const Website = Cloudflare.Vite(
       // zone must already exist in this account. Prod-only: binding them
       // unconditionally let a local `alchemy deploy` (stage dev_${USER})
       // steal the public domains onto the dev worker (2026-06-12).
-      ...(stage === 'prod'
-        ? {domain: ['f311x.com', 'www.f311x.com']}
-        : {}),
+      ...(stage === 'prod' ? {domain: ['f311x.com', 'www.f311x.com']} : {}),
     }
   }),
 )

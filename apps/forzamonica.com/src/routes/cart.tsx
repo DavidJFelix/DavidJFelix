@@ -71,25 +71,31 @@ function CartLineRow({line}: {line: CartLine}) {
   const commitTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const inFlight = useRef(false)
 
+  function cancelScheduledCommit() {
+    if (commitTimer.current) {
+      clearTimeout(commitTimer.current)
+      commitTimer.current = null
+    }
+  }
+
   // Re-sync the draft (and drop any stale scheduled commit) whenever the
   // loader refreshes server truth.
   useEffect(() => {
     setQuantity(line.quantity)
-    return () => {
-      if (commitTimer.current) {
-        clearTimeout(commitTimer.current)
-      }
-    }
+    return cancelScheduledCommit
   }, [line.quantity])
 
   // Invalidate in finally so the loader re-runs on every outcome: success,
   // user error, and the stale-cart case where the server dropped the cookie
   // (which then resolves to the empty-cart state instead of a stuck row).
-  // inFlight serializes mutations per row.
+  // inFlight serializes mutations per row, and any explicit mutation
+  // supersedes a pending draft commit (e.g. Remove cancels a scheduled
+  // quantity update for the same line).
   async function mutate(action: () => Promise<unknown>) {
     if (inFlight.current) {
       return
     }
+    cancelScheduledCommit()
     inFlight.current = true
     setPending(true)
     setError(null)

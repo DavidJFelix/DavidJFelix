@@ -11,7 +11,9 @@
     "pnpm-lock.yaml",
     "*.lock",
     "*.min.js",
-    "*.min.css"
+    "*.min.css",
+    "styled-system",
+    "routeTree.gen.ts"
   ],
   "words": [
     "biomejs",
@@ -47,6 +49,12 @@
     "lockfiles",
     "ravrun",
     "tsgo",
-    "pagefind"
+    "pagefind",
+    "forza",
+    "forzamonica",
+    "workerd",
+    "myshopify",
+    "cutover",
+    "storefronts"
   ]
 }

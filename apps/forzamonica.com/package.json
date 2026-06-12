@@ -1,0 +1,47 @@
+{
+  "name": "@davidjfelix/forzamonica.com",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "@/*": "./src/*"
+  },
+  "scripts": {
+    "dev": "vite dev --port 3002",
+    "prepare": "panda codegen",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "pnpm run build && wrangler deploy",
+    "lint": "biome check . && oxlint",
+    "lint:fix": "biome check --write .",
+    "format": "biome format . && prettier --check --no-error-on-unmatched-pattern \"**/*.md\" \"**/*.mdx\"",
+    "format:fix": "biome format --write . && prettier --write --no-error-on-unmatched-pattern \"**/*.md\" \"**/*.mdx\"",
+    "spell": "cspell --config ../../.config/cspell.json \"**\"",
+    "typecheck": "tsgo --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@ark-ui/react": "^5.37.2",
+    "@tanstack/react-devtools": "latest",
+    "@tanstack/react-router": "latest",
+    "@tanstack/react-router-devtools": "latest",
+    "@tanstack/react-start": "latest",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "1.40.0",
+    "@cloudflare/workers-types": "4.20260605.1",
+    "@pandacss/dev": "1.11.2",
+    "@tanstack/devtools-vite": "latest",
+    "@types/node": "25.9.1",
+    "@types/react": "19.2.16",
+    "@types/react-dom": "19.2.3",
+    "@typescript/native-preview": "latest",
+    "@vitejs/plugin-react": "6.0.2",
+    "jsdom": "29.1.1",
+    "vite": "8.0.16",
+    "vitest": "4.1.8",
+    "wrangler": "4.98.0"
+  }
+}

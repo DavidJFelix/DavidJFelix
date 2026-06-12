@@ -56,6 +56,12 @@ Stand up sites for 8 owned domains across Astro, TanStack Start, Vue, and Svelte
 
 **Status**: In Progress
 
+### [Forza Monica Shop](./projects/forzamonica-shop/plan.md)
+
+Headless Shopify storefront for forzamonica.com — TanStack Start + PandaCSS + Ark UI on Cloudflare Workers, wired against mock.shop until the real store exists. Scaffold complete; production blocked on Shopify/Cloudflare account setup (issues filed).
+
+**Status**: In Progress
+
 ## Priority 5 — Cross-App Instrumentation
 
 Similar shape of work; do them back-to-back once apps exist. The f311x slice of Sentry may be pulled forward as part of Priority 1 (production observability for the broken app).

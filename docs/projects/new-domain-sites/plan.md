@@ -10,7 +10,7 @@ Stand up sites for owned Cloudflare domains. Placeholders are acceptable for mos
 |---|---|---|
 | davidjfelix.com | Astro | Index / resume site — scaffolded, deploy workflow ready |
 | monicandavid.com | Astro | Basic site |
-| forzamonica.com | TanStack Start | Eventual shop; placeholder for now |
+| forzamonica.com | TanStack Start | Shop — scaffolded, see [forzamonica-shop](../forzamonica-shop/plan.md) |
 | onvibes.org | Astro | |
 | revision.city | TanStack Start | |
 | pkg.dog / pkgdog.com | Vue | |

@@ -1,0 +1,54 @@
+name: CD Deploy forzamonica.com
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/forzamonica.com/**'
+      - '.github/workflows/cd-deploy-forzamonica-com.yml'
+
+defaults:
+  run:
+    working-directory: apps/forzamonica.com
+
+jobs:
+  deploy:
+    name: wrangler deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - name: checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: mise
+        uses: jdx/mise-action@dba19683ed58901619b14f395a24841710cb4925 # v4.1.0
+        with:
+          install: true
+          cache: false
+
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+
+      # `pnpm install` already runs `panda codegen` via the prepare script, but
+      # keep it explicit so the build does not depend on install side effects.
+      - name: panda codegen
+        run: pnpm exec panda codegen
+
+      - name: vite build
+        run: pnpm exec vite build
+
+      # The Cloudflare Vite plugin emits the resolved Worker config into dist/
+      # and a redirect in .wrangler/deploy/, so a plain `wrangler deploy` picks
+      # up the built output.
+      - name: wrangler deploy
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
+        with:
+          apiToken: ${{ secrets.FORZAMONICA_CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.FORZAMONICA_CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+          workingDirectory: apps/forzamonica.com

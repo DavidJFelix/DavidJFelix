@@ -59,20 +59,17 @@ export const addToCart = createServerFn({method: 'POST'})
     const lines = [{merchandiseId: variantId, quantity}]
     const cartId = getCookie(CART_COOKIE)
     if (cartId) {
-      let payload: CartMutationPayload | null = null
-      try {
-        const data = await storefrontQuery<{cartLinesAdd: CartMutationPayload}>(
-          CART_LINES_ADD_MUTATION,
-          {cartId, lines},
-        )
-        payload = data.cartLinesAdd
-      } catch {
-        // Stale or invalid cart id -- fall through and create a fresh cart.
-      }
-      // A null cart with the id set means the cart expired; real user errors
-      // (e.g. sold out) come back alongside a live cart and should surface.
-      if (payload?.cart) {
-        return assertNoUserErrors(payload)
+      // Transport and GraphQL failures throw here and propagate, keeping the
+      // cookie (and the user's cart) intact for a retry. Only an explicit
+      // null cart -- the mutation ran but Shopify no longer has the cart --
+      // means the id is stale and a fresh cart is safe to create.
+      const data = await storefrontQuery<{cartLinesAdd: CartMutationPayload}>(
+        CART_LINES_ADD_MUTATION,
+        {cartId, lines},
+      )
+      if (data.cartLinesAdd.cart) {
+        // Real user errors (e.g. sold out) come back alongside a live cart.
+        return assertNoUserErrors(data.cartLinesAdd)
       }
       deleteCookie(CART_COOKIE)
     }

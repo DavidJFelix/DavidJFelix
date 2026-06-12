@@ -1,6 +1,10 @@
 [tools]
 node = "26"
 pnpm = "11"
+# bun runs the deploy/smoke scripts in apps/*/bin (repo rule: scripts are
+# bun, not bash). Declared here because CI's `mise install` runs at the repo
+# root and does not read app-level mise.toml [tools].
+bun = "1"
 biome = "2"
 oxlint = "1"
 prettier = "3"

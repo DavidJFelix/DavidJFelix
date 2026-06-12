@@ -1,10 +1,7 @@
 # Canonical check tasks for this app. CI and automation discover checks here;
 # tasks delegate to package.json scripts. Assumes `pnpm install` has run.
-
-# bun runs the deploy/smoke scripts in bin/ (repo rule: scripts are bun, not
-# bash); the app itself stays on the Node/pnpm toolchain.
-[tools]
-bun = "1"
+# bun (for the bin/ deploy and smoke scripts) is declared in the repo-root
+# .config/mise.toml: CI's `mise install` only reads the root config.
 
 [tasks.typecheck]
 description = "Type-check with tsgo"

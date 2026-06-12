@@ -30,7 +30,7 @@
     "react-dom": "^19.2.6"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "^1.38.0",
+    "@cloudflare/vite-plugin": "1.40.0",
     "@cloudflare/workers-types": "4.20260605.1",
     "@pandacss/dev": "1.11.2",
     "@tanstack/devtools-vite": "latest",
@@ -42,6 +42,6 @@
     "jsdom": "29.1.1",
     "vite": "8.0.16",
     "vitest": "4.1.8",
-    "wrangler": "4.100.0"
+    "wrangler": "4.98.0"
   }
 }

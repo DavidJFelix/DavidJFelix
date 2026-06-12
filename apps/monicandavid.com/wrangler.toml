@@ -1,0 +1,19 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "monicandavid-com"
+main = ".svelte-kit/cloudflare/_worker.js"
+compatibility_date = "2026-06-01"
+compatibility_flags = ["nodejs_compat"]
+
+# monicandavid.com is not wired to the worker yet, so it serves from its
+# workers.dev URL. Once the zone is connected, add:
+# routes = [
+#   { pattern = "monicandavid.com", custom_domain = true },
+#   { pattern = "www.monicandavid.com", custom_domain = true },
+# ]
+
+[observability]
+enabled = true
+
+[assets]
+directory = ".svelte-kit/cloudflare"
+binding = "ASSETS"

@@ -1,0 +1,14 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "pkg-dog"
+compatibility_date = "2026-06-01"
+
+# pkg.dog / pkgdog.com are not wired to the worker yet, so it serves from its
+# workers.dev URL. Once the zones are connected, add:
+# routes = [
+#   { pattern = "pkg.dog", custom_domain = true },
+#   { pattern = "pkgdog.com", custom_domain = true },
+#   { pattern = "www.pkgdog.com", custom_domain = true },
+# ]
+
+[assets]
+directory = "./dist"

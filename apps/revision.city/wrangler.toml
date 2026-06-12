@@ -1,0 +1,15 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "revision-city"
+main = "@tanstack/react-start/server-entry"
+compatibility_date = "2026-06-01"
+compatibility_flags = ["nodejs_compat"]
+
+# revision.city is not wired to the worker yet, so it serves from its
+# workers.dev URL. Once the zone is connected, add:
+# routes = [
+#   { pattern = "revision.city", custom_domain = true },
+#   { pattern = "www.revision.city", custom_domain = true },
+# ]
+
+[observability]
+enabled = true

@@ -64,13 +64,20 @@ function CartPage() {
 function CartLineRow({line}: {line: CartLine}) {
   const router = useRouter()
   const [pending, setPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
+  // Invalidate in finally so the loader re-runs on every outcome: success,
+  // user error, and the stale-cart case where the server dropped the cookie
+  // (which then resolves to the empty-cart state instead of a stuck row).
   async function mutate(action: () => Promise<unknown>) {
     setPending(true)
+    setError(null)
     try {
       await action()
-      await router.invalidate()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not update cart')
     } finally {
+      await router.invalidate()
       setPending(false)
     }
   }
@@ -109,6 +116,7 @@ function CartLineRow({line}: {line: CartLine}) {
           <p className={css({fontSize: 'sm', color: 'fg.muted'})}>{line.merchandise.title}</p>
         ) : null}
         <p className={css({fontSize: 'sm'})}>{formatPrice(line.merchandise.price)}</p>
+        {error ? <p className={css({fontSize: 'sm', color: 'red.600'})}>{error}</p> : null}
       </div>
       <QuantityField
         value={line.quantity}

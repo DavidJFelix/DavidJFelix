@@ -19,12 +19,19 @@ type CartMutationPayload = {
   userErrors: Array<{field: string[] | null; message: string}>
 }
 
-function assertNoUserErrors(payload: CartMutationPayload): Cart {
-  if (payload.userErrors.length > 0) {
+// Shared recovery semantics for every cart mutation. Transport and GraphQL
+// failures throw in storefrontQuery before this runs, keeping the cookie (and
+// the user's cart) intact for a retry. Real user errors (e.g. sold out) come
+// back alongside a live cart and throw so the UI can surface them. A null
+// cart means the mutation ran but Shopify no longer has the cart -- the id is
+// stale, so drop the cookie and return null for the caller to recover from.
+function resolveCartMutation(payload: CartMutationPayload): Cart | null {
+  if (payload.cart && payload.userErrors.length > 0) {
     throw new Error(payload.userErrors.map((e) => e.message).join('; '))
   }
   if (!payload.cart) {
-    throw new Error('Cart mutation returned no cart')
+    deleteCookie(CART_COOKIE)
+    return null
   }
   return payload.cart
 }
@@ -59,52 +66,54 @@ export const addToCart = createServerFn({method: 'POST'})
     const lines = [{merchandiseId: variantId, quantity}]
     const cartId = getCookie(CART_COOKIE)
     if (cartId) {
-      // Transport and GraphQL failures throw here and propagate, keeping the
-      // cookie (and the user's cart) intact for a retry. Only an explicit
-      // null cart -- the mutation ran but Shopify no longer has the cart --
-      // means the id is stale and a fresh cart is safe to create.
       const data = await storefrontQuery<{cartLinesAdd: CartMutationPayload}>(
         CART_LINES_ADD_MUTATION,
         {cartId, lines},
       )
-      if (data.cartLinesAdd.cart) {
-        // Real user errors (e.g. sold out) come back alongside a live cart.
-        return assertNoUserErrors(data.cartLinesAdd)
+      const cart = resolveCartMutation(data.cartLinesAdd)
+      if (cart) {
+        return cart
       }
-      deleteCookie(CART_COOKIE)
+      // Stale id: the cookie is already dropped -- create a fresh cart below.
     }
     const data = await storefrontQuery<{cartCreate: CartMutationPayload}>(CART_CREATE_MUTATION, {
       lines,
     })
-    const cart = assertNoUserErrors(data.cartCreate)
+    const cart = resolveCartMutation(data.cartCreate)
+    if (!cart) {
+      throw new Error('Cart creation failed')
+    }
     rememberCartId(cart.id)
     return cart
   })
 
+// Line mutations return null when the cart has expired (cookie dropped); the
+// cart page re-runs its loader after every mutation, so a null here resolves
+// to the empty-cart state rather than a stuck error loop.
 export const updateCartLine = createServerFn({method: 'POST'})
   .inputValidator((input: {lineId: string; quantity: number}) => input)
-  .handler(async ({data: {lineId, quantity}}): Promise<Cart> => {
+  .handler(async ({data: {lineId, quantity}}): Promise<Cart | null> => {
     const cartId = getCookie(CART_COOKIE)
     if (!cartId) {
-      throw new Error('No cart to update')
+      return null
     }
     const data = await storefrontQuery<{cartLinesUpdate: CartMutationPayload}>(
       CART_LINES_UPDATE_MUTATION,
       {cartId, lines: [{id: lineId, quantity}]},
     )
-    return assertNoUserErrors(data.cartLinesUpdate)
+    return resolveCartMutation(data.cartLinesUpdate)
   })
 
 export const removeCartLine = createServerFn({method: 'POST'})
   .inputValidator((input: {lineId: string}) => input)
-  .handler(async ({data: {lineId}}): Promise<Cart> => {
+  .handler(async ({data: {lineId}}): Promise<Cart | null> => {
     const cartId = getCookie(CART_COOKIE)
     if (!cartId) {
-      throw new Error('No cart to update')
+      return null
     }
     const data = await storefrontQuery<{cartLinesRemove: CartMutationPayload}>(
       CART_LINES_REMOVE_MUTATION,
       {cartId, lineIds: [lineId]},
     )
-    return assertNoUserErrors(data.cartLinesRemove)
+    return resolveCartMutation(data.cartLinesRemove)
   })

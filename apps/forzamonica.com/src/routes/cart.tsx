@@ -1,5 +1,5 @@
 import {createFileRoute, Link, useRouter} from '@tanstack/react-router'
-import {useState} from 'react'
+import {useEffect, useRef, useState} from 'react'
 
 import {css} from 'styled-system/css'
 import {button} from 'styled-system/recipes'
@@ -65,11 +65,32 @@ function CartLineRow({line}: {line: CartLine}) {
   const router = useRouter()
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Local draft of the quantity so typing is responsive; only the settled
+  // value is committed to Shopify (see scheduleQuantityCommit).
+  const [quantity, setQuantity] = useState(line.quantity)
+  const commitTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const inFlight = useRef(false)
+
+  // Re-sync the draft (and drop any stale scheduled commit) whenever the
+  // loader refreshes server truth.
+  useEffect(() => {
+    setQuantity(line.quantity)
+    return () => {
+      if (commitTimer.current) {
+        clearTimeout(commitTimer.current)
+      }
+    }
+  }, [line.quantity])
 
   // Invalidate in finally so the loader re-runs on every outcome: success,
   // user error, and the stale-cart case where the server dropped the cookie
   // (which then resolves to the empty-cart state instead of a stuck row).
+  // inFlight serializes mutations per row.
   async function mutate(action: () => Promise<unknown>) {
+    if (inFlight.current) {
+      return
+    }
+    inFlight.current = true
     setPending(true)
     setError(null)
     try {
@@ -78,8 +99,29 @@ function CartLineRow({line}: {line: CartLine}) {
       setError(cause instanceof Error ? cause.message : 'Could not update cart')
     } finally {
       await router.invalidate()
+      inFlight.current = false
       setPending(false)
     }
+  }
+
+  // Debounce quantity edits so intermediate values while typing (5 -> 1 -> 15)
+  // never reach Shopify.
+  function scheduleQuantityCommit(next: number) {
+    setQuantity(next)
+    if (commitTimer.current) {
+      clearTimeout(commitTimer.current)
+    }
+    commitTimer.current = setTimeout(() => {
+      commitTimer.current = null
+      if (next === line.quantity) {
+        return
+      }
+      void mutate(() =>
+        next === 0
+          ? removeCartLine({data: {lineId: line.id}})
+          : updateCartLine({data: {lineId: line.id, quantity: next}}),
+      )
+    }, 500)
   }
 
   const image = line.merchandise.product.featuredImage
@@ -119,16 +161,10 @@ function CartLineRow({line}: {line: CartLine}) {
         {error ? <p className={css({fontSize: 'sm', color: 'red.600'})}>{error}</p> : null}
       </div>
       <QuantityField
-        value={line.quantity}
+        value={quantity}
         min={0}
         disabled={pending}
-        onValueChange={(quantity) =>
-          mutate(() =>
-            quantity === 0
-              ? removeCartLine({data: {lineId: line.id}})
-              : updateCartLine({data: {lineId: line.id, quantity}}),
-          )
-        }
+        onValueChange={scheduleQuantityCommit}
       />
       <button
         type="button"

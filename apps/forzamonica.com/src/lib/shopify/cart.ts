@@ -21,12 +21,13 @@ type CartMutationPayload = {
 
 // Shared recovery semantics for every cart mutation. Transport and GraphQL
 // failures throw in storefrontQuery before this runs, keeping the cookie (and
-// the user's cart) intact for a retry. Real user errors (e.g. sold out) come
-// back alongside a live cart and throw so the UI can surface them. A null
-// cart means the mutation ran but Shopify no longer has the cart -- the id is
-// stale, so drop the cookie and return null for the caller to recover from.
+// the user's cart) intact for a retry. Shopify user errors (sold out, invalid
+// variant, ...) throw with the API's message regardless of whether a cart
+// came back. Only a clean null -- the mutation ran without errors but Shopify
+// no longer has the cart -- means the id is stale; drop the cookie and return
+// null for the caller to recover from.
 function resolveCartMutation(payload: CartMutationPayload): Cart | null {
-  if (payload.cart && payload.userErrors.length > 0) {
+  if (payload.userErrors.length > 0) {
     throw new Error(payload.userErrors.map((e) => e.message).join('; '))
   }
   if (!payload.cart) {

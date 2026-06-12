@@ -17,16 +17,24 @@ import * as Effect from 'effect/Effect'
 // const WorkspaceBucket = Cloudflare.R2Bucket('AgentWorkspace')
 // const Gateway = Cloudflare.AiGateway('Gateway')
 
-export const Website = Cloudflare.Vite('Website', {
-  compatibility: {
-    date: '2026-05-01',
-    flags: ['nodejs_compat'],
-  },
-  // Custom domains are the Worker's only ingress: Alchemy attaches them on
-  // deploy and Cloudflare materializes the DNS records. The f311x.com zone
-  // must already exist in this account.
-  domain: ['f311x.com', 'www.f311x.com'],
-})
+export const Website = Cloudflare.Vite(
+  'Website',
+  Effect.gen(function* () {
+    const stage = yield* Alchemy.Stage
+    return {
+      compatibility: {
+        date: '2026-05-01',
+        flags: ['nodejs_compat'],
+      },
+      // Custom domains are the Worker's only ingress: Alchemy attaches them
+      // on deploy and Cloudflare materializes the DNS records. The f311x.com
+      // zone must already exist in this account. Prod-only: binding them
+      // unconditionally let a local `alchemy deploy` (stage dev_${USER})
+      // steal the public domains onto the dev worker (2026-06-12).
+      ...(stage === 'prod' ? {domain: ['f311x.com', 'www.f311x.com']} : {}),
+    }
+  }),
+)
 
 export default Alchemy.Stack(
   'f311x',

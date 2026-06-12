@@ -7,6 +7,14 @@ on:
       - 'apps/f311x/**'
       - '.github/workflows/cd-deploy-f311x.yml'
   workflow_dispatch:
+    inputs:
+      bootstrap:
+        description: >-
+          Run `alchemy cloudflare bootstrap` before deploying. Only needed
+          when an alchemy version bump changes the state-store version and
+          the deploy fails with "Cloudflare State store not found".
+        type: boolean
+        default: false
 
 defaults:
   run:
@@ -16,7 +24,9 @@ jobs:
   deploy:
     name: alchemy deploy
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Worst case: install (~1m) + manual bootstrap cap (3m) + deploy cap
+    # (10m) + smoke retries (~5m), with headroom.
+    timeout-minutes: 25
     permissions:
       contents: read
     steps:
@@ -34,28 +44,35 @@ jobs:
       - name: pnpm install
         run: pnpm install --frozen-lockfile
 
-      # Alchemy's state lives in a state-store Worker on the account. The CLI
-      # refuses to create or upgrade it implicitly in CI (it dies with
-      # "Cloudflare State store not found"), so bootstrap explicitly first.
-      # With an up-to-date store this adopts it and only refreshes
-      # credentials, so it is cheap and idempotent; on Alchemy version bumps
-      # it upgrades the store instead of failing the deploy.
+      # Alchemy's state lives in a versioned state-store Worker on the
+      # account. The CLI refuses to create or upgrade it implicitly in CI, so
+      # when an alchemy bump changes the store version the deploy fails with
+      # a misleading "Cloudflare State store not found" — re-run this
+      # workflow from the Actions tab with `bootstrap: true` to upgrade it.
+      # Manual-only because the store changes rarely; capped with a tolerated
+      # exit code because the beta.54 CLI never exits after a successful
+      # bootstrap (run 27387217212) — the deploy step fails loudly on its own
+      # if the store is actually absent or outdated.
       - name: alchemy bootstrap state store
+        if: github.event_name == 'workflow_dispatch' && inputs.bootstrap == true
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.F311X_CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.F311X_CLOUDFLARE_ACCOUNT_ID }}
           ALCHEMY_NO_TUI: '1'
           ALCHEMY_TELEMETRY_DISABLED: '1'
-        run: pnpm exec alchemy cloudflare bootstrap
+        run: timeout -k 10s 180s pnpm exec alchemy cloudflare bootstrap || true
 
-      # Alchemy's Cloudflare.Vite resource builds the client + server bundle
-      # itself during deploy, so there is no separate build step. The stage is
-      # pinned because `alchemy deploy` otherwise defaults to `dev_${USER}`,
-      # which would be `dev_runner` in CI.
+      # Builds happen inside `alchemy deploy` (Cloudflare.Vite resource), so
+      # there is no separate build step. The wrapper script documents and
+      # contains the one tolerated failure mode (CLI hang-after-success).
       - name: alchemy deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.F311X_CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.F311X_CLOUDFLARE_ACCOUNT_ID }}
           ALCHEMY_NO_TUI: '1'
           ALCHEMY_TELEMETRY_DISABLED: '1'
-        run: pnpm exec alchemy deploy --stage prod --yes
+        run: bun bin/deploy-prod.ts
+
+      # The real gate: fails unless prod serves a working production bundle.
+      - name: smoke test
+        run: bun bin/smoke-test.ts

@@ -1,5 +1,5 @@
 import {createServerFn} from '@tanstack/react-start'
-import {getCookie, setCookie} from '@tanstack/react-start/server'
+import {deleteCookie, getCookie, setCookie} from '@tanstack/react-start/server'
 
 import {storefrontQuery} from '@/lib/shopify/client.ts'
 import {
@@ -45,6 +45,11 @@ export const fetchCart = createServerFn().handler(async (): Promise<Cart | null>
     return null
   }
   const data = await storefrontQuery<{cart: Cart | null}>(CART_QUERY, {cartId})
+  if (!data.cart) {
+    // Shopify no longer has this cart (expired or invalid) -- drop the cookie
+    // so the next add-to-cart creates a fresh one.
+    deleteCookie(CART_COOKIE)
+  }
   return data.cart
 })
 
@@ -53,19 +58,30 @@ export const addToCart = createServerFn({method: 'POST'})
   .handler(async ({data: {variantId, quantity}}): Promise<Cart> => {
     const lines = [{merchandiseId: variantId, quantity}]
     const cartId = getCookie(CART_COOKIE)
-    if (!cartId) {
-      const data = await storefrontQuery<{cartCreate: CartMutationPayload}>(CART_CREATE_MUTATION, {
-        lines,
-      })
-      const cart = assertNoUserErrors(data.cartCreate)
-      rememberCartId(cart.id)
-      return cart
+    if (cartId) {
+      let payload: CartMutationPayload | null = null
+      try {
+        const data = await storefrontQuery<{cartLinesAdd: CartMutationPayload}>(
+          CART_LINES_ADD_MUTATION,
+          {cartId, lines},
+        )
+        payload = data.cartLinesAdd
+      } catch {
+        // Stale or invalid cart id -- fall through and create a fresh cart.
+      }
+      // A null cart with the id set means the cart expired; real user errors
+      // (e.g. sold out) come back alongside a live cart and should surface.
+      if (payload?.cart) {
+        return assertNoUserErrors(payload)
+      }
+      deleteCookie(CART_COOKIE)
     }
-    const data = await storefrontQuery<{cartLinesAdd: CartMutationPayload}>(
-      CART_LINES_ADD_MUTATION,
-      {cartId, lines},
-    )
-    return assertNoUserErrors(data.cartLinesAdd)
+    const data = await storefrontQuery<{cartCreate: CartMutationPayload}>(CART_CREATE_MUTATION, {
+      lines,
+    })
+    const cart = assertNoUserErrors(data.cartCreate)
+    rememberCartId(cart.id)
+    return cart
   })
 
 export const updateCartLine = createServerFn({method: 'POST'})

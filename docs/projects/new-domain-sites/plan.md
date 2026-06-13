@@ -13,16 +13,23 @@ Stand up sites for owned Cloudflare domains. Placeholders are acceptable for mos
 | forzamonica.com | TanStack Start | Shop — scaffolded, see [forzamonica-shop](../forzamonica-shop/plan.md) |
 | onvibes.org | Astro | Scaffolded 2026-06-12 — landing page, PandaCSS, CI |
 | revision.city | TanStack Start | Scaffolded 2026-06-12 — landing page, PandaCSS + Ark UI, CI |
-| pkg.dog / pkgdog.com | Vue | Scaffolded 2026-06-12 — landing page, PandaCSS + Ark UI, CI |
+| pkg.dog / pkgdog.com | Nuxt (Vue) | Scaffolded 2026-06-12, moved to Nuxt 2026-06-13 — landing page, PandaCSS + Ark UI, CI |
 | startchi.com | TanStack Start | Scaffolded 2026-06-12 — landing page, PandaCSS + Ark UI, CI |
 | f311x.com | TanStack Start | Effect-native AI agent app -- see [f311x](../f311x/plan.md) |
 
 All placeholder sites use PandaCSS (default `@pandacss/preset-panda`); non-Astro apps
 take Ark UI as the component library (installed, unused until real components land).
-Type-checking is tsgo (`@typescript/native-preview`) everywhere except Astro
-(`astro check`); the Svelte/Vue scaffolds skip svelte-check/vue-tsc until those
-support TS 7. No CD workflows or custom-domain routes yet — wrangler configs serve
-from workers.dev once a deploy workflow exists.
+The Vue app runs on Nuxt 4 (Nitro `cloudflare_module` preset) rather than a bare Vite
+SPA, so it has a server story like the other meta-frameworks.
+
+Type-checker policy (David, 2026-06-13): each framework uses its own native
+type-checker; tsgo (`@typescript/native-preview`) is only for the case where the
+alternative would be bare `tsc`. So: Astro → `astro check`, SvelteKit →
+`svelte-check`, Nuxt → `nuxt typecheck` (vue-tsc), and the TanStack Start / React
+apps → tsgo (no framework-specific checker; the alternative there is plain tsc).
+
+No CD workflows or custom-domain routes yet — wrangler configs serve from workers.dev
+once a deploy workflow exists.
 
 ## Related
 

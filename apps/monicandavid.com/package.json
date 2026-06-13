@@ -13,7 +13,7 @@
     "format": "biome format . && prettier --check --no-error-on-unmatched-pattern \"**/*.md\" \"**/*.mdx\"",
     "format:fix": "biome format --write . && prettier --write --no-error-on-unmatched-pattern \"**/*.md\" \"**/*.mdx\"",
     "spell": "cspell --config ../../.config/cspell.json \"**\"",
-    "typecheck": "svelte-kit sync && tsgo --noEmit",
+    "typecheck": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -26,8 +26,9 @@
     "@sveltejs/kit": "2.65.0",
     "@sveltejs/vite-plugin-svelte": "7.1.2",
     "@types/node": "25.9.1",
-    "@typescript/native-preview": "latest",
     "svelte": "^5.56.3",
+    "svelte-check": "4.6.0",
+    "typescript": "6.0.3",
     "vite": "8.0.16",
     "vitest": "4.1.8",
     "wrangler": "4.98.0"

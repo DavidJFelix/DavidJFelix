@@ -2,6 +2,11 @@
 import {css} from 'styled-system/css'
 
 const title = 'pkg.dog'
+
+useHead({
+  title,
+  meta: [{name: 'description', content: title}],
+})
 </script>
 
 <template>

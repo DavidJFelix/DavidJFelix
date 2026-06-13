@@ -30,7 +30,7 @@ defaults:
 
 jobs:
   typecheck:
-    name: tsgo
+    name: svelte-check
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

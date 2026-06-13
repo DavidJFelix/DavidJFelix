@@ -2,7 +2,7 @@
 # tasks delegate to package.json scripts. Assumes `pnpm install` has run.
 
 [tasks.typecheck]
-description = "Type-check with tsgo"
+description = "Type-check with svelte-check"
 run = "pnpm run typecheck"
 
 [tasks.lint]

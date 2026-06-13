@@ -2,7 +2,7 @@
 # tasks delegate to package.json scripts. Assumes `pnpm install` has run.
 
 [tasks.typecheck]
-description = "Type-check with tsgo"
+description = "Type-check with nuxt typecheck (vue-tsc)"
 run = "pnpm run typecheck"
 
 [tasks.lint]
@@ -22,7 +22,7 @@ description = "Unit tests with Vitest (passWithNoTests until the first test land
 run = "pnpm run test"
 
 [tasks.build]
-description = "Build with Vite"
+description = "Build with Nuxt"
 run = "pnpm run build"
 
 [tasks.check]

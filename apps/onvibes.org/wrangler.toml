@@ -1,0 +1,13 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "onvibes-org"
+compatibility_date = "2026-06-01"
+
+# onvibes.org is not wired to the worker yet, so it serves from its workers.dev
+# URL. Once the zone is connected, add:
+# routes = [
+#   { pattern = "onvibes.org", custom_domain = true },
+#   { pattern = "www.onvibes.org", custom_domain = true },
+# ]
+
+[assets]
+directory = "./dist"

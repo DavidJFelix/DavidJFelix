@@ -7,11 +7,11 @@ pnpm = "11"
 bun = "1"
 biome = "2"
 oxlint = "1"
-prettier = "3"
+prettier = "3.8.4"
 actionlint = "1"
 ghalint = "1"
 zizmor = "1"
-pinact = "4"
+pinact = "4.1.0"
 
 # Repo-root checks, scoped to the config files the root owns. Legacy project
 # dirs (Advent-of-Code, Exercism, etc.) are intentionally out of scope, and

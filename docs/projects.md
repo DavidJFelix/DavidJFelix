@@ -20,6 +20,12 @@ Per-PR preview deployments, smoke tests, and screenshot testing for every deploy
 
 **Status**: In Progress
 
+### [Testing Harness & Code-Quality Safety Net](./projects/testing-harness/plan.md)
+
+A layered, fast safety net (unit -> smoke -> e2e -> coverage) that also runs inside Claude Code on the web, not just CI. Phase 0 (web-session bootstrap hook) is done; smoke-test pull-forward, generalization, unit-test backfill, and a repo-wide coverage gate follow. Complements preview-deployments (preview infra) and sentry-integration (diagnosis).
+
+**Status**: In Progress
+
 ## Priority 2 — Monorepo Hygiene
 
 ### [Linter & Formatter Standardization](./projects/linter-formatter-standardization/plan.md)

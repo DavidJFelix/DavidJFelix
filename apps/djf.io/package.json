@@ -43,7 +43,7 @@
     "@pandacss/dev": "1.11.2",
     "@playwright/test": "1.60.0",
     "cspell": "10.0.1",
-    "pagefind": "^1.5.2",
+    "pagefind": "1.5.2",
     "vitest": "4.1.8",
     "wrangler": "4.98.0"
   },

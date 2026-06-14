@@ -3,32 +3,24 @@
 A small chat app on Cloudflare — TanStack Start front end, deployed via Alchemy v2.
 "f311x" is the agent. Today it builds and deploys; the chat backend isn't wired yet.
 
-## Current state (2026-06-11)
+## Current state (2026-06-14)
 
-- **Diagnosed — three stacked failures, fixes in flight on `claude/relaxed-tesla-4bwmbj`:**
-  1. **No ingress**: `alchemy.run.ts` never set `domain`, so f311x.com has zero
-     DNS records and no custom domain is attached to the Worker. Fixed by
-     binding `f311x.com` / `www.f311x.com`.
-  2. **Every deploy since 2026-06-08 has failed.** #207 bumped alchemy
-     beta.45→51, which crashed the CLI at startup (effect `SchemaAST`
-     TypeError); #208's lockfile maintenance then removed
-     `@effect/platform-node` (an optional peer alchemy's `WorkerBridge.js`
-     imports unconditionally), changing the crash to `ERR_MODULE_NOT_FOUND`.
-     The echo backend (#211) never reached prod. Fixed: alchemy → beta.54 plus
-     an explicit `@effect/platform-node` devDependency pinned to effect's
-     version; the CLI now reaches Cloudflare auth cleanly. (beta.55 worked too
-     but is <24h old and pnpm's release-age policy rejects it in CI; pnpm
-     overrides pin the too-fresh transitives to ≥24h-old releases.)
-  3. **The artifact prod is serving is a dev-mode build** (the only successful
-     deploy, 2026-06-06, alchemy beta.45 + floating `@tanstack/react-start`).
-     Its SSR HTML references `/@id/virtual:tanstack-start-dev-client-entry`,
-     which 404s — page shell loads, app never hydrates. Verified the current
-     toolchain builds a correct production bundle (real hashed assets, echo
-     SSE works under workerd via `vite preview`). A fresh deploy replaces the
-     artifact.
-- One open risk: the deploy token may need a zone scope to attach the custom
-  domains — see the token-scopes section. Full details in the 2026-06-11
-  progress note.
+- **Production restored and verified.** `f311x.com` and `www.f311x.com` serve
+  a real production bundle that hydrates (hashed `/assets/index-*.js` entry
+  resolves; no dev virtual entry), and the chat echo streams end to end
+  (`RUN_STARTED → TEXT_MESSAGE_* → RUN_FINISHED`). Verified live after the
+  2026-06-14 deploy (CD run 27504856773).
+- **What had been wrong.** Three stacked failures — no ingress, a broken
+  deploy toolchain, and a dev-mode artifact — were fixed in #221 (merged
+  2026-06-11). One blocker outlived the merge: a leftover **dev-stage worker**
+  still held `f311x.com` / `www.f311x.com` (claimed before the prod-only
+  domain gate landed on 2026-06-12), so every prod deploy failed at custom-
+  domain reconciliation and the dev worker kept serving the broken page.
+  Detaching the domains from it (2026-06-14) let prod claim ingress. The #220
+  token-scope concern was a red herring — no zone scope was needed. Full
+  story: 2026-06-11 and 2026-06-14 progress notes.
+- **The smoke test now covers the chat loop**, not just hydration
+  (`bin/smoke-test.ts`), so "deployed but dead" fails the CD gate.
 
 ## Earlier state (2026-06-08)
 
@@ -59,18 +51,19 @@ Stabilize before building (reprioritized 2026-06-11).
 - [x] Diagnose why prod is broken; capture the symptom and root cause in a
       progress note. (2026-06-11: no ingress — no custom domain on the Worker,
       no DNS records in the zone. See the progress note.)
-- [ ] Restore prod: merge the fix branch (CD deploys on merge, or
-      `workflow_dispatch` re-runs it). The deploy rebuilds with the repaired
-      toolchain (replacing the dev-mode artifact) and attaches the custom
-      domains. Verify https://f311x.com loads, hydrates, and the chat echo
-      streams. May require granting the deploy token a zone scope first.
+- [x] Restore prod. #221 merged (2026-06-11); the remaining blocker was a
+      leftover dev worker holding the custom domains — detached 2026-06-14,
+      redeployed (CD run 27504856773), and verified f311x.com / www hydrate and
+      the chat echo streams. No zone scope was needed.
 - [ ] Make breakage readable: error visibility for the Worker (Cloudflare
       logs/tail and/or the f311x slice of
       [Sentry Integration](../sentry-integration/plan.md) pulled forward) so
       "why is it broken" doesn't require a local repro.
 - [ ] Make breakage visible pre-merge: per-PR preview deploy + smoke test —
       f311x is the first target of the
-      [preview-deployments](../preview-deployments/plan.md) project.
+      [preview-deployments](../preview-deployments/plan.md) project. (The
+      post-deploy smoke test now gates CD and covers hydration + the chat
+      stream; the per-PR *preview* deploy is still to do.)
 - [x] Wire the smallest agent backend the UI can talk to — an echo stub answers
       `/agents/chat-agent/default` and streams the reply as AG-UI SSE events
       (`RUN_STARTED` → `TEXT_MESSAGE_*` → `RUN_FINISHED`). Backed by
@@ -108,13 +101,17 @@ Stabilize before building (reprioritized 2026-06-11).
 Only **Secrets Store: Edit** was missing on the first run; the resource scopes were
 already granted. See the Alchemy CI/CD guide and the 2026-06-06 progress note.
 
-**Custom domains (unverified scope)**: attaching `f311x.com` / `www.f311x.com`
-to the Worker creates DNS records in the zone. Cloudflare doesn't document the
-exact token permission for `PUT /accounts/:id/workers/domains`; if the deploy
-fails with another generic `10000 "Authentication error"`, grant the token
-**Zone · Workers Routes · Edit** and/or **Zone · DNS · Edit** scoped to
-f311x.com. Note the f311x workflow uses its own `F311X_CLOUDFLARE_API_TOKEN`
-secret, not the shared `CLOUDFLARE_API_TOKEN` the wrangler apps use.
+**Custom domains (resolved 2026-06-14 — no extra scope needed)**: attaching
+`f311x.com` / `www.f311x.com` to the Worker creates DNS records in the zone.
+This turned out to need **no additional zone scope** — the 2026-06-14 prod
+deploy (CD run 27504856773) attached both domains and created DNS with the
+existing token; it authenticated cleanly and the only failure mode seen was a
+hostname collision with a leftover dev worker, never a `10000` auth error. If
+a future deploy ever does fail with a generic `10000 "Authentication error"`
+at the domain step, the thing to try is granting **Zone · Workers Routes ·
+Edit** and/or **Zone · DNS · Edit** scoped to f311x.com. The f311x workflow
+uses its own `F311X_CLOUDFLARE_API_TOKEN` secret, not the shared
+`CLOUDFLARE_API_TOKEN` the wrangler apps use.
 
 ## Constraints
 

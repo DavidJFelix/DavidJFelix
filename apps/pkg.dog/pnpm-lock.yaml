@@ -5414,13 +5414,13 @@ snapshots:
 
   '@csstools/postcss-cascade-layers@5.0.2(postcss@8.5.14)':
     dependencies:
-      '@csstools/selector-specificity': 5.0.0(postcss-selector-parser@7.1.4)
+      '@csstools/selector-specificity': 5.0.0(postcss-selector-parser@7.1.1)
       postcss: 8.5.14
-      postcss-selector-parser: 7.1.4
+      postcss-selector-parser: 7.1.1
 
-  '@csstools/selector-specificity@5.0.0(postcss-selector-parser@7.1.4)':
+  '@csstools/selector-specificity@5.0.0(postcss-selector-parser@7.1.1)':
     dependencies:
-      postcss-selector-parser: 7.1.4
+      postcss-selector-parser: 7.1.1
 
   '@dxup/nuxt@0.4.1(magicast@0.5.3)(typescript@6.0.3)':
     dependencies:
@@ -7105,7 +7105,7 @@ snapshots:
       '@vue/shared': 3.5.25
       estree-walker: 2.0.2
       magic-string: 0.30.21
-      postcss: 8.5.15
+      postcss: 8.5.14
       source-map-js: 1.2.1
 
   '@vue/compiler-sfc@3.5.38':
@@ -9559,7 +9559,7 @@ snapshots:
     dependencies:
       cssesc: 3.0.0
       postcss: 8.5.14
-      postcss-selector-parser: 7.1.4
+      postcss-selector-parser: 7.1.1
 
   postcss-minify-selectors@8.0.2(postcss@8.5.15):
     dependencies:
@@ -9572,7 +9572,7 @@ snapshots:
   postcss-nested@7.0.2(postcss@8.5.14):
     dependencies:
       postcss: 8.5.14
-      postcss-selector-parser: 7.1.4
+      postcss-selector-parser: 7.1.1
 
   postcss-normalize-charset@8.0.1(postcss@8.5.15):
     dependencies:

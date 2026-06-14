@@ -37,13 +37,15 @@ mise-pinned toolchain and every app's dependencies on a fresh web container, so
 mise tasks (typecheck / lint / format / test / build) and smoke boots work the
 same way they do in CI. Sync mode.
 
-### Phase 1 -- f311x smoke -> pre-merge
+### Phase 1 -- f311x smoke -> pre-merge (DONE 2026-06-14)
 
-Pull f311x's existing post-deploy smoke gate (`bin/smoke-test.ts`) into a
-canonical `mise run smoke` task that boots the app locally and runs the same
-checks, plus a CI job on PRs. Deterministic (echo stub, no secrets). Refactor
-the smoke checks into a reusable module so prod (CD) and local/preview (CI)
-share one implementation.
+`bin/smoke-checks.ts` holds the shared checks; `bin/smoke-test.ts` (CD, prod
+URLs) and `bin/smoke-local.ts` (pre-merge) both use them. `mise run smoke`
+builds, boots the production server bundle under workerd via `wrangler dev`, and
+runs the gate against it -- high fidelity (the real Workers runtime) and
+deterministic (echo stub, no secrets). Wired as a CI job on PRs in
+ci-f311x.yml. The gate stays URL-parameterized (`SMOKE_URLS`), so it can later
+point at a per-PR preview deploy with no rework.
 
 ### Phase 2 -- Generalize the e2e/smoke pattern
 
@@ -63,8 +65,9 @@ cannot silently regress as code lands.
 
 ## Open questions
 
-- Does `vite preview` serve the f311x worker (SSR + chat endpoint) locally, or
-  is `wrangler dev` needed for the smoke boot? (Phase 1 spike.)
+- ~~Local boot for f311x smoke?~~ Resolved (Phase 1): `vite preview` is
+  static-only and the built `dist/server/server.js` is a Worker `fetch` module,
+  so the boot is `wrangler dev` on the built worker (workerd).
 - Coverage tooling and thresholds (Phase 4).
 - Screenshot / visual-regression baseline strategy -- deferred to
   preview-deployments.

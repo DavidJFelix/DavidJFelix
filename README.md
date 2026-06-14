@@ -29,20 +29,13 @@ Co-founded. "Ice cream truck for pizza" — an app that sold hot-and-ready pizza
 
 ## Projects
 
-**Serverless Compose**
+* **Serverless Compose**
 Onion-style middleware framework for Node on AWS Lambda. Minimal core, extensible by composition.
-
-**MG4.tv / iotv**
+* **MG4.tv / iotv**
 Live-streaming utilities aimed at richer interactions around video content.
-
-**Atumsoft** — Advisor / Mentor
-
-**AngelHack Cincinnati 2015, 2016** — Local Event Host / Sponsor
-
-**Instameals** — Founding Engineer / DevOps
-
-**MyI, LLC** — First Contract Engineer / Engineering Advisor
-
-**E-Gov Link, EC-Link** — Contract Software Engineer / Technical Writer
-
-**Swarmfarm, LLC** — First Employee, DevOps
+* **Atumsoft** — Advisor / Mentor
+* **AngelHack Cincinnati 2015, 2016** — Local Event Host / Sponsor
+* **Instameals** — Founding Engineer / DevOps
+* **MyI, LLC** — First Contract Engineer / Engineering Advisor
+* **E-Gov Link, EC-Link** — Contract Software Engineer / Technical Writer
+* **Swarmfarm, LLC** — First Employee, DevOps

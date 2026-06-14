@@ -19,7 +19,17 @@ checksum = "sha256:8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a
 url = "https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz"
 provenance = "github-attestations"
 
+[tools.actionlint."platforms.linux-x64-baseline"]
+checksum = "sha256:8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
+url = "https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz"
+provenance = "github-attestations"
+
 [tools.actionlint."platforms.linux-x64-musl"]
+checksum = "sha256:8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
+url = "https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz"
+provenance = "github-attestations"
+
+[tools.actionlint."platforms.linux-x64-musl-baseline"]
 checksum = "sha256:8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
 url = "https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz"
 provenance = "github-attestations"
@@ -34,7 +44,17 @@ checksum = "sha256:5b44c3bc2255115c9b69e30efc0fecdf498fdb63c5d58e17084fd5f16324c
 url = "https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_darwin_amd64.tar.gz"
 provenance = "github-attestations"
 
+[tools.actionlint."platforms.macos-x64-baseline"]
+checksum = "sha256:5b44c3bc2255115c9b69e30efc0fecdf498fdb63c5d58e17084fd5f16324c644"
+url = "https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_darwin_amd64.tar.gz"
+provenance = "github-attestations"
+
 [tools.actionlint."platforms.windows-x64"]
+checksum = "sha256:6e7241b51e6817ea6a047693d8e6fed13b31819c9a0dd6c5a726e1592d22f6e9"
+url = "https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_windows_amd64.zip"
+provenance = "github-attestations"
+
+[tools.actionlint."platforms.windows-x64-baseline"]
 checksum = "sha256:6e7241b51e6817ea6a047693d8e6fed13b31819c9a0dd6c5a726e1592d22f6e9"
 url = "https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_windows_amd64.zip"
 provenance = "github-attestations"
@@ -58,7 +78,17 @@ checksum = "sha256:f6904c208ce8884cf859460178f32f885250b375da1810c551912a029f4ab
 url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.4.16/biome-linux-x64"
 provenance = "github-attestations"
 
+[tools.biome."platforms.linux-x64-baseline"]
+checksum = "sha256:f6904c208ce8884cf859460178f32f885250b375da1810c551912a029f4abf79"
+url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.4.16/biome-linux-x64"
+provenance = "github-attestations"
+
 [tools.biome."platforms.linux-x64-musl"]
+checksum = "sha256:e7102113e10c57772ce969ce088f54ec2cc37331bb4601e5f5369fd94a6fe1d9"
+url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.4.16/biome-linux-x64-musl"
+provenance = "github-attestations"
+
+[tools.biome."platforms.linux-x64-musl-baseline"]
 checksum = "sha256:e7102113e10c57772ce969ce088f54ec2cc37331bb4601e5f5369fd94a6fe1d9"
 url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.4.16/biome-linux-x64-musl"
 provenance = "github-attestations"
@@ -73,7 +103,17 @@ checksum = "sha256:42329e159a2f35b3776a01e7a16a53582d53e126fbc55bfdd5825e873a87b
 url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.4.16/biome-darwin-x64"
 provenance = "github-attestations"
 
+[tools.biome."platforms.macos-x64-baseline"]
+checksum = "sha256:42329e159a2f35b3776a01e7a16a53582d53e126fbc55bfdd5825e873a87b338"
+url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.4.16/biome-darwin-x64"
+provenance = "github-attestations"
+
 [tools.biome."platforms.windows-x64"]
+checksum = "sha256:1247239dae8f57aafeaeb9914e30b92efcc51c632eee3be4463a95969558f6a3"
+url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.4.16/biome-win32-x64.exe"
+provenance = "github-attestations"
+
+[tools.biome."platforms.windows-x64-baseline"]
 checksum = "sha256:1247239dae8f57aafeaeb9914e30b92efcc51c632eee3be4463a95969558f6a3"
 url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.4.16/biome-win32-x64.exe"
 provenance = "github-attestations"
@@ -151,11 +191,25 @@ url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.5.6/ghali
 [tools.ghalint."platforms.linux-x64".provenance.slsa]
 url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.5.6/multiple.intoto.jsonl"
 
+[tools.ghalint."platforms.linux-x64-baseline"]
+checksum = "sha256:98ee0e3330de7286f470d1e89c03ff7ce70d7a5998ba0f15969c400447be579c"
+url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.5.6/ghalint_1.5.6_linux_amd64.tar.gz"
+
+[tools.ghalint."platforms.linux-x64-baseline".provenance.slsa]
+url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.5.6/multiple.intoto.jsonl"
+
 [tools.ghalint."platforms.linux-x64-musl"]
 checksum = "sha256:98ee0e3330de7286f470d1e89c03ff7ce70d7a5998ba0f15969c400447be579c"
 url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.5.6/ghalint_1.5.6_linux_amd64.tar.gz"
 
 [tools.ghalint."platforms.linux-x64-musl".provenance.slsa]
+url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.5.6/multiple.intoto.jsonl"
+
+[tools.ghalint."platforms.linux-x64-musl-baseline"]
+checksum = "sha256:98ee0e3330de7286f470d1e89c03ff7ce70d7a5998ba0f15969c400447be579c"
+url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.5.6/ghalint_1.5.6_linux_amd64.tar.gz"
+
+[tools.ghalint."platforms.linux-x64-musl-baseline".provenance.slsa]
 url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.5.6/multiple.intoto.jsonl"
 
 [tools.ghalint."platforms.macos-arm64"]
@@ -172,11 +226,25 @@ url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.5.6/ghali
 [tools.ghalint."platforms.macos-x64".provenance.slsa]
 url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.5.6/multiple.intoto.jsonl"
 
+[tools.ghalint."platforms.macos-x64-baseline"]
+checksum = "sha256:d2a0e8605333068065dcf4c9b7b7a24891eda1750ac01fb755dfba426a390883"
+url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.5.6/ghalint_1.5.6_darwin_amd64.tar.gz"
+
+[tools.ghalint."platforms.macos-x64-baseline".provenance.slsa]
+url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.5.6/multiple.intoto.jsonl"
+
 [tools.ghalint."platforms.windows-x64"]
 checksum = "sha256:109ea9b39c8e263cef924bd3b4fe5505964204f934ca60d986f4090d01a99ba5"
 url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.5.6/ghalint_1.5.6_windows_amd64.zip"
 
 [tools.ghalint."platforms.windows-x64".provenance.slsa]
+url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.5.6/multiple.intoto.jsonl"
+
+[tools.ghalint."platforms.windows-x64-baseline"]
+checksum = "sha256:109ea9b39c8e263cef924bd3b4fe5505964204f934ca60d986f4090d01a99ba5"
+url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.5.6/ghalint_1.5.6_windows_amd64.zip"
+
+[tools.ghalint."platforms.windows-x64-baseline".provenance.slsa]
 url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.5.6/multiple.intoto.jsonl"
 
 [[tools.node]]
@@ -195,7 +263,15 @@ url = "https://unofficial-builds.nodejs.org/download/release/v26.3.0/node-v26.3.
 checksum = "sha256:a6e65cc653e40c1653b77742f9185dbce3ff1f99fa2746d211bddb53530ef206"
 url = "https://nodejs.org/dist/v26.3.0/node-v26.3.0-linux-x64.tar.gz"
 
+[tools.node."platforms.linux-x64-baseline"]
+checksum = "sha256:a6e65cc653e40c1653b77742f9185dbce3ff1f99fa2746d211bddb53530ef206"
+url = "https://nodejs.org/dist/v26.3.0/node-v26.3.0-linux-x64.tar.gz"
+
 [tools.node."platforms.linux-x64-musl"]
+checksum = "sha256:6ad2e7c0cf693fecc2febb1abf753940244f3baaa04626361ed52d64843ffc67"
+url = "https://unofficial-builds.nodejs.org/download/release/v26.3.0/node-v26.3.0-linux-x64-musl.tar.gz"
+
+[tools.node."platforms.linux-x64-musl-baseline"]
 checksum = "sha256:6ad2e7c0cf693fecc2febb1abf753940244f3baaa04626361ed52d64843ffc67"
 url = "https://unofficial-builds.nodejs.org/download/release/v26.3.0/node-v26.3.0-linux-x64-musl.tar.gz"
 
@@ -207,7 +283,15 @@ url = "https://nodejs.org/dist/v26.3.0/node-v26.3.0-darwin-arm64.tar.gz"
 checksum = "sha256:7453bd54a17bdc656e2e784d702f6eeb224fb517965e6f8c5a31a88c83d3804c"
 url = "https://nodejs.org/dist/v26.3.0/node-v26.3.0-darwin-x64.tar.gz"
 
+[tools.node."platforms.macos-x64-baseline"]
+checksum = "sha256:7453bd54a17bdc656e2e784d702f6eeb224fb517965e6f8c5a31a88c83d3804c"
+url = "https://nodejs.org/dist/v26.3.0/node-v26.3.0-darwin-x64.tar.gz"
+
 [tools.node."platforms.windows-x64"]
+checksum = "sha256:ec6d0f6b056c89498a9b26c4d5c77a31fd0b7fe45ba8a45fa87d26f66c3ebce4"
+url = "https://nodejs.org/dist/v26.3.0/node-v26.3.0-win-x64.zip"
+
+[tools.node."platforms.windows-x64-baseline"]
 checksum = "sha256:ec6d0f6b056c89498a9b26c4d5c77a31fd0b7fe45ba8a45fa87d26f66c3ebce4"
 url = "https://nodejs.org/dist/v26.3.0/node-v26.3.0-win-x64.zip"
 
@@ -344,7 +428,15 @@ checksum = "sha256:aa1facd105f0d83fe5c55b1adcd9d7417de5d83aa27471f91dc0b66cf3803
 url = "https://github.com/zizmorcore/zizmor/releases/download/v1.25.2/zizmor-x86_64-unknown-linux-gnu.tar.gz"
 provenance = "github-attestations"
 
+[tools.zizmor."platforms.linux-x64-baseline"]
+checksum = "sha256:aa1facd105f0d83fe5c55b1adcd9d7417de5d83aa27471f91dc0b66cf3803577"
+url = "https://github.com/zizmorcore/zizmor/releases/download/v1.25.2/zizmor-x86_64-unknown-linux-gnu.tar.gz"
+provenance = "github-attestations"
+
 [tools.zizmor."platforms.linux-x64-musl"]
+provenance = "github-attestations"
+
+[tools.zizmor."platforms.linux-x64-musl-baseline"]
 provenance = "github-attestations"
 
 [tools.zizmor."platforms.macos-arm64"]
@@ -357,7 +449,17 @@ checksum = "sha256:353271b9ec301dd4ba158af481323c831c6e9b494d5ac3f5aa58cf4b20769
 url = "https://github.com/zizmorcore/zizmor/releases/download/v1.25.2/zizmor-x86_64-apple-darwin.tar.gz"
 provenance = "github-attestations"
 
+[tools.zizmor."platforms.macos-x64-baseline"]
+checksum = "sha256:353271b9ec301dd4ba158af481323c831c6e9b494d5ac3f5aa58cf4b207699cc"
+url = "https://github.com/zizmorcore/zizmor/releases/download/v1.25.2/zizmor-x86_64-apple-darwin.tar.gz"
+provenance = "github-attestations"
+
 [tools.zizmor."platforms.windows-x64"]
+checksum = "sha256:65d46a8144f701200621b580f632076d80d082d60856de9f88793a95fb5882d7"
+url = "https://github.com/zizmorcore/zizmor/releases/download/v1.25.2/zizmor-x86_64-pc-windows-msvc.zip"
+provenance = "github-attestations"
+
+[tools.zizmor."platforms.windows-x64-baseline"]
 checksum = "sha256:65d46a8144f701200621b580f632076d80d082d60856de9f88793a95fb5882d7"
 url = "https://github.com/zizmorcore/zizmor/releases/download/v1.25.2/zizmor-x86_64-pc-windows-msvc.zip"
 provenance = "github-attestations"

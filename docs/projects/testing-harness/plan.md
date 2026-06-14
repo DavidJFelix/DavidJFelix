@@ -47,11 +47,17 @@ deterministic (echo stub, no secrets). Wired as a CI job on PRs in
 ci-f311x.yml. The gate stays URL-parameterized (`SMOKE_URLS`), so it can later
 point at a per-PR preview deploy with no rework.
 
-### Phase 2 -- Generalize the e2e/smoke pattern
+### Phase 2 -- Generalize the smoke pattern (DONE 2026-06-14)
 
-Promote the f311x smoke and djf.io Playwright setups into one documented
-convention (the `smoke` task contract + a short testing guide), then roll it to
-the other deployed apps (djf.io, calendar-visualizer, davidjfelix.com, ravrun).
+Documented the `smoke` task contract in CLAUDE.md (Testing Conventions ->
+Runtime checks) and rolled it to the deployed apps that lacked a runtime gate:
+calendar-visualizer and davidjfelix.com (static Astro -> `astro preview`) and
+ravrun (Vite SPA -> `vite preview`). Each gets a `bin/smoke-local.ts`, a `smoke`
+mise task (depends on `build`), and a `smoke` CI job. djf.io already has a
+Playwright e2e suite as its runtime gate, so it keeps that instead of a
+duplicate smoke task. Apps that run bun scripts but lacked `@types/bun` got it
+added, with a `/// <reference types="bun" />` in the script (the reliable
+cross-tsconfig way to pull the global in).
 
 ### Phase 3 -- Backfill real unit tests
 

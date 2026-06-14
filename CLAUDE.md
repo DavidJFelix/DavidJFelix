@@ -127,6 +127,16 @@ When in doubt, prefer kebab-case. If a third-party tool requires a different cas
 - **Avoid `beforeEach`/`beforeAll`/`afterEach`/`afterAll`** unless a framework requires it. Prefer top-level setup (top-level `await` for async), inline setup inside each test, or a small named helper called from each test. Hooks hide control flow and make tests harder to read.
 - **For tests inside `src/pages/` (Astro routing constraint)**: prefix with `_` (e.g. `_index.e2e.test.ts`). Astro treats every `.ts` in `src/pages/` as an endpoint; the underscore is its built-in escape hatch. Outside `src/pages/`, no prefix.
 
+### Runtime checks: smoke and e2e
+
+Build-time checks (typecheck, lint, unit, build) can't catch an app that builds green but is broken at runtime (f311x shipped that way on 2026-06-11). Every **deployed** app gets a canonical runtime gate — a `smoke` mise task, or a Playwright e2e suite that subsumes it (`apps/djf.io`):
+
+- **Contract**: `mise run smoke` (declares `depends = ["build"]`) boots the app's _production build_ locally and asserts the critical path serves — each key route returns 200 as a complete document whose hashed client assets also serve; an app with a backend also exercises it (f311x POSTs the chat endpoint and requires the echo stream). Deterministic and secret-free, so it runs on every PR.
+- **Boot per stack** (reference scripts live in each app's `bin/smoke-local.ts`, bun): static Astro → `astro preview`; Vite SPA → `vite preview`; Cloudflare Worker / SSR → `wrangler dev` on the built worker (workerd), because `*-preview` only serves static assets. Spawn the preview **binary directly** (`node_modules/.bin/...`), not via `pnpm run` — killing the pnpm wrapper doesn't cascade to the server, so it outlives teardown and holds the port.
+- **Knobs**: `SMOKE_*` env vars (URLs / routes / port) keep the same checks pointable at a local boot now and a per-PR preview deploy later.
+- **CI**: a `smoke` job per deployed app, mirroring the `vitest` job.
+- **e2e** (Playwright, `*.e2e.test.ts`) is the heavier browser-based layer for hydration / interaction / visual regression; optional per app, and a superset of smoke (see `apps/djf.io`).
+
 ## Apps
 
 ### djf.io (Personal Site)

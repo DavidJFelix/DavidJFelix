@@ -28,8 +28,10 @@ alternative would be bare `tsc`. So: Astro → `astro check`, SvelteKit →
 `svelte-check`, Nuxt → `nuxt typecheck` (vue-tsc), and the TanStack Start / React
 apps → tsgo (no framework-specific checker; the alternative there is plain tsc).
 
-No CD workflows or custom-domain routes yet — wrangler configs serve from workers.dev
-once a deploy workflow exists.
+Every app now has a `cd-deploy-*` workflow that ships to its workers.dev URL on
+push to `main` (path-filtered to the app dir + its own workflow file). Custom-domain
+routes are not wired yet — the `routes` blocks in each `wrangler.toml` stay commented
+until the zones are connected.
 
 ## Related
 

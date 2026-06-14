@@ -1,0 +1,49 @@
+name: CD Deploy onvibes.org
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/onvibes.org/**'
+      - '.github/workflows/cd-deploy-onvibes-org.yml'
+
+defaults:
+  run:
+    working-directory: apps/onvibes.org
+
+jobs:
+  deploy:
+    name: wrangler deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - name: checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: mise
+        uses: jdx/mise-action@dba19683ed58901619b14f395a24841710cb4925 # v4.1.0
+        with:
+          install: true
+          cache: false
+
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+
+      - name: panda codegen
+        run: pnpm exec panda codegen
+
+      - name: astro build
+        run: pnpm exec astro build
+
+      - name: wrangler deploy
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+          workingDirectory: apps/onvibes.org

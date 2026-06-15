@@ -32,11 +32,11 @@
     "wrangler": "4.100.0"
   },
   "dependencies": {
-    "@tanstack/react-router": "^1.170.8",
+    "@tanstack/react-router": "^1.170.15",
     "@tanstack/router-devtools": "^1.167.0",
-    "date-fns": "^4.3.0",
-    "react": "^19.2.6",
-    "react-dom": "^19.2.6"
+    "date-fns": "^4.4.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
   },
   "engines": {
     "node": ">=24"

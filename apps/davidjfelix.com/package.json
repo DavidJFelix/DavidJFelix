@@ -17,7 +17,7 @@
     "spell": "cspell --config ../../.config/cspell.json \"**\""
   },
   "dependencies": {
-    "astro": "^6.3.7"
+    "astro": "^6.4.6"
   },
   "devDependencies": {
     "@astrojs/check": "0.9.9",

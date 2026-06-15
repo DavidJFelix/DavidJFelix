@@ -4,8 +4,8 @@
 
 Stand up forzamonica.com as a headless Shopify storefront: TanStack Start on Cloudflare
 Workers for the frontend, the Shopify Storefront API for catalog and cart, and
-Shopify-hosted checkout. This replaces the "placeholder for now" line item in
-[new-domain-sites](../new-domain-sites/plan.md).
+Shopify-hosted checkout. This replaces the "placeholder for now" line item from the (now closed)
+new-domain-sites project.
 
 ## Architecture
 
@@ -58,6 +58,7 @@ Shopify-hosted checkout. This replaces the "placeholder for now" line item in
 ## Links
 
 - App: [`apps/forzamonica.com`](../../../apps/forzamonica.com/)
-- [new-domain-sites](../new-domain-sites/plan.md) — the originating line item
+- new-domain-sites — the originating line item (project closed; recorded in the
+  [changelog](../../changelog/2026-06.md))
 - [preview-deployments](../preview-deployments/plan.md) — deploy-verification bar this
   app should adopt

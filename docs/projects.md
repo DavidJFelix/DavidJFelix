@@ -50,12 +50,6 @@ Human-directed polish of djf.io: colors, spacing, layout, images, usability, com
 
 ## Priority 4 — Greenfield
 
-### [New Domain Sites](./projects/new-domain-sites/plan.md)
-
-Stand up sites for 8 owned domains across Astro, TanStack Start, Vue, and SvelteKit.
-
-**Status**: In Progress
-
 ### [Forza Monica Shop](./projects/forzamonica-shop/plan.md)
 
 Headless Shopify storefront for forzamonica.com — TanStack Start + PandaCSS + Ark UI on Cloudflare Workers, wired against mock.shop until the real store exists. Scaffold complete; production blocked on Shopify/Cloudflare account setup (issues filed).

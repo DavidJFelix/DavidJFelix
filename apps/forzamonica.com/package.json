@@ -17,7 +17,7 @@
     "format:fix": "biome format --write . && prettier --write --no-error-on-unmatched-pattern \"**/*.md\" \"**/*.mdx\"",
     "spell": "cspell --config ../../.config/cspell.json \"**\"",
     "typecheck": "tsgo --noEmit",
-    "test": "vitest run",
+    "test": "vitest run --coverage",
     "test:watch": "vitest"
   },
   "dependencies": {
@@ -39,6 +39,7 @@
     "@types/react-dom": "19.2.3",
     "@typescript/native-preview": "latest",
     "@vitejs/plugin-react": "6.0.2",
+    "@vitest/coverage-v8": "4.1.8",
     "jsdom": "29.1.1",
     "vite": "8.0.16",
     "vitest": "4.1.8",

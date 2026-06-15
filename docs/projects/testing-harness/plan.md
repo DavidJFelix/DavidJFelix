@@ -81,8 +81,9 @@ the whole repo verifies with one command (complementing the per-app,
 path-filtered CI). Added vitest v8 coverage gates scoped to the pure logic of
 the apps with real tests -- f311x (`src/lib/**`) and djf.io (`src/lib/**` +
 `content.config.ts`), both at 100%, with ratchet thresholds enforced via
-`--coverage` in their unit task. calendar-visualizer and forzamonica.com follow
-the same recipe (next).
+`--coverage` in their unit task. The same gate now also covers calendar-visualizer
+(`src/components/calendar-state.ts`) and forzamonica.com
+(`src/lib/format-price.ts`) -- every app with real unit tests is gated.
 
 ## Open questions
 

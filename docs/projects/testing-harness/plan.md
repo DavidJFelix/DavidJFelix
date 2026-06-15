@@ -72,10 +72,17 @@ green (17 pages). calendar-visualizer's core (`getCalendarDisplayState`) was
 already well covered (11 tests); its only gap is the component-local
 `getDayVariant`, left as a low-value follow-up.
 
-### Phase 4 -- Repo-wide test + coverage gate
+### Phase 4 -- Repo-wide test + coverage gate (DONE 2026-06-14)
 
-A root aggregator to run all app tests, plus coverage thresholds, so quality
-cannot silently regress as code lands.
+Added a monorepo aggregator -- `bin/run-app-tasks.ts` (bun) behind root
+`mise run test` / `mise run check` -- that fans a task out to every app (with
+`CI=true`, dodging the pnpm purge papercut) and prints a pass/fail summary, so
+the whole repo verifies with one command (complementing the per-app,
+path-filtered CI). Added vitest v8 coverage gates scoped to the pure logic of
+the apps with real tests -- f311x (`src/lib/**`) and djf.io (`src/lib/**` +
+`content.config.ts`), both at 100%, with ratchet thresholds enforced via
+`--coverage` in their unit task. calendar-visualizer and forzamonica.com follow
+the same recipe (next).
 
 ## Open questions
 

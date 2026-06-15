@@ -25,3 +25,16 @@ dir = "{{config_root}}"
 description = "Apply formatting fixes to repo-root config files"
 run = "biome check --write biome.jsonc .oxlintrc.json .prettierrc.json .config/cspell.json .github/renovate.json .vscode/settings.json .vscode/extensions.json"
 dir = "{{config_root}}"
+
+# Monorepo aggregators: fan a task out to every app. Per-app CI still runs each
+# app's tasks on path-filtered triggers; these are the local "verify everything"
+# commands. They run each app with CI=true to dodge pnpm's no-TTY deps-purge abort.
+[tasks.test]
+description = "Run every app's unit tests"
+run = "bun bin/run-app-tasks.ts test"
+dir = "{{config_root}}"
+
+[tasks.check]
+description = "Run every app's full check (typecheck, lint, format, test, build)"
+run = "bun bin/run-app-tasks.ts check"
+dir = "{{config_root}}"

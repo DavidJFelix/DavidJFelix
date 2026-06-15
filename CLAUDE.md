@@ -137,6 +137,11 @@ Build-time checks (typecheck, lint, unit, build) can't catch an app that builds 
 - **CI**: a `smoke` job per deployed app, mirroring the `vitest` job.
 - **e2e** (Playwright, `*.e2e.test.ts`) is the heavier browser-based layer for hydration / interaction / visual regression; optional per app, and a superset of smoke (see `apps/djf.io`).
 
+### Coverage & the monorepo aggregator
+
+- Apps with real unit-testable logic gate it with **vitest v8 coverage scoped to the logic** -- not UI / route / worker glue, which smoke + e2e cover. Set `coverage.include` to the tested modules (e.g. `src/lib/**`) and `coverage.thresholds` as a ratchet at / just under current, and run the unit task with `--coverage` so CI enforces it. f311x and djf.io are wired (100% on their logic); calendar-visualizer and forzamonica.com follow the same recipe. (Under Astro's `getViteConfig` the per-file `text` table renders empty -- cosmetic; `text-summary` and threshold enforcement work.)
+- **`mise run test` / `mise run check` at the repo root** fan the task out to every app (`bin/run-app-tasks.ts`), for a one-command "verify the whole monorepo" -- complementing the per-app, path-filtered CI. They run each app with `CI=true` so pnpm's no-TTY deps-purge check can't abort.
+
 ## Apps
 
 ### djf.io (Personal Site)

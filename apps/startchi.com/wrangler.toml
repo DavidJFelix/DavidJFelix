@@ -4,12 +4,11 @@ main = "@tanstack/react-start/server-entry"
 compatibility_date = "2026-06-01"
 compatibility_flags = ["nodejs_compat"]
 
-# startchi.com is not wired to the worker yet, so it serves from its
-# workers.dev URL. Once the zone is connected, add:
-# routes = [
-#   { pattern = "startchi.com", custom_domain = true },
-#   { pattern = "www.startchi.com", custom_domain = true },
-# ]
+# Custom domains, wired up in the Cloudflare dashboard.
+routes = [
+  { pattern = "startchi.com", custom_domain = true },
+  { pattern = "www.startchi.com", custom_domain = true },
+]
 
 [observability]
 enabled = true

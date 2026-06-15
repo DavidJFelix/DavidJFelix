@@ -29,9 +29,10 @@ alternative would be bare `tsc`. So: Astro → `astro check`, SvelteKit →
 apps → tsgo (no framework-specific checker; the alternative there is plain tsc).
 
 Every app now has a `cd-deploy-*` workflow that ships to its workers.dev URL on
-push to `main` (path-filtered to the app dir + its own workflow file). Custom-domain
-routes are not wired yet — the `routes` blocks in each `wrangler.toml` stay commented
-until the zones are connected.
+push to `main` (path-filtered to the app dir + its own workflow file). Custom domains
+are wired in the Cloudflare dashboard and enabled as `custom_domain` routes in each
+`wrangler.toml` (apex + www; pkg.dog also serves pkgdog.com) — wrangler reconciles
+them on the next deploy.
 
 ## Related
 

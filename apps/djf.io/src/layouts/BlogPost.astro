@@ -2,6 +2,7 @@
 import {Image} from 'astro:assets'
 import type {CollectionEntry} from 'astro:content'
 import {css} from 'styled-system/css'
+import {formatBlogDate} from '../lib/blog'
 import BaseLayout from './BaseLayout.astro'
 
 interface Props {
@@ -11,11 +12,7 @@ interface Props {
 const {post} = Astro.props
 const {title, description, date, author, tags, readingTime, hero} = post.data
 
-const formattedDate = new Date(date).toLocaleDateString('en-US', {
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-})
+const formattedDate = formatBlogDate(date)
 
 const ogImage = `/og/blog/${post.id}.png`
 const postUrl = Astro.site ? new URL(`/blog/${post.id}/`, Astro.site) : undefined

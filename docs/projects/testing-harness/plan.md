@@ -59,10 +59,18 @@ duplicate smoke task. Apps that run bun scripts but lacked `@types/bun` got it
 added, with a `/// <reference types="bun" />` in the script (the reliable
 cross-tsconfig way to pull the global in).
 
-### Phase 3 -- Backfill real unit tests
+### Phase 3 -- Backfill real unit tests (DONE 2026-06-14)
 
-Replace empty `passWithNoTests` placeholders with meaningful unit tests where
-logic exists (djf.io content config / SEO, calendar-visualizer state).
+djf.io's blog list / tag logic -- date sort, tag collection, tag counts, tag
+filtering, date formatting -- was duplicated inline across rss.xml, blog/index,
+blog/tags/* and the BlogPost layout. Extracted it into a pure, structurally
+typed `src/lib/blog.ts`, refactored all five call sites to use it, and covered
+it with `src/lib/blog.test.ts` (11 tests). The extracted code is the code that
+runs, so the tests guard real regressions (feed / index / tag ordering, tag-page
+popularity, date display). djf.io now has 44 passing unit tests; build still
+green (17 pages). calendar-visualizer's core (`getCalendarDisplayState`) was
+already well covered (11 tests); its only gap is the component-local
+`getDayVariant`, left as a low-value follow-up.
 
 ### Phase 4 -- Repo-wide test + coverage gate
 
@@ -77,6 +85,11 @@ cannot silently regress as code lands.
 - Coverage tooling and thresholds (Phase 4).
 - Screenshot / visual-regression baseline strategy -- deferred to
   preview-deployments.
+- pnpm `verify-deps-before-run` aborts (`ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY`)
+  when a task runs with no TTY and `node_modules` has drifted, so `mise run <task>`
+  fails in a web session unless `CI=true` is set (CI and the SessionStart hook set
+  it; manual runs do not). Durable fix candidates: a root `.npmrc`
+  `confirm-modules-purge=false`, or pinning the `latest`-tagged dev deps that drift.
 
 ## Related
 

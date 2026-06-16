@@ -32,6 +32,11 @@ description = "Smoke-test a local production boot (workerd via wrangler dev)"
 depends = ["build"]
 run = "bun bin/smoke-local.ts"
 
+[tasks."test:e2e"]
+description = "E2E + visual-regression tests with Playwright (builds first)"
+depends = ["build"]
+run = "pnpm run test:e2e"
+
 [tasks.check]
 description = "Run all checks"
 depends = ["typecheck", "lint", "format", "test", "build"]

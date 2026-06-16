@@ -73,4 +73,18 @@ for (const entry of readdirSync(appsDir, {withFileTypes: true})) {
   }
 }
 
+// 5. Install the Playwright chromium browser that djf.io's e2e suite and
+//    f311x's visual-regression tests need. The binary is shared across apps via
+//    ~/.cache/ms-playwright, so one install covers the repo. Best-effort: a
+//    failure here shouldn't abort the session.
+const playwrightApp = join(appsDir, 'djf.io')
+if (existsSync(join(playwrightApp, 'node_modules', '@playwright', 'test'))) {
+  console.log('==> playwright install: chromium')
+  await $`pnpm exec playwright install --with-deps chromium`
+    .cwd(playwrightApp)
+    .env(installEnv)
+    .nothrow()
+    .quiet()
+}
+
 console.log('session-start: toolchain + app dependencies ready')

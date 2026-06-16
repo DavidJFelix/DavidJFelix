@@ -9,6 +9,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     include: ['src/**/*.test.{ts,tsx}'],
+    // Playwright specs share the .test.ts suffix but run under their own runner.
+    exclude: ['**/*.e2e.test.{ts,tsx}', '**/node_modules/**'],
     // Coverage gate for the app's pure logic (the chat agent). The UI / route /
     // worker glue is exercised by smoke + e2e, not unit coverage, so it is not
     // included here.

@@ -13,3 +13,8 @@ dist-ssr
 .vinxi
 __unconfig*
 todos.json
+
+# playwright
+test-results/
+playwright-report/
+playwright/.cache/

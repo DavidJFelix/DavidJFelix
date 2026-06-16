@@ -29,7 +29,16 @@ const config = defineConfig({
       },
     },
   },
-  plugins: [devtools(), tanstackStart(), viteReact(), tailwindcss()],
+  plugins: [
+    devtools(),
+    // Co-located Playwright specs (*.e2e.test.ts) live under src/ -- including
+    // src/routes/ -- so keep the route generator from scanning them as routes
+    // (any .ts file in src/routes otherwise becomes an endpoint, e.g. the chat
+    // agent at src/routes/agents/chat-agent/default.ts).
+    tanstackStart({router: {routeFileIgnorePattern: '\\.test\\.'}}),
+    viteReact(),
+    tailwindcss(),
+  ],
 })
 
 export default config

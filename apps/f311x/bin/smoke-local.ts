@@ -25,11 +25,13 @@ if (!existsSync(WORKER)) {
 }
 
 const flags: Array<string> = wrangler.compatibility_flags ?? []
+// Spawn the wrangler binary directly (not via `pnpm exec`): killing the pnpm
+// wrapper does not cascade to wrangler/workerd, which would then outlive
+// teardown and keep holding the port -- the same trap the other smoke scripts
+// avoid by spawning node_modules/.bin/... directly.
 const worker = Bun.spawn(
   [
-    'pnpm',
-    'exec',
-    'wrangler',
+    'node_modules/.bin/wrangler',
     'dev',
     WORKER,
     '--port',

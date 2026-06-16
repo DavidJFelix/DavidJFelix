@@ -84,7 +84,8 @@ try {
   }
 } finally {
   worker.kill()
-  await worker.exited.catch(() => {})
+  await Promise.race([worker.exited, Bun.sleep(3_000)])
+  worker.kill('SIGKILL')
 }
 
 process.exit(exitCode)

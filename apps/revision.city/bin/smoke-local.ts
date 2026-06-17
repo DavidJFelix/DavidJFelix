@@ -31,16 +31,22 @@ const server = Bun.spawn(
   {env: {...process.env, CI: 'true'}, stdout: 'ignore', stderr: 'ignore'},
 )
 
+// A dev-mode bundle references this Vite/TanStack dev virtual entry (the 2026-06-11 f311x
+// incident); reject it, and require a real hashed asset -- a dev bundle references no hashed
+// `.js`/`.css`, so without this the check would pass vacuously.
+const DEV_ENTRY = 'virtual:tanstack-start-dev-client-entry'
+
 async function check(route: string): Promise<string | null> {
   const page = await fetch(new URL(route, BASE_URL), {signal: AbortSignal.timeout(15_000)})
   if (!page.ok) return `${route} -> HTTP ${page.status}`
   const html = await page.text()
   if (!/<\/html>/i.test(html)) return `${route} -> response is not a complete HTML document`
+  if (html.includes(DEV_ENTRY))
+    return `${route} -> serves a dev-mode bundle (dev virtual entry present)`
   const asset = html.match(/(?:src|href)="(\/[^"]+\.(?:js|css))"/)?.[1]
-  if (asset) {
-    const res = await fetch(new URL(asset, BASE_URL), {signal: AbortSignal.timeout(15_000)})
-    if (!res.ok) return `${route} asset ${asset} -> HTTP ${res.status}`
-  }
+  if (!asset) return `${route} -> no hashed client asset referenced in HTML`
+  const res = await fetch(new URL(asset, BASE_URL), {signal: AbortSignal.timeout(15_000)})
+  if (!res.ok) return `${route} asset ${asset} -> HTTP ${res.status}`
   return null
 }
 

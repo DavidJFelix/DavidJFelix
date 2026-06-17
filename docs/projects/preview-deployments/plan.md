@@ -47,11 +47,27 @@ f311x already has live deploy automation — it is the proving ground.
 - [ ] Wire error visibility for the Worker (Cloudflare logs/tail and/or the f311x slice of Sentry
       Integration pulled forward) so the diagnosis isn't a one-off — deferred to the Sentry slice
 
-### Phase 2: Generalize
+### Phase 2: Generalize (done 2026-06-17)
 
-- Roll the pattern to the other deployed apps (djf.io, calendar-visualizer, davidjfelix.com, ravrun)
-- One canonical mise task per app (e.g. `smoke`) so CI and humans share the same entry point,
-  matching the Phase 3b check convention
+Rolled the pattern to the nine wrangler-deployed apps. The wrangler shape differs from f311x's
+Alchemy stage — see the resolved open questions below.
+
+- [x] Shared infra: a composite action `.github/actions/preview-wrangler/` (build → upload → smoke
+      → Playwright screenshots → sticky comment) plus three repo-root `bin/` scripts —
+      `upload-preview.ts` (`wrangler versions upload --preview-alias pr-<N>`, unit-tested URL parser
+      gated by `mise run test:bin`), `smoke-url.ts` (generic URL smoke), `comment-preview.ts`
+      (generalized from f311x). Thin per-app `cd-preview-<app>.yml` callers.
+- [x] Wired all nine: calendar-visualizer, djf.io, ravrun, davidjfelix.com, onvibes.org,
+      revision.city, startchi.com (TanStack Start SSR), monicandavid.com (SvelteKit), pkg.dog (Nuxt).
+- [x] Screenshots on every app (David's call): committed Linux/chromium `toHaveScreenshot` baselines;
+      djf.io reuses its existing Playwright suite via a new `PREVIEW_URL` seam.
+- [ ] forzamonica.com — deferred to the forzamonica-shop project (storefront with external mock.shop
+      data complicates a stable baseline; that project is mid-flight).
+- [ ] Real-deploy verification — the `wrangler versions upload` path (and the SSR `.wrangler/deploy`
+      redirect + custom-domain `preview_urls`) is verified locally but needs a first real PR with CI
+      secrets to confirm end to end.
+
+### Phase 3: Wire into gates
 
 ### Phase 3: Wire into gates
 
@@ -70,10 +86,19 @@ Resolved for Phase 1 (2026-06-16):
   dedicated service.
 - **Preview lifecycle**: stage `pr-<N>`; auto `alchemy destroy` on PR close.
 
+Resolved for Phase 2 (2026-06-17):
+
+- **Wrangler preview mechanism**: `wrangler versions upload --preview-alias pr-<N>` uploads a
+  non-active version with a deterministic `pr-<N>-<worker>.<subdomain>.workers.dev` URL. It never
+  applies triggers, so production routes/custom domains stay on the active version — which means
+  **no teardown job** (versions are inert; Cloudflare prunes old aliases) and no route-hijack risk.
+  Custom-domain apps add `preview_urls = true` to their `wrangler.toml` so the preview URL resolves.
+- **SSR boots for baselines**: TanStack Start apps boot via `vite preview` (the `@cloudflare/vite-plugin`
+  serves the worker in workerd); SvelteKit/Nuxt boot the built worker via `wrangler dev`. Each app's
+  Playwright config mirrors its `bin/smoke-local.ts` boot.
+
 Still open (Phase 2):
 
-- Generalizing previews to apps that deploy via wrangler (not Alchemy) — the URL-resolution +
-  teardown shape will differ from f311x's.
 - Fork PRs lack secrets, so their preview job fails; revisit if external contributions ever matter
   (do not reach for `pull_request_target`).
 

@@ -27,8 +27,6 @@ jobs:
 
       - name: mise
         uses: ./.github/actions/setup-mise
-        with:
-          cache: false
 
       - name: pnpm install
         run: pnpm install --frozen-lockfile

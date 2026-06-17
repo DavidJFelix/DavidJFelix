@@ -12,6 +12,7 @@ actionlint = "1"
 ghalint = "1"
 zizmor = "1"
 pinact = "4.1.0"
+"npm:cspell" = "10.0.1"
 
 # Repo-root checks, scoped to the config files the root owns. Legacy project
 # dirs (Advent-of-Code, Exercism, etc.) are intentionally out of scope, and
@@ -24,6 +25,11 @@ dir = "{{config_root}}"
 [tasks."format:fix"]
 description = "Apply formatting fixes to repo-root config files"
 run = "biome check --write biome.jsonc .oxlintrc.json .prettierrc.json .config/cspell.json .github/renovate.json .vscode/settings.json .vscode/extensions.json"
+dir = "{{config_root}}"
+
+[tasks.spell]
+description = "Spell-check repo-owned sources (cspell)"
+run = "cspell --config .config/cspell.json --no-progress --dot 'apps/**' 'docs/**' 'bin/**' '*.md' '.config/**' '.github/**'"
 dir = "{{config_root}}"
 
 # Monorepo aggregators: fan a task out to every app. Per-app CI still runs each

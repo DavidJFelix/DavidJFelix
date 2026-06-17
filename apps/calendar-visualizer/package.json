@@ -14,8 +14,7 @@
     "format": "biome format . && prettier --check --no-error-on-unmatched-pattern \"**/*.md\" \"**/*.mdx\"",
     "format:fix": "biome format --write . && prettier --write --no-error-on-unmatched-pattern \"**/*.md\" \"**/*.mdx\"",
     "test": "vitest run --coverage",
-    "test:watch": "vitest",
-    "spell": "cspell --config ../../.config/cspell.json \"**\""
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@astrojs/react": "^5.0.7",
@@ -29,11 +28,9 @@
   },
   "devDependencies": {
     "@astrojs/check": "0.9.9",
-    "@cspell/dict-typescript": "3.2.3",
     "@pandacss/dev": "1.11.3",
     "@types/bun": "1.3.14",
     "@vitest/coverage-v8": "4.1.8",
-    "cspell": "10.0.1",
     "vitest": "4.1.8",
     "wrangler": "4.100.0"
   }

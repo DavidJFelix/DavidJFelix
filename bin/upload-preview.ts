@@ -73,7 +73,15 @@ async function main(): Promise<void> {
     process.exit(exitCode)
   }
 
-  const url = parsePreviewUrl(stdout, {prNumber, workerName})
+  let url: string
+  try {
+    url = parsePreviewUrl(stdout, {prNumber, workerName})
+  } catch (err) {
+    // A readable Actions annotation beats an uncaught bun stack trace. The most
+    // likely cause is a worker without workers.dev Preview URLs enabled.
+    console.error(`::error::${err instanceof Error ? err.message : String(err)}`)
+    process.exit(1)
+  }
   console.log(url)
   if (process.env.GITHUB_OUTPUT) {
     appendFileSync(process.env.GITHUB_OUTPUT, `url=${url}\n`)

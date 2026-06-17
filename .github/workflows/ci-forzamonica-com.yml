@@ -44,10 +44,7 @@ jobs:
           persist-credentials: false
 
       - name: mise
-        uses: jdx/mise-action@dba19683ed58901619b14f395a24841710cb4925 # v4.1.0
-        with:
-          install: true
-          cache: true
+        uses: ./.github/actions/setup-mise
 
       - name: pnpm install
         run: pnpm install --frozen-lockfile
@@ -68,10 +65,7 @@ jobs:
           persist-credentials: false
 
       - name: mise
-        uses: jdx/mise-action@dba19683ed58901619b14f395a24841710cb4925 # v4.1.0
-        with:
-          install: true
-          cache: true
+        uses: ./.github/actions/setup-mise
 
       - name: pnpm install
         run: pnpm install --frozen-lockfile
@@ -92,10 +86,7 @@ jobs:
           persist-credentials: false
 
       - name: mise
-        uses: jdx/mise-action@dba19683ed58901619b14f395a24841710cb4925 # v4.1.0
-        with:
-          install: true
-          cache: true
+        uses: ./.github/actions/setup-mise
 
       - name: pnpm install
         run: pnpm install --frozen-lockfile
@@ -116,10 +107,7 @@ jobs:
           persist-credentials: false
 
       - name: mise
-        uses: jdx/mise-action@dba19683ed58901619b14f395a24841710cb4925 # v4.1.0
-        with:
-          install: true
-          cache: true
+        uses: ./.github/actions/setup-mise
 
       - name: pnpm install
         run: pnpm install --frozen-lockfile
@@ -140,10 +128,7 @@ jobs:
           persist-credentials: false
 
       - name: mise
-        uses: jdx/mise-action@dba19683ed58901619b14f395a24841710cb4925 # v4.1.0
-        with:
-          install: true
-          cache: true
+        uses: ./.github/actions/setup-mise
 
       - name: pnpm install
         run: pnpm install --frozen-lockfile
@@ -164,10 +149,7 @@ jobs:
           persist-credentials: false
 
       - name: mise
-        uses: jdx/mise-action@dba19683ed58901619b14f395a24841710cb4925 # v4.1.0
-        with:
-          install: true
-          cache: true
+        uses: ./.github/actions/setup-mise
 
       - name: pnpm install
         run: pnpm install --frozen-lockfile

@@ -14,7 +14,9 @@
     "format:fix": "biome format --write . && prettier --write --no-error-on-unmatched-pattern \"**/*.md\" \"**/*.mdx\"",
     "typecheck": "nuxt typecheck",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:update": "playwright test --update-snapshots"
   },
   "dependencies": {
     "@ark-ui/vue": "^5.37.2",
@@ -23,6 +25,7 @@
   },
   "devDependencies": {
     "@pandacss/dev": "1.11.3",
+    "@playwright/test": "1.60.0",
     "typescript": "6.0.3",
     "vitest": "4.1.8",
     "vue-tsc": "3.3.5",

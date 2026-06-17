@@ -14,13 +14,16 @@
     "format:fix": "biome format --write . && prettier --write --no-error-on-unmatched-pattern \"**/*.md\" \"**/*.mdx\"",
     "typecheck": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:update": "playwright test --update-snapshots"
   },
   "dependencies": {
     "@ark-ui/svelte": "^5.22.1"
   },
   "devDependencies": {
     "@pandacss/dev": "1.11.3",
+    "@playwright/test": "1.60.0",
     "@sveltejs/adapter-cloudflare": "7.2.8",
     "@sveltejs/kit": "2.65.1",
     "@sveltejs/vite-plugin-svelte": "7.1.2",

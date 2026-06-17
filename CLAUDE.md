@@ -81,8 +81,11 @@ Keep it short. The issue body should fit on one screen. If it doesn't fit, the t
 - **Runtime**: Node 26, pnpm 10 (managed via mise)
 - **Linting**: Biome, Oxlint
 - **Formatting**: Biome (code); Prettier (Markdown/MDX only)
-- **Spell Check**: cspell with shared config at `.config/cspell.json`
+- **Type checking**: tsgo (`@typescript/native-preview`), per app
+- **Spell Check**: cspell, shared config at `.config/cspell.json`. It's a single repo-wide gate — a root tool (mise `npm:cspell`), run via `mise run spell` and enforced on every push/PR by `ci-spell.yml`. Apps do not carry their own cspell dependency.
 - **Per-app checks**: each app declares `typecheck` / `lint` / `format` / `test` / `build` as mise tasks in `apps/<name>/mise.toml` (`mise run check` runs them all); CI runs the same tasks
+- **Rust** (aspirational, not yet wired): clippy (lint) + rustfmt (format), shared config
+- **Full ownership map**: see [docs/tooling-standard.md](docs/tooling-standard.md) for which tool owns each concern per ecosystem
 
 ### Ecosystem tool choices
 

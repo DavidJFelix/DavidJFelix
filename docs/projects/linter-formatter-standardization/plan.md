@@ -55,22 +55,27 @@ Same ecosystem → same config. Per-project overrides only when there's a real, 
 ## Remaining work (2026-06-11 audit)
 
 A full audit (see [2026-06-11-progress.md](./2026-06-11-progress.md)) found the
-remaining scope is 2–4 sessions, not polish. In addition to the Rust gap above:
+remaining scope is 2–4 sessions, not polish. The decision-free mechanical slice
+landed 2026-06-16 (see [2026-06-16-progress.md](./2026-06-16-progress.md)); the
+Rust gap above and the scope decisions below remain.
 
-- **cspell is configured but enforced nowhere.** Per-app `spell` scripts exist,
-  but no app's mise `check` umbrella includes spell, there is no root spell
-  task, and none of the 16 CI workflows run it.
-- **Root `.prettierignore` is non-functional.** Its `*` + `!**/*.md` pattern
-  cannot re-include nested files (gitignore semantics); it needs the `/*` +
-  `!*/` recipe. Root docs and ~43 files under `docs/` are unformatted.
+- ~~**cspell is configured but enforced nowhere.**~~ **DONE 2026-06-16.** cspell
+  is now a root tool (mise `npm:cspell`) run by `mise run spell` and enforced on
+  every push/PR by `ci-spell.yml`. The redundant per-app `spell` scripts and
+  cspell devDependencies were removed; the backlog was triaged (dictionary
+  additions + ignore generated trees) to a green gate.
+- ~~**Root `.prettierignore` is non-functional.**~~ **DONE 2026-06-16.** Rewritten
+  to the working `**` + `!*/` recipe; a bare `prettier .` now touches only md/mdx
+  and descends the tree. (Enforcing format across `docs/` is still gated on the
+  root-markdown decision below.)
 - **Unscoped directories.** `Joy-of-React/` (two projects with Biome configs
   extending root, but no CI) and `Advent-of-Code/2020/*/typescript` (eight
   projects with no lint/format configs at all) sit outside the standard with no
   recorded decision.
-- **Config drift.** davidjfelix.com and djf.io are on Biome schema 2.4.4 vs
-  2.4.16 everywhere else.
-- **Phase 4 doc missing.** No `docs/tooling-standard.md`; the CLAUDE.md tooling
-  section lacks the Rust and cspell entries.
+- ~~**Config drift.**~~ **DONE 2026-06-16.** davidjfelix.com and djf.io bumped to
+  Biome schema 2.4.16.
+- ~~**Phase 4 doc missing.**~~ **DONE 2026-06-16.** `docs/tooling-standard.md`
+  added; CLAUDE.md tooling section now carries cspell, tsgo, and Rust entries.
 
 Not a gap: tsgo is a proper per-app devDependency (`@typescript/native-preview`)
 in the apps that use it — but it is pinned to `latest`, which was handed to the

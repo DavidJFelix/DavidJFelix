@@ -1,5 +1,23 @@
-# Prettier is only used for Markdown and MDX files.
-# Everything else is formatted by Biome.
-*
-!**/*.md
-!**/*.mdx
+# Prettier is only used for Markdown and MDX files; Biome formats everything else.
+#
+# Recipe: ignore every file at every depth (`**`), then re-include directories
+# (`!*/`) so prettier still descends the tree, then re-include md/mdx at any
+# depth. The previous `*` + `!**/*.md` form excluded directories outright, so the
+# negations could never reach nested files (gitignore semantics).
+**
+!*/
+!*.md
+!*.mdx
+
+# ...but never descend into generated or vendored trees, even for their markdown.
+node_modules/
+dist/
+build/
+.astro/
+.svelte-kit/
+.nuxt/
+.output/
+.vinxi/
+.wrangler/
+.vercel/
+styled-system/

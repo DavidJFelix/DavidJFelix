@@ -12,6 +12,9 @@ actionlint = "1"
 ghalint = "1"
 zizmor = "1"
 pinact = "4.1.0"
+# Spell check is a universal, repo-wide concern (no single app owns it), so cspell
+# is a root tool rather than a per-app devDependency. See docs/tooling-standard.md.
+"npm:cspell" = "10.0.1"
 
 # Repo-root checks, scoped to the config files the root owns. Legacy project
 # dirs (Advent-of-Code, Exercism, etc.) are intentionally out of scope, and
@@ -24,6 +27,15 @@ dir = "{{config_root}}"
 [tasks."format:fix"]
 description = "Apply formatting fixes to repo-root config files"
 run = "biome check --write biome.jsonc .oxlintrc.json .prettierrc.json .config/cspell.json .github/renovate.json .vscode/settings.json .vscode/extensions.json"
+dir = "{{config_root}}"
+
+# Repo-wide spell check. cspell's ignorePaths (node_modules, dist, styled-system,
+# lockfiles, etc.) handle the noise; the roots below are the repo's own sources.
+# Legacy exercise dirs (Advent-of-Code, Exercism, Joy-of-React) are intentionally
+# out of scope pending a standardization decision.
+[tasks.spell]
+description = "Spell-check repo-owned sources (cspell)"
+run = "cspell --config .config/cspell.json --no-progress --dot 'apps/**' 'docs/**' 'bin/**' '*.md' '.config/**' '.github/**'"
 dir = "{{config_root}}"
 
 # Monorepo aggregators: fan a task out to every app. Per-app CI still runs each

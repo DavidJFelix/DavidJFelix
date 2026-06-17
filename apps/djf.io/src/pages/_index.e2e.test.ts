@@ -16,3 +16,11 @@ test('home page links to blog', async ({page}) => {
   await blogLink.click()
   await expect(page).toHaveURL(/\/blog\/?$/)
 })
+
+test('home page matches the visual baseline', async ({page}) => {
+  await page.goto('/')
+  await expect(page.getByRole('heading', {level: 1, name: 'David J Felix'})).toBeVisible()
+  // Let web fonts settle so the snapshot is stable across runs.
+  await page.evaluate(() => document.fonts.ready)
+  await expect(page).toHaveScreenshot('home.png', {maxDiffPixelRatio: 0.01})
+})

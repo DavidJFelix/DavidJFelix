@@ -21,3 +21,8 @@ yarn-error.log*
 # wrangler
 .wrangler/
 .dev.vars
+
+# playwright
+test-results/
+playwright-report/
+playwright/.cache/

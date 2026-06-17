@@ -2,6 +2,11 @@
 name = "davidjfelix-com"
 compatibility_date = "2026-04-29"
 
+# This worker serves via custom domains; explicitly keep workers.dev preview
+# URLs on so `wrangler versions upload --preview-alias` (cd-preview) gets a
+# reachable pr-<N> URL. Does not affect production routing.
+preview_urls = true
+
 routes = [
   { pattern = "davidjfelix.com", custom_domain = true },
   { pattern = "www.davidjfelix.com", custom_domain = true },

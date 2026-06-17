@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+/* Base look formerly provided by the Tailwind Play CDN's inline
+   `<style type="text/tailwindcss">`. Expressed with v4 theme variables to avoid
+   `@apply`-with-variant quirks. Dark mode follows prefers-color-scheme (matching
+   the CDN default); Playwright snapshots render in light mode. */
+@layer base {
+  html {
+    color-scheme: light dark;
+  }
+  * {
+    border-color: var(--color-gray-200);
+  }
+  body {
+    background-color: var(--color-gray-50);
+    color: var(--color-gray-950);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    * {
+      border-color: var(--color-gray-800);
+    }
+    body {
+      background-color: var(--color-gray-900);
+      color: var(--color-gray-200);
+    }
+  }
+}

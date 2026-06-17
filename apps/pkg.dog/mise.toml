@@ -25,6 +25,11 @@ run = "pnpm run test"
 description = "Build with Nuxt"
 run = "pnpm run build"
 
+[tasks.smoke]
+description = "Smoke-test a local production boot (workerd via wrangler dev)"
+depends = ["build"]
+run = "bun bin/smoke-local.ts"
+
 [tasks.check]
 description = "Run all checks"
 depends = ["typecheck", "lint", "format", "test", "build"]

@@ -104,18 +104,25 @@ forzamonica's `bin/smoke-local.ts`):
 ### CI integration (chosen: sync on deploy)
 
 In `.github/workflows/cd-deploy-djf-io.yml`, add a step **after `astro build`, before
-`wrangler deploy`**, gating the deploy on sync success (HTML never goes live referencing
-records that don't exist):
+`wrangler deploy`**. Guard it on the secret so it **skips (never fails)** when the secret
+is absent — that way the workflow edit can't break a deploy, and the step activates only
+once Phase 3 adds `ATPROTO_APP_PASSWORD`. When the secret is present it gates the deploy on
+sync success (HTML never goes live referencing records that don't exist):
 
 ```yaml
+# job-level env, so the step `if:` can read it:
+env:
+  ATPROTO_APP_PASSWORD: ${{ secrets.ATPROTO_APP_PASSWORD }}
+
+# step (after `astro build`, before `wrangler deploy`):
 - name: sync standard.site records
+  if: ${{ env.ATPROTO_APP_PASSWORD != '' }} # skip when the secret is unset
   run: mise run sync-standard-site
-  env:
-    ATPROTO_APP_PASSWORD: ${{ secrets.ATPROTO_APP_PASSWORD }}
 ```
 
 Idempotent, so safe on every djf.io deploy. The DID is public and committed; the **only**
-secret is the app password.
+secret is the app password. **Ordering:** this workflow edit ships in Phase 3 alongside the
+secret — not in Phase 2 — and the `if:` guard makes an out-of-order landing non-fatal.
 
 **Security note (the tradeoff of this choice):** the app password grants full write to
 David's ATProto repo. Mitigations: store as an encrypted GitHub Actions secret (never
@@ -154,14 +161,17 @@ artifact or record we'd author.
 - [ ] `<link>` tags in `BlogPost.astro` + `BaseLayout.astro`
 - [ ] Unit tests (`src/lib/standard-site.test.ts`) + e2e (`_site.standard.publication.e2e.test.ts`, post `<link>` assertion)
 - [ ] `bin/sync-standard-site.ts` + mise task + deps (`@atproto/api`, `gray-matter`)
-- [ ] CI sync step in `cd-deploy-djf-io.yml`
 
-> Phase 2 lands `ATPROTO_DID` as a placeholder until Phase 3 supplies the real value;
-> the `{… && …}` guards keep the build green and tag-free until then.
+> Phase 2 ships the website code only — it does **not** touch the deploy workflow, so it
+> needs no credentials. `ATPROTO_DID` lands as a placeholder until Phase 3 supplies the real
+> value; the `{… && …}` guards keep the build green and tag-free until then. The deploy
+> sync step is Phase 3 (it needs the secret).
 
 ### Phase 3 — Go live (human + verify)
 
-- [ ] David: confirm DID, create app password, add `ATPROTO_APP_PASSWORD` secret (issue)
+- [ ] David: confirm the `did:plc:…`, create an app password, add the `ATPROTO_APP_PASSWORD` secret (issue)
+- [ ] Bake the real `ATPROTO_DID` into `src/lib/standard-site.ts`
+- [ ] Add the guarded sync step to `cd-deploy-djf-io.yml` (skips until the secret exists, so safe to land any time)
 - [ ] Deploy → sync step creates records
 - [ ] Validate at [site-validator.fly.dev](https://site-validator.fly.dev/)
 

@@ -40,3 +40,9 @@ run = "pnpm run build"
 [tasks.check]
 description = "Run all checks"
 depends = ["typecheck", "lint", "format", "test", "build"]
+
+# Not part of `check` -- needs ATPROTO_APP_PASSWORD and writes to bsky.social.
+# Wired into the djf.io deploy workflow in Phase 3; runnable locally meanwhile.
+[tasks."sync-standard-site"]
+description = "Sync standard.site ATProto records (needs ATPROTO_APP_PASSWORD)"
+run = "bun bin/sync-standard-site.ts"

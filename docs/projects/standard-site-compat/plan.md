@@ -154,13 +154,14 @@ artifact or record we'd author.
 - [x] Project docs (this plan + progress)
 - [x] Human-intervention issue filed for `@DavidJFelix` (DID + app password + GH secret)
 
-### Phase 2 — Website implementation (no credentials needed)
+### Phase 2 — Website implementation (no credentials needed) — done 2026-06-18
 
-- [ ] `src/lib/standard-site.ts` (DID constant + rkey/URI helpers + publication metadata)
-- [ ] `src/pages/.well-known/site.standard.publication.ts` endpoint (static-file fallback if dot-dir excluded)
-- [ ] `<link>` tags in `BlogPost.astro` + `BaseLayout.astro`
-- [ ] Unit tests (`src/lib/standard-site.test.ts`) + e2e (`_site.standard.publication.e2e.test.ts`, post `<link>` assertion)
-- [ ] `bin/sync-standard-site.ts` + mise task + deps (`@atproto/api`, `gray-matter`)
+- [x] `src/lib/standard-site.ts` (DID constant + rkey/URI helpers + publication metadata)
+- [x] `src/pages/.well-known/site.standard.publication.ts` endpoint — the leading-dot dir under `src/pages/` builds to `dist/` fine, so **no `public/` fallback was needed**
+- [x] `<link>` tags in `BlogPost.astro` + `BaseLayout.astro`
+- [x] Unit tests (`src/lib/standard-site.test.ts`, lib coverage 100%) + e2e (both well-known endpoints + post `<link>` assertion)
+- [x] `bin/sync-standard-site.ts` + mise task + deps (`@atproto/api`, `gray-matter`)
+- [x] **Added:** `src/pages/.well-known/atproto-did.ts` — serves the bare DID for AT Protocol HTTP handle verification of `@djf.io` (complements the DNS `_atproto.djf.io` record; DNS untouched)
 
 > Phase 2 ships the website code only — it does **not** touch the deploy workflow, so it
 > needs no credentials. `ATPROTO_DID` lands as a placeholder until Phase 3 supplies the real
@@ -169,17 +170,18 @@ artifact or record we'd author.
 
 ### Phase 3 — Go live (human + verify)
 
-- [ ] David: confirm the `did:plc:…`, create an app password, add the `ATPROTO_APP_PASSWORD` secret (issue)
-- [ ] Bake the real `ATPROTO_DID` into `src/lib/standard-site.ts`
+- [x] Confirm the `did:plc:…` and bake the real `ATPROTO_DID` into `src/lib/standard-site.ts` — done 2026-06-18 (`did:plc:nlbldots3jn3lk6mzca4rqzm`; resolved publicly + verified `alsoKnownAs: at://djf.io`. The DID is public, not a secret.)
+- [ ] David: create a Bluesky app password, add the `ATPROTO_APP_PASSWORD` secret (issue #249)
 - [ ] Add the guarded sync step to `cd-deploy-djf-io.yml` (skips until the secret exists, so safe to land any time)
 - [ ] Deploy → sync step creates records
 - [ ] Validate at [site-validator.fly.dev](https://site-validator.fly.dev/)
 
 ## Files
 
-**Create**: `src/lib/standard-site.ts`; `src/pages/.well-known/site.standard.publication.ts`
-(or `public/.well-known/...` fallback); `bin/sync-standard-site.ts`;
-`src/lib/standard-site.test.ts`; `src/pages/.well-known/_site.standard.publication.e2e.test.ts`
+**Create**: `src/lib/standard-site.ts`; `src/pages/.well-known/site.standard.publication.ts`;
+`src/pages/.well-known/atproto-did.ts`; `bin/sync-standard-site.ts`;
+`src/lib/standard-site.test.ts`; `src/pages/.well-known/_site.standard.publication.e2e.test.ts`;
+`src/pages/.well-known/_atproto-did.e2e.test.ts`
 (`_`-prefixed per the `src/pages/` rule, mirrors `_rss.xml.e2e.test.ts`).
 
 **Edit**: `src/layouts/BlogPost.astro`; `src/layouts/BaseLayout.astro`;

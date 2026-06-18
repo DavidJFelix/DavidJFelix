@@ -50,7 +50,7 @@ Human-directed polish of djf.io: colors, spacing, layout, images, usability, com
 
 ### [standard.site Compatibility](./projects/standard-site-compat/plan.md)
 
-Make djf.io a first-class citizen in the Bluesky/AT Protocol long-form ecosystem: publish `site.standard.publication` + per-post `site.standard.document` records and the website verification artifacts (`/.well-known/site.standard.publication` + `<link>` tags). Deterministic AT-URIs (rkey = post slug) keep the build and a CI-on-deploy sync in step. Plan + human-task issue filed; website implementation pending. Identity is `@djf.io` on bsky.social.
+Make djf.io a first-class citizen in the Bluesky/AT Protocol long-form ecosystem: publish `site.standard.publication` + per-post `site.standard.document` records and the website verification artifacts (`/.well-known/site.standard.publication` + `<link>` tags). Deterministic AT-URIs (rkey = post slug) keep the build and a CI-on-deploy sync in step. Website implementation (Phase 2) shipped 2026-06-18 — also serves `/.well-known/atproto-did` for handle verification; go-live (Phase 3) waits on the `ATPROTO_APP_PASSWORD` secret (#249). Identity is `@djf.io` on bsky.social.
 
 **Status**: In Progress
 

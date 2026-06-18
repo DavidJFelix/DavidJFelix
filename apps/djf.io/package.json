@@ -39,9 +39,11 @@
     "sharp": "^0.35.1"
   },
   "devDependencies": {
+    "@atproto/api": "0.20.16",
     "@pandacss/dev": "1.11.3",
     "@playwright/test": "1.60.0",
     "@vitest/coverage-v8": "4.1.8",
+    "gray-matter": "4.0.3",
     "pagefind": "1.5.2",
     "vitest": "4.1.8",
     "wrangler": "4.100.0"

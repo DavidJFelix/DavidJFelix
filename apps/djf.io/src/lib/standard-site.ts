@@ -10,9 +10,8 @@
 // this DID's document lists alsoKnownAs ["at://djf.io"].
 export const ATPROTO_DID = 'did:plc:nlbldots3jn3lk6mzca4rqzm'
 
-// Singleton publication record key, following the `self` convention used by
-// app.bsky.actor.profile.
-export const PUBLICATION_RKEY = 'self'
+// Singleton publication record key
+export const PUBLICATION_RKEY = '3moldv46oucwc'
 
 // Publication metadata. `name`/`description` reuse the RSS feed strings (see
 // src/pages/rss.xml.ts) so the feed and the ATProto record never diverge.

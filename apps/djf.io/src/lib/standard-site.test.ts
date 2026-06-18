@@ -6,7 +6,6 @@ import {
   documentPath,
   type ExistingRecord,
   isTid,
-  PUBLICATION,
   PUBLICATION_COLLECTION,
   PUBLICATION_RKEY,
   planDocumentActions,
@@ -50,7 +49,7 @@ test('publicationUri uses the committed publication TID constant', () => {
   expect(publicationUri()).toBe(`at://${ATPROTO_DID}/${PUBLICATION_COLLECTION}/${PUBLICATION_RKEY}`)
 })
 
-const SITE = PUBLICATION.url
+const SITE = publicationUri() // djf.io's publication AT-URI -- what documents carry as `site`
 const docA = {slug: 'a', path: '/blog/a/', record: {title: 'A'}}
 const docB = {slug: 'b', path: '/blog/b/', record: {title: 'B'}}
 
@@ -75,9 +74,9 @@ test('planDocumentActions ignores a legacy slug-keyed record and creates a TID o
 })
 
 test('planDocumentActions ignores a document owned by another publication', () => {
-  // Same path, different publication url -> not djf.io's, so never reused.
+  // Same path, but a different publication's AT-URI -> not djf.io's, so not reused.
   const existing: Array<ExistingRecord> = [
-    {rkey: TID_A, path: '/blog/a/', site: 'https://other.example'},
+    {rkey: TID_A, path: '/blog/a/', site: atUri(PUBLICATION_COLLECTION, TID_B)},
   ]
   expect(planDocumentActions(existing, [docA], SITE)).toEqual([
     {kind: 'create', slug: 'a', record: {title: 'A'}},

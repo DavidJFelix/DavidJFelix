@@ -14,6 +14,7 @@ import {
   documentPath,
   isTid,
   PUBLICATION,
+  PUBLICATION_COLLECTION,
   rkeyFromUri,
 } from './standard-site'
 
@@ -76,14 +77,21 @@ async function buildDocumentUriMap(): Promise<Map<string, string>> {
   if (!resolutionEnabled()) return map
   try {
     const pds = await resolvePdsEndpoint(ATPROTO_DID)
+    // djf.io's publication is the one whose url is PUBLICATION.url (found by url,
+    // not by record key); its AT-URI is what djf.io's documents carry as `site`.
+    const publications = await listAllRecords(pds, PUBLICATION_COLLECTION)
+    const ownPublicationUri = publications.find(
+      (record) => record.value.url === PUBLICATION.url,
+    )?.uri
+    if (!ownPublicationUri) return map
     const records = await listAllRecords(pds, DOCUMENT_COLLECTION)
     for (const record of records) {
       const {path, site} = record.value
-      // Only djf.io's documents: those whose `site` references this publication's
-      // url. Documents from any other publication sharing the repo are excluded.
+      // Only djf.io's documents: those whose `site` is this publication's AT-URI.
+      // Documents from any other publication sharing the repo are excluded.
       if (
         typeof path !== 'string' ||
-        site !== PUBLICATION.url ||
+        site !== ownPublicationUri ||
         map.has(path) ||
         !isTid(rkeyFromUri(record.uri))
       ) {

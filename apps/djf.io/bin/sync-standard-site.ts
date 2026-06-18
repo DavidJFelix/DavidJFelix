@@ -24,6 +24,7 @@ import {
   PUBLICATION_COLLECTION,
   PUBLICATION_RKEY,
   planDocumentActions,
+  publicationUri,
   rkeyFromUri,
 } from '../src/lib/standard-site'
 
@@ -90,9 +91,10 @@ async function listExisting(agent: AtpAgent, collection: string): Promise<Array<
 function documentRecord(slug: string, data: Frontmatter): Record<string, unknown> {
   return {
     $type: DOCUMENT_COLLECTION,
-    // Reference the publication by its url (djf.io is the one publication with
-    // this url), so ownership doesn't depend on the publication's record key.
-    site: PUBLICATION.url,
+    // The publication's AT-URI: document.site must be at://{did}/{collection}/{rkey}
+    // (a bare url is rejected by the validator). publicationUri() is djf.io's
+    // publication -- the one whose url is PUBLICATION.url.
+    site: publicationUri(),
     title: data.title,
     publishedAt: new Date(data.date).toISOString(),
     path: documentPath(slug),
@@ -128,7 +130,7 @@ async function syncDocuments(agent: AtpAgent): Promise<number> {
     record: documentRecord(slug, data),
   }))
   // Sequential on purpose: gentle on the PDS and keeps log output ordered.
-  for (const action of planDocumentActions(existing, desired, PUBLICATION.url)) {
+  for (const action of planDocumentActions(existing, desired, publicationUri())) {
     if (action.kind === 'create') {
       // No rkey -> the PDS assigns a TID.
       await agent.com.atproto.repo.createRecord({

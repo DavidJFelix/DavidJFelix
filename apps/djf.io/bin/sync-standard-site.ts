@@ -24,7 +24,6 @@ import {
   PUBLICATION_COLLECTION,
   PUBLICATION_RKEY,
   planDocumentActions,
-  publicationUri,
   rkeyFromUri,
 } from '../src/lib/standard-site'
 
@@ -76,10 +75,11 @@ async function listExisting(agent: AtpAgent, collection: string): Promise<Array<
       cursor,
     })
     for (const record of data.records) {
-      const value = record.value as {path?: unknown}
+      const value = record.value as {path?: unknown; site?: unknown}
       records.push({
         rkey: rkeyFromUri(record.uri),
         path: typeof value.path === 'string' ? value.path : undefined,
+        site: typeof value.site === 'string' ? value.site : undefined,
       })
     }
     cursor = data.cursor
@@ -90,7 +90,9 @@ async function listExisting(agent: AtpAgent, collection: string): Promise<Array<
 function documentRecord(slug: string, data: Frontmatter): Record<string, unknown> {
   return {
     $type: DOCUMENT_COLLECTION,
-    site: publicationUri(),
+    // Reference the publication by its url (djf.io is the one publication with
+    // this url), so ownership doesn't depend on the publication's record key.
+    site: PUBLICATION.url,
     title: data.title,
     publishedAt: new Date(data.date).toISOString(),
     path: documentPath(slug),
@@ -126,7 +128,7 @@ async function syncDocuments(agent: AtpAgent): Promise<number> {
     record: documentRecord(slug, data),
   }))
   // Sequential on purpose: gentle on the PDS and keeps log output ordered.
-  for (const action of planDocumentActions(existing, desired)) {
+  for (const action of planDocumentActions(existing, desired, PUBLICATION.url)) {
     if (action.kind === 'create') {
       // No rkey -> the PDS assigns a TID.
       await agent.com.atproto.repo.createRecord({

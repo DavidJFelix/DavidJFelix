@@ -65,7 +65,7 @@ export function publicationUri(): string {
 // assigns the TID). It is intentionally non-destructive -- deleting legacy or
 // orphaned records is a manual step -- so a deploy can never wipe a record.
 
-export type ExistingRecord = {rkey: string; path?: string}
+export type ExistingRecord = {rkey: string; path?: string; site?: string}
 
 export type DesiredDocument = {slug: string; path: string; record: Record<string, unknown>}
 
@@ -76,12 +76,20 @@ export type DocumentAction =
 export function planDocumentActions(
   existing: ReadonlyArray<ExistingRecord>,
   desired: ReadonlyArray<DesiredDocument>,
+  ownerSite: string,
 ): Array<DocumentAction> {
-  // First valid-TID record per path; legacy non-TID records are ignored so the
+  // First valid-TID record per path, among records that belong to this
+  // publication (matched by `site`) -- documents from other publications sharing
+  // the repo are never reused. Legacy non-TID records are ignored too, so the
   // post gets a fresh server-assigned TID instead of reusing a bad key.
   const tidByPath = new Map<string, string>()
   for (const record of existing) {
-    if (record.path && isTid(record.rkey) && !tidByPath.has(record.path)) {
+    if (
+      record.site === ownerSite &&
+      record.path &&
+      isTid(record.rkey) &&
+      !tidByPath.has(record.path)
+    ) {
       tidByPath.set(record.path, record.rkey)
     }
   }

@@ -8,7 +8,14 @@
 // ./standard-site.) This is the only networked module, and is excluded from
 // coverage in vitest.config.ts.
 
-import {ATPROTO_DID, DOCUMENT_COLLECTION, documentPath, isTid, rkeyFromUri} from './standard-site'
+import {
+  ATPROTO_DID,
+  DOCUMENT_COLLECTION,
+  documentPath,
+  isTid,
+  PUBLICATION,
+  rkeyFromUri,
+} from './standard-site'
 
 const PLC_DIRECTORY = 'https://plc.directory'
 const FETCH_TIMEOUT_MS = 10_000
@@ -71,8 +78,17 @@ async function buildDocumentUriMap(): Promise<Map<string, string>> {
     const pds = await resolvePdsEndpoint(ATPROTO_DID)
     const records = await listAllRecords(pds, DOCUMENT_COLLECTION)
     for (const record of records) {
-      const path = record.value.path
-      if (typeof path !== 'string' || map.has(path) || !isTid(rkeyFromUri(record.uri))) continue
+      const {path, site} = record.value
+      // Only djf.io's documents: those whose `site` references this publication's
+      // url. Documents from any other publication sharing the repo are excluded.
+      if (
+        typeof path !== 'string' ||
+        site !== PUBLICATION.url ||
+        map.has(path) ||
+        !isTid(rkeyFromUri(record.uri))
+      ) {
+        continue
+      }
       map.set(path, record.uri)
     }
     return map

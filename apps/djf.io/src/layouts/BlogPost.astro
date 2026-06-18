@@ -3,7 +3,7 @@ import {Image} from 'astro:assets'
 import type {CollectionEntry} from 'astro:content'
 import {css} from 'styled-system/css'
 import {formatBlogDate} from '../lib/blog'
-import {documentUri} from '../lib/standard-site'
+import {documentUri} from '../lib/standard-site-resolve'
 import BaseLayout from './BaseLayout.astro'
 
 interface Props {
@@ -14,6 +14,10 @@ const {post} = Astro.props
 const {title, description, date, author, tags, readingTime, hero} = post.data
 
 const formattedDate = formatBlogDate(date)
+
+// Resolved from the live PDS only when the deploy opts in (STANDARD_SITE_RESOLVE);
+// null otherwise, so the link is omitted in offline/local/CI builds.
+const standardDocumentUri = await documentUri(post.id)
 
 const ogImage = `/og/blog/${post.id}.png`
 const postUrl = Astro.site ? new URL(`/blog/${post.id}/`, Astro.site) : undefined
@@ -33,7 +37,11 @@ const jsonLd = {
 
 <BaseLayout title={title} description={description} ogType="article" ogImage={ogImage}>
   <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} slot="head" />
-  <link rel="site.standard.document" href={documentUri(post.id)} slot="head" />
+  {
+    standardDocumentUri && (
+      <link rel="site.standard.document" href={standardDocumentUri} slot="head" />
+    )
+  }
   <article data-pagefind-body>
     <header
       class={css({

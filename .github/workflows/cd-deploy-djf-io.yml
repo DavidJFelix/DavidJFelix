@@ -37,9 +37,6 @@ jobs:
       - name: panda codegen
         run: pnpm exec panda codegen
 
-      - name: astro build
-        run: pnpm exec astro build
-
       # Detect the secret in a step-scoped env (ghalint 006 forbids secrets in
       # job env), so the sync below can skip when it is unset — keeping djf.io
       # deploys decoupled from the atproto credential.
@@ -52,11 +49,21 @@ jobs:
             echo "present=true" >> "$GITHUB_OUTPUT"
           fi
 
+      # Runs before the build so the document records exist when the build
+      # resolves their TID URIs below.
       - name: sync standard.site records
         if: ${{ steps.atproto.outputs.present == 'true' }}
         env:
           ATPROTO_APP_PASSWORD: ${{ secrets.ATPROTO_APP_PASSWORD }}
         run: mise run sync-standard-site
+
+      # STANDARD_SITE_RESOLVE makes the build read document TID URIs from the live
+      # PDS. Step-scoped so only the deploy build hits the network — local/CI/e2e/
+      # preview builds stay offline and deterministic (links omitted).
+      - name: astro build
+        env:
+          STANDARD_SITE_RESOLVE: '1'
+        run: pnpm exec astro build
 
       - name: wrangler deploy
         uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0

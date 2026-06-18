@@ -1,9 +1,11 @@
 // Syncs djf.io's blog to its AT Protocol (standard.site) records on bsky.social:
-// one site.standard.publication (rkey `self`) plus one site.standard.document
-// per post (rkey = slug). Idempotent putRecord upserts, safe to run on every
-// deploy. Reuses the URIs and metadata the site renders (../src/lib/
-// standard-site.ts) so records and pages never drift, and writes nothing back
-// to the repo.
+// one site.standard.publication (committed-constant TID rkey) plus one
+// site.standard.document per post (server-assigned TID rkey, matched to the post
+// by its `path`). Idempotent and non-destructive: it upserts the publication and
+// creates missing / updates existing documents, but never deletes -- migrating
+// or pruning legacy records is a manual step. Safe to run on every deploy.
+// Reuses the helpers and reconcile planner the site renders with
+// (../src/lib/standard-site.ts); writes nothing back to the repo.
 //
 // Auth uses ATPROTO_APP_PASSWORD (a Bluesky app password -- never committed);
 // the DID is public and lives in the shared module.
@@ -15,10 +17,15 @@ import {AtpAgent} from '@atproto/api'
 import matter from 'gray-matter'
 import {
   ATPROTO_DID,
-  documentRkey,
+  DOCUMENT_COLLECTION,
+  documentPath,
+  type ExistingRecord,
   PUBLICATION,
+  PUBLICATION_COLLECTION,
   PUBLICATION_RKEY,
+  planDocumentActions,
   publicationUri,
+  rkeyFromUri,
 } from '../src/lib/standard-site'
 
 const BLOG_DIR = fileURLToPath(new URL('../src/content/blog', import.meta.url))
@@ -58,41 +65,85 @@ async function connect(): Promise<AtpAgent> {
   return agent
 }
 
+async function listExisting(agent: AtpAgent, collection: string): Promise<Array<ExistingRecord>> {
+  const records: Array<ExistingRecord> = []
+  let cursor: string | undefined
+  do {
+    const {data} = await agent.com.atproto.repo.listRecords({
+      repo: ATPROTO_DID,
+      collection,
+      limit: 100,
+      cursor,
+    })
+    for (const record of data.records) {
+      const value = record.value as {path?: unknown}
+      records.push({
+        rkey: rkeyFromUri(record.uri),
+        path: typeof value.path === 'string' ? value.path : undefined,
+      })
+    }
+    cursor = data.cursor
+  } while (cursor)
+  return records
+}
+
+function documentRecord(slug: string, data: Frontmatter): Record<string, unknown> {
+  return {
+    $type: DOCUMENT_COLLECTION,
+    site: publicationUri(),
+    title: data.title,
+    publishedAt: new Date(data.date).toISOString(),
+    path: documentPath(slug),
+    description: data.description,
+    ...(data.tags ? {tags: data.tags} : {}),
+  }
+}
+
 async function syncPublication(agent: AtpAgent): Promise<void> {
+  // putRecord upserts at the committed-constant rkey; the legacy `self` record,
+  // if any, is left for manual cleanup.
   await agent.com.atproto.repo.putRecord({
     repo: ATPROTO_DID,
-    collection: 'site.standard.publication',
+    collection: PUBLICATION_COLLECTION,
     rkey: PUBLICATION_RKEY,
     record: {
-      $type: 'site.standard.publication',
+      $type: PUBLICATION_COLLECTION,
       url: PUBLICATION.url,
       name: PUBLICATION.name,
       description: PUBLICATION.description,
       preferences: {showInDiscover: PUBLICATION.showInDiscover},
     },
   })
-  console.log(`synced publication '${PUBLICATION_RKEY}'`)
+  console.log(`put publication '${PUBLICATION_RKEY}'`)
 }
 
 async function syncDocuments(agent: AtpAgent): Promise<number> {
   const posts = await loadPosts()
+  const existing = await listExisting(agent, DOCUMENT_COLLECTION)
+  const desired = posts.map(({slug, data}) => ({
+    slug,
+    path: documentPath(slug),
+    record: documentRecord(slug, data),
+  }))
   // Sequential on purpose: gentle on the PDS and keeps log output ordered.
-  for (const {slug, data} of posts) {
-    await agent.com.atproto.repo.putRecord({
-      repo: ATPROTO_DID,
-      collection: 'site.standard.document',
-      rkey: documentRkey(slug),
-      record: {
-        $type: 'site.standard.document',
-        site: publicationUri(),
-        title: data.title,
-        publishedAt: new Date(data.date).toISOString(),
-        path: `/blog/${slug}/`,
-        description: data.description,
-        ...(data.tags ? {tags: data.tags} : {}),
-      },
-    })
-    console.log(`synced document '${slug}'`)
+  for (const action of planDocumentActions(existing, desired)) {
+    if (action.kind === 'create') {
+      // No rkey -> the PDS assigns a TID.
+      await agent.com.atproto.repo.createRecord({
+        repo: ATPROTO_DID,
+        collection: DOCUMENT_COLLECTION,
+        record: action.record,
+      })
+      console.log(`created document '${action.slug}'`)
+    } else {
+      await agent.com.atproto.repo.putRecord({
+        repo: ATPROTO_DID,
+        collection: DOCUMENT_COLLECTION,
+        rkey: action.rkey,
+        record: action.record,
+      })
+      console.log(`updated document '${action.slug}' ('${action.rkey}')`)
+    }
   }
   return posts.length
 }

@@ -1,5 +1,4 @@
 import {expect, test} from '@playwright/test'
-import {documentUri} from '../../lib/standard-site'
 
 test('a blog post page renders MDX content and frontmatter', async ({page}) => {
   await page.goto('/blog')
@@ -22,11 +21,11 @@ test('a blog post with a hero image in frontmatter displays it', async ({page}) 
   expect(naturalWidth).toBeGreaterThan(0)
 })
 
-test('a blog post head carries its standard.site document link', async ({page}) => {
+test('a blog post omits the standard.site document link in offline builds', async ({page}) => {
+  // The document <link>'s rkey is a server-assigned TID resolved from the live
+  // PDS only when the deploy sets STANDARD_SITE_RESOLVE. This suite boots a plain
+  // local production build without it, so the link is absent (deterministic).
   await page.goto('/blog/2025-12-07-on-running')
 
-  await expect(page.locator('link[rel="site.standard.document"]')).toHaveAttribute(
-    'href',
-    documentUri('2025-12-07-on-running'),
-  )
+  await expect(page.locator('link[rel="site.standard.document"]')).toHaveCount(0)
 })

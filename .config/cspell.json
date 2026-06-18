@@ -121,8 +121,10 @@
     "itertools",
     "jeremey",
     "justfiles",
+    "jzfcijpj",
     "longhands",
     "microformats",
+    "moldv",
     "msgpackr",
     "noerror",
     "nxdomain",
@@ -130,6 +132,7 @@
     "openclaw",
     "opencode",
     "openrouter",
+    "oucwc",
     "papercut",
     "pepperonio",
     "pkce",
@@ -166,6 +169,7 @@
     "vinxi",
     "virtuals",
     "vndly",
-    "wordle"
+    "wordle",
+    "xrpc"
   ]
 }

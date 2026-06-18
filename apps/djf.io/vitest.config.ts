@@ -10,6 +10,10 @@ export default getViteConfig({
     coverage: {
       provider: 'v8',
       include: ['src/lib/**', 'src/content.config.ts'],
+      // standard-site-resolve.ts is the thin networked PDS reader (gated, used
+      // only at build time); its behavior is verified at deploy, not in unit
+      // coverage. The pure logic it builds on lives in standard-site.ts.
+      exclude: ['src/lib/standard-site-resolve.ts'],
       reporter: ['text', 'text-summary'],
       thresholds: {statements: 100, branches: 90, functions: 100, lines: 100},
     },

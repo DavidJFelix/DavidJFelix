@@ -4,6 +4,11 @@ main = "@tanstack/react-start/server-entry"
 compatibility_date = "2026-06-01"
 compatibility_flags = ["nodejs_compat"]
 
+# This worker serves via custom domains; explicitly keep workers.dev preview
+# URLs on so `wrangler versions upload --preview-alias` (cd-preview) gets a
+# reachable pr-<N> URL. Does not affect production routing.
+preview_urls = true
+
 # Custom domains, wired up in the Cloudflare dashboard.
 routes = [
   { pattern = "revision.city", custom_domain = true },

@@ -1,7 +1,11 @@
 import {defineConfig, devices} from '@playwright/test'
 
+// Runs against either a deployed per-PR preview (PREVIEW_URL set by
+// cd-preview-djf-io.yml) or a local production boot (no PREVIEW_URL) for
+// authoring/checking baselines and the behavioral suite.
 const PORT = 4321
-const BASE_URL = `http://127.0.0.1:${PORT}`
+const PREVIEW_URL = process.env.PREVIEW_URL
+const BASE_URL = PREVIEW_URL ?? `http://127.0.0.1:${PORT}`
 
 export default defineConfig({
   testDir: './src',
@@ -21,10 +25,13 @@ export default defineConfig({
       use: {...devices['Desktop Chrome']},
     },
   ],
-  webServer: {
-    command: `pnpm preview --host 127.0.0.1 --port ${PORT}`,
-    url: BASE_URL,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  },
+  // Nothing to boot when pointed at a deployed preview.
+  webServer: PREVIEW_URL
+    ? undefined
+    : {
+        command: `pnpm preview --host 127.0.0.1 --port ${PORT}`,
+        url: BASE_URL,
+        reuseExistingServer: !process.env.CI,
+        timeout: 120_000,
+      },
 })

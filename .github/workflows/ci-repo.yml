@@ -12,6 +12,7 @@ on:
       - '.github/renovate.json'
       - '.vscode/settings.json'
       - '.vscode/extensions.json'
+      - 'bin/**'
       - '.github/workflows/ci-repo.yml'
   pull_request:
     paths:
@@ -23,6 +24,7 @@ on:
       - '.github/renovate.json'
       - '.vscode/settings.json'
       - '.vscode/extensions.json'
+      - 'bin/**'
       - '.github/workflows/ci-repo.yml'
 
 env:
@@ -46,3 +48,21 @@ jobs:
 
       - name: format
         run: mise run format
+
+  bin-test:
+    name: bun test (bin/)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: mise
+        uses: ./.github/actions/setup-mise
+
+      - name: test bin
+        run: mise run test:bin

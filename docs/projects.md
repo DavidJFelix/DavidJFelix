@@ -14,15 +14,9 @@ A small chat app on Cloudflare — TanStack Start front end, deployed via Alchem
 
 **Status**: In Progress
 
-### [Preview Deployments & Visual Testing](./projects/preview-deployments/plan.md)
-
-Per-PR preview deployments, smoke tests, and screenshot testing for every deployed web app, so breakage is visible at review time instead of in production. Also the new bar for dependency auto-merge. f311x is the proving ground.
-
-**Status**: In Progress
-
 ### [Testing Harness & Code-Quality Safety Net](./projects/testing-harness/plan.md)
 
-A layered, fast safety net (unit -> smoke -> e2e -> coverage) that also runs inside Claude Code on the web, not just CI. Phase 0 (web-session bootstrap hook) is done; smoke-test pull-forward, generalization, unit-test backfill, and a repo-wide coverage gate follow. Complements preview-deployments (preview infra) and sentry-integration (diagnosis).
+A layered, fast safety net (unit -> smoke -> e2e -> coverage) that also runs inside Claude Code on the web, not just CI. Phase 0 (web-session bootstrap hook) is done; smoke-test pull-forward, generalization, unit-test backfill, and a repo-wide coverage gate follow. Complements the shipped preview-deploy infrastructure and sentry-integration (diagnosis).
 
 **Status**: In Progress
 
@@ -50,7 +44,7 @@ Move unattended LLM-driven GitHub Actions off Anthropic-billed Claude onto a che
 
 ### [Blog Style Improvement](./projects/blog-style-improvement/plan.md)
 
-Human-directed polish of djf.io: colors, spacing, layout, images, usability, components. Advances when David sits down to direct; preview URLs from the preview-deployments project will feed this workflow.
+Human-directed polish of djf.io: colors, spacing, layout, images, usability, components. Advances when David sits down to direct; preview URLs from the per-PR preview deploys will feed this workflow.
 
 **Status**: In Progress
 

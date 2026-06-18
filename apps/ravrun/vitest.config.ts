@@ -8,6 +8,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     include: ['src/**/*.test.{ts,tsx}'],
+    // Playwright specs (*.e2e.test.ts) are driven by Playwright, not Vitest.
+    exclude: ['**/*.e2e.test.ts', '**/node_modules/**'],
     // Framework is wired ahead of the first test; remove once one exists.
     passWithNoTests: true,
   },

@@ -32,6 +32,11 @@ description = "Spell-check repo-owned sources (cspell)"
 run = "cspell --config .config/cspell.json --no-progress --dot 'apps/**' 'docs/**' 'bin/**' '*.md' '.config/**' '.github/**'"
 dir = "{{config_root}}"
 
+[tasks."test:bin"]
+description = "Unit-test the repo-root bin/ scripts (bun test)"
+run = "bun test bin/"
+dir = "{{config_root}}"
+
 # Monorepo aggregators: fan a task out to every app. Per-app CI still runs each
 # app's tasks on path-filtered triggers; these are the local "verify everything"
 # commands. They run each app with CI=true to dodge pnpm's no-TTY deps-purge abort.

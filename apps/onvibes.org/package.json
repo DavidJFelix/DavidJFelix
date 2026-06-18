@@ -14,7 +14,9 @@
     "format": "biome format . && prettier --check --no-error-on-unmatched-pattern \"**/*.md\" \"**/*.mdx\"",
     "format:fix": "biome format --write . && prettier --write --no-error-on-unmatched-pattern \"**/*.md\" \"**/*.mdx\"",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:update": "playwright test --update-snapshots"
   },
   "dependencies": {
     "astro": "^6.4.6"
@@ -22,6 +24,7 @@
   "devDependencies": {
     "@astrojs/check": "0.9.9",
     "@pandacss/dev": "1.11.3",
+    "@playwright/test": "1.60.0",
     "vitest": "4.1.8",
     "wrangler": "4.100.0"
   }

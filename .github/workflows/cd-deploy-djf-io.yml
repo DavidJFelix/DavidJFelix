@@ -57,12 +57,13 @@ jobs:
           ATPROTO_APP_PASSWORD: ${{ secrets.ATPROTO_APP_PASSWORD }}
         run: mise run sync-standard-site
 
-      # STANDARD_SITE_RESOLVE makes the build read document TID URIs from the live
-      # PDS. Step-scoped so only the deploy build hits the network — local/CI/e2e/
-      # preview builds stay offline and deterministic (links omitted).
+      # Resolve document TID URIs from the live PDS only when the sync above ran
+      # (same secret gate) — a deploy that skips sync stays offline rather than
+      # emitting links to records it didn't update. Local/CI/e2e/preview builds
+      # never set this, so they stay offline and deterministic (links omitted).
       - name: astro build
         env:
-          STANDARD_SITE_RESOLVE: '1'
+          STANDARD_SITE_RESOLVE: ${{ steps.atproto.outputs.present }}
         run: pnpm exec astro build
 
       - name: wrangler deploy

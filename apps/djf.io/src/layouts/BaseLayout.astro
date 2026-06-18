@@ -2,6 +2,7 @@
 import '../index.css'
 import {css} from 'styled-system/css'
 import Search from '../components/Search'
+import {publicationUri} from '../lib/standard-site'
 
 interface Props {
   title: string
@@ -53,6 +54,7 @@ const ogImageUrl = Astro.site ? new URL(ogImage, Astro.site) : undefined
       href="/rss.xml"
     />
     <link rel="sitemap" href="/sitemap-index.xml" />
+    <link rel="site.standard.publication" href={publicationUri()} />
     <slot name="head" />
   </head>
   <body

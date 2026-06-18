@@ -28,6 +28,7 @@
     "playwright-report",
     "test-results"
   ],
+  "ignoreRegExpList": ["did:plc:[a-z0-9]+"],
   "words": [
     "biomejs",
     "davidjfelix",
@@ -112,6 +113,7 @@
     "headshot",
     "hostable",
     "hyperdrive",
+    "idempotently",
     "impls",
     "instameals",
     "iotv",
@@ -134,6 +136,7 @@
     "planetscale",
     "pointable",
     "posthog",
+    "prerendered",
     "prerendering",
     "prerenders",
     "pulumi",

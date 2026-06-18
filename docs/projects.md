@@ -48,12 +48,6 @@ Human-directed polish of djf.io: colors, spacing, layout, images, usability, com
 
 **Status**: In Progress
 
-### [standard.site Compatibility](./projects/standard-site-compat/plan.md)
-
-Make djf.io a first-class citizen in the Bluesky/AT Protocol long-form ecosystem: publish `site.standard.publication` + per-post `site.standard.document` records and the website verification artifacts (`/.well-known/site.standard.publication` + `<link>` tags). Deterministic AT-URIs (rkey = post slug) keep the build and a CI-on-deploy sync in step. Plan + human-task issue filed; website implementation pending. Identity is `@djf.io` on bsky.social.
-
-**Status**: In Progress
-
 ## Priority 4 — Greenfield
 
 ### [Forza Monica Shop](./projects/forzamonica-shop/plan.md)

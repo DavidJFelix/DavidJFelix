@@ -81,6 +81,28 @@ Not a gap: tsgo is a proper per-app devDependency (`@typescript/native-preview`)
 in the apps that use it — but it is pinned to `latest`, which was handed to the
 dependency-freshness project to pin when Renovate coverage extends.
 
+### Surfaced 2026-06-18 (during djf.io standard.site Phase 3)
+
+- **Changelog (and `docs/`) Markdown is not Prettier-clean, and nothing guards it.**
+  Adding a changelog entry on 2026-06-18 showed that `prettier --write
+  docs/changelog/2026-06.md` reflows the _entire_ file — the existing prose predates the
+  `proseWrap: always` recipe — and no CI job runs `prettier --check` over `docs/`. Format
+  `docs/changelog/**` (at minimum) once with Prettier, then add a CI guard (a
+  `prettier --check` step — extend `ci-repo.yml`, which already triggers on `docs/`
+  changes, or a small dedicated job) so it cannot drift again. This is the concrete first
+  action of open decision #3 below; decide there whether to format all of `docs/` or only
+  the changelog plus new surfaces.
+- **Convert `.config/cspell.json` → `.config/cspell.jsonc` and comment the ATProto DID
+  ignore.** The `ignoreRegExpList` entry that skips ATProto DID strings (added for djf.io
+  during the standard.site work) is unexplained, and plain JSON cannot carry a comment —
+  switch the file to JSONC and document why the regex exists. The rename touches every
+  by-name reference: the three root tasks in `.config/mise.toml` (`format`, `format:fix`,
+  `spell`), the `.config/cspell.json` path-filter entries in the ~12 per-app `ci-*.yml`
+  workflows and `ci-repo.yml`, and the mentions in `CLAUDE.md`, `docs/tooling-standard.md`,
+  and `docs/github-actions-style.md`. Both cspell and Biome accept `.jsonc`; leave
+  historical changelog/progress references as-is. (Related: the 2026-06-16 note already
+  flags those per-app path filters as a leftover to prune — fold that in.)
+
 ### Open scope decisions (block the big items)
 
 1. **Rust**: full standard per the plan, minimal (default clippy +

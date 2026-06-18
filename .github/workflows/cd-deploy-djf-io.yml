@@ -7,6 +7,9 @@ on:
       - 'apps/djf.io/**'
       - '.github/workflows/cd-deploy-djf-io.yml'
 
+env:
+  MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
+
 defaults:
   run:
     working-directory: apps/djf.io
@@ -36,6 +39,24 @@ jobs:
 
       - name: astro build
         run: pnpm exec astro build
+
+      # Detect the secret in a step-scoped env (ghalint 006 forbids secrets in
+      # job env), so the sync below can skip when it is unset — keeping djf.io
+      # deploys decoupled from the atproto credential.
+      - name: check standard.site secret
+        id: atproto
+        env:
+          ATPROTO_APP_PASSWORD: ${{ secrets.ATPROTO_APP_PASSWORD }}
+        run: |
+          if [ -n "$ATPROTO_APP_PASSWORD" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: sync standard.site records
+        if: ${{ steps.atproto.outputs.present == 'true' }}
+        env:
+          ATPROTO_APP_PASSWORD: ${{ secrets.ATPROTO_APP_PASSWORD }}
+        run: mise run sync-standard-site
 
       - name: wrangler deploy
         uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0

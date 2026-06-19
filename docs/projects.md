@@ -2,94 +2,116 @@
 
 Ongoing projects and their documentation.
 
-Active work is grouped and ordered by priority (reprioritized 2026-06-11). Dev environment projects run async to the main sequence.
+Grouped by status, and within **Active**, ordered by priority. Reconciled 2026-06-18 (the prior
+2026-06-11 priority tiers were overtaken by the f311x prod restore and the repo-wide preview
+rollout). Status legend:
 
-## Priority 1 — App Health & Preview Infrastructure
+- **Active** — in flight or next-up, agent-doable now
+- **Blocked** — waiting on an external/human dependency (account, credential, another project)
+- **Parked** — needs David at a local machine; no agent path
+- **Deferred** — intentionally not now
 
-f311x is broken in production despite green CI and a successful deploy. Restoring it — and building the preview/observability infrastructure that makes that class of breakage visible — is the current top concern.
+## Active
 
 ### [f311x.com](./projects/f311x/plan.md)
 
-A small chat app on Cloudflare — TanStack Start front end, deployed via Alchemy v2. Currently broken in production (reported 2026-06-11); diagnose and restore first, then swap the echo stub for a real model.
+A small chat app on Cloudflare (TanStack Start, Alchemy v2). Production is restored and verified;
+the live work is swapping the echo stub for a real model and getting Worker error visibility (via
+the Sentry rollout, which f311x leads).
 
-**Status**: In Progress
+**Status**: Active
 
-### [Testing Harness & Code-Quality Safety Net](./projects/testing-harness/plan.md)
+### [CI Pipeline Efficiency](./projects/ci-pipeline-efficiency/plan.md)
 
-A layered, fast safety net (unit -> smoke -> e2e -> coverage) that also runs inside Claude Code on the web, not just CI. Phase 0 (web-session bootstrap hook) is done; smoke-test pull-forward, generalization, unit-test backfill, and a repo-wide coverage gate follow. Complements the shipped preview-deploy infrastructure and sentry-integration (diagnosis).
+Make CI trigger only the workflows a change can affect (better path filtering, not concurrency), and
+cache the steps that start cold — the pnpm store, and the blocking web-session Playwright install.
 
-**Status**: In Progress
+**Status**: Active
 
-## Priority 2 — Monorepo Hygiene
+### [Renovate Rollout](./projects/renovate-rollout/plan.md)
 
-### [Linter & Formatter Standardization](./projects/linter-formatter-standardization/plan.md)
+Extend Renovate repo-wide (npm + mise + Cargo + lockFileMaintenance), pin the `latest`-tagged tsgo
+deps, revisit gated auto-merge, and retire the bespoke freshness skill + cron once coverage is
+proven. Respawn of the closed dependency-freshness project.
 
-Converge on a single, consistent set of linters and formatters across the entire monorepo with clear tool-to-file-type ownership. A 2026-06-11 audit found 2–4 sessions of real work remaining (Rust at 0%, cspell unwired, unscoped directories); three scope decisions pending.
+**Status**: Active
 
-**Status**: In Progress
+### [Lint/Format Loose Ends](./projects/lint-format-loose-ends/plan.md)
 
-### [Dependency Freshness](./projects/dependency-freshness/plan.md)
+The concrete residual of the closed linter-formatter standardization: format all of `docs/` + add a
+Prettier guard, rename `.config/cspell.json` → `.jsonc`, and fold the legacy JS dirs into the
+standard (low priority). Rust is scoped out.
 
-mise-based versioning and an ongoing process to keep packages across the monorepo current. Renovate now owns all ecosystems (npm, mise, Cargo); gated auto-merge is deprioritized and waits on preview verification plus real test suites.
-
-**Status**: In Progress
-
-### [LLM Automation Migration](./projects/llm-automation-migration/plan.md)
-
-Move unattended LLM-driven GitHub Actions off Anthropic-billed Claude onto a cheaper runtime. Deferred — not a now thing; scope shrinks if Renovate replaces the freshness cron.
-
-**Status**: Deferred
-
-## Priority 3 — djf.io Cluster
-
-### [Blog Style Improvement](./projects/blog-style-improvement/plan.md)
-
-Human-directed polish of djf.io: colors, spacing, layout, images, usability, components. Advances when David sits down to direct; preview URLs from the per-PR preview deploys will feed this workflow.
-
-**Status**: In Progress
-
-## Priority 4 — Greenfield
-
-### [Forza Monica Shop](./projects/forzamonica-shop/plan.md)
-
-Headless Shopify storefront for forzamonica.com — TanStack Start + PandaCSS + Ark UI on Cloudflare Workers, wired against mock.shop until the real store exists. Scaffold complete; production blocked on Shopify/Cloudflare account setup (issues filed).
-
-**Status**: In Progress
-
-## Priority 5 — Cross-App Instrumentation
-
-Similar shape of work; do them back-to-back once apps exist. The f311x slice of Sentry may be pulled forward as part of Priority 1 (production observability for the broken app).
+**Status**: Active
 
 ### [Sentry Integration](./projects/sentry-integration/plan.md)
 
-Wire Sentry into every app in the repo for crash and error monitoring.
+Wire Sentry into every deployed app for crash/error monitoring. Full-fleet rollout; f311x leads (it
+needs Worker error visibility).
 
-**Status**: In Progress
+**Status**: Active
 
 ### [PostHog Integration](./projects/posthog-integration/plan.md)
 
-Wire PostHog into every app in the repo for product analytics.
+Wire PostHog into every deployed app for product analytics. Full-fleet rollout, back-to-back with
+Sentry.
 
-**Status**: In Progress
+**Status**: Active
 
-## Async — Dev Environment
+### [Blog Content](./projects/blog-content/plan.md)
 
-Run in parallel to the main sequence; not on the critical path.
+Begin writing djf.io blog posts (the words, distinct from the style project). First up: "attention
+is all you need" — a callback to the Transformer paper, on utilizing LLMs in your work.
+
+**Status**: Active
+
+### [Blog Style Improvement](./projects/blog-style-improvement/plan.md)
+
+Human-directed visual/UX polish of djf.io: colors, spacing, layout, images, usability, components.
+David is driving specific changes now; per-PR preview URLs feed the loop.
+
+**Status**: Active
+
+## Blocked
+
+### [Forza Monica Shop](./projects/forzamonica-shop/plan.md)
+
+Headless Shopify storefront for forzamonica.com (TanStack Start + PandaCSS + Ark UI on Workers,
+wired against mock.shop). Scaffold complete; production blocked on two human tasks (Shopify store +
+token, domain registration) filed as issues.
+
+**Status**: Blocked
+
+## Parked
+
+Local-machine work; no agent path until David sits down at his machine.
 
 ### [Dotfiles Overhaul](./projects/dotfiles-overhaul/plan.md)
 
-Migrate shell from omz to fish, add nushell/jj/starship config, sync local state back into repo, audit packages.
+Migrate shell from omz to fish, add nushell/jj/starship config, sync local state back into repo,
+audit packages.
 
-**Status**: In Progress
+**Status**: Parked
 
 ### [Setup Warp](./projects/setup-warp/plan.md)
 
 Install the Warp CLI and explore using it.
 
-**Status**: In Progress
+**Status**: Parked
 
 ### [Update Warp Config](./projects/update-warp-config/plan.md)
 
 Pull configuration items from dotfiles into Warp and sync Warp-native config back into the repo.
+Depends on Setup Warp + Dotfiles.
 
-**Status**: In Progress
+**Status**: Parked
+
+## Deferred
+
+### [LLM Automation Migration](./projects/llm-automation-migration/plan.md)
+
+Move unattended LLM-driven GitHub Actions off Anthropic-billed Claude onto a cheaper runtime. Now
+scoped to `bot-claude-code-review.yml` alone (the freshness cron is being retired by
+renovate-rollout).
+
+**Status**: Deferred

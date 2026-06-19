@@ -6,10 +6,10 @@
 Claude Code in CI tasks), but this sits behind app health / preview
 infrastructure and the active hygiene work.
 
-Scope change: dependency-freshness decided 2026-06-11 that Renovate owns all
-ecosystems (npm, mise, Cargo). If Renovate replaces the freshness cron,
-`cron-dependency-freshness.yml` drops out of scope here and
-`bot-claude-code-review.yml` becomes the primary migration target.
+Scope (finalized 2026-06-18): the `renovate-rollout` project retires
+`cron-dependency-freshness.yml` outright, so it's no longer a migration target —
+**`bot-claude-code-review.yml` is the sole workflow to move.** Still deferred behind the active
+work.
 
 ## Goal
 
@@ -25,9 +25,12 @@ Interactive work (David ↔ Claude in Claude Code) stays on Claude. This is abou
 
 ## In-scope workflows
 
-- `.github/workflows/cron-dependency-freshness.yml` — weekly freshness sweep
-- `.github/workflows/bot-claude-code-review.yml` — PR review on open/update
-- `.github/workflows/bot-claude.yml` — keep on Claude for now (interactive mention bot); revisit after the other two land
+- `.github/workflows/bot-claude-code-review.yml` — PR review on open/update. **The sole migration
+  target.**
+- ~~`.github/workflows/cron-dependency-freshness.yml`~~ — dropped: the `renovate-rollout` project
+  retires this workflow entirely (Renovate owns dependencies), so there's nothing to migrate.
+- `.github/workflows/bot-claude.yml` — keep on Claude for now (interactive mention bot); revisit
+  after the review bot lands.
 
 ## Implementation
 

@@ -29,8 +29,8 @@ SvelteKit + PandaCSS, Cloudflare Worker.
 ### Phase 1 — Basic layout
 
 - [ ] Confirm the site's purpose with David.
-- [x] Replace the single `<h1>` with a real layout: header, hero, footer. (done 2026-06-19 —
-      neutral copy, pending purpose confirmation)
+- [x] Replace the single `<h1>` with a real layout: header, hero, footer. (done 2026-06-19 — neutral
+      copy, pending purpose confirmation)
 
 ### Phase 2 — Content (purpose-dependent)
 

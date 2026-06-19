@@ -31,7 +31,7 @@ TanStack Start (React 19) + PandaCSS + Ark UI, Cloudflare Worker.
 
 ### Phase 1 — Basic layout + positioning
 
-- [ ] Replace the single `<h1>` with a real layout: header, hero, footer.
+- [x] Replace the single `<h1>` with a real layout: header, hero, footer. (done 2026-06-19)
 - [ ] Land the positioning: what startchi is for, who it serves.
 
 ### Phase 2 — Directory MVP → spins out

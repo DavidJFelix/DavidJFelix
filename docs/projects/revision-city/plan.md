@@ -26,7 +26,7 @@ TanStack Start (React 19) + PandaCSS + Ark UI, Cloudflare Worker.
 
 ### Phase 1 — Basic layout + positioning
 
-- [ ] Replace the single `<h1>` with a real layout: header, hero, footer.
+- [x] Replace the single `<h1>` with a real layout: header, hero, footer. (done 2026-06-19)
 - [ ] Land a positioning line: what "reviews & diffs, centralized" means here.
 
 ### Phase 2 — Scope the MVP → spins out (design doc)

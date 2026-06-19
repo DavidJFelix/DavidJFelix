@@ -36,7 +36,7 @@ Nuxt + Vue + PandaCSS (+ Ark UI), Cloudflare Worker.
 
 ### Phase 1 — Basic layout + explainer landing
 
-- [ ] Replace the single `<h1>` with a real layout: header, hero, footer.
+- [x] Replace the single `<h1>` with a real layout: header, hero, footer. (done 2026-06-19)
 - [ ] Write the landing copy that explains the focusing-lens idea clearly (this concept needs
       explaining before anything else matters).
 

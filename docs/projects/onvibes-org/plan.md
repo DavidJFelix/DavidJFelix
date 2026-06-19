@@ -35,7 +35,8 @@ Astro + PandaCSS, Cloudflare Worker.
 
 ### Phase 1 — Basic layout + showcase scaffold
 
-- [ ] Replace the single `<h1>` with a real layout: header, hero explaining onvibes, footer.
+- [x] Replace the single `<h1>` with a real layout: header, hero explaining onvibes, footer. (done
+      2026-06-19)
 - [ ] Scaffold the showcase: a grid of vibecoded apps (data-driven, even if seeded with a few).
 
 ### Phase 2 — Builder toolchain MVP → spins out as its own project

@@ -67,6 +67,9 @@ model behind the chat loop, plus error visibility for the Worker.
 - [ ] Swap the echo for a real model — the live priority now that prod is stable.
       Choose the model path (direct provider vs. AI Gateway); the wire contract and
       route stay the same, only `chatAgentStream` changes.
+      **⚠️ Auth required first** (noted 2026-06-19, mechanism TBD): a real model must sit
+      behind authentication before it's exposed, to prevent abuse and uncontrolled cost.
+      Decide the mechanism (Cloudflare Access vs. accounts vs. token gate) when picked up.
 - [ ] Error visibility for the Worker — now delivered by the active
       [Sentry Integration](../sentry-integration/plan.md) rollout, which f311x
       leads, rather than a one-off slice. "Why is it broken" shouldn't require a

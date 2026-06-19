@@ -9,5 +9,6 @@ Write blog posts for djf.io. David writes them; this just records that the work 
 
 ## Related
 
+- Parent umbrella: [djf.io](../djf-io/plan.md)
 - App: `apps/djf.io/` (posts live in `src/content/blog/`)
 - `blog-style-improvement` — the visual/UX side of the same site

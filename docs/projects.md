@@ -2,47 +2,113 @@
 
 Ongoing projects and their documentation.
 
-Grouped by status, and within **Active**, ordered by priority. Reconciled 2026-06-18 (the prior
-2026-06-11 priority tiers were overtaken by the f311x prod restore and the repo-wide preview
-rollout). Status legend:
+The portfolio is organized around **apps**: every app in `apps/` has a persistent _umbrella_ project
+(vision, current state, roadmap), and high-value efforts spin out from those umbrellas as focused,
+ephemeral task projects or GitHub issues. App umbrellas don't "close" — they're living roadmaps;
+task projects close and are captured in the [changelog](changelog/). Cross-cutting and
+infrastructure work sits below the apps it serves. Reorganized 2026-06-19 (project-per-app
+revision).
 
-- **Active** — in flight or next-up, agent-doable now
-- **Blocked** — waiting on an external/human dependency (account, credential, another project)
-- **Parked** — needs David at a local machine; no agent path
-- **Deferred** — intentionally not now
+Status legend:
 
-## Active
+- App umbrellas: **Built-out** / **Functional** / **Placeholder** / **Idea**
+- Task projects: **Active** / **Blocked** / **Parked** / **Deferred**
 
-### [f311x.com](./projects/f311x/plan.md)
+## Apps
 
-A small chat app on Cloudflare (TanStack Start, Alchemy v2). Production is restored and verified;
-the live work is swapping the echo stub for a real model and getting Worker error visibility (via
-the Sentry rollout, which f311x leads).
+The product surface. Ordered by where the next valuable work is — content polish → domains & layouts
+→ LLM features.
 
-**Status**: Active
+### Built-out & functional (real substance — polish first)
 
-### [CI Pipeline Efficiency](./projects/ci-pipeline-efficiency/plan.md)
+#### [djf.io](./projects/djf-io/plan.md)
 
-Make CI trigger only the workflows a change can affect (better path filtering, not concurrency), and
-cache the steps that start cold — the pnpm store, and the blocking web-session Playwright install.
+Personal site + blog; the most built-out app. Live with content, search, and feeds. Drives two child
+projects: visual/UX polish and the writing.
 
-**Status**: Active
+**Status**: Built-out · spin-outs: [blog-content](./projects/blog-content/plan.md),
+[blog-style-improvement](./projects/blog-style-improvement/plan.md)
 
-### [Renovate Rollout](./projects/renovate-rollout/plan.md)
+#### [calendar-visualizer](./projects/calendar-visualizer/plan.md)
 
-Extend Renovate repo-wide (npm + mise + Cargo + lockFileMaintenance), pin the `latest`-tagged tsgo
-deps, revisit gated auto-merge, and retire the bespoke freshness skill + cron once coverage is
-proven. Respawn of the closed dependency-freshness project.
+Interactive full-year calendar overlaying weekends/holidays/custom phases. Functional and
+unit-tested, but ships only on `workers.dev` — needs a real domain and user-configurable data.
 
-**Status**: Active
+**Status**: Functional
 
-### [Lint/Format Loose Ends](./projects/lint-format-loose-ends/plan.md)
+#### [ravrun](./projects/ravrun/plan.md)
 
-The concrete residual of the closed linter-formatter standardization: format all of `docs/` + add a
-Prettier guard, rename `.config/cspell.json` → `.jsonc`, and fold the legacy JS dirs into the
-standard (low priority). Rust is scoped out.
+Marathon / endurance training-plan generator + visualizer. Functional from a hardcoded demo plan;
+`workers.dev` only, no tests yet — needs a domain, a test floor, and form-driven input.
 
-**Status**: Active
+**Status**: Functional
+
+#### [davidjfelix.com](./projects/davidjfelix-com/plan.md)
+
+Minimal personal identity landing — name, bio, profile links — pointing at djf.io. Real but
+intentionally small.
+
+**Status**: Real, minimal
+
+### Functional, gated
+
+#### [forzamonica.com](./projects/forzamonica-com/plan.md)
+
+Headless Shopify storefront (TanStack Start + Panda/Ark on Workers, wired against mock.shop).
+Scaffold complete; production blocked on two human tasks (Shopify store + token, domain
+registration) filed as issues.
+
+**Status**: Functional · Blocked (human tasks)
+
+#### [f311x](./projects/f311x/plan.md)
+
+Small chat app / agent playground on Cloudflare (TanStack Start, Alchemy v2). Production restored
+and verified; next is swapping the echo stub for a real model — which must sit behind auth first
+(mechanism TBD).
+
+**Status**: Functional
+
+### Placeholders (live domains; basic layout is the near-term)
+
+#### [monicandavid.com](./projects/monicandavid-com/plan.md)
+
+Personal site for Monica & David. Live but a single-`<h1>` placeholder; purpose assumed
+(couple/home/wedding) and flagged for confirmation.
+
+**Status**: Placeholder
+
+#### [onvibes.org](./projects/onvibes-org/plan.md)
+
+A showcase of "vibecoded" apps plus an Astro-based builder toolchain to create them. Live
+placeholder; the builder's LLM must sit behind auth (mechanism TBD).
+
+**Status**: Placeholder
+
+#### [revision.city](./projects/revision-city/plan.md)
+
+A centralized version-control service for managing reviews and diffs. Live placeholder; MVP shape to
+be scoped.
+
+**Status**: Placeholder
+
+#### [startchi.com](./projects/startchi-com/plan.md)
+
+An ecosystem for Chicago / Midwest startups — directory, signal boost, org hub, identity. Live
+placeholder.
+
+**Status**: Placeholder
+
+#### [pkg.dog](./projects/pkg-dog/plan.md)
+
+A focusing-lens package manager: tree-shakes published ESM/TS packages into independent parts and
+republishes them so downstream users can ignore irrelevant alerts and upgrade types safely. Live
+placeholder on premium domains; the deep build is a research effort.
+
+**Status**: Placeholder
+
+## Cross-cutting
+
+Span every deployed app.
 
 ### [Sentry Integration](./projects/sentry-integration/plan.md)
 
@@ -58,29 +124,32 @@ Sentry.
 
 **Status**: Active
 
-### [Blog Content](./projects/blog-content/plan.md)
+## Infrastructure & hygiene
 
-Begin writing djf.io blog posts (the words, distinct from the style project). First up: "attention
-is all you need" — a callback to the Transformer paper, on utilizing LLMs in your work.
+Repo plumbing. Real work, but lower priority than moving the apps forward.
 
-**Status**: Active
+### [CI Pipeline Efficiency](./projects/ci-pipeline-efficiency/plan.md)
 
-### [Blog Style Improvement](./projects/blog-style-improvement/plan.md)
-
-Human-directed visual/UX polish of djf.io: colors, spacing, layout, images, usability, components.
-David is driving specific changes now; per-PR preview URLs feed the loop.
+Make CI trigger only the workflows a change can affect (better path filtering, not concurrency), and
+cache the steps that start cold — the pnpm store, and the blocking web-session Playwright install.
 
 **Status**: Active
 
-## Blocked
+### [Renovate Rollout](./projects/renovate-rollout/plan.md)
 
-### [Forza Monica Shop](./projects/forzamonica-shop/plan.md)
+Extend Renovate repo-wide (npm + mise + Cargo + lockFileMaintenance), pin the `latest`-tagged tsgo
+deps, revisit gated auto-merge, and retire the bespoke freshness skill + cron once coverage is
+proven.
 
-Headless Shopify storefront for forzamonica.com (TanStack Start + PandaCSS + Ark UI on Workers,
-wired against mock.shop). Scaffold complete; production blocked on two human tasks (Shopify store +
-token, domain registration) filed as issues.
+**Status**: Active
 
-**Status**: Blocked
+### [Lint/Format Loose Ends](./projects/lint-format-loose-ends/plan.md)
+
+The concrete residual of the closed linter-formatter standardization: format all of `docs/` + add a
+Prettier guard, rename `.config/cspell.json` → `.jsonc`, and fold the legacy JS dirs into the
+standard.
+
+**Status**: Active
 
 ## Parked
 
@@ -111,7 +180,6 @@ Depends on Setup Warp + Dotfiles.
 ### [LLM Automation Migration](./projects/llm-automation-migration/plan.md)
 
 Move unattended LLM-driven GitHub Actions off Anthropic-billed Claude onto a cheaper runtime. Now
-scoped to `bot-claude-code-review.yml` alone (the freshness cron is being retired by
-renovate-rollout).
+scoped to `bot-claude-code-review.yml` alone.
 
 **Status**: Deferred

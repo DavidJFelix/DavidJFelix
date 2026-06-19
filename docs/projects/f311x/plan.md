@@ -44,9 +44,10 @@ A small chat app on Cloudflare — TanStack Start front end, deployed via Alchem
   into a non-building state. See #202 and the 2026-06-03 progress note for the
   teardown.
 
-## Next — restore the app, then make the chat real
+## Next — make the chat real, with error visibility
 
-Stabilize before building (reprioritized 2026-06-11).
+Production is restored and verified (2026-06-14); stabilization is done. The live work is a real
+model behind the chat loop, plus error visibility for the Worker.
 
 - [x] Diagnose why prod is broken; capture the symptom and root cause in a
       progress note. (2026-06-11: no ingress — no custom domain on the Worker,
@@ -55,23 +56,21 @@ Stabilize before building (reprioritized 2026-06-11).
       leftover dev worker holding the custom domains — detached 2026-06-14,
       redeployed (CD run 27504856773), and verified f311x.com / www hydrate and
       the chat echo streams. No zone scope was needed.
-- [ ] Make breakage readable: error visibility for the Worker (Cloudflare
-      logs/tail and/or the f311x slice of
-      [Sentry Integration](../sentry-integration/plan.md) pulled forward) so
-      "why is it broken" doesn't require a local repro.
-- [ ] Make breakage visible pre-merge: per-PR preview deploy + smoke test —
-      f311x is the first target of the
-      [preview-deployments](../preview-deployments/plan.md) project. (The
-      post-deploy smoke test now gates CD and covers hydration + the chat
-      stream; the per-PR *preview* deploy is still to do.)
+- [x] Make breakage visible pre-merge: per-PR preview deploy + smoke test. f311x
+      was the proving ground; the per-PR preview pipeline shipped repo-wide
+      2026-06-17 (see the changelog). The post-deploy smoke test also gates CD and
+      covers hydration + the chat stream.
 - [x] Wire the smallest agent backend the UI can talk to — an echo stub answers
       `/agents/chat-agent/default` and streams the reply as AG-UI SSE events
       (`RUN_STARTED` → `TEXT_MESSAGE_*` → `RUN_FINISHED`). Backed by
       `src/lib/chat-agent.ts`; the route is `src/routes/agents/chat-agent/default.ts`.
-- [ ] Swap the echo for a real model. Choose the model path (direct provider vs.
-      AI Gateway) now that there's a working loop to put behind it. The wire
-      contract and route stay the same — only `chatAgentStream` changes.
-      Behind stabilization as of 2026-06-11.
+- [ ] Swap the echo for a real model — the live priority now that prod is stable.
+      Choose the model path (direct provider vs. AI Gateway); the wire contract and
+      route stay the same, only `chatAgentStream` changes.
+- [ ] Error visibility for the Worker — now delivered by the active
+      [Sentry Integration](../sentry-integration/plan.md) rollout, which f311x
+      leads, rather than a one-off slice. "Why is it broken" shouldn't require a
+      local repro.
 - [ ] Add a test with each new surface. typecheck + build + vitest already gate
       every PR; keep them green.
 

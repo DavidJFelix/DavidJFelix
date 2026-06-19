@@ -1,5 +1,12 @@
 # Forza Monica Shop
 
+## Status
+
+**Blocked** (2026-06-18) — scaffold is complete and verified against mock.shop, but production is
+gated on two human tasks (filed as GitHub issues): create the Shopify store + Headless channel +
+Storefront token, and register forzamonica.com + add the zone to Cloudflare. Parked until David
+clears those.
+
 ## Goal
 
 Stand up forzamonica.com as a headless Shopify storefront: TanStack Start on Cloudflare
@@ -60,5 +67,5 @@ new-domain-sites project.
 - App: [`apps/forzamonica.com`](../../../apps/forzamonica.com/)
 - new-domain-sites — the originating line item (project closed; recorded in the
   [changelog](../../changelog/2026-06.md))
-- [preview-deployments](../preview-deployments/plan.md) — deploy-verification bar this
-  app should adopt
+- preview deployments — the per-PR preview/smoke/screenshot bar this app adopts (shipped repo-wide
+  2026-06-17; see the changelog)

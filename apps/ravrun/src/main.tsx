@@ -1,7 +1,13 @@
 import {createRouter, RouterProvider} from '@tanstack/react-router'
 import ReactDOM from 'react-dom/client'
+import {initClientObservability} from './observability/client'
 import {routeTree} from './routeTree.gen'
 import './styles.css'
+
+// Start error monitoring + analytics before render. No-op until the
+// VITE_PUBLIC_* credentials are set, so dev and uninstrumented deploys are
+// unaffected.
+initClientObservability()
 
 // Set up a Router instance
 const router = createRouter({

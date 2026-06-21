@@ -1,0 +1,11 @@
+---
+// Client-side error monitoring (Sentry) + product analytics (PostHog). The
+// script is browser-only and no-ops until PUBLIC_SENTRY_DSN / PUBLIC_POSTHOG_KEY
+// are set at build time. Rendered once in the page <head>.
+---
+
+<script>
+  import {initClientObservability} from '../observability/client'
+
+  initClientObservability()
+</script>

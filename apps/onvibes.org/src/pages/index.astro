@@ -3,6 +3,13 @@ import '../index.css'
 import {css} from 'styled-system/css'
 
 const title = 'onvibes.org'
+const description =
+  'A showcase of vibecoded apps — built fast and by feel — and a toolchain for building your own.'
+
+const features = [
+  {name: 'Showcase', body: 'Browse vibecoded apps and see how they came together.'},
+  {name: 'Build', body: 'Spin up your own with the onvibes toolchain. In development.'},
+]
 ---
 
 <html lang="en">
@@ -10,21 +17,117 @@ const title = 'onvibes.org'
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
-    <meta name="description" content={title} />
+    <meta name="description" content={description} />
     <title>{title}</title>
   </head>
   <body
     class={css({
-      minHeight: '100vh',
-      display: 'grid',
-      placeItems: 'center',
+      minHeight: '100dvh',
+      display: 'flex',
+      flexDirection: 'column',
       fontFamily: 'sans',
       bg: 'white',
       color: 'neutral.900',
     })}
   >
-    <main>
-      <h1 class={css({fontSize: '5xl', fontWeight: 'bold', letterSpacing: 'tight'})}>{title}</h1>
+    <header
+      class={css({
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        px: {base: '6', md: '8'},
+        py: '5',
+        borderBottomWidth: '1px',
+        borderColor: 'neutral.200',
+      })}
+    >
+      <span class={css({fontWeight: 'semibold', fontSize: 'lg', letterSpacing: 'tight'})}>
+        {title}
+      </span>
+      <span class={css({fontSize: 'sm', color: 'neutral.500'})}>vibecoded apps</span>
+    </header>
+
+    <main
+      class={css({
+        flex: '1',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        width: 'full',
+        maxWidth: '4xl',
+        mx: 'auto',
+        px: {base: '6', md: '8'},
+        py: {base: '16', md: '24'},
+      })}
+    >
+      <p
+        class={css({
+          fontSize: 'sm',
+          fontWeight: 'medium',
+          color: 'neutral.500',
+          textTransform: 'uppercase',
+          letterSpacing: 'wider',
+        })}
+      >
+        Showcase + toolchain
+      </p>
+      <h1
+        class={css({
+          mt: '4',
+          fontSize: {base: '4xl', md: '6xl'},
+          fontWeight: 'bold',
+          letterSpacing: 'tight',
+          lineHeight: 'tight',
+        })}
+      >
+        Apps, built on vibes.
+      </h1>
+      <p
+        class={css({
+          mt: '6',
+          fontSize: {base: 'lg', md: 'xl'},
+          color: 'neutral.600',
+          maxWidth: '2xl',
+          lineHeight: 'relaxed',
+        })}
+      >
+        {description}
+      </p>
+
+      <ul
+        class={css({
+          mt: '12',
+          display: 'grid',
+          gridTemplateColumns: {base: '1fr', sm: 'repeat(2, 1fr)'},
+          gap: '6',
+          listStyleType: 'none',
+          p: '0',
+        })}
+      >
+        {
+          features.map((f) => (
+            <li class={css({borderWidth: '1px', borderColor: 'neutral.200', rounded: 'xl', p: '6'})}>
+              <h2 class={css({fontSize: 'lg', fontWeight: 'semibold'})}>{f.name}</h2>
+              <p class={css({mt: '2', fontSize: 'sm', color: 'neutral.600', lineHeight: 'relaxed'})}>
+                {f.body}
+              </p>
+            </li>
+          ))
+        }
+      </ul>
     </main>
+
+    <footer
+      class={css({
+        px: {base: '6', md: '8'},
+        py: '6',
+        borderTopWidth: '1px',
+        borderColor: 'neutral.200',
+        fontSize: 'sm',
+        color: 'neutral.500',
+      })}
+    >
+      © 2026 {title}
+    </footer>
   </body>
 </html>

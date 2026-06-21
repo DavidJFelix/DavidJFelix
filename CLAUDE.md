@@ -15,6 +15,15 @@ docs/
         └── YYYY-MM-DD-progress.md       # Progress notes (one per session)
 ```
 
+### Project kinds
+
+Two kinds of project live under `docs/projects/`:
+
+- **App umbrella projects** — one per app in `apps/` (e.g. `djf-io`, `onvibes-org`). These are _persistent_: an app's roadmap doesn't "complete," so its umbrella is a living document (vision, current state, roadmap). High-value efforts spin out from an umbrella as their own task projects or GitHub issues.
+- **Task projects** — focused and _ephemeral_ (e.g. a migration, a rollout). These follow the "Closing a Project" rule below: when done, capture the result in `docs/changelog/` and delete the directory.
+
+When the "working notes, not history / delete when complete" guidance below refers to projects, it means **task projects**. App umbrellas persist.
+
 ### Naming Conventions
 
 - **IMPERATIVE**: All project directories and files MUST use lowercase kebab-case naming

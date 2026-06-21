@@ -25,5 +25,7 @@ User-directed. David reviews the live site and issues specific changes; Claude e
 
 ## Related
 
-- [Blog Migration](../blog-migration/plan.md) — produced the baseline being polished here
+- Parent umbrella: [djf.io](../djf-io/plan.md)
+- Blog migration produced the baseline being polished here (project closed; see the
+  [changelog](../../changelog/))
 - App location: `apps/djf.io/`

@@ -7,7 +7,9 @@ import {expect, test} from '@playwright/test'
 
 test('home page renders the landing', async ({page}) => {
   await page.goto('/')
-  await expect(page.getByRole('heading', {level: 1, name: 'onvibes.org'})).toBeVisible()
+  await expect(page.getByRole('heading', {level: 1, name: 'Apps, built on vibes.'})).toBeVisible()
+  await expect(page.getByRole('heading', {level: 2, name: 'Showcase'})).toBeVisible()
+  await expect(page.getByRole('heading', {level: 2, name: 'Build'})).toBeVisible()
 })
 
 test('home page matches the visual baseline', async ({page}) => {

@@ -6,9 +6,12 @@ Wire Sentry into every app in the repo for crash and error monitoring.
 
 ## Status
 
-**Active — full-fleet rollout** (promoted 2026-06-18). **f311x leads**: its plan calls for Worker
-error visibility, so it's the first integration and the proving ground. Per-PR preview deploys now
-exist (2026-06-17) as a place to validate instrumentation before merge.
+**Active — client-side wired fleet-wide; pending activation** (2026-06-21). Error monitoring is in
+all eleven apps' clients, no-op until a DSN is set; turning it on (projects + DSNs + deploy env) is a
+human task — #261. **Worker-side error visibility is deferred** — the original f311x driver — because
+TanStack Start on Cloudflare has no clean worker-entry wrap on the installed version and the meta-SDK
+breaks workerd (getsentry/sentry-javascript#20038); it pairs with f311x's real-model work. See the
+2026-06-21 progress note.
 
 ## Scope
 

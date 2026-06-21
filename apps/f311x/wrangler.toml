@@ -1,7 +1,11 @@
 name = "f311x"
+main = "src/server.ts"
 compatibility_date = "2026-05-01"
 compatibility_flags = ["nodejs_compat"]
 
-# Deploy and bindings are managed by Alchemy v2 (see alchemy.run.ts); the app is
-# built by Vite / TanStack Start, so there is no standalone worker entry here.
-# This file is kept only as a fallback for `wrangler types` / `wrangler dev`.
+# Deploy and bindings are managed by Alchemy v2 (see alchemy.run.ts). `main`
+# points at the custom server entry (src/server.ts), which wraps TanStack Start's
+# handler with Sentry; @cloudflare/vite-plugin needs the explicit entry to use the
+# wrapper instead of @tanstack/react-start/server-entry directly
+# (cloudflare/workers-sdk#11100). The Vite/TanStack Start build emits the worker
+# to dist/server/server.js.

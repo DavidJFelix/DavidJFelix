@@ -70,3 +70,26 @@ test('search works from a blog post page', async ({page}) => {
   await dialog.getByRole('searchbox').fill('positivity')
   await expect(dialog.getByRole('link', {name: /On Positivity/}).first()).toBeVisible()
 })
+
+test('shows the Ctrl key hint on non-Mac platforms', async ({page}) => {
+  await gotoHydrated(page, '/')
+
+  await expect(page.getByText('Ctrl K', {exact: true})).toBeVisible()
+  await expect(page.getByText('⌘K', {exact: true})).toBeHidden()
+})
+
+test('shows the ⌘ key hint immediately on Mac, with no Ctrl→⌘ flash', async ({page}) => {
+  // Both hints ship in the markup; CSS reveals one based on a data-platform
+  // attribute an inline <head> script sets from navigator.platform before the
+  // first paint. addInitScript runs before the page's own scripts, so forcing
+  // a Mac platform exercises that branch — and because the choice is pre-paint
+  // CSS rather than a post-hydration effect, ⌘K is the only glyph ever painted.
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'platform', {get: () => 'MacIntel'})
+  })
+  await gotoHydrated(page, '/')
+
+  await expect(page.locator('html')).toHaveAttribute('data-platform', 'mac')
+  await expect(page.getByText('⌘K', {exact: true})).toBeVisible()
+  await expect(page.getByText('Ctrl K', {exact: true})).toBeHidden()
+})

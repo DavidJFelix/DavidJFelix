@@ -38,7 +38,6 @@ export default function Search() {
   const [results, setResults] = useState<PagefindSearchFragment[]>([])
   const [searched, setSearched] = useState(false)
   const [indexMissing, setIndexMissing] = useState(false)
-  const [shortcutHint, setShortcutHint] = useState('Ctrl K')
   const buttonRef = useRef<HTMLButtonElement>(null)
   const dialogRef = useRef<HTMLDialogElement>(null)
   // Monotonic token: bumping it invalidates searches still in flight.
@@ -86,10 +85,12 @@ export default function Search() {
   }
 
   // The one real external-system sync: a window-level hotkey listener. The
-  // platform hint and the test-readiness marker piggyback on it because both
-  // also wait for the same moment — React mounted on the client. The marker
-  // is set after addEventListener and read by the e2e tests before they send
-  // keystrokes; Astro's own hydration signals fire before listeners attach.
+  // test-readiness marker piggybacks on it because it waits for the same
+  // moment — React mounted on the client. The marker is set after
+  // addEventListener and read by the e2e tests before they send keystrokes;
+  // Astro's own hydration signals fire before listeners attach. (The platform
+  // key hint is resolved before paint by CSS off the data-platform attribute
+  // set in BaseLayout, not here, so it never flashes from Ctrl to ⌘.)
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'k' && (event.metaKey || event.ctrlKey)) {
@@ -103,7 +104,6 @@ export default function Search() {
       }
     }
     window.addEventListener('keydown', onKeyDown)
-    setShortcutHint(/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K')
     // Native light dismiss: backdrop clicks close the dialog without any
     // click handler. Set imperatively because React's TS types do not know
     // the attribute yet; browsers without closedby support ignore it and
@@ -141,7 +141,14 @@ export default function Search() {
             color: 'zinc.500',
           })}
         >
-          {shortcutHint}
+          {/* Both hints render; CSS shows one based on the data-platform
+              attribute BaseLayout's inline script sets before first paint, so
+              the correct key is painted immediately instead of swapping in a
+              post-hydration effect (the old Ctrl→⌘ flash). */}
+          <span className={css({'[data-platform=mac] &': {display: 'none'}})}>Ctrl K</span>
+          <span className={css({display: 'none', '[data-platform=mac] &': {display: 'inline'}})}>
+            ⌘K
+          </span>
         </kbd>
       </button>
       <dialog

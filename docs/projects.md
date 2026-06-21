@@ -72,8 +72,7 @@ and verified; next is swapping the echo stub for a real model — which must sit
 
 #### [monicandavid.com](./projects/monicandavid-com/plan.md)
 
-Personal site for Monica & David. Live but a single-`<h1>` placeholder; purpose assumed
-(couple/home/wedding) and flagged for confirmation.
+A couple's blog for Monica & David. Basic landing shipped; the actual posts are the next phase.
 
 **Status**: Placeholder
 

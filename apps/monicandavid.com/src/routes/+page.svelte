@@ -2,7 +2,7 @@
 import {css} from 'styled-system/css'
 
 const brand = 'Monica & David'
-const description = 'Our corner of the web — more to come soon.'
+const description = 'A little blog about our life together. Posts coming soon.'
 </script>
 
 <svelte:head>
@@ -49,8 +49,20 @@ const description = 'Our corner of the web — more to come soon.'
       py: {base: '16', md: '24'},
     })}
   >
+    <p
+      class={css({
+        fontSize: 'sm',
+        fontWeight: 'medium',
+        color: 'neutral.500',
+        textTransform: 'uppercase',
+        letterSpacing: 'wider',
+      })}
+    >
+      Our blog
+    </p>
     <h1
       class={css({
+        mt: '4',
         fontSize: {base: '4xl', md: '6xl'},
         fontWeight: 'bold',
         letterSpacing: 'tight',

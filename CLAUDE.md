@@ -79,6 +79,20 @@ Keep it short. The issue body should fit on one screen. If it doesn't fit, the t
 - [AGENTS.md](AGENTS.md) -- universal AI agent entry point
 - [docs/changelog/](docs/changelog/) -- monthly change history
 
+## Agent skills
+
+### Issue tracker
+
+Hybrid: project plans and progress notes live as committed markdown under `docs/projects/<name>/`; tasks that need a human become terse GitHub issues assigned to `@DavidJFelix`. PRs are not a triage surface. See [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md).
+
+### Triage labels
+
+Canonical defaults -- `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix` -- applied to GitHub issues. See [docs/agents/triage-labels.md](docs/agents/triage-labels.md).
+
+### Domain docs
+
+Multi-context: a root `CONTEXT-MAP.md` points to a per-app `CONTEXT.md`, with ADRs at the root and per app; all created lazily. See [docs/agents/domain.md](docs/agents/domain.md).
+
 ## Monorepo Structure
 
 - `apps/` - Application projects (djf.io, calendar-visualizer, ravrun)

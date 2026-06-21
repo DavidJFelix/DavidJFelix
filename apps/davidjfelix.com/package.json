@@ -18,7 +18,9 @@
     "test:e2e:update": "playwright test --update-snapshots"
   },
   "dependencies": {
-    "astro": "^6.4.6"
+    "@sentry/browser": "^10.59.0",
+    "astro": "^6.4.6",
+    "posthog-js": "^1.391.2"
   },
   "devDependencies": {
     "@astrojs/check": "0.9.9",

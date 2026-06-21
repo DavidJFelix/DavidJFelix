@@ -20,7 +20,9 @@
   },
   "dependencies": {
     "@ark-ui/vue": "^5.37.2",
+    "@sentry/browser": "^10.59.0",
     "nuxt": "^4.4.8",
+    "posthog-js": "^1.391.2",
     "vue": "^3.5.38"
   },
   "devDependencies": {

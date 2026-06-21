@@ -1,7 +1,6 @@
 import {fileURLToPath} from 'node:url'
 import {unified} from '@astrojs/markdown-remark'
 import mdx from '@astrojs/mdx'
-import react from '@astrojs/react'
 import sitemap from '@astrojs/sitemap'
 import {defineConfig} from 'astro/config'
 import * as pagefind from 'pagefind'
@@ -48,5 +47,5 @@ export default defineConfig({
   markdown: {
     processor: unified(),
   },
-  integrations: [react(), mdx(), sitemap(), pagefindIntegration()],
+  integrations: [mdx(), sitemap(), pagefindIntegration()],
 })

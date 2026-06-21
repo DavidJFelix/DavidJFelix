@@ -1,17 +1,14 @@
 import {expect, type Page, test} from '@playwright/test'
 
-// client:load islands attach their listeners only after React hydrates and
-// flushes effects — interacting before then drops clicks and keystrokes on
-// the floor. astro-island's ssr-attribute removal is not a safe signal (the
-// React client hydrates inside startTransition and returns immediately), so
-// the component sets data-hotkey-ready once its keydown listener is attached.
-const gotoHydrated = async (page: Page, path: string) => {
+// Search wires itself up in a deferred module script, which runs before the
+// load event, so it is ready by the time page.goto resolves.
+const visit = async (page: Page, path: string) => {
   await page.goto(path)
-  await expect(page.locator('button[data-hotkey-ready]')).toBeVisible()
+  await expect(page.getByRole('button', {name: 'Search'})).toBeVisible()
 }
 
 test('nav search button opens the dialog and finds a post by title', async ({page}) => {
-  await gotoHydrated(page, '/')
+  await visit(page, '/')
 
   await page.getByRole('button', {name: 'Search'}).click()
   const dialog = page.getByRole('dialog', {name: 'Search posts'})
@@ -26,7 +23,7 @@ test('nav search button opens the dialog and finds a post by title', async ({pag
 })
 
 test('cmd/ctrl+k opens search and finds a post by body text', async ({page}) => {
-  await gotoHydrated(page, '/')
+  await visit(page, '/')
 
   await page.keyboard.press('ControlOrMeta+k')
   const dialog = page.getByRole('dialog', {name: 'Search posts'})
@@ -38,7 +35,7 @@ test('cmd/ctrl+k opens search and finds a post by body text', async ({page}) => 
 })
 
 test('escape closes the search dialog', async ({page}) => {
-  await gotoHydrated(page, '/')
+  await visit(page, '/')
 
   await page.keyboard.press('ControlOrMeta+k')
   const dialog = page.getByRole('dialog', {name: 'Search posts'})
@@ -49,7 +46,7 @@ test('escape closes the search dialog', async ({page}) => {
 })
 
 test('search reports when nothing matches and recovers when the query changes', async ({page}) => {
-  await gotoHydrated(page, '/')
+  await visit(page, '/')
 
   await page.keyboard.press('ControlOrMeta+k')
   const dialog = page.getByRole('dialog', {name: 'Search posts'})
@@ -63,7 +60,7 @@ test('search reports when nothing matches and recovers when the query changes', 
 })
 
 test('search works from a blog post page', async ({page}) => {
-  await gotoHydrated(page, '/blog/2025-12-07-on-running/')
+  await visit(page, '/blog/2025-12-07-on-running/')
 
   await page.keyboard.press('ControlOrMeta+k')
   const dialog = page.getByRole('dialog', {name: 'Search posts'})
@@ -72,22 +69,21 @@ test('search works from a blog post page', async ({page}) => {
 })
 
 test('shows the Ctrl key hint on non-Mac platforms', async ({page}) => {
-  await gotoHydrated(page, '/')
+  await visit(page, '/')
 
   await expect(page.getByText('Ctrl K', {exact: true})).toBeVisible()
   await expect(page.getByText('⌘K', {exact: true})).toBeHidden()
 })
 
 test('shows the ⌘ key hint immediately on Mac, with no Ctrl→⌘ flash', async ({page}) => {
-  // Both hints ship in the markup; CSS reveals one based on a data-platform
-  // attribute an inline <head> script sets from navigator.platform before the
-  // first paint. addInitScript runs before the page's own scripts, so forcing
-  // a Mac platform exercises that branch — and because the choice is pre-paint
-  // CSS rather than a post-hydration effect, ⌘K is the only glyph ever painted.
+  // Both hints ship in the markup; CSS reveals one from the data-platform
+  // attribute BaseLayout's inline <head> script sets from navigator.platform
+  // before first paint. addInitScript runs before that script, so forcing a Mac
+  // platform exercises the branch and ⌘K is the only glyph ever painted.
   await page.addInitScript(() => {
     Object.defineProperty(navigator, 'platform', {get: () => 'MacIntel'})
   })
-  await gotoHydrated(page, '/')
+  await visit(page, '/')
 
   await expect(page.locator('html')).toHaveAttribute('data-platform', 'mac')
   await expect(page.getByText('⌘K', {exact: true})).toBeVisible()

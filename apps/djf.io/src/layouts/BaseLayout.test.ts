@@ -1,5 +1,3 @@
-import {loadRenderers} from 'astro:container'
-import {getContainerRenderer} from '@astrojs/react'
 import {experimental_AstroContainer as AstroContainer} from 'astro/container'
 import {expect, test} from 'vitest'
 import BaseLayout from './BaseLayout.astro'
@@ -7,10 +5,7 @@ import BaseLayout from './BaseLayout.astro'
 // The container API does not carry `site` config through to `Astro.site`, so
 // absolute-URL tags (canonical, og:url, og:image) are conditionally skipped
 // here and asserted against the real build in seo.e2e.test.ts instead.
-// The React renderer is needed to server-render the Search island in the nav.
-const container = await AstroContainer.create({
-  renderers: await loadRenderers([getContainerRenderer()]),
-})
+const container = await AstroContainer.create()
 
 test('BaseLayout renders title prop suffixed with site name', async () => {
   const html = await container.renderToString(BaseLayout, {

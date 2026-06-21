@@ -1,6 +1,7 @@
 ---
 import '../index.css'
 import {css} from 'styled-system/css'
+import Observability from '../components/Observability.astro'
 import Search from '../components/Search'
 import {publicationUri} from '../lib/standard-site'
 
@@ -55,6 +56,7 @@ const ogImageUrl = Astro.site ? new URL(ogImage, Astro.site) : undefined
     />
     <link rel="sitemap" href="/sitemap-index.xml" />
     <link rel="site.standard.publication" href={publicationUri()} />
+    <Observability />
     <slot name="head" />
   </head>
   <body

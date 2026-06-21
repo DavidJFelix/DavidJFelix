@@ -1,6 +1,9 @@
 #:schema node_modules/wrangler/config-schema.json
 name = "startchi-com"
-main = "@tanstack/react-start/server-entry"
+# Custom server entry (src/server.ts) wraps the TanStack Start handler with Sentry;
+# @cloudflare/vite-plugin needs this explicit entry instead of the default
+# @tanstack/react-start/server-entry (cloudflare/workers-sdk#11100).
+main = "src/server.ts"
 compatibility_date = "2026-06-01"
 compatibility_flags = ["nodejs_compat"]
 

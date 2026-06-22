@@ -1,120 +1,111 @@
 ---
 import {Image} from 'astro:assets'
+import {getCollection} from 'astro:content'
 import {css} from 'styled-system/css'
 import headshot from '../assets/headshot.png'
 import BaseLayout from '../layouts/BaseLayout.astro'
+import {formatBlogDate, sortPostsByDateDesc} from '../lib/blog'
+
+const recentPosts = sortPostsByDateDesc(await getCollection('blog')).slice(0, 3)
 ---
 
 <BaseLayout title="David J Felix" description="Personal blog of David J Felix">
-  <div class={css({display: 'flex', flexDirection: 'column', gap: '8'})}>
+  <div class={css({display: 'flex', flexDirection: 'column', gap: '12'})}>
     <section
       class={css({
         display: 'flex',
         flexDirection: {base: 'column', md: 'row'},
         alignItems: 'center',
         gap: '8',
-        mb: '8',
       })}
     >
       <Image
         src={headshot}
         alt="David J Felix"
         class={css({
-          w: '48',
-          h: '48',
+          w: '40',
+          h: '40',
           borderRadius: 'full',
-          border: '4px solid',
-          borderColor: 'zinc.700',
+          borderWidth: '4px',
+          borderStyle: 'solid',
+          borderColor: 'border',
         })}
       />
       <div>
         <h1 class={css({fontSize: '4xl', fontWeight: 'bold', mb: '2'})}>David J Felix</h1>
-        <p class={css({color: 'zinc.400', fontSize: 'lg'})}>It's all downhill from here</p>
+        <p class={css({color: 'text.muted', fontSize: 'lg'})}>It's all downhill from here</p>
       </div>
     </section>
 
     <section>
-      <h2 class={css({fontSize: '2xl', fontWeight: 'bold', mb: '4'})}>About Me</h2>
-
       <div
         class={css({
-          '& p': {mb: '4', color: 'zinc.300'},
-          '& ul': {pl: '6', mb: '4', color: 'zinc.300'},
-          '& li': {mb: '2'},
-          '& h3': {fontSize: 'xl', fontWeight: 'bold', mb: '3', mt: '6', color: 'zinc.100'},
-          '& h4': {fontSize: 'md', fontWeight: 'bold', mb: '2', mt: '4', color: 'zinc.100'},
+          display: 'flex',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          mb: '6',
         })}
       >
-        <p>
-          I deeply enjoy startups. I'm currently at Brain-CA Technologies (seed stage);
-          before that, Era Software (Series A, acquired by ServiceNow and folded into
-          Lightstep) and earlier, VNDLY (Series B, acquired by Workday). I've also founded
-          a couple of my own — NullServe and Pepperonio (AngelHack Cincinnati 2014 winner).
-        </p>
+        <h2 class={css({fontSize: '2xl', fontWeight: 'bold'})}>Recent posts</h2>
+        <a
+          href="/blog"
+          class={css({
+            color: 'accent.text',
+            textDecoration: 'none',
+            fontSize: 'sm',
+            _hover: {textDecoration: 'underline'},
+          })}
+        >
+          All posts &rarr;
+        </a>
+      </div>
 
-        <p>
-          I graduated from the University of Dayton College of Engineering with a B.S. in
-          Computer Engineering. My interests sit around serverless, DevOps, and cloud-first
-          infrastructure.
-        </p>
-
-        <h3>Companies</h3>
-
-        <h4>Brain-CA Technologies · 2024–present</h4>
-        <p>
-          Seed-stage AI hardware company building power-efficient inference chips and
-          learning algorithms. I work across AI research, MLOps, hardware engineering, and
-          team management.
-        </p>
-
-        <h4>Era Software → ServiceNow Cloud Observability (Lightstep) · 2022–2024</h4>
-        <p>
-          Joined Era Software (Series A) as a full-stack engineer; continued through the
-          ServiceNow acquisition, working on observability and application log management.
-        </p>
-
-        <h4>VNDLY · 2020–2022</h4>
-        <p>Series B. Full-stack engineer. Acquired by Workday.</p>
-
-        <h3>Founded</h3>
-
-        <h4>NullServe · 2019–present</h4>
-        <p>
-          Company built around leveraging SaaS and serverless platforms as a hosting and
-          scalable execution engine. Delivered custom serverless video pipelines and a web
-          app hosting setup. Still active in a limited capacity.
-        </p>
-
-        <h4>Pepperonio · 2014–2015 (closed)</h4>
-        <p>
-          Co-founded. "Ice cream truck for pizza" — an app that sold hot-and-ready pizzas
-          in real time from trucks routed to high-demand locations. AngelHack Cincinnati
-          2014 winner.
-        </p>
-
-        <h3>Projects</h3>
-
-        <h4>Serverless Compose</h4>
-        <p>
-          Onion-style middleware framework for Node on AWS Lambda. Minimal core, extensible
-          by composition.
-        </p>
-
-        <h4>
-          MG4.tv / iotv
-        </h4>
-        <p>
-          Live-streaming utilities aimed at richer interactions around video content.
-        </p>
-
-        <ul>
-          <li>Atumsoft — Advisor / Mentor</li>
-          <li>AngelHack Cincinnati 2015, 2016 — Local Event Host / Sponsor</li>
-          <li>Instameals — Founding Engineer / DevOps</li>
-          <li>MyI, LLC — First Contract Engineer / Engineering Advisor</li>
-          <li>E-Gov Link, EC-Link — Contract Software Engineer / Technical Writer</li>
-          <li>Swarmfarm, LLC — First Employee, DevOps</li>
-        </ul>
+      <div class={css({display: 'flex', flexDirection: 'column', gap: '6'})}>
+        {
+          recentPosts.map((post) => (
+            <article
+              class={css({
+                p: '6',
+                bg: 'bg.subtle',
+                borderRadius: 'lg',
+                borderWidth: '1px',
+                borderStyle: 'solid',
+                borderColor: 'border.subtle',
+                transition: 'border-color 0.2s',
+                _hover: {borderColor: 'border'},
+              })}
+            >
+              <a href={`/blog/${post.id}`} class={css({textDecoration: 'none'})}>
+                <h3
+                  class={css({
+                    fontSize: 'xl',
+                    fontWeight: 'semibold',
+                    color: 'text',
+                    mb: '2',
+                    _hover: {color: 'accent.text'},
+                  })}
+                >
+                  {post.data.title}
+                </h3>
+              </a>
+              <p class={css({color: 'text.muted', mb: '3', fontSize: 'sm'})}>
+                {post.data.description}
+              </p>
+              <div
+                class={css({
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '3',
+                  color: 'text.muted',
+                  fontSize: 'xs',
+                })}
+              >
+                <span>{formatBlogDate(post.data.date)}</span>
+                {post.data.readingTime && <span>{post.data.readingTime} read</span>}
+              </div>
+            </article>
+          ))
+        }
       </div>
     </section>
   </div>

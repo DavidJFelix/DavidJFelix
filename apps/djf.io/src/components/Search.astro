@@ -5,20 +5,20 @@ const trigger = css({
   display: 'flex',
   alignItems: 'center',
   gap: '2',
-  color: 'zinc.400',
+  color: 'text.muted',
   bg: 'transparent',
   cursor: 'pointer',
-  _hover: {color: 'zinc.100'},
+  _hover: {color: 'text'},
 })
 
 const hint = css({
   borderWidth: '1px',
   borderStyle: 'solid',
-  borderColor: 'zinc.700',
+  borderColor: 'border',
   borderRadius: 'sm',
   px: '1.5',
   fontSize: 'xs',
-  color: 'zinc.500',
+  color: 'text.muted',
 })
 
 // Ctrl K vs ⌘K is picked by CSS from the data-platform attribute BaseLayout sets
@@ -31,11 +31,11 @@ const dialog = css({
   maxW: 'xl',
   mt: '15vh',
   mx: 'auto',
-  bg: 'zinc.900',
-  color: 'zinc.100',
+  bg: 'bg.subtle',
+  color: 'text',
   borderWidth: '1px',
   borderStyle: 'solid',
-  borderColor: 'zinc.700',
+  borderColor: 'border',
   borderRadius: 'lg',
   p: '0',
   boxShadow: 'xl',
@@ -44,19 +44,19 @@ const dialog = css({
 
 const input = css({
   width: 'full',
-  bg: 'zinc.950',
-  color: 'zinc.100',
+  bg: 'bg.canvas',
+  color: 'text',
   borderWidth: '1px',
   borderStyle: 'solid',
-  borderColor: 'zinc.700',
+  borderColor: 'border',
   borderRadius: 'md',
   px: '3',
   py: '2',
-  _focus: {outline: 'none', borderColor: 'zinc.500'},
-  _placeholder: {color: 'zinc.500'},
+  _focus: {outline: 'none', borderColor: 'accent.solid'},
+  _placeholder: {color: 'text.muted'},
 })
 
-const status = css({color: 'zinc.400', px: '3', py: '4'})
+const status = css({color: 'text.muted', px: '3', py: '4'})
 
 // Results are built by the script below, so their styling lives here as
 // descendant rules rather than per-node classes.
@@ -71,12 +71,12 @@ const results = css({
     py: '2',
     borderRadius: 'md',
     textDecoration: 'none',
-    _hover: {bg: 'zinc.800'},
+    _hover: {bg: 'bg.element'},
   },
   '& span': {display: 'block'},
-  '& span:first-child': {color: 'zinc.100', fontWeight: 'semibold'},
-  '& span:last-child': {color: 'zinc.400', fontSize: 'sm'},
-  '& mark': {bg: 'transparent', color: 'blue.400', fontWeight: 'semibold'},
+  '& span:first-child': {color: 'text', fontWeight: 'semibold'},
+  '& span:last-child': {color: 'text.muted', fontSize: 'sm'},
+  '& mark': {bg: 'transparent', color: 'accent.text', fontWeight: 'semibold'},
 })
 ---
 

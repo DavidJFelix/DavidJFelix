@@ -5,6 +5,7 @@ import '@fontsource-variable/inter'
 import '@fontsource-variable/jetbrains-mono'
 import {css} from 'styled-system/css'
 import Search from '../components/Search.astro'
+import ThemeToggle from '../components/ThemeToggle.astro'
 import {publicationUri} from '../lib/standard-site'
 
 interface Props {
@@ -26,6 +27,12 @@ const {
 const pathname = Astro.url.pathname.endsWith('/') ? Astro.url.pathname : `${Astro.url.pathname}/`
 const canonicalUrl = Astro.site ? new URL(pathname, Astro.site) : undefined
 const ogImageUrl = Astro.site ? new URL(ogImage, Astro.site) : undefined
+
+const navLink = css({
+  color: 'text.muted',
+  textDecoration: 'none',
+  _hover: {color: 'text'},
+})
 ---
 
 <!doctype html>
@@ -33,6 +40,17 @@ const ogImageUrl = Astro.site ? new URL(ogImage, Astro.site) : undefined
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    {/* Resolve the color theme before first paint so there is no flash: an
+        explicit choice in localStorage wins, otherwise follow the system. */}
+    <script is:inline>
+      const storedTheme = localStorage.getItem('theme')
+      document.documentElement.dataset.theme =
+        storedTheme === 'light' || storedTheme === 'dark'
+          ? storedTheme
+          : matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light'
+    </script>
     {/* Tag the platform before first paint so the search hotkey hint renders as
         ⌘K (Mac) or Ctrl K immediately, instead of flashing after hydration. */}
     <script is:inline>
@@ -70,8 +88,8 @@ const ogImageUrl = Astro.site ? new URL(ogImage, Astro.site) : undefined
   <body
     class={css({
       fontFamily: 'body',
-      bg: 'zinc.950',
-      color: 'zinc.100',
+      bg: 'bg.canvas',
+      color: 'text',
       minH: '100vh',
       lineHeight: '1.6',
     })}
@@ -79,13 +97,13 @@ const ogImageUrl = Astro.site ? new URL(ogImage, Astro.site) : undefined
     <header
       class={css({
         borderBottom: '1px solid',
-        borderBottomColor: 'zinc.800',
+        borderBottomColor: 'border.subtle',
         py: '4',
       })}
     >
       <nav
         class={css({
-          maxW: '4xl',
+          maxW: '3xl',
           mx: 'auto',
           px: '4',
           display: 'flex',
@@ -98,52 +116,27 @@ const ogImageUrl = Astro.site ? new URL(ogImage, Astro.site) : undefined
           class={css({
             fontSize: 'xl',
             fontWeight: 'bold',
-            color: 'zinc.100',
+            color: 'text',
             textDecoration: 'none',
-            _hover: {color: 'zinc.300'},
+            _hover: {color: 'accent.text'},
           })}
         >
           djf.io
         </a>
         <div class={css({display: 'flex', alignItems: 'center', gap: '6'})}>
           <Search />
-          <a
-            href="/blog"
-            class={css({
-              color: 'zinc.400',
-              textDecoration: 'none',
-              _hover: {color: 'zinc.100'},
-            })}
-          >
-            Blog
-          </a>
-          <a
-            href="https://github.com/davidjfelix"
-            class={css({
-              color: 'zinc.400',
-              textDecoration: 'none',
-              _hover: {color: 'zinc.100'},
-            })}
-          >
-            GitHub
-          </a>
-          <a
-            href="https://twitter.com/davidjfelix"
-            class={css({
-              color: 'zinc.400',
-              textDecoration: 'none',
-              _hover: {color: 'zinc.100'},
-            })}
-          >
-            Twitter
-          </a>
+          <a href="/blog" class={navLink}>Blog</a>
+          <a href="/about" class={navLink}>About</a>
+          <a href="https://github.com/davidjfelix" class={navLink}>GitHub</a>
+          <a href="https://twitter.com/davidjfelix" class={navLink}>Twitter</a>
+          <ThemeToggle />
         </div>
       </nav>
     </header>
 
     <main
       class={css({
-        maxW: '4xl',
+        maxW: '3xl',
         mx: 'auto',
         px: '4',
         py: '8',
@@ -155,18 +148,18 @@ const ogImageUrl = Astro.site ? new URL(ogImage, Astro.site) : undefined
     <footer
       class={css({
         borderTop: '1px solid',
-        borderTopColor: 'zinc.800',
+        borderTopColor: 'border.subtle',
         py: '6',
         mt: '12',
       })}
     >
       <div
         class={css({
-          maxW: '4xl',
+          maxW: '3xl',
           mx: 'auto',
           px: '4',
           textAlign: 'center',
-          color: 'zinc.400',
+          color: 'text.muted',
           fontSize: 'sm',
         })}
       >

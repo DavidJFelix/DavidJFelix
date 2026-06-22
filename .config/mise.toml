@@ -10,7 +10,7 @@ oxlint = "1"
 prettier = "3.8.4"
 actionlint = "1"
 ghalint = "1"
-zizmor = "1"
+zizmor = "1.26.1"
 pinact = "4.1.0"
 "npm:cspell" = "10.0.1"
 

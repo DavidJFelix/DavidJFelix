@@ -1,7 +1,7 @@
 ---
 import '../index.css'
 import {css} from 'styled-system/css'
-import Search from '../components/Search'
+import Search from '../components/Search.astro'
 import {publicationUri} from '../lib/standard-site'
 
 interface Props {
@@ -30,6 +30,13 @@ const ogImageUrl = Astro.site ? new URL(ogImage, Astro.site) : undefined
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    {/* Tag the platform before first paint so the search hotkey hint renders as
+        ⌘K (Mac) or Ctrl K immediately, instead of flashing after hydration. */}
+    <script is:inline>
+      if (/Mac|iPhone|iPad/.test(navigator.platform)) {
+        document.documentElement.dataset.platform = 'mac'
+      }
+    </script>
     <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title} | djf.io</title>
@@ -96,7 +103,7 @@ const ogImageUrl = Astro.site ? new URL(ogImage, Astro.site) : undefined
           djf.io
         </a>
         <div class={css({display: 'flex', alignItems: 'center', gap: '6'})}>
-          <Search client:load />
+          <Search />
           <a
             href="/blog"
             class={css({

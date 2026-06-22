@@ -1,6 +1,4 @@
-import {loadRenderers} from 'astro:container'
 import type {CollectionEntry} from 'astro:content'
-import {getContainerRenderer} from '@astrojs/react'
 import {experimental_AstroContainer as AstroContainer} from 'astro/container'
 import {expect, test} from 'vitest'
 import BlogPost from './BlogPost.astro'
@@ -8,10 +6,7 @@ import BlogPost from './BlogPost.astro'
 // The container API does not carry `site` config through to `Astro.site`, so
 // JSON-LD url/image and og:image absolute URLs are asserted against the real
 // build in seo.e2e.test.ts instead.
-// The React renderer is needed to server-render the Search island in the nav.
-const container = await AstroContainer.create({
-  renderers: await loadRenderers([getContainerRenderer()]),
-})
+const container = await AstroContainer.create()
 
 // `new Date('YYYY-MM-DD')` parses as UTC midnight, then `toLocaleDateString`
 // uses the local zone — TZs west of UTC roll back a day. Construct in local

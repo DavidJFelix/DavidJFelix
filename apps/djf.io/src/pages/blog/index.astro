@@ -27,32 +27,30 @@ const posts = sortPostsByDateDesc(await getCollection('blog'))
           <article
             class={css({
               p: '6',
-              bg: 'zinc.900',
+              bg: 'bg.subtle',
               borderRadius: 'lg',
-              border: '1px solid',
-              borderColor: 'zinc.800',
+              borderWidth: '1px',
+              borderStyle: 'solid',
+              borderColor: 'border.subtle',
               transition: 'border-color 0.2s',
-              _hover: {borderColor: 'zinc.700'},
+              _hover: {borderColor: 'border'},
             })}
           >
-            <a
-              href={`/blog/${post.id}`}
-              class={css({textDecoration: 'none'})}
-            >
+            <a href={`/blog/${post.id}`} class={css({textDecoration: 'none'})}>
               <h2
                 class={css({
                   fontSize: 'xl',
                   fontWeight: 'semibold',
-                  color: 'zinc.100',
+                  color: 'text',
                   mb: '2',
-                  _hover: {color: 'zinc.300'},
+                  _hover: {color: 'accent.text'},
                 })}
               >
                 {post.data.title}
               </h2>
             </a>
 
-            <p class={css({color: 'zinc.400', mb: '3', fontSize: 'sm'})}>
+            <p class={css({color: 'text.muted', mb: '3', fontSize: 'sm'})}>
               {post.data.description}
             </p>
 
@@ -61,7 +59,7 @@ const posts = sortPostsByDateDesc(await getCollection('blog'))
                 display: 'flex',
                 flexWrap: 'wrap',
                 gap: '3',
-                color: 'zinc.500',
+                color: 'text.muted',
                 fontSize: 'xs',
               })}
             >
@@ -75,14 +73,14 @@ const posts = sortPostsByDateDesc(await getCollection('blog'))
                   <a
                     href={`/blog/tags/${tag}`}
                     class={css({
-                      bg: 'zinc.800',
-                      color: 'zinc.400',
+                      bg: 'bg.element',
+                      color: 'text.muted',
                       px: '2',
                       py: '0.5',
                       borderRadius: 'sm',
                       fontSize: 'xs',
                       textDecoration: 'none',
-                      _hover: {bg: 'zinc.700', color: 'zinc.300'},
+                      _hover: {bg: 'bg.elementHover', color: 'text'},
                     })}
                   >
                     {tag}

@@ -21,10 +21,10 @@ const {tag, posts} = Astro.props
     <a
       href="/blog/tags"
       class={css({
-        color: 'zinc.500',
+        color: 'text.muted',
         textDecoration: 'none',
         fontSize: 'sm',
-        _hover: {color: 'zinc.300'},
+        _hover: {color: 'text'},
       })}
     >
       &larr; All tags
@@ -50,12 +50,13 @@ const {tag, posts} = Astro.props
           <article
             class={css({
               p: '6',
-              bg: 'zinc.900',
+              bg: 'bg.subtle',
               borderRadius: 'lg',
-              border: '1px solid',
-              borderColor: 'zinc.800',
+              borderWidth: '1px',
+              borderStyle: 'solid',
+              borderColor: 'border.subtle',
               transition: 'border-color 0.2s',
-              _hover: {borderColor: 'zinc.700'},
+              _hover: {borderColor: 'border'},
             })}
           >
             <a
@@ -66,15 +67,15 @@ const {tag, posts} = Astro.props
                 class={css({
                   fontSize: 'xl',
                   fontWeight: 'semibold',
-                  color: 'zinc.100',
+                  color: 'text',
                   mb: '2',
-                  _hover: {color: 'zinc.300'},
+                  _hover: {color: 'accent.text'},
                 })}
               >
                 {post.data.title}
               </h2>
 
-              <p class={css({color: 'zinc.400', mb: '3', fontSize: 'sm'})}>
+              <p class={css({color: 'text.muted', mb: '3', fontSize: 'sm'})}>
                 {post.data.description}
               </p>
 
@@ -83,7 +84,7 @@ const {tag, posts} = Astro.props
                   display: 'flex',
                   flexWrap: 'wrap',
                   gap: '3',
-                  color: 'zinc.500',
+                  color: 'text.muted',
                   fontSize: 'xs',
                 })}
               >
@@ -96,8 +97,8 @@ const {tag, posts} = Astro.props
                   {post.data.tags.map((t: string) => (
                     <span
                       class={css({
-                        bg: t === tag ? 'zinc.700' : 'zinc.800',
-                        color: t === tag ? 'zinc.200' : 'zinc.400',
+                        bg: t === tag ? 'bg.elementHover' : 'bg.element',
+                        color: t === tag ? 'text' : 'text.muted',
                         px: '2',
                         py: '0.5',
                         borderRadius: 'sm',

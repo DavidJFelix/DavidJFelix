@@ -24,21 +24,22 @@ const sortedTags = tagCountsDesc(await getCollection('blog'))
         <a
           href={`/blog/tags/${tag}`}
           class={css({
-            bg: 'zinc.900',
-            color: 'zinc.300',
+            bg: 'bg.subtle',
+            color: 'text.muted',
             px: '4',
             py: '2',
             borderRadius: 'md',
-            border: '1px solid',
-            borderColor: 'zinc.800',
+            borderWidth: '1px',
+            borderStyle: 'solid',
+            borderColor: 'border.subtle',
             textDecoration: 'none',
             fontSize: 'sm',
             transition: 'border-color 0.2s',
-            _hover: {borderColor: 'zinc.700', color: 'zinc.100'},
+            _hover: {borderColor: 'border', color: 'text'},
           })}
         >
           {tag}
-          <span class={css({color: 'zinc.500', ml: '2'})}>{count}</span>
+          <span class={css({color: 'text.muted', ml: '2'})}>{count}</span>
         </a>
       ))
     }

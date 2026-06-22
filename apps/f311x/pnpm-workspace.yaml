@@ -9,10 +9,10 @@ allowBuilds:
 # Pinned because pnpm's release-age supply-chain policy rejects packages
 # published <24h ago; these track alchemy 2.0.0-beta.54 (see plan.md).
 overrides:
-  '@distilled.cloud/aws': 0.24.9
-  '@distilled.cloud/axiom': 0.24.9
-  '@distilled.cloud/cloudflare': 0.24.9
-  '@distilled.cloud/core': 0.24.9
-  '@distilled.cloud/neon': 0.24.9
-  '@distilled.cloud/planetscale': 0.24.9
-  '@effect/platform-node-shared': 4.0.0-beta.83
+  '@distilled.cloud/aws': 0.26.1
+  '@distilled.cloud/axiom': 0.26.1
+  '@distilled.cloud/cloudflare': 0.26.1
+  '@distilled.cloud/core': 0.26.1
+  '@distilled.cloud/neon': 0.26.1
+  '@distilled.cloud/planetscale': 0.26.1
+  '@effect/platform-node-shared': 4.0.0-beta.85

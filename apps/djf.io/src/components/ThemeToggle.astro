@@ -1,0 +1,68 @@
+---
+import {css} from 'styled-system/css'
+
+const button = css({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  color: 'text.muted',
+  bg: 'transparent',
+  cursor: 'pointer',
+  borderRadius: 'sm',
+  _hover: {color: 'text'},
+  _focusVisible: {outline: '2px solid', outlineColor: 'focus.ring', outlineOffset: '2px'},
+})
+
+// Icons are swapped by CSS from the data-theme attribute BaseLayout sets before
+// first paint, so the right icon shows immediately without a flash. The moon
+// (switch to dark) shows in light mode; the sun (switch to light) in dark mode.
+const onlyLight = css({'[data-theme=dark] &': {display: 'none'}})
+const onlyDark = css({display: 'none', '[data-theme=dark] &': {display: 'block'}})
+---
+
+<button type="button" id="theme-toggle" class={button} aria-label="Toggle color theme">
+  <svg
+    class={onlyLight}
+    xmlns="http://www.w3.org/2000/svg"
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"></path>
+  </svg>
+  <svg
+    class={onlyDark}
+    xmlns="http://www.w3.org/2000/svg"
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <circle cx="12" cy="12" r="5"></circle>
+    <path
+      d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+    ></path>
+  </svg>
+</button>
+
+<script>
+  const toggle = document.querySelector<HTMLButtonElement>('#theme-toggle')
+  if (toggle) {
+    toggle.addEventListener('click', () => {
+      const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'
+      document.documentElement.dataset.theme = next
+      localStorage.setItem('theme', next)
+    })
+  }
+</script>

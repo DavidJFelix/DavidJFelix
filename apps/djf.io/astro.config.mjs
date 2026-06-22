@@ -2,6 +2,10 @@ import {fileURLToPath} from 'node:url'
 import {unified} from '@astrojs/markdown-remark'
 import mdx from '@astrojs/mdx'
 import sitemap from '@astrojs/sitemap'
+// oxlint's import/default can't follow @sentry/astro's default export through its
+// conditional exports; the default import is the documented entry and resolves at build.
+// eslint-disable-next-line import/default
+import sentry from '@sentry/astro'
 import {defineConfig} from 'astro/config'
 import * as pagefind from 'pagefind'
 
@@ -38,6 +42,17 @@ function pagefindIntegration() {
   }
 }
 
+// Sentry build-time wiring. This is a static, client-only site, so the server
+// SDK is never injected; the browser SDK is bundled only when a DSN is set
+// (production deploy) and source maps upload only when fully configured -- so
+// local, CI, and preview builds ship zero Sentry code and stay deterministic.
+const SENTRY_DSN = process.env.PUBLIC_SENTRY_DSN
+const {SENTRY_AUTH_TOKEN, SENTRY_ORG, SENTRY_PROJECT} = process.env
+const sentrySourceMaps =
+  SENTRY_AUTH_TOKEN && SENTRY_ORG && SENTRY_PROJECT
+    ? {org: SENTRY_ORG, project: SENTRY_PROJECT, authToken: SENTRY_AUTH_TOKEN}
+    : {sourcemaps: {disable: true}}
+
 // https://astro.build/config
 export default defineConfig({
   site: 'https://djf.io',
@@ -47,5 +62,14 @@ export default defineConfig({
   markdown: {
     processor: unified(),
   },
-  integrations: [mdx(), sitemap(), pagefindIntegration()],
+  integrations: [
+    sentry({
+      enabled: {client: Boolean(SENTRY_DSN), server: false},
+      telemetry: false,
+      ...sentrySourceMaps,
+    }),
+    mdx(),
+    sitemap(),
+    pagefindIntegration(),
+  ],
 })

@@ -1,5 +1,8 @@
 ---
 import '../index.css'
+import '@fontsource-variable/schibsted-grotesk'
+import '@fontsource-variable/inter'
+import '@fontsource-variable/jetbrains-mono'
 import {css} from 'styled-system/css'
 import Search from '../components/Search.astro'
 import {publicationUri} from '../lib/standard-site'
@@ -66,7 +69,7 @@ const ogImageUrl = Astro.site ? new URL(ogImage, Astro.site) : undefined
   </head>
   <body
     class={css({
-      fontFamily: 'system-ui, sans-serif',
+      fontFamily: 'body',
       bg: 'zinc.950',
       color: 'zinc.100',
       minH: '100vh',

@@ -65,8 +65,9 @@ const sentrySourceMaps =
 // `prerenderEnvironment: 'node'` keeps prerendering in Node rather than the
 // adapter's default workerd, because the build optimizes images and renders OG
 // cards with native `sharp` (src/pages/og), which can't load in workerd.
-// `imageService: 'compile'` pre-optimizes astro:assets with sharp at build, so
-// the worker carries no image runtime.
+// `imageService: 'custom'` keeps Astro's default sharp service so astro:assets
+// are optimized at build; the adapter's other modes (incl. 'compile') hand
+// images off unoptimized, which shipped the blog banner at its 3.7MB source size.
 //
 // Skipped under Vitest: vitest.config.ts builds on getViteConfig, which would
 // otherwise load the Cloudflare Vite plugin and reject Vitest's SSR config. Unit
@@ -74,7 +75,7 @@ const sentrySourceMaps =
 // adapter.
 const adapter = process.env.VITEST
   ? undefined
-  : cloudflare({imageService: 'compile', prerenderEnvironment: 'node'})
+  : cloudflare({imageService: 'custom', prerenderEnvironment: 'node'})
 
 // https://astro.build/config
 export default defineConfig({

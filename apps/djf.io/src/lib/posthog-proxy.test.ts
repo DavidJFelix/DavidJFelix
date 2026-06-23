@@ -2,28 +2,28 @@ import {expect, test} from 'vitest'
 import {INGEST_PREFIX, postHogUpstream} from './posthog-proxy'
 
 test('routes the SDK bundle to the assets host', () => {
-  expect(postHogUpstream('/ingest/static/array.js')).toEqual({
+  expect(postHogUpstream('/diag/static/array.js')).toEqual({
     host: 'us-assets.i.posthog.com',
     pathname: '/static/array.js',
   })
 })
 
 test('routes remote config (/array) to the assets host', () => {
-  expect(postHogUpstream('/ingest/array/phc_abc/config.js')).toEqual({
+  expect(postHogUpstream('/diag/array/phc_abc/config.js')).toEqual({
     host: 'us-assets.i.posthog.com',
     pathname: '/array/phc_abc/config.js',
   })
 })
 
 test('routes event capture to the ingestion host', () => {
-  expect(postHogUpstream('/ingest/e/')).toEqual({
+  expect(postHogUpstream('/diag/e/')).toEqual({
     host: 'us.i.posthog.com',
     pathname: '/e/',
   })
 })
 
 test('routes feature flags to the ingestion host', () => {
-  expect(postHogUpstream('/ingest/flags/')).toEqual({
+  expect(postHogUpstream('/diag/flags/')).toEqual({
     host: 'us.i.posthog.com',
     pathname: '/flags/',
   })

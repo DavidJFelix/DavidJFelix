@@ -1,10 +1,10 @@
 // Reverse-proxy routing for PostHog (US cloud). The Worker in src/worker.ts
-// serves these under /ingest on this domain so a content blocker that drops
+// serves these under /diag on this domain so a content blocker that drops
 // *.posthog.com can't drop our analytics. PostHog splits traffic across two
 // upstreams: the SDK bundle and remote config load from the assets host; events,
 // flags, and the rest are ingestion/API traffic.
 
-export const INGEST_PREFIX = '/ingest'
+export const INGEST_PREFIX = '/diag'
 
 const US_INGESTION_HOST = 'us.i.posthog.com'
 const US_ASSETS_HOST = 'us-assets.i.posthog.com'
@@ -18,7 +18,7 @@ export interface PostHogUpstream {
   pathname: string
 }
 
-// Map an incoming /ingest/* request path to the PostHog host and upstream path
+// Map an incoming /diag/* request path to the PostHog host and upstream path
 // it should be proxied to.
 export function postHogUpstream(pathname: string): PostHogUpstream {
   const rest = pathname.slice(INGEST_PREFIX.length) || '/'

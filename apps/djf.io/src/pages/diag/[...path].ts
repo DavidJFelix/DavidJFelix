@@ -1,7 +1,7 @@
 import type {APIRoute} from 'astro'
 import {postHogUpstream} from '../../lib/posthog-proxy'
 
-// Reverse-proxies /ingest/* to PostHog at request time so analytics ride this
+// Reverse-proxies /diag/* to PostHog at request time so analytics ride this
 // first-party origin instead of *.posthog.com (which content blockers drop).
 // This is the only non-prerendered route -- everything else stays static.
 export const prerender = false

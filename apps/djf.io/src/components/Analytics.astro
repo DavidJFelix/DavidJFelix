@@ -13,12 +13,12 @@
     void (async () => {
       const {default: posthog} = await import('posthog-js')
       // Same-origin reverse proxy: events and the lazily-loaded SDK assets
-      // travel through /ingest on this domain (see src/worker.ts), so content
+      // travel through /diag on this domain (see src/worker.ts), so content
       // blockers that drop *.posthog.com don't drop our analytics. api_host is
       // derived from the live origin so it works on production and any preview
       // host; ui_host keeps the toolbar and in-app links pointed at PostHog.
       posthog.init(key, {
-        api_host: `${location.origin}/ingest`,
+        api_host: `${location.origin}/diag`,
         ui_host: 'https://us.posthog.com',
         // Cookieless and storage-free, so no consent banner is required.
         // Trade-off on this multi-page site: every page load is a fresh

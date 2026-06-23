@@ -2,7 +2,7 @@
 name = "djf-io"
 # The @astrojs/cloudflare adapter's worker entry. The build (via
 # @cloudflare/vite-plugin) bundles it with the SSR manifest; only on-demand
-# routes (src/pages/bugs.ts, src/pages/ingest) run here -- prerendered pages are
+# routes (src/pages/bugs.ts, src/pages/diag) run here -- prerendered pages are
 # served straight from the assets below, bypassing the worker.
 main = "@astrojs/cloudflare/entrypoints/server"
 compatibility_date = "2026-04-29"

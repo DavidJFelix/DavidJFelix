@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@astrojs/check": "^0.9.9",
+    "@astrojs/cloudflare": "^13.7.0",
     "@astrojs/markdown-remark": "^7.2.0",
     "@astrojs/mdx": "^6.0.3",
     "@astrojs/rss": "^4.0.18",
@@ -43,6 +44,7 @@
     "@atproto/api": "0.20.16",
     "@pandacss/dev": "1.11.3",
     "@playwright/test": "1.61.0",
+    "@sentry/cloudflare": "^10.59.0",
     "@vitest/coverage-v8": "4.1.9",
     "gray-matter": "4.0.3",
     "pagefind": "1.5.2",

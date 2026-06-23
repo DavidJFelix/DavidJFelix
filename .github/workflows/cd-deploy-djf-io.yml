@@ -75,10 +75,15 @@ jobs:
           SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT_DJF_IO }}
         run: pnpm exec astro build
 
+      # Deploy the @astrojs/cloudflare adapter's build. The build emits the worker
+      # + a resolved config at dist/server/wrangler.json (assets -> dist/client),
+      # so deploy points at that, not the source wrangler.toml. The Sentry tunnel
+      # is pinned to djf.io's project via PUBLIC_SENTRY_DSN, inlined into the
+      # endpoint by the astro build above (import.meta.env) -- no runtime var.
       - name: wrangler deploy
         uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy
+          command: deploy -c dist/server/wrangler.json
           workingDirectory: apps/djf.io

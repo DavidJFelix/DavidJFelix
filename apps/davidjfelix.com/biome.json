@@ -3,5 +3,18 @@
   "extends": ["../../biome.jsonc"],
   "files": {
     "includes": ["**", "!**/node_modules", "!**/dist", "!**/.astro", "!**/*.svg"]
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["**/*.astro"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUnusedImports": "off",
+            "noUnusedVariables": "off"
+          }
+        }
+      }
+    }
+  ]
 }

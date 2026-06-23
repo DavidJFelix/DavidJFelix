@@ -6,7 +6,7 @@ import {postHogUpstream} from '../../lib/posthog-proxy'
 // This is the only non-prerendered route -- everything else stays static.
 export const prerender = false
 
-export const ALL: APIRoute = ({request}) => {
+export const ALL: APIRoute = async ({request}) => {
   const url = new URL(request.url)
   const {host, pathname} = postHogUpstream(url.pathname)
 
@@ -26,5 +26,20 @@ export const ALL: APIRoute = ({request}) => {
   if (clientIp) {
     proxied.headers.set('X-Forwarded-For', clientIp)
   }
-  return fetch(proxied)
+
+  const response = await fetch(proxied)
+  // Defense-in-depth: never let the upstream plant a cookie on this origin --
+  // analytics here are deliberately cookieless. PostHog doesn't set cookies on
+  // these endpoints today, so only rebuild the response in the rare case it does
+  // (rebuilding unconditionally would risk a body/content-encoding mismatch).
+  if (!response.headers.has('set-cookie')) {
+    return response
+  }
+  const headers = new Headers(response.headers)
+  headers.delete('set-cookie')
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  })
 }

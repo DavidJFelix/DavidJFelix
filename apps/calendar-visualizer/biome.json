@@ -7,7 +7,8 @@
       "!**/.pulumi",
       "!**/routeTree.gen.ts",
       "!**/node_modules",
-      "!**/styled-system"
+      "!**/styled-system",
+      "!**/*.svg"
     ]
   },
   "assist": {
@@ -34,5 +35,18 @@
         "noUselessElse": "error"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["**/*.astro"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUnusedImports": "off",
+            "noUnusedVariables": "off"
+          }
+        }
+      }
+    }
+  ]
 }

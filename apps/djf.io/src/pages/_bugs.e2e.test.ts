@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/test'
-import {SENTRY_TUNNEL_ROUTE} from './lib/sentry-tunnel'
+import {SENTRY_TUNNEL_ROUTE} from '../lib/sentry-tunnel'
 
 // Exercises the deployed worker's tunnel route end to end (local `wrangler dev`
 // boot and the per-PR preview worker alike). Every case is rejected before the

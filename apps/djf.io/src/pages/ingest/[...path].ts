@@ -3,7 +3,7 @@ import {postHogUpstream} from '../../lib/posthog-proxy'
 
 // Reverse-proxies /ingest/* to PostHog at request time so analytics ride this
 // first-party origin instead of *.posthog.com (which content blockers drop).
-// This is the only non-prerendered route -- everything else stays static.
+// Non-prerendered alongside src/pages/bugs.ts -- everything else stays static.
 export const prerender = false
 
 export const ALL: APIRoute = async ({request}) => {

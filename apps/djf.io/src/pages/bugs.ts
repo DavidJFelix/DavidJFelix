@@ -3,8 +3,8 @@ import {forwardEnvelope} from '../lib/sentry-tunnel'
 
 // The Sentry tunnel endpoint. The browser SDK POSTs error/trace envelopes here
 // (a same-origin path ad/tracker blockers don't drop) and this route forwards
-// them to Sentry's ingest API. The only on-demand route on the site -- every
-// page stays prerendered -- so Cloudflare invokes the worker just for this path.
+// them to Sentry's ingest API. One of two on-demand routes on the site (see also
+// src/pages/ingest/[...path].ts) -- every page stays prerendered.
 // Its filename must match SENTRY_TUNNEL_ROUTE in src/lib/sentry-tunnel.ts.
 export const prerender = false
 

@@ -1,4 +1,4 @@
-// Reverse-proxy routing for PostHog (US cloud). The Worker in src/worker.ts
+// Reverse-proxy routing for PostHog (US cloud). src/pages/ingest/[...path].ts
 // serves these under /ingest on this domain so a content blocker that drops
 // *.posthog.com can't drop our analytics. PostHog splits traffic across two
 // upstreams: the SDK bundle and remote config load from the assets host; events,

@@ -52,6 +52,12 @@ async function main(): Promise<void> {
     process.exit(1)
   }
 
+  // Optional explicit wrangler config (relative to the app dir). Framework
+  // adapters that emit a resolved config elsewhere set this -- e.g. djf.io's
+  // @astrojs/cloudflare build writes dist/server/wrangler.json. Unset for the
+  // plain `[assets]` apps, which deploy straight from their wrangler.toml.
+  const config = process.env.WRANGLER_CONFIG
+
   // Test seam: exercise the upload/parse path without credentials, e.g.
   // UPLOAD_PREVIEW_TEST_CMD='echo https://abc-app.acct.workers.dev'.
   const cmd = process.env.UPLOAD_PREVIEW_TEST_CMD?.split(' ') ?? [
@@ -60,6 +66,7 @@ async function main(): Promise<void> {
     'wrangler',
     'versions',
     'upload',
+    ...(config ? ['-c', config] : []),
     '--preview-alias',
     `pr-${prNumber}`,
   ]

@@ -29,7 +29,12 @@ export default defineConfig({
   webServer: PREVIEW_URL
     ? undefined
     : {
-        command: `pnpm preview --host 127.0.0.1 --port ${PORT}`,
+        // Boot the built worker + static assets in workerd via `wrangler dev`,
+        // not `astro preview` (which serves only assets and would 404 the
+        // tunnel endpoint). Point at the @astrojs/cloudflare adapter's generated
+        // config (built into dist/server) and spawn the wrangler binary directly
+        // so Playwright's teardown kills workerd along with it.
+        command: `./node_modules/.bin/wrangler dev -c dist/server/wrangler.json --ip 127.0.0.1 --port ${PORT}`,
         url: BASE_URL,
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,

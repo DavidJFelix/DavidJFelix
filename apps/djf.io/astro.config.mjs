@@ -57,10 +57,10 @@ const sentrySourceMaps =
     ? {org: SENTRY_ORG, project: SENTRY_PROJECT, authToken: SENTRY_AUTH_TOKEN}
     : {sourcemaps: {disable: true}}
 
-// The Cloudflare adapter exists only so the Sentry tunnel endpoint
-// (src/pages/bugs.ts, `prerender = false`) can run on demand; every page stays
-// prerendered and is served straight from assets, so the worker is invoked only
-// for that one route.
+// The Cloudflare adapter exists only so the on-demand endpoints -- src/pages/bugs.ts
+// (the Sentry tunnel) and src/pages/ingest (the PostHog proxy), both
+// `prerender = false` -- can run on demand; every page stays prerendered and is
+// served straight from assets, so the worker is invoked only for those routes.
 //
 // `prerenderEnvironment: 'node'` keeps prerendering in Node rather than the
 // adapter's default workerd, because the build optimizes images and renders OG
@@ -84,10 +84,10 @@ export default defineConfig({
   // KV-backed session driver, which would require provisioning a SESSION KV
   // namespace; the no-op driver keeps the worker binding-free.
   session: {driver: sessionDrivers.null()},
-  // The only on-demand route is the Sentry tunnel (src/pages/bugs.ts) -- a
-  // stateless relay with no cookies or session state, that does its own DSN
-  // validation. Astro's CSRF origin check would otherwise 403 the SDK's POST
-  // (it tunnels envelopes as text/plain, a form content-type), so disable it.
+  // The on-demand routes (src/pages/bugs.ts, src/pages/ingest) are stateless
+  // relays -- no cookies or session state, each doing its own validation. Astro's
+  // CSRF origin check would otherwise 403 the SDKs' POSTs (the Sentry tunnel
+  // sends envelopes as text/plain, a form content-type), so disable it.
   security: {checkOrigin: false},
   redirects: {
     '/blog/2024-4-26-on-positivity': '/blog/2024-04-26-on-positivity',

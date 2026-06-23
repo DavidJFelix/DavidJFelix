@@ -4,6 +4,7 @@ import '@fontsource-variable/schibsted-grotesk'
 import '@fontsource-variable/inter'
 import '@fontsource-variable/jetbrains-mono'
 import {css} from 'styled-system/css'
+import Analytics from '../components/Analytics.astro'
 import Search from '../components/Search.astro'
 import ThemeToggle from '../components/ThemeToggle.astro'
 import {publicationUri} from '../lib/standard-site'
@@ -27,6 +28,11 @@ const {
 const pathname = Astro.url.pathname.endsWith('/') ? Astro.url.pathname : `${Astro.url.pathname}/`
 const canonicalUrl = Astro.site ? new URL(pathname, Astro.site) : undefined
 const ogImageUrl = Astro.site ? new URL(ogImage, Astro.site) : undefined
+
+// Only ship analytics on builds that carry the key (production deploy). The
+// component guards on the key at runtime too; gating the render here keeps it
+// out of local/CI/preview output entirely.
+const posthogEnabled = Boolean(import.meta.env.PUBLIC_POSTHOG_KEY)
 
 const navLink = css({
   color: 'text.muted',
@@ -83,6 +89,7 @@ const navLink = css({
     />
     <link rel="sitemap" href="/sitemap-index.xml" />
     <link rel="site.standard.publication" href={publicationUri()} />
+    {posthogEnabled && <Analytics />}
     <slot name="head" />
   </head>
   <body

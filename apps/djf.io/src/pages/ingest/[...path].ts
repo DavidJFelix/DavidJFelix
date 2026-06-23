@@ -6,6 +6,10 @@ import {postHogUpstream} from '../../lib/posthog-proxy'
 // This is the only non-prerendered route -- everything else stays static.
 export const prerender = false
 
+// Cap how long we wait on PostHog so a stalled upstream can't pin the worker
+// until the platform deadline; past this we abort and return a clean 504.
+const UPSTREAM_TIMEOUT_MS = 10_000
+
 export const ALL: APIRoute = async ({request}) => {
   const url = new URL(request.url)
   const {host, pathname} = postHogUpstream(url.pathname)
@@ -27,7 +31,17 @@ export const ALL: APIRoute = async ({request}) => {
     proxied.headers.set('X-Forwarded-For', clientIp)
   }
 
-  const response = await fetch(proxied)
+  // Bound the upstream call with an abort timeout rather than hanging on a
+  // stalled PostHog until the platform deadline.
+  let response: Response
+  try {
+    response = await fetch(proxied, {signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS)})
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'TimeoutError') {
+      return new Response('Upstream timeout', {status: 504})
+    }
+    throw error
+  }
   // Defense-in-depth: never let the upstream plant a cookie on this origin --
   // analytics here are deliberately cookieless. PostHog doesn't set cookies on
   // these endpoints today, so only rebuild the response in the rare case it does

@@ -2,19 +2,6 @@
   "$schema": "https://biomejs.dev/schemas/2.4.16/schema.json",
   "extends": ["../../biome.jsonc"],
   "files": {
-    "includes": ["**", "!**/node_modules", "!**/dist", "!**/.astro", "!**/*.svg"]
-  },
-  "overrides": [
-    {
-      "includes": ["**/*.astro"],
-      "linter": {
-        "rules": {
-          "correctness": {
-            "noUnusedImports": "off",
-            "noUnusedVariables": "off"
-          }
-        }
-      }
-    }
-  ]
+    "includes": ["**", "!**/node_modules", "!**/dist", "!**/.astro"]
+  }
 }

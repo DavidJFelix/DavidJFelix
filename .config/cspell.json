@@ -63,6 +63,7 @@
     "pinact",
     "oxlintrc",
     "codegen",
+    "pathspec",
     "lockfile",
     "lockfiles",
     "ravrun",

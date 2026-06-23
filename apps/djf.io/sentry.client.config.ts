@@ -1,0 +1,17 @@
+import * as Sentry from '@sentry/astro'
+
+// Injected at build via PUBLIC_SENTRY_DSN (see astro.config.mjs and the djf.io
+// deploy workflow). Absent locally and on CI/preview builds, so Sentry stays
+// disabled there -- no network, deterministic e2e and smoke.
+const dsn = import.meta.env.PUBLIC_SENTRY_DSN
+
+Sentry.init({
+  dsn,
+  enabled: Boolean(dsn),
+  // Errors + performance tracing. No Session Replay: it's the heaviest bundle
+  // and there's little to replay on a static, low-interaction blog.
+  integrations: [Sentry.browserTracingIntegration()],
+  // Low-traffic personal site -- sample every transaction for full visibility.
+  tracesSampleRate: 1.0,
+  environment: import.meta.env.PUBLIC_SENTRY_ENVIRONMENT ?? 'production',
+})

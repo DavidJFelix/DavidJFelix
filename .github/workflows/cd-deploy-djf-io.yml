@@ -61,9 +61,18 @@ jobs:
       # (same secret gate) — a deploy that skips sync stays offline rather than
       # emitting links to records it didn't update. Local/CI/e2e/preview builds
       # never set this, so they stay offline and deterministic (links omitted).
+      #
+      # Sentry: PUBLIC_SENTRY_DSN (public, a repo variable) turns the browser SDK
+      # on for production only; the auth token (secret) + org + project enable
+      # source-map upload. All gated in astro.config.mjs — unset means no Sentry
+      # code ships, so preview/CI/e2e stay clean.
       - name: astro build
         env:
           STANDARD_SITE_RESOLVE: ${{ steps.atproto.outputs.present }}
+          PUBLIC_SENTRY_DSN: ${{ vars.SENTRY_DSN_DJF_IO }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT_DJF_IO }}
         run: pnpm exec astro build
 
       - name: wrangler deploy

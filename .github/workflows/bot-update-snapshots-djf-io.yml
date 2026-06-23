@@ -1,0 +1,92 @@
+name: Bot Update Snapshots djf.io
+
+# Regenerate djf.io's Playwright visual baselines on demand. A maintainer adds
+# the `update-snapshots` label to a PR; this re-runs the e2e suite with
+# --update-snapshots on the Linux runner (the only place that can produce the
+# committed `*-chromium-linux.png` baselines) and pushes the result back to the
+# PR branch. Label-triggered and not a merge gate, so this is a Bot workflow.
+#
+# Caveat: the commit is pushed with GITHUB_TOKEN, and GitHub deliberately does
+# not re-trigger workflows for bot-token pushes, so the `playwright` check will
+# not re-run automatically on the new commit -- re-run it once from the Actions
+# tab (or push any commit) to turn it green. The bot leaves a comment saying so.
+
+on:
+  pull_request:
+    types: [labeled]
+
+concurrency:
+  group: bot-update-snapshots-djf-io-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
+
+jobs:
+  update-snapshots:
+    name: playwright --update-snapshots
+    # Only react to our label, and only for same-repo PRs -- the token cannot
+    # push to a fork's branch.
+    if: >-
+      github.event.label.name == 'update-snapshots' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+    defaults:
+      run:
+        working-directory: apps/djf.io
+    steps:
+      - name: checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          persist-credentials: false
+
+      - name: mise
+        uses: ./.github/actions/setup-mise
+
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+
+      - name: playwright install
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: playwright --update-snapshots
+        run: pnpm exec playwright test --update-snapshots
+
+      - name: git push
+        working-directory: ${{ github.workspace }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          if git diff --quiet -- 'apps/djf.io/**/*-snapshots'; then
+            echo 'No snapshot changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add 'apps/djf.io/**/*-snapshots'
+          git commit -m 'test(djf.io): update Playwright visual baselines'
+          # persist-credentials is false (ghalint policy 013), so push via an
+          # explicit token URL instead of a stored credential.
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${HEAD_REF}"
+
+      - name: gh pr comment
+        working-directory: ${{ github.workspace }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          gh pr comment "$PR" --body 'Regenerated the Playwright visual baselines and pushed them to this branch. Re-run the **playwright** check once (Actions tab) so it picks up the new commit -- bot-token pushes do not auto-trigger it.'
+
+      - name: gh pr edit
+        if: always()
+        working-directory: ${{ github.workspace }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+        run: gh pr edit "$PR" --remove-label update-snapshots

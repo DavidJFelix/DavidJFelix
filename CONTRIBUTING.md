@@ -30,6 +30,13 @@ Add an entry to the current month's file in `docs/changelog/`. Create the monthl
 - Use tooling defined in `.config/mise.toml` (Biome, Oxlint, Prettier)
 - See per-app `package.json` scripts for lint/format/spell commands
 
+### Linting: fix findings, don't silence them
+
+Don't disable a lint rule or exclude files to make a finding disappear — fix the actual issue. Two shortcuts are specifically banned:
+
+- **Per-app Biome overrides that turn rules off.** Biome lints only the `---` frontmatter of an `.astro` file, not the template, so a symbol used only in markup (`<Calendar />`, `{title}`) reads as unused. That single false positive is handled **once**, centrally, in the root `biome.jsonc` (`noUnusedImports` / `noUnusedVariables` off for `**/*.astro`); `astro check` (tsgo) is template-aware and owns unused-symbol detection for Astro. Do not re-add a per-app `*.astro` override.
+- **Excluding files to dodge a real finding.** e.g. don't add `!**/*.svg` to skip `noSvgWithoutTitle` — give the SVG a `<title>` or `role="img"` + `aria-label` instead (see any `apps/*/public/favicon.svg`).
+
 ## Tool versions: `.config/mise.toml` and `.config/mise.lock`
 
 `.config/mise.toml` declares the tools and version ranges this repo uses; `.config/mise.lock` pins them to exact versions (with per-platform URLs and checksums) so every machine and CI runner installs the same bits.

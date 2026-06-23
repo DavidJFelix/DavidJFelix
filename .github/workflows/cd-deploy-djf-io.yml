@@ -66,6 +66,12 @@ jobs:
       # on for production only; the auth token (secret) + org + project enable
       # source-map upload. All gated in astro.config.mjs — unset means no Sentry
       # code ships, so preview/CI/e2e stay clean.
+      #
+      # PostHog: PUBLIC_POSTHOG_KEY (the project key — public by design, so a repo
+      # variable, not a secret) turns analytics on for production only. BaseLayout
+      # only renders the snippet when it's set, so preview/CI/e2e ship no PostHog
+      # code and stay deterministic. Unset until the variable is created (see the
+      # PostHog rollout issue), so deploys stay dark until then.
       - name: astro build
         env:
           STANDARD_SITE_RESOLVE: ${{ steps.atproto.outputs.present }}
@@ -73,6 +79,7 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: ${{ vars.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT_DJF_IO }}
+          PUBLIC_POSTHOG_KEY: ${{ vars.POSTHOG_KEY_DJF_IO }}
         run: pnpm exec astro build
 
       # Deploy the @astrojs/cloudflare adapter's build. The build emits the worker

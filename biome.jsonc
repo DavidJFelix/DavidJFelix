@@ -52,5 +52,23 @@
     "formatter": {
       "trailingCommas": "none"
     }
-  }
+  },
+  // Biome lints only the `---` frontmatter of `.astro` files, not the template,
+  // so a symbol used only in markup (`<Calendar />`, `{title}`) reads as unused.
+  // `astro check` (tsgo) is template-aware and owns unused-symbol detection for
+  // Astro, so these two rules are turned off for `.astro` here -- once, centrally.
+  // Do NOT re-add this as a per-app biome override (see CONTRIBUTING.md).
+  "overrides": [
+    {
+      "includes": ["**/*.astro"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUnusedImports": "off",
+            "noUnusedVariables": "off"
+          }
+        }
+      }
+    }
+  ]
 }

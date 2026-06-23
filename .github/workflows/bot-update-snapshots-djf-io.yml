@@ -63,13 +63,16 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: |
-          if git diff --quiet -- 'apps/djf.io/**/*-snapshots'; then
+          # Baselines are PNGs *inside* the *-snapshots/ dirs, so the pathspec
+          # needs the trailing /** to reach them. Stage first, then check the
+          # index, so a brand-new (untracked) snapshot is committed too.
+          git add 'apps/djf.io/**/*-snapshots/**'
+          if git diff --cached --quiet; then
             echo 'No snapshot changes to commit.'
             exit 0
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add 'apps/djf.io/**/*-snapshots'
           git commit -m 'test(djf.io): update Playwright visual baselines'
           # persist-credentials is false (ghalint policy 013), so push via an
           # explicit token URL instead of a stored credential.

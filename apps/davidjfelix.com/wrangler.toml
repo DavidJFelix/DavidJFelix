@@ -1,6 +1,11 @@
 #:schema node_modules/wrangler/config-schema.json
 name = "davidjfelix-com"
+# The @astrojs/cloudflare adapter's worker entry. Only on-demand routes
+# (src/pages/bugs.ts, src/pages/diag) run here; prerendered pages are served
+# straight from the assets below, bypassing the worker.
+main = "@astrojs/cloudflare/entrypoints/server"
 compatibility_date = "2026-04-29"
+compatibility_flags = ["nodejs_compat"]
 
 # This worker serves via custom domains; explicitly keep workers.dev preview
 # URLs on so `wrangler versions upload --preview-alias` (cd-preview) gets a
@@ -14,3 +19,4 @@ routes = [
 
 [assets]
 directory = "./dist"
+binding = "ASSETS"

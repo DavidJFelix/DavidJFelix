@@ -1,6 +1,13 @@
 ---
+import Analytics from '../components/Analytics.astro'
+
 const title = 'David J. Felix'
 const description = 'Personal site of David J. Felix.'
+
+// Only ship analytics on builds that carry the key (production deploy). Sentry is
+// injected separately by the @sentry/astro integration when PUBLIC_SENTRY_DSN is
+// set. Both stay off locally/CI/preview.
+const posthogEnabled = Boolean(import.meta.env.PUBLIC_POSTHOG_KEY)
 ---
 
 <html lang="en">
@@ -11,6 +18,7 @@ const description = 'Personal site of David J. Felix.'
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
     <title>{title}</title>
+    {posthogEnabled && <Analytics />}
     <style>
       :root {
         color-scheme: dark;

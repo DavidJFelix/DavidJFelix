@@ -1,6 +1,13 @@
 ---
+import Analytics from '../components/Analytics.astro'
 import {Calendar} from '../components/calendar'
 import '../index.css'
+
+// Only ship analytics on builds that carry the key (production deploy). The
+// component guards on the key at runtime too; gating the render here keeps it out
+// of local/CI/preview output entirely. Sentry is injected separately by the
+// @sentry/astro integration when PUBLIC_SENTRY_DSN is set.
+const posthogEnabled = Boolean(import.meta.env.PUBLIC_POSTHOG_KEY)
 ---
 
 <html lang="en">
@@ -10,6 +17,7 @@ import '../index.css'
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
     <title>Calendar Visualizer</title>
+    {posthogEnabled && <Analytics />}
   </head>
   <body>
     <Calendar />

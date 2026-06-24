@@ -13,19 +13,24 @@
     "lint:fix": "biome check --write .",
     "format": "biome format . && prettier --check --no-error-on-unmatched-pattern \"**/*.md\" \"**/*.mdx\"",
     "format:fix": "biome format --write . && prettier --write --no-error-on-unmatched-pattern \"**/*.md\" \"**/*.mdx\"",
-    "test": "vitest run",
+    "test": "vitest run --coverage",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:update": "playwright test --update-snapshots"
   },
   "dependencies": {
-    "astro": "^6.4.6"
+    "@astrojs/cloudflare": "^13.7.0",
+    "@sentry/astro": "^10.60.0",
+    "astro": "^6.4.6",
+    "posthog-js": "^1.393.0"
   },
   "devDependencies": {
     "@astrojs/check": "0.9.9",
     "@pandacss/dev": "1.11.3",
     "@playwright/test": "1.61.0",
+    "@sentry/cloudflare": "^10.60.0",
+    "@vitest/coverage-v8": "4.1.9",
     "vitest": "4.1.9",
-    "wrangler": "4.103.0"
+    "wrangler": "4.104.0"
   }
 }

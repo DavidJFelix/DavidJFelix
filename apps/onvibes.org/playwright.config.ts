@@ -4,8 +4,9 @@ import {defineConfig, devices} from '@playwright/test'
 //   - a deployed per-PR preview (PREVIEW_URL set by cd-preview-onvibes-org.yml), or
 //   - a local production boot (no PREVIEW_URL) for writing/checking baselines.
 //
-// The local boot serves the built static site via `astro preview` -- the same
-// boot bin/smoke-local.ts uses.
+// The local boot serves the built worker + assets via `wrangler dev` -- the same
+// boot bin/smoke-local.ts uses, so the on-demand /diag and /bugs routes are
+// reachable.
 const PORT = Number(process.env.PLAYWRIGHT_PORT ?? 4324)
 const PREVIEW_URL = process.env.PREVIEW_URL
 const BASE_URL = PREVIEW_URL ?? `http://127.0.0.1:${PORT}`
@@ -27,7 +28,7 @@ export default defineConfig({
   webServer: PREVIEW_URL
     ? undefined
     : {
-        command: `node_modules/.bin/astro preview --host 127.0.0.1 --port ${PORT}`,
+        command: `node_modules/.bin/wrangler dev -c dist/server/wrangler.json --ip 127.0.0.1 --port ${PORT}`,
         url: BASE_URL,
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,

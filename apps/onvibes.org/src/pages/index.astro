@@ -1,6 +1,12 @@
 ---
+import Analytics from '../components/Analytics.astro'
 import '../index.css'
 import {css} from 'styled-system/css'
+
+// Only ship analytics on builds that carry the key (production deploy). Sentry is
+// injected separately by the @sentry/astro integration when PUBLIC_SENTRY_DSN is
+// set. Both stay off locally/CI/preview.
+const posthogEnabled = Boolean(import.meta.env.PUBLIC_POSTHOG_KEY)
 
 const title = 'onvibes.org'
 const description =
@@ -19,6 +25,7 @@ const features = [
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
     <title>{title}</title>
+    {posthogEnabled && <Analytics />}
   </head>
   <body
     class={css({

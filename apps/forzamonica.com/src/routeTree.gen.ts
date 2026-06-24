@@ -10,13 +10,20 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as CartRouteImport } from './routes/cart'
+import { Route as BugsRouteImport } from './routes/bugs'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductsIndexRouteImport } from './routes/products/index'
 import { Route as ProductsHandleRouteImport } from './routes/products/$handle'
+import { Route as DiagSplatRouteImport } from './routes/diag/$'
 
 const CartRoute = CartRouteImport.update({
   id: '/cart',
   path: '/cart',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BugsRoute = BugsRouteImport.update({
+  id: '/bugs',
+  path: '/bugs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -34,37 +41,63 @@ const ProductsHandleRoute = ProductsHandleRouteImport.update({
   path: '/products/$handle',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DiagSplatRoute = DiagSplatRouteImport.update({
+  id: '/diag/$',
+  path: '/diag/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/bugs': typeof BugsRoute
   '/cart': typeof CartRoute
+  '/diag/$': typeof DiagSplatRoute
   '/products/$handle': typeof ProductsHandleRoute
   '/products/': typeof ProductsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/bugs': typeof BugsRoute
   '/cart': typeof CartRoute
+  '/diag/$': typeof DiagSplatRoute
   '/products/$handle': typeof ProductsHandleRoute
   '/products': typeof ProductsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/bugs': typeof BugsRoute
   '/cart': typeof CartRoute
+  '/diag/$': typeof DiagSplatRoute
   '/products/$handle': typeof ProductsHandleRoute
   '/products/': typeof ProductsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/cart' | '/products/$handle' | '/products/'
+  fullPaths:
+    | '/'
+    | '/bugs'
+    | '/cart'
+    | '/diag/$'
+    | '/products/$handle'
+    | '/products/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/cart' | '/products/$handle' | '/products'
-  id: '__root__' | '/' | '/cart' | '/products/$handle' | '/products/'
+  to: '/' | '/bugs' | '/cart' | '/diag/$' | '/products/$handle' | '/products'
+  id:
+    | '__root__'
+    | '/'
+    | '/bugs'
+    | '/cart'
+    | '/diag/$'
+    | '/products/$handle'
+    | '/products/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BugsRoute: typeof BugsRoute
   CartRoute: typeof CartRoute
+  DiagSplatRoute: typeof DiagSplatRoute
   ProductsHandleRoute: typeof ProductsHandleRoute
   ProductsIndexRoute: typeof ProductsIndexRoute
 }
@@ -76,6 +109,13 @@ declare module '@tanstack/react-router' {
       path: '/cart'
       fullPath: '/cart'
       preLoaderRoute: typeof CartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bugs': {
+      id: '/bugs'
+      path: '/bugs'
+      fullPath: '/bugs'
+      preLoaderRoute: typeof BugsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -99,12 +139,21 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductsHandleRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/diag/$': {
+      id: '/diag/$'
+      path: '/diag/$'
+      fullPath: '/diag/$'
+      preLoaderRoute: typeof DiagSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BugsRoute: BugsRoute,
   CartRoute: CartRoute,
+  DiagSplatRoute: DiagSplatRoute,
   ProductsHandleRoute: ProductsHandleRoute,
   ProductsIndexRoute: ProductsIndexRoute,
 }

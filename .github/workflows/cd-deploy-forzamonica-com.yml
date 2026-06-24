@@ -36,7 +36,16 @@ jobs:
       - name: panda codegen
         run: pnpm exec panda codegen
 
+      # Client observability vars, inlined at build by Vite. VITE_PUBLIC_SENTRY_DSN
+      # turns the browser Sentry SDK on; VITE_PUBLIC_POSTHOG_KEY turns PostHog on.
+      # Both public by design (repo variables). Unset means Vite dead-code-
+      # eliminates the SDKs, so preview/CI ship zero vendor code; unset until issue
+      # #261 sets them, so deploys stay dark. Worker-side Sentry reads SENTRY_DSN
+      # at runtime from a Cloudflare Worker var (set separately, also #261).
       - name: vite build
+        env:
+          VITE_PUBLIC_SENTRY_DSN: ${{ vars.SENTRY_DSN_FORZAMONICA_COM }}
+          VITE_PUBLIC_POSTHOG_KEY: ${{ vars.POSTHOG_KEY_FORZAMONICA_COM }}
         run: pnpm exec vite build
 
       # The Cloudflare Vite plugin emits the resolved Worker config into dist/

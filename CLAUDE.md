@@ -78,6 +78,8 @@ Keep it short. The issue body should fit on one screen. If it doesn't fit, the t
 - [CONTRIBUTING.md](CONTRIBUTING.md) -- PR workflow, changelog process, code conventions
 - [AGENTS.md](AGENTS.md) -- universal AI agent entry point
 - [docs/changelog/](docs/changelog/) -- monthly change history
+- [docs/configuration-style.md](docs/configuration-style.md) -- config file placement, scoping, and format
+- [docs/scripting-style.md](docs/scripting-style.md) -- scripting language choice and the sed/perl ban
 
 ## Agent skills
 
@@ -128,7 +130,8 @@ Multi-context: a root `CONTEXT-MAP.md` points to a per-app `CONTEXT.md`, with AD
   in a `bin/` directory, organized as makes sense; a `bin/` directory is not free
   rein to write bash, the bun-not-bash rule still applies inside it. Remove
   `justfile`s when found. Do not introduce new task tooling (moon, Taskfile, etc.)
-  without an explicit ask.
+  without an explicit ask. See [docs/scripting-style.md](docs/scripting-style.md)
+  for the full language-choice order and the `sed`/`perl` ban (which includes CI).
 - **Deployment**: Cloudflare. (Vercel has been dropped — remove references when
   encountered.) Pulumi / SST / Alchemy may come in later; not needed yet.
 

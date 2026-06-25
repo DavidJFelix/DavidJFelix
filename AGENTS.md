@@ -30,6 +30,8 @@ Personal monorepo containing web applications, exercises, and configuration. No 
 - [CONTRIBUTING.md](CONTRIBUTING.md) -- PR workflow, changelog process, code conventions
 - [docs/changelog/](docs/changelog/) -- monthly change history
 - [docs/projects.md](docs/projects.md) -- active project index
+- [docs/configuration-style.md](docs/configuration-style.md) -- config file placement, scoping, and format
+- [docs/scripting-style.md](docs/scripting-style.md) -- scripting language choice and conventions
 
 ## Sub-folder agent docs
 

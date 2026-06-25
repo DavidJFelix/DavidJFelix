@@ -191,6 +191,15 @@
     "virtuals",
     "vndly",
     "wordle",
-    "xrpc"
+    "xrpc",
+    "codemod",
+    "dotdir",
+    "footguns",
+    "httpx",
+    "pyproject",
+    "repoints",
+    "unportable",
+    "unreviewable",
+    "xtask"
   ]
 }

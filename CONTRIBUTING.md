@@ -63,7 +63,7 @@ Scripts follow [docs/scripting-style.md](docs/scripting-style.md). Key rules:
   Python (uv, pinned version) > Bash (bootstrap or trivial only) > interactive shells
   (Nushell / Fish / Zsh -- never committed).
 - **Bun scripts:** `#!/usr/bin/env bun`, ESM, in a `bin/` directory, fronted by a `mise` task; use
-  `Bun.$` instead of dropping to bash.
+  the `$` shell tag (`import {$} from 'bun'`) instead of dropping to bash.
 - **`sed` and `perl` are banned everywhere** -- including GitHub Actions `run:` steps and any
   programmatic workflow. Transform text in a `bin/*.ts` script instead.
 

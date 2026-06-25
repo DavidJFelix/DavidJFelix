@@ -40,8 +40,9 @@ This matches the repo rule that scripts are bun, not bash (declared in `.config/
 - **Entry point is a `mise` task** that calls the script, so nobody has to remember the path
   (`run = "bun bin/run-app-tasks.ts test"`).
 - **Use Bun's built-ins** instead of shelling out: `Bun.spawn`, `Bun.file`, `fetch`, `Bun.sleep`, and
-  `Bun.$` for shell-like pipelines. `Bun.$` is the answer to "but I need to pipe commands" -- you get
-  shell ergonomics with real escaping, types, and error handling, without leaving TypeScript:
+  the `$` shell tag (`import {$} from 'bun'`) for shell-like pipelines. The `$` tag is the answer to
+  "but I need to pipe commands" -- you get shell ergonomics with real escaping, types, and error
+  handling, without leaving TypeScript:
 
   ```ts
   import {$} from 'bun'
@@ -59,8 +60,8 @@ when the work is closely tied to its ecosystem -- ML ops, data/ML libraries, a P
 Starlark-adjacent build config. When Python is the right call, use it -- and only ever with **uv**.
 `pip` and `poetry` are banned (per CLAUDE.md); never invoke `pip` directly.
 
-**Pin the Python version explicitly -- never float.** Pin to the current stable (3.14 at the time of
-writing). Two mechanisms:
+**Pin the Python version explicitly -- never float.** Choose an explicit, repo-approved version and
+pin it; don't track "latest." Two mechanisms:
 
 - **Single-file scripts:** PEP 723 inline metadata, run with `uv run`. uv fetches the exact
   interpreter and dependencies into an ephemeral environment:
@@ -84,11 +85,11 @@ few-liner** that a real runtime would only complicate. Constraints:
 
 - **Keep it small.** The moment it grows logic -- loops that parse command output, conditionals on
   structured data, arrays of records -- promote it to a Bun script. Bash has no types, no real error
-  handling, quoting footguns, and no test story; `Bun.$` gives the same orchestration with none of
-  that.
+  handling, quoting footguns, and no test story; the `$` shell tag gives the same orchestration with
+  none of that.
 - `#!/usr/bin/env bash` and `set -euo pipefail`. Keep it shellcheck-clean.
-- **Bash orchestrates other programs; it does not transform text.** No `sed`, no `perl`, no `awk`
-  reach-for (see the ban below).
+- **Bash orchestrates other programs; it does not transform text.** No `sed` or `perl` reach-for
+  (see the ban below).
 
 ### 5. Interactive shells -- Nushell, Fish, Zsh (never committed)
 

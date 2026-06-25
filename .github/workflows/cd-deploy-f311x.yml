@@ -68,13 +68,6 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.F311X_CLOUDFLARE_ACCOUNT_ID }}
           ALCHEMY_NO_TUI: '1'
           ALCHEMY_TELEMETRY_DISABLED: '1'
-          # Client observability vars, inlined by the Vite build that runs inside
-          # `alchemy deploy` (Cloudflare.Vite). VITE_PUBLIC_SENTRY_DSN turns the
-          # browser Sentry SDK on; VITE_PUBLIC_POSTHOG_KEY turns PostHog on. Both
-          # public (repo variables). Unset means Vite dead-code-eliminates the
-          # SDKs, so the build stays clean; unset until issue #261 sets them, so
-          # deploys stay dark. Worker-side Sentry reads SENTRY_DSN at runtime from
-          # a Cloudflare Worker var (set separately, also #261).
           VITE_PUBLIC_SENTRY_DSN: ${{ vars.SENTRY_DSN_F311X }}
           VITE_PUBLIC_POSTHOG_KEY: ${{ vars.POSTHOG_KEY_F311X }}
         run: bun bin/deploy-prod.ts

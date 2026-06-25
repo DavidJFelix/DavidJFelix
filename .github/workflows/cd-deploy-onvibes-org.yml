@@ -34,12 +34,6 @@ jobs:
       - name: panda codegen
         run: pnpm exec panda codegen
 
-      # Sentry: PUBLIC_SENTRY_DSN (a repo variable) turns the browser SDK on for
-      # production only; the auth token (secret) + org + project enable source-map
-      # upload. PostHog: PUBLIC_POSTHOG_KEY (the project key, public by design)
-      # turns analytics on for production only. All gated in astro.config.mjs /
-      # index.astro — unset means no vendor code ships, so preview/CI/e2e stay
-      # clean. Unset until issue #261 sets them, so deploys stay dark.
       - name: astro build
         env:
           PUBLIC_SENTRY_DSN: ${{ vars.SENTRY_DSN_ONVIBES_ORG }}
@@ -49,9 +43,6 @@ jobs:
           PUBLIC_POSTHOG_KEY: ${{ vars.POSTHOG_KEY_ONVIBES_ORG }}
         run: pnpm exec astro build
 
-      # Deploy the @astrojs/cloudflare adapter's build. The build emits the worker
-      # + a resolved config at dist/server/wrangler.json (assets -> dist/client),
-      # so deploy points at that, not the source wrangler.toml.
       - name: wrangler deploy
         uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
         with:

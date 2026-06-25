@@ -49,8 +49,6 @@ jobs:
           worker-name: calendar-visualizer
           pr-number: ${{ github.event.pull_request.number }}
           smoke-routes: /
-          # @astrojs/cloudflare emits the deployable config here (assets ->
-          # dist/client); upload from it rather than the source wrangler.toml.
           wrangler-config: dist/server/wrangler.json
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

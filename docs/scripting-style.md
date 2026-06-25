@@ -14,7 +14,7 @@ to write a script.
 | ---- | ---------------------------- | ------------------------------------------------------------- |
 | 1    | The project's native language | A script inside a project, written in that project's language |
 | 2    | Bun / TypeScript             | The default for this monorepo's repo- and app-level scripts   |
-| 3    | Python (pinned + uv)         | When the script needs the Python ecosystem                    |
+| 3    | Python (pinned + uv)         | When Python is the better fit -- ML ops, Python-tied tooling |
 | 4    | Bash                         | Bootstrap before a runtime exists, or a trivial few-liner     |
 | 5    | Interactive shells           | Nushell / Fish / Zsh -- **never** for committed scripts       |
 
@@ -53,8 +53,11 @@ This matches the repo rule that scripts are bun, not bash (declared in `.config/
 
 ### 3. Python (pinned version + uv)
 
-When a script needs the Python ecosystem (a data/ML library, a Python-native tool), use Python -- and
-only ever with **uv**. `pip` and `poetry` are banned (per CLAUDE.md); never invoke `pip` directly.
+Bun and TypeScript cover the overwhelming majority of scripting -- reach for Python only when it is
+the clearly better fit, not merely possible. Bun is usually enough; Python becomes the obvious choice
+when the work is closely tied to its ecosystem -- ML ops, data/ML libraries, a Python-native tool, or
+Starlark-adjacent build config. When Python is the right call, use it -- and only ever with **uv**.
+`pip` and `poetry` are banned (per CLAUDE.md); never invoke `pip` directly.
 
 **Pin the Python version explicitly -- never float.** Pin to the current stable (3.14 at the time of
 writing). Two mechanisms:

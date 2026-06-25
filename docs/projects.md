@@ -111,17 +111,19 @@ Span every deployed app.
 
 ### [Sentry Integration](./projects/sentry-integration/plan.md)
 
-Wire Sentry into every deployed app for crash/error monitoring. Full-fleet rollout; f311x leads (it
-needs Worker error visibility).
+Wire Sentry into every deployed app for crash/error monitoring. Full-fleet rollout **landed
+2026-06-25** (all 11 apps; server-side on the worker apps); dark until the projects + per-app DSN
+vars exist (issue #261).
 
-**Status**: Active
+**Status**: Active · Blocked (human activation)
 
 ### [PostHog Integration](./projects/posthog-integration/plan.md)
 
-Wire PostHog into every deployed app for product analytics. Full-fleet rollout, back-to-back with
-Sentry.
+Wire PostHog into every deployed app for product analytics. Full-fleet rollout **landed 2026-06-25**
+(all 11 apps reverse-proxy through `/diag`); dark until the projects + per-app key vars exist (issue
+#261).
 
-**Status**: Active
+**Status**: Active · Blocked (human activation)
 
 ## Infrastructure & hygiene
 

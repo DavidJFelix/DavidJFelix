@@ -38,7 +38,16 @@ jobs:
 
       # SvelteKit's adapter-cloudflare emits the Worker into .svelte-kit/cloudflare
       # during `vite build`, so a plain `wrangler deploy` ships that output.
+      #
+      # Client observability vars, inlined by Vite. VITE_PUBLIC_SENTRY_DSN turns the
+      # browser Sentry SDK on; VITE_PUBLIC_POSTHOG_KEY turns PostHog on. Both public
+      # (repo variables). Unset means Vite dead-code-eliminates the SDKs, so
+      # preview/CI ship zero vendor code; unset until issue #261 sets them, so
+      # deploys stay dark. (Server-side Sentry is deferred for this SvelteKit app.)
       - name: vite build
+        env:
+          VITE_PUBLIC_SENTRY_DSN: ${{ vars.SENTRY_DSN_MONICANDAVID_COM }}
+          VITE_PUBLIC_POSTHOG_KEY: ${{ vars.POSTHOG_KEY_MONICANDAVID_COM }}
         run: pnpm exec vite build
 
       - name: wrangler deploy

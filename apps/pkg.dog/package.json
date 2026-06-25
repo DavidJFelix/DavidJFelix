@@ -13,19 +13,22 @@
     "format": "biome format . && prettier --check --no-error-on-unmatched-pattern \"**/*.md\" \"**/*.mdx\"",
     "format:fix": "biome format --write . && prettier --write --no-error-on-unmatched-pattern \"**/*.md\" \"**/*.mdx\"",
     "typecheck": "nuxt typecheck",
-    "test": "vitest run",
+    "test": "vitest run --coverage",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:update": "playwright test --update-snapshots"
   },
   "dependencies": {
     "@ark-ui/vue": "^5.37.2",
+    "@sentry/browser": "^10.60.0",
     "nuxt": "^4.4.8",
+    "posthog-js": "^1.393.0",
     "vue": "^3.5.38"
   },
   "devDependencies": {
     "@pandacss/dev": "1.11.3",
     "@playwright/test": "1.61.0",
+    "@vitest/coverage-v8": "4.1.9",
     "typescript": "6.0.3",
     "vitest": "4.1.9",
     "vue-tsc": "3.3.5",

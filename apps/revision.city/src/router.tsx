@@ -1,5 +1,6 @@
 import {createRouter as createTanStackRouter} from '@tanstack/react-router'
 
+import {initClientObservability} from './observability/client'
 import {routeTree} from './routeTree.gen'
 
 export function getRouter() {
@@ -9,6 +10,13 @@ export function getRouter() {
     defaultPreload: 'intent',
     defaultPreloadStaleTime: 0,
   })
+
+  // Browser-only: SSR builds dead-code-eliminate this, so the SDKs never enter
+  // the worker bundle. Each integration stays dark until its VITE_PUBLIC_* var is
+  // set at build (see src/observability).
+  if (!import.meta.env.SSR) {
+    initClientObservability()
+  }
 
   return router
 }

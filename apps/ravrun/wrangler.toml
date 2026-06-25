@@ -1,6 +1,15 @@
 #:schema node_modules/wrangler/config-schema.json
 name = "ravrun"
+# ravrun is a static SPA; this worker (src/worker.ts) exists only to host the
+# same-origin observability relay (PostHog proxy at /diag, Sentry tunnel at /bugs)
+# in front of the assets below. nodejs_compat is required by @sentry/cloudflare.
+main = "src/worker.ts"
 compatibility_date = "2026-04-29"
+compatibility_flags = ["nodejs_compat"]
 
 [assets]
 directory = "./dist"
+binding = "ASSETS"
+# Serve index.html for unmatched paths (SPA deep links / refreshes). The worker
+# intercepts /diag and /bugs before falling through to this binding.
+not_found_handling = "single-page-application"

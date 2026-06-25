@@ -1,7 +1,13 @@
 import {createRouter, RouterProvider} from '@tanstack/react-router'
 import ReactDOM from 'react-dom/client'
+import {initClientObservability} from './observability/client'
 import {routeTree} from './routeTree.gen'
 import './styles.css'
+
+// Start client-side error monitoring + analytics (browser-only entry). Each stays
+// dark until its VITE_PUBLIC_* var is set at build; both ride the same-origin
+// relay served by src/worker.ts.
+initClientObservability()
 
 // Set up a Router instance
 const router = createRouter({

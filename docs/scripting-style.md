@@ -69,7 +69,7 @@ pin it; don't track "latest." Two mechanisms:
   ```python
   #!/usr/bin/env -S uv run --script
   # /// script
-  # requires-python = ">=3.14"
+  # requires-python = ">=X.Y"  # the repo's approved Python version
   # dependencies = ["httpx"]
   # ///
   ```

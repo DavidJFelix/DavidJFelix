@@ -11,12 +11,12 @@ export default defineConfig({
     include: ['src/**/*.test.{ts,tsx}'],
     // Playwright specs share the .test.ts suffix but run under their own runner.
     exclude: ['**/*.e2e.test.{ts,tsx}', '**/node_modules/**'],
-    // Coverage gate for the app's pure logic (the chat agent). The UI / route /
-    // worker glue is exercised by smoke + e2e, not unit coverage, so it is not
-    // included here.
+    // Coverage gate for the app's pure logic (the chat agent + the observability
+    // relays and config resolver). The UI / route / worker glue is exercised by
+    // smoke + e2e, not unit coverage, so it is not included here.
     coverage: {
       provider: 'v8',
-      include: ['src/lib/**'],
+      include: ['src/lib/**', 'src/observability/config.ts'],
       reporter: ['text', 'text-summary'],
       thresholds: {statements: 100, branches: 90, functions: 100, lines: 100},
     },

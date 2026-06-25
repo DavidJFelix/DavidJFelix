@@ -1,7 +1,13 @@
 name = "f311x"
+# Custom server entry (src/server.ts) wraps the TanStack Start handler with Sentry
+# (@sentry/cloudflare withSentry). Alchemy's Cloudflare.Vite build reads this
+# `main`, so prod uses the wrapper instead of @tanstack/react-start/server-entry
+# (cloudflare/workers-sdk#11100). A plain local `vite build` ignores it and emits
+# the default server bundle (dist/server/server.js) that smoke/dev boot. Server-
+# side Sentry no-ops until the SENTRY_DSN worker var is set.
+main = "src/server.ts"
 compatibility_date = "2026-05-01"
 compatibility_flags = ["nodejs_compat"]
 
-# Deploy and bindings are managed by Alchemy v2 (see alchemy.run.ts); the app is
-# built by Vite / TanStack Start, so there is no standalone worker entry here.
-# This file is kept only as a fallback for `wrangler types` / `wrangler dev`.
+# Deploy and bindings are otherwise managed by Alchemy v2 (see alchemy.run.ts).
+# This file is also a fallback for `wrangler types` / `wrangler dev`.

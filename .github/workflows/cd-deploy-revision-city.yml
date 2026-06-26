@@ -43,12 +43,12 @@ jobs:
         run: pnpm exec vite build
 
       # The Cloudflare Vite plugin emits the resolved Worker config into dist/
-      # and a redirect in .wrangler/deploy/, so a plain `wrangler deploy` picks
-      # up the built output.
+      # and a redirect in .wrangler/deploy/, so `wrangler deploy` picks up the
+      # built output.
       - name: wrangler deploy
         uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy
+          command: deploy --var SENTRY_DSN:${{ vars.SENTRY_DSN_REVISION_CITY }}
           workingDirectory: apps/revision.city

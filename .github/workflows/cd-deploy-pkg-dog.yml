@@ -37,7 +37,7 @@ jobs:
         run: pnpm exec panda codegen
 
       # Nuxt (Nitro cloudflare_module preset) emits .output/server/index.mjs and
-      # .output/public, so a plain `wrangler deploy` ships that output.
+      # .output/public, so `wrangler deploy` ships that output.
       - name: nuxt build
         run: pnpm exec nuxt build
 
@@ -46,5 +46,5 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy
+          command: deploy --var NUXT_PUBLIC_SENTRY_DSN:${{ vars.SENTRY_DSN_PKG_DOG }} --var NUXT_PUBLIC_POSTHOG_KEY:${{ vars.POSTHOG_KEY_PKG_DOG }}
           workingDirectory: apps/pkg.dog

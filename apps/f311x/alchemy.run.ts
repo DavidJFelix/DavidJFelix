@@ -26,6 +26,8 @@ export const Website = Cloudflare.Vite(
         date: '2026-05-01',
         flags: ['nodejs_compat'],
       },
+      // Runtime worker var for withSentry (src/server.ts); empty until activation.
+      env: {SENTRY_DSN: process.env.SENTRY_DSN ?? ''},
       // Custom domains are the Worker's only ingress: Alchemy attaches them
       // on deploy and Cloudflare materializes the DNS records. The f311x.com
       // zone must already exist in this account. Prod-only: binding them

@@ -8,6 +8,10 @@ This document is the reference; the live config lives in `.config/`, root
 `biome.jsonc` / `.oxlintrc.json` / `.prettierrc.json`, and each app's
 `apps/<name>/` configs.
 
+For _where_ those config files live and _what format_ they take, see
+[configuration-style.md](configuration-style.md); for which language to write a
+script in, see [scripting-style.md](scripting-style.md).
+
 ## Ownership map
 
 ### Universal (all file types, all projects)

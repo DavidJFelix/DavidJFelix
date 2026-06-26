@@ -5,11 +5,11 @@ import {SENTRY_TUNNEL_ROUTE} from '../../shared/sentry-tunnel'
 
 // Client-only Nuxt plugin (.client suffix): starts Sentry error monitoring and
 // PostHog analytics in the browser, each only when its credential is set. Reads
-// Nuxt runtime config -- overridable at runtime by the NUXT_PUBLIC_SENTRY_DSN /
-// NUXT_PUBLIC_POSTHOG_KEY Cloudflare Worker vars (issue #261) -- so toggling them
-// needs no rebuild. Both ride the same-origin relay (server/routes/{diag,bugs}) so
-// ad/tracker blockers can't drop them. The SDKs are imported dynamically, so a
-// runtime without the vars set never fetches them.
+// Nuxt runtime config -- baked at build from the NUXT_PUBLIC_* env (see
+// nuxt.config.ts), the same repo variables the rest of the fleet uses. Both ride
+// the same-origin relay (server/routes/{diag,bugs}) so ad/tracker blockers can't
+// drop them. The SDKs are imported dynamically, so a build without the credentials
+// never fetches them.
 export default defineNuxtPlugin(() => {
   const {public: pub} = useRuntimeConfig()
 

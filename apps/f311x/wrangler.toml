@@ -4,7 +4,7 @@ name = "f311x"
 # `main`, so prod uses the wrapper instead of @tanstack/react-start/server-entry
 # (cloudflare/workers-sdk#11100). A plain local `vite build` ignores it and emits
 # the default server bundle (dist/server/server.js) that smoke/dev boot. Server-
-# side Sentry no-ops until the SENTRY_DSN worker var is set.
+# side Sentry reads VITE_PUBLIC_SENTRY_DSN (inlined at build); no-op until set.
 main = "src/server.ts"
 compatibility_date = "2026-05-01"
 compatibility_flags = ["nodejs_compat"]

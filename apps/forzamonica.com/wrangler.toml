@@ -3,8 +3,8 @@ name = "forzamonica-com"
 # Custom server entry (src/server.ts) wraps the TanStack Start handler with Sentry
 # (@sentry/cloudflare withSentry); @cloudflare/vite-plugin needs this explicit
 # entry instead of the default @tanstack/react-start/server-entry
-# (cloudflare/workers-sdk#11100). Server-side Sentry no-ops until the SENTRY_DSN
-# worker var is set.
+# (cloudflare/workers-sdk#11100). Server-side Sentry reads VITE_PUBLIC_SENTRY_DSN
+# (inlined at build, same as the client); no-op until it's set.
 main = "src/server.ts"
 compatibility_date = "2026-06-01"
 compatibility_flags = ["nodejs_compat"]

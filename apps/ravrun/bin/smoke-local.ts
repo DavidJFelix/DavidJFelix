@@ -21,14 +21,13 @@ if (!existsSync('dist')) {
   process.exit(1)
 }
 
-// Boot the worker + static assets in workerd via `wrangler dev` (reading
-// wrangler.toml for `main` = src/worker.ts and the ASSETS binding), not `vite
-// preview` -- the worker hosts the /diag and /bugs relay routes that a plain
-// static preview would 404. Spawn the wrangler binary directly (not through
-// `pnpm run`): killing the pnpm wrapper does not cascade to workerd, so it would
-// outlive teardown and hold the port.
+// Boot the production build via `vite preview`. With @cloudflare/vite-plugin this
+// serves the built worker (src/worker.ts) in workerd, so the /diag and /bugs relay
+// routes resolve and every other path falls through to the SPA assets. Spawn the
+// vite binary directly (not through `pnpm run`): killing the pnpm wrapper does not
+// cascade to the server, so it would outlive teardown and hold the port.
 const server = Bun.spawn(
-  ['node_modules/.bin/wrangler', 'dev', '--ip', '127.0.0.1', '--port', String(PORT)],
+  ['node_modules/.bin/vite', 'preview', '--host', '127.0.0.1', '--port', String(PORT)],
   {env: {...process.env, CI: 'true'}, stdout: 'ignore', stderr: 'ignore'},
 )
 

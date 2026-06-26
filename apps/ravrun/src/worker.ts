@@ -8,11 +8,11 @@ import {forwardEnvelope, SENTRY_TUNNEL_ROUTE} from './lib/sentry-tunnel'
 // analytics/errors. Every other request is served straight from the ASSETS
 // binding (the built SPA, with single-page-application fallback for client
 // routes). withSentry captures unhandled errors thrown in the relay; both it and
-// the tunnel's project pin no-op until the SENTRY_DSN worker var is set.
+// the tunnel's project pin read VITE_PUBLIC_SENTRY_DSN -- inlined at build, the
+// same value the client uses -- and no-op until it's set.
 
 interface Env {
   ASSETS: {fetch: (request: Request) => Promise<Response>}
-  SENTRY_DSN?: string
 }
 
 // Cap how long we wait on PostHog so a stalled upstream can't pin the worker
@@ -66,7 +66,7 @@ const handler = {
   async fetch(request: Request, env: Env): Promise<Response> {
     const {pathname} = new URL(request.url)
     if (pathname === SENTRY_TUNNEL_ROUTE) {
-      return forwardEnvelope(request, {allowedDsn: env.SENTRY_DSN})
+      return forwardEnvelope(request, {allowedDsn: import.meta.env.VITE_PUBLIC_SENTRY_DSN})
     }
     if (pathname === INGEST_PREFIX || pathname.startsWith(`${INGEST_PREFIX}/`)) {
       return proxyToPostHog(request)
@@ -75,4 +75,7 @@ const handler = {
   },
 }
 
-export default withSentry((env: Env) => ({dsn: env.SENTRY_DSN, tracesSampleRate: 1}), handler)
+export default withSentry(
+  () => ({dsn: import.meta.env.VITE_PUBLIC_SENTRY_DSN, tracesSampleRate: 1}),
+  handler,
+)

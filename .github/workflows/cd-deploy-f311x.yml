@@ -70,7 +70,6 @@ jobs:
           ALCHEMY_TELEMETRY_DISABLED: '1'
           VITE_PUBLIC_SENTRY_DSN: ${{ vars.SENTRY_DSN_F311X }}
           VITE_PUBLIC_POSTHOG_KEY: ${{ vars.POSTHOG_KEY_F311X }}
-          SENTRY_DSN: ${{ vars.SENTRY_DSN_F311X }}
         run: bun bin/deploy-prod.ts
 
       # The real gate: fails unless prod serves a working production bundle.

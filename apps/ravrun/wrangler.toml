@@ -8,7 +8,7 @@ compatibility_date = "2026-04-29"
 compatibility_flags = ["nodejs_compat"]
 
 [assets]
-directory = "./dist"
+# directory is wired by @cloudflare/vite-plugin to the Vite client build output.
 binding = "ASSETS"
 # Serve index.html for unmatched paths (SPA deep links / refreshes). The worker
 # intercepts /diag and /bugs before falling through to this binding.

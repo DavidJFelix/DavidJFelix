@@ -9,4 +9,3 @@ rules:
     ignore:
       - bot-claude.yml
       - bot-claude-code-review.yml
-      - cron-dependency-freshness.yml

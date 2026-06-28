@@ -47,6 +47,7 @@ jobs:
           worker-name: onvibes-org
           pr-number: ${{ github.event.pull_request.number }}
           smoke-routes: /
+          wrangler-config: dist/server/wrangler.json
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           github-token: ${{ secrets.GITHUB_TOKEN }}

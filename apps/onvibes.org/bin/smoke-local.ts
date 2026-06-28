@@ -1,14 +1,13 @@
 /// <reference types="bun" />
 // Pre-merge smoke gate: boots the production preview server and checks the
-// critical path serves a working bundle -- the route returns 200, the response
+// critical path serves a working bundle -- each route returns 200, the response
 // is a complete HTML document, and any hashed client asset it references itself
 // serves. Catches the "deployed but broken" class (route 404/500, missing
 // assets) before merge. Deterministic and secret-free.
 //
-// onvibes.org is a static Astro site (no SSR adapter); `astro preview` serves
-// the built `dist/` exactly as Cloudflare serves it. Assumes `astro build` has
-// run (the `smoke` mise task depends on `build`). Parameterized via
-// SMOKE_ROUTES / SMOKE_PORT so the same checks can later target a preview deploy.
+// Assumes `astro build` has run (the `smoke` mise task depends on `build`). The
+// gate is parameterized (SMOKE_ROUTES / SMOKE_PORT) so the same checks can later
+// target a per-PR preview deploy.
 
 import {existsSync} from 'node:fs'
 
@@ -17,17 +16,28 @@ const BASE_URL = `http://127.0.0.1:${PORT}`
 const ROUTES = (process.env.SMOKE_ROUTES ?? '/').split(',')
 const READY_TIMEOUT_MS = 60_000
 
-if (!existsSync('dist')) {
-  console.error('::error::dist is missing -- run `mise run build` first')
+if (!existsSync('dist/server/wrangler.json')) {
+  console.error('::error::dist/server/wrangler.json is missing -- run `mise run build` first')
   process.exit(1)
 }
 
-// Spawn the preview binary directly (not through `pnpm run`): killing the pnpm
-// wrapper does not cascade to the server, so it would outlive teardown and hold
-// the port. Detached stdio keeps the server from holding this process's pipes
-// open, which would otherwise stall a `... | tail` pipeline after we exit.
+// Boot the built worker + static assets in workerd via `wrangler dev`, not
+// `astro preview` (which the Cloudflare adapter does not support and which would
+// 404 the on-demand /diag and /bugs routes). Point at the @astrojs/cloudflare
+// adapter's generated config (built into dist/server). Spawn the wrangler binary
+// directly (not through `pnpm run`): killing the pnpm wrapper does not cascade to
+// the server, so it would outlive teardown and hold the port.
 const server = Bun.spawn(
-  ['node_modules/.bin/astro', 'preview', '--host', '127.0.0.1', '--port', String(PORT)],
+  [
+    'node_modules/.bin/wrangler',
+    'dev',
+    '-c',
+    'dist/server/wrangler.json',
+    '--ip',
+    '127.0.0.1',
+    '--port',
+    String(PORT),
+  ],
   {env: {...process.env, CI: 'true'}, stdout: 'ignore', stderr: 'ignore'},
 )
 

@@ -1,0 +1,37 @@
+---
+// PostHog product analytics. index.astro only renders this when
+// PUBLIC_POSTHOG_KEY is set at build (production deploy), and the script below
+// guards on the key again at runtime -- so locally, on CI, and on preview builds
+// nothing initializes and no PostHog code loads. Same offline-by-default posture
+// as the Sentry gating in astro.config.mjs, which keeps Playwright e2e and smoke
+// deterministic.
+---
+
+<script>
+  const key = import.meta.env.PUBLIC_POSTHOG_KEY
+  if (key) {
+    void (async () => {
+      const {default: posthog} = await import('posthog-js')
+      // Same-origin reverse proxy: events and the lazily-loaded SDK assets
+      // travel through /diag on this domain (see src/pages/diag/[...path].ts), so
+      // content blockers that drop *.posthog.com don't drop our analytics.
+      // api_host is derived from the live origin so it works on production and any
+      // preview host; ui_host keeps the toolbar and in-app links pointed at
+      // PostHog.
+      posthog.init(key, {
+        api_host: `${location.origin}/diag`,
+        ui_host: 'https://us.posthog.com',
+        // Cookieless and storage-free, so no consent banner is required.
+        // Trade-off on a multi-page site: every page load is a fresh anonymous
+        // id. Switch to 'localStorage' if returning-visitor stitching matters
+        // more than keeping zero client-side storage.
+        persistence: 'memory',
+        person_profiles: 'identified_only',
+        autocapture: false,
+        capture_pageview: true,
+        capture_pageleave: true,
+        disable_session_recording: true,
+      })
+    })()
+  }
+</script>

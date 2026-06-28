@@ -39,6 +39,9 @@ jobs:
       # SvelteKit's adapter-cloudflare emits the Worker into .svelte-kit/cloudflare
       # during `vite build`, so a plain `wrangler deploy` ships that output.
       - name: vite build
+        env:
+          VITE_PUBLIC_SENTRY_DSN: ${{ vars.SENTRY_DSN_MONICANDAVID_COM }}
+          VITE_PUBLIC_POSTHOG_KEY: ${{ vars.POSTHOG_KEY_MONICANDAVID_COM }}
         run: pnpm exec vite build
 
       - name: wrangler deploy

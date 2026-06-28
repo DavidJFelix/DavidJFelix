@@ -25,6 +25,8 @@
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.40.2",
     "@fontsource-variable/geist": "^5.2.9",
+    "@sentry/cloudflare": "^10.60.0",
+    "@sentry/react": "^10.60.0",
     "@tailwindcss/vite": "^4.3.1",
     "@tanstack/ai": "^0.32.0",
     "@tanstack/ai-react": "^0.15.4",
@@ -39,6 +41,7 @@
     "effect": "4.0.0-beta.85",
     "lucide-react": "^1.18.0",
     "marked": "^18.0.5",
+    "posthog-js": "^1.393.0",
     "radix-ui": "^1.5.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
@@ -54,8 +57,8 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "4.20260619.1",
-    "@playwright/test": "1.61.0",
     "@effect/platform-node": "4.0.0-beta.85",
+    "@playwright/test": "1.61.0",
     "@tailwindcss/typography": "0.5.20",
     "@tanstack/devtools-vite": "latest",
     "@testing-library/dom": "10.4.1",

@@ -32,6 +32,12 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: astro build
+        env:
+          PUBLIC_SENTRY_DSN: ${{ vars.SENTRY_DSN_DAVIDJFELIX_COM }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT_DAVIDJFELIX_COM }}
+          PUBLIC_POSTHOG_KEY: ${{ vars.POSTHOG_KEY_DAVIDJFELIX_COM }}
         run: pnpm exec astro build
 
       - name: wrangler deploy
@@ -39,5 +45,5 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy
+          command: deploy -c dist/server/wrangler.json
           workingDirectory: apps/davidjfelix.com

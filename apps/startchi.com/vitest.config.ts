@@ -13,5 +13,11 @@ export default defineConfig({
     exclude: ['**/*.e2e.test.ts', '**/node_modules/**'],
     // Framework is wired ahead of the first test; remove once one exists.
     passWithNoTests: true,
+    coverage: {
+      provider: 'v8',
+      include: ['src/lib/**', 'src/observability/config.ts'],
+      reporter: ['text', 'text-summary'],
+      thresholds: {statements: 100, branches: 90, functions: 100, lines: 100},
+    },
   },
 })

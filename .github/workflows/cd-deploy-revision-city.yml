@@ -36,12 +36,15 @@ jobs:
       - name: panda codegen
         run: pnpm exec panda codegen
 
+      - name: vite build
+        env:
+          VITE_PUBLIC_SENTRY_DSN: ${{ vars.SENTRY_DSN_REVISION_CITY }}
+          VITE_PUBLIC_POSTHOG_KEY: ${{ vars.POSTHOG_KEY_REVISION_CITY }}
+        run: pnpm exec vite build
+
       # The Cloudflare Vite plugin emits the resolved Worker config into dist/
       # and a redirect in .wrangler/deploy/, so a plain `wrangler deploy` picks
       # up the built output.
-      - name: vite build
-        run: pnpm exec vite build
-
       - name: wrangler deploy
         uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
         with:

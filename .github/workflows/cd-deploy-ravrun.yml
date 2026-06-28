@@ -32,6 +32,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: vite build
+        env:
+          VITE_PUBLIC_SENTRY_DSN: ${{ vars.SENTRY_DSN_RAVRUN }}
+          VITE_PUBLIC_POSTHOG_KEY: ${{ vars.POSTHOG_KEY_RAVRUN }}
         run: pnpm exec vite build
 
       - name: wrangler deploy

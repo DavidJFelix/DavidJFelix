@@ -21,10 +21,13 @@
   },
   "dependencies": {
     "@ark-ui/react": "^5.37.2",
+    "@sentry/cloudflare": "^10.60.0",
+    "@sentry/react": "^10.60.0",
     "@tanstack/react-devtools": "latest",
     "@tanstack/react-router": "latest",
     "@tanstack/react-router-devtools": "latest",
     "@tanstack/react-start": "latest",
+    "posthog-js": "^1.393.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
   },

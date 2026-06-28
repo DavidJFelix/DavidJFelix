@@ -37,6 +37,9 @@ jobs:
         run: pnpm exec panda codegen
 
       - name: vite build
+        env:
+          VITE_PUBLIC_SENTRY_DSN: ${{ vars.SENTRY_DSN_FORZAMONICA_COM }}
+          VITE_PUBLIC_POSTHOG_KEY: ${{ vars.POSTHOG_KEY_FORZAMONICA_COM }}
         run: pnpm exec vite build
 
       # The Cloudflare Vite plugin emits the resolved Worker config into dist/

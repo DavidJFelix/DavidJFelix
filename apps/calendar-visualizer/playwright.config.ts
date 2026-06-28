@@ -4,9 +4,9 @@ import {defineConfig, devices} from '@playwright/test'
 //   - a deployed per-PR preview (PREVIEW_URL set by cd-preview-calendar-visualizer.yml), or
 //   - a local production boot (no PREVIEW_URL) for writing/checking baselines.
 //
-// The local boot serves the built static site via `astro preview` -- the same
+// The local boot serves the built worker + assets via `wrangler dev` -- the same
 // boot bin/smoke-local.ts uses -- so the page matches what the preview deploy
-// serves.
+// serves and the on-demand /diag and /bugs routes are reachable.
 const PORT = Number(process.env.PLAYWRIGHT_PORT ?? 4322)
 const PREVIEW_URL = process.env.PREVIEW_URL
 const BASE_URL = PREVIEW_URL ?? `http://127.0.0.1:${PORT}`
@@ -28,10 +28,10 @@ export default defineConfig({
   webServer: PREVIEW_URL
     ? undefined
     : {
-        // Spawn the astro binary directly (not via `pnpm exec`) so Playwright's
-        // teardown kills the server instead of a wrapper that outlives it and
-        // holds the port -- the trap bin/smoke-local.ts notes.
-        command: `node_modules/.bin/astro preview --host 127.0.0.1 --port ${PORT}`,
+        // Spawn the wrangler binary directly (not via `pnpm exec`) so Playwright's
+        // teardown kills workerd instead of a wrapper that outlives it and holds
+        // the port. `astro preview` can't serve the adapter's worker routes.
+        command: `node_modules/.bin/wrangler dev -c dist/server/wrangler.json --ip 127.0.0.1 --port ${PORT}`,
         url: BASE_URL,
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,

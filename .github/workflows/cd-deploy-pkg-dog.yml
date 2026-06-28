@@ -37,8 +37,13 @@ jobs:
         run: pnpm exec panda codegen
 
       # Nuxt (Nitro cloudflare_module preset) emits .output/server/index.mjs and
-      # .output/public, so a plain `wrangler deploy` ships that output.
+      # .output/public, so `wrangler deploy` ships that output. The observability
+      # config is baked here from the build env (nuxt.config.ts reads these), so
+      # no runtime worker var is needed.
       - name: nuxt build
+        env:
+          NUXT_PUBLIC_SENTRY_DSN: ${{ vars.SENTRY_DSN_PKG_DOG }}
+          NUXT_PUBLIC_POSTHOG_KEY: ${{ vars.POSTHOG_KEY_PKG_DOG }}
         run: pnpm exec nuxt build
 
       - name: wrangler deploy

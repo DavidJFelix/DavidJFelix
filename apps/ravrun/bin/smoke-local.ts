@@ -21,10 +21,11 @@ if (!existsSync('dist')) {
   process.exit(1)
 }
 
-// Spawn the preview binary directly (not through `pnpm run`): killing the pnpm
-// wrapper does not cascade to the server, so it would outlive teardown and hold
-// the port. Detached stdio keeps the server from holding this process's pipes
-// open, which would otherwise stall a `... | tail` pipeline after we exit.
+// Boot the production build via `vite preview`. With @cloudflare/vite-plugin this
+// serves the built worker (src/worker.ts) in workerd, so the /diag and /bugs relay
+// routes resolve and every other path falls through to the SPA assets. Spawn the
+// vite binary directly (not through `pnpm run`): killing the pnpm wrapper does not
+// cascade to the server, so it would outlive teardown and hold the port.
 const server = Bun.spawn(
   ['node_modules/.bin/vite', 'preview', '--host', '127.0.0.1', '--port', String(PORT)],
   {env: {...process.env, CI: 'true'}, stdout: 'ignore', stderr: 'ignore'},

@@ -6,11 +6,16 @@ Wire Sentry into every app in the repo for crash and error monitoring.
 
 ## Status
 
-**Active — full-fleet rollout** (promoted 2026-06-18). **f311x leads**: its plan calls for Worker
-error visibility, so it's the first integration and the proving ground. Per-PR preview deploys now
-exist (2026-06-17) as a place to validate instrumentation before merge. **djf.io client-side landed
-(2026-06-22)**: it's a fully static site, so it gets client-only instrumentation (errors + tracing);
-apps with a real runtime add the Worker/server half on top.
+**Active — blocked on activation.** The **full-fleet rollout landed 2026-06-25** (branch
+`claude/pensive-euler-w2a96w`, see [progress](2026-06-25-progress.md)): all 11 apps now carry
+client-side Sentry behind the same-origin `/bugs` tunnel, with server-side `withSentry` on the 4
+TanStack Start apps + ravrun (deferred on the SvelteKit/Nuxt placeholders — `@sentry/node` can't run
+on workerd). Everything is **dark** until the Sentry project(s) exist and the per-app DSN vars are
+set (issue #261); #94 covers the org/project creation. After that the project closes — capture in
+`docs/changelog/` and delete this directory.
+
+History: f311x was the intended Worker proving ground; djf.io landed client-side first (2026-06-22)
+and became the templatized pilot.
 
 ## Scope
 

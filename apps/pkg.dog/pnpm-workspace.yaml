@@ -1,5 +1,7 @@
 allowBuilds:
   '@parcel/watcher': false
+  # core-js's postinstall is only a funding banner -- no native build to run.
+  core-js: false
   esbuild: true
   sharp: true
   workerd: true

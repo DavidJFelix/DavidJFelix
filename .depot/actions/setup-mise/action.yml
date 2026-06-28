@@ -1,0 +1,22 @@
+name: Setup mise
+description: >-
+  Install mise-managed tools with a cache key scoped to the root tool config and
+  lockfile (.config/mise.toml + .config/mise.lock). Editing app-level mise.toml
+  (e.g. adding tasks) no longer busts the shared cache; only genuine tool-version
+  bumps do.
+
+inputs:
+  cache:
+    description: Restore and save the mise tool cache.
+    required: false
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    - name: mise
+      uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
+      with:
+        install: true
+        cache: ${{ inputs.cache }}
+        cache_key: mise-v1-{{platform}}-${{ hashFiles('.config/mise.toml', '.config/mise.lock') }}

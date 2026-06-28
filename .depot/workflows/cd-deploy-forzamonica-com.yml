@@ -1,0 +1,53 @@
+# Depot CI Migration
+# Source: .github/workflows/cd-deploy-forzamonica-com.yml
+#
+# Changes made:
+# - Rewrote .github/ path references to .depot/
+# - Changed GitHub runs-on labels to their Depot equivalents
+
+name: CD Deploy forzamonica.com
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/forzamonica.com/**'
+      - '.depot/workflows/cd-deploy-forzamonica-com.yml'
+defaults:
+  run:
+    working-directory: apps/forzamonica.com
+jobs:
+  deploy:
+    name: wrangler deploy
+    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+      # `pnpm install` already runs `panda codegen` via the prepare script, but
+      # keep it explicit so the build does not depend on install side effects.
+      - name: panda codegen
+        run: pnpm exec panda codegen
+      - name: vite build
+        env:
+          VITE_PUBLIC_SENTRY_DSN: ${{ vars.SENTRY_DSN_FORZAMONICA_COM }}
+          VITE_PUBLIC_POSTHOG_KEY: ${{ vars.POSTHOG_KEY_FORZAMONICA_COM }}
+        run: pnpm exec vite build
+      # The Cloudflare Vite plugin emits the resolved Worker config into dist/
+      # and a redirect in .wrangler/deploy/, so a plain `wrangler deploy` picks
+      # up the built output.
+      - name: wrangler deploy
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+          workingDirectory: apps/forzamonica.com

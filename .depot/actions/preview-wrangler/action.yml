@@ -1,0 +1,139 @@
+name: Preview (wrangler)
+description: >-
+  Per-PR preview for a wrangler app. Builds the app, uploads a NON-ACTIVE
+  version via `wrangler versions upload --preview-alias pr-<N>` (deterministic
+  preview URL, no production routes touched, nothing to tear down), smokes the
+  preview URL, runs the app's Playwright screenshot suite against it, and upserts
+  a sticky PR comment. The caller runs checkout + setup-mise first; this action
+  installs deps and does the rest in the app directory.
+
+inputs:
+  app:
+    description: App directory name under apps/ (also the artifact + comment label).
+    required: true
+  worker-name:
+    description: The wrangler.toml `name` of the worker (used to build the preview URL).
+    required: true
+  pr-number:
+    description: The pull-request number (preview alias pr-<N>).
+    required: true
+  smoke-routes:
+    description: Comma-separated routes to smoke against the preview.
+    required: false
+    default: "/"
+  wrangler-config:
+    description: >-
+      Optional path (relative to the app dir) to an explicit wrangler config for
+      the upload, for adapters that emit a resolved config elsewhere (e.g.
+      @astrojs/cloudflare -> dist/server/wrangler.json). Default: the app's own
+      wrangler.toml.
+    required: false
+    default: ""
+  cloudflare-api-token:
+    description: Cloudflare API token (Workers Scripts edit — same scope deploy uses).
+    required: true
+  cloudflare-account-id:
+    description: Cloudflare account ID.
+    required: true
+  github-token:
+    description: GITHUB_TOKEN for the sticky PR comment (needs pull-requests write).
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: pnpm install
+      shell: bash
+      working-directory: apps/${{ inputs.app }}
+      run: pnpm install --frozen-lockfile
+
+    - name: build
+      shell: bash
+      working-directory: apps/${{ inputs.app }}
+      run: mise run build
+
+    # Builds the app's `dist`/worker, uploads a preview version, and resolves the
+    # deterministic pr-<N> alias URL into `url` for the steps below.
+    - name: upload preview
+      id: deploy
+      shell: bash
+      working-directory: apps/${{ inputs.app }}
+      env:
+        PR_NUMBER: ${{ inputs.pr-number }}
+        WORKER_NAME: ${{ inputs.worker-name }}
+        WRANGLER_CONFIG: ${{ inputs.wrangler-config }}
+        CLOUDFLARE_API_TOKEN: ${{ inputs.cloudflare-api-token }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ inputs.cloudflare-account-id }}
+      run: bun "$GITHUB_WORKSPACE/bin/upload-preview.ts"
+
+    # workers.dev preview URLs are live immediately, so a few quick attempts
+    # suffice instead of the prod gate's long propagation retries.
+    - name: smoke test
+      id: smoke
+      shell: bash
+      env:
+        SMOKE_URL: ${{ steps.deploy.outputs.url }}
+        SMOKE_ROUTES: ${{ inputs.smoke-routes }}
+        SMOKE_ATTEMPTS: "5"
+        SMOKE_RETRY_DELAY_MS: "5000"
+      run: bun "$GITHUB_WORKSPACE/bin/smoke-url.ts"
+
+    - name: resolve playwright version
+      id: pw-version
+      shell: bash
+      working-directory: apps/${{ inputs.app }}
+      run: |
+        version=$(node -p "require('@playwright/test/package.json').version")
+        echo "version=$version" >> "$GITHUB_OUTPUT"
+
+    - name: cache playwright browsers
+      id: pw-cache
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-${{ runner.os }}-${{ steps.pw-version.outputs.version }}
+
+    - name: playwright install
+      if: steps.pw-cache.outputs.cache-hit != 'true'
+      shell: bash
+      working-directory: apps/${{ inputs.app }}
+      run: pnpm exec playwright install --with-deps chromium
+
+    - name: playwright install-deps
+      if: steps.pw-cache.outputs.cache-hit == 'true'
+      shell: bash
+      working-directory: apps/${{ inputs.app }}
+      run: pnpm exec playwright install-deps chromium
+
+    # PREVIEW_URL set => playwright.config.ts skips the local boot and points at
+    # the deployed preview. `pnpm run` (not `mise run`) avoids the e2e task's
+    # local build dependency, which the preview path doesn't need.
+    - name: screenshots
+      id: e2e
+      shell: bash
+      working-directory: apps/${{ inputs.app }}
+      env:
+        PREVIEW_URL: ${{ steps.deploy.outputs.url }}
+      run: pnpm run test:e2e
+
+    - name: upload playwright report
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: playwright-report-${{ inputs.app }}
+        path: apps/${{ inputs.app }}/playwright-report/
+        retention-days: 14
+
+    - name: comment preview url
+      if: ${{ !cancelled() }}
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        PR_NUMBER: ${{ inputs.pr-number }}
+        PREVIEW_URL: ${{ steps.deploy.outputs.url }}
+        PREVIEW_MARKER: "<!-- preview-${{ inputs.app }} -->"
+        PREVIEW_TITLE: ${{ inputs.app }} preview
+        PREVIEW_STATUS: >-
+          ${{ (steps.smoke.outcome == 'success' && steps.e2e.outcome == 'success')
+          && '✅ passed' || '❌ failed' }}
+      run: bun "$GITHUB_WORKSPACE/bin/comment-preview.ts"

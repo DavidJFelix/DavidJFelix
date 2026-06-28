@@ -1,0 +1,53 @@
+# Depot CI Migration
+# Source: .github/workflows/cd-preview-startchi-com.yml
+#
+# Changes made:
+# - Rewrote .github/ path references to .depot/
+# - Changed GitHub runs-on labels to their Depot equivalents
+
+name: CD Preview startchi.com
+# Per-PR preview deploy for startchi.com (wrangler, TanStack Start SSR). On every
+# PR touching the app: upload a non-active version with a pr-<N> preview alias,
+# smoke the preview URL, screenshot-diff it against committed baselines, and post
+# the URL. No teardown -- `wrangler versions upload` never serves production, so
+# the custom domains stay on the active version. Forks have no secrets and will
+# fail the deploy step -- acceptable for a personal monorepo; do NOT switch to
+# pull_request_target.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'apps/startchi.com/**'
+      - '.depot/workflows/cd-preview-startchi-com.yml'
+      - '.depot/actions/preview-wrangler/**'
+      - 'bin/**'
+concurrency:
+  group: preview-startchi-com-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+env:
+  MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
+jobs:
+  preview:
+    name: deploy + smoke + screenshots
+    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: preview
+        uses: ./.depot/actions/preview-wrangler
+        with:
+          app: startchi.com
+          worker-name: startchi-com
+          pr-number: ${{ github.event.pull_request.number }}
+          smoke-routes: /
+          cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}

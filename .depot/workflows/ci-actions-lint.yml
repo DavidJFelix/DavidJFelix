@@ -1,0 +1,59 @@
+# Depot CI Migration
+# Source: .github/workflows/ci-actions-lint.yml
+#
+# Changes made:
+# - Rewrote .github/ path references to .depot/
+# - Changed GitHub runs-on labels to their Depot equivalents
+
+name: CI Actions Lint
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/**'
+      - '.depot/actions/**'
+      - '.github/zizmor.yml'
+      - '.config/mise.toml'
+      - 'ghalint.yaml'
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+      - '.depot/actions/**'
+      - '.github/zizmor.yml'
+      - '.config/mise.toml'
+      - 'ghalint.yaml'
+jobs:
+  lint:
+    name: actionlint + ghalint + zizmor + pinact
+    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: Verify mise.lock matches mise.toml
+        # mise install during the previous step updates .config/mise.lock if
+        # mise.toml has gained or bumped a tool. A non-empty diff here means
+        # whoever changed mise.toml forgot to commit the lockfile update.
+        run: |
+          if ! git diff --exit-code .config/mise.lock; then
+            echo "::error file=.config/mise.lock::.config/mise.lock is out of date. Run 'mise install' locally (with GITHUB_TOKEN set, or 'gh auth login' first) and commit the updated lockfile. See CONTRIBUTING.md for details."
+            exit 1
+          fi
+      - name: actionlint
+        run: actionlint
+      - name: ghalint
+        run: ghalint run
+      - name: zizmor
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: zizmor .github/workflows/
+      - name: pinact
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pinact run --check

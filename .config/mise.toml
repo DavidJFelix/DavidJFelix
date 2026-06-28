@@ -13,6 +13,7 @@ ghalint = "1"
 zizmor = "1.26.1"
 pinact = "4.1.0"
 "npm:cspell" = "10.0.1"
+depot = { version = "latest", exe = "depot" }
 
 # Repo-root checks, scoped to the config files the root owns. Legacy project
 # dirs (Advent-of-Code, Exercism, etc.) are intentionally out of scope, and

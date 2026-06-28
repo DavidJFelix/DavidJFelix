@@ -1,0 +1,92 @@
+# Depot CI Migration
+# Source: .github/workflows/cd-deploy-djf-io.yml
+#
+# Changes made:
+# - Rewrote .github/ path references to .depot/
+# - Changed GitHub runs-on labels to their Depot equivalents
+
+name: CD Deploy djf.io
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/djf.io/**'
+      - '.depot/workflows/cd-deploy-djf-io.yml'
+env:
+  MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
+defaults:
+  run:
+    working-directory: apps/djf.io
+jobs:
+  deploy:
+    name: wrangler deploy
+    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+      - name: panda codegen
+        run: pnpm exec panda codegen
+      # Detect the secret in a step-scoped env (ghalint 006 forbids secrets in
+      # job env), so the sync below can skip when it is unset — keeping djf.io
+      # deploys decoupled from the atproto credential.
+      - name: check standard.site secret
+        id: atproto
+        env:
+          ATPROTO_APP_PASSWORD: ${{ secrets.ATPROTO_APP_PASSWORD }}
+        run: |
+          if [ -n "$ATPROTO_APP_PASSWORD" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          fi
+      # Runs before the build so the document records exist when the build
+      # resolves their TID URIs below.
+      - name: sync standard.site records
+        if: ${{ steps.atproto.outputs.present == 'true' }}
+        env:
+          ATPROTO_APP_PASSWORD: ${{ secrets.ATPROTO_APP_PASSWORD }}
+        run: mise run sync-standard-site
+      # Resolve document TID URIs from the live PDS only when the sync above ran
+      # (same secret gate) — a deploy that skips sync stays offline rather than
+      # emitting links to records it didn't update. Local/CI/e2e/preview builds
+      # never set this, so they stay offline and deterministic (links omitted).
+      #
+      # Sentry: PUBLIC_SENTRY_DSN (public, a repo variable) turns the browser SDK
+      # on for production only; the auth token (secret) + org + project enable
+      # source-map upload. All gated in astro.config.mjs — unset means no Sentry
+      # code ships, so preview/CI/e2e stay clean.
+      #
+      # PostHog: PUBLIC_POSTHOG_KEY (the project key — public by design, so a repo
+      # variable, not a secret) turns analytics on for production only. BaseLayout
+      # only renders the snippet when it's set, so preview/CI/e2e ship no PostHog
+      # code and stay deterministic. Unset until the variable is created (see the
+      # PostHog rollout issue), so deploys stay dark until then.
+      - name: astro build
+        env:
+          STANDARD_SITE_RESOLVE: ${{ steps.atproto.outputs.present }}
+          PUBLIC_SENTRY_DSN: ${{ vars.SENTRY_DSN_DJF_IO }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT_DJF_IO }}
+          PUBLIC_POSTHOG_KEY: ${{ vars.POSTHOG_KEY_DJF_IO }}
+        run: pnpm exec astro build
+      # Deploy the @astrojs/cloudflare adapter's build. The build emits the worker
+      # + a resolved config at dist/server/wrangler.json (assets -> dist/client),
+      # so deploy points at that, not the source wrangler.toml. The Sentry tunnel
+      # is pinned to djf.io's project via PUBLIC_SENTRY_DSN, inlined into the
+      # endpoint by the astro build above (import.meta.env) -- no runtime var.
+      - name: wrangler deploy
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy -c dist/server/wrangler.json
+          workingDirectory: apps/djf.io

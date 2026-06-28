@@ -1,0 +1,56 @@
+# Depot CI Migration
+# Source: .github/workflows/cron-dependency-freshness.yml
+#
+# Changes made:
+# - Rewrote .github/ path references to .depot/
+# - Changed GitHub runs-on labels to their Depot equivalents
+
+name: Cron Dependency Freshness
+# Runs unattended on a weekly cron; also dispatchable on demand.
+on:
+  schedule:
+    # Weekly, Monday 06:00 UTC — one schedule covers all ecosystems.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+jobs:
+  freshness:
+    name: dependency-freshness sweep
+    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
+    timeout-minutes: 60
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+    steps:
+      - name: checkout
+        # persist-credentials must stay true: anthropics/claude-code-action runs
+        # `git fetch` during setup before configuring its own auth. See
+        # anthropics/claude-code-action#1236.
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: claude-code-action
+        uses: anthropics/claude-code-action@2fee15510437d71399d9139ed60433470484a8fb # v1.0.153
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          additional_permissions: |
+            actions: read
+          # Unattended run on an ephemeral, isolated runner. The skill needs
+          # broad tool access (pnpm, cargo, mise, git, the GitHub MCP tools);
+          # the real boundary is this job's `permissions:` block above, not a
+          # tool allowlist. --max-turns is raised well past a single sweep's
+          # needs since one run can open many PRs.
+          claude_args: |
+            --max-turns 150
+            --dangerously-skip-permissions
+          prompt: |
+            Run the dependency-freshness skill for all ecosystems (npm, mise,
+            Cargo). Discover, evaluate, apply, verify, and open PRs exactly as
+            described in .claude/skills/dependency-freshness/SKILL.md. This is
+            the scheduled cron run — there is no human in the loop, so follow
+            the skill's batching and escalation rules without asking for
+            confirmation.

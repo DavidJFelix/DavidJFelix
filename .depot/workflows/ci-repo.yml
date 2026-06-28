@@ -1,0 +1,67 @@
+# Depot CI Migration
+# Source: .github/workflows/ci-repo.yml
+#
+# Changes made:
+# - Rewrote .github/ path references to .depot/
+# - Changed GitHub runs-on labels to their Depot equivalents
+
+name: CI repo
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'biome.jsonc'
+      - '.oxlintrc.json'
+      - '.prettierrc.json'
+      - '.config/cspell.json'
+      - '.config/mise.toml'
+      - '.github/renovate.json'
+      - '.vscode/settings.json'
+      - '.vscode/extensions.json'
+      - 'bin/**'
+      - '.depot/workflows/ci-repo.yml'
+  pull_request:
+    paths:
+      - 'biome.jsonc'
+      - '.oxlintrc.json'
+      - '.prettierrc.json'
+      - '.config/cspell.json'
+      - '.config/mise.toml'
+      - '.github/renovate.json'
+      - '.vscode/settings.json'
+      - '.vscode/extensions.json'
+      - 'bin/**'
+      - '.depot/workflows/ci-repo.yml'
+env:
+  MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
+jobs:
+  format:
+    name: format check (root config files)
+    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: format
+        run: mise run format
+  bin-test:
+    name: bun test (bin/)
+    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: test bin
+        run: mise run test:bin

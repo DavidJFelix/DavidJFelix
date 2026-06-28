@@ -1,0 +1,160 @@
+# Depot CI Migration
+# Source: .github/workflows/ci-djf-io.yml
+#
+# Changes made:
+# - Rewrote .github/ path references to .depot/
+# - Changed GitHub runs-on labels to their Depot equivalents
+
+name: CI djf.io
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/djf.io/**'
+      - '.config/cspell.json'
+      - '.config/mise.toml'
+      - 'biome.jsonc'
+      - '.oxlintrc.json'
+      - '.prettierrc.json'
+      - '.depot/workflows/ci-djf-io.yml'
+  pull_request:
+    paths:
+      - 'apps/djf.io/**'
+      - '.config/cspell.json'
+      - '.config/mise.toml'
+      - 'biome.jsonc'
+      - '.oxlintrc.json'
+      - '.prettierrc.json'
+      - '.depot/workflows/ci-djf-io.yml'
+env:
+  MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
+defaults:
+  run:
+    working-directory: apps/djf.io
+jobs:
+  typecheck:
+    name: astro check
+    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+      - name: typecheck
+        run: mise run typecheck
+  lint:
+    name: biome + oxlint
+    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+      - name: lint
+        run: mise run lint
+  format:
+    name: format check
+    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+      - name: format
+        run: mise run format
+  build:
+    name: astro build
+    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+      - name: build
+        run: mise run build
+  vitest:
+    name: vitest
+    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+      - name: vitest
+        run: mise run test:unit
+  playwright:
+    name: playwright
+    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+      - name: resolve playwright version
+        id: pw-version
+        run: |
+          version=$(node -p "require('@playwright/test/package.json').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: cache playwright browsers
+        id: pw-cache
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw-version.outputs.version }}
+      - name: playwright install
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps chromium
+      - name: playwright install-deps
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: pnpm exec playwright install-deps chromium
+      - name: playwright
+        run: mise run test:e2e
+      - name: upload-artifact
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playwright-report
+          path: apps/djf.io/playwright-report/
+          retention-days: 14

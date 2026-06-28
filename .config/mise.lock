@@ -166,6 +166,65 @@ url = "https://github.com/oven-sh/bun/releases/download/bun-v1.3.14/bun-windows-
 checksum = "sha256:538f9c846355d9e847b2671bc00c47da4229a0befb24df3282b739770f3b475f"
 url = "https://github.com/oven-sh/bun/releases/download/bun-v1.3.14/bun-windows-x64-baseline.zip"
 
+[[tools.depot]]
+version = "2.101.66"
+backend = "github:depot/cli"
+
+[tools.depot."platforms.linux-arm64"]
+checksum = "sha256:326d50d0de043def2678bf3015ae206a2e7cfef94bceecf29f4b4a050eeb256a"
+url = "https://github.com/depot/cli/releases/download/v2.101.66/depot_2.101.66_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/460242738"
+
+[tools.depot."platforms.linux-arm64-musl"]
+checksum = "sha256:326d50d0de043def2678bf3015ae206a2e7cfef94bceecf29f4b4a050eeb256a"
+url = "https://github.com/depot/cli/releases/download/v2.101.66/depot_2.101.66_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/460242738"
+
+[tools.depot."platforms.linux-x64"]
+checksum = "sha256:bad82209950ccc56a1d607b87138b81736bb3c62a6d9f351e94900f28437f2ef"
+url = "https://github.com/depot/cli/releases/download/v2.101.66/depot_2.101.66_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/460242737"
+
+[tools.depot."platforms.linux-x64-baseline"]
+checksum = "sha256:bad82209950ccc56a1d607b87138b81736bb3c62a6d9f351e94900f28437f2ef"
+url = "https://github.com/depot/cli/releases/download/v2.101.66/depot_2.101.66_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/460242737"
+
+[tools.depot."platforms.linux-x64-musl"]
+checksum = "sha256:bad82209950ccc56a1d607b87138b81736bb3c62a6d9f351e94900f28437f2ef"
+url = "https://github.com/depot/cli/releases/download/v2.101.66/depot_2.101.66_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/460242737"
+
+[tools.depot."platforms.linux-x64-musl-baseline"]
+checksum = "sha256:bad82209950ccc56a1d607b87138b81736bb3c62a6d9f351e94900f28437f2ef"
+url = "https://github.com/depot/cli/releases/download/v2.101.66/depot_2.101.66_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/460242737"
+
+[tools.depot."platforms.macos-arm64"]
+checksum = "sha256:41268e4483be6e81d8eb26f1b33f442699d7ee4d545ec73ea9db5d481c19ea75"
+url = "https://github.com/depot/cli/releases/download/v2.101.66/depot_2.101.66_darwin_arm64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/460242741"
+
+[tools.depot."platforms.macos-x64"]
+checksum = "sha256:3b631892418f08567c9432d3f5d2c81b555d7fa786084715c777998ecc540a79"
+url = "https://github.com/depot/cli/releases/download/v2.101.66/depot_2.101.66_darwin_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/460242736"
+
+[tools.depot."platforms.macos-x64-baseline"]
+checksum = "sha256:3b631892418f08567c9432d3f5d2c81b555d7fa786084715c777998ecc540a79"
+url = "https://github.com/depot/cli/releases/download/v2.101.66/depot_2.101.66_darwin_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/460242736"
+
+[tools.depot."platforms.windows-x64"]
+checksum = "sha256:9bc3b32101fa463f82418b76e6f784e73076f33a4b6d2fd83a6fa64a66247ec1"
+url = "https://github.com/depot/cli/releases/download/v2.101.66/depot_2.101.66_windows_amd64.zip"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/460242743"
+
+[tools.depot."platforms.windows-x64-baseline"]
+checksum = "sha256:9bc3b32101fa463f82418b76e6f784e73076f33a4b6d2fd83a6fa64a66247ec1"
+url = "https://github.com/depot/cli/releases/download/v2.101.66/depot_2.101.66_windows_amd64.zip"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/460242743"
+
 [[tools.ghalint]]
 version = "1.5.6"
 backend = "aqua:suzuki-shunsuke/ghalint"

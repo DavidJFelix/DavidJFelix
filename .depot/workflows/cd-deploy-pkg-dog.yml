@@ -1,0 +1,54 @@
+# Depot CI Migration
+# Source: .github/workflows/cd-deploy-pkg-dog.yml
+#
+# Changes made:
+# - Rewrote .github/ path references to .depot/
+# - Changed GitHub runs-on labels to their Depot equivalents
+
+name: CD Deploy pkg.dog
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/pkg.dog/**'
+      - '.depot/workflows/cd-deploy-pkg-dog.yml'
+defaults:
+  run:
+    working-directory: apps/pkg.dog
+jobs:
+  deploy:
+    name: wrangler deploy
+    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+      # `pnpm install` already runs `panda codegen` via the prepare script, but
+      # keep it explicit so the build does not depend on install side effects.
+      - name: panda codegen
+        run: pnpm exec panda codegen
+      # Nuxt (Nitro cloudflare_module preset) emits .output/server/index.mjs and
+      # .output/public, so `wrangler deploy` ships that output. The observability
+      # config is baked here from the build env (nuxt.config.ts reads these), so
+      # no runtime worker var is needed.
+      - name: nuxt build
+        env:
+          NUXT_PUBLIC_SENTRY_DSN: ${{ vars.SENTRY_DSN_PKG_DOG }}
+          NUXT_PUBLIC_POSTHOG_KEY: ${{ vars.POSTHOG_KEY_PKG_DOG }}
+        run: pnpm exec nuxt build
+      - name: wrangler deploy
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+          workingDirectory: apps/pkg.dog

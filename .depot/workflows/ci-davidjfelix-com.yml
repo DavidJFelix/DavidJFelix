@@ -1,0 +1,136 @@
+# Depot CI Migration
+# Source: .github/workflows/ci-davidjfelix-com.yml
+#
+# Changes made:
+# - Rewrote .github/ path references to .depot/
+# - Changed GitHub runs-on labels to their Depot equivalents
+
+name: CI davidjfelix.com
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/davidjfelix.com/**'
+      - '.config/cspell.json'
+      - '.config/mise.toml'
+      - 'biome.jsonc'
+      - '.oxlintrc.json'
+      - '.prettierrc.json'
+      - '.depot/workflows/ci-davidjfelix-com.yml'
+  pull_request:
+    paths:
+      - 'apps/davidjfelix.com/**'
+      - '.config/cspell.json'
+      - '.config/mise.toml'
+      - 'biome.jsonc'
+      - '.oxlintrc.json'
+      - '.prettierrc.json'
+      - '.depot/workflows/ci-davidjfelix-com.yml'
+env:
+  MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
+defaults:
+  run:
+    working-directory: apps/davidjfelix.com
+jobs:
+  typecheck:
+    name: astro check
+    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+      - name: typecheck
+        run: mise run typecheck
+  lint:
+    name: biome + oxlint
+    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+      - name: lint
+        run: mise run lint
+  format:
+    name: format check
+    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+      - name: format
+        run: mise run format
+  build:
+    name: astro build
+    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+      - name: build
+        run: mise run build
+  vitest:
+    name: vitest
+    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+      - name: vitest
+        run: mise run test
+  smoke:
+    name: smoke (local production boot)
+    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+      - name: smoke
+        run: mise run smoke

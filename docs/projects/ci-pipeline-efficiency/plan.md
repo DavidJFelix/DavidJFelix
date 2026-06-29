@@ -2,7 +2,7 @@
 
 Two CI pain points David flagged: too many workflows run on a given change, and dependency/browser
 installs are slow. Make CI trigger only the workflows a change can actually affect, and cache the
-steps that currently start cold. Grounded in a full survey of `.github/workflows/`.
+steps that currently start cold. Grounded in a full survey of `.depot/workflows/`.
 
 ## Task 1 — Trigger filtering (only the correct actions run)
 
@@ -58,5 +58,5 @@ The fan-out today: all 10 per-app `ci-*.yml` workflows list the same shared root
 ## Related
 
 - `lint-format-loose-ends` — its cspell→jsonc rename sequences after Task 1's filter cleanup
-- Survey basis: `.github/workflows/ci-*.yml`, `cd-*.yml`, `.github/actions/setup-mise/`,
-  `.github/actions/preview-wrangler/`, `.claude/hooks/session-start.ts`
+- Survey basis: `.depot/workflows/ci-*.yml`, `cd-*.yml`, `.depot/actions/setup-mise/`,
+  `.depot/actions/preview-wrangler/`, `.claude/hooks/session-start.ts`

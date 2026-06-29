@@ -1,6 +1,8 @@
 # GitHub Actions style guide
 
-Conventions for workflows in `.github/workflows/`.
+Conventions for the repo's workflows. They are written in GitHub Actions syntax but run on
+[Depot CI](https://depot.dev) from `.depot/workflows/` (on `depot-ubuntu-latest` runners), so the
+path and runner-label examples below reflect that.
 
 ## Workflow categories
 
@@ -118,14 +120,14 @@ on:
       - '.config/cspell.json'
       - '.config/mise.toml'
       - 'biome.jsonc'
-      - '.github/workflows/ci-djf-io.yml'
+      - '.depot/workflows/ci-djf-io.yml'
   pull_request:
     paths:
       - 'apps/djf.io/**'
       - '.config/cspell.json'
       - '.config/mise.toml'
       - 'biome.jsonc'
-      - '.github/workflows/ci-djf-io.yml'
+      - '.depot/workflows/ci-djf-io.yml'
 ```
 
 `Run` and `Cron` workflows do not need path filters -- they are dispatched explicitly or on a schedule.
@@ -159,7 +161,7 @@ jobs:
       fail-fast: false
       matrix:
         app: [djf.io, calendar-visualizer, ravrun]
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-latest
     steps:
       - uses: actions/checkout@...
       - run: pnpm --filter ${{ matrix.app }} test
@@ -170,17 +172,17 @@ Example parallel jobs:
 ```yaml
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-latest
     steps: [...]
   typecheck:
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-latest
     steps: [...]
   test:
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-latest
     steps: [...]
   build:
     needs: [lint, typecheck, test]  # only if build actually requires them
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-latest
     steps: [...]
 ```
 

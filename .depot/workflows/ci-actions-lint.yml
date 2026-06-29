@@ -1,27 +1,31 @@
 # Depot CI Migration
 # Source: .github/workflows/ci-actions-lint.yml
 #
-# Changes made:
-# - Rewrote .github/ path references to .depot/
-# - Changed GitHub runs-on labels to their Depot equivalents
-
+# Lints the Depot workflows themselves. The workflows now live in
+# .depot/workflows/ (run on Depot's runners), so the linters are pointed there
+# explicitly:
+# - actionlint / zizmor / pinact accept explicit paths, so they cover both the
+#   workflows and the .depot/actions/* composites.
+# - ghalint's `run` is hardcoded to .github/workflows/ and cannot target
+#   .depot/workflows/, so it only lints the composite actions via `run-action`.
+#   actionlint (correctness) + zizmor (security audit) cover the workflows.
 name: CI Actions Lint
 on:
   push:
     branches: [main]
     paths:
-      - '.github/workflows/**'
+      - '.depot/workflows/**'
       - '.depot/actions/**'
       - '.github/zizmor.yml'
+      - '.github/actionlint.yaml'
       - '.config/mise.toml'
-      - 'ghalint.yaml'
   pull_request:
     paths:
-      - '.github/workflows/**'
+      - '.depot/workflows/**'
       - '.depot/actions/**'
       - '.github/zizmor.yml'
+      - '.github/actionlint.yaml'
       - '.config/mise.toml'
-      - 'ghalint.yaml'
 jobs:
   lint:
     name: actionlint + ghalint + zizmor + pinact
@@ -46,14 +50,14 @@ jobs:
             exit 1
           fi
       - name: actionlint
-        run: actionlint
-      - name: ghalint
-        run: ghalint run
+        run: actionlint -config-file .github/actionlint.yaml .depot/workflows/*.yml
+      - name: ghalint (composite actions)
+        run: ghalint run-action .depot/actions/*/action.yml
       - name: zizmor
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: zizmor .github/workflows/
+        run: zizmor .depot/workflows/*.yml .depot/actions/*/action.yml
       - name: pinact
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pinact run --check
+        run: pinact run --check .depot/workflows/*.yml .depot/actions/*/action.yml

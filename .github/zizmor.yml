@@ -1,11 +1,11 @@
-# zizmor suppressions.
+# zizmor suppressions for the Depot workflows (.depot/workflows/).
 #
-# anthropics/claude-code-action runs `git fetch` during setup before
-# configuring its own auth, so the checkout step must keep
-# persist-credentials enabled. Tracked upstream at
-# anthropics/claude-code-action#1236.
+# cron-dependency-freshness.yml runs anthropics/claude-code-action, which does
+# `git fetch` during setup before configuring its own auth, so its checkout must
+# keep persist-credentials enabled. Tracked upstream at
+# anthropics/claude-code-action#1236. zizmor matches by filename, so this covers
+# the file wherever it lives.
 rules:
   artipacked:
     ignore:
-      - bot-claude.yml
-      - bot-claude-code-review.yml
+      - cron-dependency-freshness.yml

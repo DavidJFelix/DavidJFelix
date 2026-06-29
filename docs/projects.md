@@ -180,7 +180,9 @@ Depends on Setup Warp + Dotfiles.
 
 ### [LLM Automation Migration](./projects/llm-automation-migration/plan.md)
 
-Move unattended LLM-driven GitHub Actions off Anthropic-billed Claude onto a cheaper runtime. Now
-scoped to `bot-claude-code-review.yml` alone.
+Was: move unattended LLM-driven GitHub Actions off Anthropic-billed Claude onto a cheaper runtime.
+Obsoleted 2026-06-29 — the Depot migration removed both Claude bot workflows, so there is nothing
+left to migrate. Pending a decision to close the project or repurpose it (cheaper review bot on
+Depot).
 
-**Status**: Deferred
+**Status**: Obsolete (decision pending)

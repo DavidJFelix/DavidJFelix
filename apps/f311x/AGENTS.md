@@ -161,7 +161,7 @@ has no handler). See [docs/projects/f311x/plan.md](../../docs/projects/f311x/pla
 - **Package manager**: pnpm (mise pins the version). Wrangler-touching projects stay on pnpm.
 - **Keep it small.** Add a binding or dependency only when something actually uses it.
 - **Every new surface ships with a test.** typecheck + build + vitest gate every PR via
-  `.github/workflows/ci-f311x.yml`; keep them green.
+  `.depot/workflows/ci-f311x.yml`; keep them green.
 - **Components** follow shadcn conventions; use `cn()` (clsx + tailwind-merge) for class merging.
 
 ## Layout

@@ -1,5 +1,14 @@
 # LLM Automation Migration
 
+## Status (2026-06-29)
+
+**Obsolete — pending a decision.** The CI/CD migration to Depot removed both Claude
+bot workflows from the repo: `bot-claude.yml` and `bot-claude-code-review.yml` had no
+Depot equivalent and were deleted. The original migration target no longer exists, so
+this project is moot as written. Either **close it** (nothing left to migrate) or
+**repurpose it** as "introduce a cheaper LLM review bot on Depot" — a fresh greenfield
+effort. Awaiting that call; the prior status is kept below for context.
+
 ## Status (2026-06-11)
 
 **Deferred — worth doing, not now.** The motivation stands (avoid running
@@ -25,12 +34,11 @@ Interactive work (David ↔ Claude in Claude Code) stays on Claude. This is abou
 
 ## In-scope workflows
 
-- `.github/workflows/bot-claude-code-review.yml` — PR review on open/update. **The sole migration
-  target.**
-- ~~`.github/workflows/cron-dependency-freshness.yml`~~ — dropped: the `renovate-rollout` project
+- ~~`bot-claude-code-review.yml`~~ — was the sole migration target; **removed entirely in the
+  2026-06-29 Depot migration** (no Depot equivalent), so there is nothing left to migrate.
+- ~~`cron-dependency-freshness.yml`~~ — dropped earlier: the `renovate-rollout` project
   retires this workflow entirely (Renovate owns dependencies), so there's nothing to migrate.
-- `.github/workflows/bot-claude.yml` — keep on Claude for now (interactive mention bot); revisit
-  after the review bot lands.
+- ~~`bot-claude.yml`~~ — interactive mention bot; also **removed in the 2026-06-29 Depot migration**.
 
 ## Implementation
 

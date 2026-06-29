@@ -23,6 +23,9 @@ on:
 concurrency:
   group: preview-onvibes-org-${{ github.event.pull_request.number }}
   cancel-in-progress: true
+defaults:
+  run:
+    working-directory: apps/onvibes.org
 env:
   MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
 jobs:
@@ -43,7 +46,6 @@ jobs:
       - name: preview
         uses: ./.depot/actions/preview-wrangler
         with:
-          app: onvibes.org
           worker-name: onvibes-org
           pr-number: ${{ github.event.pull_request.number }}
           smoke-routes: /

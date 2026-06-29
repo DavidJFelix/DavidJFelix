@@ -24,6 +24,9 @@ on:
 concurrency:
   group: preview-monicandavid-com-${{ github.event.pull_request.number }}
   cancel-in-progress: true
+defaults:
+  run:
+    working-directory: apps/monicandavid.com
 env:
   MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
 jobs:

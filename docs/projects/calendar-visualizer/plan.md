@@ -5,8 +5,9 @@ single-screen tool for planning and visualizing a year at a glance.
 
 ## Status
 
-**Functional — no real domain yet** (2026-06-19). Works end to end and has unit tests, but ships
-only on a `workers.dev` URL. The near-term questions are product framing and a real home.
+**Functional — staying on `workers.dev` for now** (2026-06-29). Works end to end and has unit tests.
+Intentionally stays on the `workers.dev` URL until the product is fleshed out — the near-term work
+is product definition, not a domain decision.
 
 ## Vision
 
@@ -14,11 +15,12 @@ A genuinely useful year-at-a-glance planner: drop in your project phases, holida
 and see the whole year laid out, with overlays that make conflicts and gaps obvious. Shareable, and
 configurable to _your_ year — not a fixed demo.
 
-## Current state (2026-06-19)
+## Current state (2026-06-29)
 
 - Functional full-year grid with weekend/holiday/phase overlays; unit-tested (`src/lib`).
 - Astro + React + PandaCSS, built static.
-- **Deploys only to `workers.dev`** — `wrangler.toml` has no custom domain/route.
+- **Stays on `workers.dev` intentionally** — no custom domain until the product is defined; a domain
+  decision is deferred, not blocking.
 - Data is largely hardcoded (a fixed year + sample phases), not user-supplied.
 
 ## Stack
@@ -27,17 +29,17 @@ Astro + React + PandaCSS, Cloudflare (static assets).
 
 ## Roadmap
 
-### Phase 1 — Frame it + give it a home
+### Phase 1 — Define the product
 
-- [ ] Decide the product framing: standalone tool vs. a labeled tool under another site.
-- [ ] Decide a real domain (own domain) or a subpath, and wire it (today it's `workers.dev` only).
+- [ ] Decide what the product actually does and who it's for — the blocking question.
+- [ ] Defer the domain decision until then; stay on `workers.dev` in the meantime.
 
-### Phase 2 — Make it yours
+### Phase 2 — Make it yours (follows product definition)
 
 - [ ] User-configurable data: pick the year, enter your own phases/holidays/dates (not hardcoded).
 - [ ] Persist a configuration (URL-encoded state or storage).
 
-### Phase 3 — Share & export
+### Phase 3 — Share & export (follows product definition)
 
 - [ ] Shareable view links; export to image/PDF or `.ics`.
 

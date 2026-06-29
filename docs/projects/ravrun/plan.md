@@ -5,8 +5,10 @@ and see the whole block laid out.
 
 ## Status
 
-**Functional — no real domain, no tests** (2026-06-19). A working schedule grid built from a
-hardcoded demo plan, on a `workers.dev` URL. Needs framing, a domain, and a test floor.
+**Functional — domains owned, thin test floor** (2026-06-29). A working schedule grid built from a
+hardcoded demo plan, still served on a `workers.dev` URL even though two domains are already owned.
+Near-term: wire the custom domain(s), replace the hardcoded demo with form-driven input, and grow
+the thin test coverage.
 
 ## Vision
 
@@ -14,13 +16,14 @@ Tell ravrun your race (distance, date, current fitness/paces) and get a structur
 block you can actually follow — and export to your calendar. A focused tool for runners building
 toward a goal race.
 
-## Current state (2026-06-19)
+## Current state (2026-06-29)
 
 - Functional week-by-week schedule grid (an 18-week demo plan, hardcoded).
 - `/about` is a stub.
 - Vite + React + Tailwind, built static.
-- **Deploys only to `workers.dev`** — `wrangler.toml` has no custom domain/route.
-- **No tests yet.**
+- **Two domains already owned: ravrun.com and rav.run** — but `wrangler.toml` still has no custom
+  domain/route, so it deploys only to `workers.dev`.
+- **Thin test floor** — ~4 unit-test stubs exist; coverage is minimal.
 
 ## Stack
 
@@ -28,15 +31,16 @@ Vite + React + Tailwind, Cloudflare (static assets).
 
 ## Roadmap
 
-### Phase 1 — Frame it + give it a home + a test floor
+### Phase 1 — Wire the domains + form-driven input + flesh out tests
 
-- [ ] Settle the name/brand and a real domain (today it's `workers.dev` only).
-- [ ] Add a basic test for the plan-generation logic before it grows.
+- [ ] Wire the owned domain(s) ravrun.com / rav.run into `apps/ravrun/wrangler.toml` so it leaves
+      the `workers.dev` URL.
+- [ ] Form-driven input: distance, target paces, start date, number of weeks → generated schedule
+      (replace the hardcoded 18-week demo).
+- [ ] Flesh out the thin (~4 stub) test coverage for the plan-generation logic before it grows.
 
 ### Phase 2 — Make the plan yours
 
-- [ ] Form-driven input: distance, target paces, start date, number of weeks → generated schedule
-      (replace the hardcoded demo).
 - [ ] Flesh out `/about` into a real explainer.
 
 ### Phase 3 — Take it with you

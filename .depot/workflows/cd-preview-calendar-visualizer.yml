@@ -24,6 +24,9 @@ on:
 concurrency:
   group: preview-calendar-visualizer-${{ github.event.pull_request.number }}
   cancel-in-progress: true
+defaults:
+  run:
+    working-directory: apps/calendar-visualizer
 env:
   MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
 jobs:
@@ -45,7 +48,6 @@ jobs:
       - name: preview
         uses: ./.depot/actions/preview-wrangler
         with:
-          app: calendar-visualizer
           worker-name: calendar-visualizer
           pr-number: ${{ github.event.pull_request.number }}
           smoke-routes: /

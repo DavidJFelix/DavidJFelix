@@ -36,11 +36,7 @@ not two:
 - Delete `.claude/commands/dependency-freshness.md`
 - Remove the skill/command mentions from `CLAUDE.md` and `AGENTS.md`
 
-Retiring the cron also empties the `llm-automation-migration` freshness target. The review bot was
-since removed outright in the 2026-06-29 Depot migration, so that project no longer has a target.
-
 ## Related
 
 - Closed parent: `docs/changelog/2026-06.md` (2026-06-18)
-- `llm-automation-migration` — its scope shrinks when the freshness cron is retired
 - `apps/djf.io/.github/renovate.json` — the config to generalize

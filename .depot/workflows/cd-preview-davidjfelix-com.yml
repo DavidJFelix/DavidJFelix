@@ -47,7 +47,6 @@ jobs:
       - name: preview
         uses: ./.depot/actions/preview-wrangler
         with:
-          app: davidjfelix.com
           worker-name: davidjfelix-com
           pr-number: ${{ github.event.pull_request.number }}
           smoke-routes: /

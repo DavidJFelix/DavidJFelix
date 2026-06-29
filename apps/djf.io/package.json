@@ -33,24 +33,24 @@
     "@fontsource-variable/schibsted-grotesk": "^5.2.8",
     "@fontsource/inter": "^5.2.8",
     "@radix-ui/colors": "^3.0.0",
-    "@sentry/astro": "^10.59.0",
+    "@sentry/astro": "^10.62.0",
     "@types/react": "^19.2.17",
     "@typescript/native-preview": "latest",
     "astro": "^6.4.6",
-    "posthog-js": "^1.391.2",
+    "posthog-js": "^1.395.0",
     "satori": "^0.26.0",
     "sharp": "^0.35.1"
   },
   "devDependencies": {
-    "@atproto/api": "0.20.16",
-    "@pandacss/dev": "1.11.3",
-    "@playwright/test": "1.61.0",
-    "@sentry/cloudflare": "^10.59.0",
+    "@atproto/api": "0.20.22",
+    "@pandacss/dev": "1.11.4",
+    "@playwright/test": "1.61.1",
+    "@sentry/cloudflare": "^10.62.0",
     "@vitest/coverage-v8": "4.1.9",
     "gray-matter": "4.0.3",
     "pagefind": "1.5.2",
     "vitest": "4.1.9",
-    "wrangler": "4.103.0"
+    "wrangler": "4.105.0"
   },
   "engines": {
     "node": ">=24"

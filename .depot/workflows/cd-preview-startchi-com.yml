@@ -24,6 +24,9 @@ on:
 concurrency:
   group: preview-startchi-com-${{ github.event.pull_request.number }}
   cancel-in-progress: true
+defaults:
+  run:
+    working-directory: apps/startchi.com
 env:
   MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
 jobs:
@@ -44,7 +47,6 @@ jobs:
       - name: preview
         uses: ./.depot/actions/preview-wrangler
         with:
-          app: startchi.com
           worker-name: startchi-com
           pr-number: ${{ github.event.pull_request.number }}
           smoke-routes: /

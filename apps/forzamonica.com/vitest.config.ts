@@ -9,6 +9,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     include: ['src/**/*.test.{ts,tsx}'],
+    // Playwright specs (*.e2e.test.ts) are driven by Playwright, not Vitest.
+    exclude: ['**/*.e2e.test.ts', '**/node_modules/**'],
     // Coverage gate scoped to the tested pure logic: price formatting, the
     // observability relays (src/lib/{posthog-proxy,sentry-tunnel}), and the
     // client-config resolver. The route glue + client bootstrap are exercised by

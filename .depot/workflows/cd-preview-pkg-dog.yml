@@ -24,6 +24,9 @@ on:
 concurrency:
   group: preview-pkg-dog-${{ github.event.pull_request.number }}
   cancel-in-progress: true
+defaults:
+  run:
+    working-directory: apps/pkg.dog
 env:
   MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
 jobs:
@@ -44,7 +47,6 @@ jobs:
       - name: preview
         uses: ./.depot/actions/preview-wrangler
         with:
-          app: pkg.dog
           worker-name: pkg-dog
           pr-number: ${{ github.event.pull_request.number }}
           smoke-routes: /

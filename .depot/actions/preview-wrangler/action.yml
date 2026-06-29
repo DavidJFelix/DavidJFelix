@@ -8,9 +8,6 @@ description: >-
   installs deps and does the rest in the app directory.
 
 inputs:
-  app:
-    description: App directory name under apps/ (also the artifact + comment label).
-    required: true
   worker-name:
     description: The wrangler.toml `name` of the worker (used to build the preview URL).
     required: true
@@ -44,12 +41,10 @@ runs:
   steps:
     - name: pnpm install
       shell: bash
-      working-directory: apps/${{ inputs.app }}
       run: pnpm install --frozen-lockfile
 
     - name: build
       shell: bash
-      working-directory: apps/${{ inputs.app }}
       run: mise run build
 
     # Builds the app's `dist`/worker, uploads a preview version, and resolves the
@@ -57,7 +52,6 @@ runs:
     - name: upload preview
       id: deploy
       shell: bash
-      working-directory: apps/${{ inputs.app }}
       env:
         PR_NUMBER: ${{ inputs.pr-number }}
         WORKER_NAME: ${{ inputs.worker-name }}
@@ -81,7 +75,6 @@ runs:
     - name: resolve playwright version
       id: pw-version
       shell: bash
-      working-directory: apps/${{ inputs.app }}
       run: |
         version=$(node -p "require('@playwright/test/package.json').version")
         echo "version=$version" >> "$GITHUB_OUTPUT"
@@ -96,13 +89,11 @@ runs:
     - name: playwright install
       if: steps.pw-cache.outputs.cache-hit != 'true'
       shell: bash
-      working-directory: apps/${{ inputs.app }}
       run: pnpm exec playwright install --with-deps chromium
 
     - name: playwright install-deps
       if: steps.pw-cache.outputs.cache-hit == 'true'
       shell: bash
-      working-directory: apps/${{ inputs.app }}
       run: pnpm exec playwright install-deps chromium
 
     # PREVIEW_URL set => playwright.config.ts skips the local boot and points at
@@ -111,7 +102,6 @@ runs:
     - name: screenshots
       id: e2e
       shell: bash
-      working-directory: apps/${{ inputs.app }}
       env:
         PREVIEW_URL: ${{ steps.deploy.outputs.url }}
       run: pnpm run test:e2e

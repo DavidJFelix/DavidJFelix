@@ -98,7 +98,7 @@ All project documentation follows the structure defined in [CLAUDE.md](CLAUDE.md
 
 ## GitHub Actions
 
-Workflows in `.github/workflows/` follow the conventions in [docs/github-actions-style.md](docs/github-actions-style.md). Key rules:
+Workflows live in `.depot/workflows/` (GitHub Actions syntax, run on Depot CI) and follow the conventions in [docs/github-actions-style.md](docs/github-actions-style.md). Key rules:
 
 - File names are lowercase, underscore-separated, and prefixed with the workflow category: `ci_`, `cd_`, `run_` (workflow_dispatch only), or `cron_` (schedule only). Combined categories use alphabetical order (`cd_cron_*.yml`, display name `CD CRON`).
 - Every CI/CD workflow has a `paths:` filter covering its subtree, the shared config it depends on, and the workflow file itself.

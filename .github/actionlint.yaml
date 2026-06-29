@@ -1,0 +1,7 @@
+# actionlint config.
+#
+# Workflows run on Depot CI (.depot/workflows/) on Depot's runners, whose
+# labels actionlint doesn't know about. Register them so `runs-on:` checks pass.
+self-hosted-runner:
+  labels:
+    - depot-ubuntu-latest

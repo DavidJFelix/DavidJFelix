@@ -175,12 +175,3 @@ Pull configuration items from dotfiles into Warp and sync Warp-native config bac
 Depends on Setup Warp + Dotfiles.
 
 **Status**: Parked
-
-## Deferred
-
-### [LLM Automation Migration](./projects/llm-automation-migration/plan.md)
-
-Move unattended LLM-driven GitHub Actions off Anthropic-billed Claude onto a cheaper runtime. Now
-scoped to `bot-claude-code-review.yml` alone.
-
-**Status**: Deferred

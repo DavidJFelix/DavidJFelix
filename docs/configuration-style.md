@@ -39,8 +39,8 @@ So for Tier-2 tools the repo root (or the tool's conventional dotfile) is the lo
 Move into `.config/` only if you are prepared to wire the flag through all three surfaces and have
 confirmed the editor still resolves it. Keeping a Tier-2 config at root needs **no** justification --
 that IS its documented default. Tier-2 tools in this repo, kept at root deliberately: **Biome**
-(`biome.jsonc`), **Oxlint** (`.oxlintrc.json`), **Prettier** (`.prettierrc.json`), **ghalint**
-(`ghalint.yaml`), **zizmor** (`.github/zizmor.yml`).
+(`biome.jsonc`), **Oxlint** (`.oxlintrc.json`), **Prettier** (`.prettierrc.json`), **zizmor**
+(`.github/zizmor.yml`), **actionlint** (`.github/actionlint.yaml`).
 
 ### Tier 3 -- pinned by design: its required spot, permanently
 
@@ -60,7 +60,7 @@ The file's location is load-bearing semantics, not a search path -- it cannot mo
 | Tier | Meaning                  | What to do                                                       | Repo examples                            |
 | ---- | ------------------------ | --------------------------------------------------------------- | ---------------------------------------- |
 | 1    | Auto-discovers `.config/` | Put it in `.config/`                                            | cspell, mise                             |
-| 2    | `.config/` via flag only | Default to root; move only if you wire CLI + CI + editor + verify | Biome, Oxlint, Prettier, ghalint, zizmor |
+| 2    | `.config/` via flag only | Default to root; move only if you wire CLI + CI + editor + verify | Biome, Oxlint, Prettier, zizmor, actionlint |
 | 3    | Location is semantics    | Leave at its required spot                                       | EditorConfig (root), Cargo.toml (root), Renovate (`.github/`) |
 
 **Before adding any new top-level config, do the Tier check.** "I didn't look" is not Tier 3. Read

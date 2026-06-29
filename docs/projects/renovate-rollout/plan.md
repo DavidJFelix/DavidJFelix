@@ -32,15 +32,11 @@ Once Renovate demonstrably owns every ecosystem, remove the bespoke tooling so t
 not two:
 
 - Delete `.claude/skills/dependency-freshness/`
-- Delete `.github/workflows/cron-dependency-freshness.yml`
+- Delete `.depot/workflows/cron-dependency-freshness.yml`
 - Delete `.claude/commands/dependency-freshness.md`
 - Remove the skill/command mentions from `CLAUDE.md` and `AGENTS.md`
-
-Retiring the cron also empties the `llm-automation-migration` freshness target, leaving only the
-review bot to migrate.
 
 ## Related
 
 - Closed parent: `docs/changelog/2026-06.md` (2026-06-18)
-- `llm-automation-migration` — its scope shrinks when the freshness cron is retired
 - `apps/djf.io/.github/renovate.json` — the config to generalize

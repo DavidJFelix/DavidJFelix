@@ -4,3 +4,6 @@
 /target
 .DS_Store
 node_modules/
+
+# Warden local run artifacts (logs, sessions, cached findings)
+.warden/

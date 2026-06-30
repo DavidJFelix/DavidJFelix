@@ -10,8 +10,12 @@ Start + Panda/Ark scaffold. Near-term work is a basic layout + positioning, then
 ## Vision
 
 A centralized home for version control focused on the _review_ experience — managing reviews and
-diffs as first-class objects. The exact shape is open (a hosted VCS? a review/diff layer on top of
-git or GitHub? a great standalone diff viewer?), and scoping that is the first real design task.
+diffs as first-class objects.
+
+> ⚠️ **Open question — MVP shape (deferred 2026-06-29).** The product shape is _not_ yet captured
+> here. It is a nuanced vision David will articulate himself, in his own words; it does not reduce
+> to a multiple-choice pick, so this plan deliberately does not propose or pin a direction. Until
+> David writes it up, the MVP shape is the open, blocking question — nothing downstream is scoped.
 
 ## Current state (2026-06-19)
 
@@ -24,21 +28,23 @@ TanStack Start (React 19) + PandaCSS + Ark UI, Cloudflare Worker.
 
 ## Roadmap
 
-### Phase 1 — Basic layout + positioning
+### Phase 1 — Position the concept
 
 - [x] Replace the single `<h1>` with a real layout: header, hero, footer. (done 2026-06-19)
 - [ ] Land a positioning line: what "reviews & diffs, centralized" means here.
 
-### Phase 2 — Scope the MVP → spins out (design doc)
+### Phase 2 — David defines the MVP shape (design/positioning doc — the gate)
 
-- [ ] Decide the product shape: hosted VCS vs. review layer atop git/GitHub vs. diff viewer.
-- [ ] Write it up before building.
+- [ ] **David articulates the MVP vision himself**, in his own words — this is his call, and it is
+      the open, blocking question (see Vision). The plan does not pre-decide a direction.
+- [ ] Capture it as a design/positioning doc. That doc is the gate before any build.
 
 ### Phase 3 — MVP
 
-- [ ] Build the smallest version of the chosen shape.
+- [ ] Build the smallest version of the shape David defines.
 
-> Note: this is a large idea; near-term is layout + clear positioning + a scoping doc, not a VCS.
+> Note: this is a large idea; near-term is layout + clear positioning. No build starts until the MVP
+> shape is written down — and that shape is David's to articulate, not something this plan pins.
 
 ## Related
 

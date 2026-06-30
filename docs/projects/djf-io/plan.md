@@ -5,9 +5,10 @@ web identity. The most built-out app in the repo.
 
 ## Status
 
-**Built-out — actively iterating** (2026-06-19). Live at djf.io with content, search, and feeds. Two
-child projects drive ongoing work: `blog-style-improvement` (visual/UX, David-driven) and
-`blog-content` (the writing).
+**Built-out — actively iterating** (2026-06-29). Live at djf.io with content, search, and feeds. For
+this stretch the active focus is **content + polish**, driven by its two child projects:
+`blog-content` (active — the writing) and `blog-style-improvement` (parked this stretch while
+content leads; still David-driven when it resumes).
 
 ## Vision
 
@@ -21,6 +22,7 @@ profiles) points here.
 - Blog posts in `src/content/blog/` (MDX), bio homepage, Pagefind search, RSS, sitemap, OG images.
 - standard.site / ATProto integration shipped (posts mirrored as AT records; #252–#254).
 - Playwright e2e is the canonical runtime gate (it subsumes smoke); vitest covers `src/lib` at 100%.
+- Observability (Sentry / PostHog) is wired but dark until activation (#261).
 
 ## Stack
 
@@ -30,16 +32,16 @@ Astro + MDX + React, PandaCSS, Pagefind (search), Cloudflare (static assets).
 
 App-level direction. Concrete pushes spin out as their own projects (below) or issues.
 
-### Style & UX — `blog-style-improvement` (active, David-driven)
+### Content — `blog-content` (active — current focus)
+
+- [ ] First post — leading candidate "attention is all you need" (callback to the Transformer paper;
+      on using LLMs in your work), not yet locked in.
+- [ ] Establish a publishing cadence.
+
+### Style & UX — `blog-style-improvement` (parked this stretch, David-driven)
 
 - [ ] David's concrete change list (colors, spacing, layout, images, usability, components),
-      reviewed through per-PR preview URLs.
-
-### Content — `blog-content` (active)
-
-- [ ] "attention is all you need" — first post (callback to the Transformer paper; on using LLMs in
-      your work).
-- [ ] Establish a publishing cadence.
+      reviewed through per-PR preview URLs. Resumes once content leads less.
 
 ### Features (as the writing warrants)
 

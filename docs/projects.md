@@ -7,7 +7,8 @@ The portfolio is organized around **apps**: every app in `apps/` has a persisten
 ephemeral task projects or GitHub issues. App umbrellas don't "close" — they're living roadmaps;
 task projects close and are captured in the [changelog](changelog/). Cross-cutting and
 infrastructure work sits below the apps it serves. Reorganized 2026-06-19 (project-per-app
-revision).
+revision); last reviewed 2026-06-29 (portfolio status review). Current active focus: **djf.io
+content + polish**.
 
 Status legend:
 
@@ -32,14 +33,16 @@ projects: visual/UX polish and the writing.
 #### [calendar-visualizer](./projects/calendar-visualizer/plan.md)
 
 Interactive full-year calendar overlaying weekends/holidays/custom phases. Functional and
-unit-tested, but ships only on `workers.dev` — needs a real domain and user-configurable data.
+unit-tested. Staying on `workers.dev` intentionally until the product is defined — the near-term
+work is deciding what it actually does, then user-configurable data.
 
 **Status**: Functional
 
 #### [ravrun](./projects/ravrun/plan.md)
 
-Marathon / endurance training-plan generator + visualizer. Functional from a hardcoded demo plan;
-`workers.dev` only, no tests yet — needs a domain, a test floor, and form-driven input.
+Marathon / endurance training-plan generator + visualizer. Functional from a hardcoded demo plan.
+Already owns ravrun.com + rav.run (not yet wired in `wrangler.toml`) and has thin test stubs — next
+is wiring the domains, form-driven input, and growing test coverage.
 
 **Status**: Functional
 

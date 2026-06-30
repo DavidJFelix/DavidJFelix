@@ -50,8 +50,11 @@ Nuxt + Vue + PandaCSS (+ Ark UI), Cloudflare Worker.
 
 - [ ] A usable flow for a single package end to end; then widen.
 
-> Note: Phase 2+ is a major research effort, not a weekend. Phase 1 (layout + explainer) is the
-> realistic near-term goal.
+> ⚠️ **Open question — feasibility (reviewed, deferred 2026-06-29).** Whether the core
+> decompose-and-republish pipeline is actually buildable is _unproven_ — it's a major research
+> effort, not a weekend, and the Phase 2 spike exists to answer it. Until that spike lands, the deep
+> build stays an open question. Phase 1 (layout + explainer landing) is the realistic near-term goal
+> regardless.
 
 ## Related
 

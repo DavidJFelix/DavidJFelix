@@ -23,6 +23,9 @@ on:
 concurrency:
   group: preview-ravrun-${{ github.event.pull_request.number }}
   cancel-in-progress: true
+defaults:
+  run:
+    working-directory: apps/ravrun
 env:
   MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
 jobs:
@@ -43,7 +46,6 @@ jobs:
       - name: preview
         uses: ./.depot/actions/preview-wrangler
         with:
-          app: ravrun
           worker-name: ravrun
           pr-number: ${{ github.event.pull_request.number }}
           smoke-routes: /

@@ -110,8 +110,11 @@ runs:
       if: ${{ !cancelled() }}
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
-        name: playwright-report-${{ inputs.app }}
-        path: apps/${{ inputs.app }}/playwright-report/
+        # No `app` input any more: name keys off the unique worker-name, and the
+        # glob matches the single app dir that produced a report in this fresh
+        # checkout (only the app under test runs e2e).
+        name: playwright-report-${{ inputs.worker-name }}
+        path: apps/*/playwright-report/
         retention-days: 14
 
     - name: comment preview url
@@ -121,8 +124,8 @@ runs:
         GITHUB_TOKEN: ${{ inputs.github-token }}
         PR_NUMBER: ${{ inputs.pr-number }}
         PREVIEW_URL: ${{ steps.deploy.outputs.url }}
-        PREVIEW_MARKER: "<!-- preview-${{ inputs.app }} -->"
-        PREVIEW_TITLE: ${{ inputs.app }} preview
+        PREVIEW_MARKER: "<!-- preview-${{ inputs.worker-name }} -->"
+        PREVIEW_TITLE: ${{ inputs.worker-name }} preview
         PREVIEW_STATUS: >-
           ${{ (steps.smoke.outcome == 'success' && steps.e2e.outcome == 'success')
           && '✅ passed' || '❌ failed' }}

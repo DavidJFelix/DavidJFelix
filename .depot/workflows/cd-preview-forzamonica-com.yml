@@ -1,32 +1,25 @@
-# Depot CI Migration
-# Source: .github/workflows/cd-preview-startchi-com.yml
-#
-# Changes made:
-# - Rewrote .github/ path references to .depot/
-# - Changed GitHub runs-on labels to their Depot equivalents
-
-name: CD Preview startchi.com
-# Per-PR preview deploy for startchi.com (wrangler, TanStack Start SSR). On every
-# PR touching the app: upload a non-active version with a pr-<N> preview alias,
-# smoke the preview URL, screenshot-diff it against committed baselines, and post
-# the URL. No teardown -- `wrangler versions upload` never serves production, so
-# the custom domains stay on the active version. Forks have no secrets and will
-# fail the deploy step -- acceptable for a personal monorepo; do NOT switch to
-# pull_request_target.
+name: CD Preview forzamonica.com
+# Per-PR preview deploy for forzamonica.com (wrangler, TanStack Start SSR). On
+# every PR touching the app: upload a non-active version with a pr-<N> preview
+# alias, smoke the preview URL, screenshot-diff it against committed baselines,
+# and post the URL. No teardown -- `wrangler versions upload` never serves
+# production, so production stays on the active version. Forks have no secrets
+# and will fail the deploy step -- acceptable for a personal monorepo; do NOT
+# switch to pull_request_target.
 on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - 'apps/startchi.com/**'
-      - '.depot/workflows/cd-preview-startchi-com.yml'
+      - 'apps/forzamonica.com/**'
+      - '.depot/workflows/cd-preview-forzamonica-com.yml'
       - '.depot/actions/preview-wrangler/**'
       - 'bin/**'
 concurrency:
-  group: preview-startchi-com-${{ github.event.pull_request.number }}
+  group: preview-forzamonica-com-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 defaults:
   run:
-    working-directory: apps/startchi.com
+    working-directory: apps/forzamonica.com
 env:
   MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
 jobs:
@@ -47,7 +40,7 @@ jobs:
       - name: preview
         uses: ./.depot/actions/preview-wrangler
         with:
-          worker-name: startchi-com
+          worker-name: forzamonica-com
           pr-number: ${{ github.event.pull_request.number }}
           smoke-routes: /
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}

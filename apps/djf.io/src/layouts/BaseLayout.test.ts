@@ -131,9 +131,9 @@ test('BaseLayout renders default slot content inside <main>', async () => {
   expect(html).toContain('<p data-test="slot-content">hi</p>')
 })
 
-test('BaseLayout renders current year in footer', async () => {
+test('BaseLayout renders the signature footer', async () => {
   const html = await container.renderToString(BaseLayout, {
     props: {title: 'x'},
   })
-  expect(html).toContain(String(new Date().getFullYear()))
+  expect(html).toMatch(/(©|&copy;) David J Felix/)
 })

@@ -38,8 +38,8 @@ const adapter = process.env.VITEST
       prerenderEnvironment: 'node',
       // Read a DO-free config so `astro build`'s miniflare validation doesn't
       // choke on the Flue agent Durable Objects (declared in wrangler.toml,
-      // which `flue build` consumes). See wrangler.astro.jsonc.
-      configPath: './wrangler.astro.jsonc',
+      // which `flue build` consumes). See wrangler-astro.jsonc.
+      configPath: './wrangler-astro.jsonc',
     })
 
 // https://astro.build/config

@@ -1,5 +1,7 @@
 allowBuilds:
-  '@mongodb-js/zstd': set this to true or false
+  # Optional native deps pulled in transitively; not exercised here, so skip
+  # their build scripts.
+  '@mongodb-js/zstd': false
   '@sentry/cli': true
   # core-js's postinstall is only a funding banner -- no native build to run.
   core-js: false
@@ -8,7 +10,7 @@ allowBuilds:
   '@google/genai': false
   core-js-pure: false
   esbuild: true
-  node-liblzma: set this to true or false
-  protobufjs: set this to true or false
+  node-liblzma: false
+  protobufjs: false
   sharp: true
   workerd: true

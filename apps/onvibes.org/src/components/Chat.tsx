@@ -1,7 +1,7 @@
 import {type FlueConversationPart, FlueProvider, useFlueAgent} from '@flue/react'
 import {createFlueClient} from '@flue/sdk'
 import React, {useState} from 'react'
-import './Chat.css'
+import './chat.css'
 
 // Keep React in value scope for the JSX runtime; harmless if unused.
 void React
@@ -81,7 +81,9 @@ function MessagePart({part}: {part: FlueConversationPart}) {
       </details>
     )
   if (part.type === 'file') {
-    if (!part.url) return <span>Attachment ({part.mediaType})</span>
+    // Only render URLs we can vouch for. A real model (once the faux echo is
+    // swapped out) could emit a `javascript:` URL that would fire on click.
+    if (!part.url || !isSafeUrl(part.url)) return <span>Attachment ({part.mediaType})</span>
     return part.mediaType.startsWith('image/') ? (
       <img src={part.url} alt={part.filename ?? 'attachment'} style={{maxWidth: 240}} />
     ) : (
@@ -93,6 +95,16 @@ function MessagePart({part}: {part: FlueConversationPart}) {
       {part.toolName}: {part.state}
     </pre>
   )
+}
+
+// Allow only http(s) attachment URLs; everything else (javascript:, data:, ...)
+// falls back to plain text. Relative URLs resolve against the page origin.
+function isSafeUrl(url: string): boolean {
+  try {
+    return ['http:', 'https:'].includes(new URL(url, window.location.href).protocol)
+  } catch {
+    return false
+  }
 }
 
 function partKey(part: FlueConversationPart): string {

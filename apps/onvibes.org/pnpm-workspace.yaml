@@ -9,6 +9,7 @@ allowBuilds:
   # banners only, no native build to run.
   '@google/genai': false
   core-js-pure: false
+  # esbuild's postinstall fetches its native binary -- a real build, so allow it.
   esbuild: true
   node-liblzma: false
   protobufjs: false

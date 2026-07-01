@@ -14,6 +14,12 @@ interface Props {
   description?: string
   ogType?: 'website' | 'article'
   ogImage?: string
+  // Head extras are rendered directly here rather than forwarded through a
+  // `<slot name="head" />`: Astro 7 does not render a named slot placed inside
+  // `<head>` (the slot is received but emits nothing), which silently dropped
+  // the JSON-LD and standard-site link on every blog post.
+  jsonLd?: Record<string, unknown>
+  standardDocumentUri?: string | null
 }
 
 const {
@@ -21,6 +27,8 @@ const {
   description = 'Personal blog of David J Felix',
   ogType = 'website',
   ogImage = '/og/default.png',
+  jsonLd,
+  standardDocumentUri,
 } = Astro.props
 
 // Pages build with the default directory format, so published URLs end with a
@@ -90,7 +98,8 @@ const navLink = css({
     <link rel="sitemap" href="/sitemap-index.xml" />
     <link rel="site.standard.publication" href={publicationUri()} />
     {posthogEnabled && <Analytics />}
-    <slot name="head" />
+    {jsonLd && <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+    {standardDocumentUri && <link rel="site.standard.document" href={standardDocumentUri} />}
   </head>
   <body
     class={css({

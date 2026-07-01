@@ -39,6 +39,7 @@ One mini guide per concern, in `docs/contributing/`. Read the guide before worki
 
 | Guide                                                                | Owns                                                   |
 | -------------------------------------------------------------------- | ------------------------------------------------------ |
+| [code-style.md](docs/contributing/code-style.md)                     | formatting defaults, functional shape, named arguments |
 | [file-naming.md](docs/contributing/file-naming.md)                   | kebab-case rule and the framework-imposed exceptions   |
 | [testing.md](docs/contributing/testing.md)                           | test style, smoke/e2e runtime gates, coverage ratchets |
 | [linting.md](docs/contributing/linting.md)                           | fix findings, don't silence them                       |

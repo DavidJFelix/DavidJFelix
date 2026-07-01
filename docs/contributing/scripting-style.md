@@ -83,10 +83,12 @@ Bash is the fallback for exactly two cases: **bootstrap/provisioning before a re
 (the moment before bun or uv is installed -- see `dotfiles/scripts/`), or a **genuinely trivial
 few-liner** that a real runtime would only complicate. Constraints:
 
-- **Keep it small.** The moment it grows logic -- loops that parse command output, conditionals on
-  structured data, arrays of records -- promote it to a Bun script. Bash has no types, no real error
-  handling, quoting footguns, and no test story; the `$` shell tag gives the same orchestration with
-  none of that.
+- **Hard budget: fewer than 10 lines, trivial syntax only** -- straight-line commands, at most a
+  guard `if`. No functions, no arrays, no loops that parse command output. At line 10 or the first
+  clever construct, promote it to a Bun script. Bash has no types, no real error handling, quoting
+  footguns, and no test story; the `$` shell tag gives the same orchestration with none of that. A
+  recurring workflow that outgrows scripting entirely can justify a purpose-built utility in Rust
+  or Go, fronted by a mise task like everything else.
 - `#!/usr/bin/env bash` and `set -euo pipefail`. Keep it shellcheck-clean.
 - **Bash orchestrates other programs; it does not transform text.** No `sed` or `perl` reach-for
   (see the ban below).

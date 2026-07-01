@@ -10,6 +10,16 @@
 - **Avoid `beforeEach`/`beforeAll`/`afterEach`/`afterAll`** unless a framework requires it. Prefer
   top-level setup (top-level `await` for async), inline setup inside each test, or a small named
   helper called from each test. Hooks hide control flow and make tests harder to read.
+- **Parameterize instead of copy-pasting.** When several tests differ only in inputs and expected
+  outputs, use a top-level `test.each` (vitest and `bun:test` both support it) over a case table.
+  The table rows carry the case names -- this replaces `describe` grouping, it doesn't excuse it.
+- **Given/when/then bodies, minimal setup.** Each test reads as: the givens (a few `const`s),
+  the action, the assertions -- in that order, no nesting, nothing the test doesn't use. If setup
+  needs more than a few lines, extract a named helper and call it from the test.
+- **Property-based and fuzz where the input space warrants it.** A parser, codec, or invariant
+  (`decode(encode(x)) === x`) deserves generated inputs, not three hand-picked ones:
+  [fast-check](https://fast-check.dev/) in TypeScript, `proptest` / `cargo-fuzz` in Rust. Keep
+  example-based tests alongside for the known edge cases.
 - **For tests inside `src/pages/` (Astro routing constraint)**: prefix with `_` (e.g.
   `_index.e2e.test.ts`). Astro treats every `.ts` in `src/pages/` as an endpoint; the underscore is
   its built-in escape hatch. Outside `src/pages/`, no prefix.

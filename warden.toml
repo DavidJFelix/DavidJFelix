@@ -1,0 +1,44 @@
+# Warden — AI code review on pull requests.
+# Guide: https://warden.sentry.dev/guide  ·  Source: https://github.com/getsentry/warden
+#
+# Runtime is Pi pointed at OpenRouter, so the review model is swappable without
+# editing this file: the model is chosen via the WARDEN_MODEL env/secret
+# (an "openrouter/<provider>/<model>" selector), and WARDEN_OPENROUTER_API_KEY
+# supplies the credential. CI wires both as secrets — see the open GitHub issue
+# tracking that setup. For a local `warden run`, export the same two vars.
+#
+# Lives at the repo root because both the CLI and the getsentry/warden action
+# resolve `./warden.toml` relative to the git root (a documented-default, like
+# Cargo.toml — see docs/configuration-style.md). Skills are managed with
+# `warden add <name>` / `warden sync`.
+
+version = 1
+
+# Inherited by every skill below.
+[defaults]
+runtime = "pi"
+# Severity gate. failOn: lowest severity that fails the PR check.
+# reportOn: lowest severity posted as an inline annotation.
+# Levels: critical, high, medium, low, info, off.
+failOn = "high"
+reportOn = "medium"
+
+# Built-in baseline application-security review. Whole-repo: no `paths` filter,
+# so it sees the entire PR diff across all apps and root config.
+[[skills]]
+name = "security-review"
+
+[[skills.triggers]]
+type = "pull_request"
+actions = ["opened", "synchronize", "reopened", "ready_for_review", "labeled"]
+# Skip draft PRs — review once the PR is marked ready, not on every WIP push.
+draft = false
+
+# Built-in correctness / logic-bug review. Also whole-repo.
+[[skills]]
+name = "code-review"
+
+[[skills.triggers]]
+type = "pull_request"
+actions = ["opened", "synchronize", "reopened", "ready_for_review", "labeled"]
+draft = false

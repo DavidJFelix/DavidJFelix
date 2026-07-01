@@ -194,6 +194,7 @@
     "templatizing",
     "typesafety",
     "unawaited",
+    "uncloneable",
     "unconfig",
     "unparseable",
     "unportable",
@@ -205,6 +206,8 @@
     "vinxi",
     "virtuals",
     "vndly",
+    "warden",
+    "webidl",
     "wordle",
     "xrpc",
     "xtask"

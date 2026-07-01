@@ -5,10 +5,11 @@ and see the whole block laid out.
 
 ## Status
 
-**Functional — domains owned, thin test floor** (2026-06-29). A working schedule grid built from a
-hardcoded demo plan, still served on a `workers.dev` URL even though two domains are already owned.
-Near-term: wire the custom domain(s), replace the hardcoded demo with form-driven input, and grow
-the thin test coverage.
+**Functional — plan engine landed, UI wiring next** (2026-07-01). Domains are live: ravrun.com and
+rav.run are wired (configured in the Cloudflare dashboard; `wrangler.toml` doesn't declare them —
+optional cleanup to make that declarative). A real training-plan engine now lives in `src/lib/plan/`
+(built TDD, 100% statement coverage); the near-term work is wiring the form UI + URL state on top of
+it, replacing the hardcoded demo grid.
 
 ## Vision
 
@@ -16,14 +17,20 @@ Tell ravrun your race (distance, date, current fitness/paces) and get a structur
 block you can actually follow — and export to your calendar. A focused tool for runners building
 toward a goal race.
 
-## Current state (2026-06-29)
+## Current state (2026-07-01)
 
-- Functional week-by-week schedule grid (an 18-week demo plan, hardcoded).
+- **Plan engine** in `src/lib/plan/` (pure logic, 20 unit tests, repo coverage gate green):
+  - `constants.ts` — every tunable training rule (stepback cadence, peak long runs, taper factors,
+    pace offsets, ramp cap) in one central object.
+  - `paces.ts` — Riegel race prediction, Daniels-lite training pace bands, parse/format helpers.
+  - `generate.ts` — race-date-anchored generator: base → build → peak → taper → race phases,
+    every-4th-week stepbacks, long-run progression, week template rotating around the long-run day,
+    race week with shakeout. Modeled on David's real 2026 marathon plan (yearroundrunning.com ICS).
+  - `feasibility.ts` — achievability findings: aggressive/unrealistic goal vs. Riegel prediction,
+    unsafe mileage ramp (with `suggestedWeeks`), too-short plan, window already underway.
+- UI still renders the old hardcoded 18-week demo grid — not yet wired to the engine.
 - `/about` is a stub.
-- Vite + React + Tailwind, built static.
-- **Two domains already owned: ravrun.com and rav.run** — but `wrangler.toml` still has no custom
-  domain/route, so it deploys only to `workers.dev`.
-- **Thin test floor** — ~4 unit-test stubs exist; coverage is minimal.
+- Vite + React + Tailwind, built static; **ravrun.com + rav.run wired** (dashboard-configured).
 
 ## Stack
 
@@ -31,13 +38,16 @@ Vite + React + Tailwind, Cloudflare (static assets).
 
 ## Roadmap
 
-### Phase 1 — Wire the domains + form-driven input + flesh out tests
+### Phase 1 — Plan engine + form-driven input
 
-- [ ] Wire the owned domain(s) ravrun.com / rav.run into `apps/ravrun/wrangler.toml` so it leaves
-      the `workers.dev` URL.
-- [ ] Form-driven input: distance, target paces, start date, number of weeks → generated schedule
-      (replace the hardcoded 18-week demo).
-- [ ] Flesh out the thin (~4 stub) test coverage for the plan-generation logic before it grows.
+- [x] Domains: ravrun.com / rav.run are live (dashboard-configured, 2026-07-01). Optional: declare
+      them in `wrangler.toml` so the config is committed.
+- [x] Plan-generation engine (TDD, 2026-07-01): Riegel paces, phased progressive-mileage generator
+      anchored on race date, feasibility checker. Constants centralized for controlled tuning.
+- [ ] Form-driven input wired to the engine: race distance + date, goal time, current weekly
+      mileage, recent race, days/week, long-run day → generated schedule in the grid. Config in URL
+      search params so plans are shareable links for free.
+- [ ] Surface feasibility findings in the UI (aggressive goal, unsafe ramp + suggested weeks).
 
 ### Phase 2 — Make the plan yours
 

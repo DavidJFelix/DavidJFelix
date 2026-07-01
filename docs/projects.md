@@ -40,9 +40,9 @@ work is deciding what it actually does, then user-configurable data.
 
 #### [ravrun](./projects/ravrun/plan.md)
 
-Marathon / endurance training-plan generator + visualizer. Functional from a hardcoded demo plan.
-Already owns ravrun.com + rav.run (not yet wired in `wrangler.toml`) and has thin test stubs — next
-is wiring the domains, form-driven input, and growing test coverage.
+Marathon / endurance training-plan generator + visualizer. Live on ravrun.com + rav.run. The plan
+engine landed 2026-07-01 (Riegel paces, phased progressive-mileage generator, feasibility checker —
+TDD, coverage-gated); next is the form UI + URL state replacing the hardcoded demo grid.
 
 **Status**: Functional
 

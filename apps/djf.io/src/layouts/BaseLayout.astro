@@ -42,11 +42,45 @@ const ogImageUrl = Astro.site ? new URL(ogImage, Astro.site) : undefined
 // out of local/CI/preview output entirely.
 const posthogEnabled = Boolean(import.meta.env.PUBLIC_POSTHOG_KEY)
 
+const navLinks = [
+  {href: '/blog', label: 'Blog'},
+  {href: '/about', label: 'About'},
+  {href: 'https://github.com/davidjfelix', label: 'GitHub'},
+  {href: 'https://twitter.com/davidjfelix', label: 'Twitter'},
+]
+
 const navLink = css({
   color: 'text.muted',
   textDecoration: 'none',
   _hover: {color: 'text'},
 })
+
+const navToggle = css({
+  display: {base: 'flex', md: 'none'},
+  alignItems: 'center',
+  justifyContent: 'center',
+  color: 'text.muted',
+  bg: 'transparent',
+  cursor: 'pointer',
+  borderRadius: 'sm',
+  _hover: {color: 'text'},
+  _focusVisible: {outline: '2px solid', outlineColor: 'focus.ring', outlineOffset: '2px'},
+})
+
+// The [hidden] override must beat the display token below, since a class
+// setting display would otherwise win over the UA's [hidden] rule.
+const menuPanel = css({
+  display: {base: 'flex', md: 'none'},
+  flexDirection: 'column',
+  gap: '4',
+  pt: '4',
+  '&[hidden]': {display: 'none'},
+})
+
+// Icons swap on the button's own aria-expanded, same pattern as ThemeToggle's
+// data-theme swap: bars while closed, an X while open.
+const iconMenuClosed = css({'#nav-toggle[aria-expanded=true] &': {display: 'none'}})
+const iconMenuOpen = css({display: 'none', '#nav-toggle[aria-expanded=true] &': {display: 'block'}})
 ---
 
 <!doctype html>
@@ -117,35 +151,88 @@ const navLink = css({
         py: '4',
       })}
     >
-      <nav
-        class={css({
-          maxW: '3xl',
-          mx: 'auto',
-          px: '4',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        })}
-      >
-        <a
-          href="/"
+      <nav class={css({maxW: '3xl', mx: 'auto', px: '4'})}>
+        <div
           class={css({
-            fontSize: 'xl',
-            fontWeight: 'bold',
-            color: 'text',
-            textDecoration: 'none',
-            _hover: {color: 'accent.text'},
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
           })}
         >
-          djf.io
-        </a>
-        <div class={css({display: 'flex', alignItems: 'center', gap: '6'})}>
-          <Search />
-          <a href="/blog" class={navLink}>Blog</a>
-          <a href="/about" class={navLink}>About</a>
-          <a href="https://github.com/davidjfelix" class={navLink}>GitHub</a>
-          <a href="https://twitter.com/davidjfelix" class={navLink}>Twitter</a>
-          <ThemeToggle />
+          <a
+            href="/"
+            class={css({
+              fontSize: 'xl',
+              fontWeight: 'bold',
+              color: 'text',
+              textDecoration: 'none',
+              _hover: {color: 'accent.text'},
+            })}
+          >
+            djf.io
+          </a>
+          <div class={css({display: 'flex', alignItems: 'center', gap: '6'})}>
+            <Search />
+            <div
+              class={css({
+                display: {base: 'none', md: 'flex'},
+                alignItems: 'center',
+                gap: '6',
+              })}
+            >
+              {navLinks.map(({href, label}) => (
+                <a href={href} class={navLink}>{label}</a>
+              ))}
+            </div>
+            <button
+              type="button"
+              id="nav-toggle"
+              aria-label="Open menu"
+              aria-expanded="false"
+              aria-controls="nav-menu"
+              class={navToggle}
+            >
+              <svg
+                class={iconMenuClosed}
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <line x1="4" x2="20" y1="6" y2="6"></line>
+                <line x1="4" x2="20" y1="12" y2="12"></line>
+                <line x1="4" x2="20" y1="18" y2="18"></line>
+              </svg>
+              <svg
+                class={iconMenuOpen}
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M18 6 6 18"></path>
+                <path d="m6 6 12 12"></path>
+              </svg>
+            </button>
+            <ThemeToggle />
+          </div>
+        </div>
+        <div id="nav-menu" hidden class={menuPanel}>
+          {navLinks.map(({href, label}) => (
+            <a href={href} class={navLink}>{label}</a>
+          ))}
         </div>
       </nav>
     </header>
@@ -182,5 +269,21 @@ const navLink = css({
         &copy; David J Felix
       </div>
     </footer>
+
+    <script>
+      const toggle = document.querySelector<HTMLButtonElement>('#nav-toggle')
+      const menu = document.querySelector<HTMLElement>('#nav-menu')
+      if (toggle && menu) {
+        const setOpen = (open: boolean) => {
+          toggle.setAttribute('aria-expanded', String(open))
+          toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu')
+          menu.hidden = !open
+        }
+        toggle.addEventListener('click', () => setOpen(Boolean(menu.hidden)))
+        window.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape' && !menu.hidden) setOpen(false)
+        })
+      }
+    </script>
   </body>
 </html>

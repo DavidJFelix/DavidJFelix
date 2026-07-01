@@ -36,13 +36,14 @@ const jsonLd = {
 }
 ---
 
-<BaseLayout title={title} description={description} ogType="article" ogImage={ogImage}>
-  <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} slot="head" />
-  {
-    standardDocumentUri && (
-      <link rel="site.standard.document" href={standardDocumentUri} slot="head" />
-    )
-  }
+<BaseLayout
+  title={title}
+  description={description}
+  ogType="article"
+  ogImage={ogImage}
+  jsonLd={jsonLd}
+  standardDocumentUri={standardDocumentUri}
+>
   <article data-pagefind-body>
     <header
       class={css({

@@ -63,15 +63,47 @@ test('BaseLayout links the RSS feed and sitemap', async () => {
   expect(html).toMatch(/<link rel="sitemap" href="\/sitemap-index\.xml"/)
 })
 
-test('BaseLayout renders head slot content inside <head>', async () => {
+// Head extras (JSON-LD, standard-site link) are passed as props and rendered
+// directly in <head>, not forwarded through a `<slot name="head" />`: Astro 7
+// does not render a named slot placed inside <head> in the real build, which
+// silently dropped this content on every blog post (caught by seo.e2e.test.ts,
+// not the container API — the container renders head slots even though the
+// real build does not).
+test('BaseLayout renders the jsonLd prop as a ld+json script inside <head>', async () => {
   const html = await container.renderToString(BaseLayout, {
-    props: {title: 'x'},
-    slots: {head: '<meta name="test-head-slot" content="1">'},
+    props: {title: 'x', jsonLd: {'@type': 'BlogPosting', headline: 'Hi'}},
   })
   const headEnd = html.indexOf('</head>')
-  const slotIndex = html.indexOf('<meta name="test-head-slot" content="1">')
-  expect(slotIndex).toBeGreaterThan(-1)
-  expect(slotIndex).toBeLessThan(headEnd)
+  const scriptIndex = html.search(/<script type="application\/ld\+json">/)
+  expect(scriptIndex).toBeGreaterThan(-1)
+  expect(scriptIndex).toBeLessThan(headEnd)
+  expect(html).toContain('{"@type":"BlogPosting","headline":"Hi"}')
+})
+
+test('BaseLayout omits the ld+json script when no jsonLd prop is given', async () => {
+  const html = await container.renderToString(BaseLayout, {
+    props: {title: 'x'},
+  })
+  expect(html).not.toContain('application/ld+json')
+})
+
+test('BaseLayout renders the standard-site document link inside <head> when provided', async () => {
+  const html = await container.renderToString(BaseLayout, {
+    props: {title: 'x', standardDocumentUri: 'at://did:plc:abc/site.standard.document/xyz'},
+  })
+  const headEnd = html.indexOf('</head>')
+  const linkIndex = html.indexOf(
+    '<link rel="site.standard.document" href="at://did:plc:abc/site.standard.document/xyz">',
+  )
+  expect(linkIndex).toBeGreaterThan(-1)
+  expect(linkIndex).toBeLessThan(headEnd)
+})
+
+test('BaseLayout omits the standard-site document link when the URI is null', async () => {
+  const html = await container.renderToString(BaseLayout, {
+    props: {title: 'x', standardDocumentUri: null},
+  })
+  expect(html).not.toContain('site.standard.document')
 })
 
 test('BaseLayout renders nav links to home, blog, github, twitter', async () => {

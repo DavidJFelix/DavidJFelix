@@ -2,7 +2,15 @@
   "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
   "version": "0.2",
   "language": "en",
-  "dictionaries": ["typescript", "node", "npm", "html", "css", "bash", "software-terms"],
+  "dictionaries": [
+    "typescript",
+    "node",
+    "npm",
+    "html",
+    "css",
+    "bash",
+    "software-terms"
+  ],
   "ignorePaths": [
     "node_modules",
     "dist",
@@ -28,7 +36,9 @@
     "playwright-report",
     "test-results"
   ],
-  "ignoreRegExpList": ["did:plc:[a-z0-9]+"],
+  "ignoreRegExpList": [
+    "did:plc:[a-z0-9]+"
+  ],
   "words": [
     "achievability",
     "actioned",
@@ -76,6 +86,7 @@
     "dtend",
     "dtstamp",
     "dtstart",
+    "earendil",
     "editorconfig",
     "effectful",
     "exercism",
@@ -88,6 +99,7 @@
     "forzamonica",
     "frontmatter",
     "gatekept",
+    "genai",
     "geolocates",
     "getsentry",
     "ghalint",
@@ -125,6 +137,7 @@
     "mattpocock",
     "menlo",
     "microformats",
+    "miniflare",
     "mise",
     "mjs",
     "moldv",
@@ -241,6 +254,7 @@
     "xtask",
     "yearroundrunning",
     "zizmor",
+    "zstd",
     "zustand"
   ]
 }

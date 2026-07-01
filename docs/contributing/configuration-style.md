@@ -148,4 +148,4 @@ Within the JS ecosystem specifically:
 - [tooling-standard.md](tooling-standard.md) -- which tool owns which concern, per ecosystem
 - [scripting-style.md](scripting-style.md) -- language choice for scripts and automation
 - [github-actions-style.md](github-actions-style.md) -- workflow conventions (YAML, by mandate)
-- [CONTRIBUTING.md](../CONTRIBUTING.md) -- PR workflow and code conventions
+- [CONTRIBUTING.md](../../CONTRIBUTING.md) -- PR workflow and code conventions

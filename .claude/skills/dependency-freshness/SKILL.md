@@ -106,7 +106,7 @@ If verification fails on an isolated update, still open the PR but mark it as `d
 
 Keep it to one surface. The escalation channel is a single **`deps:needs-attention` label on the PR** — applied to any PR carrying a major or known-incompatible bump. Anything the skill could not apply goes in the `## Skipped` section of the batch PR body. No companion issues for routine cases.
 
-Open a separate follow-up issue (assigned to `@DavidJFelix`, following the Human Intervention Task format in `CLAUDE.md`) **only** when the blocker is genuinely outside a PR's reach — a credential, a third-party account decision, or a deprecated package that needs a human to pick a replacement. That's the exception, not the routine path.
+Open a separate follow-up issue (assigned to `@DavidJFelix`, following the human-task format in `docs/agents/issue-tracker.md`) **only** when the blocker is genuinely outside a PR's reach — a credential, a third-party account decision, or a deprecated package that needs a human to pick a replacement. That's the exception, not the routine path.
 
 ## Discovery details
 

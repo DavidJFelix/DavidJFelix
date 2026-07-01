@@ -19,9 +19,9 @@ scope decisions already made.
 - Rename to JSONC and add a comment explaining the ATProto-DID `ignoreRegExpList` entry (added
   during djf.io's standard.site work; unexplained in plain JSON).
 - Fix every by-name reference: the three root tasks in `.config/mise.toml`
-  (`format`, `format:fix`, `spell`), `CLAUDE.md`, `docs/tooling-standard.md`, and
-  `docs/github-actions-style.md`. Both cspell and Biome accept `.jsonc`; leave historical
-  changelog/progress references as-is.
+  (`format`, `format:fix`, `spell`), `docs/contributing/configuration-style.md`,
+  `docs/contributing/tooling-standard.md`, and `docs/contributing/github-actions-style.md`. Both
+  cspell and Biome accept `.jsonc`; leave historical changelog/progress references as-is.
 - **Sequence after `ci-pipeline-efficiency` Task 1**, which removes `.config/cspell.json` from the
   per-app `ci-*.yml` path filters entirely — so this rename no longer has to touch ~12 workflows.
 
@@ -39,5 +39,5 @@ scope decisions already made.
 ## Related
 
 - Closed parent + resolved decisions: `docs/changelog/2026-06.md` (2026-06-18)
-- `docs/tooling-standard.md` — the ownership map this completes
+- `docs/contributing/tooling-standard.md` — the ownership map this completes
 - `ci-pipeline-efficiency` — sequence the cspell rename after its filter cleanup

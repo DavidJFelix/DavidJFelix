@@ -55,10 +55,14 @@ const navLink = css({
   _hover: {color: 'text'},
 })
 
+// Padding grows the tap target past the WCAG 24px minimum; the negative
+// margin keeps the icon's layout footprint unchanged in the header row.
 const navToggle = css({
   display: {base: 'flex', md: 'none'},
   alignItems: 'center',
   justifyContent: 'center',
+  p: '2',
+  m: '-2',
   color: 'text.muted',
   bg: 'transparent',
   cursor: 'pointer',
@@ -229,11 +233,17 @@ const iconMenuOpen = css({display: 'none', '#nav-toggle[aria-expanded=true] &': 
             <ThemeToggle />
           </div>
         </div>
-        <div id="nav-menu" hidden class={menuPanel}>
+        <div id="nav-menu" class={menuPanel}>
           {navLinks.map(({href, label}) => (
             <a href={href} class={navLink}>{label}</a>
           ))}
         </div>
+        {/* The panel ships open so the links stay reachable without JavaScript;
+            with it, collapse before first paint and let the toggle take over. */}
+        <script is:inline>
+          const navMenu = document.getElementById('nav-menu')
+          if (navMenu) navMenu.hidden = true
+        </script>
       </nav>
     </header>
 

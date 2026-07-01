@@ -45,7 +45,7 @@ Without that precision, it's easy to conflate two distinct ideas.
 Until now, that's been my problem.
 More precisely, I've been trying to "build a blog platform" rather than "write and publish more."
 
-It's second nature for engineers to consider one side of your requirements primarily, they care about the product you build.
+It's second nature for engineers to consider only their side of the requirements: the product they build.
 Holding the product to strict quality standards over everything else is a convincing trap.
 The reality is the existential need for the product is its audience (aka customer, reader, user, etc.)
 If a product doesn't reach its audience, engineering has failed to build it.

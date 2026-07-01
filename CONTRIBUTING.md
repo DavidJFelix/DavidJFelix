@@ -107,6 +107,14 @@ Workflows live in `.depot/workflows/` (GitHub Actions syntax, run on Depot CI) a
 
 See [docs/github-actions-style.md](docs/github-actions-style.md) for the full guide and the new-workflow checklist.
 
+## Code review
+
+[Warden](https://warden.sentry.dev/guide) is the canonical automated reviewer: it runs its built-in `security-review` and `code-review` skills on every non-draft PR (`.depot/workflows/ci-warden.yml`) and owns the inline findings posted to the PR. Everything else complements it -- nothing else should post competing PR comments. The [review-consolidation](docs/projects/review-consolidation/plan.md) project tracks the direction (Warden is the path forward; other tools complement, not compete).
+
+- **Warden (CI gate).** Automatic, every PR. The single source of posted inline review comments.
+- **Built-in `/code-review` and `/security-review` (local).** Run on-demand before you push, as an inner-loop sanity pass. Do **not** pass `--comment` -- Warden owns posted comments, and double-posting the same diff is noise and double model spend.
+- **`/review` (Standards + Spec).** The holistic on-demand review: does the branch follow the repo's documented standards, and does it match the originating issue/PRD? Warden checks neither, so this stays.
+
 ## References
 
 - [CLAUDE.md](CLAUDE.md) -- project documentation standards, monorepo structure, tooling

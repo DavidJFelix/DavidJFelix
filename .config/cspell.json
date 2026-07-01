@@ -56,6 +56,7 @@
     "schibsted",
     "grotesk",
     "mattpocock",
+    "achievability",
     "actioned",
     "actionlint",
     "ghalint",
@@ -124,6 +125,7 @@
     "gatekept",
     "geolocates",
     "getsentry",
+    "higdon",
     "gofmt",
     "goimports",
     "golangci",
@@ -174,6 +176,7 @@
     "reprioritized",
     "rescoped",
     "respawned",
+    "riegel",
     "rollouts",
     "papercuts",
     "rkey",
@@ -181,7 +184,10 @@
     "rspack",
     "shiki",
     "spoofable",
+    "shakeout",
     "starlark",
+    "stepback",
+    "stepbacks",
     "stmts",
     "stormlight",
     "strava",
@@ -207,6 +213,7 @@
     "vndly",
     "wordle",
     "xrpc",
+    "yearroundrunning",
     "xtask"
   ]
 }

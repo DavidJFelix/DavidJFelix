@@ -15,7 +15,7 @@
 name: CI Warden
 on:
   pull_request:
-    types: [opened, synchronize, reopened, labeled]
+    types: [opened, synchronize, reopened, ready_for_review, labeled]
 
 # contents: write is required for resolving review threads via GraphQL.
 # See: https://github.com/orgs/community/discussions/44650

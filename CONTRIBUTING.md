@@ -122,11 +122,13 @@ All project documentation follows the structure defined in [CLAUDE.md](CLAUDE.md
 Workflows live in `.depot/workflows/` (GitHub Actions syntax, run on Depot CI) and follow the
 conventions in [docs/github-actions-style.md](docs/github-actions-style.md). Key rules:
 
-- File names are lowercase, underscore-separated, and prefixed with the workflow category: `ci_`,
-  `cd_`, `run_` (`workflow_dispatch` only), or `cron_` (schedule only). Combined categories use
-  alphabetical order (`cd_cron_*.yml`, display name `CD CRON`).
-- Every CI/CD workflow has a `paths:` filter covering its subtree, the shared config it depends on,
-  and the workflow file itself.
+- File names are lowercase kebab-case, prefixed with the workflow category: `ci-`, `cd-`, `run-`
+  (`workflow_dispatch` only), or `cron-` (schedule only). Combined categories use alphabetical order
+  (`cd-cron-*.yml`, display name `CD CRON`).
+- A CI/CD workflow scoped to a subtree carries a `paths:` filter covering that subtree, the shared
+  config it depends on, and the workflow file itself. Deliberately repo-wide gates (`ci-spell.yml`,
+  `ci-warden.yml`) are the exception: they run on every PR without a filter and say why in a header
+  comment.
 - When you add a new subtree, update the relevant workflows' `paths:` filters (or add new workflows)
   and verify they fire.
 - Use matrices and parallel jobs wherever the work is independent. Do not chain jobs with `needs:`

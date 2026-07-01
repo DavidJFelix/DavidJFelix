@@ -30,7 +30,7 @@ name = "security-review"
 
 [[skills.triggers]]
 type = "pull_request"
-actions = ["opened", "synchronize", "reopened", "labeled"]
+actions = ["opened", "synchronize", "reopened", "ready_for_review", "labeled"]
 # Skip draft PRs — review once the PR is marked ready, not on every WIP push.
 draft = false
 
@@ -40,5 +40,5 @@ name = "code-review"
 
 [[skills.triggers]]
 type = "pull_request"
-actions = ["opened", "synchronize", "reopened", "labeled"]
+actions = ["opened", "synchronize", "reopened", "ready_for_review", "labeled"]
 draft = false

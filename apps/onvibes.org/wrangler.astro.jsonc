@@ -1,0 +1,16 @@
+{
+  // Astro-only Cloudflare config. The @astrojs/cloudflare adapter reads this
+  // (via `configPath` in astro.config.mjs) instead of wrangler.toml, so Astro's
+  // build never sees the Flue agent Durable Objects it doesn't export. The
+  // deployed Worker is Flue's (wrangler.toml + `flue build`); this config only
+  // shapes `astro build` and its local miniflare validation.
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "onvibes-org",
+  "main": "@astrojs/cloudflare/entrypoints/server",
+  "compatibility_date": "2026-06-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./dist/client",
+    "binding": "ASSETS"
+  }
+}

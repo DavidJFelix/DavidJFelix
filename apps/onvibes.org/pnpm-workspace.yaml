@@ -1,7 +1,14 @@
 allowBuilds:
+  '@mongodb-js/zstd': set this to true or false
   '@sentry/cli': true
   # core-js's postinstall is only a funding banner -- no native build to run.
   core-js: false
+  # Transitive deps of the Cloudflare `agents` SDK / pi-ai; funding/postinstall
+  # banners only, no native build to run.
+  '@google/genai': false
+  core-js-pure: false
   esbuild: true
+  node-liblzma: set this to true or false
+  protobufjs: set this to true or false
   sharp: true
   workerd: true

@@ -28,7 +28,7 @@ Do not invent new categories beyond these. If a workflow does not fit, it is pro
 ## File naming
 
 - All workflow files are lowercase.
-- Use hyphens (`-`) as the separator -- kebab-case, per the repo-wide file naming rule in CLAUDE.md. Not underscores, not dots.
+- Use hyphens (`-`) as the separator -- kebab-case, per the repo-wide file naming rule in [file-naming.md](file-naming.md). Not underscores, not dots.
 - The file name starts with the category prefix, then describes what the workflow does.
 
 Good:

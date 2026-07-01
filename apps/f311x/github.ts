@@ -1,3 +1,8 @@
+// Alchemy v2 stack that provisions the CI credentials for f311x: a
+// least-privilege Cloudflare account API token, pushed into this repo's
+// GitHub Actions secrets. Effect-native and loaded by the Alchemy CLI,
+// like alchemy.run.ts.
+
 import * as Alchemy from 'alchemy'
 import * as Cloudflare from 'alchemy/Cloudflare'
 import * as GitHub from 'alchemy/GitHub'
@@ -6,7 +11,7 @@ import * as Effect from 'effect/Effect'
 import * as Layer from 'effect/Layer'
 import * as Redacted from 'effect/Redacted'
 
-export default Alchemy.Stack<void, Config.ConfigError>(
+export default Alchemy.Stack(
   'github',
   {
     providers: Layer.mergeAll(Cloudflare.providers(), GitHub.providers()),

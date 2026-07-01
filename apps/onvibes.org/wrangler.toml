@@ -30,7 +30,7 @@ run_worker_first = ["/api/*"]
 # Durable Objects backing the Flue agent runtime. `flue build` generates these
 # classes (one per agent, plus the registry) and exports them from the Worker.
 # SQLite storage must be enabled via a migration. Astro reads a separate,
-# DO-free config (wrangler.astro.jsonc) so its own build doesn't try to validate
+# DO-free config (wrangler-astro.jsonc) so its own build doesn't try to validate
 # these classes it never exports.
 #
 # NOTE: array-of-tables must come after all top-level keys in TOML, or the keys

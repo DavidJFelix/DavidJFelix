@@ -68,7 +68,8 @@ const navLink = css({
     {/* Tag the platform before first paint so the search hotkey hint renders as
         ⌘K (Mac) or Ctrl K immediately, instead of flashing after hydration. */}
     <script is:inline>
-      if (/Mac|iPhone|iPad/.test(navigator.platform)) {
+      const uaPlatform = navigator.userAgentData?.platform || navigator.userAgent
+      if (/Mac|iPhone|iPad|iPod/.test(uaPlatform)) {
         document.documentElement.dataset.platform = 'mac'
       }
     </script>
@@ -179,7 +180,7 @@ const navLink = css({
           fontSize: 'sm',
         })}
       >
-        &copy; {new Date().getFullYear()} David J Felix. All rights reserved.
+        &copy; David J Felix
       </div>
     </footer>
   </body>

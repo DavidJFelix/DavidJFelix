@@ -32,8 +32,8 @@ When adding a skill or persona, put the solid copy in `.agents/` and symlink it 
 
 The non-negotiable rules, one line each. Follow the link before working in that area.
 
-- **Naming**: lowercase kebab-case for every file and directory; framework-imposed exceptions only
-  -- [file-naming.md](docs/contributing/file-naming.md)
+- **Naming**: lowercase kebab-case for every file and directory; documented exceptions only --
+  [file-naming.md](docs/contributing/file-naming.md)
 - **No emojis** in code, commits, or documentation
 - **Commits/PRs**: [conventional commit](https://www.conventionalcommits.org/) PR titles; every PR
   adds a changelog entry -- [CONTRIBUTING.md](CONTRIBUTING.md)

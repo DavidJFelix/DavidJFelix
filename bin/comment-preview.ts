@@ -42,6 +42,11 @@ async function gh(method: string, path: string, payload?: unknown): Promise<unkn
     body: payload ? JSON.stringify(payload) : undefined,
   })
   if (!res.ok) {
+    // A duplicate we're deleting may already be gone -- a concurrent same-app
+    // run (racing us in the concurrency cancel window) or a manual delete. The
+    // goal state, comment absent, is already met, so a DELETE 404 is a no-op
+    // rather than an abort of the otherwise-idempotent cleanup.
+    if (method === 'DELETE' && res.status === 404) return undefined
     throw new Error(`GitHub API ${method} ${path} -> HTTP ${res.status} ${await res.text()}`)
   }
   // DELETE replies 204 No Content; don't try to parse an empty body as JSON.

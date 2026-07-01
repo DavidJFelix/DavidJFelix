@@ -194,6 +194,7 @@
     "templatizing",
     "typesafety",
     "unawaited",
+    "uncloneable",
     "unconfig",
     "unparseable",
     "unportable",
@@ -206,6 +207,7 @@
     "virtuals",
     "vndly",
     "warden",
+    "webidl",
     "wordle",
     "xrpc",
     "xtask"

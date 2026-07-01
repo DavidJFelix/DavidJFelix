@@ -54,15 +54,6 @@ export default defineConfig({
   // relays -- no cookies or session state, each doing its own validation. Astro's
   // CSRF origin check would otherwise 403 the SDKs' POSTs, so disable it.
   security: {checkOrigin: false},
-  // Astro 6 ships rolldown-vite, whose React Fast Refresh wrapper
-  // (`builtin:vite-react-refresh-wrapper`, injected by @vitejs/plugin-react via
-  // @astrojs/react) crashes dev with "Missing field `moduleType`", so the /chat
-  // island never hydrates. @vitejs/plugin-react only skips that wrapper when
-  // `server.hmr` is off, so we disable HMR to keep dev working. The cost is
-  // manual browser refresh during dev; remove this once rolldown-vite fixes the
-  // native refresh wrapper. See https://v7.vite.dev/guide/rolldown and
-  // https://github.com/tajo/ladle/issues/623.
-  vite: {server: {hmr: false}},
   integrations: [
     // React powers the /chat island (Flue's React hooks). The islands
     // architecture keeps it scoped to that page -- every other route stays

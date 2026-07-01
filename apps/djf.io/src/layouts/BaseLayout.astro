@@ -68,8 +68,7 @@ const navLink = css({
     {/* Tag the platform before first paint so the search hotkey hint renders as
         ⌘K (Mac) or Ctrl K immediately, instead of flashing after hydration. */}
     <script is:inline>
-      const uaPlatform = navigator.userAgentData?.platform || navigator.userAgent
-      if (/Mac|iPhone|iPad|iPod/.test(uaPlatform)) {
+      if (/Mac|iPhone|iPad|iPod/.test(navigator.userAgent)) {
         document.documentElement.dataset.platform = 'mac'
       }
     </script>

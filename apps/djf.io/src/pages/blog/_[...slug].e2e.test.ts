@@ -14,7 +14,7 @@ test('a blog post with a hero image in frontmatter displays it', async ({page}) 
   await page.goto('/blog/2023-12-30-shipposting')
 
   const hero = page.getByRole('img', {
-    name: /animated style illustration a software engineer/,
+    name: /software engineer with short blond hair/,
   })
   await expect(hero).toBeVisible()
   const naturalWidth = await hero.evaluate((img) => (img as HTMLImageElement).naturalWidth)

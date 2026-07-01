@@ -7,7 +7,7 @@ Persona review of the diff between `HEAD` and a fixed point. Each persona answer
 the panel reports them side by side without merging. For standards/spec conformance use `/review`
 instead -- the panel judges quality, not compliance.
 
-The personas live in `.claude/agents/`: `design-reviewer`, `product-reviewer`,
+The personas live in `.agents/agents/`: `design-reviewer`, `product-reviewer`,
 `engineering-reviewer`, `testing-reviewer`, `benchmark-reviewer`, `tooling-reviewer`. Their
 rubrics live in those files -- do not restate them in prompts.
 

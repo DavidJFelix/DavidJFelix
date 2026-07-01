@@ -18,10 +18,15 @@ apps have independent lockfiles and dependencies. Shared dev tooling is managed 
 | `docs/agents/`       | Agent workflow docs -- issue tracker, triage labels, domain docs                            |
 | `docs/projects/`     | Active project plans and progress notes (ephemeral working notes)                           |
 | `docs/changelog/`    | Monthly change history (the durable record)                                                 |
-| `.claude/agents/`    | Review personas -- focused reviewer subagents                                               |
-| `.claude/skills/`    | Claude Code skills                                                                          |
+| `.agents/agents/`    | Review personas -- focused reviewer subagents (solid copies)                                |
+| `.agents/skills/`    | Claude Code skills (solid copies)                                                           |
 | `.config/`           | Shared tooling config (mise, cspell)                                                        |
 | `bin/`               | Repo-root bun scripts, fronted by mise tasks                                                |
+
+`.agents/` is the tool-agnostic source of truth for skills and personas; `.claude/skills/` and
+`.claude/agents/` hold tracked symlinks into it, because Claude Code only discovers `.claude/`.
+When adding a skill or persona, put the solid copy in `.agents/` and symlink it from `.claude/`
+(one symlink per skill folder / agent file -- never symlink the whole directory).
 
 ## Hard rules
 
@@ -61,7 +66,7 @@ The non-negotiable rules, one line each. Follow the link before working in that 
 
 ## Review personas
 
-Six focused reviewers live in `.claude/agents/`. Each answers one question and reports only
+Six focused reviewers live in `.agents/agents/`. Each answers one question and reports only
 findings that would change a decision -- "just enough" applies to reviews too. Run the relevant
 ones together with the `/panel-review` skill, or invoke one directly as a subagent.
 

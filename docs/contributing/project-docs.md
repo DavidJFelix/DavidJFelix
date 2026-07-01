@@ -6,7 +6,7 @@ How project documentation is structured. Plans and progress notes are committed 
 
 ## Directory structure
 
-```
+```text
 docs/
 ├── projects.md                          # Summary of all ongoing projects with links
 └── projects/

@@ -14,7 +14,7 @@ Plans and in-progress notes are committed markdown, not an external tracker:
   `docs/projects/<name>/` directory**, plus its entry in `docs/projects.md`.
 - Naming: lowercase kebab-case for directories and files.
 
-Full convention: `CLAUDE.md -> Project Documentation`.
+Full convention: [docs/contributing/project-docs.md](../contributing/project-docs.md).
 
 ## 2. Human-only tasks -- GitHub issues
 
@@ -24,7 +24,7 @@ issue assigned to `@DavidJFelix`**.
 
 Keep these issues **terse**: bullet steps, minimal prose, and **direct links to the exact thing to
 act on** (the dashboard, the DNS provider, the account page). One verb per step; each step
-independently checkable. Required shape (`CLAUDE.md -> Human Intervention Tasks`):
+independently checkable. Required shape (this section is the canonical definition):
 
 - **Background** -- 1-3 sentences: why a human, why now.
 - **Steps** -- a `- [ ]` checklist. One verb each. Link straight to where the action happens.

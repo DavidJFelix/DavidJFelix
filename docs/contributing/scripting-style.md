@@ -3,7 +3,7 @@
 When you need to automate something -- a build step, a one-off, CI glue, a codemod -- which language
 do you reach for, and which do you refuse? This guide ranks the choices and bans two.
 
-It expands on the "Tasks & scripts" rule in [CLAUDE.md](../CLAUDE.md): prefer a `mise` task; if a task
+It expands on the "Tasks & scripts" rule in [tooling-standard.md](tooling-standard.md): prefer a `mise` task; if a task
 is too complex for one, write a script. The first question is always **can this be a `mise` task
 calling an existing tool?** If so, do that and stop. Everything below is for when you genuinely need
 to write a script.
@@ -58,7 +58,7 @@ Bun and TypeScript cover the overwhelming majority of scripting -- reach for Pyt
 the clearly better fit, not merely possible. Bun is usually enough; Python becomes the obvious choice
 when the work is closely tied to its ecosystem -- ML ops, data/ML libraries, a Python-native tool, or
 Starlark-adjacent build config. When Python is the right call, use it -- and only ever with **uv**.
-`pip` and `poetry` are banned (per CLAUDE.md); never invoke `pip` directly.
+`pip` and `poetry` are banned (per [tooling-standard.md](tooling-standard.md)); never invoke `pip` directly.
 
 **Pin the Python version explicitly -- never float.** Choose an explicit, repo-approved version and
 pin it; don't track "latest." Two mechanisms:
@@ -129,7 +129,7 @@ testable, and identical locally and in CI. Name the step after the tool it runs,
 - Repo-wide scripts: `bin/*.ts` at the repo root. App-scoped scripts: `apps/<name>/bin/*.ts`.
 - The entry point is a `mise` task that calls the script -- don't make humans remember script paths.
 - **Do not introduce new task runners** (just, make, Taskfile, moon). `mise` owns task orchestration;
-  remove `justfile`s when found (per CLAUDE.md).
+  remove `justfile`s when found (per [tooling-standard.md](tooling-standard.md)).
 
 ## Checklist for a new script
 
@@ -147,5 +147,5 @@ testable, and identical locally and in CI. Name the step after the tool it runs,
 
 - [configuration-style.md](configuration-style.md) -- where config files live and what format
 - [github-actions-style.md](github-actions-style.md) -- workflow conventions
-- [CLAUDE.md](../CLAUDE.md) -- the "Tasks & scripts" and ecosystem tool-choice rules
-- [CONTRIBUTING.md](../CONTRIBUTING.md) -- PR workflow and code conventions
+- [tooling-standard.md](tooling-standard.md) -- ecosystem defaults and tool ownership
+- [CONTRIBUTING.md](../../CONTRIBUTING.md) -- PR workflow and code conventions

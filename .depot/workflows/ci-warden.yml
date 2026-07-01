@@ -39,6 +39,14 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
+      # getsentry/warden is a composite action that runs bare `node
+      # dist/action/index.js`, so it uses whatever Node is on PATH. The runner's
+      # default is Node 20, on which the action's bundled undici (>=8.0.3) throws
+      # `TypeError: webidl.util.markAsUncloneable is not a function` (the API
+      # landed in Node 22.10; see nodejs/undici#5024). setup-mise puts the
+      # repo-pinned Node (26) on PATH, which has it.
+      - name: mise
+        uses: ./.depot/actions/setup-mise
       # Split analyze/report so GitHub write credentials don't hold the long
       # model-backed analysis run (recommended by the Warden GitHub guide).
       - name: warden analyze

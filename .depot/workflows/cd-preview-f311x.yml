@@ -99,14 +99,20 @@ jobs:
           name: playwright-report
           path: apps/f311x/playwright-report/
           retention-days: 14
+      # Shared with every wrangler app's preview via bin/comment-preview.ts; the
+      # marker/title/footer make it f311x-specific. $GITHUB_WORKSPACE resolves
+      # the repo-root script despite the app-dir working directory.
       - name: comment preview url
         if: ${{ !cancelled() }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PREVIEW_URL: ${{ steps.deploy.outputs.url }}
+          PREVIEW_MARKER: '<!-- f311x-preview -->'
+          PREVIEW_TITLE: f311x preview
+          PREVIEW_FOOTER: 'Stage `pr-${{ github.event.pull_request.number }}`; torn down automatically when this PR closes.'
           PREVIEW_STATUS: >-
             ${{ (steps.smoke.outcome == 'success' && steps.e2e.outcome == 'success') && '✅ passed' || '❌ failed' }}
-        run: bun bin/comment-preview.ts
+        run: bun "$GITHUB_WORKSPACE/bin/comment-preview.ts"
   teardown:
     name: destroy preview stage
     if: github.event.action == 'closed'

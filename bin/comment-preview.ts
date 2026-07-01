@@ -1,10 +1,11 @@
 #!/usr/bin/env bun
 // Upserts a single "sticky" PR comment with the preview URL and the smoke +
-// screenshot status. Idempotent across pushes: finds a prior comment bearing the
-// per-app marker and edits it, else creates one. Shared by every wrangler app's
-// cd-preview workflow -- the app-specific marker and heading come from
-// PREVIEW_MARKER / PREVIEW_TITLE. Uses the Actions-provided GITHUB_TOKEN (needs
-// `pull-requests: write`). Generalized from apps/f311x/bin/comment-preview.ts.
+// screenshot status. Idempotent across pushes: scans ALL comment pages for the
+// per-app marker, edits the first match, and deletes any duplicate markers left
+// behind by earlier runs. Shared by every preview workflow -- the app-specific
+// marker, heading, and teardown note come from PREVIEW_MARKER / PREVIEW_TITLE /
+// PREVIEW_FOOTER. Uses the Actions-provided GITHUB_TOKEN (needs
+// `pull-requests: write`).
 
 const token = process.env.GITHUB_TOKEN
 const repo = process.env.GITHUB_REPOSITORY // owner/name
@@ -13,6 +14,9 @@ const url = process.env.PREVIEW_URL
 const status = process.env.PREVIEW_STATUS ?? '⚠️ unknown'
 const marker = process.env.PREVIEW_MARKER
 const title = process.env.PREVIEW_TITLE ?? 'Preview'
+const footer =
+  process.env.PREVIEW_FOOTER ??
+  `Preview version \`pr-${prNumber}\`; replaced on each push, inert once this PR closes.`
 
 if (!token || !repo || !prNumber || !marker) {
   console.error(
@@ -25,7 +29,7 @@ const body =
   `${marker}\n### ${title}\n\n` +
   (url ? `- Preview: ${url}\n` : '- Preview: _deploy failed — see the workflow logs_\n') +
   `- Smoke + screenshots: ${status}\n\n` +
-  `_Preview version \`pr-${prNumber}\`; replaced on each push, inert once this PR closes._`
+  `_${footer}_`
 
 async function gh(method: string, path: string, payload?: unknown): Promise<unknown> {
   const res = await fetch(`https://api.github.com${path}`, {
@@ -33,25 +37,54 @@ async function gh(method: string, path: string, payload?: unknown): Promise<unkn
     headers: {
       authorization: `Bearer ${token}`,
       accept: 'application/vnd.github+json',
-      'user-agent': 'preview-wrangler',
+      'user-agent': 'preview-comment',
     },
     body: payload ? JSON.stringify(payload) : undefined,
   })
   if (!res.ok) {
+    // A duplicate we're deleting may already be gone -- a concurrent same-app
+    // run (racing us in the concurrency cancel window) or a manual delete. The
+    // goal state, comment absent, is already met, so a DELETE 404 is a no-op
+    // rather than an abort of the otherwise-idempotent cleanup.
+    if (method === 'DELETE' && res.status === 404) return undefined
     throw new Error(`GitHub API ${method} ${path} -> HTTP ${res.status} ${await res.text()}`)
   }
-  return res.json()
+  // DELETE replies 204 No Content; don't try to parse an empty body as JSON.
+  return res.status === 204 ? undefined : res.json()
 }
 
-const comments = (await gh(
-  'GET',
-  `/repos/${repo}/issues/${prNumber}/comments?per_page=100`,
-)) as Array<{id: number; body?: string}>
-const existing = comments.find((c) => c.body?.includes(marker))
+// The list-issue-comments endpoint returns comments oldest-first with no sort
+// option, so we must walk every page: on a PR with >100 comments the sticky
+// comment falls off page 1, and reading only the first page would never find it
+// -- posting a fresh duplicate on every run. Collect all marker-bearing comments
+// across all pages instead.
+type Comment = {id: number; body?: string}
+const marked: Comment[] = []
+for (let page = 1; ; page++) {
+  const batch = (await gh(
+    'GET',
+    `/repos/${repo}/issues/${prNumber}/comments?per_page=100&page=${page}`,
+  )) as Comment[]
+  marked.push(...batch.filter((c) => c.body?.includes(marker)))
+  if (batch.length < 100) break
+}
 
-if (existing) {
-  await gh('PATCH', `/repos/${repo}/issues/comments/${existing.id}`, {body})
+// Keep the oldest marked comment (stable position in the thread), edit it in
+// place, and delete the rest -- this fixes forward and cleans up duplicates that
+// earlier runs already posted.
+const [keep, ...duplicates] = marked
+for (const dup of duplicates) {
+  await gh('DELETE', `/repos/${repo}/issues/comments/${dup.id}`)
+}
+if (keep) {
+  await gh('PATCH', `/repos/${repo}/issues/comments/${keep.id}`, {body})
 } else {
   await gh('POST', `/repos/${repo}/issues/${prNumber}/comments`, {body})
 }
-console.log('preview comment upserted')
+
+const removed = duplicates.length
+console.log(
+  `preview comment ${keep ? 'updated' : 'created'}${
+    removed ? ` (removed ${removed} duplicate${removed > 1 ? 's' : ''})` : ''
+  }`,
+)

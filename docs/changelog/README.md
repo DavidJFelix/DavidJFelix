@@ -4,9 +4,11 @@ Change history for the monorepo, organized as monthly files in reverse chronolog
 
 ## Format
 
-Each file is named `YYYY-MM.md` and contains entries grouped by date. Entries use [conventional commit](https://www.conventionalcommits.org/) categories.
+Each file is named `YYYY-MM.md` and contains entries grouped by date. Entries use
+[conventional commit](https://www.conventionalcommits.org/) categories.
 
-Months with no changes are skipped -- do not create an empty file. Gaps in the file list are expected and intentional.
+Months with no changes are skipped -- do not create an empty file. Gaps in the file list are
+expected and intentional.
 
 ```markdown
 ## YYYY-MM-DD
@@ -31,7 +33,9 @@ Use the app or area name: `djf.io`, `calendar-visualizer`, `ravrun`, `tooling`, 
 
 ## Per-app changelogs
 
-Published packages may maintain their own `CHANGELOG.md` at `apps/<name>/CHANGELOG.md` for release-specific history. This directory captures repo-wide changes across all apps and infrastructure.
+Published packages may maintain their own `CHANGELOG.md` at `apps/<name>/CHANGELOG.md` for
+release-specific history. This directory captures repo-wide changes across all apps and
+infrastructure.
 
 ## Files
 

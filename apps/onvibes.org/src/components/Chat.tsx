@@ -26,7 +26,9 @@ function Conversation() {
     try {
       await agent.sendMessage(message)
     } catch (error) {
-      setInput(message)
+      // Only restore the failed message if the field is still empty -- don't
+      // clobber anything the user typed while the send was in flight.
+      setInput((current) => current || message)
       setActionError(error instanceof Error ? error.message : String(error))
     }
   }

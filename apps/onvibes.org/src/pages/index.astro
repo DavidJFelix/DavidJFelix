@@ -1,12 +1,6 @@
 ---
-import Analytics from '../components/Analytics.astro'
-import '../index.css'
 import {css} from 'styled-system/css'
-
-// Only ship analytics on builds that carry the key (production deploy). Sentry is
-// injected separately by the @sentry/astro integration when PUBLIC_SENTRY_DSN is
-// set. Both stay off locally/CI/preview.
-const posthogEnabled = Boolean(import.meta.env.PUBLIC_POSTHOG_KEY)
+import BaseLayout from '../layouts/BaseLayout.astro'
 
 const title = 'onvibes.org'
 const description =
@@ -18,25 +12,18 @@ const features = [
 ]
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="generator" content={Astro.generator} />
-    <meta name="description" content={description} />
-    <title>{title}</title>
-    {posthogEnabled && <Analytics />}
-  </head>
-  <body
-    class={css({
-      minHeight: '100dvh',
-      display: 'flex',
-      flexDirection: 'column',
-      fontFamily: 'sans',
-      bg: 'white',
-      color: 'neutral.900',
-    })}
-  >
+<BaseLayout
+  title={title}
+  description={description}
+  bodyClass={css({
+    minHeight: '100dvh',
+    display: 'flex',
+    flexDirection: 'column',
+    fontFamily: 'sans',
+    bg: 'white',
+    color: 'neutral.900',
+  })}
+>
     <header
       class={css({
         display: 'flex',
@@ -136,5 +123,4 @@ const features = [
     >
       © 2026 {title}
     </footer>
-  </body>
-</html>
+</BaseLayout>

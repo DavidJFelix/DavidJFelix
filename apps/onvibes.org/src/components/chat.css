@@ -32,14 +32,14 @@
   background: #f5f5f5;
   font-size: 0.75rem;
 }
-.chat .status.streaming,
-.chat .status.completed {
+/* AgentStatus values from @flue/react: idle | connecting | submitted |
+   streaming | error. idle/connecting keep the neutral base style. */
+.chat .status.submitted,
+.chat .status.streaming {
   color: #0d5e3a;
   background: #dff5e8;
 }
-.chat .status.error,
-.chat .status.errored,
-.chat .status.disconnected {
+.chat .status.error {
   color: #8f2929;
   background: #fde7e7;
 }

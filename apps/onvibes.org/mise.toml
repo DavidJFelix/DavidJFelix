@@ -25,11 +25,11 @@ description = "Unit tests with Vitest (passWithNoTests until the first test land
 run = "pnpm run test"
 
 [tasks.build]
-description = "Build with Astro"
+description = "Build the site (Astro) and the deployable Flue worker"
 run = "pnpm run build"
 
 [tasks.smoke]
-description = "Smoke-test a local production boot (astro preview)"
+description = "Smoke-test a local production boot (wrangler dev on the built Flue worker)"
 depends = ["build"]
 run = "bun bin/smoke-local.ts"
 

@@ -80,7 +80,9 @@ position-independent arguments. `move(3, 7)` is unreviewable; `move({x: 3, y: 7}
 
 - **`interface` over `type` for object shapes** -- better error messages and hover output. `type` is
   allowed the moment its features are needed: unions, intersections, mapped or conditional types,
-  tuples, function types.
+  tuples, function types. Enforced by oxlint `typescript/consistent-type-definitions` (root
+  `.oxlintrc.json`), alongside `max-params` and `typescript/consistent-type-imports` for the
+  arguments and import rules above.
 - **`Prettify<T>`** flattens an intersection- or generic-built type into a readable hover; reach for
   it when a composed type leaks its plumbing:
   <!-- prettier-ignore -->

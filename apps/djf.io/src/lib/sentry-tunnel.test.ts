@@ -13,7 +13,7 @@ const post = (body: string): Request =>
   new Request(`https://djf.io${SENTRY_TUNNEL_ROUTE}`, {method: 'POST', body})
 
 // fetch stub that records its call and stands in for a 200 from Sentry ingest.
-const stubFetch = () => vi.fn(async () => new Response('{"id":"evt"}', {status: 200}))
+const stubFetch = () => vi.fn<typeof fetch>(async () => new Response('{"id":"evt"}', {status: 200}))
 
 test('rejects non-POST methods with 405 and an Allow header, without forwarding', async () => {
   const fetchImpl = stubFetch()

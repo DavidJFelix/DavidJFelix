@@ -7,6 +7,7 @@ import {fetchProducts} from '@/lib/shopify/catalog.ts'
 
 export const Route = createFileRoute('/products/')({
   loader: () => fetchProducts(),
+  head: () => ({meta: [{title: 'Shop — Forza Monica'}]}),
   component: ProductsPage,
 })
 

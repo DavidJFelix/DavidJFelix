@@ -7,6 +7,7 @@ import {
   CART_LINES_ADD_MUTATION,
   CART_LINES_REMOVE_MUTATION,
   CART_LINES_UPDATE_MUTATION,
+  CART_QUANTITY_QUERY,
   CART_QUERY,
   type Cart,
 } from '@/lib/shopify/queries.ts'
@@ -59,6 +60,21 @@ export const fetchCart = createServerFn().handler(async (): Promise<Cart | null>
     deleteCookie(CART_COOKIE)
   }
   return data.cart
+})
+
+// Powers the header badge, so it runs on every navigation (root route
+// loader): no cookie means no Shopify round trip, and a stale cart id is left
+// for fetchCart or the next mutation to clean up -- this read stays cheap and
+// side-effect free.
+export const fetchCartQuantity = createServerFn().handler(async (): Promise<number> => {
+  const cartId = getCookie(CART_COOKIE)
+  if (!cartId) {
+    return 0
+  }
+  const data = await storefrontQuery<{cart: {totalQuantity: number} | null}>(CART_QUANTITY_QUERY, {
+    cartId,
+  })
+  return data.cart?.totalQuantity ?? 0
 })
 
 export const addToCart = createServerFn({method: 'POST'})

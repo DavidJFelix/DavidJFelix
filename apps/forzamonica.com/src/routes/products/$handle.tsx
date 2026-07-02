@@ -11,6 +11,9 @@ import {fetchProduct} from '@/lib/shopify/catalog.ts'
 
 export const Route = createFileRoute('/products/$handle')({
   loader: ({params}) => fetchProduct({data: params.handle}),
+  head: ({loaderData}) => ({
+    meta: [{title: loaderData ? `${loaderData.title} — Forza Monica` : 'Forza Monica'}],
+  }),
   component: ProductPage,
 })
 

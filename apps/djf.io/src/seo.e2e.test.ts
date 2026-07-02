@@ -63,6 +63,14 @@ test('every sitemap page has Open Graph and Twitter card meta with a served og i
       'content',
       loc,
     )
+    await expect(head.locator('meta[property="og:locale"]'), `${loc} og:locale`).toHaveAttribute(
+      'content',
+      'en_US',
+    )
+    await expect(
+      head.locator('meta[property="og:image:alt"]'),
+      `${loc} og:image:alt`,
+    ).toHaveAttribute('content', /\S/)
     await expect(head.locator('meta[name="twitter:card"]'), `${loc} twitter:card`).toHaveAttribute(
       'content',
       'summary_large_image',
@@ -95,6 +103,11 @@ test('blog posts embed BlogPosting and BreadcrumbList JSON-LD matching the page'
   expect(jsonLd.url).toBe('https://djf.io/blog/2025-12-07-on-running/')
   expect(jsonLd.image).toBe('https://djf.io/og/blog/2025-12-07-on-running.png')
   expect(jsonLd.datePublished).toBe('2025-12-07T00:00:00.000Z')
+
+  await expect(page.locator('head meta[property="og:image:alt"]')).toHaveAttribute(
+    'content',
+    'Title card for On Running on djf.io',
+  )
 
   const breadcrumb = JSON.parse((await scripts.nth(1).textContent()) as string)
   expect(breadcrumb['@type']).toBe('BreadcrumbList')

@@ -90,6 +90,23 @@ test('BlogPost sets og:type article', async () => {
   expect(html).toMatch(/<meta property="og:type" content="article"/)
 })
 
+test('BlogPost emits article meta for the post', async () => {
+  const html = await container.renderToString(BlogPost, {
+    props: {post: fixturePost({author: 'DavidJFelix', tags: ['running']})},
+  })
+  const publishedTime = new Date(2025, 11, 7).toISOString()
+  expect(html).toContain(`<meta property="article:published_time" content="${publishedTime}"`)
+  expect(html).toMatch(/<meta property="article:author" content="DavidJFelix"/)
+  expect(html).toMatch(/<meta property="article:tag" content="running"/)
+})
+
+test('BlogPost article meta falls back to David J Felix as author', async () => {
+  const html = await container.renderToString(BlogPost, {
+    props: {post: fixturePost()},
+  })
+  expect(html).toMatch(/<meta property="article:author" content="David J Felix"/)
+})
+
 const jsonLdFrom = (html: string) => {
   const match = html.match(/<script type="application\/ld\+json">(.*?)<\/script>/s)
   expect(match).not.toBeNull()

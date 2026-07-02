@@ -45,6 +45,42 @@ test('BaseLayout renders og:type article when overridden', async () => {
   expect(html).toMatch(/<meta property="og:type" content="article"/)
 })
 
+// og:image:alt and twitter:image:alt render only alongside og:image, which
+// needs Astro.site; the container omits it, so the alt tags are asserted
+// against the real build in seo.e2e.test.ts.
+test('BaseLayout renders locale and twitter creator', async () => {
+  const html = await container.renderToString(BaseLayout, {
+    props: {title: 'x'},
+  })
+  expect(html).toMatch(/<meta property="og:locale" content="en_US"/)
+  expect(html).toMatch(/<meta name="twitter:creator" content="@davidjfelix"/)
+})
+
+test('BaseLayout renders article meta only when the article prop is given', async () => {
+  const withArticle = await container.renderToString(BaseLayout, {
+    props: {
+      title: 'x',
+      ogType: 'article',
+      article: {
+        publishedTime: '2025-12-07T00:00:00.000Z',
+        author: 'DavidJFelix',
+        tags: ['running', 'meta-blog'],
+      },
+    },
+  })
+  expect(withArticle).toMatch(
+    /<meta property="article:published_time" content="2025-12-07T00:00:00.000Z"/,
+  )
+  expect(withArticle).toMatch(/<meta property="article:author" content="DavidJFelix"/)
+  expect(withArticle).toMatch(/<meta property="article:tag" content="running"/)
+  expect(withArticle).toMatch(/<meta property="article:tag" content="meta-blog"/)
+
+  const withoutArticle = await container.renderToString(BaseLayout, {
+    props: {title: 'x'},
+  })
+  expect(withoutArticle).not.toContain('article:published_time')
+})
+
 test('BaseLayout renders Twitter card meta', async () => {
   const html = await container.renderToString(BaseLayout, {
     props: {title: 'A Title', description: 'A description'},

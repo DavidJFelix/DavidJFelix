@@ -59,6 +59,8 @@ const neighborLink = css({
   description={description}
   ogType="article"
   ogImage={ogImage}
+  ogImageAlt={`Title card for ${title} on djf.io`}
+  article={{publishedTime: date.toISOString(), author: author ?? 'David J Felix', tags}}
   jsonLd={jsonLd}
   standardDocumentUri={standardDocumentUri}
 >

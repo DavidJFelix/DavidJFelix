@@ -15,6 +15,9 @@ interface Props {
   description?: string
   ogType?: 'website' | 'article'
   ogImage?: string
+  ogImageAlt?: string
+  // Rendered as article:* OpenGraph meta; only articles pass it.
+  article?: {publishedTime: string; author: string; tags?: Array<string>}
   // Head extras are rendered directly here rather than forwarded through a
   // `<slot name="head" />`: Astro 7 does not render a named slot placed inside
   // `<head>` (the slot is received but emits nothing), which silently dropped
@@ -28,6 +31,8 @@ const {
   description = 'Personal blog of David J Felix',
   ogType = 'website',
   ogImage = '/og/default.png',
+  ogImageAlt = 'Title card for djf.io, the blog of David J Felix',
+  article,
   jsonLd,
   standardDocumentUri,
 } = Astro.props
@@ -139,15 +144,22 @@ const iconMenuOpen = css({display: 'none', '#nav-toggle[aria-expanded=true] &': 
     <meta property="og:description" content={description} />
     <meta property="og:type" content={ogType} />
     <meta property="og:site_name" content="djf.io" />
+    <meta property="og:locale" content="en_US" />
     {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
     {ogImageUrl && <meta property="og:image" content={ogImageUrl} />}
     {ogImageUrl && <meta property="og:image:width" content="1200" />}
     {ogImageUrl && <meta property="og:image:height" content="630" />}
+    {ogImageUrl && <meta property="og:image:alt" content={ogImageAlt} />}
+    {article && <meta property="article:published_time" content={article.publishedTime} />}
+    {article && <meta property="article:author" content={article.author} />}
+    {article?.tags?.map((tag) => <meta property="article:tag" content={tag} />)}
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@davidjfelix" />
+    <meta name="twitter:creator" content="@davidjfelix" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     {ogImageUrl && <meta name="twitter:image" content={ogImageUrl} />}
+    {ogImageUrl && <meta name="twitter:image:alt" content={ogImageAlt} />}
     <link
       rel="alternate"
       type="application/rss+xml"

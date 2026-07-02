@@ -36,8 +36,8 @@ toward a goal race.
   stepback labels and weekly totals; feasibility banners with a one-click "Use N weeks" fix;
   Download `.ics` button. Visual e2e baseline pins a fully-specified plan URL (including `today`).
 - `/about` explains the product: philosophy, how plans are built, paces, honesty checks, sharing.
-- Vite + React + Tailwind, built static; **ravrun.com + rav.run wired**, declared in
-  `wrangler.toml` as `custom_domain` routes.
+- Vite + React + Tailwind, built static; **ravrun.com + rav.run wired**, declared in `wrangler.toml`
+  as `custom_domain` routes.
 
 ## Stack
 

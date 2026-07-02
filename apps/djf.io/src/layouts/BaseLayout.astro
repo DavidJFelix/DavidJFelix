@@ -2,7 +2,8 @@
 import '../index.css'
 import '@fontsource-variable/schibsted-grotesk'
 import '@fontsource-variable/inter'
-import '@fontsource-variable/jetbrains-mono'
+import interLatinWoff2 from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url'
+import schibstedLatinWoff2 from '@fontsource-variable/schibsted-grotesk/files/schibsted-grotesk-latin-wght-normal.woff2?url'
 import {css} from 'styled-system/css'
 import Analytics from '../components/Analytics.astro'
 import Search from '../components/Search.astro'
@@ -18,7 +19,7 @@ interface Props {
   // `<slot name="head" />`: Astro 7 does not render a named slot placed inside
   // `<head>` (the slot is received but emits nothing), which silently dropped
   // the JSON-LD and standard-site link on every blog post.
-  jsonLd?: Record<string, unknown>
+  jsonLd?: Record<string, unknown> | Array<Record<string, unknown>>
   standardDocumentUri?: string | null
 }
 
@@ -37,21 +38,35 @@ const pathname = Astro.url.pathname.endsWith('/') ? Astro.url.pathname : `${Astr
 const canonicalUrl = Astro.site ? new URL(pathname, Astro.site) : undefined
 const ogImageUrl = Astro.site ? new URL(ogImage, Astro.site) : undefined
 
+const jsonLdItems = Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : []
+
 // Only ship analytics on builds that carry the key (production deploy). The
 // component guards on the key at runtime too; gating the render here keeps it
 // out of local/CI/preview output entirely.
 const posthogEnabled = Boolean(import.meta.env.PUBLIC_POSTHOG_KEY)
 
-const navLinks = [
+// The X logo stands in for the word in the desktop row, but the accessible
+// name and the mobile menu keep calling it Twitter.
+const X_ICON_PATH =
+  'M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.451-6.231Zm-1.161 17.52h1.833L7.084 4.126H5.117l11.966 15.644Z'
+
+const navLinks: Array<{href: string; label: string; iconPath?: string}> = [
   {href: '/blog', label: 'Blog'},
   {href: '/about', label: 'About'},
   {href: 'https://github.com/davidjfelix', label: 'GitHub'},
-  {href: 'https://twitter.com/davidjfelix', label: 'Twitter'},
+  {href: 'https://twitter.com/davidjfelix', label: 'Twitter', iconPath: X_ICON_PATH},
 ]
 
 const navLink = css({
   color: 'text.muted',
   textDecoration: 'none',
+  _hover: {color: 'text'},
+})
+
+const navIconLink = css({
+  display: 'flex',
+  alignItems: 'center',
+  color: 'text.muted',
   _hover: {color: 'text'},
 })
 
@@ -110,6 +125,12 @@ const iconMenuOpen = css({display: 'none', '#nav-toggle[aria-expanded=true] &': 
         document.documentElement.dataset.platform = 'mac'
       }
     </script>
+    {/* Latin is the only subset these pages use; preloading the two woff2s
+        that style above-the-fold text skips the CSS-then-font round trip.
+        fontsource@5 ships no per-subset CSS, but its unicode-range rules
+        already keep the other subsets from downloading. */}
+    <link rel="preload" as="font" type="font/woff2" href={interLatinWoff2} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={schibstedLatinWoff2} crossorigin />
     <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title} | djf.io</title>
@@ -136,7 +157,9 @@ const iconMenuOpen = css({display: 'none', '#nav-toggle[aria-expanded=true] &': 
     <link rel="sitemap" href="/sitemap-index.xml" />
     <link rel="site.standard.publication" href={publicationUri()} />
     {posthogEnabled && <Analytics />}
-    {jsonLd && <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+    {jsonLdItems.map((item) => (
+      <script is:inline type="application/ld+json" set:html={JSON.stringify(item)} />
+    ))}
     {standardDocumentUri && <link rel="site.standard.document" href={standardDocumentUri} />}
   </head>
   <body
@@ -184,9 +207,24 @@ const iconMenuOpen = css({display: 'none', '#nav-toggle[aria-expanded=true] &': 
                 gap: '6',
               })}
             >
-              {navLinks.map(({href, label}) => (
-                <a href={href} class={navLink}>{label}</a>
-              ))}
+              {navLinks.map(({href, label, iconPath}) =>
+                iconPath ? (
+                  <a href={href} aria-label={label} title={label} class={navIconLink}>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path d={iconPath}></path>
+                    </svg>
+                  </a>
+                ) : (
+                  <a href={href} class={navLink}>{label}</a>
+                ),
+              )}
             </div>
             <button
               type="button"

@@ -6,10 +6,10 @@ and see the whole block laid out.
 ## Status
 
 **Functional — full product loop shipped to the branch** (2026-07-01). Domains are live: ravrun.com
-and rav.run are wired (configured in the Cloudflare dashboard; `wrangler.toml` doesn't declare them
-— optional cleanup to make that declarative). The plan engine, form-driven UI (config in URL search
-params, so plans are shareable links), feasibility banners, and `.ics` export all landed; the
-hardcoded demo grid is gone. Remaining: `/about` explainer and taste-tuning the constants.
+and rav.run are wired and now declared in `wrangler.toml` (`custom_domain` routes, same pattern as
+davidjfelix.com). The plan engine, form-driven UI (config in URL search params, so plans are
+shareable links), feasibility banners, `.ics` export, and a real `/about` all landed; the hardcoded
+demo grid is gone. Remaining: taste-tuning the constants against rendered plans.
 
 ## Vision
 
@@ -36,7 +36,8 @@ toward a goal race.
   stepback labels and weekly totals; feasibility banners with a one-click "Use N weeks" fix;
   Download `.ics` button. Visual e2e baseline pins a fully-specified plan URL (including `today`).
 - `/about` explains the product: philosophy, how plans are built, paces, honesty checks, sharing.
-- Vite + React + Tailwind, built static; **ravrun.com + rav.run wired** (dashboard-configured).
+- Vite + React + Tailwind, built static; **ravrun.com + rav.run wired**, declared in
+  `wrangler.toml` as `custom_domain` routes.
 
 ## Stack
 
@@ -46,8 +47,8 @@ Vite + React + Tailwind, Cloudflare (static assets).
 
 ### Phase 1 — Plan engine + form-driven input
 
-- [x] Domains: ravrun.com / rav.run are live (dashboard-configured, 2026-07-01). Optional: declare
-      them in `wrangler.toml` so the config is committed.
+- [x] Domains: ravrun.com / rav.run are live and declared in `wrangler.toml` as `custom_domain`
+      routes (2026-07-01).
 - [x] Plan-generation engine (TDD, 2026-07-01): Riegel paces, phased progressive-mileage generator
       anchored on race date, feasibility checker. Constants centralized for controlled tuning.
 - [x] Form-driven input wired to the engine (2026-07-01): race distance + date, goal time, current

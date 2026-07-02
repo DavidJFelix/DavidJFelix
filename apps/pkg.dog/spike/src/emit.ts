@@ -29,8 +29,11 @@ export async function emitParts(
     await mkdir(dir, {recursive: true})
 
     for (const runtimePath of part.modules) {
+      // The _dist/ mirror is a guess; a module may ship no declaration file.
       const typesPath = typesPathOf(part, plan, runtimePath)
-      for (const filePath of [runtimePath, ...(typesPath === undefined ? [] : [typesPath])]) {
+      const hasTypes =
+        typesPath !== undefined && (await Bun.file(join(upstream.dir, typesPath)).exists())
+      for (const filePath of [runtimePath, ...(hasTypes ? [typesPath] : [])]) {
         const source = await Bun.file(join(upstream.dir, filePath)).text()
         const rewritten = rewriteCrossPartImports(source, filePath, part, plan)
         const target = join(dir, filePath)

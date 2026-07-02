@@ -117,6 +117,25 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: vitest
         run: mise run test
+  spike-test:
+    name: bun test (spike)
+    runs-on: depot-ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: bun install
+        run: bun install --frozen-lockfile
+        working-directory: apps/pkg.dog/spike
+      - name: bun test
+        run: bun test
+        working-directory: apps/pkg.dog/spike
   smoke:
     name: smoke (local production boot)
     runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.

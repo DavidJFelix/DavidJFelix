@@ -119,6 +119,74 @@ test('mutually-cyclic entries merge into one part', () => {
   expect(plan.parts[0]?.subpaths).toEqual(['./a', './b'])
 })
 
+test('a dependency boundary is not traversed: the dep part keeps its own internals', () => {
+  const plan = planOf(
+    [
+      {path: 'a.js', text: 'import {b} from "./b.js"\nexport const a = b\n'},
+      {path: 'b.js', text: 'import {h} from "./_h.js"\nexport const b = h\n'},
+      {path: '_h.js', text: 'export const h = 1\n'},
+    ],
+    [
+      ['./a', 'a.js'],
+      ['./b', 'b.js'],
+    ],
+  )
+  const partA = plan.parts.find((p) => p.name.endsWith('__a'))
+  const partB = plan.parts.find((p) => p.name.endsWith('__b'))
+  // a must not bundle b's private helper just because it reaches it through b.
+  expect(partA?.modules).toEqual(['a.js'])
+  expect(partA?.partDeps).toEqual(['@pkgdog/std__collections__b'])
+  expect(partB?.modules).toEqual(['_h.js', 'b.js'])
+})
+
+test('a merged cyclic part is addressable per original subpath by its dependents', () => {
+  const plan = planOf(
+    [
+      {path: 'a.js', text: 'import {b} from "./b.js"\nexport const a = () => b\n'},
+      {path: 'b.js', text: 'import {a} from "./a.js"\nexport const b = () => a\n'},
+      {path: 'd.js', text: 'import {a} from "./a.js"\nexport const d = a\n'},
+    ],
+    [
+      ['./a', 'a.js'],
+      ['./b', 'b.js'],
+      ['./d', 'd.js'],
+    ],
+  )
+  // d imports a, which lives inside the merged a--b part; the rewrite target
+  // must address that specific entry via its subpath alias.
+  expect(plan.moduleSpecifier['a.js']).toBe('@pkgdog/std__collections__a--b/a')
+  const partD = plan.parts.find((p) => p.name.endsWith('__d'))
+  expect(partD?.partDeps).toEqual(['@pkgdog/std__collections__a--b'])
+})
+
+test('a root entry with its own exports becomes the bare package part, not a skipped barrel', () => {
+  const plan = planOf([{path: 'mod.js', text: 'export const solo = 1\n'}], [['.', 'mod.js']])
+  expect(plan.skipped).toEqual([])
+  expect(plan.parts[0]?.name).toBe('@pkgdog/std__collections')
+  expect(Object.keys(plan.parts[0]?.exportsMap ?? {})).toEqual(['.'])
+})
+
+test('a module that re-exports two entries but also exports its own code is not a barrel', () => {
+  const plan = planOf(
+    [
+      {
+        path: 'mix.js',
+        text: 'export * from "./a.js"\nexport * from "./b.js"\nexport const own = 1\n',
+      },
+      {path: 'a.js', text: 'export const a = 1\n'},
+      {path: 'b.js', text: 'export const b = 2\n'},
+    ],
+    [
+      ['./mix', 'mix.js'],
+      ['./a', 'a.js'],
+      ['./b', 'b.js'],
+    ],
+  )
+  expect(plan.skipped).toEqual([])
+  const mix = plan.parts.find((p) => p.name.endsWith('__mix'))
+  expect(mix?.partDeps).toEqual(['@pkgdog/std__collections__a', '@pkgdog/std__collections__b'])
+})
+
 test('single-subpath parts expose both dot and the original subpath alias', () => {
   const plan = planOf([{path: 'a.js', text: 'export const a = 1\n'}], [['./a', 'a.js']])
   expect(

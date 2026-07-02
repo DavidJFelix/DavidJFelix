@@ -1,5 +1,5 @@
 import {expect, test} from 'vitest'
-import {breadcrumbs, person, PROFILE_URLS, webSite} from './structured-data'
+import {breadcrumbs, PROFILE_URLS, person, webSite} from './structured-data'
 
 const site = new URL('https://djf.io')
 

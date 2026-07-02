@@ -14,7 +14,7 @@ hero:
   tagline: Resolving to ship more in 2024. It's easier said than done, why is that?
   image:
     file: ../../assets/shipposting-hero.png
-    alt: 'ChatGPT Generated image with the following prompt: animated style illustration a software engineer with short blonde hair and a mustache, in a workspace. You can see the slightly conflicted and dissatisfied expression as you write your blog, surrounded by notes and sketches of various blog designs.'
+    alt: 'Illustration of a software engineer with short blond hair and a mustache at a cluttered desk, looking conflicted while sketching blog designs.'
 ---
 
 ## Expectations
@@ -34,7 +34,7 @@ In Reid Hoffman's words:
 > If you are not embarrassed by the first version of your product, you've launched too late.
 
 Hoffman's wisdom about perfectionism has always felt like it wants me to ignore my emotions.
-Accepting it without reasoning is problematic because it feels like accepting any other positive mindset grift -- like the only thing between you and a billion dollars is waking up at 4 am or an ice bath daily.
+Accepting it without reasoning is problematic because it feels like accepting any other positive mindset grift, like the only thing between you and a billion dollars is waking up at 4 am or an ice bath daily.
 Overlooking your embarrassment might get you to the goal, but ignoring it fails to learn anything from it.
 Without learning from it, you'll constantly battle anxiety, and you may be unable to reassure yourself that the goal is worthwhile.
 
@@ -45,7 +45,7 @@ Without that precision, it's easy to conflate two distinct ideas.
 Until now, that's been my problem.
 More precisely, I've been trying to "build a blog platform" rather than "write and publish more."
 
-It's second nature for engineers to consider one side of your requirements primarily -- they care about the product you build.
+It's second nature for engineers to consider only their side of the requirements: the product they build.
 Holding the product to strict quality standards over everything else is a convincing trap.
 The reality is the existential need for the product is its audience (aka customer, reader, user, etc.)
 If a product doesn't reach its audience, engineering has failed to build it.
@@ -55,12 +55,12 @@ It's disheartening that engineers can't save a product with quality or expertise
 The distinction between goals is in the shipping process; it lies in the "what," "how," and "to whom."
 In the past, I would object that shipping a platform **is shipping**.
 But, the audience is an existential need, and building a platform is shipping a product to an audience of just me.
-Writing blog posts is shipping a product to my actual audience -- readers.
+Writing blog posts is shipping a product to my actual audience: readers.
 
 Creating for yourself is comfortable because you're both the audience and the engineer.
 It short-circuits shipping without the vulnerability.
 Still, it's important not to conflate this goal that looks like yours with your actual goal.
-It's essential to Keep the actual product and audience in mind.
+It's essential to keep the actual product and audience in mind.
 It helps to set clear objectives to prevent yourself from misconstruing non-goals.
 Clarity here prevents amplifying your goal into something immense and more intricate.
 
@@ -73,7 +73,7 @@ Nobody can build everything all at once.
 Because of that, not all features can be the top priority.
 Non-technical goals are still features to develop.
 Shipping early might mean delaying **almost all** technical features.
-That can feel disappointing, but it's not that engineering does not matter -- it matters a lot.
+That can feel disappointing, but it's not that engineering does not matter, it matters a lot.
 Engineering can be instrumental in early decisions and keeping future features in mind.
 It ensures the product doesn't commit itself to a path needing dramatic correction.
 Engineers must ship with regularity to avoid blocking the primary goal.
@@ -93,7 +93,7 @@ Rather than building everything, you should stake these projects in their existe
 They should reach their audience first.
 Engineering goals can still be vital cornerstones, but building small and shipping to users is essential.
 
-![ChatGPT Generated image with the following prompt: banner-width illustration of a sunrise over a construction site, portrayed in a more exaggerated and vibrant animated style](../../assets/shipposting-banner.png)
+![Vibrant illustration of a sunrise over a construction site.](../../assets/shipposting-banner.png)
 
 ## Shipping
 

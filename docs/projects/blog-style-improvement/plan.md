@@ -2,10 +2,12 @@
 
 ## Status
 
-**Parked this stretch** (2026-06-29). David chose no active style work for now while content is the
-focus (see `blog-content`). The model is unchanged for when it resumes: David reviews the live site
-and issues specific changes; Claude executes, reviewed through per-PR preview URLs (shipped
-2026-06-17). The #171 style punch-list (discovery) stays open but is not being driven right now.
+**Active again** (2026-07-01). David ran a full critique of the live site ("criticize everything")
+and triaged it into a concrete change list, so style/UX work is moving again. Execution is bucketed:
+Claude drives the engineering items; copy and design-taste items are decided with David and reviewed
+through per-PR preview URLs (shipped 2026-06-17); a few are backlog or GitHub issues (#308 hero, #309
+off-site SEO). Session detail in `2026-07-01-progress.md`. The #171 discovery punch-list stays the
+umbrella for style direction.
 
 ## Goal
 

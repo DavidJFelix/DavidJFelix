@@ -32,6 +32,7 @@
     "@fontsource-variable/jetbrains-mono": "^5.2.8",
     "@fontsource-variable/schibsted-grotesk": "^5.2.8",
     "@fontsource/inter": "^5.2.8",
+    "@fortawesome/free-brands-svg-icons": "^7.3.0",
     "@radix-ui/colors": "^3.0.0",
     "@sentry/astro": "^10.59.0",
     "@types/react": "^19.2.17",

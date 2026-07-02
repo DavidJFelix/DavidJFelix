@@ -1,0 +1,96 @@
+---
+import type {CollectionEntry} from 'astro:content'
+import {css} from 'styled-system/css'
+import {formatBlogDate} from '../lib/blog'
+
+interface Props {
+  post: CollectionEntry<'blog'>
+  headingLevel?: 'h2' | 'h3'
+  showTags?: boolean
+  currentTag?: string
+}
+
+const {post, headingLevel = 'h2', showTags = true, currentTag} = Astro.props
+const {title, description, date, tags, readingTime} = post.data
+const Heading = headingLevel
+---
+
+<article
+  class={css({
+    position: 'relative',
+    p: '6',
+    bg: 'bg.subtle',
+    borderRadius: 'lg',
+    borderWidth: '1px',
+    borderStyle: 'solid',
+    borderColor: 'border.subtle',
+    transition: 'border-color 0.2s',
+    _hover: {borderColor: 'border'},
+  })}
+>
+  {/* The ::after overlay stretches this one link across the whole card, making
+      it a single click target without nesting links; tag chips stay clickable
+      above it via z-index. */}
+  <a
+    href={`/blog/${post.id}`}
+    class={css({
+      textDecoration: 'none',
+      color: 'text',
+      _hover: {color: 'accent.text'},
+      _after: {content: '""', position: 'absolute', inset: '0'},
+    })}
+  >
+    <Heading
+      class={css({
+        fontSize: 'xl',
+        fontWeight: 'semibold',
+        color: 'inherit',
+        mb: '2',
+      })}
+    >
+      {title}
+    </Heading>
+  </a>
+
+  <p class={css({color: 'text.muted', mb: '3', fontSize: 'sm'})}>{description}</p>
+
+  <div
+    class={css({
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: '3',
+      color: 'text.muted',
+      fontSize: 'xs',
+    })}
+  >
+    <span>{formatBlogDate(date)}</span>
+    {readingTime && <span>{readingTime} read</span>}
+  </div>
+
+  {
+    showTags && tags && tags.length > 0 && (
+      <div class={css({display: 'flex', flexWrap: 'wrap', gap: '2', mt: '3'})}>
+        {tags.map((tag: string) => (
+          <a
+            href={`/blog/tags/${tag}`}
+            aria-current={tag === currentTag ? 'page' : undefined}
+            class={css({
+              position: 'relative',
+              zIndex: 1,
+              bg: tag === currentTag ? 'bg.elementHover' : 'bg.element',
+              color: tag === currentTag ? 'text' : 'text.muted',
+              px: '2',
+              py: '0.5',
+              borderRadius: 'sm',
+              fontSize: 'xs',
+              textDecoration: 'none',
+              _hover: {bg: 'bg.elementHover', color: 'text'},
+            })}
+          >
+            {tag}
+          </a>
+        ))}
+      </div>
+    )
+  }
+</article>

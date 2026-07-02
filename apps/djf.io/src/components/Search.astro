@@ -11,7 +11,10 @@ const trigger = css({
   _hover: {color: 'text'},
 })
 
+// Keyboard hint is meaningless on touch and eats header width, so it only
+// renders from md up.
 const hint = css({
+  display: {base: 'none', md: 'inline-block'},
   borderWidth: '1px',
   borderStyle: 'solid',
   borderColor: 'border',

@@ -38,6 +38,18 @@ export function postsForTag<T extends DatedPost & TaggedPost>(
   return sortPostsByDateDesc(posts.filter((post) => post.data.tags?.includes(tag)))
 }
 
+// Chronological neighbors of the post with `id`: prev is the next-older post,
+// next the next-newer, matching a reader's sense on a newest-first blog.
+export function postNeighbors<T extends DatedPost & {id: string}>(
+  posts: ReadonlyArray<T>,
+  id: string,
+): {prev?: T; next?: T} {
+  const sorted = sortPostsByDateDesc(posts)
+  const index = sorted.findIndex((post) => post.id === id)
+  if (index === -1) return {}
+  return {prev: sorted[index + 1], next: sorted[index - 1]}
+}
+
 // Long-form en-US date, e.g. "December 7, 2025" -- the format shown across the
 // blog UI.
 export function formatBlogDate(date: Date): string {

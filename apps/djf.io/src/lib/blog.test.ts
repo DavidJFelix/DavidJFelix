@@ -1,9 +1,18 @@
 import {expect, test} from 'vitest'
-import {collectTags, formatBlogDate, postsForTag, sortPostsByDateDesc, tagCountsDesc} from './blog'
+import {
+  collectTags,
+  formatBlogDate,
+  postNeighbors,
+  postsForTag,
+  sortPostsByDateDesc,
+  tagCountsDesc,
+} from './blog'
 
 const post = (date: string, tags?: Array<string>) => ({
   data: {date: new Date(date), ...(tags === undefined ? {} : {tags})},
 })
+
+const idPost = (id: string, date: string) => ({id, data: {date: new Date(date)}})
 
 test('sortPostsByDateDesc orders posts newest first', () => {
   const a = post('2025-01-01')
@@ -57,6 +66,29 @@ test('postsForTag returns only matching posts, newest first', () => {
 
 test('postsForTag returns an empty array when no post carries the tag', () => {
   expect(postsForTag([post('2025-01-01', ['running'])], 'absent')).toEqual([])
+})
+
+test('postNeighbors finds both neighbors for a middle post', () => {
+  const newest = idPost('newest', '2025-06-01')
+  const middle = idPost('middle', '2025-03-01')
+  const oldest = idPost('oldest', '2025-01-01')
+  expect(postNeighbors([oldest, newest, middle], 'middle')).toEqual({prev: oldest, next: newest})
+})
+
+test('postNeighbors gives the newest post only an older neighbor', () => {
+  const newest = idPost('newest', '2025-06-01')
+  const oldest = idPost('oldest', '2025-01-01')
+  expect(postNeighbors([newest, oldest], 'newest')).toEqual({prev: oldest, next: undefined})
+})
+
+test('postNeighbors gives the oldest post only a newer neighbor', () => {
+  const newest = idPost('newest', '2025-06-01')
+  const oldest = idPost('oldest', '2025-01-01')
+  expect(postNeighbors([newest, oldest], 'oldest')).toEqual({prev: undefined, next: newest})
+})
+
+test('postNeighbors returns nothing for an unknown id', () => {
+  expect(postNeighbors([idPost('only', '2025-01-01')], 'absent')).toEqual({})
 })
 
 test('formatBlogDate renders a long-form en-US date', () => {

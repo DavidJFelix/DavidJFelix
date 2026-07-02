@@ -13,11 +13,14 @@ function Conversation() {
   const [instanceId] = useState(() => crypto.randomUUID())
   const [actionError, setActionError] = useState<string>()
   const agent = useFlueAgent({name: 'assistant', id: instanceId})
+  // One in-flight send per agent session -- Flue rejects concurrent
+  // submissions on the same instance, so gate the form while one is active.
+  const busy = agent.status === 'submitted' || agent.status === 'streaming'
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const message = input.trim()
-    if (!message) return
+    if (!message || busy) return
     setInput('')
     setActionError(undefined)
     try {
@@ -58,11 +61,12 @@ function Conversation() {
         <input
           aria-label="Message"
           autoComplete="off"
+          disabled={busy}
           onChange={(event) => setInput(event.target.value)}
           placeholder="Say hello"
           value={input}
         />
-        <button disabled={!input.trim()} type="submit">
+        <button disabled={busy || !input.trim()} type="submit">
           Send
         </button>
       </form>

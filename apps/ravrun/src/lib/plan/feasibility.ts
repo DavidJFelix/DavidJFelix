@@ -34,6 +34,13 @@ function goalGapFinding(request: PlanRequest): Finding | undefined {
       message: `Your recent race predicts ${formatDuration(predicted)}; this goal is aggressive but within reach on a strong block.`,
     }
   }
+  if (gap < -PLAN_RULES.goalGapConservativeFraction) {
+    return {
+      level: 'info',
+      code: 'conservative-goal',
+      message: `Your recent race predicts ${formatDuration(predicted)} — this goal has headroom, so you could aim faster.`,
+    }
+  }
   return undefined
 }
 

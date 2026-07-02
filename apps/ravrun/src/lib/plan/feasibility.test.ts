@@ -101,4 +101,8 @@ test('flags goals that outrun the fitness the recent race predicts', () => {
 
   const unrealistic = assessFeasibility(marathonRequest(predicted * 0.88))
   expect(unrealistic.find((finding) => finding.code === 'unrealistic-goal')?.level).toBe('danger')
+
+  // The flip side: a goal well slower than predicted gets a friendly nudge.
+  const conservative = assessFeasibility(marathonRequest(predicted * 1.1))
+  expect(conservative.find((finding) => finding.code === 'conservative-goal')?.level).toBe('info')
 })

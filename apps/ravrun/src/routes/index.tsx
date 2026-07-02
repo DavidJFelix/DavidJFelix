@@ -1,5 +1,6 @@
 import {createFileRoute, useNavigate} from '@tanstack/react-router'
 import {addDays, format, parseISO} from 'date-fns'
+import {useState} from 'react'
 import {DEFAULT_DURATION_WEEKS, RACE_DISTANCE_MILES} from '../lib/plan/constants'
 import type {Finding} from '../lib/plan/feasibility'
 import {assessFeasibility} from '../lib/plan/feasibility'
@@ -150,7 +151,8 @@ function HomeComponent() {
       <PlanForm config={config} search={search} onChange={updateSearch} />
       <FindingsList findings={findings} onUseSuggestedWeeks={(weeks) => updateSearch({weeks})} />
       <PlanToolbar plan={plan} />
-      <PlanGrid plan={plan} />
+      <WorkoutLegend />
+      <PlanGrid plan={plan} today={config.today} />
     </main>
   )
 }
@@ -328,6 +330,39 @@ function PlanToolbar({plan}: {plan: TrainingPlan}) {
       >
         Download .ics
       </button>
+      <CopyLinkButton />
+    </div>
+  )
+}
+
+// The URL already encodes the whole plan config; sharing it is one click.
+function CopyLinkButton() {
+  const [copied, setCopied] = useState(false)
+  const copyLink = () => {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+  return (
+    <button
+      type="button"
+      className="rounded border border-gray-400 dark:border-gray-600 px-3 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+      onClick={copyLink}
+    >
+      {copied ? 'Copied!' : 'Copy link'}
+    </button>
+  )
+}
+
+function WorkoutLegend() {
+  return (
+    <div className="flex flex-wrap gap-2 text-xs">
+      {(Object.keys(WORKOUT_STYLES) as WorkoutType[]).map((type) => (
+        <span key={type} className={`rounded px-2 py-0.5 capitalize ${WORKOUT_STYLES[type]}`}>
+          {type}
+        </span>
+      ))}
     </div>
   )
 }
@@ -350,24 +385,26 @@ const PHASE_STYLES: Record<PlanWeek['phase'], string> = {
   race: 'text-yellow-700 dark:text-yellow-400',
 }
 
-function PlanGrid({plan}: {plan: TrainingPlan}) {
+function PlanGrid({plan, today}: {plan: TrainingPlan; today: string}) {
   const headerDates = plan.weeks[0]?.days ?? []
   return (
-    <div className="grid grid-cols-[auto_repeat(7,minmax(0,1fr))] gap-1 text-xs">
-      <div />
-      {headerDates.map((day) => (
-        <div key={day.date} className="p-1 text-center font-semibold">
-          {format(parseISO(day.date), 'EEE')}
-        </div>
-      ))}
-      {plan.weeks.map((week) => (
-        <WeekRow key={week.index} week={week} />
-      ))}
+    <div className="overflow-x-auto">
+      <div className="grid grid-cols-[auto_repeat(7,minmax(0,1fr))] gap-1 text-xs min-w-[56rem]">
+        <div />
+        {headerDates.map((day) => (
+          <div key={day.date} className="p-1 text-center font-semibold">
+            {format(parseISO(day.date), 'EEE')}
+          </div>
+        ))}
+        {plan.weeks.map((week) => (
+          <WeekRow key={week.index} week={week} today={today} />
+        ))}
+      </div>
     </div>
   )
 }
 
-function WeekRow({week}: {week: PlanWeek}) {
+function WeekRow({week, today}: {week: PlanWeek; today: string}) {
   return (
     <>
       <div className="p-2 pr-3 text-right">
@@ -379,16 +416,20 @@ function WeekRow({week}: {week: PlanWeek}) {
         <div className="text-gray-500 dark:text-gray-400">{Math.round(week.totalMiles)} mi</div>
       </div>
       {week.days.map((day) => (
-        <DayCell key={day.date} day={day} />
+        <DayCell key={day.date} day={day} isToday={day.date === today} />
       ))}
     </>
   )
 }
 
-function DayCell({day}: {day: PlanDay}) {
+function DayCell({day, isToday}: {day: PlanDay; isToday: boolean}) {
   const date = parseISO(day.date)
   return (
-    <div className="p-1 rounded border border-gray-200 dark:border-gray-800 flex flex-col gap-1 min-h-16">
+    <div
+      className={`p-1 rounded border flex flex-col gap-1 min-h-16 ${
+        isToday ? 'border-sky-500 border-2' : 'border-gray-200 dark:border-gray-800'
+      }`}
+    >
       <span className="text-gray-500 dark:text-gray-400">{format(date, 'MMM d')}</span>
       {day.workout ? (
         <span className={`rounded px-1 py-0.5 ${WORKOUT_STYLES[day.workout.type]}`}>

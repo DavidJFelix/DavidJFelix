@@ -35,7 +35,7 @@ toward a goal race.
   long-run day — config lives in URL search params (shareable plans); color-coded grid with phase +
   stepback labels and weekly totals; feasibility banners with a one-click "Use N weeks" fix;
   Download `.ics` button. Visual e2e baseline pins a fully-specified plan URL (including `today`).
-- `/about` is a stub.
+- `/about` explains the product: philosophy, how plans are built, paces, honesty checks, sharing.
 - Vite + React + Tailwind, built static; **ravrun.com + rav.run wired** (dashboard-configured).
 
 ## Stack
@@ -58,7 +58,7 @@ Vite + React + Tailwind, Cloudflare (static assets).
 
 ### Phase 2 — Make the plan yours
 
-- [ ] Flesh out `/about` into a real explainer.
+- [x] Flesh out `/about` into a real explainer (2026-07-01).
 - [ ] Taste-tune constants against rendered plans (peak long run 20 vs 22, marathon taper 2 vs 1
       weeks).
 - [ ] Days-per-week flexibility (template currently assumes 6 run days + rest).

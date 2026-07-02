@@ -3,6 +3,7 @@
 // resolves at build.
 // eslint-disable-next-line import/default
 import cloudflare from '@astrojs/cloudflare'
+import react from '@astrojs/react'
 // eslint-disable-next-line import/default
 import sentry from '@sentry/astro'
 import {defineConfig, sessionDrivers} from 'astro/config'
@@ -32,7 +33,14 @@ const sentrySourceMaps =
 // tests cover only pure src/lib, so they need no adapter.
 const adapter = process.env.VITEST
   ? undefined
-  : cloudflare({imageService: 'passthrough', prerenderEnvironment: 'node'})
+  : cloudflare({
+      imageService: 'passthrough',
+      prerenderEnvironment: 'node',
+      // Read a DO-free config so `astro build`'s miniflare validation doesn't
+      // choke on the Flue agent Durable Objects (declared in wrangler.toml,
+      // which `flue build` consumes). See wrangler-astro.jsonc.
+      configPath: './wrangler-astro.jsonc',
+    })
 
 // https://astro.build/config
 export default defineConfig({
@@ -47,6 +55,10 @@ export default defineConfig({
   // CSRF origin check would otherwise 403 the SDKs' POSTs, so disable it.
   security: {checkOrigin: false},
   integrations: [
+    // React powers the /chat island (Flue's React hooks). The islands
+    // architecture keeps it scoped to that page -- every other route stays
+    // static, zero-JS.
+    react(),
     sentry({
       enabled: {client: Boolean(SENTRY_DSN), server: false},
       telemetry: false,

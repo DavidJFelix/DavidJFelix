@@ -6,6 +6,9 @@
   "ignorePaths": [
     "node_modules",
     "dist",
+    "dist-flue",
+    ".flue-vite",
+    ".flue-vite.wrangler.jsonc",
     "build",
     ".git",
     "pnpm-lock.yaml",
@@ -32,6 +35,10 @@
   "words": [
     "biomejs",
     "davidjfelix",
+    "earendil",
+    "genai",
+    "miniflare",
+    "zstd",
     "oxlint",
     "cspell",
     "pnpm",

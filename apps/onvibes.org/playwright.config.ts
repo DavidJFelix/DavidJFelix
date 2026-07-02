@@ -24,11 +24,13 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   projects: [{name: 'chromium', use: {...devices['Desktop Chrome']}}],
-  // Nothing to boot when pointed at a deployed preview.
+  // Nothing to boot when pointed at a deployed preview. The local boot uses the
+  // Flue worker config -- the artifact CD deploys (Astro hosted inside it, /api
+  // agent DOs included) -- so e2e exercises the same worker production runs.
   webServer: PREVIEW_URL
     ? undefined
     : {
-        command: `node_modules/.bin/wrangler dev -c dist/server/wrangler.json --ip 127.0.0.1 --port ${PORT}`,
+        command: `node_modules/.bin/wrangler dev -c dist-flue/onvibes_org/wrangler.json --ip 127.0.0.1 --port ${PORT}`,
         url: BASE_URL,
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,

@@ -1,8 +1,10 @@
 #:schema node_modules/wrangler/config-schema.json
 name = "onvibes-org"
 # Flue owns the deployed Worker and hosts Astro inside it (src/app.ts); `flue
-# build` overrides `main` with its generated entry. This value is what the
-# @astrojs/cloudflare adapter uses for its own (unused) build output.
+# build` overrides `main` with its generated entry, and the @astrojs/cloudflare
+# adapter reads wrangler-astro.jsonc instead of this file. The value is a
+# required-but-unused placeholder (a wrangler config with [[migrations]] must
+# declare a main).
 main = "@astrojs/cloudflare/entrypoints/server"
 compatibility_date = "2026-06-01"
 compatibility_flags = ["nodejs_compat"]

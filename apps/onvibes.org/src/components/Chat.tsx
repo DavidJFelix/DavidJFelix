@@ -1,10 +1,7 @@
 import {type FlueConversationPart, FlueProvider, useFlueAgent} from '@flue/react'
 import {createFlueClient} from '@flue/sdk'
-import React, {useState} from 'react'
+import {type FormEvent, useState} from 'react'
 import './chat.css'
-
-// Keep React in value scope for the JSX runtime; harmless if unused.
-void React
 
 // The Flue agent HTTP API is served at /api by the Flue Worker that hosts this
 // Astro app (see src/app.ts). Same origin, so a relative baseUrl is all we need.
@@ -17,7 +14,7 @@ function Conversation() {
   const [actionError, setActionError] = useState<string>()
   const agent = useFlueAgent({name: 'assistant', id: instanceId})
 
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const message = input.trim()
     if (!message) return
@@ -46,8 +43,12 @@ function Conversation() {
         {agent.messages.map((message) => (
           <article className={`message ${message.role}`} key={message.id}>
             <strong>{message.role}</strong>
-            {message.parts.map((part) => (
-              <MessagePart key={partKey(part)} part={part} />
+            {/* Parts are append-only within a message and text/reasoning parts
+                carry no id, so the position is the stable identity. Keying by
+                content would remount the node on every streaming delta. */}
+            {message.parts.map((part, index) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: append-only array, no stable id on parts
+              <MessagePart key={index} part={part} />
             ))}
           </article>
         ))}
@@ -107,12 +108,6 @@ function isSafeUrl(url: string): boolean {
   } catch {
     return false
   }
-}
-
-function partKey(part: FlueConversationPart): string {
-  if (part.type === 'dynamic-tool') return `tool:${part.toolCallId}`
-  if (part.type === 'file') return `file:${part.id ?? part.url ?? part.mediaType}`
-  return `${part.type}:${part.text}`
 }
 
 export default function Chat() {

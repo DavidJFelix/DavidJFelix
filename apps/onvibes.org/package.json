@@ -6,8 +6,9 @@
     "prepare": "panda codegen",
     "dev": "astro dev",
     "dev:worker": "flue dev --target cloudflare",
-    "build": "panda codegen && astro build && flue build --target cloudflare",
+    "build": "pnpm run build:astro && pnpm run build:worker",
     "build:astro": "panda codegen && astro build",
+    "build:worker": "flue build --target cloudflare && bun bin/patch-flue-wrangler.ts",
     "preview": "astro preview",
     "astro": "astro",
     "typecheck": "astro check",
@@ -29,11 +30,10 @@
     "@sentry/astro": "^10.60.0",
     "agents": "^0.14.5",
     "astro": "^7.0.0",
-    "hono": "4.12.26",
+    "hono": "4.12.27",
     "posthog-js": "^1.393.0",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7",
-    "valibot": "^1.4.2"
+    "react-dom": "^19.2.7"
   },
   "devDependencies": {
     "@astrojs/check": "0.9.9",

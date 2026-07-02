@@ -1,24 +1,16 @@
 ---
 import Chat from '../components/Chat.tsx'
+import BaseLayout from '../layouts/BaseLayout.astro'
 
 const title = 'Chat · onvibes.org'
 const description = 'A simple React chat, wired to onvibes via a Flue agent.'
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="generator" content={Astro.generator} />
-    <meta name="description" content={description} />
-    <title>{title}</title>
-  </head>
-  <body>
-    <!--
-      client:only="react" -- the chat is fully client-driven (crypto.randomUUID
-      for the instance id, Flue's streaming hooks), so there's nothing to render
-      on the server; skip SSR of the island entirely.
-    -->
-    <Chat client:only="react" />
-  </body>
-</html>
+<BaseLayout title={title} description={description}>
+  <!--
+    client:only="react" -- the chat is fully client-driven (crypto.randomUUID
+    for the instance id, Flue's streaming hooks), so there's nothing to render
+    on the server; skip SSR of the island entirely.
+  -->
+  <Chat client:only="react" />
+</BaseLayout>

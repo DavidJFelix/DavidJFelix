@@ -1,0 +1,34 @@
+---
+import Analytics from '../components/Analytics.astro'
+import '../index.css'
+
+// Shared document shell: head boilerplate, the Panda base stylesheet, and
+// analytics wiring live here so every page gets them and head changes happen
+// once. `bodyClass` lets a page keep styling the <body> itself (index.astro's
+// layout styles live there).
+interface Props {
+  title: string
+  description: string
+  bodyClass?: string
+}
+const {title, description, bodyClass} = Astro.props
+
+// Only ship analytics on builds that carry the key (production deploy). Sentry
+// is injected separately by the @sentry/astro integration when
+// PUBLIC_SENTRY_DSN is set. Both stay off locally/CI/preview.
+const posthogEnabled = Boolean(import.meta.env.PUBLIC_POSTHOG_KEY)
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+    {posthogEnabled && <Analytics />}
+  </head>
+  <body class={bodyClass}>
+    <slot />
+  </body>
+</html>

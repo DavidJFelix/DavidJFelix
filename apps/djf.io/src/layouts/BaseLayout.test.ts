@@ -161,6 +161,18 @@ test('BaseLayout renders nav links to home, blog, github, twitter', async () => 
   expect(html).toMatch(/href="https:\/\/twitter\.com\/davidjfelix"/)
 })
 
+test('BaseLayout renders GitHub and Twitter as icon links with accessible names', async () => {
+  const html = await container.renderToString(BaseLayout, {
+    props: {title: 'x'},
+  })
+  expect(html).toMatch(
+    /<a href="https:\/\/github\.com\/davidjfelix" aria-label="GitHub"[^>]*>\s*<svg/,
+  )
+  expect(html).toMatch(
+    /<a href="https:\/\/twitter\.com\/davidjfelix" aria-label="Twitter"[^>]*>\s*<svg/,
+  )
+})
+
 test('BaseLayout renders the search trigger button in nav', async () => {
   const html = await container.renderToString(BaseLayout, {
     props: {title: 'x'},

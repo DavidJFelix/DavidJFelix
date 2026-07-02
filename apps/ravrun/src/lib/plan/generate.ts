@@ -148,6 +148,42 @@ function paceBandFor(
   return paces?.[type]
 }
 
+// When the goal outruns current fitness, training bands drift linearly from
+// current-fitness paces toward goal-fitness paces across the block. A goal
+// slower than predicted never drags training paces backward.
+function goalFitnessPaces(request: PlanRequest): TrainingPaces | undefined {
+  const {recentRace} = request.runner
+  const {goalTimeSeconds} = request.race
+  if (recentRace === undefined || goalTimeSeconds === undefined) return undefined
+  const distanceMiles = RACE_DISTANCE_MILES[request.race.distance]
+  if (goalTimeSeconds >= predictRaceTime(recentRace, distanceMiles)) return undefined
+  return trainingPaces({distanceMiles, timeSeconds: goalTimeSeconds})
+}
+
+function lerpBand(from: PaceBand, to: PaceBand, fraction: number): PaceBand {
+  return {
+    minSecondsPerMile:
+      from.minSecondsPerMile + (to.minSecondsPerMile - from.minSecondsPerMile) * fraction,
+    maxSecondsPerMile:
+      from.maxSecondsPerMile + (to.maxSecondsPerMile - from.maxSecondsPerMile) * fraction,
+  }
+}
+
+function driftedPaces(
+  paces: TrainingPaces | undefined,
+  goalPaces: TrainingPaces | undefined,
+  fraction: number,
+): TrainingPaces | undefined {
+  if (paces === undefined || goalPaces === undefined) return paces
+  return {
+    easy: lerpBand(paces.easy, goalPaces.easy, fraction),
+    long: lerpBand(paces.long, goalPaces.long, fraction),
+    recovery: lerpBand(paces.recovery, goalPaces.recovery, fraction),
+    tempo: lerpBand(paces.tempo, goalPaces.tempo, fraction),
+    interval: lerpBand(paces.interval, goalPaces.interval, fraction),
+  }
+}
+
 function raceWeekWorkout(dayIndex: number, distance: RaceDistance): Workout | undefined {
   if (dayIndex === 6) return {type: 'race', distanceMiles: RACE_DISTANCE_MILES[distance]}
   if (dayIndex === 5) return {type: 'shakeout', distanceMiles: PLAN_RULES.shakeoutMiles}
@@ -167,6 +203,7 @@ export function generatePlan(request: PlanRequest): TrainingPlan {
   const startDate = addDays(raceDate, -(durationWeeks * 7 - 1))
   const longRunDay = request.runner.longRunDay ?? PLAN_RULES.defaultLongRunDay
   const paces = request.runner.recentRace ? trainingPaces(request.runner.recentRace) : undefined
+  const goalPaces = goalFitnessPaces(request)
   const raceBand = racePaceBand(request)
   const phases = assignPhases(durationWeeks, request.race.distance)
   const stepbacks = assignStepbacks(phases)
@@ -216,11 +253,13 @@ export function generatePlan(request: PlanRequest): TrainingPlan {
       }
     }
 
+    const driftFraction = durationWeeks <= 1 ? 1 : weekIndex / (durationWeeks - 1)
+    const weekPaces = driftedPaces(paces, goalPaces, driftFraction)
     const days = weekDates.map((date, dayIndex): PlanDay => {
       const workout = workouts[dayIndex]
       return {
         date: format(date, 'yyyy-MM-dd'),
-        workout: workout && {...workout, paceBand: paceBandFor(workout.type, paces, raceBand)},
+        workout: workout && {...workout, paceBand: paceBandFor(workout.type, weekPaces, raceBand)},
       }
     })
     const totalMiles = workouts.reduce((total, workout) => total + (workout?.distanceMiles ?? 0), 0)

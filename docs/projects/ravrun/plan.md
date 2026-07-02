@@ -5,11 +5,11 @@ and see the whole block laid out.
 
 ## Status
 
-**Functional — plan engine landed, UI wiring next** (2026-07-01). Domains are live: ravrun.com and
-rav.run are wired (configured in the Cloudflare dashboard; `wrangler.toml` doesn't declare them —
-optional cleanup to make that declarative). A real training-plan engine now lives in `src/lib/plan/`
-(built TDD, 100% statement coverage); the near-term work is wiring the form UI + URL state on top of
-it, replacing the hardcoded demo grid.
+**Functional — full product loop shipped to the branch** (2026-07-01). Domains are live: ravrun.com
+and rav.run are wired (configured in the Cloudflare dashboard; `wrangler.toml` doesn't declare them
+— optional cleanup to make that declarative). The plan engine, form-driven UI (config in URL search
+params, so plans are shareable links), feasibility banners, and `.ics` export all landed; the
+hardcoded demo grid is gone. Remaining: `/about` explainer and taste-tuning the constants.
 
 ## Vision
 
@@ -19,16 +19,22 @@ toward a goal race.
 
 ## Current state (2026-07-01)
 
-- **Plan engine** in `src/lib/plan/` (pure logic, 20 unit tests, repo coverage gate green):
+- **Plan engine** in `src/lib/plan/` (pure logic, 25 unit tests, repo coverage gate green):
   - `constants.ts` — every tunable training rule (stepback cadence, peak long runs, taper factors,
     pace offsets, ramp cap) in one central object.
   - `paces.ts` — Riegel race prediction, Daniels-lite training pace bands, parse/format helpers.
   - `generate.ts` — race-date-anchored generator: base → build → peak → taper → race phases,
     every-4th-week stepbacks, long-run progression, week template rotating around the long-run day,
-    race week with shakeout. Modeled on David's real 2026 marathon plan (yearroundrunning.com ICS).
+    race week with shakeout, pace bands drifting toward goal fitness when the goal is faster than
+    predicted. Modeled on David's real 2026 marathon plan (yearroundrunning.com ICS).
   - `feasibility.ts` — achievability findings: aggressive/unrealistic goal vs. Riegel prediction,
     unsafe mileage ramp (with `suggestedWeeks`), too-short plan, window already underway.
-- UI still renders the old hardcoded 18-week demo grid — not yet wired to the engine.
+  - `ics.ts` — deterministic `.ics` export: one all-day event per workout with distance, pace band,
+    and week/phase context.
+- **Form-driven UI** on `/`: race, date, goal time, weekly mileage, recent race, plan length,
+  long-run day — config lives in URL search params (shareable plans); color-coded grid with phase +
+  stepback labels and weekly totals; feasibility banners with a one-click "Use N weeks" fix;
+  Download `.ics` button. Visual e2e baseline pins a fully-specified plan URL (including `today`).
 - `/about` is a stub.
 - Vite + React + Tailwind, built static; **ravrun.com + rav.run wired** (dashboard-configured).
 
@@ -44,18 +50,23 @@ Vite + React + Tailwind, Cloudflare (static assets).
       them in `wrangler.toml` so the config is committed.
 - [x] Plan-generation engine (TDD, 2026-07-01): Riegel paces, phased progressive-mileage generator
       anchored on race date, feasibility checker. Constants centralized for controlled tuning.
-- [ ] Form-driven input wired to the engine: race distance + date, goal time, current weekly
-      mileage, recent race, days/week, long-run day → generated schedule in the grid. Config in URL
-      search params so plans are shareable links for free.
-- [ ] Surface feasibility findings in the UI (aggressive goal, unsafe ramp + suggested weeks).
+- [x] Form-driven input wired to the engine (2026-07-01): race distance + date, goal time, current
+      weekly mileage, recent race, plan length, long-run day → generated schedule in the grid.
+      Config in URL search params so plans are shareable links for free.
+- [x] Surface feasibility findings in the UI (2026-07-01): aggressive goal, unsafe ramp with a
+      one-click "Use N weeks" button.
 
 ### Phase 2 — Make the plan yours
 
 - [ ] Flesh out `/about` into a real explainer.
+- [ ] Taste-tune constants against rendered plans (peak long run 20 vs 22, marathon taper 2 vs 1
+      weeks).
+- [ ] Days-per-week flexibility (template currently assumes 6 run days + rest).
 
 ### Phase 3 — Take it with you
 
-- [ ] Export the plan to `.ics` / calendar; shareable links.
+- [x] Export the plan to `.ics` (2026-07-01, client-side download); shareable links via URL state.
+- [ ] Post-race continuation blocks (recovery / maintenance appended after race week).
 
 ## Related
 

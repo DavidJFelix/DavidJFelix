@@ -173,6 +173,34 @@ test('attaches pace bands from a recent race and the goal time', () => {
   expect(predictedBand?.minSecondsPerMile).toBeCloseTo(549, 0)
 })
 
+// When the goal outruns current fitness, training paces drift from
+// current-fitness bands toward goal-fitness bands across the block (as
+// David's real plan does). Week 1 trains where you are; the final training
+// week sits near where you're going. A slower-than-predicted goal never
+// drags paces backward (pinned by the static-band assertions above).
+test('drifts pace bands toward goal fitness when the goal is faster', () => {
+  const recentRace = {distanceMiles: RACE_DISTANCE_MILES.fiveK, timeSeconds: 25 * 60}
+  const plan = generatePlan({
+    race: {distance: 'marathon', date: '2026-10-18', goalTimeSeconds: 3.5 * 3600},
+    runner: {weeklyMileage: 24, recentRace},
+    durationWeeks: 20,
+  })
+  const easyMin = (weekIndex: number) =>
+    plan.weeks[weekIndex]?.days.find((day) => day.workout?.type === 'easy')?.workout?.paceBand
+      ?.minSecondsPerMile ?? 0
+
+  const current = trainingPaces(recentRace)
+  expect(easyMin(0)).toBeCloseTo(current.easy.minSecondsPerMile, 5)
+  expect(easyMin(9)).toBeLessThan(easyMin(0))
+  expect(easyMin(18)).toBeLessThan(easyMin(9))
+
+  const goalFitness = trainingPaces({
+    distanceMiles: RACE_DISTANCE_MILES.marathon,
+    timeSeconds: 3.5 * 3600,
+  })
+  expect(Math.abs(easyMin(18) - goalFitness.easy.minSecondsPerMile)).toBeLessThan(5)
+})
+
 // The schedule shape is flexible: a Sunday long run rotates the whole week
 // with it (recovery Monday, rest Tuesday, tempo Wednesday...).
 test('moves the whole rotation when the long run day changes', () => {

@@ -92,6 +92,9 @@ export const PLAN_RULES = {
   // blowing up at the race).
   goalGapWarningFraction: 0.05,
   goalGapDangerFraction: 0.1,
+  // ...and how far it may lag the prediction before a "you could aim
+  // faster" nudge.
+  goalGapConservativeFraction: 0.05,
 
   // Feasibility: weekly volume growth beyond this fraction between full
   // weeks risks injury; suggested alternatives are capped at a year out.

@@ -123,6 +123,13 @@ test('BaseLayout omits the ld+json script when no jsonLd prop is given', async (
   expect(html).not.toContain('application/ld+json')
 })
 
+test('BaseLayout escapes angle brackets inside JSON-LD payloads', async () => {
+  const html = await container.renderToString(BaseLayout, {
+    props: {title: 'x', jsonLd: {headline: '</script><img>'}},
+  })
+  expect(html).toContain('{"headline":"\\u003c/script>\\u003cimg>"}')
+})
+
 test('BaseLayout renders one ld+json script per entry when jsonLd is an array', async () => {
   const html = await container.renderToString(BaseLayout, {
     props: {title: 'x', jsonLd: [{'@type': 'WebSite'}, {'@type': 'Person'}]},

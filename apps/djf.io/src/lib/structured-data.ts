@@ -1,5 +1,6 @@
-// JSON-LD builders for the pages that emit structured data: Person and
-// WebSite on the home and about pages, BreadcrumbList on blog posts.
+// JSON-LD builders for the pages that emit structured data: Person plus
+// WebSite on the home page, Person alone on About (the WebSite entity
+// belongs to the site root once), BreadcrumbList on blog posts.
 // Absolute URLs need Astro.site; when it is unset (unit-test containers,
 // bare local builds) the url fields stay undefined and JSON.stringify
 // drops them.

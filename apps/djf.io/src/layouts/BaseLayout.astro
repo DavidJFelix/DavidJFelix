@@ -45,7 +45,11 @@ const pathname = Astro.url.pathname.endsWith('/') ? Astro.url.pathname : `${Astr
 const canonicalUrl = Astro.site ? new URL(pathname, Astro.site) : undefined
 const ogImageUrl = Astro.site ? new URL(ogImage, Astro.site) : undefined
 
-const jsonLdItems = Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : []
+// JSON.stringify leaves "<" unescaped, so a value containing "</script>"
+// would close the inline tag early; < is the standard JSON-safe escape.
+const jsonLdPayloads = (Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : []).map((item) =>
+  JSON.stringify(item).replace(/</gu, '\\u003c'),
+)
 
 // Only ship analytics on builds that carry the key (production deploy). The
 // component guards on the key at runtime too; gating the render here keeps it
@@ -173,8 +177,8 @@ const iconMenuOpen = css({display: 'none', '#nav-toggle[aria-expanded=true] &': 
     <link rel="sitemap" href="/sitemap-index.xml" />
     <link rel="site.standard.publication" href={publicationUri()} />
     {posthogEnabled && <Analytics />}
-    {jsonLdItems.map((item) => (
-      <script is:inline type="application/ld+json" set:html={JSON.stringify(item)} />
+    {jsonLdPayloads.map((payload) => (
+      <script is:inline type="application/ld+json" set:html={payload} />
     ))}
     {standardDocumentUri && <link rel="site.standard.document" href={standardDocumentUri} />}
   </head>

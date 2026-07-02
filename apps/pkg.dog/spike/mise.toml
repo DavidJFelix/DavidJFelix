@@ -8,6 +8,6 @@ run = "bun bin/decompose.ts"
 description = "Unit tests for the decomposition pipeline"
 run = "bun test"
 
-[tasks.publish-parts]
-description = "npm-publish emitted parts under @pkgdog (dry-run unless PKGDOG_PUBLISH=1)"
-run = "bun bin/publish-parts.ts"
+[tasks.verify-registry]
+description = "Serve emitted parts over the npm protocol and install them with a real npm client"
+run = "bun bin/verify-registry.ts"

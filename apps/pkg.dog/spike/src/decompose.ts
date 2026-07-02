@@ -45,7 +45,7 @@ export interface DecomposePlan {
  * the internals only it reaches. Imports of another part's entry become real
  * package dependencies instead of bundled copies; mutually-cyclic entries
  * merge into one part; internals reached by several parts move to shared
- * `--internal-*` parts. Barrel entries (re-export-only aggregators, like a
+ * `__-internal-*` parts. Barrel entries (re-export-only aggregators, like a
  * root `mod.js`) are skipped -- they are the thing being decomposed.
  */
 export function planDecomposition(input: DecomposeInput): DecomposePlan {
@@ -95,14 +95,16 @@ export function planDecomposition(input: DecomposeInput): DecomposePlan {
   const groupPartName = groups.map((group) => {
     const slugs = group
       .map((e) => subpathSlug(e.subpath))
+      .filter((s) => s !== '')
       .toSorted((a, b) => a.localeCompare(b, 'en'))
+    if (slugs.length === 0) return `${scope}/${base}`
     const joined = slugs.join('--')
     const slug = joined.length <= 80 ? joined : `${slugs[0]}--and-${String(slugs.length - 1)}-more`
-    return `${scope}/${base}--${slug}`
+    return `${scope}/${base}__${slug}`
   })
   const internalPartName = internalGroups.map((modules) => {
     const first = modules.toSorted((a, b) => a.localeCompare(b, 'en'))[0] as string
-    return `${scope}/${base}--internal-${moduleSlug(first)}`
+    return `${scope}/${base}__-internal-${moduleSlug(first)}`
   })
 
   const moduleToPart: Record<string, string> = {}
@@ -166,15 +168,30 @@ export function planDecomposition(input: DecomposeInput): DecomposePlan {
   return {parts: sortedParts, skipped, moduleToPart, moduleSpecifier}
 }
 
-/** `@std/collections` -> `std-collections` */
+/**
+ * JSR-style reversible mangling: `@std/collections` -> `std__collections`,
+ * so `pkgdog:@std/collections/chunk` maps to the npm-compat name
+ * `@pkgdog/std__collections__chunk` and back.
+ */
 export function sanitizeBase(jsrName: string): string {
-  return jsrName.replace(/^@/u, '').replaceAll('/', '-').replaceAll('_', '-')
+  return jsrName.replace(/^@/u, '').replaceAll('/', '__')
 }
 
-/** `.` -> `root`, `./drop-while` -> `drop-while` */
+/** `.` -> `` (root), `./drop-while` -> `drop-while`, `./x/y` -> `x__y` */
 export function subpathSlug(subpath: string): string {
-  if (subpath === '.') return 'root'
-  return subpath.replace(/^\.\//u, '').replaceAll('/', '-').replaceAll('_', '-')
+  if (subpath === '.') return ''
+  return subpath.replace(/^\.\//u, '').replaceAll('/', '__')
+}
+
+/**
+ * Reverse the mangling into the user-facing scheme:
+ * `@pkgdog/std__collections__chunk` -> `pkgdog:@std/collections/chunk`.
+ */
+export function pkgdogSpecifier(npmName: string): string {
+  const bare = npmName.replace(/^@[^/]+\//u, '')
+  const [scope, name, ...partPath] = bare.split('__')
+  const suffix = partPath.length === 0 ? '' : `/${partPath.join('/')}`
+  return `pkgdog:@${String(scope)}/${String(name)}${suffix}`
 }
 
 /** `_dist/map_entries.js` -> `map-entries` */

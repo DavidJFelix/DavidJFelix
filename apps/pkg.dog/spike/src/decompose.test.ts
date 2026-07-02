@@ -1,5 +1,11 @@
 import {expect, test} from 'bun:test'
-import {moduleSlug, planDecomposition, sanitizeBase, subpathSlug} from './decompose.ts'
+import {
+  moduleSlug,
+  pkgdogSpecifier,
+  planDecomposition,
+  sanitizeBase,
+  subpathSlug,
+} from './decompose.ts'
 import {buildModuleGraph, type SourceFile} from './module-graph.ts'
 
 const upstream = {jsrName: '@std/collections', version: '1.3.0'}
@@ -25,8 +31,8 @@ test('independent entries become independent single-module parts', () => {
     ],
   )
   expect(plan.parts.map((p) => p.name)).toEqual([
-    '@pkgdog/std-collections--a',
-    '@pkgdog/std-collections--b',
+    '@pkgdog/std__collections__a',
+    '@pkgdog/std__collections__b',
   ])
   expect(plan.parts.every((p) => p.partDeps.length === 0)).toBe(true)
 })
@@ -59,9 +65,9 @@ test('importing another entry becomes a part dependency, not a bundled copy', ()
       ['./map', 'map.js'],
     ],
   )
-  const agg = plan.parts.find((p) => p.name.endsWith('--agg'))
+  const agg = plan.parts.find((p) => p.name.endsWith('__agg'))
   expect(agg?.modules).toEqual(['agg.js'])
-  expect(agg?.partDeps).toEqual(['@pkgdog/std-collections--map'])
+  expect(agg?.partDeps).toEqual(['@pkgdog/std__collections__map'])
 })
 
 test('an internal module used by one entry is bundled into that part', () => {
@@ -89,11 +95,11 @@ test('an internal module shared by two entries moves to a shared internal part',
     ],
   )
   const internal = plan.parts.find((p) => p.kind === 'internal')
-  expect(internal?.name).toBe('@pkgdog/std-collections--internal-shared')
+  expect(internal?.name).toBe('@pkgdog/std__collections__-internal-shared')
   expect(internal?.modules).toEqual(['_shared.js'])
-  const partA = plan.parts.find((p) => p.name.endsWith('--a'))
+  const partA = plan.parts.find((p) => p.name.endsWith('__a'))
   expect(partA?.modules).toEqual(['a.js'])
-  expect(partA?.partDeps).toEqual(['@pkgdog/std-collections--internal-shared'])
+  expect(partA?.partDeps).toEqual(['@pkgdog/std__collections__-internal-shared'])
 })
 
 test('mutually-cyclic entries merge into one part', () => {
@@ -108,7 +114,7 @@ test('mutually-cyclic entries merge into one part', () => {
     ],
   )
   expect(plan.parts).toHaveLength(1)
-  expect(plan.parts[0]?.name).toBe('@pkgdog/std-collections--a--b')
+  expect(plan.parts[0]?.name).toBe('@pkgdog/std__collections__a--b')
   expect(plan.parts[0]?.modules).toEqual(['a.js', 'b.js'])
   expect(plan.parts[0]?.subpaths).toEqual(['./a', './b'])
 })
@@ -129,9 +135,16 @@ test('external bare imports are carried onto the part', () => {
 })
 
 test('name and slug helpers normalize JSR names and paths', () => {
-  expect(sanitizeBase('@std/collections')).toBe('std-collections')
-  expect(subpathSlug('.')).toBe('root')
+  expect(sanitizeBase('@std/collections')).toBe('std__collections')
+  expect(subpathSlug('.')).toBe('')
   expect(subpathSlug('./drop-while')).toBe('drop-while')
+  expect(subpathSlug('./x/y')).toBe('x__y')
   expect(moduleSlug('_dist/map_entries.js')).toBe('map-entries')
   expect(moduleSlug('_utils.js')).toBe('utils')
+})
+
+test('mangled npm-compat names reverse into pkgdog: specifiers', () => {
+  expect(pkgdogSpecifier('@pkgdog/std__collections__chunk')).toBe('pkgdog:@std/collections/chunk')
+  expect(pkgdogSpecifier('@pkgdog/std__collections')).toBe('pkgdog:@std/collections')
+  expect(pkgdogSpecifier('@pkgdog/std__collections__x__y')).toBe('pkgdog:@std/collections/x/y')
 })

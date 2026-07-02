@@ -2,11 +2,11 @@
   "name": "@davidjfelix/pkg.dog-spike",
   "private": true,
   "type": "module",
-  "description": "Phase 2 feasibility spike: decompose a published JSR package into independent parts and republish them as @pkgdog/* packages",
+  "description": "Phase 2 feasibility spike: decompose a published JSR package into independent parts and serve them from pkg.dog's own registry",
   "scripts": {
     "decompose": "bun bin/decompose.ts",
-    "publish-parts": "bun bin/publish-parts.ts",
-    "test": "bun test"
+    "test": "bun test",
+    "verify-registry": "bun bin/verify-registry.ts"
   },
   "devDependencies": {
     "typescript": "^6.0.3"

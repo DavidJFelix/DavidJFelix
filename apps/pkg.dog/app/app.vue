@@ -6,7 +6,7 @@ const tag = 'package manager'
 const eyebrow = 'A focusing lens for packages'
 const heading = 'Only the parts you use.'
 const description =
-  'Most packages bundle many independent tools behind one name — and every alert for any of them lands on you. pkg.dog republishes a package as its independent parts, so updates and vulnerabilities only reach the code you actually import.'
+  'Most packages bundle many independent tools behind one name — and every alert for any of them lands on you. pkg.dog is a package manager that serves packages as their independent parts, so updates and vulnerabilities only reach the code you actually import.'
 
 const steps = [
   {
@@ -18,8 +18,8 @@ const steps = [
     body: 'It walks the real import graph and splits the package into parts that are genuinely independent. Shared internals become dependencies, not copies.',
   },
   {
-    name: 'Republish',
-    body: 'Each part ships as its own package with its own types. Depend on a part, and the rest of the package can no longer page you.',
+    name: 'Serve',
+    body: 'Each part is served from pkg.dog’s own registry with its own types. Depend on a part, and the rest of the package can no longer page you.',
   },
 ]
 const proof =

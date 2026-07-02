@@ -48,6 +48,27 @@ The fan-out today: all 10 per-app `ci-*.yml` workflows list the same shared root
   is likely already optimal. Confirm, don't duplicate.
 - **Optional, lower priority:** build-artifact caching (Astro `.astro/`, Vite, `.tsbuildinfo`).
 
+## Considered and rejected: Depot snapshot images (2026-07-02)
+
+Depot CI's snapshot enhancements (2026-06-26: create and reuse a sandbox image in one workflow via
+a `snapshot:` job key, jobs booting from it with `runs-on: {image, size}`) looked like the answer
+to Task 2, so a full conversion was built across all per-app workflows -- then measured against
+real check-run timings and scrapped. Baseline from PRs #304 / #307 / #315: per-app CI jobs
+(checkout + mise + `pnpm install` + tool) complete in 19-29 s, the djf.io Playwright job in ~49 s,
+full wrangler previews in 37-102 s, and a 22-job `bin/**` fan-out ran with no contention penalty.
+Depot's caching already holds setup to roughly 10-15 s per job -- which also softens Task 2's
+premise that the pnpm store is the biggest win. Booting from per-app images would save those
+seconds while adding: a `needs: snapshot` hop to every job, full-graph serialization behind a
+2-4 minute image rebuild whenever the tag expires or is missing, a zizmor parse gap (it cannot
+read `runs-on: {image, size}` and skips such files), and an org-shared image writable from fork
+PRs. One anomaly (PR #315: every job a uniform ~53 s, even cspell) was queue/sync overhead, which
+images would not fix. Revisit only if setup grows to minutes -- sharded e2e reusing one setup,
+service-container pulls, or much heavier installs.
+
+Also checked while in there: every job already runs on the 2-vCPU / 1x-billing floor
+(`depot-ubuntu-latest` = `2x8`), so there is no smaller sandbox to downsize low-parallelism jobs
+onto.
+
 ## Survey corrections
 
 - There is **no push+PR double-run**: `push` is gated to `branches: [main]`, so PR branches fire

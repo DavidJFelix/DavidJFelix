@@ -6,9 +6,11 @@ updates and vulnerabilities. The most ambitious app in the repo.
 
 ## Status
 
-**Placeholder — ambitious** (2026-06-19). Live at pkg.dog (and pkgdog.com) serving a single centered
-`<h1>`. The near-term deliverable is a basic layout + an explainer landing; the real product is a
-research-heavy build.
+**Feasibility proven for the happy path** (2026-07-02). The Phase 2 spike
+([`apps/pkg.dog/spike`](../../../apps/pkg.dog/spike/)) decomposes `@std/collections@1.3.0` into 50
+independently installable parts that verify against upstream and pass `npm publish --dry-run`. The
+landing (Phase 1) now explains the focusing lens with a fetch/decompose/republish strip and a proof
+line. Next: real `@pkgdog/*` publish and a messier second target.
 
 ## Vision
 
@@ -22,11 +24,13 @@ ESM/TypeScript packages and re-publishing the pieces, it gives downstream users 
 Start with the JSR / ESM / TypeScript world (where decomposition is cleanest); expand to more
 ecosystems later.
 
-## Current state (2026-06-19)
+## Current state (2026-07-02)
 
 - Live at pkg.dog + www, and pkgdog.com + www (Nuxt on Cloudflare; all four custom domains wired).
-- `app/app.vue` renders a single centered `<h1>` (Panda `css()`); no real layout yet.
-- Smoke + Playwright e2e already wired.
+- Landing explains the concept: hero, three-step fetch/decompose/republish strip, proof line, two
+  feature cards. Smoke + Playwright e2e (visual baseline) wired.
+- `apps/pkg.dog/spike/` holds the working decompose pipeline (bun; see its README for the algorithm,
+  results, and deliberate cuts).
 
 ## Stack
 
@@ -34,27 +38,31 @@ Nuxt + Vue + PandaCSS (+ Ark UI), Cloudflare Worker.
 
 ## Roadmap
 
-### Phase 1 — Basic layout + explainer landing
+### Phase 1 — Basic layout + explainer landing (complete)
 
 - [x] Replace the single `<h1>` with a real layout: header, hero, footer. (done 2026-06-19)
-- [ ] Write the landing copy that explains the focusing-lens idea clearly (this concept needs
-      explaining before anything else matters).
+- [x] Write the landing copy that explains the focusing-lens idea clearly. (done 2026-07-02:
+      three-step fetch/decompose/republish strip + proof line)
 
 ### Phase 2 — Feasibility spike → spins out (likely with a design doc)
 
-- [ ] Prototype the core pipeline: tree-shake a published ESM/TS package into independent parts and
-      republish them (start with one real package from JSR).
-- [ ] Validate the "ignore irrelevant alerts / upgrade types safely" claim on that prototype.
+- [x] Prototype the core pipeline: decompose a published ESM/TS package into independent parts and
+      emit them as publishable packages. (done 2026-07-02: `@std/collections` -> 50 parts, all
+      verified against upstream, all passing `npm publish --dry-run`)
+- [ ] Run the first real publish under `@pkgdog/*` (blocked on the npm org + token — human task).
+- [ ] Prove the messy middle: decompose a package with heavy shared internals (es-toolkit, then zod)
+      and validate the "ignore irrelevant alerts / upgrade types safely" claim on it.
 
 ### Phase 3 — MVP
 
 - [ ] A usable flow for a single package end to end; then widen.
 
-> ⚠️ **Open question — feasibility (reviewed, deferred 2026-06-29).** Whether the core
-> decompose-and-republish pipeline is actually buildable is _unproven_ — it's a major research
-> effort, not a weekend, and the Phase 2 spike exists to answer it. Until that spike lands, the deep
-> build stays an open question. Phase 1 (layout + explainer landing) is the realistic near-term goal
-> regardless.
+> **Feasibility (answered for the happy path, 2026-07-02).** The decompose-and-republish pipeline
+> works on stdlib-shaped packages: per-export parts, real cross-part dependencies with rewritten
+> specifiers, shared internals split out, cycles merged, barrels skipped. Still open: packages with
+> deep shared-internal graphs and type-only entanglement — that's what the second target must answer
+> before the MVP is scoped. See
+> [`apps/pkg.dog/spike/README.md`](../../../apps/pkg.dog/spike/README.md).
 
 ## Related
 

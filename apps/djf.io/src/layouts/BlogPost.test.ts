@@ -126,6 +126,43 @@ test('BlogPost JSON-LD uses the post author and falls back to David J Felix', as
   expect(withoutAuthor.author).toEqual({'@type': 'Person', name: 'David J Felix'})
 })
 
+const neighbor = (id: string, title: string) =>
+  ({...fixturePost({title}), id}) as unknown as CollectionEntry<'blog'>
+
+test('BlogPost embeds a BreadcrumbList after the BlogPosting', async () => {
+  const html = await container.renderToString(BlogPost, {
+    props: {post: fixturePost()},
+  })
+  const scripts = [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)]
+  expect(scripts).toHaveLength(2)
+  const breadcrumb = JSON.parse(scripts[1][1])
+  expect(breadcrumb['@type']).toBe('BreadcrumbList')
+  expect(breadcrumb.itemListElement.map((item: {name: string}) => item.name)).toEqual([
+    'Home',
+    'Blog',
+    'A Real Title',
+  ])
+})
+
+test('BlogPost links its chronological neighbors when provided', async () => {
+  const html = await container.renderToString(BlogPost, {
+    props: {
+      post: fixturePost(),
+      prev: neighbor('older-post', 'The Older One'),
+      next: neighbor('newer-post', 'The Newer One'),
+    },
+  })
+  expect(html).toMatch(/<a href="\/blog\/older-post"[^>]*>[^<]*The Older One/)
+  expect(html).toMatch(/<a href="\/blog\/newer-post"[^>]*>[^<]*The Newer One/)
+})
+
+test('BlogPost omits the neighbor nav when there are no neighbors', async () => {
+  const html = await container.renderToString(BlogPost, {
+    props: {post: fixturePost()},
+  })
+  expect(html).not.toContain('More posts')
+})
+
 test('BlogPost JSON-LD joins tags into keywords and omits them when absent', async () => {
   const withTags = jsonLdFrom(
     await container.renderToString(BlogPost, {

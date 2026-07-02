@@ -84,13 +84,23 @@ test('home page advertises the RSS feed', async ({page}) => {
   await expect(alternate).toHaveAttribute('href', '/rss.xml')
 })
 
-test('blog posts embed BlogPosting JSON-LD matching the page', async ({page}) => {
+test('blog posts embed BlogPosting and BreadcrumbList JSON-LD matching the page', async ({
+  page,
+}) => {
   await page.goto('/blog/2025-12-07-on-running/')
-  const raw = await page.locator('script[type="application/ld+json"]').textContent()
-  const jsonLd = JSON.parse(raw as string)
+  const scripts = page.locator('script[type="application/ld+json"]')
+  const jsonLd = JSON.parse((await scripts.first().textContent()) as string)
   expect(jsonLd['@type']).toBe('BlogPosting')
   expect(jsonLd.headline).toBe((await page.locator('h1').textContent())?.trim())
   expect(jsonLd.url).toBe('https://djf.io/blog/2025-12-07-on-running/')
   expect(jsonLd.image).toBe('https://djf.io/og/blog/2025-12-07-on-running.png')
   expect(jsonLd.datePublished).toBe('2025-12-07T00:00:00.000Z')
+
+  const breadcrumb = JSON.parse((await scripts.nth(1).textContent()) as string)
+  expect(breadcrumb['@type']).toBe('BreadcrumbList')
+  expect(breadcrumb.itemListElement.map((item: {item: string}) => item.item)).toEqual([
+    'https://djf.io/',
+    'https://djf.io/blog/',
+    'https://djf.io/blog/2025-12-07-on-running/',
+  ])
 })

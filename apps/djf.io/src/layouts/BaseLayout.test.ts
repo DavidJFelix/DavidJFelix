@@ -87,6 +87,15 @@ test('BaseLayout omits the ld+json script when no jsonLd prop is given', async (
   expect(html).not.toContain('application/ld+json')
 })
 
+test('BaseLayout renders one ld+json script per entry when jsonLd is an array', async () => {
+  const html = await container.renderToString(BaseLayout, {
+    props: {title: 'x', jsonLd: [{'@type': 'WebSite'}, {'@type': 'Person'}]},
+  })
+  expect(html.match(/<script type="application\/ld\+json">/g)).toHaveLength(2)
+  expect(html).toContain('{"@type":"WebSite"}')
+  expect(html).toContain('{"@type":"Person"}')
+})
+
 test('BaseLayout renders the standard-site document link inside <head> when provided', async () => {
   const html = await container.renderToString(BaseLayout, {
     props: {title: 'x', standardDocumentUri: 'at://did:plc:abc/site.standard.document/xyz'},

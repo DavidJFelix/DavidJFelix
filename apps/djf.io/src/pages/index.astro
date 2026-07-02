@@ -6,11 +6,16 @@ import headshot from '../assets/headshot.png'
 import PostCard from '../components/PostCard.astro'
 import BaseLayout from '../layouts/BaseLayout.astro'
 import {sortPostsByDateDesc} from '../lib/blog'
+import {person, webSite} from '../lib/structured-data'
 
 const recentPosts = sortPostsByDateDesc(await getCollection('blog')).slice(0, 3)
 ---
 
-<BaseLayout title="David J Felix" description="Personal blog of David J Felix">
+<BaseLayout
+  title="David J Felix"
+  description="Personal blog of David J Felix"
+  jsonLd={[webSite(Astro.site), person(Astro.site)]}
+>
   <div class={css({display: 'flex', flexDirection: 'column', gap: '12'})}>
     <section
       class={css({

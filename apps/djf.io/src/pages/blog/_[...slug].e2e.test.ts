@@ -21,6 +21,16 @@ test('a blog post with a hero image in frontmatter displays it', async ({page}) 
   expect(naturalWidth).toBeGreaterThan(0)
 })
 
+test('a blog post links its chronological neighbor', async ({page}) => {
+  await page.goto('/blog/2025-12-07-on-running/')
+
+  await page
+    .getByRole('navigation', {name: 'More posts'})
+    .getByRole('link', {name: /On Positivity/})
+    .click()
+  await expect(page).toHaveURL(/\/blog\/2024-04-26-on-positivity\/?$/)
+})
+
 test('a blog post omits the standard.site document link in offline builds', async ({page}) => {
   // The document <link>'s rkey is a server-assigned TID resolved from the live
   // PDS only when the deploy sets STANDARD_SITE_RESOLVE. This suite boots a plain

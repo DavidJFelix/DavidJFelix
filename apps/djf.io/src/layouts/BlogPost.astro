@@ -5,13 +5,17 @@ import {css} from 'styled-system/css'
 import {prose} from 'styled-system/recipes'
 import {formatBlogDate} from '../lib/blog'
 import {documentUri} from '../lib/standard-site-resolve'
+import {breadcrumbs} from '../lib/structured-data'
 import BaseLayout from './BaseLayout.astro'
 
 interface Props {
   post: CollectionEntry<'blog'>
+  // Chronological neighbors, for the reader and for crawlable internal links.
+  prev?: CollectionEntry<'blog'>
+  next?: CollectionEntry<'blog'>
 }
 
-const {post} = Astro.props
+const {post, prev, next} = Astro.props
 const {title, description, date, author, tags, readingTime, hero} = post.data
 
 const formattedDate = formatBlogDate(date)
@@ -22,7 +26,7 @@ const standardDocumentUri = await documentUri(post.id)
 
 const ogImage = `/og/blog/${post.id}.png`
 const postUrl = Astro.site ? new URL(`/blog/${post.id}/`, Astro.site) : undefined
-const jsonLd = {
+const blogPosting = {
   '@context': 'https://schema.org',
   '@type': 'BlogPosting',
   headline: title,
@@ -34,6 +38,20 @@ const jsonLd = {
   image: Astro.site ? new URL(ogImage, Astro.site) : undefined,
   keywords: tags?.join(', '),
 }
+const jsonLd = [
+  blogPosting,
+  breadcrumbs(Astro.site, [
+    {name: 'Home', path: '/'},
+    {name: 'Blog', path: '/blog/'},
+    {name: title, path: `/blog/${post.id}/`},
+  ]),
+]
+
+const neighborLink = css({
+  color: 'accent.text',
+  textDecoration: 'none',
+  _hover: {textDecoration: 'underline'},
+})
 ---
 
 <BaseLayout
@@ -130,4 +148,39 @@ const jsonLd = {
       <slot />
     </div>
   </article>
+
+  {/* Outside the article so pagefind does not index neighbor titles into
+      this page's search entry. */}
+  {
+    (prev || next) && (
+      <nav
+        aria-label="More posts"
+        class={css({
+          display: 'flex',
+          justifyContent: 'space-between',
+          gap: '4',
+          mt: '12',
+          pt: '6',
+          borderTop: '1px solid',
+          borderTopColor: 'border.subtle',
+          fontSize: 'sm',
+        })}
+      >
+        <div>
+          {prev && (
+            <a href={`/blog/${prev.id}`} class={neighborLink}>
+              &larr; {prev.data.title}
+            </a>
+          )}
+        </div>
+        <div class={css({textAlign: 'right'})}>
+          {next && (
+            <a href={`/blog/${next.id}`} class={neighborLink}>
+              {next.data.title} &rarr;
+            </a>
+          )}
+        </div>
+      </nav>
+    )
+  }
 </BaseLayout>

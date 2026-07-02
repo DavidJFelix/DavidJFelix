@@ -2,9 +2,10 @@
 import {css} from 'styled-system/css'
 import {prose} from 'styled-system/recipes'
 import BaseLayout from '../layouts/BaseLayout.astro'
+import {person} from '../lib/structured-data'
 ---
 
-<BaseLayout title="About" description="About David J Felix">
+<BaseLayout title="About" description="About David J Felix" jsonLd={person(Astro.site)}>
   <h1 class={css({fontSize: '4xl', fontWeight: 'bold', mb: '8'})}>About</h1>
 
   <div class={prose()}>

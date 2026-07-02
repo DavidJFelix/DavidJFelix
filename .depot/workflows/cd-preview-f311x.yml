@@ -17,6 +17,7 @@ on:
     paths:
       - 'apps/f311x/**'
       - '.depot/workflows/cd-preview-f311x.yml'
+      - '.depot/actions/snapshot-setup/**'
 # One preview per PR; a new push cancels an in-flight preview. A close event
 # shares the group so teardown supersedes any running preview.
 concurrency:
@@ -28,10 +29,36 @@ defaults:
   run:
     working-directory: apps/f311x
 jobs:
+  snapshot:
+    name: snapshot image
+    # Shared f311x sandbox image (mise tools + node_modules + Chromium).
+    # Depot skips this job while the image tag exists; the other jobs boot
+    # from the image. See docs/contributing/github-actions-style.md.
+    runs-on: depot-ubuntu-latest
+    snapshot:
+      image-name: f311x
+      version: v1
+      with:
+        max-age: 7d
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: snapshot setup
+        uses: ./.depot/actions/snapshot-setup
+        with:
+          app: f311x
   preview:
     name: deploy + smoke + screenshots
     if: github.event.action != 'closed'
-    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
+    needs: snapshot
+    runs-on:
+      image: f311x
+      size: 2x8
     # install (~1m) + deploy cap (10m) + smoke + screenshots, with headroom.
     timeout-minutes: 25
     permissions:
@@ -44,8 +71,9 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
-      - name: mise
-        uses: ./.depot/actions/setup-mise
+          clean: false
+      - name: mise install
+        run: mise install
       - name: pnpm install
         run: pnpm install --frozen-lockfile
       # Builds happen inside `alchemy deploy` (Cloudflare.Vite resource); the
@@ -67,23 +95,10 @@ jobs:
           SMOKE_ATTEMPTS: '4'
           SMOKE_RETRY_DELAY_MS: '5000'
         run: bun bin/smoke-test.ts
-      - name: resolve playwright version
-        id: pw-version
-        run: |
-          version=$(node -p "require('@playwright/test/package.json').version")
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-      - name: cache playwright browsers
-        id: pw-cache
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.pw-version.outputs.version }}
+      # Chromium and its OS packages ship in the snapshot image; this only
+      # downloads a browser when the PR bumps Playwright past the image.
       - name: playwright install
-        if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install --with-deps chromium
-      - name: playwright install-deps
-        if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: pnpm exec playwright install-deps chromium
+        run: pnpm exec playwright install chromium
       # PREVIEW_URL set => playwright.config.ts skips the local boot and points
       # at the deployed preview. `pnpm run` (not `mise run`) avoids the e2e
       # task's local build dependency, which the preview path doesn't need.
@@ -116,7 +131,10 @@ jobs:
   teardown:
     name: destroy preview stage
     if: github.event.action == 'closed'
-    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
+    needs: snapshot
+    runs-on:
+      image: f311x
+      size: 2x8
     timeout-minutes: 10
     permissions:
       contents: read
@@ -127,8 +145,9 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
-      - name: mise
-        uses: ./.depot/actions/setup-mise
+          clean: false
+      - name: mise install
+        run: mise install
       - name: pnpm install
         run: pnpm install --frozen-lockfile
       - name: destroy preview

@@ -9,6 +9,11 @@
 # - ghalint's `run` is hardcoded to .github/workflows/ and cannot target
 #   .depot/workflows/, so it only lints the composite actions via `run-action`.
 #   actionlint (correctness) + zizmor (security audit) cover the workflows.
+# - zizmor cannot yet parse Depot's snapshot syntax (runs-on: {image, size}),
+#   so it skips the snapshot-booted workflows with a warning and audits the
+#   rest; actionlint still checks them via narrow ignores in
+#   .github/actionlint.yaml. Coverage returns when github-actions-models
+#   learns the Depot schema.
 name: CI Actions Lint
 on:
   push:

@@ -4,8 +4,9 @@ description: >-
   version via `wrangler versions upload --preview-alias pr-<N>` (deterministic
   preview URL, no production routes touched, nothing to tear down), smokes the
   preview URL, runs the app's Playwright screenshot suite against it, and upserts
-  a sticky PR comment. The caller runs checkout + setup-mise first; this action
-  installs deps and does the rest in the app directory.
+  a sticky PR comment. The caller boots from the app's snapshot image and runs
+  checkout + `mise install` first; this action installs deps (a no-op guard on
+  a current image) and does the rest in the app directory.
 
 inputs:
   worker-name:
@@ -72,29 +73,11 @@ runs:
         SMOKE_RETRY_DELAY_MS: "5000"
       run: bun "$GITHUB_WORKSPACE/bin/smoke-url.ts"
 
-    - name: resolve playwright version
-      id: pw-version
-      shell: bash
-      run: |
-        version=$(node -p "require('@playwright/test/package.json').version")
-        echo "version=$version" >> "$GITHUB_OUTPUT"
-
-    - name: cache playwright browsers
-      id: pw-cache
-      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-      with:
-        path: ~/.cache/ms-playwright
-        key: playwright-${{ runner.os }}-${{ steps.pw-version.outputs.version }}
-
+    # Chromium and its OS packages ship in the caller's snapshot image; this
+    # only downloads a browser when the PR bumps Playwright past the image.
     - name: playwright install
-      if: steps.pw-cache.outputs.cache-hit != 'true'
       shell: bash
-      run: pnpm exec playwright install --with-deps chromium
-
-    - name: playwright install-deps
-      if: steps.pw-cache.outputs.cache-hit == 'true'
-      shell: bash
-      run: pnpm exec playwright install-deps chromium
+      run: pnpm exec playwright install chromium
 
     # PREVIEW_URL set => playwright.config.ts skips the local boot and points at
     # the deployed preview. `pnpm run` (not `mise run`) avoids the e2e task's

@@ -5,3 +5,14 @@
 self-hosted-runner:
   labels:
     - depot-ubuntu-latest
+
+# Depot CI extends the GitHub Actions schema: snapshot jobs configure the
+# underlying snapshot action through `snapshot.with` (e.g. max-age), and jobs
+# boot from a snapshot image via a `runs-on: {image, size}` mapping. actionlint
+# already knows Depot's `snapshot.image-name` / `snapshot.version`; ignore just
+# the two shapes it doesn't.
+paths:
+  .depot/workflows/*.yml:
+    ignore:
+      - 'unexpected key "with" for "snapshot" section'
+      - 'unexpected key "(image|size)" for "runs-on" section'

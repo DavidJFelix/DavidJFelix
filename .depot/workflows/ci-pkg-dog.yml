@@ -17,6 +17,7 @@ on:
       - '.oxlintrc.json'
       - '.prettierrc.json'
       - '.depot/workflows/ci-pkg-dog.yml'
+      - '.depot/actions/snapshot-setup/**'
   pull_request:
     paths:
       - 'apps/pkg.dog/**'
@@ -26,100 +27,24 @@ on:
       - '.oxlintrc.json'
       - '.prettierrc.json'
       - '.depot/workflows/ci-pkg-dog.yml'
+      - '.depot/actions/snapshot-setup/**'
 env:
   MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
 defaults:
   run:
     working-directory: apps/pkg.dog
 jobs:
-  typecheck:
-    name: vue-tsc
-    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - name: checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          persist-credentials: false
-      - name: mise
-        uses: ./.depot/actions/setup-mise
-      - name: pnpm install
-        run: pnpm install --frozen-lockfile
-      - name: typecheck
-        run: mise run typecheck
-  lint:
-    name: biome + oxlint
-    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - name: checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          persist-credentials: false
-      - name: mise
-        uses: ./.depot/actions/setup-mise
-      - name: pnpm install
-        run: pnpm install --frozen-lockfile
-      - name: lint
-        run: mise run lint
-  format:
-    name: format check
-    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - name: checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          persist-credentials: false
-      - name: mise
-        uses: ./.depot/actions/setup-mise
-      - name: pnpm install
-        run: pnpm install --frozen-lockfile
-      - name: format
-        run: mise run format
-  build:
-    name: nuxt build
-    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - name: checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          persist-credentials: false
-      - name: mise
-        uses: ./.depot/actions/setup-mise
-      - name: pnpm install
-        run: pnpm install --frozen-lockfile
-      - name: build
-        run: mise run build
-  vitest:
-    name: vitest
-    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - name: checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          persist-credentials: false
-      - name: mise
-        uses: ./.depot/actions/setup-mise
-      - name: pnpm install
-        run: pnpm install --frozen-lockfile
-      - name: vitest
-        run: mise run test
-  smoke:
-    name: smoke (local production boot)
-    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
+  snapshot:
+    name: snapshot image
+    # Shared pkg-dog sandbox image (mise tools + node_modules + Chromium).
+    # Depot skips this job while the image tag exists; the other jobs boot
+    # from the image. See docs/contributing/github-actions-style.md.
+    runs-on: depot-ubuntu-latest
+    snapshot:
+      image-name: pkg-dog
+      version: v1
+      with:
+        max-age: 7d
     timeout-minutes: 15
     permissions:
       contents: read
@@ -128,8 +53,132 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
-      - name: mise
-        uses: ./.depot/actions/setup-mise
+      - name: snapshot setup
+        uses: ./.depot/actions/snapshot-setup
+        with:
+          app: pkg.dog
+  typecheck:
+    name: vue-tsc
+    needs: snapshot
+    runs-on:
+      image: pkg-dog
+      size: 2x8
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          clean: false
+      - name: mise install
+        run: mise install
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+      - name: typecheck
+        run: mise run typecheck
+  lint:
+    name: biome + oxlint
+    needs: snapshot
+    runs-on:
+      image: pkg-dog
+      size: 2x8
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          clean: false
+      - name: mise install
+        run: mise install
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+      - name: lint
+        run: mise run lint
+  format:
+    name: format check
+    needs: snapshot
+    runs-on:
+      image: pkg-dog
+      size: 2x8
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          clean: false
+      - name: mise install
+        run: mise install
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+      - name: format
+        run: mise run format
+  build:
+    name: nuxt build
+    needs: snapshot
+    runs-on:
+      image: pkg-dog
+      size: 2x8
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          clean: false
+      - name: mise install
+        run: mise install
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+      - name: build
+        run: mise run build
+  vitest:
+    name: vitest
+    needs: snapshot
+    runs-on:
+      image: pkg-dog
+      size: 2x8
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          clean: false
+      - name: mise install
+        run: mise install
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+      - name: vitest
+        run: mise run test
+  smoke:
+    name: smoke (local production boot)
+    needs: snapshot
+    runs-on:
+      image: pkg-dog
+      size: 2x8
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          clean: false
+      - name: mise install
+        run: mise install
       - name: pnpm install
         run: pnpm install --frozen-lockfile
       - name: smoke

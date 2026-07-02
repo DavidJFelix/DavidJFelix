@@ -25,13 +25,42 @@ concurrency:
 env:
   MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
 jobs:
+  snapshot:
+    name: snapshot image
+    # Shared djf-io sandbox image (mise tools + node_modules + Chromium).
+    # Depot skips this job while the image tag exists; the job below boots
+    # from the image. See docs/contributing/github-actions-style.md. Gated on
+    # the same label as the main job so unrelated label events skip both.
+    if: >-
+      github.event.label.name == 'update-snapshots' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: depot-ubuntu-latest
+    snapshot:
+      image-name: djf-io
+      version: v1
+      with:
+        max-age: 7d
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - name: snapshot setup
+        uses: ./.depot/actions/snapshot-setup
+        with:
+          app: djf.io
   update-snapshots:
     name: playwright --update-snapshots
     # Only react to our label, and only for same-repo PRs -- the token cannot
     # push to a fork's branch.
     if: >-
       github.event.label.name == 'update-snapshots' && github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
+    needs: snapshot
+    runs-on:
+      image: djf-io
+      size: 2x8
     timeout-minutes: 30
     permissions:
       contents: write
@@ -45,12 +74,15 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.ref }}
           persist-credentials: false
-      - name: mise
-        uses: ./.depot/actions/setup-mise
+          clean: false
+      - name: mise install
+        run: mise install
       - name: pnpm install
         run: pnpm install --frozen-lockfile
+      # Chromium and its OS packages ship in the snapshot image; this only
+      # downloads a browser when the PR bumps Playwright past the image.
       - name: playwright install
-        run: pnpm exec playwright install --with-deps chromium
+        run: pnpm exec playwright install chromium
       - name: playwright --update-snapshots
         run: pnpm exec playwright test --update-snapshots
       - name: git push

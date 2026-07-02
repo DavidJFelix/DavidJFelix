@@ -47,6 +47,10 @@ The fan-out today: all 10 per-app `ci-*.yml` workflows list the same shared root
   browser cache on the resolved Playwright version, and only djf.io runs Playwright in CI, so this
   is likely already optimal. Confirm, don't duplicate.
 - **Optional, lower priority:** build-artifact caching (Astro `.astro/`, Vite, `.tsbuildinfo`).
+- **Update (2026-07-02):** the per-app Depot snapshot images (see the changelog entry and the
+  Snapshot images section of `github-actions-style.md`) now bake mise tools, `node_modules`, and
+  Playwright Chromium into the image every app workflow boots from, which supersedes the
+  pnpm-store cache-action idea for CI. The web-session Playwright item below still stands.
 
 ## Survey corrections
 

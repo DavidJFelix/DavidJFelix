@@ -1,0 +1,28 @@
+name: Snapshot setup
+description: >-
+  Setup steps for a Depot CI snapshot job: install the mise-managed toolchain,
+  the app's node_modules, and Playwright's Chromium (browser plus OS packages)
+  so the captured sandbox image boots with everything warm. The caller runs
+  checkout first. Jobs booting from the image keep `mise install` and
+  `pnpm install --frozen-lockfile` as no-op guards, so an image that lags a
+  config change (within its max-age) costs delta install time, never
+  correctness.
+
+inputs:
+  app:
+    description: The directory under apps/ whose dependencies are baked into the image.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: mise
+      uses: ./.depot/actions/setup-mise
+    - name: pnpm install
+      shell: bash
+      working-directory: apps/${{ inputs.app }}
+      run: pnpm install --frozen-lockfile
+    - name: playwright install
+      shell: bash
+      working-directory: apps/${{ inputs.app }}
+      run: pnpm exec playwright install --with-deps chromium

@@ -20,6 +20,7 @@ on:
       - 'apps/pkg.dog/**'
       - '.depot/workflows/cd-preview-pkg-dog.yml'
       - '.depot/actions/preview-wrangler/**'
+      - '.depot/actions/snapshot-setup/**'
       - 'bin/**'
 concurrency:
   group: preview-pkg-dog-${{ github.event.pull_request.number }}
@@ -30,9 +31,35 @@ defaults:
 env:
   MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
 jobs:
+  snapshot:
+    name: snapshot image
+    # Shared pkg-dog sandbox image (mise tools + node_modules + Chromium).
+    # Depot skips this job while the image tag exists; the other jobs boot
+    # from the image. See docs/contributing/github-actions-style.md.
+    runs-on: depot-ubuntu-latest
+    snapshot:
+      image-name: pkg-dog
+      version: v1
+      with:
+        max-age: 7d
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: snapshot setup
+        uses: ./.depot/actions/snapshot-setup
+        with:
+          app: pkg.dog
   preview:
     name: deploy + smoke + screenshots
-    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
+    needs: snapshot
+    runs-on:
+      image: pkg-dog
+      size: 2x8
     timeout-minutes: 20
     permissions:
       contents: read
@@ -42,8 +69,9 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
-      - name: mise
-        uses: ./.depot/actions/setup-mise
+          clean: false
+      - name: mise install
+        run: mise install
       - name: preview
         uses: ./.depot/actions/preview-wrangler
         with:

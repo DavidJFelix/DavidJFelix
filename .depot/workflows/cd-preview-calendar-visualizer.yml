@@ -19,6 +19,7 @@ on:
       - 'apps/calendar-visualizer/**'
       - '.depot/workflows/cd-preview-calendar-visualizer.yml'
       - '.depot/actions/preview-wrangler/**'
+      - '.depot/actions/snapshot-setup/**'
       - 'bin/**'
 # One preview per PR; a new push cancels an in-flight preview.
 concurrency:
@@ -30,9 +31,35 @@ defaults:
 env:
   MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
 jobs:
+  snapshot:
+    name: snapshot image
+    # Shared calendar-visualizer sandbox image (mise tools + node_modules + Chromium).
+    # Depot skips this job while the image tag exists; the other jobs boot
+    # from the image. See docs/contributing/github-actions-style.md.
+    runs-on: depot-ubuntu-latest
+    snapshot:
+      image-name: calendar-visualizer
+      version: v1
+      with:
+        max-age: 7d
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: snapshot setup
+        uses: ./.depot/actions/snapshot-setup
+        with:
+          app: calendar-visualizer
   preview:
     name: deploy + smoke + screenshots
-    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
+    needs: snapshot
+    runs-on:
+      image: calendar-visualizer
+      size: 2x8
     # install + build + upload + smoke + screenshots, with headroom.
     timeout-minutes: 20
     permissions:
@@ -43,8 +70,9 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
-      - name: mise
-        uses: ./.depot/actions/setup-mise
+          clean: false
+      - name: mise install
+        run: mise install
       - name: preview
         uses: ./.depot/actions/preview-wrangler
         with:

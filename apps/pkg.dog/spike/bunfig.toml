@@ -1,0 +1,4 @@
+# Scope test discovery to the spike's own sources -- work/ holds extracted
+# upstream packages whose bundled tests are not runnable here.
+[test]
+root = "src"

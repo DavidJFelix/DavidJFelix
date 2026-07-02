@@ -6,7 +6,24 @@ const tag = 'package manager'
 const eyebrow = 'A focusing lens for packages'
 const heading = 'Only the parts you use.'
 const description =
-  'pkg.dog tree-shakes published packages into their independent parts and republishes them — so updates and vulnerabilities only reach the code you actually import.'
+  'Most packages bundle many independent tools behind one name — and every alert for any of them lands on you. pkg.dog republishes a package as its independent parts, so updates and vulnerabilities only reach the code you actually import.'
+
+const steps = [
+  {
+    name: 'Fetch',
+    body: 'pkg.dog pulls a published ESM + TypeScript package from its registry.',
+  },
+  {
+    name: 'Decompose',
+    body: 'It walks the real import graph and splits the package into parts that are genuinely independent. Shared internals become dependencies, not copies.',
+  },
+  {
+    name: 'Republish',
+    body: 'Each part ships as its own package with its own types. Depend on a part, and the rest of the package can no longer page you.',
+  },
+]
+const proof =
+  'First decomposition: @std/collections splits into 50 independently installable parts.'
 
 const features = [
   {
@@ -110,6 +127,42 @@ useHead({
         "
       >
         {{ description }}
+      </p>
+
+      <ol
+        :class="
+          css({
+            mt: '12',
+            display: 'grid',
+            gridTemplateColumns: {base: '1fr', sm: 'repeat(3, 1fr)'},
+            gap: '6',
+            listStyleType: 'none',
+            p: '0',
+          })
+        "
+      >
+        <li v-for="step in steps" :key="step.name">
+          <h2
+            :class="
+              css({
+                fontSize: 'sm',
+                fontWeight: 'semibold',
+                color: 'neutral.500',
+                textTransform: 'uppercase',
+                letterSpacing: 'wider',
+              })
+            "
+          >
+            {{ step.name }}
+          </h2>
+          <p :class="css({mt: '2', fontSize: 'sm', color: 'neutral.600', lineHeight: 'relaxed'})">
+            {{ step.body }}
+          </p>
+        </li>
+      </ol>
+
+      <p :class="css({mt: '8', fontSize: 'sm', color: 'neutral.500', fontStyle: 'italic'})">
+        {{ proof }}
       </p>
 
       <ul

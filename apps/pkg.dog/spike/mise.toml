@@ -1,0 +1,13 @@
+# Tasks for the pkg.dog Phase 2 feasibility spike. Assumes `bun install` has run.
+
+[tasks.decompose]
+description = "Fetch a JSR package, decompose it into parts, emit + verify them (default: @std/collections)"
+run = "bun bin/decompose.ts"
+
+[tasks.test]
+description = "Unit tests for the decomposition pipeline"
+run = "bun test"
+
+[tasks.publish-parts]
+description = "npm-publish emitted parts under @pkgdog (dry-run unless PKGDOG_PUBLISH=1)"
+run = "bun bin/publish-parts.ts"

@@ -43,13 +43,22 @@ jobs:
           persist-credentials: false
       - name: mise
         uses: ./.depot/actions/setup-mise
+      # Uploads the Flue worker (the artifact CD deploys: Astro hosted inside it
+      # plus the /api agent DOs), not the Astro adapter's dist/server config.
+      #
+      # BOOTSTRAP CONSTRAINT: `wrangler versions upload` cannot carry new
+      # Durable Object migrations ("new Worker versions with new migrations
+      # cannot be uploaded" -- Cloudflare DO migrations docs). Until migration v1
+      # is applied to production by the first `wrangler deploy` (merge of the
+      # Flue PR, or a one-time manual deploy), this preview upload will fail
+      # with a migrations error. It self-heals once production has the classes.
       - name: preview
         uses: ./.depot/actions/preview-wrangler
         with:
           worker-name: onvibes-org
           pr-number: ${{ github.event.pull_request.number }}
-          smoke-routes: /
-          wrangler-config: dist/server/wrangler.json
+          smoke-routes: /,/chat
+          wrangler-config: dist-flue/onvibes_org/wrangler.json
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           github-token: ${{ secrets.GITHUB_TOKEN }}

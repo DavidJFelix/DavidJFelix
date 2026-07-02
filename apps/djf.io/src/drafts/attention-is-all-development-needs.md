@@ -18,11 +18,11 @@ hero:
 - Acknowledge paper by a similar name, talking about LLMs. Link it to this, which is about AI
   development.
 - Discuss "slop", "taste", "skills", "loops", "character" and now "attention".
-  - Slop is a pejorative term for AI produced content that is low quality but verbose.
+  - Slop is a pejorative term for AI-produced content that is low quality but verbose.
   - Taste is the observation that doing less is often better but it requires attention to detail and
     a preference for removing things that detract from quality.
   - Skills are the tools that LLMs use for workflows
-  - Loops are A set of skills that are used to iterate on AI produced content.
+  - Loops are a set of skills that are used to iterate on AI-produced content.
   - Character is a deeper form of taste. It's when tastes have been developed so well that they
     potentially take on competing initiatives. For example, tastes in a usability standpoint may be
     at odds with the tastes of a security engineer.

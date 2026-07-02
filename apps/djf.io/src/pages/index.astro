@@ -3,13 +3,19 @@ import {Image} from 'astro:assets'
 import {getCollection} from 'astro:content'
 import {css} from 'styled-system/css'
 import headshot from '../assets/headshot.png'
+import PostCard from '../components/PostCard.astro'
 import BaseLayout from '../layouts/BaseLayout.astro'
-import {formatBlogDate, sortPostsByDateDesc} from '../lib/blog'
+import {sortPostsByDateDesc} from '../lib/blog'
+import {person, webSite} from '../lib/structured-data'
 
 const recentPosts = sortPostsByDateDesc(await getCollection('blog')).slice(0, 3)
 ---
 
-<BaseLayout title="David J Felix" description="Personal blog of David J Felix">
+<BaseLayout
+  title="David J Felix"
+  description="Personal blog of David J Felix"
+  jsonLd={[webSite(Astro.site), person(Astro.site)]}
+>
   <div class={css({display: 'flex', flexDirection: 'column', gap: '12'})}>
     <section
       class={css({
@@ -61,51 +67,7 @@ const recentPosts = sortPostsByDateDesc(await getCollection('blog')).slice(0, 3)
       </div>
 
       <div class={css({display: 'flex', flexDirection: 'column', gap: '6'})}>
-        {
-          recentPosts.map((post) => (
-            <article
-              class={css({
-                p: '6',
-                bg: 'bg.subtle',
-                borderRadius: 'lg',
-                borderWidth: '1px',
-                borderStyle: 'solid',
-                borderColor: 'border.subtle',
-                transition: 'border-color 0.2s',
-                _hover: {borderColor: 'border'},
-              })}
-            >
-              <a href={`/blog/${post.id}`} class={css({textDecoration: 'none'})}>
-                <h3
-                  class={css({
-                    fontSize: 'xl',
-                    fontWeight: 'semibold',
-                    color: 'text',
-                    mb: '2',
-                    _hover: {color: 'accent.text'},
-                  })}
-                >
-                  {post.data.title}
-                </h3>
-              </a>
-              <p class={css({color: 'text.muted', mb: '3', fontSize: 'sm'})}>
-                {post.data.description}
-              </p>
-              <div
-                class={css({
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: '3',
-                  color: 'text.muted',
-                  fontSize: 'xs',
-                })}
-              >
-                <span>{formatBlogDate(post.data.date)}</span>
-                {post.data.readingTime && <span>{post.data.readingTime} read</span>}
-              </div>
-            </article>
-          ))
-        }
+        {recentPosts.map((post) => <PostCard post={post} headingLevel="h3" showTags={false} />)}
       </div>
     </section>
   </div>

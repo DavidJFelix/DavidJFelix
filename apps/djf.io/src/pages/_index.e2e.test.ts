@@ -8,6 +8,13 @@ test('home page renders heading and tagline', async ({page}) => {
   await expect(page.getByText("It's all downhill from here")).toBeVisible()
 })
 
+test('clicking anywhere on a recent-post card opens the post', async ({page}) => {
+  await page.goto('/')
+
+  await page.locator('article').first().click()
+  await expect(page).toHaveURL(/\/blog\/2025-12-07-on-running\/?$/)
+})
+
 test('home page links to blog', async ({page}) => {
   await page.goto('/')
 

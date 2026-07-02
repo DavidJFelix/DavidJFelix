@@ -1,8 +1,9 @@
 ---
 import {getCollection} from 'astro:content'
 import {css} from 'styled-system/css'
+import PostCard from '../../../components/PostCard.astro'
 import BaseLayout from '../../../layouts/BaseLayout.astro'
-import {collectTags, formatBlogDate, postsForTag} from '../../../lib/blog'
+import {collectTags, postsForTag} from '../../../lib/blog'
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog')
@@ -42,78 +43,6 @@ const {tag, posts} = Astro.props
   </h1>
 
   <div class={css({display: 'flex', flexDirection: 'column', gap: '6'})}>
-    {
-      posts.map((post) => {
-        const formattedDate = formatBlogDate(post.data.date)
-
-        return (
-          <article
-            class={css({
-              p: '6',
-              bg: 'bg.subtle',
-              borderRadius: 'lg',
-              borderWidth: '1px',
-              borderStyle: 'solid',
-              borderColor: 'border.subtle',
-              transition: 'border-color 0.2s',
-              _hover: {borderColor: 'border'},
-            })}
-          >
-            <a
-              href={`/blog/${post.id}`}
-              class={css({textDecoration: 'none', display: 'block'})}
-            >
-              <h2
-                class={css({
-                  fontSize: 'xl',
-                  fontWeight: 'semibold',
-                  color: 'text',
-                  mb: '2',
-                  _hover: {color: 'accent.text'},
-                })}
-              >
-                {post.data.title}
-              </h2>
-
-              <p class={css({color: 'text.muted', mb: '3', fontSize: 'sm'})}>
-                {post.data.description}
-              </p>
-
-              <div
-                class={css({
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: '3',
-                  color: 'text.muted',
-                  fontSize: 'xs',
-                })}
-              >
-                <span>{formattedDate}</span>
-                {post.data.readingTime && <span>{post.data.readingTime} read</span>}
-              </div>
-
-              {post.data.tags && post.data.tags.length > 0 && (
-                <div class={css({display: 'flex', flexWrap: 'wrap', gap: '2', mt: '3'})}>
-                  {post.data.tags.map((t: string) => (
-                    <span
-                      class={css({
-                        bg: t === tag ? 'bg.elementHover' : 'bg.element',
-                        color: t === tag ? 'text' : 'text.muted',
-                        px: '2',
-                        py: '0.5',
-                        borderRadius: 'sm',
-                        fontSize: 'xs',
-                      })}
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </a>
-          </article>
-        )
-      })
-    }
+    {posts.map((post) => <PostCard post={post} currentTag={tag} />)}
   </div>
 </BaseLayout>

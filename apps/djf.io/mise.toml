@@ -37,9 +37,13 @@ depends = ["test:unit", "test:e2e"]
 description = "Build with Panda codegen + Astro"
 run = "pnpm run build"
 
+[tasks."lint:prose"]
+description = "Fail on em-dashes or curly quotes in blog content"
+run = "bun bin/check-prose.ts"
+
 [tasks.check]
 description = "Run all checks"
-depends = ["typecheck", "lint", "format", "test", "build"]
+depends = ["typecheck", "lint", "format", "lint:prose", "test", "build"]
 
 # Not part of `check` -- needs ATPROTO_APP_PASSWORD and writes to bsky.social.
 # Wired into the djf.io deploy workflow in Phase 3; runnable locally meanwhile.

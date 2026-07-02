@@ -42,10 +42,20 @@ jobs:
           SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT_ONVIBES_ORG }}
           PUBLIC_POSTHOG_KEY: ${{ vars.POSTHOG_KEY_ONVIBES_ORG }}
         run: pnpm exec astro build
+      # Flue owns the deployed Worker and hosts the Astro build inside it
+      # (src/app.ts): the /api agent API plus its Durable Objects live there.
+      # The step also re-injects the [assets] binding flue's build drops (see
+      # bin/patch-flue-wrangler.ts).
+      - name: flue build
+        run: pnpm run build:worker
+      # Deploy the Flue artifact, not dist/server/wrangler.json -- that config
+      # is only the Astro adapter's build-validation shape (no /api, no DOs).
+      # This must stay `deploy` (not `versions upload`): it applies the Durable
+      # Object migrations, which version uploads cannot carry.
       - name: wrangler deploy
         uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy -c dist/server/wrangler.json
+          command: deploy -c dist-flue/onvibes_org/wrangler.json
           workingDirectory: apps/onvibes.org

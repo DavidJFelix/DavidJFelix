@@ -26,9 +26,9 @@
   },
   "devDependencies": {
     "@astrojs/check": "0.9.9",
-    "@pandacss/dev": "1.11.3",
-    "@playwright/test": "1.61.0",
-    "@sentry/cloudflare": "10.60.0",
+    "@pandacss/dev": "1.11.4",
+    "@playwright/test": "1.61.1",
+    "@sentry/cloudflare": "10.62.0",
     "@vitest/coverage-v8": "4.1.9",
     "vitest": "4.1.9",
     "wrangler": "4.105.0"

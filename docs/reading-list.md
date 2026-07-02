@@ -1,9 +1,10 @@
 # Reading List
 
-Books on shelf, waiting to be read. Migrated out of GitHub issues on 2026-05-13 — issues weren't the right home for a reading list.
+Books on shelf, waiting to be read. Migrated out of GitHub issues on 2026-05-13 — issues weren't the
+right home for a reading list.
 
-> [!NOTE]
-> This is a temporary home. At some point this should move into notes proper, alongside the rest of the personal reference material.
+> [!NOTE] This is a temporary home. At some point this should move into notes proper, alongside the
+> rest of the personal reference material.
 
 ## Fiction
 
@@ -23,5 +24,6 @@ Books on shelf, waiting to be read. Migrated out of GitHub issues on 2026-05-13 
 - [ ] **Shortcut Your Startup: Ten Ways to Speed Up Entrepreneurial Success** — print
 - [ ] **The Prince** — Kindle / print
 - [ ] **The SaaS Playbook: Build a Multimillion-Dollar Startup Without Venture Capital** — print
-- [ ] **The Meritocracy Trap: How America's Foundational Myth Feeds Inequality, Dismantles the Middle Class, and Devours the Elite** — print
+- [ ] **The Meritocracy Trap: How America's Foundational Myth Feeds Inequality, Dismantles the
+      Middle Class, and Devours the Elite** — print
 - [ ] **How to Decide** — print. Recommended by Jeremey D.

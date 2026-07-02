@@ -1,0 +1,43 @@
+name: CI docs
+# Formatting gate for repo-owned Markdown (docs/, root *.md, .github/): a bare
+# `prettier --check .` whose scope is set by the root .prettierignore -- apps
+# are excluded (their per-app format gates own their markdown), as are the
+# legacy dirs and the hash-locked .agents/ skills.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - '*.md'
+      - '.github/**/*.md'
+      - '.prettierrc.json'
+      - '.prettierignore'
+      - '.config/mise.toml'
+      - '.depot/workflows/ci-docs.yml'
+  pull_request:
+    paths:
+      - 'docs/**'
+      - '*.md'
+      - '.github/**/*.md'
+      - '.prettierrc.json'
+      - '.prettierignore'
+      - '.config/mise.toml'
+      - '.depot/workflows/ci-docs.yml'
+env:
+  MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
+jobs:
+  format:
+    name: format check (Markdown)
+    runs-on: depot-ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: prettier
+        run: mise run format:md

@@ -1,7 +1,7 @@
 # File Naming
 
-All directory and file names in the repo MUST use lowercase kebab-case. This applies to source
-files (`.ts`, `.tsx`, `.astro`), config files, docs, and scripts -- not just project documentation.
+All directory and file names in the repo MUST use lowercase kebab-case. This applies to source files
+(`.ts`, `.tsx`, `.astro`), config files, docs, and scripts -- not just project documentation.
 
 **Examples**: `vectorize-index.ts`, `chat-agent.ts`, `search-knowledge.ts`,
 `2026-05-16-progress.md`, `vite.config.ts`.

@@ -12,4 +12,5 @@ Install the Warp CLI and spend time exploring how to use it.
 
 ## Out of scope
 
-- Updating configuration. Config work — pulling items from dotfiles and migrating them into Warp — is tracked separately under [Update Warp Config](../update-warp-config/plan.md).
+- Updating configuration. Config work — pulling items from dotfiles and migrating them into Warp —
+  is tracked separately under [Update Warp Config](../update-warp-config/plan.md).

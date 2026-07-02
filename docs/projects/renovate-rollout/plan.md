@@ -1,8 +1,8 @@
 # renovate-rollout
 
-Residual of the closed `dependency-freshness` project (see the 2026-06-18 changelog). The
-2026-06-11 decision handed dependency ownership to Renovate; this finishes the rollout and retires
-the bespoke freshness skill.
+Residual of the closed `dependency-freshness` project (see the 2026-06-18 changelog). The 2026-06-11
+decision handed dependency ownership to Renovate; this finishes the rollout and retires the bespoke
+freshness skill.
 
 ## Scope
 

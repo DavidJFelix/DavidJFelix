@@ -59,7 +59,6 @@ position-independent arguments. `move(3, 7)` is unreviewable; `move({x: 3, y: 7}
   - `XxxProps` -- inputs to a React component
   - `XxxOptions` -- when most fields are optional knobs with defaults
 
-  <!-- prettier-ignore -->
   ```ts
   export interface ParsePreviewUrlParams {
     prNumber: string
@@ -85,7 +84,6 @@ position-independent arguments. `move(3, 7)` is unreviewable; `move({x: 3, y: 7}
   arguments and import rules above.
 - **`Prettify<T>`** flattens an intersection- or generic-built type into a readable hover; reach for
   it when a composed type leaks its plumbing:
-  <!-- prettier-ignore -->
   ```ts
   type Prettify<T> = {[K in keyof T]: T[K]} & {}
   ```

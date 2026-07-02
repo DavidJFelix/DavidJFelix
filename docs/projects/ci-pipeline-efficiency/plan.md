@@ -8,7 +8,7 @@ steps that currently start cold. Grounded in a full survey of `.depot/workflows/
 
 David's steer: the lever here is **better filtering**, not run-deduplication. (Concurrency /
 cancel-in-progress was considered and set aside — it trims wasted compute on rapid pushes but does
-not stop the *wrong* workflows from running.) The principle: a workflow triggers only on changes
+not stop the _wrong_ workflows from running.) The principle: a workflow triggers only on changes
 that can change its result.
 
 The fan-out today: all 10 per-app `ci-*.yml` workflows list the same shared root files in their
@@ -19,8 +19,8 @@ The fan-out today: all 10 per-app `ci-*.yml` workflows list the same shared root
   filter. Apps run neither cspell (it's the repo-wide `ci-spell.yml` gate) nor Prettier (Markdown
   only, repo-level). Clear win, no safety loss. (This also shrinks the `lint-format-loose-ends`
   cspell→jsonc rename, which otherwise has to edit all these filters.)
-- **Path-filter `ci-spell.yml`.** It currently has no `paths:` and runs on *every* push/PR.
-  Restrict it to spell-checkable file types + `.config/cspell.json*` + its own workflow.
+- **Path-filter `ci-spell.yml`.** It currently has no `paths:` and runs on _every_ push/PR. Restrict
+  it to spell-checkable file types + `.config/cspell.json*` + its own workflow.
 - **Drop the redundant `cd-deploy-*.yml` self-references** from `ci-f311x.yml` and
   `ci-forzamonica-com.yml` path filters (a deploy-workflow edit shouldn't trigger app CI).
 - **Decide the shared toolchain/lint configs.** `biome.jsonc`, `.oxlintrc.json`, and
@@ -38,11 +38,12 @@ The fan-out today: all 10 per-app `ci-*.yml` workflows list the same shared root
   keyed on `mise.toml`/`mise.lock`), but every `pnpm install --frozen-lockfile` re-downloads from
   cold — the biggest install-speed win. Add `actions/cache` on `pnpm store path`, keyed on
   `**/pnpm-lock.yaml` (matching the repo's existing version-keyed cache convention).
-- **Fix the blocking web-session Playwright install.** `.claude/hooks/session-start.ts` *awaits*
+- **Fix the blocking web-session Playwright install.** `.claude/hooks/session-start.ts` _awaits_
   `playwright install --with-deps chromium` (~300 MB) on every cold web session, even though most
   sessions never run e2e — this is the "waiting FOREVER" pain. Options: make it non-blocking (kick
-  it off without `await`) or lazy (install on first e2e run); cache-guard on `~/.cache/ms-playwright`
-  if the web env persists it; drop `--with-deps` if the base image already carries the OS libs.
+  it off without `await`) or lazy (install on first e2e run); cache-guard on
+  `~/.cache/ms-playwright` if the web env persists it; drop `--with-deps` if the base image already
+  carries the OS libs.
 - **CI Playwright is already cached** — `ci-djf-io.yml` and the `preview-wrangler` composite key the
   browser cache on the resolved Playwright version, and only djf.io runs Playwright in CI, so this
   is likely already optimal. Confirm, don't duplicate.

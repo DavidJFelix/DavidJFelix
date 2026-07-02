@@ -11,6 +11,12 @@ const PORT = Number(process.env.PLAYWRIGHT_PORT ?? 4176)
 const PREVIEW_URL = process.env.PREVIEW_URL
 const BASE_URL = PREVIEW_URL ?? `http://127.0.0.1:${PORT}`
 
+// Escape hatch for sandboxes that ship a system Chromium instead of letting
+// `playwright install` download the pinned build (e.g. remote web sessions
+// with PLAYWRIGHT_BROWSERS_PATH pointing at a pre-installed copy). Unset in
+// CI, where the pinned browser is installed normally.
+const CHROMIUM_EXECUTABLE = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE
+
 export default defineConfig({
   testDir: './src',
   testMatch: '**/*.e2e.test.ts',
@@ -23,7 +29,15 @@ export default defineConfig({
     baseURL: BASE_URL,
     trace: 'on-first-retry',
   },
-  projects: [{name: 'chromium', use: {...devices['Desktop Chrome']}}],
+  projects: [
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        launchOptions: CHROMIUM_EXECUTABLE ? {executablePath: CHROMIUM_EXECUTABLE} : {},
+      },
+    },
+  ],
   // Nothing to boot when pointed at a deployed preview.
   webServer: PREVIEW_URL
     ? undefined

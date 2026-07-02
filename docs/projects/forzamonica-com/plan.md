@@ -2,10 +2,11 @@
 
 ## Status
 
-**Blocked** (2026-06-18) — scaffold is complete and verified against mock.shop, but production is
-gated on two human tasks (filed as GitHub issues): create the Shopify store + Headless channel +
-Storefront token, and register forzamonica.com + add the zone to Cloudflare. Parked until David
-clears those.
+**Active** (2026-07-02) — the domain blocker is cleared (#223 closed; David reports forzamonica.com
+is attached to the worker, though the `routes` block in `wrangler.toml` is still commented out and
+should be reconciled). The Shopify store + token (#222) remains the gate for the real-catalog
+cutover; until then the storefront builds against mock.shop. Site map + shared layout landed
+2026-07-02 (about, policies, 404, footer, cart badge).
 
 ## Goal
 
@@ -44,8 +45,9 @@ replaces the "placeholder for now" line item from the (now closed) new-domain-si
       like the other apps (decided 2026-06-12); no per-app secrets
 - [ ] Shopify store + Headless channel + Storefront API token
       ([#222](https://github.com/davidjfelix/davidjfelix/issues/222))
-- [ ] Register forzamonica.com and add the zone to the account, then restore the `routes` block in
-      `wrangler.toml` (GitHub issue; worker serves from workers.dev until then)
+- [x] Register forzamonica.com and add the zone to the account (#223, closed 2026-06-14; David
+      reports the domain is attached — the commented `routes` block in `wrangler.toml` still needs
+      reconciling with however it was attached)
 - [ ] First production deploy on merge to main
 
 ### Phase 3 — Real store cutover
@@ -59,6 +61,9 @@ replaces the "placeholder for now" line item from the (now closed) new-domain-si
 - [x] Sentry + PostHog per the cross-app instrumentation projects (wired 2026-06-25; dark until
       #261)
 - [x] Per-PR preview + Playwright e2e (#300) — forzamonica was the last wrangler app without them
+- [x] Site map + shared layout (2026-07-02): about page, policy stubs, styled 404, footer, header
+      cart badge, per-page titles, e2e for all of it. Catalog kept flat — collections routes
+      deferred until the real product line exists.
 - [ ] Extend e2e beyond the home hero to catalog → cart (mock.shop makes this straightforward)
 - [ ] Collections, search, richer PDP as the catalog warrants
 

@@ -3,8 +3,10 @@
 Books on shelf, waiting to be read. Migrated out of GitHub issues on 2026-05-13 — issues weren't the
 right home for a reading list.
 
-> [!NOTE] This is a temporary home. At some point this should move into notes proper, alongside the
-> rest of the personal reference material.
+> [!NOTE]
+>
+> This is a temporary home. At some point this should move into notes proper, alongside the rest of
+> the personal reference material.
 
 ## Fiction
 

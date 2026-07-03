@@ -13,7 +13,10 @@ const post = (body: string): Request =>
   new Request(`https://djf.io${SENTRY_TUNNEL_ROUTE}`, {method: 'POST', body})
 
 // fetch stub that records its call and stands in for a 200 from Sentry ingest.
-const stubFetch = () => vi.fn<typeof fetch>(async () => new Response('{"id":"evt"}', {status: 200}))
+// fetch by call signature only: lib.dom types `typeof fetch` with a required
+// static `preconnect`, which a plain stub cannot (and need not) satisfy.
+type FetchLike = (...args: Parameters<typeof fetch>) => ReturnType<typeof fetch>
+const stubFetch = () => vi.fn<FetchLike>(async () => new Response('{"id":"evt"}', {status: 200}))
 
 test('rejects non-POST methods with 405 and an Allow header, without forwarding', async () => {
   const fetchImpl = stubFetch()

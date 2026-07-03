@@ -57,10 +57,12 @@ const sentrySourceMaps =
     ? {org: SENTRY_ORG, project: SENTRY_PROJECT, authToken: SENTRY_AUTH_TOKEN}
     : {sourcemaps: {disable: true}}
 
-// The Cloudflare adapter exists only so the on-demand endpoints -- src/pages/bugs.ts
-// (the Sentry tunnel) and src/pages/ingest (the PostHog proxy), both
-// `prerender = false` -- can run on demand; every page stays prerendered and is
-// served straight from assets, so the worker is invoked only for those routes.
+// The Cloudflare adapter runs the on-demand endpoints -- src/pages/bugs.ts
+// (the Sentry tunnel) and src/pages/diag (the PostHog proxy), both
+// `prerender = false`. Every page stays prerendered, but page requests reach
+// the worker anyway (wrangler.toml `run_worker_first`) so src/worker.ts can
+// negotiate them into markdown for agents; the HTML itself is still fetched
+// from assets.
 //
 // `prerenderEnvironment: 'node'` keeps prerendering in Node rather than the
 // adapter's default workerd, because the build optimizes images and renders OG

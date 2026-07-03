@@ -124,6 +124,25 @@ test('negotiateMarkdown converts an html page for a markdown request', async () 
   expect(body).toContain('# On Running')
 })
 
+test('negotiateMarkdown carries page headers through but drops the html-specific ones', async () => {
+  const response = await negotiateMarkdown(
+    markdownRequest(),
+    htmlResponse(fullPage, {
+      headers: {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'max-age=3600',
+        'content-encoding': 'identity',
+        etag: '"html-rev-1"',
+        vary: 'accept-encoding',
+      },
+    }),
+  )
+  expect(response.headers.get('cache-control')).toBe('max-age=3600')
+  expect(response.headers.get('etag')).toBeNull()
+  expect(response.headers.get('content-encoding')).toBeNull()
+  expect(response.headers.get('vary')).toBe('accept-encoding, accept')
+})
+
 test('negotiateMarkdown matches the content type case-insensitively', async () => {
   const response = await negotiateMarkdown(
     markdownRequest(),

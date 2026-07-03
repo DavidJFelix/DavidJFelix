@@ -125,16 +125,18 @@ export async function negotiateMarkdown(request: Request, response: Response): P
   if (contentType === null || !contentType.toLowerCase().includes(HTML_TYPE)) return response
 
   const {markdown, tokens} = htmlPageToMarkdown(await response.text())
-  // Fresh headers on purpose: the HTML response's ETag and Content-Length
-  // describe the HTML representation, and reusing them would let a cache serve
-  // one representation for the other. Vary tells caches the same URL splits on
-  // Accept.
-  return new Response(markdown, {
-    status: response.status,
-    headers: {
-      'content-type': `${MARKDOWN_TYPE}; charset=utf-8`,
-      'x-markdown-tokens': String(tokens),
-      vary: 'accept',
-    },
-  })
+  // Carry the page's headers through -- caching policy and anything upstream
+  // middleware adds apply to the markdown rendition too -- but drop the ones
+  // that describe the HTML bytes (ETag, Content-Length, Content-Encoding):
+  // reusing those would let a cache serve one representation as the other.
+  // Vary (appended, in case the page already varies) tells caches the same
+  // URL splits on Accept.
+  const headers = new Headers(response.headers)
+  headers.delete('content-length')
+  headers.delete('content-encoding')
+  headers.delete('etag')
+  headers.set('content-type', `${MARKDOWN_TYPE}; charset=utf-8`)
+  headers.set('x-markdown-tokens', String(tokens))
+  headers.append('vary', 'accept')
+  return new Response(markdown, {status: response.status, headers})
 }

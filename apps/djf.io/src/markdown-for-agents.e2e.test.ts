@@ -14,6 +14,8 @@ test('the home page serves markdown when the request asks for it', async ({reque
   expect(response.headers()['content-type']).toBe('text/markdown; charset=utf-8')
   const body = await response.text()
   expect(response.headers()['x-markdown-tokens']).toBe(String(Math.ceil(body.length / 4)))
+  // the asset response's ETag describes the HTML bytes and must not be reused
+  expect(response.headers().etag).toBeUndefined()
   expect(body).toContain('title: "David J Felix | djf.io"')
   expect(body).not.toContain('<html')
 })

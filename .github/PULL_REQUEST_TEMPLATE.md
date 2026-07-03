@@ -22,7 +22,11 @@ Scopes: djf.io, calendar-visualizer, ravrun, tooling, docs, repo
 
 ## Changelog entry
 
-<!-- Copy this into docs/changelog/YYYY-MM.md under the correct date heading. -->
+<!--
+Add a fragment file docs/changelog/fragments/YYYY-MM-DD-<type>-<scope>-<short-slug>.md containing
+one entry like the block below. Never edit docs/changelog/YYYY-MM.md directly -- the roll-up owns
+the monthly files. See docs/changelog/fragments/README.md.
+-->
 
 ```markdown
 ### type(scope): description

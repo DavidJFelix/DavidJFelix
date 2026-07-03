@@ -10,7 +10,8 @@ rules live in [AGENTS.md](AGENTS.md); the detailed style guides live in
 1. Create a feature branch
 2. Make changes following the style guides below
 3. Open a PR with a [conventional commit](https://www.conventionalcommits.org/) title
-4. Add a changelog entry to `docs/changelog/YYYY-MM.md`
+4. Add a changelog fragment to `docs/changelog/fragments/` (never edit `docs/changelog/YYYY-MM.md`
+   directly)
 5. If you touched `.config/mise.toml`, run `mise install` and commit the resulting
    `.config/mise.lock` change in the same PR -- CI fails on a stale lockfile (see
    [tooling-standard.md](docs/contributing/tooling-standard.md))
@@ -28,9 +29,15 @@ type(scope): description
 
 ### Changelog
 
-Add an entry to the current month's file in `docs/changelog/`. Create the monthly file if it does
-not exist yet. Months with no changes are skipped entirely -- do not create empty files. See
-[docs/changelog/README.md](docs/changelog/README.md) for format details.
+Add one fragment file to `docs/changelog/fragments/`, named
+`YYYY-MM-DD-<type>-<scope>-<short-slug>.md` (lowercase kebab-case; dots in scopes flatten, so
+`djf.io` becomes `djf-io`). The body is exactly one entry in the monthly-file format: a
+`### type(scope): description` heading followed by the prose paragraphs.
+
+Never edit the monthly `docs/changelog/YYYY-MM.md` files -- they are only ever written by the
+roll-up (`mise run changelog:rollup`), which the `cron-changelog-rollup` workflow runs weekly,
+opening a PR with the result. Fragments from parallel PRs merge without conflicts because each PR
+adds its own file. See [docs/changelog/README.md](docs/changelog/README.md) for format details.
 
 ## Style guides
 

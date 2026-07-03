@@ -17,7 +17,7 @@ apps have independent lockfiles and dependencies. Shared dev tooling is managed 
 | `docs/contributing/` | Style mini guides -- naming, testing, linting, config, scripting, tooling, CI, project docs      |
 | `docs/agents/`       | Agent workflow docs -- issue tracker, triage labels, domain docs                                 |
 | `docs/projects/`     | Active project plans and progress notes (ephemeral working notes)                                |
-| `docs/changelog/`    | Monthly change history (the durable record)                                                      |
+| `docs/changelog/`    | Monthly change history (the durable record); PRs add fragments in `fragments/`                   |
 | `.agents/agents/`    | Review personas -- focused reviewer subagents (solid copies)                                     |
 | `.agents/skills/`    | Claude Code skills (solid copies)                                                                |
 | `.config/`           | Shared tooling config (mise, cspell)                                                             |
@@ -39,7 +39,8 @@ The non-negotiable rules, one line each. Follow the link before working in that 
   [code-style.md](docs/contributing/code-style.md)
 - **No emojis** in code, commits, or documentation
 - **Commits/PRs**: [conventional commit](https://www.conventionalcommits.org/) PR titles; every PR
-  adds a changelog entry -- [CONTRIBUTING.md](CONTRIBUTING.md)
+  adds a changelog fragment in `docs/changelog/fragments/` -- monthly files are written only by the
+  roll-up (`mise run changelog:rollup`), never by PRs -- [CONTRIBUTING.md](CONTRIBUTING.md)
 - **Testing**: co-located tests, no `describe` blocks, no lifecycle hooks; deployed apps carry a
   smoke gate -- [testing.md](docs/contributing/testing.md)
 - **Scripts**: mise task first, then a bun script in `bin/`; bash only when trivial; `sed` and

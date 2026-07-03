@@ -2,6 +2,20 @@
 
 Change history for the monorepo, organized as monthly files in reverse chronological order.
 
+## Fragments
+
+Changes enter the changelog as fragment files in [fragments/](./fragments/), one per PR -- parallel
+PRs never conflict because each adds its own file. A fragment is named
+`YYYY-MM-DD-<type>-<scope>-<short-slug>.md` and contains exactly one entry in the format below
+(heading plus prose). See [fragments/README.md](./fragments/README.md) for the full rules.
+
+The monthly files are only ever written by the roll-up -- never edit them directly.
+`mise run changelog:rollup` folds every pending fragment into the right `YYYY-MM.md` (creating the
+month file or day heading as needed, days newest-first, filename order within a day), deletes the
+folded fragments, and refreshes the file list at the bottom of this README. The
+`cron-changelog-rollup` workflow runs it weekly and opens a PR with the result; run the task
+manually for an immediate roll-up.
+
 ## Format
 
 Each file is named `YYYY-MM.md` and contains entries grouped by date. Entries use

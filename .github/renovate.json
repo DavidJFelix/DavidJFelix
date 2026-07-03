@@ -11,6 +11,10 @@
     "enabled": true,
     "labels": ["security"]
   },
+  "github-actions": {
+    "description": "Workflows live in .depot/workflows/ (Depot CI), which the manager's default patterns do not cover; the action.yaml pattern re-adds composite-action coverage in case patterns replace rather than extend the defaults.",
+    "managerFilePatterns": ["/^\\.depot/workflows/[^/]+\\.ya?ml$/", "/(^|/)action\\.ya?ml$/"]
+  },
   "packageRules": [
     {
       "matchUpdateTypes": ["patch", "minor"],

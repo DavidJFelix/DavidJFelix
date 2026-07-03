@@ -3,18 +3,21 @@
 # Adapted from `warden init`'s generated .github/workflows/warden.yml to this
 # repo's conventions (Depot runners, pinned SHAs, persist-credentials off).
 #
-# Two deliberate deviations from docs/github-actions-style.md, both because
-# Warden reviews the whole PR diff rather than one subtree:
+# Two deliberate deviations from docs/contributing/github-actions-style.md,
+# both because Warden reviews the whole PR diff rather than one subtree:
 #   - No `paths:` filter. Like ci-spell.yml, this is a repo-wide gate; scoping
 #     it to a subtree would blind the review to everything else in the diff.
 #   - `pull_request` only, no `push` to main. Warden needs a PR context (it
 #     diffs head against base); there is nothing for it to review on a push.
 #
 # Config lives in /warden.toml. The model (WARDEN_MODEL) and OpenRouter key
-# (WARDEN_OPENROUTER_API_KEY) come from repository/org secrets.
+# (WARDEN_OPENROUTER_API_KEY) come from Depot secrets — these workflows run on
+# Depot CI, which never sees GitHub repo secrets.
 name: CI Warden
 on:
   pull_request:
+    # `labeled` stays so adding the "Warden" label re-runs the review;
+    # warden.toml's trigger filters which label counts, so other labels no-op.
     types: [opened, synchronize, reopened, ready_for_review, labeled]
 
 # contents: write is required for resolving review threads via GraphQL.
@@ -29,10 +32,12 @@ jobs:
     name: warden
     runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
     timeout-minutes: 20
+    # No GITHUB_TOKEN env: the warden action's github-token input already
+    # defaults to the workflow token, and an env copy would also expose it to
+    # every child process of the model-backed analyze step.
     env:
       WARDEN_MODEL: ${{ secrets.WARDEN_MODEL }}
       WARDEN_OPENROUTER_API_KEY: ${{ secrets.WARDEN_OPENROUTER_API_KEY }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -47,8 +52,10 @@ jobs:
       # repo-pinned Node (26) on PATH, which has it.
       - name: mise
         uses: ./.depot/actions/setup-mise
-      # Split analyze/report so GitHub write credentials don't hold the long
-      # model-backed analysis run (recommended by the Warden GitHub guide).
+      # Split analyze/report per the Warden GitHub guide. Note: both steps use
+      # the workflow token (the action input's default), so with this setup the
+      # split is a structural findings handoff, not a credential boundary; a
+      # separately minted report-only app token would be needed for that.
       - name: warden analyze
         id: warden-analyze
         uses: getsentry/warden@c85791e0571b0d03646e6d2cbacc772831ff9ff6 # v0.38.1

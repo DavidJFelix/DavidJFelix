@@ -147,6 +147,15 @@ proven.
 
 **Status**: Active
 
+### [Review Consolidation](./projects/review-consolidation/plan.md)
+
+Consolidate the repo's code-review surfaces around **Warden** as the canonical automated PR gate,
+with the built-in `/code-review` + `/security-review` (local inner loop) and `/review` (Standards +
+Spec) positioned to complement it, not compete. Warden landed 2026-06-30; the gate goes live once
+its secrets exist (#302). Next: encode the repo's own standards as custom Warden skills.
+
+**Status**: Active · Blocked (human activation, #302)
+
 ### [Lint/Format Loose Ends](./projects/lint-format-loose-ends/plan.md)
 
 The concrete residual of the closed linter-formatter standardization: format all of `docs/` + add a

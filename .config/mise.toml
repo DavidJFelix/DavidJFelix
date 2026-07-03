@@ -13,6 +13,11 @@ ghalint = "1"
 zizmor = "1.26.1"
 pinact = "4.1.0"
 "npm:cspell" = "10.0.1"
+# Warden CLI: AI code review run locally (`warden run`) and in CI (the Depot
+# ci-warden.yml workflow uses the getsentry/warden action, which bundles its
+# own copy). Pinned like cspell via mise's npm backend; there is no root
+# package.json. Config lives in /warden.toml.
+"npm:@sentry/warden" = "0.38.1"
 depot = { version = "latest", exe = "depot" }
 
 # Repo-root checks, scoped to the config files the root owns. Legacy project

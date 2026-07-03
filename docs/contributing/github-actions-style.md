@@ -115,8 +115,9 @@ For `uses:` steps, name the action by its tool (`wrangler deploy`, `actions/chec
 
 ## Path filters: only run when the relevant subtree changes
 
-Every CI and CD workflow MUST include `paths:` filters on its `push` and `pull_request` triggers.
-Workflows pay for themselves only when they cover the code that changed.
+Every CI and CD workflow that targets a specific subtree MUST include `paths:` filters on its `push`
+and `pull_request` triggers. Workflows pay for themselves only when they cover the code that
+changed.
 
 The path filter must include:
 
@@ -148,6 +149,11 @@ on:
 
 `Run` and `Cron` workflows do not need path filters -- they are dispatched explicitly or on a
 schedule.
+
+Deliberately repo-wide gates are the other exception: a check that must see every PR regardless of
+what changed -- `ci-spell.yml` (cspell) and `ci-warden.yml` (AI review) -- runs without a `paths:`
+filter and documents why in a header comment. This is a narrow carve-out, not a license to skip
+filters: a workflow that exercises one subtree still scopes to it.
 
 ## Adding code to a subtree
 

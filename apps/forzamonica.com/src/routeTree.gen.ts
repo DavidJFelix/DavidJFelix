@@ -11,9 +11,13 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as BugsRouteImport } from './routes/bugs'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductsIndexRouteImport } from './routes/products/index'
 import { Route as ProductsHandleRouteImport } from './routes/products/$handle'
+import { Route as PoliciesShippingRouteImport } from './routes/policies/shipping'
+import { Route as PoliciesReturnsRouteImport } from './routes/policies/returns'
+import { Route as PoliciesPrivacyRouteImport } from './routes/policies/privacy'
 import { Route as DiagSplatRouteImport } from './routes/diag/$'
 
 const CartRoute = CartRouteImport.update({
@@ -24,6 +28,11 @@ const CartRoute = CartRouteImport.update({
 const BugsRoute = BugsRouteImport.update({
   id: '/bugs',
   path: '/bugs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -41,6 +50,21 @@ const ProductsHandleRoute = ProductsHandleRouteImport.update({
   path: '/products/$handle',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PoliciesShippingRoute = PoliciesShippingRouteImport.update({
+  id: '/policies/shipping',
+  path: '/policies/shipping',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PoliciesReturnsRoute = PoliciesReturnsRouteImport.update({
+  id: '/policies/returns',
+  path: '/policies/returns',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PoliciesPrivacyRoute = PoliciesPrivacyRouteImport.update({
+  id: '/policies/privacy',
+  path: '/policies/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DiagSplatRoute = DiagSplatRouteImport.update({
   id: '/diag/$',
   path: '/diag/$',
@@ -49,26 +73,38 @@ const DiagSplatRoute = DiagSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/bugs': typeof BugsRoute
   '/cart': typeof CartRoute
   '/diag/$': typeof DiagSplatRoute
+  '/policies/privacy': typeof PoliciesPrivacyRoute
+  '/policies/returns': typeof PoliciesReturnsRoute
+  '/policies/shipping': typeof PoliciesShippingRoute
   '/products/$handle': typeof ProductsHandleRoute
   '/products/': typeof ProductsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/bugs': typeof BugsRoute
   '/cart': typeof CartRoute
   '/diag/$': typeof DiagSplatRoute
+  '/policies/privacy': typeof PoliciesPrivacyRoute
+  '/policies/returns': typeof PoliciesReturnsRoute
+  '/policies/shipping': typeof PoliciesShippingRoute
   '/products/$handle': typeof ProductsHandleRoute
   '/products': typeof ProductsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/bugs': typeof BugsRoute
   '/cart': typeof CartRoute
   '/diag/$': typeof DiagSplatRoute
+  '/policies/privacy': typeof PoliciesPrivacyRoute
+  '/policies/returns': typeof PoliciesReturnsRoute
+  '/policies/shipping': typeof PoliciesShippingRoute
   '/products/$handle': typeof ProductsHandleRoute
   '/products/': typeof ProductsIndexRoute
 }
@@ -76,28 +112,50 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/about'
     | '/bugs'
     | '/cart'
     | '/diag/$'
+    | '/policies/privacy'
+    | '/policies/returns'
+    | '/policies/shipping'
     | '/products/$handle'
     | '/products/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/bugs' | '/cart' | '/diag/$' | '/products/$handle' | '/products'
-  id:
-    | '__root__'
+  to:
     | '/'
+    | '/about'
     | '/bugs'
     | '/cart'
     | '/diag/$'
+    | '/policies/privacy'
+    | '/policies/returns'
+    | '/policies/shipping'
+    | '/products/$handle'
+    | '/products'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/bugs'
+    | '/cart'
+    | '/diag/$'
+    | '/policies/privacy'
+    | '/policies/returns'
+    | '/policies/shipping'
     | '/products/$handle'
     | '/products/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
   BugsRoute: typeof BugsRoute
   CartRoute: typeof CartRoute
   DiagSplatRoute: typeof DiagSplatRoute
+  PoliciesPrivacyRoute: typeof PoliciesPrivacyRoute
+  PoliciesReturnsRoute: typeof PoliciesReturnsRoute
+  PoliciesShippingRoute: typeof PoliciesShippingRoute
   ProductsHandleRoute: typeof ProductsHandleRoute
   ProductsIndexRoute: typeof ProductsIndexRoute
 }
@@ -116,6 +174,13 @@ declare module '@tanstack/react-router' {
       path: '/bugs'
       fullPath: '/bugs'
       preLoaderRoute: typeof BugsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -139,6 +204,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductsHandleRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/policies/shipping': {
+      id: '/policies/shipping'
+      path: '/policies/shipping'
+      fullPath: '/policies/shipping'
+      preLoaderRoute: typeof PoliciesShippingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/policies/returns': {
+      id: '/policies/returns'
+      path: '/policies/returns'
+      fullPath: '/policies/returns'
+      preLoaderRoute: typeof PoliciesReturnsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/policies/privacy': {
+      id: '/policies/privacy'
+      path: '/policies/privacy'
+      fullPath: '/policies/privacy'
+      preLoaderRoute: typeof PoliciesPrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/diag/$': {
       id: '/diag/$'
       path: '/diag/$'
@@ -151,9 +237,13 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
   BugsRoute: BugsRoute,
   CartRoute: CartRoute,
   DiagSplatRoute: DiagSplatRoute,
+  PoliciesPrivacyRoute: PoliciesPrivacyRoute,
+  PoliciesReturnsRoute: PoliciesReturnsRoute,
+  PoliciesShippingRoute: PoliciesShippingRoute,
   ProductsHandleRoute: ProductsHandleRoute,
   ProductsIndexRoute: ProductsIndexRoute,
 }

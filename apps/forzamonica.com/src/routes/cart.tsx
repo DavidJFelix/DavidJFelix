@@ -11,6 +11,7 @@ import type {CartLine} from '@/lib/shopify/queries.ts'
 
 export const Route = createFileRoute('/cart')({
   loader: () => fetchCart(),
+  head: () => ({meta: [{title: 'Cart — Forza Monica'}]}),
   component: CartPage,
 })
 

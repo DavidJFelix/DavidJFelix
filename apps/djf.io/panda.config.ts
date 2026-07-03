@@ -43,7 +43,9 @@ export default defineConfig({
         fonts: {
           body: {value: "'Inter Variable', system-ui, sans-serif"},
           heading: {value: "'Schibsted Grotesk Variable', 'Inter Variable', system-ui, sans-serif"},
-          mono: {value: "'JetBrains Mono Variable', ui-monospace, monospace"},
+          mono: {
+            value: "'JetBrains Mono Variable', ui-monospace, 'SFMono-Regular', Menlo, monospace",
+          },
         },
         colors: {
           olive: scale(olive),

@@ -151,6 +151,16 @@ const CART_FIELDS = /* GraphQL */ `
   }
 `
 
+// Badge-sized slice of the cart for the site header; the full CART_QUERY
+// stays on the cart page.
+export const CART_QUANTITY_QUERY = /* GraphQL */ `
+  query CartQuantity($cartId: ID!) {
+    cart(id: $cartId) {
+      totalQuantity
+    }
+  }
+`
+
 export const CART_QUERY = /* GraphQL */ `
   ${CART_FIELDS}
   query Cart($cartId: ID!) {

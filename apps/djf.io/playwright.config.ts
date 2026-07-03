@@ -1,8 +1,8 @@
 import {defineConfig, devices} from '@playwright/test'
 
 // Runs against either a deployed per-PR preview (PREVIEW_URL set by
-// cd-preview-djf-io.yml) or a local production boot (no PREVIEW_URL) for
-// authoring/checking baselines and the behavioral suite.
+// .depot/workflows/cd-preview-djf-io.yml) or a local production boot (no
+// PREVIEW_URL) for authoring/checking baselines and the behavioral suite.
 const PORT = 4321
 const PREVIEW_URL = process.env.PREVIEW_URL
 const BASE_URL = PREVIEW_URL ?? `http://127.0.0.1:${PORT}`

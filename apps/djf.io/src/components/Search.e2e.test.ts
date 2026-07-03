@@ -77,11 +77,13 @@ test('shows the Ctrl key hint on non-Mac platforms', async ({page}) => {
 
 test('shows the ⌘ key hint immediately on Mac, with no Ctrl→⌘ flash', async ({page}) => {
   // Both hints ship in the markup; CSS reveals one from the data-platform
-  // attribute BaseLayout's inline <head> script sets from navigator.platform
+  // attribute BaseLayout's inline <head> script sets from navigator.userAgent
   // before first paint. addInitScript runs before that script, so forcing a Mac
-  // platform exercises the branch and ⌘K is the only glyph ever painted.
+  // user agent exercises the branch and ⌘K is the only glyph ever painted.
   await page.addInitScript(() => {
-    Object.defineProperty(navigator, 'platform', {get: () => 'MacIntel'})
+    Object.defineProperty(navigator, 'userAgent', {
+      get: () => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+    })
   })
   await visit(page, '/')
 

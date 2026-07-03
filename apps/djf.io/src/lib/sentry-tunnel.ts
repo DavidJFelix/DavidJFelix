@@ -3,7 +3,7 @@
 // The browser SDK normally POSTs envelopes straight to `*.ingest.sentry.io`,
 // which ad/tracker blockers drop -- so a chunk of real-user errors never arrive.
 // Setting the SDK's `tunnel` to a same-origin path makes it POST here instead;
-// the Cloudflare worker (src/worker.ts) forwards the envelope on to Sentry's
+// the on-demand route (src/pages/bugs.ts) forwards the envelope on to Sentry's
 // ingest API server-side, where no blocker can see it. Blockers match Sentry's
 // ingest *hosts*, not arbitrary first-party paths, so the relay slips through.
 //
@@ -13,10 +13,10 @@
 // DSN, only for that exact project (so nobody else can relay their telemetry
 // through this domain).
 
-// The path the SDK tunnels through and the worker serves. Single source of
-// truth, imported by both sentry.client.config.ts and src/worker.ts. Neutral on
-// purpose -- it must not read as "sentry"/"telemetry", or blockers would match
-// the path too. Keep it clear of real routes (no `/bugs` page exists).
+// The path the SDK tunnels through and src/pages/bugs.ts serves (its filename
+// must match). Single source of truth, imported by sentry.client.config.ts.
+// Neutral on purpose -- it must not read as "sentry"/"telemetry", or blockers
+// would match the path too.
 export const SENTRY_TUNNEL_ROUTE = '/bugs'
 
 // A Sentry SaaS ingest host: `o<org>.ingest.sentry.io` or a regional

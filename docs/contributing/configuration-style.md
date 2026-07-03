@@ -37,8 +37,8 @@ breaks format-on-save is worse than a tidy root.
 
 So for Tier-2 tools the repo root (or the tool's conventional dotfile) is the low-friction default.
 Move into `.config/` only if you are prepared to wire the flag through all three surfaces and have
-confirmed the editor still resolves it. Keeping a Tier-2 config at root needs **no** justification --
-that IS its documented default. Tier-2 tools in this repo, kept at root deliberately: **Biome**
+confirmed the editor still resolves it. Keeping a Tier-2 config at root needs **no** justification
+-- that IS its documented default. Tier-2 tools in this repo, kept at root deliberately: **Biome**
 (`biome.jsonc`), **Oxlint** (`.oxlintrc.json`), **Prettier** (`.prettierrc.json`), **zizmor**
 (`.github/zizmor.yml`), **actionlint** (`.github/actionlint.yaml`).
 
@@ -47,21 +47,21 @@ that IS its documented default. Tier-2 tools in this repo, kept at root delibera
 The file's location is load-bearing semantics, not a search path -- it cannot move:
 
 - **EditorConfig** (`.editorconfig`): the directory it sits in defines its scope; tools walk _up_
-  from the edited file looking for the literal name. Move it into `.config/` and it would govern only
-  files under `.config/`. Permanent root file.
-- **Cargo** (`Cargo.toml`): the manifest's directory _is_ the package/workspace root. `--manifest-path`
-  repoints but cannot rename or nest it. (`.cargo/config.toml` is a separate Cargo settings file in
-  its own `.cargo/` dotdir -- also not XDG `.config/`.)
-- **Renovate** (`.github/renovate.json`): no `.config/` support at all; the off-root location it _does_
-  honor is `.github/`. Use that, not the root.
+  from the edited file looking for the literal name. Move it into `.config/` and it would govern
+  only files under `.config/`. Permanent root file.
+- **Cargo** (`Cargo.toml`): the manifest's directory _is_ the package/workspace root.
+  `--manifest-path` repoints but cannot rename or nest it. (`.cargo/config.toml` is a separate Cargo
+  settings file in its own `.cargo/` dotdir -- also not XDG `.config/`.)
+- **Renovate** (`.github/renovate.json`): no `.config/` support at all; the off-root location it
+  _does_ honor is `.github/`. Use that, not the root.
 
 ### The decision in one table
 
-| Tier | Meaning                  | What to do                                                       | Repo examples                            |
-| ---- | ------------------------ | --------------------------------------------------------------- | ---------------------------------------- |
-| 1    | Auto-discovers `.config/` | Put it in `.config/`                                            | cspell, mise                             |
-| 2    | `.config/` via flag only | Default to root; move only if you wire CLI + CI + editor + verify | Biome, Oxlint, Prettier, zizmor, actionlint |
-| 3    | Location is semantics    | Leave at its required spot                                       | EditorConfig (root), Cargo.toml (root), Renovate (`.github/`) |
+| Tier | Meaning                   | What to do                                                        | Repo examples                                                 |
+| ---- | ------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------- |
+| 1    | Auto-discovers `.config/` | Put it in `.config/`                                              | cspell, mise                                                  |
+| 2    | `.config/` via flag only  | Default to root; move only if you wire CLI + CI + editor + verify | Biome, Oxlint, Prettier, zizmor, actionlint                   |
+| 3    | Location is semantics     | Leave at its required spot                                        | EditorConfig (root), Cargo.toml (root), Renovate (`.github/`) |
 
 **Before adding any new top-level config, do the Tier check.** "I didn't look" is not Tier 3. Read
 the tool's config-resolution docs, then place the file.
@@ -108,12 +108,12 @@ footguns.
    JSON. Wanting to explain a field you cannot annotate is the signal you wanted JSONC.
 6. **YAML** -- last resort, only when a tool mandates it (GitHub Actions, some linters). YAML's
    significant whitespace, type-coercion surprises (the Norway problem: `no` -> `false`), and
-   anchor/alias complexity make it the format most likely to bite. Never pick YAML when the tool also
-   accepts anything above it.
+   anchor/alias complexity make it the format most likely to bite. Never pick YAML when the tool
+   also accepts anything above it.
 
-Rule of thumb: **pick the highest format on this list that the tool accepts natively.** Don't drop to
-JSON because it's familiar when the tool reads TypeScript; don't hand-write YAML when JSONC is on the
-menu. Placement and format are independent wins that compound -- `.config/foo.ts` beats a root
+Rule of thumb: **pick the highest format on this list that the tool accepts natively.** Don't drop
+to JSON because it's familiar when the tool reads TypeScript; don't hand-write YAML when JSONC is on
+the menu. Placement and format are independent wins that compound -- `.config/foo.ts` beats a root
 `foo.yaml` on both axes.
 
 ## 4. JavaScript / TypeScript config: TypeScript + ESM
@@ -128,7 +128,8 @@ Within the JS ecosystem specifically:
 - **Bare `.ts` / `.js` first; `.mts` / `.mjs` only when necessary.** The explicit-ESM extensions are
   a workaround for a CJS-default package (no `"type": "module"`) or a tool that demands the explicit
   extension. When the package is already `"type": "module"`, a bare `.ts` _is_ ESM -- use it.
-  (`astro.config.mjs` exists for legacy reasons; new configs should be `.ts` where the loader allows.)
+  (`astro.config.mjs` exists for legacy reasons; new configs should be `.ts` where the loader
+  allows.)
 - **Avoid CJS entirely.** No `.cjs`, no `require()`, no `module.exports` in config. If a tool truly
   only loads CJS, that is the rare documented exception -- note it where it lives.
 
@@ -139,8 +140,8 @@ Within the JS ecosystem specifically:
 - [ ] **Scoped to its blast radius?** In the app if it's app-specific; at root only if repo-wide.
 - [ ] **Best format the tool accepts?** Highest on the preference list (real language > object
       notation > JSONC > TOML > JSON > YAML).
-- [ ] **JS/TS config:** TypeScript, ESM, bare `.ts` (not `.mts` / `.mjs` / `.cjs`) unless a constraint
-      forces otherwise.
+- [ ] **JS/TS config:** TypeScript, ESM, bare `.ts` (not `.mts` / `.mjs` / `.cjs`) unless a
+      constraint forces otherwise.
 - [ ] **If it landed at root (Tier 2/3):** is the reason a genuine tool constraint, not convenience?
 
 ## References

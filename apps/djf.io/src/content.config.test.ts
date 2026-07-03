@@ -14,16 +14,13 @@ test('blog schema accepts minimal valid frontmatter', () => {
 })
 
 test('blog schema coerces ISO date strings to Date', () => {
-  const result = schema.safeParse({
+  const parsed = schema.parse({
     title: 'x',
     description: 'y',
     date: '2025-12-07',
   })
-  expect(result.success).toBe(true)
-  if (result.success) {
-    expect(result.data.date).toBeInstanceOf(Date)
-    expect(result.data.date.getUTCFullYear()).toBe(2025)
-  }
+  expect(parsed.date).toBeInstanceOf(Date)
+  expect(parsed.date.getUTCFullYear()).toBe(2025)
 })
 
 test('blog schema rejects missing title', () => {

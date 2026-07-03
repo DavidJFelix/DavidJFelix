@@ -9,6 +9,22 @@
 !*.md
 !*.mdx
 
+# Apps own their markdown through their per-app format gates (each app runs
+# prettier itself; djf.io excludes its semantic-line-break blog content via its
+# own .prettierignore, which a root-level run would not honor).
+apps/
+
+# Out-of-scope trees: legacy dirs (mirroring the spell gate), vendored skills
+# whose content hashes are pinned in skills-lock.json, and the .claude symlink
+# surface into .agents.
+Advent-of-Code/
+Exercism/
+Joy-of-React/
+dailyui/
+dotfiles/
+.agents/
+.claude/
+
 # ...but never descend into generated or vendored trees, even for their markdown.
 node_modules/
 dist/

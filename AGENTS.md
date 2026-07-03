@@ -1,7 +1,7 @@
 # Agents
 
-Entry point for AI coding agents operating on this repository. Start here; everything else is
-linked from this file.
+Entry point for AI coding agents operating on this repository. Start here; everything else is linked
+from this file.
 
 ## Repository overview
 
@@ -11,22 +11,22 @@ apps have independent lockfiles and dependencies. Shared dev tooling is managed 
 
 ## Key paths
 
-| Path                 | Description                                                                                 |
-| -------------------- | ------------------------------------------------------------------------------------------- |
+| Path                 | Description                                                                                      |
+| -------------------- | ------------------------------------------------------------------------------------------------ |
 | `apps/`              | Application projects, one directory per app; [docs/projects.md](docs/projects.md) describes each |
-| `docs/contributing/` | Style mini guides -- naming, testing, linting, config, scripting, tooling, CI, project docs |
-| `docs/agents/`       | Agent workflow docs -- issue tracker, triage labels, domain docs                            |
-| `docs/projects/`     | Active project plans and progress notes (ephemeral working notes)                           |
-| `docs/changelog/`    | Monthly change history (the durable record)                                                 |
-| `.agents/agents/`    | Review personas -- focused reviewer subagents (solid copies)                                |
-| `.agents/skills/`    | Claude Code skills (solid copies)                                                           |
-| `.config/`           | Shared tooling config (mise, cspell)                                                        |
-| `bin/`               | Repo-root bun scripts, fronted by mise tasks                                                |
+| `docs/contributing/` | Style mini guides -- naming, testing, linting, config, scripting, tooling, CI, project docs      |
+| `docs/agents/`       | Agent workflow docs -- issue tracker, triage labels, domain docs                                 |
+| `docs/projects/`     | Active project plans and progress notes (ephemeral working notes)                                |
+| `docs/changelog/`    | Monthly change history (the durable record)                                                      |
+| `.agents/agents/`    | Review personas -- focused reviewer subagents (solid copies)                                     |
+| `.agents/skills/`    | Claude Code skills (solid copies)                                                                |
+| `.config/`           | Shared tooling config (mise, cspell)                                                             |
+| `bin/`               | Repo-root bun scripts, fronted by mise tasks                                                     |
 
 `.agents/` is the tool-agnostic source of truth for skills and personas; `.claude/skills/` and
-`.claude/agents/` hold tracked symlinks into it, because Claude Code only discovers `.claude/`.
-When adding a skill or persona, put the solid copy in `.agents/` and symlink it from `.claude/`
-(one symlink per skill folder / agent file -- never symlink the whole directory).
+`.claude/agents/` hold tracked symlinks into it, because Claude Code only discovers `.claude/`. When
+adding a skill or persona, put the solid copy in `.agents/` and symlink it from `.claude/` (one
+symlink per skill folder / agent file -- never symlink the whole directory).
 
 ## Hard rules
 
@@ -34,6 +34,9 @@ The non-negotiable rules, one line each. Follow the link before working in that 
 
 - **Naming**: lowercase kebab-case for every file and directory; documented exceptions only --
   [file-naming.md](docs/contributing/file-naming.md)
+- **Code style**: formatters own formatting; immutable data + functions over classes; named
+  arguments (`XxxParams`/`XxxProps`/`XxxOptions`); bash under 10 lines --
+  [code-style.md](docs/contributing/code-style.md)
 - **No emojis** in code, commits, or documentation
 - **Commits/PRs**: [conventional commit](https://www.conventionalcommits.org/) PR titles; every PR
   adds a changelog entry -- [CONTRIBUTING.md](CONTRIBUTING.md)
@@ -66,18 +69,18 @@ The non-negotiable rules, one line each. Follow the link before working in that 
 
 ## Review personas
 
-Six focused reviewers live in `.agents/agents/`. Each answers one question and reports only
-findings that would change a decision -- "just enough" applies to reviews too. Run the relevant
-ones together with the `/panel-review` skill, or invoke one directly as a subagent.
+Six focused reviewers live in `.agents/agents/`. Each answers one question and reports only findings
+that would change a decision -- "just enough" applies to reviews too. Run the relevant ones together
+with the `/panel-review` skill, or invoke one directly as a subagent.
 
-| Persona                | Question                                                    |
-| ---------------------- | ----------------------------------------------------------- |
-| `design-reviewer`      | Does this look good -- consistent, calm, free of noise?     |
-| `product-reviewer`     | Does this meet the desire just enough, with no extras?      |
-| `engineering-reviewer` | Is this well organized, right-sized, and easy to work in?   |
-| `testing-reviewer`     | Do the tests prove it works and will not regress?           |
-| `benchmark-reviewer`   | Is there a numeric goal, and can we measure against it?     |
-| `tooling-reviewer`     | Does this reduce friction in the development loop?          |
+| Persona                | Question                                                  |
+| ---------------------- | --------------------------------------------------------- |
+| `design-reviewer`      | Does this look good -- consistent, calm, free of noise?   |
+| `product-reviewer`     | Does this meet the desire just enough, with no extras?    |
+| `engineering-reviewer` | Is this well organized, right-sized, and easy to work in? |
+| `testing-reviewer`     | Do the tests prove it works and will not regress?         |
+| `benchmark-reviewer`   | Is there a numeric goal, and can we measure against it?   |
+| `tooling-reviewer`     | Does this reduce friction in the development loop?        |
 
 ## Sub-folder agent docs
 

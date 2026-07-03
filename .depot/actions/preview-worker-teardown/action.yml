@@ -1,0 +1,33 @@
+name: Preview teardown (isolated worker)
+description: >-
+  Deletes the `<worker>-pr-<N>` Worker that preview-worker deployed, including
+  its Durable Object namespaces (force delete via the Cloudflare REST API).
+  Tolerates a never-deployed preview as a no-op, so the PR `closed` event
+  succeeds even when the preview job failed or never ran. The caller runs
+  checkout + setup-mise first.
+
+inputs:
+  worker-name:
+    description: The production worker name; the preview to delete is `<worker-name>-pr-<N>`.
+    required: true
+  pr-number:
+    description: The pull-request number.
+    required: true
+  cloudflare-api-token:
+    description: Cloudflare API token (Workers Scripts edit).
+    required: true
+  cloudflare-account-id:
+    description: Cloudflare account ID.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: delete preview worker
+      shell: bash
+      env:
+        PR_NUMBER: ${{ inputs.pr-number }}
+        WORKER_NAME: ${{ inputs.worker-name }}
+        CLOUDFLARE_API_TOKEN: ${{ inputs.cloudflare-api-token }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ inputs.cloudflare-account-id }}
+      run: bun "$GITHUB_WORKSPACE/bin/teardown-preview-worker.ts"

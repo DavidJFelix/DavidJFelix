@@ -86,12 +86,13 @@ export function progressionSteps(durationWeeks: number, distance: RaceDistance):
 // Long-run distance per week: linear climb from a fitness-derived start to
 // the distance peak across non-stepback progression weeks; stepbacks dip to
 // a fraction of the previous long run; taper weeks shrink from the peak.
-function longRunMilesByWeek(
-  phases: WeekPhase[],
-  stepbacks: boolean[],
-  distance: RaceDistance,
-  weeklyMileage: number,
-): (number | undefined)[] {
+function longRunMilesByWeek(args: {
+  phases: WeekPhase[]
+  stepbacks: boolean[]
+  distance: RaceDistance
+  weeklyMileage: number
+}): (number | undefined)[] {
+  const {phases, stepbacks, distance, weeklyMileage} = args
   const peak = PLAN_RULES.peakLongRunMiles[distance]
   const start = Math.min(
     peak,
@@ -207,12 +208,12 @@ export function generatePlan(request: PlanRequest): TrainingPlan {
   const raceBand = racePaceBand(request)
   const phases = assignPhases(durationWeeks, request.race.distance)
   const stepbacks = assignStepbacks(phases)
-  const longRuns = longRunMilesByWeek(
+  const longRuns = longRunMilesByWeek({
     phases,
     stepbacks,
-    request.race.distance,
-    request.runner.weeklyMileage,
-  )
+    distance: request.race.distance,
+    weeklyMileage: request.runner.weeklyMileage,
+  })
 
   const weeks = Array.from({length: durationWeeks}, (_, weekIndex): PlanWeek => {
     const phase = phases[weekIndex] ?? 'base'

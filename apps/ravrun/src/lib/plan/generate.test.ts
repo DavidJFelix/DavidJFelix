@@ -51,12 +51,15 @@ test('rotates the week template around the long run', () => {
 // taper, where sessions shrink but intensity stays.
 test('switches the quality day from easy to intervals at the build phase', () => {
   const plan = generatePlan(twentyWeekMarathon)
-  for (const week of plan.weeks) {
-    const qualityType = week.days[3]?.workout?.type
-    if (week.phase === 'base') expect(qualityType).toBe('easy')
-    if (week.phase === 'build' || week.phase === 'peak' || week.phase === 'taper') {
-      expect(qualityType).toBe('interval')
-    }
+  const qualityTypes = (phases: string[]) =>
+    plan.weeks
+      .filter((week) => phases.includes(week.phase))
+      .map((week) => week.days[3]?.workout?.type)
+  for (const type of qualityTypes(['base'])) {
+    expect(type).toBe('easy')
+  }
+  for (const type of qualityTypes(['build', 'peak', 'taper'])) {
+    expect(type).toBe('interval')
   }
 })
 
@@ -90,14 +93,19 @@ test('progresses the long run from current fitness to the distance peak and back
   expect(plan.weeks[16]?.phase).toBe('peak')
   expect(longMiles[17]).toBe(12)
   expect(longMiles[18]).toBe(8)
-  for (let i = 1; i <= 16; i++) {
-    const current = longMiles[i] ?? 0
-    const previous = longMiles[i - 1] ?? 0
-    if (plan.weeks[i]?.isStepback) {
-      expect(current).toBeLessThan(previous)
-    } else if (!plan.weeks[i - 1]?.isStepback) {
-      expect(current).toBeGreaterThanOrEqual(previous)
-    }
+  const stepbackWeeks = plan.weeks.filter((week) => week.isStepback)
+  for (const week of stepbackWeeks) {
+    expect(longMiles[week.index] ?? 0).toBeLessThan(longMiles[week.index - 1] ?? 0)
+  }
+  const climbingWeeks = plan.weeks.filter(
+    (week) =>
+      week.index >= 1 &&
+      week.index <= 16 &&
+      !week.isStepback &&
+      !plan.weeks[week.index - 1]?.isStepback,
+  )
+  for (const week of climbingWeeks) {
+    expect(longMiles[week.index] ?? 0).toBeGreaterThanOrEqual(longMiles[week.index - 1] ?? 0)
   }
 })
 
@@ -114,21 +122,30 @@ test('builds weekly volume around the long run without unsafe ramps', () => {
   for (const week of plan.weeks) {
     const dayMiles = week.days.reduce((sum, day) => sum + (day.workout?.distanceMiles ?? 0), 0)
     expect(week.totalMiles).toBeCloseTo(dayMiles, 5)
-    for (const day of week.days) {
-      if (day.workout) expect(day.workout.distanceMiles).toBeGreaterThanOrEqual(1)
+    const workouts = week.days.flatMap((day) => (day.workout ? [day.workout] : []))
+    for (const workout of workouts) {
+      expect(workout.distanceMiles).toBeGreaterThanOrEqual(1)
     }
   }
 
-  for (let i = 1; i < plan.weeks.length - 1; i++) {
-    const week = plan.weeks[i]
-    const previous = plan.weeks[i - 1]
-    if (!week || !previous || week.phase === 'taper' || week.phase === 'race') continue
-    if (week.isStepback) {
-      expect(week.totalMiles).toBeLessThan(previous.totalMiles)
-      expect(week.totalMiles).toBeLessThan(plan.weeks[i + 1]?.totalMiles ?? 0)
-    } else if (!previous.isStepback) {
-      expect(week.totalMiles / previous.totalMiles).toBeLessThanOrEqual(1.11)
-    }
+  const progressionWeeks = plan.weeks.filter(
+    (week) =>
+      week.index >= 1 &&
+      week.index < plan.weeks.length - 1 &&
+      week.phase !== 'taper' &&
+      week.phase !== 'race',
+  )
+  for (const week of progressionWeeks.filter((week) => week.isStepback)) {
+    expect(week.totalMiles).toBeLessThan(plan.weeks[week.index - 1]?.totalMiles ?? 0)
+    expect(week.totalMiles).toBeLessThan(plan.weeks[week.index + 1]?.totalMiles ?? 0)
+  }
+  const climbs = progressionWeeks.filter(
+    (week) => !week.isStepback && !plan.weeks[week.index - 1]?.isStepback,
+  )
+  for (const week of climbs) {
+    expect(week.totalMiles / (plan.weeks[week.index - 1]?.totalMiles ?? 1)).toBeLessThanOrEqual(
+      1.11,
+    )
   }
 
   const raceDay = plan.weeks[19]?.days[6]

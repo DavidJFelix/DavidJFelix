@@ -153,6 +153,7 @@ function HomeComponent() {
       <PlanToolbar plan={plan} />
       <WorkoutLegend />
       <PlanGrid plan={plan} today={config.today} />
+      <PlanAgenda plan={plan} today={config.today} />
     </main>
   )
 }
@@ -289,7 +290,7 @@ function FindingsList({findings, onUseSuggestedWeeks}: FindingsListProps) {
       {findings.map((finding) => (
         <div
           key={finding.code}
-          className={`border-l-4 rounded px-3 py-2 text-sm flex items-center gap-3 ${FINDING_STYLES[finding.level]}`}
+          className={`border-l-4 rounded px-3 py-2 text-sm flex flex-wrap items-center gap-3 ${FINDING_STYLES[finding.level]}`}
         >
           <span className="grow">{finding.message}</span>
           {finding.suggestedWeeks !== undefined && (
@@ -319,7 +320,7 @@ function PlanToolbar({plan}: {plan: TrainingPlan}) {
     URL.revokeObjectURL(url)
   }
   return (
-    <div className="flex items-center gap-3 text-sm">
+    <div className="flex flex-wrap items-center gap-3 text-sm">
       <span>
         {plan.startDate} → {plan.raceDate} · {plan.weeks.length} weeks · ~{totalMiles} miles total
       </span>
@@ -385,10 +386,55 @@ const PHASE_STYLES: Record<PlanWeek['phase'], string> = {
   race: 'text-yellow-700 dark:text-yellow-400',
 }
 
+// Phones get a stacked agenda instead of the 7-column grid — every day
+// readable without horizontal scrolling.
+function PlanAgenda({plan, today}: {plan: TrainingPlan; today: string}) {
+  return (
+    <div className="md:hidden flex flex-col gap-4 text-sm">
+      {plan.weeks.map((week) => (
+        <section key={week.index} className="flex flex-col gap-1">
+          <h3 className="font-semibold">
+            Week {week.index + 1}
+            <span className={`ml-2 capitalize font-normal ${PHASE_STYLES[week.phase]}`}>
+              {week.phase}
+              {week.isStepback ? ' · stepback' : ''}
+            </span>
+            <span className="ml-2 font-normal text-gray-500 dark:text-gray-400">
+              {Math.round(week.totalMiles)} mi
+            </span>
+          </h3>
+          {week.days.map((day) => (
+            <div
+              key={day.date}
+              className={`flex items-center gap-2 rounded border px-2 py-1 ${
+                day.date === today
+                  ? 'border-sky-500 border-2'
+                  : 'border-gray-200 dark:border-gray-800'
+              }`}
+            >
+              <span className="w-16 shrink-0 text-gray-500 dark:text-gray-400">
+                {format(parseISO(day.date), 'EEE M/d')}
+              </span>
+              {day.workout ? (
+                <span className={`rounded px-1.5 py-0.5 ${WORKOUT_STYLES[day.workout.type]}`}>
+                  {workoutSummary(day.workout)}
+                  {day.workout.paceBand ? ` · ${formatPaceBand(day.workout.paceBand)}` : ''}
+                </span>
+              ) : (
+                <span className="text-gray-400 dark:text-gray-600">Rest</span>
+              )}
+            </div>
+          ))}
+        </section>
+      ))}
+    </div>
+  )
+}
+
 function PlanGrid({plan, today}: {plan: TrainingPlan; today: string}) {
   const headerDates = plan.weeks[0]?.days ?? []
   return (
-    <div className="overflow-x-auto">
+    <div className="hidden md:block overflow-x-auto">
       <div className="grid grid-cols-[auto_repeat(7,minmax(0,1fr))] gap-1 text-xs min-w-[56rem]">
         <div />
         {headerDates.map((day) => (

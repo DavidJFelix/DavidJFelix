@@ -90,7 +90,7 @@ function timingFinding(request: PlanRequest, today: string | undefined): Finding
   const durationWeeks = request.durationWeeks ?? DEFAULT_DURATION_WEEKS[request.race.distance]
   const raceDate = parseISO(request.race.date)
   const todayDate = parseISO(today)
-  if (differenceInCalendarDays(raceDate, todayDate) <= 0) {
+  if (differenceInCalendarDays(raceDate, todayDate) < 0) {
     return {
       level: 'danger',
       code: 'race-passed',

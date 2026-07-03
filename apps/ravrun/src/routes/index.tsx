@@ -1,5 +1,5 @@
 import {createFileRoute, useNavigate} from '@tanstack/react-router'
-import {addDays, format, parseISO} from 'date-fns'
+import {addDays, format, isValid, parseISO} from 'date-fns'
 import {useState} from 'react'
 import {DEFAULT_DURATION_WEEKS, RACE_DISTANCE_MILES} from '../lib/plan/constants'
 import type {Finding} from '../lib/plan/feasibility'
@@ -54,8 +54,12 @@ function asDistance(value: unknown): RaceDistance | undefined {
     : undefined
 }
 
+// Shape alone is not enough: "2026-02-30" matches the pattern but is not a
+// real date, and an invalid Date would throw inside date-fns during render.
 function asIsoDate(value: unknown): string | undefined {
-  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : undefined
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined
+  const parsed = parseISO(value)
+  return isValid(parsed) && format(parsed, 'yyyy-MM-dd') === value ? value : undefined
 }
 
 function asDurationText(value: unknown): string | undefined {
@@ -63,6 +67,7 @@ function asDurationText(value: unknown): string | undefined {
 }
 
 function asNumber(value: unknown): number | undefined {
+  if (value === '' || value === undefined || value === null) return undefined
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : undefined
 }
@@ -340,10 +345,15 @@ function PlanToolbar({plan}: {plan: TrainingPlan}) {
 function CopyLinkButton() {
   const [copied, setCopied] = useState(false)
   const copyLink = () => {
-    navigator.clipboard.writeText(window.location.href).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    })
+    navigator.clipboard.writeText(window.location.href).then(
+      () => {
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      },
+      // Clipboard can be denied (permissions, insecure context); the URL bar
+      // still has the link, so failing quietly is fine.
+      () => {},
+    )
   }
   return (
     <button

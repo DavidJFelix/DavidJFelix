@@ -218,6 +218,16 @@ test('drifts pace bands toward goal fitness when the goal is faster', () => {
   expect(Math.abs(easyMin(18) - goalFitness.easy.minSecondsPerMile)).toBeLessThan(5)
 })
 
+// The engine is an exported API: garbage durations or weekdays fail fast
+// instead of silently building a malformed schedule.
+test('rejects invalid duration and long-run day', () => {
+  expect(() => generatePlan({...twentyWeekMarathon, durationWeeks: 0})).toThrow(RangeError)
+  expect(() => generatePlan({...twentyWeekMarathon, durationWeeks: 10.5})).toThrow(RangeError)
+  expect(() =>
+    generatePlan({...twentyWeekMarathon, runner: {weeklyMileage: 24, longRunDay: 7}}),
+  ).toThrow(RangeError)
+})
+
 // The schedule shape is flexible: a Sunday long run rotates the whole week
 // with it (recovery Monday, rest Tuesday, tempo Wednesday...).
 test('moves the whole rotation when the long run day changes', () => {

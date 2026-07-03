@@ -58,6 +58,10 @@ test('warns when the training window is already underway or the race has passed'
     (finding) => finding.code === 'race-passed',
   )
   expect(passed?.level).toBe('danger')
+
+  // Race day itself is not "passed" — you are racing today.
+  const raceDayFindings = assessFeasibility(request, {today: '2026-10-18'})
+  expect(raceDayFindings.find((finding) => finding.code === 'race-passed')).toBeUndefined()
 })
 
 // A runner already at or above peak volume has nothing to ramp, and a goal

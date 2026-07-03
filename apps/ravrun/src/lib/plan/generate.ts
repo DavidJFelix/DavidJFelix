@@ -200,9 +200,15 @@ function raceWeekWorkout(dayIndex: number, distance: RaceDistance): Workout | un
 
 export function generatePlan(request: PlanRequest): TrainingPlan {
   const durationWeeks = request.durationWeeks ?? DEFAULT_DURATION_WEEKS[request.race.distance]
+  if (!Number.isInteger(durationWeeks) || durationWeeks < 1) {
+    throw new RangeError('durationWeeks must be a positive integer')
+  }
+  const longRunDay = request.runner.longRunDay ?? PLAN_RULES.defaultLongRunDay
+  if (!Number.isInteger(longRunDay) || longRunDay < 0 || longRunDay > 6) {
+    throw new RangeError('longRunDay must be an integer from 0 (Sunday) to 6 (Saturday)')
+  }
   const raceDate = parseISO(request.race.date)
   const startDate = addDays(raceDate, -(durationWeeks * 7 - 1))
-  const longRunDay = request.runner.longRunDay ?? PLAN_RULES.defaultLongRunDay
   const paces = request.runner.recentRace ? trainingPaces(request.runner.recentRace) : undefined
   const goalPaces = goalFitnessPaces(request)
   const raceBand = racePaceBand(request)

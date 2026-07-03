@@ -62,7 +62,10 @@ and owns the inline findings posted to the PR. Everything else complements it --
 post competing PR comments. The [review-consolidation](docs/projects/review-consolidation/plan.md)
 project tracks the direction (Warden is the path forward; other tools complement, not compete).
 
-- **Warden (CI gate).** Automatic, every PR. The single source of posted inline review comments.
+- **Warden (CI gate).** Automatic, every PR; the single source of posted inline review comments, and
+  findings at `failOn` severity fail the check. Add the `Warden` label to re-run it (or to review a
+  draft). Also runs locally: `mise exec -- warden <ref>` with `WARDEN_MODEL` and
+  `WARDEN_OPENROUTER_API_KEY` exported.
 - **Built-in `/code-review` and `/security-review` (local).** Run on-demand before you push, as an
   inner-loop sanity pass. Do **not** pass `--comment` -- Warden owns posted comments, and
   double-posting the same diff is noise and double model spend.

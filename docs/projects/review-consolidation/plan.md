@@ -36,11 +36,11 @@ not file removal.
 
 ## Phases
 
-1. **Land Warden.** Config, workflow, CLI pin, changelog — done 2026-06-30. Gate goes live once the
-   `WARDEN_MODEL` + `WARDEN_OPENROUTER_API_KEY` secrets exist
-   ([#302](https://github.com/DavidJFelix/DavidJFelix/issues/302)). Verify on a real PR (findings
-   post, check gates as configured). Confirm `persist-credentials: false` holds — if Warden can't
-   read the diff, add the documented `artipacked` suppression.
+1. **Land Warden.** Done. Config/workflow/CLI pin landed 2026-06-30 (#306, merged); the Depot
+   secrets ([#302](https://github.com/DavidJFelix/DavidJFelix/issues/302), closed) authenticated
+   2026-07-03 and the gate runs live. `persist-credentials: false` held — Warden reads the diff via
+   the API, no `artipacked` suppression needed. Enforcement (`failCheck = true`) and the `Warden`
+   re-run label shipped as the follow-up PR.
 2. **Document the division of labor.** `CONTRIBUTING.md` → "Code review" section: Warden owns posted
    comments; run the built-ins locally without `--comment`; keep `/review`. Done this session.
 3. **Encode the repo's own standards as Warden skills.** The real consolidation payoff: author
@@ -53,10 +53,11 @@ not file removal.
    _Standards_ axis is still needed or is now subsumed by the gate. Keep the _Spec_ axis regardless
    — Warden does not check conformance to the originating issue/PRD. Collapse surfaces only where
    they genuinely duplicate.
-5. **Tune and retire.** Calibrate `failOn` / `reportOn`; decide always-on vs. gated behind a
-   `Warden` label based on real cost and noise (the trigger already includes `labeled`). Confirm no
-   other stale review automation remains. Capture the outcome in the changelog and delete this
-   project directory.
+5. **Tune and retire.** Calibrate `failOn` / `reportOn`; decide always-on vs. label-gated based on
+   real cost and noise (the `Warden` label already works as the manual re-run/opt-in lever). Decide
+   where CodeRabbit fits: it currently reviews every PR in parallel with Warden — under evaluation;
+   the thesis says one of them must end up owning posted findings. Confirm no other stale review
+   automation remains. Capture the outcome in the changelog and delete this project directory.
 
 ## Non-goals
 

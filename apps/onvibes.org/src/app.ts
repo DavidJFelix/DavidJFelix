@@ -1,3 +1,5 @@
+import {fauxAssistantMessage, fauxText, registerFauxProvider} from '@earendil-works/pi-ai/compat'
+import {registerProvider} from '@flue/runtime'
 import {type Fetchable, flue} from '@flue/runtime/routing'
 import {Hono} from 'hono'
 // The Astro app, prebuilt by `astro build` into a self-contained Cloudflare
@@ -11,6 +13,40 @@ import untypedAstroWorker from '../dist/server/entry.mjs'
 
 const astroWorker = untypedAstroWorker as Fetchable
 
+// ─── Model providers ────────────────────────────────────────────────────────
+// Provider setup lives here in the app entrypoint (Flue convention), running at
+// isolate load -- before any agent harness resolves a model. The "onvibes"
+// provider is a keyless faux echo: no API key, deterministic output. Swap it
+// for a real provider (e.g. Cloudflare's `AI` binding) once credentials are
+// wired; agents reference it as "onvibes/assistant" (src/agents/assistant.ts).
+const faux = registerFauxProvider({
+  api: 'onvibes',
+  provider: 'onvibes',
+  models: [{id: 'assistant'}],
+})
+// registerFauxProvider only supplies the API *transport*; Flue resolves
+// "onvibes/assistant" against its provider registry (then pi-ai's builtin
+// catalog, which never contains faux models). Register the provider ID so
+// resolveModel can find it and route to the faux transport above.
+registerProvider('onvibes', {api: 'onvibes', baseUrl: ''})
+// The faux provider consumes ONE queued response per model call (shift off a
+// queue); a plain one-element queue would echo the first message and error
+// ("No more faux responses queued") on every message after it. Re-queue the
+// responder on each call so the echo answers indefinitely.
+const echo: Parameters<typeof faux.setResponses>[0][number] = (context) => {
+  faux.appendResponses([echo])
+  const input = context.messages.at(-1)
+  const text =
+    input?.role === 'user'
+      ? typeof input.content === 'string'
+        ? input.content
+        : input.content.map((block) => (block.type === 'text' ? block.text : '')).join('')
+      : ''
+  return fauxAssistantMessage(fauxText(`You said: ${text}`))
+}
+faux.setResponses([echo])
+
+// ─── Routing ────────────────────────────────────────────────────────────────
 // Flue is the Worker; Astro runs inside it. Flue's agent HTTP API is served
 // under /api (the /chat React island points its client there); every other
 // request falls through to the Astro Worker, which serves the prerendered pages

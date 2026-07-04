@@ -35,7 +35,13 @@ async function main(): Promise<void> {
 
   const res = await fetch(
     `https://api.cloudflare.com/client/v4/accounts/${accountId}/workers/scripts/${target}?force=true`,
-    {method: 'DELETE', headers: {authorization: `Bearer ${apiToken}`}},
+    {
+      method: 'DELETE',
+      headers: {authorization: `Bearer ${apiToken}`},
+      // Fail fast if the Cloudflare API is unresponsive instead of hanging the
+      // teardown job until its workflow-level timeout.
+      signal: AbortSignal.timeout(30_000),
+    },
   )
 
   if (res.ok) {

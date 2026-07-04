@@ -6,20 +6,26 @@
 # - Changed GitHub runs-on labels to their Depot equivalents
 
 name: CD Preview onvibes.org
-# Per-PR preview deploy for onvibes.org (wrangler). On every PR touching the app:
-# upload a non-active version with a pr-<N> preview alias, smoke the preview URL,
-# screenshot-diff it against committed baselines, and post the URL. No teardown
-# -- `wrangler versions upload` never serves production, so the custom domains
-# stay on the active version. Forks have no secrets and will fail the deploy step
-# -- acceptable for a personal monorepo; do NOT switch to pull_request_target.
+# Per-PR preview deploy for onvibes.org. The Worker carries Durable Objects
+# (the Flue agent runtime), and `wrangler versions upload` cannot carry DO
+# migrations (Cloudflare error 10211) — so instead of a preview version of the
+# production Worker, each PR gets an ISOLATED `onvibes-org-pr-<N>` Worker via a
+# real `wrangler deploy` (migrations apply cleanly; DO state is per-preview,
+# never shared with production). Smoke + screenshots run against its
+# workers.dev URL, and the Worker is deleted when the PR closes. Forks have no
+# secrets and will fail the deploy step -- acceptable for a personal monorepo;
+# do NOT switch to pull_request_target.
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, closed]
     paths:
       - 'apps/onvibes.org/**'
       - '.depot/workflows/cd-preview-onvibes-org.yml'
-      - '.depot/actions/preview-wrangler/**'
+      - '.depot/actions/preview-worker/**'
+      - '.depot/actions/preview-worker-teardown/**'
       - 'bin/**'
+# One preview per PR; a new push cancels an in-flight preview. A close event
+# shares the group so teardown supersedes any running preview.
 concurrency:
   group: preview-onvibes-org-${{ github.event.pull_request.number }}
   cancel-in-progress: true
@@ -31,6 +37,7 @@ env:
 jobs:
   preview:
     name: deploy + smoke + screenshots
+    if: github.event.action != 'closed'
     runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
     timeout-minutes: 20
     permissions:
@@ -44,12 +51,33 @@ jobs:
       - name: mise
         uses: ./.depot/actions/setup-mise
       - name: preview
-        uses: ./.depot/actions/preview-wrangler
+        uses: ./.depot/actions/preview-worker
         with:
           worker-name: onvibes-org
           pr-number: ${{ github.event.pull_request.number }}
-          smoke-routes: /
-          wrangler-config: dist/server/wrangler.json
+          smoke-routes: /,/chat
+          wrangler-config: dist-flue/onvibes_org/wrangler.json
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+  teardown:
+    name: delete preview worker
+    if: github.event.action == 'closed'
+    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: teardown
+        uses: ./.depot/actions/preview-worker-teardown
+        with:
+          worker-name: onvibes-org
+          pr-number: ${{ github.event.pull_request.number }}
+          cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

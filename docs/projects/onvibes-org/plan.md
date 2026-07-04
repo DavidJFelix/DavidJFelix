@@ -5,8 +5,9 @@ creating them. Astro-based.
 
 ## Status
 
-**Placeholder** (2026-06-19). Live at onvibes.org serving a single centered `<h1>`; Astro + Panda
-scaffold with smoke + e2e in place. Near-term work is a basic layout and the showcase scaffold.
+**Early build** (2026-07-02). Live at onvibes.org with the landing layout and a `/chat` demo backed
+by a Flue agent in the deployed Worker (faux echo until a real model is wired). Near-term work is
+the showcase scaffold and the real-model swap (blocked on the auth decision).
 
 ## Vision
 
@@ -21,15 +22,19 @@ onvibes.org has two halves:
 > behind authentication before it's exposed — to prevent abuse and uncontrolled cost. Decide the
 > mechanism (Cloudflare Access vs. accounts vs. token gate) when the builder work is picked up.
 
-## Current state (2026-06-19)
+## Current state (2026-07-02)
 
-- Live at onvibes.org (Astro on Cloudflare; custom domain + www wired; `preview_urls` on).
-- `src/pages/index.astro` renders a single centered `<h1>` (Panda `css()`); no real layout yet.
-- Smoke + Playwright e2e already wired.
+- Live at onvibes.org (custom domain + www wired; `preview_urls` on). The deployed Worker is now
+  **Flue hosting Astro**: `src/app.ts` mounts the Flue agent API at `/api` and forwards everything
+  else to the prebuilt Astro worker (see PR #303 and the 2026-07-02 progress note).
+- `/` renders the header/hero/footer layout; `/chat` is a React island talking to a keyless faux
+  echo agent (`src/agents/assistant.ts`) — the first builder-toolchain slice.
+- Smoke boots the Flue worker, checks `/` + `/chat`, and POSTs the agent endpoint; Playwright e2e
+  boots the same worker.
 
 ## Stack
 
-Astro + PandaCSS, Cloudflare Worker.
+Astro + PandaCSS + React islands, Flue (agents on Durable Objects), Cloudflare Worker.
 
 ## Roadmap
 

@@ -7,6 +7,13 @@ main = "src/worker.ts"
 compatibility_date = "2026-04-29"
 compatibility_flags = ["nodejs_compat"]
 
+# Custom domains, wired up in the Cloudflare dashboard; declared here so the
+# config is committed (same pattern as davidjfelix.com / monicandavid.com).
+routes = [
+  { pattern = "ravrun.com", custom_domain = true },
+  { pattern = "rav.run", custom_domain = true },
+]
+
 [assets]
 # directory is wired by @cloudflare/vite-plugin to the Vite client build output.
 binding = "ASSETS"

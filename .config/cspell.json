@@ -151,6 +151,8 @@
     "oxfmt",
     "oxlint",
     "oxlintrc",
+    "packument",
+    "packuments",
     "pagefind",
     "pageleave",
     "pandacss",

@@ -1,0 +1,57 @@
+# Warden — AI code review of any branch, on demand via workflow_dispatch.
+#
+# The dispatch counterpart of ci-warden.yml. The getsentry/warden *action*
+# cannot review from a dispatch event — its analyze/report modes require a
+# pull_request event, and dispatch routes to schedule-type sweep triggers —
+# so this runs the mise-pinned warden *CLI* against the dispatched branch
+# instead. The CLI takes a two-dot git range (three-dot is not supported and
+# a bare ref is treated as a file pattern), so the step computes the
+# merge-base itself — reviewing only the branch's own commits, not whatever
+# the base gained since the branch point. Findings print to the job log and
+# the run fails per warden.toml's failOn; nothing is posted to a PR — for
+# inline PR comments, add the "Warden" label instead (ci-warden.yml).
+#
+# Pick the branch to review in the dispatch UI (the run checks out that ref);
+# `base` sets what it diffs against, default main.
+#
+# Model (WARDEN_MODEL) and OpenRouter key (WARDEN_OPENROUTER_API_KEY) come
+# from Depot secrets, same as ci-warden.yml.
+name: Run Warden
+on:
+  workflow_dispatch:
+    inputs:
+      base:
+        description: Base ref the dispatched branch is diffed against
+        required: false
+        default: main
+
+env:
+  MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
+
+jobs:
+  review:
+    name: warden
+    runs-on: depot-ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    env:
+      WARDEN_MODEL: ${{ secrets.WARDEN_MODEL }}
+      WARDEN_OPENROUTER_API_KEY: ${{ secrets.WARDEN_OPENROUTER_API_KEY }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          # merge-base and the two-dot diff need real history for both the
+          # dispatched branch and the base, not a depth-1 snapshot.
+          fetch-depth: 0
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: warden run
+        env:
+          # Indirection instead of inlining ${{ inputs.base }} in `run:` keeps
+          # the dispatch input out of shell-template position (zizmor
+          # template-injection).
+          BASE: ${{ inputs.base }}
+        run: mise exec -- warden run "$(git merge-base "origin/${BASE}" HEAD)..HEAD"

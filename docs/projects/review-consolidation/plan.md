@@ -55,12 +55,13 @@ not file removal.
    — Warden does not check conformance to the originating issue/PRD. Collapse surfaces only where
    they genuinely duplicate.
 5. **Tune and retire.** Always-on vs. label-gated: decided 2026-07-05 — two days of live per-push
-   reviews cost too much, so the gate is label-only (`labeled` events + `Warden` label; a
-   `workflow_dispatch` alternative was rejected because the warden action routes dispatch events to
-   schedule-type sweeps, never PR review). Remaining: calibrate `failOn` / `reportOn`; decide where
-   CodeRabbit fits: it currently reviews every PR in parallel with Warden — under evaluation; the
-   thesis says one of them must end up owning posted findings. Confirm no other stale review
-   automation remains. Capture the outcome in the changelog and delete this project directory.
+   reviews cost too much, so the gate is label-only (`labeled` events + `Warden` label; the warden
+   action cannot review a PR from `workflow_dispatch` — it routes dispatch events to schedule-type
+   sweeps — so `run-warden.yml` covers dispatch via the CLI, reviewing any branch into the job log
+   instead of onto a PR). Remaining: calibrate `failOn` / `reportOn`; decide where CodeRabbit fits:
+   it currently reviews every PR in parallel with Warden — under evaluation; the thesis says one of
+   them must end up owning posted findings. Confirm no other stale review automation remains.
+   Capture the outcome in the changelog and delete this project directory.
 
 ## Non-goals
 

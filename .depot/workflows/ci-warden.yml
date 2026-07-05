@@ -8,10 +8,12 @@
 # Adding the label reviews that PR's current head; remove and re-add it to
 # re-run. warden.toml's triggers mirror the same filter.
 #
-# Not `workflow_dispatch`: the getsentry/warden action routes dispatch events
-# to schedule-type sweep triggers (issue reports), never PR review — analyze/
-# report modes require a pull_request event (they diff head against base and
-# post the review to the PR). The label IS the manual dispatch button.
+# No `workflow_dispatch` here: the getsentry/warden action routes dispatch
+# events to schedule-type sweep triggers (issue reports), never PR review —
+# analyze/report modes require a pull_request event (they diff head against
+# base and post the review to the PR). The label is the dispatch button for
+# PR reviews; run-warden.yml covers dispatching a review of an arbitrary
+# branch via the CLI (findings in the job log, not on a PR).
 #
 # Two deliberate deviations from docs/contributing/github-actions-style.md,
 # both because Warden reviews the whole PR diff rather than one subtree:

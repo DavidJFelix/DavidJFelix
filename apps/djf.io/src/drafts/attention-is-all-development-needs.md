@@ -1,5 +1,5 @@
 ---
-title: AI-driven Engineering and Craftsmanship: Attention is All You Need
+title: AI-driven Engineering: Attention is All You Need
 author: DavidJFelix
 description: "In the modern era of AI-driven software engineering, our focus and ability to focus our efforts is one of the scarcest resources."
 date: 2025-12-07

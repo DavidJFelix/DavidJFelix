@@ -1,7 +1,17 @@
-# Warden — AI code review on every pull request.
+# Warden — AI code review on demand, per pull request.
 #
 # Adapted from `warden init`'s generated .github/workflows/warden.yml to this
 # repo's conventions (Depot runners, pinned SHAs, persist-credentials off).
+#
+# Label-gated, not always-on: reviewing every push to every PR cost real model
+# spend, so the review runs only when the "Warden" label is added to a PR.
+# Adding the label reviews that PR's current head; remove and re-add it to
+# re-run. warden.toml's triggers mirror the same filter.
+#
+# Not `workflow_dispatch`: the getsentry/warden action routes dispatch events
+# to schedule-type sweep triggers (issue reports), never PR review — analyze/
+# report modes require a pull_request event (they diff head against base and
+# post the review to the PR). The label IS the manual dispatch button.
 #
 # Two deliberate deviations from docs/contributing/github-actions-style.md,
 # both because Warden reviews the whole PR diff rather than one subtree:
@@ -16,9 +26,7 @@
 name: CI Warden
 on:
   pull_request:
-    # `labeled` stays so adding the "Warden" label re-runs the review;
-    # warden.toml's trigger filters which label counts, so other labels no-op.
-    types: [opened, synchronize, reopened, ready_for_review, labeled]
+    types: [labeled]
 
 # contents: write is required for resolving review threads via GraphQL.
 # See: https://github.com/orgs/community/discussions/44650
@@ -30,6 +38,9 @@ permissions:
 jobs:
   review:
     name: warden
+    # Filter at the job level so other labels never allocate a runner; the
+    # equivalent filter in warden.toml would only no-op after checkout + mise.
+    if: github.event.label.name == 'Warden'
     runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
     timeout-minutes: 20
     # No GITHUB_TOKEN env: the warden action's github-token input already

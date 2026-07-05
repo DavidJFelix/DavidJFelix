@@ -65,15 +65,16 @@ checklist -- whenever you add or touch one.
 ## Code review
 
 [Warden](https://warden.sentry.dev/guide) is the canonical automated reviewer: it runs its built-in
-`security-review` and `code-review` skills on every non-draft PR (`.depot/workflows/ci-warden.yml`)
-and owns the inline findings posted to the PR. Everything else complements it -- nothing else should
-post competing PR comments. The [review-consolidation](docs/projects/review-consolidation/plan.md)
-project tracks the direction (Warden is the path forward; other tools complement, not compete).
+`security-review` and `code-review` skills on demand -- add the `Warden` label to a PR
+(`.depot/workflows/ci-warden.yml`) -- and owns the inline findings posted to the PR. Everything else
+complements it -- nothing else should post competing PR comments. The
+[review-consolidation](docs/projects/review-consolidation/plan.md) project tracks the direction
+(Warden is the path forward; other tools complement, not compete).
 
-- **Warden (CI gate).** Automatic, every PR; the single source of posted inline review comments, and
-  findings at `failOn` severity fail the check. Add the `Warden` label to re-run it (or to review a
-  draft). Also runs locally: `mise exec -- warden <ref>` with `WARDEN_MODEL` and
-  `WARDEN_OPENROUTER_API_KEY` exported.
+- **Warden (CI gate, label-gated).** Add the `Warden` label to a PR (drafts included) to review its
+  current head; remove and re-add the label to re-run. It is the single source of posted inline
+  review comments, and findings at `failOn` severity fail the check. Also runs locally:
+  `mise exec -- warden <ref>` with `WARDEN_MODEL` and `WARDEN_OPENROUTER_API_KEY` exported.
 - **Built-in `/code-review` and `/security-review` (local).** Run on-demand before you push, as an
   inner-loop sanity pass. Do **not** pass `--comment` -- Warden owns posted comments, and
   double-posting the same diff is noise and double model spend.

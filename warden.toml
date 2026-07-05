@@ -38,15 +38,15 @@ failCheck = true
 [[skills]]
 name = "security-review"
 
+# Label-gated: `labeled` is the only action, and on labeled events the matcher
+# only fires when the event's label is in `labels`. Adding the "Warden" label
+# to a PR (draft included — labeling is the explicit opt-in) reviews its
+# current head; remove and re-add to re-run. Mirrors the job-level guard in
+# .depot/workflows/ci-warden.yml, which keeps other labels from even
+# allocating a runner.
 [[skills.triggers]]
 type = "pull_request"
-actions = ["opened", "synchronize", "reopened", "ready_for_review", "labeled"]
-# Skip draft PRs — review once the PR is marked ready, not on every WIP push.
-draft = false
-# With draft set, the matcher runs on (non-draft) OR (has this label), and
-# `labeled` events only match this specific label. Net effect: every non-draft
-# PR reviews as usual, random labels no longer trigger re-reviews, and adding
-# the "Warden" label is the manual re-run lever (it also opts in a draft).
+actions = ["labeled"]
 labels = ["Warden"]
 
 # Built-in correctness / logic-bug review. Also whole-repo.
@@ -55,6 +55,5 @@ name = "code-review"
 
 [[skills.triggers]]
 type = "pull_request"
-actions = ["opened", "synchronize", "reopened", "ready_for_review", "labeled"]
-draft = false
+actions = ["labeled"]
 labels = ["Warden"]

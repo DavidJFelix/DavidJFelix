@@ -74,7 +74,7 @@ complements it -- nothing else should post competing PR comments. The
 - **Warden (CI gate, label-gated).** Add the `Warden` label to a PR (drafts included) to review its
   current head; remove and re-add the label to re-run. It is the single source of posted inline
   review comments, and findings at `failOn` severity fail the check. To review a branch without a
-  PR, dispatch `run-warden.yml` on it (CLI-based; findings land in the job log, not on a PR). Also
+  PR, dispatch `ci-warden.yml` on it (CLI-based; findings land in the job log, not on a PR). Also
   runs locally: `mise exec -- warden <ref>` with `WARDEN_MODEL` and `WARDEN_OPENROUTER_API_KEY`
   exported.
 - **Built-in `/code-review` and `/security-review` (local).** Run on-demand before you push, as an

@@ -1,26 +1,28 @@
-# Warden — AI code review on demand, per pull request.
+# Warden — AI code review on demand: label a PR, or dispatch on a branch.
 #
 # Adapted from `warden init`'s generated .github/workflows/warden.yml to this
 # repo's conventions (Depot runners, pinned SHAs, persist-credentials off).
 #
-# Label-gated, not always-on: reviewing every push to every PR cost real model
-# spend, so the review runs only when the "Warden" label is added to a PR.
-# Adding the label reviews that PR's current head; remove and re-add it to
-# re-run. warden.toml's triggers mirror the same filter.
-#
-# No `workflow_dispatch` here: the getsentry/warden action routes dispatch
-# events to schedule-type sweep triggers (issue reports), never PR review —
-# analyze/report modes require a pull_request event (they diff head against
-# base and post the review to the PR). The label is the dispatch button for
-# PR reviews; run-warden.yml covers dispatching a review of an arbitrary
-# branch via the CLI (findings in the job log, not on a PR).
+# On demand, not always-on: reviewing every push to every PR cost real model
+# spend, so nothing runs unless asked. Two levers, one job each:
+#   - Add the "Warden" label to a PR (review job): the getsentry/warden action
+#     reviews the PR's current head and posts inline comments + a check.
+#     Remove and re-add the label to re-run. warden.toml's triggers mirror
+#     the same filter.
+#   - workflow_dispatch on any branch (dispatch-review job): the action cannot
+#     review from a dispatch event (its analyze/report modes require a
+#     pull_request event; dispatch routes to schedule-type sweep triggers), so
+#     this path runs the mise-pinned warden CLI on the dispatched branch,
+#     diffed from its merge-base with the `base` input (default main).
+#     Findings print to the job log and the run fails per warden.toml's
+#     failOn; nothing is posted to a PR.
 #
 # Two deliberate deviations from docs/contributing/github-actions-style.md,
 # both because Warden reviews the whole PR diff rather than one subtree:
 #   - No `paths:` filter. Like ci-spell.yml, this is a repo-wide gate; scoping
 #     it to a subtree would blind the review to everything else in the diff.
-#   - `pull_request` only, no `push` to main. Warden needs a PR context (it
-#     diffs head against base); there is nothing for it to review on a push.
+#   - No `push` to main. Warden reviews a change set (PR diff or branch
+#     range); there is nothing for it to review on a push.
 #
 # Config lives in /warden.toml. The model (WARDEN_MODEL) and OpenRouter key
 # (WARDEN_OPENROUTER_API_KEY) come from Depot secrets — these workflows run on
@@ -29,22 +31,28 @@ name: CI Warden
 on:
   pull_request:
     types: [labeled]
-
-# contents: write is required for resolving review threads via GraphQL.
-# See: https://github.com/orgs/community/discussions/44650
-permissions:
-  contents: write
-  pull-requests: write
-  checks: write
+  workflow_dispatch:
+    inputs:
+      base:
+        description: Base ref the dispatched branch is diffed against
+        required: false
+        default: main
 
 jobs:
   review:
     name: warden
-    # Filter at the job level so other labels never allocate a runner; the
-    # equivalent filter in warden.toml would only no-op after checkout + mise.
-    if: github.event.label.name == 'Warden'
+    # Only the "Warden" label runs the review; filtering at the job level
+    # means other labels never allocate a runner (the equivalent filter in
+    # warden.toml would only no-op after checkout + mise).
+    if: github.event_name == 'pull_request' && github.event.label.name == 'Warden'
     runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
     timeout-minutes: 20
+    # contents: write is required for resolving review threads via GraphQL.
+    # See: https://github.com/orgs/community/discussions/44650
+    permissions:
+      contents: write
+      pull-requests: write
+      checks: write
     # No GITHUB_TOKEN env: the warden action's github-token input already
     # defaults to the workflow token, and an env copy would also expose it to
     # every child process of the model-backed analyze step.
@@ -79,3 +87,37 @@ jobs:
         with:
           mode: report
           findings-file: ${{ steps.warden-analyze.outputs.findings-file }}
+
+  dispatch-review:
+    name: warden (dispatch)
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: depot-ubuntu-latest
+    timeout-minutes: 20
+    # Log-only: the CLI posts nothing, so read is all this job needs.
+    permissions:
+      contents: read
+    env:
+      MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
+      WARDEN_MODEL: ${{ secrets.WARDEN_MODEL }}
+      WARDEN_OPENROUTER_API_KEY: ${{ secrets.WARDEN_OPENROUTER_API_KEY }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          # merge-base and the two-dot diff need real history for both the
+          # dispatched branch and the base, not a depth-1 snapshot.
+          fetch-depth: 0
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: warden run
+        env:
+          # Indirection instead of inlining ${{ inputs.base }} in `run:` keeps
+          # the dispatch input out of shell-template position (zizmor
+          # template-injection).
+          BASE: ${{ inputs.base }}
+        # The CLI only accepts two-dot ranges (a bare ref is treated as a file
+        # pattern and warns "no files matched"; three-dot fails to parse), so
+        # compute the merge-base here — reviewing only the branch's own
+        # commits, not whatever the base gained since the branch point.
+        run: mise exec -- warden run "$(git merge-base "origin/${BASE}" HEAD)..HEAD"

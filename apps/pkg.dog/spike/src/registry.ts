@@ -1,4 +1,4 @@
-import {mkdir} from 'node:fs/promises'
+import {mkdir, rm} from 'node:fs/promises'
 import {join} from 'node:path'
 import {$} from 'bun'
 
@@ -53,9 +53,10 @@ export async function fetchUpstream(
   const tarballRes = await fetch(versionMeta.dist.tarball)
   if (!tarballRes.ok) throw new Error(`tarball ${tarballRes.status} for ${npmName}@${resolved}`)
   await Bun.write(tarballPath, tarballRes)
-  await $`tar xzf ${tarballPath} -C ${workDir}`.quiet()
-
+  // Clear any previous extraction so files removed upstream don't linger.
   const dir = join(workDir, 'package')
+  await rm(dir, {recursive: true, force: true})
+  await $`tar xzf ${tarballPath} -C ${workDir}`.quiet()
   const packageJson = (await Bun.file(join(dir, 'package.json')).json()) as UpstreamPackageJson
   return {jsrName, npmName, version: resolved, dir, packageJson}
 }

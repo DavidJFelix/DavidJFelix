@@ -84,7 +84,11 @@ export function buildModuleGraph(
       const target = byPath.has(resolved)
         ? (typesToRuntime.get(resolved) ?? resolved)
         : resolveCandidate(resolved, byPath, typesToRuntime)
-      if (target && target !== runtimePath) info.internalImports.add(target)
+      // A .d.ts with no runtime pair is not a module; edges to it would create
+      // phantom graph nodes that distort ownership and sharing.
+      if (target !== undefined && target.endsWith('.js') && target !== runtimePath) {
+        info.internalImports.add(target)
+      }
     }
 
     for (const specifier of specifiers) addSpecifier(runtimePath, specifier)

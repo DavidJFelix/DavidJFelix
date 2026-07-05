@@ -31,12 +31,12 @@ const rewritePartA = {
 }
 
 test('rewriteCrossPartImports rewrites cross-part specifiers in both quote styles', () => {
-  const rewritten = rewriteCrossPartImports(
-    `import {b} from "./b.js"\nimport {c} from './b.js'\nexport const a = [b, c]\n`,
-    'a.js',
-    rewritePartA,
-    rewritePlan,
-  )
+  const rewritten = rewriteCrossPartImports({
+    source: `import {b} from "./b.js"\nimport {c} from './b.js'\nexport const a = [b, c]\n`,
+    filePath: 'a.js',
+    part: rewritePartA,
+    plan: rewritePlan,
+  })
   expect(rewritten).toContain('from "@pkgdog/x__y__b"')
   expect(rewritten).toContain(`from '@pkgdog/x__y__b'`)
   expect(rewritten).not.toContain('./b.js')
@@ -44,16 +44,18 @@ test('rewriteCrossPartImports rewrites cross-part specifiers in both quote style
 
 test('rewriteCrossPartImports leaves own-module and bare imports untouched', () => {
   const source = 'import {a2} from "./a.js"\nimport {eq} from "@std/assert"\nexport const a = 1\n'
-  expect(rewriteCrossPartImports(source, 'other.js', rewritePartA, rewritePlan)).toBe(source)
+  expect(
+    rewriteCrossPartImports({source, filePath: 'other.js', part: rewritePartA, plan: rewritePlan}),
+  ).toBe(source)
 })
 
 test('rewriteCrossPartImports maps d.ts type imports back to the runtime module owner', () => {
-  const rewritten = rewriteCrossPartImports(
-    'import type {B} from "../b.d.ts"\nexport declare const a: B\n',
-    '_dist/a.d.ts',
-    rewritePartA,
-    rewritePlan,
-  )
+  const rewritten = rewriteCrossPartImports({
+    source: 'import type {B} from "../b.d.ts"\nexport declare const a: B\n',
+    filePath: '_dist/a.d.ts',
+    part: rewritePartA,
+    plan: rewritePlan,
+  })
   expect(rewritten).toContain('from "@pkgdog/x__y__b"')
 })
 

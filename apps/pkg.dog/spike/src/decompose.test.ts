@@ -139,6 +139,26 @@ test('a dependency boundary is not traversed: the dep part keeps its own interna
   expect(partB?.modules).toEqual(['_h.js', 'b.js'])
 })
 
+test('a merged cyclic group containing the root entry keeps its dot export', () => {
+  const plan = planOf(
+    [
+      {path: 'mod.js', text: 'import {b} from "./b.js"\nexport const root = () => b\n'},
+      {path: 'b.js', text: 'import {root} from "./mod.js"\nexport const b = () => root\n'},
+    ],
+    [
+      ['.', 'mod.js'],
+      ['./b', 'b.js'],
+    ],
+  )
+  expect(plan.parts).toHaveLength(1)
+  const keys = Object.keys(plan.parts[0]?.exportsMap ?? {}).toSorted((x, y) =>
+    x.localeCompare(y, 'en'),
+  )
+  // dependents of mod.js are routed to the bare part name, so '.' must exist.
+  expect(keys).toEqual(['.', './b'])
+  expect(plan.moduleSpecifier['mod.js']).toBe(plan.parts[0]?.name)
+})
+
 test('a merged cyclic part is addressable per original subpath by its dependents', () => {
   const plan = planOf(
     [

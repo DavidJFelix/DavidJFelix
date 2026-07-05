@@ -71,4 +71,6 @@ the emitted parts and `decompose-plan.json`. All gitignored build output.
 - Specifier rewriting is a quoted-string replacement of scanned specifiers, not an AST transform.
 - Barrel detection (re-export-only module with two or more internal imports) and the mangling's `__`
   separator (ambiguous if an upstream name itself contains `__`) are heuristics tuned for
-  stdlib-shaped packages.
+  stdlib-shaped packages. Same for part naming: subpaths in different directories can slug to the
+  same name, and a real subpath could collide with a `__-internal-*` name; the real registry needs
+  collision detection before publishing.

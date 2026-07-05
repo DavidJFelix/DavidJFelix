@@ -134,14 +134,20 @@ export function planDecomposition(input: DecomposeInput): DecomposePlan {
     )
     for (const m of modules) moduleToPart[m] ??= name
     const exportsOut: Record<string, EntryPaths> = {}
-    if (group.length === 1) exportsOut['.'] = (group[0] as {paths: EntryPaths}).paths
-    for (const entry of group) if (entry.subpath !== '.') exportsOut[entry.subpath] = entry.paths
+    for (const entry of group) exportsOut[entry.subpath] = entry.paths
+    if (group.length === 1) exportsOut['.'] ??= (group[0] as {paths: EntryPaths}).paths
     parts.push({
       name,
       kind: 'export',
       subpaths: group.map((e) => e.subpath).toSorted((a, b) => a.localeCompare(b, 'en')),
       modules: modules.toSorted((a, b) => a.localeCompare(b, 'en')),
-      partDeps: partDepsOf(graph, modules, name, moduleToPart, closure.boundaries),
+      partDeps: partDepsOf({
+        graph,
+        modules,
+        selfName: name,
+        moduleToPart,
+        boundaries: closure.boundaries,
+      }),
       externals: externalsOf(graph, modules),
       exportsMap: exportsOut,
     })
@@ -158,7 +164,7 @@ export function planDecomposition(input: DecomposeInput): DecomposePlan {
       kind: 'internal',
       subpaths: [],
       modules: modules.toSorted((a, b) => a.localeCompare(b, 'en')),
-      partDeps: partDepsOf(graph, modules, name, moduleToPart, new Set()),
+      partDeps: partDepsOf({graph, modules, selfName: name, moduleToPart, boundaries: new Set()}),
       externals: externalsOf(graph, modules),
       exportsMap: exportsOut,
     })
@@ -302,13 +308,21 @@ function connectedComponents(graph: ModuleGraph, subset: Set<string>): string[][
   return components
 }
 
-function partDepsOf(
-  graph: ModuleGraph,
-  modules: string[],
-  selfName: string,
-  moduleToPart: Record<string, string>,
-  boundaries: Set<string>,
-): string[] {
+interface PartDepsParams {
+  graph: ModuleGraph
+  modules: string[]
+  selfName: string
+  moduleToPart: Record<string, string>
+  boundaries: Set<string>
+}
+
+function partDepsOf({
+  graph,
+  modules,
+  selfName,
+  moduleToPart,
+  boundaries,
+}: PartDepsParams): string[] {
   const deps = new Set<string>()
   for (const boundary of boundaries) {
     const part = moduleToPart[boundary]

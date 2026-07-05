@@ -66,6 +66,21 @@ test('buildModuleGraph flags re-export-only barrels', () => {
   expect(graph.modules.get('a.js')?.isBarrel).toBe(false)
 })
 
+test('buildModuleGraph ignores d.ts imports with no runtime pair instead of inventing modules', () => {
+  const graph = buildModuleGraph(
+    [
+      {path: 'a.js', text: 'export const a = 1\n'},
+      {
+        path: '_dist/a.d.ts',
+        text: 'import type {O} from "./orphan.d.ts"\nexport declare const a: O\n',
+      },
+      {path: '_dist/orphan.d.ts', text: 'export declare type O = number\n'},
+    ],
+    new Map([['a.js', '_dist/a.d.ts']]),
+  )
+  expect(graph.modules.get('a.js')?.internalImports.size).toBe(0)
+})
+
 test('buildModuleGraph records bare specifiers as external imports', () => {
   const graph = buildModuleGraph(
     [{path: 'a.js', text: 'import {eq} from "@std/assert"\nexport const a = eq\n'}],

@@ -35,7 +35,7 @@ export async function emitParts(
         typesPath !== undefined && (await Bun.file(join(upstream.dir, typesPath)).exists())
       for (const filePath of [runtimePath, ...(hasTypes ? [typesPath] : [])]) {
         const source = await Bun.file(join(upstream.dir, filePath)).text()
-        const rewritten = rewriteCrossPartImports(source, filePath, part, plan)
+        const rewritten = rewriteCrossPartImports({source, filePath, part, plan})
         const target = join(dir, filePath)
         await mkdir(dirname(target), {recursive: true})
         await Bun.write(target, rewritten)
@@ -60,13 +60,20 @@ function typesPathOf(part: Part, plan: DecomposePlan, runtimePath: string): stri
   return plan.moduleToPart[runtimePath] === part.name ? mirror : undefined
 }
 
+export interface RewriteCrossPartImportsParams {
+  source: string
+  filePath: string
+  part: Part
+  plan: DecomposePlan
+}
+
 /** Replace specifiers that resolve to modules owned by other parts. */
-export function rewriteCrossPartImports(
-  source: string,
-  filePath: string,
-  part: Part,
-  plan: DecomposePlan,
-): string {
+export function rewriteCrossPartImports({
+  source,
+  filePath,
+  part,
+  plan,
+}: RewriteCrossPartImportsParams): string {
   const specifiers = filePath.endsWith('.d.ts')
     ? scanTypesModule(source)
     : scanRuntimeModule(source).specifiers

@@ -5,9 +5,9 @@ from this file.
 
 ## Repository overview
 
-Personal monorepo containing web applications, exercises, and configuration. No pnpm workspace --
-apps have independent lockfiles and dependencies. Shared dev tooling is managed via mise
-(`.config/mise.toml`).
+Personal monorepo containing web applications, exercises, and configuration. No repo-root pnpm
+workspace -- apps have independent lockfiles and dependencies, and conflict-prone workspace trees
+live under `workspaces/`. Shared dev tooling is managed via mise (`.config/mise.toml`).
 
 ## Key paths
 
@@ -18,6 +18,7 @@ apps have independent lockfiles and dependencies. Shared dev tooling is managed 
 | `docs/agents/`       | Agent workflow docs -- issue tracker, triage labels, domain docs                                 |
 | `docs/projects/`     | Active project plans and progress notes (ephemeral working notes)                                |
 | `docs/changelog/`    | Monthly change history (the durable record); PRs add fragments in `fragments/`                   |
+| `workspaces/`        | Isolated workspace trees whose package-manager roots should not collide with the parent repo     |
 | `.agents/agents/`    | Review personas -- focused reviewer subagents (solid copies)                                     |
 | `.agents/skills/`    | Claude Code skills (solid copies)                                                                |
 | `.config/`           | Shared tooling config (mise, cspell)                                                             |

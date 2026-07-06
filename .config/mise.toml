@@ -19,10 +19,11 @@ pinact = "4.1.0"
 # package.json. Config lives in /warden.toml.
 "npm:@sentry/warden" = "0.38.1"
 depot = { version = "latest", exe = "depot" }
+"npm:@earendil-works/pi-coding-agent" = { version = "latest", allow_builds = ["@google/genai", "protobufjs"] }
 
 # Repo-root checks, scoped to the config files the root owns. Legacy project
-# dirs (Advent-of-Code, Exercism, etc.) are intentionally out of scope, and
-# apps/* shadow these tasks with their own.
+# dirs and isolated workspace trees are intentionally out of scope, and apps/*
+# shadow these tasks with their own.
 [tasks.format]
 description = "Check formatting of repo-root config files (Biome)"
 run = "biome check biome.jsonc .oxlintrc.json .prettierrc.json .config/cspell.json .github/renovate.json .vscode/settings.json .vscode/extensions.json"

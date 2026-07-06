@@ -1,2 +1,2 @@
 [workspace]
-members = ["Advent-of-Code/2022/rust/*"]
+members = ["crates/*", "workspaces/advent-of-code/2022/rust/*"]

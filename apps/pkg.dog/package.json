@@ -20,18 +20,18 @@
   },
   "dependencies": {
     "@ark-ui/vue": "^5.37.2",
-    "@sentry/browser": "^10.60.0",
+    "@sentry/browser": "^10.63.0",
     "nuxt": "^4.4.8",
-    "posthog-js": "^1.393.0",
+    "posthog-js": "^1.396.6",
     "vue": "^3.5.38"
   },
   "devDependencies": {
-    "@pandacss/dev": "1.11.3",
-    "@playwright/test": "1.61.0",
+    "@pandacss/dev": "1.11.4",
+    "@playwright/test": "1.61.1",
     "@vitest/coverage-v8": "4.1.9",
     "typescript": "6.0.3",
     "vitest": "4.1.9",
-    "vue-tsc": "3.3.5",
-    "wrangler": "4.105.0"
+    "vue-tsc": "3.3.6",
+    "wrangler": "4.107.0"
   }
 }

@@ -37,7 +37,7 @@ export function checkGuess(guess, answer) {
     }
 
     let status = 'incorrect'
-    const misplacedIndex = answerChars.findIndex((char) => char === guessChars[i])
+    const misplacedIndex = answerChars.indexOf(guessChars[i])
     if (misplacedIndex >= 0) {
       status = 'misplaced'
       answerChars[misplacedIndex] = SOLVED_CHAR

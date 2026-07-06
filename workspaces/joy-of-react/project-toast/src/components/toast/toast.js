@@ -28,6 +28,7 @@ function Toast({children = '', variant = 'notice', onClose = () => {}}) {
       </p>
       <button
         className={styles.closeButton}
+        type="button"
         onClick={onClose}
         aria-label="Dismiss message"
         aria-live="off"

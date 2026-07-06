@@ -12,12 +12,9 @@ console.info({answer})
 
 function Game() {
   const [guesses, setGuesses] = React.useState([])
-  const appendGuess = React.useCallback(
-    (newGuess) => {
-      setGuesses((guesses) => [...guesses, newGuess])
-    },
-    [setGuesses],
-  )
+  const appendGuess = React.useCallback((newGuess) => {
+    setGuesses((currentGuesses) => [...currentGuesses, newGuess])
+  }, [])
 
   return (
     <>

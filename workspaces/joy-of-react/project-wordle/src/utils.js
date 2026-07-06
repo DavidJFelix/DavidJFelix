@@ -4,7 +4,7 @@ export const sample = (arr) => {
 
 export const range = (start, end, step = 1) => {
   const output = []
-  if (typeof end === 'undefined') {
+  if (end === undefined) {
     end = start
     start = 0
   }

@@ -1,3 +1,5 @@
+import React from 'react'
+
 import Game from '../game'
 import Header from '../header'
 

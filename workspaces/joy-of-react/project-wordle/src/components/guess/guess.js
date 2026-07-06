@@ -1,7 +1,9 @@
 import React from 'react'
 import {range} from '../../utils'
 
-function Guess({guess = '', guessStatus = []}) {
+const emptyGuessStatus = []
+
+function Guess({guess = '', guessStatus = emptyGuessStatus}) {
   const letterSlots = range(5)
 
   return (

@@ -17,7 +17,7 @@ function ToastPlayground() {
     setMessage('')
     setVariant('notice')
     popToast(message, variant)
-  }, [popToast, variant, message, setVariant, setMessage])
+  }, [popToast, variant, message])
 
   return (
     <div className={styles.wrapper}>

@@ -134,8 +134,9 @@ skills:
   (getRequest, setResponseHeader, setCookie, getCookie, useSession), three-phase request handling,
   AsyncLocalStorage context." use: "@tanstack/start-server-core#start-server-core"
 - when: "Programmatic route tree building as an alternative to filesystem conventions: rootRoute,
-index, route, layout, physical, defineVirtualSubtreeConfig. Use with TanStack Router plugin's
-virtualRouteConfig option." use: "@tanstack/virtual-file-routes#virtual-file-routes"
+  index, route, layout, physical, defineVirtualSubtreeConfig. Use with TanStack Router plugin's
+  virtualRouteConfig option." use: "@tanstack/virtual-file-routes#virtual-file-routes"
+
 <!-- intent-skills:end -->
 
 # f311x

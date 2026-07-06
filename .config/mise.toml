@@ -7,7 +7,7 @@ pnpm = "11"
 bun = "1"
 biome = "2"
 oxlint = "1"
-prettier = "3.8.4"
+prettier = "3.9.4"
 actionlint = "1"
 ghalint = "1"
 zizmor = "1.26.1"
@@ -17,7 +17,7 @@ pinact = "4.1.0"
 # ci-warden.yml workflow uses the getsentry/warden action, which bundles its
 # own copy). Pinned like cspell via mise's npm backend; there is no root
 # package.json. Config lives in /warden.toml.
-"npm:@sentry/warden" = "0.38.1"
+"npm:@sentry/warden" = "0.39.0"
 depot = { version = "latest", exe = "depot" }
 "npm:@earendil-works/pi-coding-agent" = { version = "latest", allow_builds = ["@google/genai", "protobufjs"] }
 

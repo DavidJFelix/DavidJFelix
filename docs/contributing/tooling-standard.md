@@ -65,6 +65,10 @@ The ownership map above covers quality tooling; this covers the rest of what age
   bun-only -- until confirmed, Wrangler projects stay on pnpm.)
 - **Lockfiles**: one per project. If a project has both `pnpm-lock.yaml` and `bun.lock`, keep
   `pnpm-lock.yaml` and delete `bun.lock`.
+- **Auth libraries**: `better-auth` and `next-auth` are **banned** in all code in this repo. Do not
+  add them as dependencies, do not recommend them, do not copy patterns that assume them. Hand-roll
+  the OAuth flow (small, boring, auditable) or get an explicit sign-off before introducing any auth
+  library.
 - **Python**: `uv`. `pip` is banned -- never invoke it directly. `poetry` is banned.
 - **Rust**: `cargo`. **Go**: `go mod`.
 - **Tasks & scripts**: prefer `mise` tasks. If a task is too complex for a mise task, write it as a

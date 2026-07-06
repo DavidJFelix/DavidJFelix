@@ -3,13 +3,14 @@
 How the engineering skills should consume this repo's domain documentation when exploring the
 codebase.
 
-**Layout: multi-context.** A `CONTEXT-MAP.md` at the repo root points to one `CONTEXT.md` per app
-under `apps/<app>/`. None of these exist yet -- they're created lazily (see below).
+**Layout: multi-context.** A `CONTEXT-MAP.md` at the repo root points to the repo-level `CONTEXT.md`
+plus app contexts under `apps/<app>/`. App contexts are created lazily (see below).
 
 ## Before exploring, read these
 
-- **`CONTEXT-MAP.md`** at the repo root -- it points at one `CONTEXT.md` per app. Read each one
-  relevant to the app you're working in.
+- **`CONTEXT-MAP.md`** at the repo root -- it points at each `CONTEXT.md`. Read each one relevant to
+  the area you're working in.
+- **`CONTEXT.md`** at the repo root -- the glossary for repo-wide organization terms.
 - **`apps/<app>/CONTEXT.md`** -- the glossary for that app.
 - **`docs/adr/`** at the root for system-wide decisions, and **`apps/<app>/docs/adr/`** for
   app-scoped decisions. Read ADRs that touch the area you're about to work in.
@@ -25,6 +26,7 @@ Multi-context (presence of `CONTEXT-MAP.md` at the root):
 ```
 /
 ├── CONTEXT-MAP.md
+├── CONTEXT.md                         ← repo-wide organization language
 ├── docs/adr/                          ← system-wide decisions
 └── apps/
     ├── djf.io/

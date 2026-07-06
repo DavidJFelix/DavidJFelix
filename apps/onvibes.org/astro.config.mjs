@@ -46,6 +46,16 @@ const adapter = process.env.VITEST
 export default defineConfig({
   site: 'https://onvibes.org',
   adapter,
+  vite: {
+    server: {
+      // In production Flue owns the Worker and serves the agent API at /api
+      // (src/app.ts). `astro dev` has no such routes, so bridge them to the
+      // `flue dev` server (default port 3583; ws for streaming). Host is left
+      // unchanged so URLs the API builds from the request (e.g. streamUrl)
+      // point back at this origin and stay behind the proxy.
+      proxy: {'/api': {target: 'http://127.0.0.1:3583', ws: true}},
+    },
+  },
   // The site has no sessions. Without this the Cloudflare adapter defaults to a
   // KV-backed session driver, which would require provisioning a SESSION KV
   // namespace; the no-op driver keeps the worker binding-free.

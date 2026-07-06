@@ -57,15 +57,15 @@ lintable rules into the existing per-app oxlint gate via the root `.oxlintrc.jso
 
 ### 4. Fold the legacy JS dirs into the standard — low priority
 
-- `Joy-of-React/` (two projects with Biome configs extending root but no CI) and
-  `Advent-of-Code/2020/*/typescript` (eight projects with no lint/format config) sit outside the
-  standard. Wire them in (configs + CI) when convenient. Explicitly low priority.
+- `workspaces/joy-of-react/` (two projects with Biome configs extending root but no CI) and
+  `workspaces/advent-of-code/2020/*/typescript` (eight projects with no lint/format config) sit
+  outside the standard. Wire them in (configs + CI) when convenient. Explicitly low priority.
 
 ## Decided, no work
 
 - **Rust is scoped out.** No clippy/rustfmt/CI for the exercise crates until a real Rust project
   exists. Revisit then. Sizing data (measured 2026-07-02):
-  `cargo clippy --workspace -W clippy::pedantic` reports ~48 findings across the Advent-of-Code 2022
+  `cargo clippy --workspace -W clippy::pedantic` reports ~48 findings across the Advent of Code 2022
   crates, dominated by `uninlined_format_args`, `redundant_closure_for_method_calls`, and
   `print_with_newline` — a single modest fix-up PR when the time comes. The wiring is
   `[workspace.lints]` in the root `Cargo.toml` plus `[lints] workspace = true` per crate, per

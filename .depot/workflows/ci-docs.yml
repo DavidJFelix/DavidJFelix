@@ -1,8 +1,8 @@
 name: CI docs
 # Formatting gate for repo-owned Markdown (docs/, root *.md, .github/): a bare
 # `prettier --check .` whose scope is set by the root .prettierignore -- apps
-# are excluded (their per-app format gates own their markdown), as are the
-# legacy dirs and the hash-locked .agents/ skills.
+# are excluded (their per-app format gates own their markdown), as are isolated
+# workspace trees, legacy dirs, and the hash-locked .agents/ skills.
 on:
   push:
     branches: [main]

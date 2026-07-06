@@ -39,7 +39,7 @@ Biome owns every file type except Markdown/MDX. Revisit if Biome gains MD/MDX su
 | Lint    | clippy  | shared `clippy.toml` + lints in root `Cargo.toml` |
 | Format  | rustfmt | shared `rustfmt.toml`                             |
 
-Status: 0% implemented across the repo's exercise crates (Advent-of-Code 2022, Exercism). Depth is
+Status: 0% implemented across the repo's exercise crates (Advent of Code 2022, Exercism). Depth is
 an open decision — full ruleset vs. minimal (default clippy + `cargo fmt --check`) vs. scope-out
 until a real Rust project exists.
 
@@ -96,6 +96,6 @@ The ownership map above covers quality tooling; this covers the rest of what age
 
 ## Known caveats / open decisions
 
-- **Legacy directories are out of scope.** `Advent-of-Code/`, `Exercism/`, and `Joy-of-React/` are
-  excluded from the spell gate and have no lint/format CI; whether to wire them in, document them
-  out, or archive them is undecided.
+- **Legacy directories and workspace trees are out of scope.** `Exercism/` and `workspaces/` are
+  excluded from the spell gate and have no root-owned lint/format CI. Workspace trees own their own
+  tooling blast radius and can opt into checks later.

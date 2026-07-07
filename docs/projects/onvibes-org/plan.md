@@ -14,9 +14,8 @@ decided (below); building it is the current work, and it gates the real-model sw
 Anyone can sign up; nobody can do anything until manually enabled.
 
 - **Sign-up / sign-in via GitHub OAuth**, hand-written flow -- no auth library. `better-auth` and
-  `next-auth` are banned repo-wide
-  ([tooling-standard.md](../../contributing/tooling-standard.md)); any other auth library needs
-  explicit sign-off.
+  `next-auth` are banned repo-wide ([tooling-standard.md](../../contributing/tooling-standard.md));
+  any other auth library needs explicit sign-off.
 - **Users and sessions in D1**, schema managed by **Drizzle**. Session id in an HttpOnly cookie.
 - **`enabled` boolean on the user row, default false.** Enablement is a manual database flip
   (`wrangler d1 execute`). Disabled users get an error -- no request-access machinery. What
@@ -24,9 +23,9 @@ Anyone can sign up; nobody can do anything until manually enabled.
 
 ## Current state (2026-07-02)
 
-- Live at onvibes.org (custom domain + www wired; `preview_urls` on). The deployed Worker is
-  **Flue hosting Astro**: `src/app.ts` mounts the Flue agent API at `/api` and forwards everything
-  else to the prebuilt Astro worker (see PR #303 and the 2026-07-02 progress note).
+- Live at onvibes.org (custom domain + www wired; `preview_urls` on). The deployed Worker is **Flue
+  hosting Astro**: `src/app.ts` mounts the Flue agent API at `/api` and forwards everything else to
+  the prebuilt Astro worker (see PR #303 and the 2026-07-02 progress note).
 - `/` renders the header/hero/footer layout; `/chat` is a React island talking to a keyless faux
   echo agent (`src/agents/assistant.ts`).
 - Smoke boots the Flue worker, checks `/` + `/chat`, and POSTs the agent endpoint; Playwright e2e
@@ -34,8 +33,7 @@ Anyone can sign up; nobody can do anything until manually enabled.
 
 ## Stack
 
-Astro + PandaCSS + React islands, Flue (agents on Durable Objects), Cloudflare Worker, D1 +
-Drizzle.
+Astro + PandaCSS + React islands, Flue (agents on Durable Objects), Cloudflare Worker, D1 + Drizzle.
 
 ## Roadmap
 

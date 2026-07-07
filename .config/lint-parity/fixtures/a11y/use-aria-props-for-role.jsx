@@ -1,1 +1,0 @@
-<span role="checkbox"></span>

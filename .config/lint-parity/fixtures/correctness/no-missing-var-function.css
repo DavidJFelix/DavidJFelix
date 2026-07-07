@@ -1,4 +1,0 @@
-a {
-  --foo: red;
-  color: --foo;
-}

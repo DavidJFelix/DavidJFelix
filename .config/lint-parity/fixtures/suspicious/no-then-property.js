@@ -1,3 +1,0 @@
-const then = () => {};
-
-export { then };

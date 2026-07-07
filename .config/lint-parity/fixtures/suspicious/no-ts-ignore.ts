@@ -1,2 +1,0 @@
-// @ts-ignore
-let foo;

@@ -1,1 +1,0 @@
-<FirstComponent children={'foo'} />

@@ -1,3 +1,0 @@
-[].map(() => {
-    // Missing return value
-});

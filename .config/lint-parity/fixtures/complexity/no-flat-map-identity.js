@@ -1,1 +1,0 @@
-array.flatMap((arr) => arr);

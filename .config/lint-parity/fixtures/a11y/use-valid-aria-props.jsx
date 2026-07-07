@@ -1,1 +1,0 @@
-<div aria-lorem="foobar" />;

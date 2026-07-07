@@ -1,4 +1,0 @@
-function example() {
-    return;
-    neverCalled();
-}

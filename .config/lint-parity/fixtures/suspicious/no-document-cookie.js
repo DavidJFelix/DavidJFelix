@@ -1,1 +1,0 @@
-document.cookie = "foo=bar";

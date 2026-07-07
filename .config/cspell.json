@@ -29,9 +29,7 @@
     ".alchemy",
     "coverage",
     "playwright-report",
-    "test-results",
-    ".config/lint-parity/fixtures",
-    ".config/lint-parity/manifest.json"
+    "test-results"
   ],
   "ignoreRegExpList": ["did:plc:[a-z0-9]+"],
   "words": [

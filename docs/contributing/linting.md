@@ -2,10 +2,10 @@
 
 Oxlint is the primary linter (root `.oxlintrc.json`); Biome runs alongside it with a pruned rule
 list covering only what oxlint cannot check -- CSS lint rules and a handful of JS rules with no
-oxlint equivalent. The split is proven rule-by-rule by the lint-parity kit (`.config/lint-parity/`,
-`mise run lint:parity`): every rule that was active under the old Biome recommended preset has a
-fixture asserting the engine that now owns it still catches it. When bumping oxlint or Biome, that
-gate tells you if coverage regressed.
+oxlint equivalent. The split was proven rule-by-rule during the migration by a lint-parity kit (one
+violating fixture per previously-active Biome rule, asserted against the engine that took it over);
+the kit was removed once every fixture passed, and lives in git history on the migration PR if a
+future oxlint/Biome bump needs to re-verify coverage.
 
 Fix findings, don't silence them. Don't disable a lint rule or exclude files to make a finding
 disappear -- fix the actual issue. Two shortcuts are specifically banned:

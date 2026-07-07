@@ -27,10 +27,9 @@
   },
   // Oxlint (root .oxlintrc.json) is the primary linter. Biome's linter is
   // pruned to the rules oxlint has no equivalent for, at their old recommended
-  // severities. The lint-parity kit (.config/lint-parity/, `mise run
-  // lint:parity`) proves rule-by-rule that everything the old recommended
-  // preset caught is still caught by one of the two engines -- rerun it before
-  // editing this list.
+  // severities. The migration PR proved rule-by-rule (via a since-removed
+  // lint-parity fixture kit, still in git history) that everything the old
+  // recommended preset caught is caught by one of the two engines.
   "linter": {
     "enabled": true,
     "rules": {

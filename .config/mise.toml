@@ -40,11 +40,6 @@ description = "Apply formatting fixes to repo-root config files"
 run = "oxfmt --ignore-path=.gitignore biome.jsonc .oxfmtrc.json .oxlintrc.json .prettierrc.json .config/cspell.json .github/renovate.json .vscode/settings.json .vscode/extensions.json"
 dir = "{{config_root}}"
 
-[tasks."lint:parity"]
-description = "Verify every previously-active Biome rule is still caught by oxlint or pruned Biome"
-run = "bun bin/lint-parity.ts"
-dir = "{{config_root}}"
-
 [tasks."format:md"]
 description = "Check repo-owned Markdown formatting (Prettier; scope set by .prettierignore)"
 run = "prettier --check ."

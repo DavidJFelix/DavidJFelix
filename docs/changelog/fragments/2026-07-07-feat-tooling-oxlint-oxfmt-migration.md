@@ -7,9 +7,9 @@ violation fixture tested against both engines: 175 are now enforced by oxlint (t
 `.oxlintrc.json` gained the vue and oxc plugins, ~30 explicit rule enables, and ~11 severity
 alignments), and 46 stay with Biome -- all 25 CSS rules plus one HTML rule (oxlint parses neither
 language), 18 JS-family rules with no usable oxlint equivalent, and 2 whose oxlint ports are
-type-aware-only. The evidence is checked in as the lint-parity kit (`.config/lint-parity/`,
-`mise run lint:parity`, gated by `ci-repo.yml`): one violating fixture per rule, each asserted
-against the engine that now owns it.
+type-aware-only. The proof ran as a lint-parity kit -- one violating fixture per rule, each asserted
+against the engine that now owns it -- which was removed once every fixture passed and remains in
+git history on the migration PR.
 
 oxfmt (pinned via mise, config in `.oxfmtrc.json`) formats JS/TS/JSX/TSX, JSON/JSONC, CSS, and Vue
 byte-identically to Biome's output -- verified across five apps' full source trees -- so the switch

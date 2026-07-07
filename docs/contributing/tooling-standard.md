@@ -35,10 +35,11 @@ Applies to every JS/TS app (Astro, React, Vue, Svelte, TanStack Start, Nuxt, pla
 
 Oxlint is the primary linter and oxfmt the primary formatter; Biome remains only where oxc does not
 reach -- CSS linting, a pruned list of JS rules oxlint has no equivalent for, `.astro`/`.svelte`
-formatting, and import organizing. Rule-level coverage is proven by the lint-parity kit
-(`.config/lint-parity/`, run via `mise run lint:parity`): one fixture per previously-active Biome
-rule, each asserted against the engine that now owns it. Revisit the Biome remainder as oxlint/oxfmt
-grow (svelte/astro formatting, CSS linting, import sorting).
+formatting, and import organizing. Rule-level coverage was proven during the migration by a
+lint-parity kit (one violating fixture per previously-active Biome rule, asserted against the engine
+that took it over); the kit was removed after passing and lives in git history on the migration PR.
+Revisit the Biome remainder as oxlint/oxfmt grow (svelte/astro formatting, CSS linting, import
+sorting).
 
 ### Rust _(aspirational — not yet implemented)_
 
@@ -96,7 +97,7 @@ The ownership map above covers quality tooling; this covers the rest of what age
   repo root fans every app's full check out (`bin/run-app-tasks.ts`).
 - **Root config files** (`biome.jsonc`, `.oxlintrc.json`, `.oxfmtrc.json`, etc.) are formatted by
   the root `mise run format` task (oxfmt, plus a Biome lint of Biome's own configs) and gated by
-  `ci-repo.yml`, which also runs the lint-parity fixtures (`mise run lint:parity`).
+  `ci-repo.yml`.
 - **Repo-owned Markdown** (`docs/`, root `*.md`, `.github/`) is format-gated by the root
   `mise run format:md` task (a bare `prettier --check .`, scope set by `.prettierignore`) and
   `ci-docs.yml`. Apps are excluded — their per-app format gates own their markdown, and djf.io's

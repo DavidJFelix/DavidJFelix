@@ -29,7 +29,9 @@
     ".alchemy",
     "coverage",
     "playwright-report",
-    "test-results"
+    "test-results",
+    ".config/lint-parity/fixtures",
+    ".config/lint-parity/manifest.json"
   ],
   "ignoreRegExpList": ["did:plc:[a-z0-9]+"],
   "words": [
@@ -149,6 +151,7 @@
     "openrouter",
     "oucwc",
     "oxfmt",
+    "oxfmtrc",
     "oxlint",
     "oxlintrc",
     "pagefind",

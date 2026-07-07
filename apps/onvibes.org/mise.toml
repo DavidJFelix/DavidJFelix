@@ -9,11 +9,11 @@ run = "pnpm run typecheck"
 wait_for = ["build"]
 
 [tasks.lint]
-description = "Lint with Biome + Oxlint"
+description = "Lint with Oxlint + Biome"
 run = "pnpm run lint"
 
 [tasks.format]
-description = "Check formatting (Biome; Prettier for md/mdx)"
+description = "Check formatting (oxfmt; Biome for astro/svelte; Prettier for md/mdx)"
 run = "pnpm run format"
 
 [tasks."format:fix"]

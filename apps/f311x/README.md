@@ -31,7 +31,7 @@ See [AGENTS.md](./AGENTS.md) for the full table.
 | `pnpm build`     | Production build                  |
 | `pnpm deploy`    | Alchemy v2 deploy                 |
 | `pnpm ingest`    | Run `scripts/ingest.ts` under Bun |
-| `pnpm lint`      | Biome + Oxlint                    |
+| `pnpm lint`      | Oxlint + Biome                    |
 | `pnpm typecheck` | `tsc --noEmit`                    |
 | `pnpm test`      | Vitest                            |
 

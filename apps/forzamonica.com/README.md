@@ -30,7 +30,7 @@ App boots on `http://localhost:3002`.
 | `pnpm dev`       | Vite dev server (workerd SSR) |
 | `pnpm build`     | Production build              |
 | `pnpm deploy`    | Build + `wrangler deploy`     |
-| `pnpm lint`      | Biome + Oxlint                |
+| `pnpm lint`      | Oxlint + Biome                |
 | `pnpm typecheck` | `tsgo --noEmit`               |
 | `pnpm test`      | Vitest                        |
 

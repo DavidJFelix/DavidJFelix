@@ -15,6 +15,7 @@ on:
       - '.config/mise.toml'
       - 'biome.jsonc'
       - '.oxlintrc.json'
+      - '.oxfmtrc.json'
       - '.prettierrc.json'
       - '.depot/workflows/ci-forzamonica-com.yml'
       - '.depot/workflows/cd-deploy-forzamonica-com.yml'
@@ -25,6 +26,7 @@ on:
       - '.config/mise.toml'
       - 'biome.jsonc'
       - '.oxlintrc.json'
+      - '.oxfmtrc.json'
       - '.prettierrc.json'
       - '.depot/workflows/ci-forzamonica-com.yml'
       - '.depot/workflows/cd-deploy-forzamonica-com.yml'
@@ -52,7 +54,7 @@ jobs:
       - name: typecheck
         run: mise run typecheck
   lint:
-    name: biome + oxlint
+    name: oxlint + biome
     runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
     timeout-minutes: 10
     permissions:

@@ -110,7 +110,7 @@ test('BlogPost article meta falls back to David J Felix as author', async () => 
 const jsonLdFrom = (html: string) => {
   const match = html.match(/<script type="application\/ld\+json">(.*?)<\/script>/s)
   expect(match).not.toBeNull()
-  // biome-ignore lint/style/noNonNullAssertion: asserted non-null above
+  // oxlint-disable-next-line typescript/no-non-null-assertion -- asserted non-null above
   return JSON.parse(match![1])
 }
 

@@ -22,7 +22,7 @@ declare module '@tanstack/react-router' {
   }
 }
 
-// biome-ignore lint/style/noNonNullAssertion: This will exist or we'll crash
+// oxlint-disable-next-line typescript/no-non-null-assertion -- This will exist or we'll crash
 const rootElement = document.getElementById('app')!
 
 if (!rootElement.innerHTML) {

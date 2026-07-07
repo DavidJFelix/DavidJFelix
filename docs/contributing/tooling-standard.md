@@ -23,14 +23,22 @@ For _where_ those config files live and _what format_ they take, see
 
 Applies to every JS/TS app (Astro, React, Vue, Svelte, TanStack Start, Nuxt, plain Node).
 
-| Concern                                                         | Tool                                | Config                                                                |
-| --------------------------------------------------------------- | ----------------------------------- | --------------------------------------------------------------------- |
-| Lint + format (JS/TS/JSX/TSX, JSON/JSONC, CSS, framework files) | Biome                               | root `biome.jsonc`, app `biome.json` extends it                       |
-| Additional lint rules                                           | Oxlint                              | root `.oxlintrc.json`                                                 |
-| Type checking                                                   | tsgo (`@typescript/native-preview`) | per-app `tsconfig.json`                                               |
-| Markdown / MDX formatting                                       | Prettier (md/mdx only)              | root `.prettierrc.json` (`proseWrap: always`), root `.prettierignore` |
+| Concern                                                                 | Tool                                | Config                                                                |
+| ----------------------------------------------------------------------- | ----------------------------------- | --------------------------------------------------------------------- |
+| Lint, primary (JS/TS/JSX/TSX + astro/vue/svelte script blocks)          | Oxlint                              | root `.oxlintrc.json`                                                 |
+| Lint, residual (CSS lint + the JS rules oxlint lacks; pruned rule list) | Biome                               | root `biome.jsonc`, app `biome.json` extends it                       |
+| Format (JS/TS/JSX/TSX, JSON/JSONC, CSS, Vue)                            | oxfmt                               | root `.oxfmtrc.json`                                                  |
+| Format (`.astro` frontmatter, `.svelte` script blocks)                  | Biome                               | root `biome.jsonc` (`formatter.includes`)                             |
+| Import organizing                                                       | Biome assist                        | root `biome.jsonc`                                                    |
+| Type checking                                                           | tsgo (`@typescript/native-preview`) | per-app `tsconfig.json`                                               |
+| Markdown / MDX formatting                                               | Prettier (md/mdx only)              | root `.prettierrc.json` (`proseWrap: always`), root `.prettierignore` |
 
-Biome owns every file type except Markdown/MDX. Revisit if Biome gains MD/MDX support.
+Oxlint is the primary linter and oxfmt the primary formatter; Biome remains only where oxc does not
+reach -- CSS linting, a pruned list of JS rules oxlint has no equivalent for, `.astro`/`.svelte`
+formatting, and import organizing. Rule-level coverage is proven by the lint-parity kit
+(`.config/lint-parity/`, run via `mise run lint:parity`): one fixture per previously-active Biome
+rule, each asserted against the engine that now owns it. Revisit the Biome remainder as oxlint/oxfmt
+grow (svelte/astro formatting, CSS linting, import sorting).
 
 ### Rust _(aspirational — not yet implemented)_
 
@@ -83,11 +91,12 @@ The ownership map above covers quality tooling; this covers the rest of what age
   The `ci-spell.yml` workflow runs it on every push and PR — no paths filter, because it's
   universal. Apps do **not** carry their own cspell dependency or `spell` script; the root gate
   covers them.
-- **Biome + Oxlint + typecheck + tests** are per-app, declared as mise tasks in each
+- **Oxlint + Biome + oxfmt + typecheck + tests** are per-app, declared as mise tasks in each
   `apps/<name>/mise.toml` and run by that app's path-filtered CI workflow. `mise run check` at the
   repo root fans every app's full check out (`bin/run-app-tasks.ts`).
-- **Root config files** (`biome.jsonc`, `.oxlintrc.json`, etc.) are formatted by the root
-  `mise run format` task and gated by `ci-repo.yml`.
+- **Root config files** (`biome.jsonc`, `.oxlintrc.json`, `.oxfmtrc.json`, etc.) are formatted by
+  the root `mise run format` task (oxfmt, plus a Biome lint of Biome's own configs) and gated by
+  `ci-repo.yml`, which also runs the lint-parity fixtures (`mise run lint:parity`).
 - **Repo-owned Markdown** (`docs/`, root `*.md`, `.github/`) is format-gated by the root
   `mise run format:md` task (a bare `prettier --check .`, scope set by `.prettierignore`) and
   `ci-docs.yml`. Apps are excluded — their per-app format gates own their markdown, and djf.io's

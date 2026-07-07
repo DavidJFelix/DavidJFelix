@@ -16,3 +16,6 @@ styled-system
 test-results/
 playwright-report/
 playwright/.cache/
+
+# vitest coverage output
+coverage/

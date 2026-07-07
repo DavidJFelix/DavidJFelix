@@ -25,10 +25,11 @@ Two tiers decide any formatting question:
    - **K&R braces** -- opening brace on the same line, closing brace on its own line
    - **100-column lines**, LF endings, trailing commas in multiline literals
 
-For JS/TS the house defaults are already encoded in the root `biome.jsonc` (`quoteStyle: single`,
-`semicolons: asNeeded`, `bracketSpacing: false`, `indentWidth: 2`, `lineWidth: 100`) -- run
-`mise run format` and you get them for free. Rust and Go use their stock formatters unmodified;
-their defaults are the language norms.
+For JS/TS the house defaults are already encoded in the root `.oxfmtrc.json` (`singleQuote: true`,
+`semi: false`, `bracketSpacing: false`, `tabWidth: 2`, `printWidth: 100`; Biome's `biome.jsonc`
+mirrors them for the `.astro`/`.svelte` files it still formats) -- run `mise run format` and you get
+them for free. Rust and Go use their stock formatters unmodified; their defaults are the language
+norms.
 
 ## Shape: functional and data-centric
 

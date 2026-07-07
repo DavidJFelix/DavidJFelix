@@ -12,6 +12,7 @@ on:
     paths:
       - 'biome.jsonc'
       - '.oxlintrc.json'
+      - '.oxfmtrc.json'
       - '.prettierrc.json'
       - '.config/cspell.json'
       - '.config/mise.toml'
@@ -19,11 +20,13 @@ on:
       - '.vscode/settings.json'
       - '.vscode/extensions.json'
       - 'bin/**'
+      - '.config/lint-parity/**'
       - '.depot/workflows/ci-repo.yml'
   pull_request:
     paths:
       - 'biome.jsonc'
       - '.oxlintrc.json'
+      - '.oxfmtrc.json'
       - '.prettierrc.json'
       - '.config/cspell.json'
       - '.config/mise.toml'
@@ -31,6 +34,7 @@ on:
       - '.vscode/settings.json'
       - '.vscode/extensions.json'
       - 'bin/**'
+      - '.config/lint-parity/**'
       - '.depot/workflows/ci-repo.yml'
 env:
   MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
@@ -50,6 +54,21 @@ jobs:
         uses: ./.depot/actions/setup-mise
       - name: format
         run: mise run format
+  lint-parity:
+    name: lint parity (oxlint/biome fixtures)
+    runs-on: depot-ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: lint parity
+        run: mise run lint:parity
   bin-test:
     name: bun test (bin/)
     runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.

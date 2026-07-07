@@ -1,0 +1,2 @@
+if (!Boolean(foo)) {
+}

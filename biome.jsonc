@@ -3,29 +3,110 @@
   "vcs": {
     "enabled": true,
     "clientKind": "git",
-    "useIgnoreFile": true
+    "useIgnoreFile": true,
   },
   "assist": {
     "actions": {
       "source": {
-        "organizeImports": "on"
-      }
-    }
+        "organizeImports": "on",
+      },
+    },
   },
+  // oxfmt owns formatting for JS/TS/JSX/TSX, JSON/JSONC, CSS, and Vue
+  // (.oxfmtrc.json). Biome formats only what oxfmt cannot parse yet: .astro
+  // frontmatter and .svelte script blocks. Style options mirror .oxfmtrc.json.
   "formatter": {
     "enabled": true,
+    "includes": ["**/*.astro", "**/*.svelte"],
     "useEditorconfig": true,
     "indentStyle": "space",
     "indentWidth": 2,
     "lineEnding": "lf",
     "lineWidth": 100,
-    "attributePosition": "auto"
+    "attributePosition": "auto",
   },
+  // Oxlint (root .oxlintrc.json) is the primary linter. Biome's linter is
+  // pruned to the rules oxlint has no equivalent for, at their old recommended
+  // severities. The lint-parity kit (.config/lint-parity/, `mise run
+  // lint:parity`) proves rule-by-rule that everything the old recommended
+  // preset caught is still caught by one of the two engines -- rerun it before
+  // editing this list.
   "linter": {
     "enabled": true,
     "rules": {
-      "preset": "recommended"
-    }
+      "preset": "none",
+      "a11y": {
+        // JSX/HTML rules oxlint does not implement
+        "noSvgWithoutTitle": "error",
+        // CSS lint lives entirely in Biome (oxlint does not parse CSS)
+        "useGenericFontNames": "error",
+      },
+      "complexity": {
+        "noImportantStyles": "warn",
+        "noThisInStatic": "warn",
+        "noUselessContinue": "info",
+        "noUselessStringRaw": "info",
+        "useArrowFunction": "warn",
+        "useLiteralKeys": "info",
+        // oxlint's typescript/prefer-optional-chain is type-aware only
+        "useOptionalChain": "warn",
+        "useSimpleNumberKeys": "warn",
+      },
+      "correctness": {
+        "noDuplicateAttributes": "error",
+        "noInvalidDirectionInLinearGradient": "error",
+        "noInvalidGridAreas": "error",
+        "noInvalidPositionAtImportRule": "error",
+        "noMissingVarFunction": "error",
+        "noStringCaseMismatch": "error",
+        "noUnknownFunction": "error",
+        "noUnknownMediaFeatureName": "error",
+        "noUnknownProperty": "error",
+        "noUnknownPseudoClass": "error",
+        "noUnknownPseudoElement": "error",
+        "noUnknownTypeSelector": "error",
+        "noUnknownUnit": "error",
+        "noUnmatchableAnbSelector": "error",
+        "noVoidTypeReturn": "error",
+      },
+      "performance": {
+        "noDynamicNamespaceImportAccess": "warn",
+      },
+      "style": {
+        "noDescendingSpecificity": "warn",
+        // oxlint's typescript/consistent-type-exports is type-aware only
+        "useExportType": "warn",
+        "useVueMultiWordComponentNames": "info",
+      },
+      "suspicious": {
+        "noAssignInExpressions": "error",
+        // covered by oxlint's jest/no-export only when the jest plugin is on,
+        // which would double-report every jest/vitest twin rule -- keep here
+        "noExportsInTest": "error",
+        "noImplicitAnyLet": "error",
+        "noOctalEscape": "warn",
+        "noRedundantUseStrict": "warn",
+        "noSuspiciousSemicolonInJsx": "warn",
+        // covered by oxlint's nextjs plugin only, whose other correctness
+        // rules false-positive on non-Next apps -- keep here
+        "useGoogleFontDisplay": "warn",
+        "noDeprecatedMediaType": "warn",
+        "noDuplicateAtImportRules": "error",
+        "noDuplicateCustomProperties": "error",
+        "noDuplicateFontNames": "error",
+        "noDuplicateProperties": "error",
+        "noDuplicateSelectorsKeyframeBlock": "error",
+        "noEmptyBlock": "warn",
+        "noImportantInKeyframe": "error",
+        "noShorthandPropertyOverrides": "error",
+        "noUnknownAtRules": "error",
+        // Biome-config hygiene rules: they lint biome.jsonc and editor
+        // settings themselves, so they stay for as long as Biome does
+        "noBiomeFirstException": "error",
+        "noQuickfixBiome": "info",
+        "useBiomeIgnoreFolder": "warn",
+      },
+    },
   },
   "javascript": {
     "formatter": {
@@ -37,38 +118,15 @@
       "arrowParentheses": "always",
       "bracketSameLine": false,
       "bracketSpacing": false,
-      "attributePosition": "auto"
-    }
+      "attributePosition": "auto",
+    },
   },
   "css": {
     "linter": {
-      "enabled": true
+      "enabled": true,
     },
     "parser": {
-      "cssModules": true
-    }
+      "cssModules": true,
+    },
   },
-  "json": {
-    "formatter": {
-      "trailingCommas": "none"
-    }
-  },
-  // Biome lints only the `---` frontmatter of `.astro` files, not the template,
-  // so a symbol used only in markup (`<Calendar />`, `{title}`) reads as unused.
-  // `astro check` (tsgo) is template-aware and owns unused-symbol detection for
-  // Astro, so these two rules are turned off for `.astro` here -- once, centrally.
-  // Do NOT re-add this as a per-app biome override (see CONTRIBUTING.md).
-  "overrides": [
-    {
-      "includes": ["**/*.astro"],
-      "linter": {
-        "rules": {
-          "correctness": {
-            "noUnusedImports": "off",
-            "noUnusedVariables": "off"
-          }
-        }
-      }
-    }
-  ]
 }

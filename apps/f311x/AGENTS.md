@@ -134,8 +134,9 @@ skills:
   (getRequest, setResponseHeader, setCookie, getCookie, useSession), three-phase request handling,
   AsyncLocalStorage context." use: "@tanstack/start-server-core#start-server-core"
 - when: "Programmatic route tree building as an alternative to filesystem conventions: rootRoute,
-index, route, layout, physical, defineVirtualSubtreeConfig. Use with TanStack Router plugin's
-virtualRouteConfig option." use: "@tanstack/virtual-file-routes#virtual-file-routes"
+  index, route, layout, physical, defineVirtualSubtreeConfig. Use with TanStack Router plugin's
+  virtualRouteConfig option." use: "@tanstack/virtual-file-routes#virtual-file-routes"
+
 <!-- intent-skills:end -->
 
 # f311x
@@ -195,6 +196,6 @@ deploys in one step — there is no separate build command.
 | `pnpm preview`   | Vite preview                                                           |
 | `pnpm deploy`    | Alchemy v2 deploy                                                      |
 | `pnpm destroy`   | Alchemy v2 destroy                                                     |
-| `pnpm lint`      | Biome + Oxlint                                                         |
+| `pnpm lint`      | Oxlint + Biome                                                         |
 | `pnpm typecheck` | `tsgo --noEmit`                                                        |
 | `pnpm test`      | Vitest                                                                 |

@@ -7,7 +7,7 @@ import {Hono} from 'hono'
 // exists at bundle time. It's a generated artifact with no type declarations
 // (and absent before the first build), so the import is suppressed and the
 // value is typed explicitly below.
-// biome-ignore lint/suspicious/noTsIgnore: @ts-expect-error reports "unused" when the artifact exists and resolves; only @ts-ignore tolerates both the present and pre-build states
+// oxlint-disable-next-line typescript/ban-ts-comment, typescript/prefer-ts-expect-error -- @ts-expect-error reports "unused" when the artifact exists and resolves; only @ts-ignore tolerates both the present and pre-build states
 // @ts-ignore -- generated build artifact, untyped and absent pre-build
 import untypedAstroWorker from '../dist/server/entry.mjs'
 

@@ -12,6 +12,7 @@ on:
     paths:
       - 'biome.jsonc'
       - '.oxlintrc.json'
+      - '.oxfmtrc.json'
       - '.prettierrc.json'
       - '.config/cspell.json'
       - '.config/mise.toml'
@@ -24,6 +25,7 @@ on:
     paths:
       - 'biome.jsonc'
       - '.oxlintrc.json'
+      - '.oxfmtrc.json'
       - '.prettierrc.json'
       - '.config/cspell.json'
       - '.config/mise.toml'

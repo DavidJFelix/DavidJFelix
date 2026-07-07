@@ -33,3 +33,6 @@ styled-system-studio
 test-results/
 playwright-report/
 playwright/.cache/
+
+# vitest coverage output
+coverage/

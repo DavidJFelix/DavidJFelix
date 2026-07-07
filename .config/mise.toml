@@ -7,6 +7,7 @@ pnpm = "11"
 bun = "1"
 biome = "2"
 oxlint = "1"
+"npm:oxfmt" = "0.58.0"
 prettier = "3.8.4"
 actionlint = "1"
 ghalint = "1"
@@ -25,13 +26,18 @@ depot = { version = "latest", exe = "depot" }
 # dirs and isolated workspace trees are intentionally out of scope, and apps/*
 # shadow these tasks with their own.
 [tasks.format]
-description = "Check formatting of repo-root config files (Biome)"
-run = "biome check biome.jsonc .oxlintrc.json .prettierrc.json .config/cspell.json .github/renovate.json .vscode/settings.json .vscode/extensions.json"
+description = "Check formatting of repo-root config files (oxfmt; Biome lints its own configs)"
+# --ignore-path: the root .prettierignore ignores everything but md/mdx (it
+# scopes Prettier), which would blank oxfmt's explicit file list too
+run = [
+  "oxfmt --check --ignore-path=.gitignore biome.jsonc .oxfmtrc.json .oxlintrc.json .prettierrc.json .config/cspell.json .github/renovate.json .vscode/settings.json .vscode/extensions.json",
+  "biome lint biome.jsonc .vscode/settings.json .vscode/extensions.json",
+]
 dir = "{{config_root}}"
 
 [tasks."format:fix"]
 description = "Apply formatting fixes to repo-root config files"
-run = "biome check --write biome.jsonc .oxlintrc.json .prettierrc.json .config/cspell.json .github/renovate.json .vscode/settings.json .vscode/extensions.json"
+run = "oxfmt --ignore-path=.gitignore biome.jsonc .oxfmtrc.json .oxlintrc.json .prettierrc.json .config/cspell.json .github/renovate.json .vscode/settings.json .vscode/extensions.json"
 dir = "{{config_root}}"
 
 [tasks."format:md"]

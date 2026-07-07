@@ -1,5 +1,6 @@
 {
   "recommendations": [
+    "oxc.oxc-vscode",
     "biomejs.biome",
     "editorconfig.editorconfig",
     "streetsidesoftware.code-spell-checker"

@@ -50,7 +50,7 @@ function Conversation() {
                 carry no id, so the position is the stable identity. Keying by
                 content would remount the node on every streaming delta. */}
             {message.parts.map((part, index) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: append-only array, no stable id on parts
+              // oxlint-disable-next-line react/no-array-index-key -- append-only array, no stable id on parts
               <MessagePart key={index} part={part} />
             ))}
           </article>

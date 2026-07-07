@@ -6,11 +6,11 @@ description = "Type-check with nuxt typecheck (vue-tsc)"
 run = "pnpm run typecheck"
 
 [tasks.lint]
-description = "Lint with Biome + Oxlint"
+description = "Lint with Oxlint + Biome"
 run = "pnpm run lint"
 
 [tasks.format]
-description = "Check formatting (Biome; Prettier for md/mdx)"
+description = "Check formatting (oxfmt; Prettier for md/mdx)"
 run = "pnpm run format"
 
 [tasks."format:fix"]

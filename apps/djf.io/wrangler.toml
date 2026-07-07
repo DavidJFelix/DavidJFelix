@@ -18,11 +18,4 @@ binding = "ASSETS"
 # from assets. The negated prefixes are pure static files (hashed bundles,
 # fonts, images, the search index) that can never negotiate to markdown; they
 # keep bypassing the worker entirely.
-run_worker_first = [
-  "/*",
-  "!/_astro/*",
-  "!/pagefind/*",
-  "!/og/*",
-  "!/favicon.svg",
-  "!/robots.txt",
-]
+run_worker_first = ["/*", "!/_astro/*", "!/pagefind/*", "!/og/*", "!/favicon.svg", "!/robots.txt"]

@@ -27,7 +27,7 @@
     "vitest/no-hooks": "error",
     "vitest/max-nested-describe": ["error", { "max": 0 }],
     "default-case-last": "warn",
-    "eqeqeq": ["error", "always", { "null": "ignore" }],
+    "eqeqeq": "error",
     "array-callback-return": "error",
     "no-case-declarations": "error",
     "no-constructor-return": "error",

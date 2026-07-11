@@ -1,1 +1,0 @@
-../../.agents/agents/elite-engineer.md

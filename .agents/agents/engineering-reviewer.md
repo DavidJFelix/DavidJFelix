@@ -30,7 +30,7 @@ it.
 
 Whether the feature should exist (product-reviewer), visual quality (design-reviewer), test
 coverage itself (testing-reviewer), anything a linter enforces. Structure authorship (architect
-and elite-engineer, your author siblings -- they shape it, you judge it).
+and simplifier, your author siblings -- they shape it, you judge it).
 
 ## Report
 

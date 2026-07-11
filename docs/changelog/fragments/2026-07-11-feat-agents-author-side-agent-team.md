@@ -9,17 +9,17 @@ technical dispute itself. Around it: a planner that decomposes goals into indepe
 steps, a product voice that cuts scope to just-enough before work is staffed, a researcher that
 verifies prior art instead of remembering it, an architect that consolidates recurring problems into
 libraries ("solving problems for problem solvers," not DRY compliance), a developer that builds to
-the brief at ponytail lite intensity, an elite engineer that runs the ponytail ladder at ultra to
-delete what the present does not earn, an adversarial tester briefed to prove the code does not
-work, and a platform engineer that owns the Cloudflare/CI paved road. A seventh judge,
-security-reviewer, joins the review bench in the existing reviewer format.
+the brief at ponytail lite intensity, a simplifier that runs the ponytail ladder at ultra to delete
+what the present does not earn, an adversarial tester briefed to prove the code does not work, and a
+platform engineer that owns the Cloudflare/CI paved road. A seventh judge, security-reviewer, joins
+the review bench in the existing reviewer format.
 
 Author/judge sibling contracts pair builders with reviewers (product/product-reviewer,
-tester/testing-reviewer, platform-engineer/tooling-reviewer, architect + elite-engineer/
-engineering-reviewer, back-referenced from both sides), and the architect/elite-engineer seam is
-written into both files as designed disagreement settled by the deep-module test or the director's
-dispute rule. Shared doctrine is factored into two new style guides -- ponytail.md (the frugality
-ladder and persona intensities) and evidence-discipline.md (verified-vs-assumed claims,
+tester/testing-reviewer, platform-engineer/tooling-reviewer, architect +
+simplifier/engineering-reviewer, back-referenced from both sides), and the architect/simplifier seam
+is written into both files as designed disagreement settled by the deep-module test or the
+director's dispute rule. Shared doctrine is factored into two new style guides -- ponytail.md (the
+frugality ladder and persona intensities) and evidence-discipline.md (verified-vs-assumed claims,
 cite-don't-claim returns) -- and the team is wired into its surfaces: AGENTS.md documents the team
 and the seven-judge bench, panel-review seats the new security judge, and `.agents/agents/` joins
 the spell gate. Pattern informed by ALT-F4's opencode agent org (tier routing, brief discipline,

@@ -25,7 +25,7 @@ Personas run the ladder at different intensities:
 
 - **lite** (developer): ship what is asked; name the lazier alternative in the return rather than
   cutting scope unilaterally.
-- **ultra** (elite-engineer): deletion before addition, measured in negative diff; challenge each
+- **ultra** (simplifier): deletion before addition, measured in negative diff; challenge each
   construct's right to exist.
 
 The architect runs the ladder in reverse: its job is to make rung 2 ("already in the codebase")

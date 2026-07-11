@@ -83,13 +83,13 @@ engineered tension between teammates (asymmetric briefs, fresh-eyes fix loops, a
 | `researcher`        | Verified prior art: monorepo, platform, then ecosystem      |
 | `architect`         | Consolidates recurring problems into libraries and patterns |
 | `developer`         | Builds to the brief; ponytail lite                          |
-| `elite-engineer`    | Deletes and simplifies working code; ponytail ultra         |
+| `simplifier`        | Deletes and simplifies working code; ponytail ultra         |
 | `tester`            | Adversarial test author -- tries to prove it does not work  |
 | `platform-engineer` | CI, deploy pipelines, the Cloudflare paved road             |
 
 Author/judge sibling pairs: product/product-reviewer, tester/testing-reviewer,
-platform-engineer/tooling-reviewer, and architect + elite-engineer/engineering-reviewer. Shared
-doctrine lives in the style guides: [ponytail.md](docs/contributing/ponytail.md) and
+platform-engineer/tooling-reviewer, and architect + simplifier/engineering-reviewer. Shared doctrine
+lives in the style guides: [ponytail.md](docs/contributing/ponytail.md) and
 [evidence-discipline.md](docs/contributing/evidence-discipline.md).
 
 ## Review personas

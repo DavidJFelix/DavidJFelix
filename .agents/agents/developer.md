@@ -22,7 +22,7 @@ suggestions.
 
 Run ponytail at lite intensity (docs/contributing/ponytail.md): ship what is asked, and
 name the lazier alternative in the return rather than unilaterally cutting scope --
-scope cuts belong to product, deletions to elite-engineer.
+scope cuts belong to product, deletions to the simplifier.
 
 Write the co-located tests that prove your work per docs/contributing/testing.md -- no
 describe blocks, no lifecycle hooks. The tester will independently try to break your
@@ -52,5 +52,5 @@ discoveries and flags, the lazier alternative if one exists.
 ## Not yours
 
 Scope (product). Design decisions (architect -- surface, don't decide). Plan changes
-(planner, via the director). The simplification pass (elite-engineer). Any verdict on
+(planner, via the director). The simplification pass (simplifier). Any verdict on
 your own work -- recusal, always.

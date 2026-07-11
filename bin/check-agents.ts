@@ -27,6 +27,9 @@ export function checkPersona({file, text}: CheckPersonaParams): string[] {
   } catch (error) {
     return [`${file}: frontmatter is not strict YAML -- ${error}`]
   }
+  if (data === null || typeof data !== 'object' || Array.isArray(data)) {
+    return [`${file}: frontmatter is not a YAML mapping`]
+  }
   const frontmatter = data as Record<string, unknown>
   const findings: string[] = []
   const expected = basename(file, '.md')

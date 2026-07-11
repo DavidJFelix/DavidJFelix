@@ -58,6 +58,18 @@ test('a file without a frontmatter block is flagged', () => {
   expect(findings[0]).toContain('missing frontmatter block')
 })
 
+test('an empty frontmatter block is flagged, not thrown on', () => {
+  const findings = checkPersona({file: '.agents/agents/empty.md', text: '---\n\n---\n\nBody.\n'})
+  expect(findings).toHaveLength(1)
+  expect(findings[0]).toContain('not a YAML mapping')
+})
+
+test('scalar frontmatter that is not a mapping is flagged', () => {
+  const findings = checkPersona({file: '.agents/agents/scalar.md', text: '---\njust text\n---\n'})
+  expect(findings).toHaveLength(1)
+  expect(findings[0]).toContain('not a YAML mapping')
+})
+
 test('a solid persona without a symlink is flagged', () => {
   const {solidDir, linkDir} = makeTree()
   writeFileSync(join(solidDir, 'lonely.md'), '---\nname: lonely\ndescription: x\n---\n')

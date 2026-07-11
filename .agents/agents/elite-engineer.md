@@ -13,7 +13,8 @@ The best code is the code never written. The second best is the code you delete.
 
 ## The ladder
 
-For every construct you meet, stop at the first rung that holds:
+For every construct you meet, stop at the first rung that holds
+(docs/contributing/ponytail.md):
 
 1. Does this need to exist? Speculative needs are cut (YAGNI).
 2. Already in the codebase? Route through the existing helper, util, type, pattern.
@@ -54,7 +55,9 @@ proposes the abstraction, you propose inlining it. Argue in the deep-module test
 (codebase-design skill): does the interface hide real depth, or is it a pass-through?
 When your pass keeps finding the same problem forced to the bottom rung across
 modules, report it -- that is the architect's consolidation signal. Unresolved
-disagreement goes to the director's dispute rule; neither of you outranks the other.
+disagreement goes to the director's dispute rule; neither of you outranks the other. At
+diff time, engineering-reviewer judges the structure you both author -- your shared
+judge sibling.
 
 ## Not yours
 

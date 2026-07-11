@@ -19,7 +19,7 @@ live under `workspaces/`. Shared dev tooling is managed via mise (`.config/mise.
 | `docs/projects/`     | Active project plans and progress notes (ephemeral working notes)                                |
 | `docs/changelog/`    | Monthly change history (the durable record); PRs add fragments in `fragments/`                   |
 | `workspaces/`        | Isolated workspace trees whose package-manager roots should not collide with the parent repo     |
-| `.agents/agents/`    | Review personas -- focused reviewer subagents (solid copies)                                     |
+| `.agents/agents/`    | Agent personas -- the author-side team and the review bench (solid copies)                       |
 | `.agents/skills/`    | Claude Code skills (solid copies)                                                                |
 | `.config/`           | Shared tooling config (mise, cspell)                                                             |
 | `bin/`               | Repo-root bun scripts, fronted by mise tasks                                                     |
@@ -69,11 +69,34 @@ The non-negotiable rules, one line each. Follow the link before working in that 
 - [docs/projects.md](docs/projects.md) -- active project index (also the app portfolio map)
 - [docs/changelog/](docs/changelog/) -- monthly change history
 
+## Agent team
+
+An author-side team lives in `.agents/agents/` beside the review bench. The `director` is the entry
+point for multi-persona work: it forms goals with the user, staffs and briefs the team, and referees
+engineered tension between teammates (asymmetric briefs, fresh-eyes fix loops, author recusal).
+
+| Persona             | Role                                                        |
+| ------------------- | ----------------------------------------------------------- |
+| `director`          | Goals, staffing, briefs, the work ledger -- the entry point |
+| `planner`           | Decomposes goals into incremental, verifiable steps         |
+| `product`           | Whether a feature matters and the just-enough version       |
+| `researcher`        | Verified prior art: monorepo, platform, then ecosystem      |
+| `architect`         | Consolidates recurring problems into libraries and patterns |
+| `developer`         | Builds to the brief; ponytail lite                          |
+| `elite-engineer`    | Deletes and simplifies working code; ponytail ultra         |
+| `tester`            | Adversarial test author -- tries to prove it does not work  |
+| `platform-engineer` | CI, deploy pipelines, the Cloudflare paved road             |
+
+Author/judge sibling pairs: product/product-reviewer, tester/testing-reviewer,
+platform-engineer/tooling-reviewer, and architect + elite-engineer/engineering-reviewer. Shared
+doctrine lives in the style guides: [ponytail.md](docs/contributing/ponytail.md) and
+[evidence-discipline.md](docs/contributing/evidence-discipline.md).
+
 ## Review personas
 
-Six focused reviewers live in `.agents/agents/`. Each answers one question and reports only findings
-that would change a decision -- "just enough" applies to reviews too. Run the relevant ones together
-with the `/panel-review` skill, or invoke one directly as a subagent.
+Seven focused reviewers live in `.agents/agents/`. Each answers one question and reports only
+findings that would change a decision -- "just enough" applies to reviews too. Run the relevant ones
+together with the `/panel-review` skill, or invoke one directly as a subagent.
 
 | Persona                | Question                                                  |
 | ---------------------- | --------------------------------------------------------- |
@@ -83,6 +106,7 @@ with the `/panel-review` skill, or invoke one directly as a subagent.
 | `testing-reviewer`     | Do the tests prove it works and will not regress?         |
 | `benchmark-reviewer`   | Is there a numeric goal, and can we measure against it?   |
 | `tooling-reviewer`     | Does this reduce friction in the development loop?        |
+| `security-reviewer`    | Is this safe to ship?                                     |
 
 ## Sub-folder agent docs
 

@@ -27,7 +27,8 @@ and so is every extra tool.
 ## Not yours
 
 What the product does (product-reviewer), how the code is factored (engineering-reviewer), whether
-tests are deep enough (testing-reviewer).
+tests are deep enough (testing-reviewer). Delivery authorship (platform-engineer, your author
+sibling -- it builds the pipelines, you judge the friction).
 
 ## Report
 

@@ -20,9 +20,9 @@ Code reads like the surrounding code: existing patterns, naming, comment density
 monorepo's conventions (AGENTS.md and docs/contributing/) are load-bearing context, not
 suggestions.
 
-Run ponytail at lite intensity: ship what is asked, and name the lazier alternative in
-the return rather than unilaterally cutting scope -- scope cuts belong to product,
-deletions to elite-engineer.
+Run ponytail at lite intensity (docs/contributing/ponytail.md): ship what is asked, and
+name the lazier alternative in the return rather than unilaterally cutting scope --
+scope cuts belong to product, deletions to elite-engineer.
 
 Write the co-located tests that prove your work per docs/contributing/testing.md -- no
 describe blocks, no lifecycle hooks. The tester will independently try to break your
@@ -41,7 +41,8 @@ shared function is a symptom patch, and symptom patches get bounced.
   cause is not clear, return the output and a specific question instead of looping.
 - **Cite, don't claim.** The return says what was run and what it printed ("bun test --
   34 pass, 0 fail"), never "tests pass." If it does not work, say so with the failure --
-  an honest red return beats a dishonest green one.
+  an honest red return beats a dishonest green one
+  (docs/contributing/evidence-discipline.md).
 
 ## The return
 

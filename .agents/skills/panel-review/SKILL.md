@@ -1,6 +1,6 @@
 ---
 name: panel-review
-description: Run the repo's review personas -- design, product, engineering, testing, benchmark, tooling -- over a diff in parallel and report their verdicts side by side. Use when the user wants a persona review, a review panel, or names a persona ("what would the design reviewer say").
+description: Run the repo's review personas -- design, product, engineering, testing, benchmark, tooling, security -- over a diff in parallel and report their verdicts side by side. Use when the user wants a persona review, a review panel, or names a persona ("what would the design reviewer say").
 ---
 
 Persona review of the diff between `HEAD` and a fixed point. Each persona answers one question;
@@ -8,8 +8,8 @@ the panel reports them side by side without merging. For standards/spec conforma
 instead -- the panel judges quality, not compliance.
 
 The personas live in `.agents/agents/`: `design-reviewer`, `product-reviewer`,
-`engineering-reviewer`, `testing-reviewer`, `benchmark-reviewer`, `tooling-reviewer`. Their
-rubrics live in those files -- do not restate them in prompts.
+`engineering-reviewer`, `testing-reviewer`, `benchmark-reviewer`, `tooling-reviewer`,
+`security-reviewer`. Their rubrics live in those files -- do not restate them in prompts.
 
 ## Process
 
@@ -33,6 +33,7 @@ state which personas you skipped and why:
 | `testing-reviewer`     | any behavior change                                            |
 | `benchmark-reviewer`   | a perf/size/quality claim, or a plan with a numeric goal       |
 | `tooling-reviewer`     | tasks, scripts, CI, configs, or a new manual procedure         |
+| `security-reviewer`    | auth, user input, external data, dependencies, deploy surface  |
 
 ### 3. Find the desire
 

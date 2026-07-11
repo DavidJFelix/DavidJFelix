@@ -22,5 +22,8 @@ director's dispute rule. Shared doctrine is factored into two new style guides -
 frugality ladder and persona intensities) and evidence-discipline.md (verified-vs-assumed claims,
 cite-don't-claim returns) -- and the team is wired into its surfaces: AGENTS.md documents the team
 and the seven-judge bench, panel-review seats the new security judge, and `.agents/agents/` joins
-the spell gate. Pattern informed by ALT-F4's opencode agent org (tier routing, brief discipline,
-verdict ladders) adapted for Claude Code's native teammate messaging.
+the spell gate. A new `bin/check-agents.ts` (with co-located tests, fronted by
+`mise run check:agents` and a ci-repo job) gates the artifact class itself: strict-YAML frontmatter
+with name/filename agreement and a bidirectional `.claude/agents/` symlink mirror -- the two defect
+classes that regress silently. Pattern informed by ALT-F4's opencode agent org (tier routing, brief
+discipline, verdict ladders) adapted for Claude Code's native teammate messaging.

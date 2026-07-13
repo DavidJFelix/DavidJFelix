@@ -539,7 +539,7 @@ url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/451113107"
 provenance = "github-attestations"
 
 [[tools.prettier]]
-version = "3.9.4"
+version = "3.9.5"
 backend = "npm:prettier"
 
 [[tools.zizmor]]

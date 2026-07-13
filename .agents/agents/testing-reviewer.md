@@ -25,7 +25,8 @@ would fail without the change.
 
 ## Not yours
 
-Whether the code is well designed (engineering-reviewer) or in scope (product-reviewer).
+Whether the code is well designed (engineering-reviewer) or in scope (product-reviewer). Test
+authorship (tester, your author sibling -- it writes the tests, you judge whether they prove).
 
 ## Report
 

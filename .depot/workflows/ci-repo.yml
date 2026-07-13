@@ -20,6 +20,8 @@ on:
       - '.vscode/settings.json'
       - '.vscode/extensions.json'
       - 'bin/**'
+      - '.agents/agents/**'
+      - '.claude/agents/**'
       - '.depot/workflows/ci-repo.yml'
   pull_request:
     paths:
@@ -33,6 +35,8 @@ on:
       - '.vscode/settings.json'
       - '.vscode/extensions.json'
       - 'bin/**'
+      - '.agents/agents/**'
+      - '.claude/agents/**'
       - '.depot/workflows/ci-repo.yml'
 env:
   MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
@@ -67,3 +71,18 @@ jobs:
         uses: ./.depot/actions/setup-mise
       - name: test bin
         run: mise run test:bin
+  check-agents:
+    name: check agents (persona frontmatter + symlink mirror)
+    runs-on: depot-ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: check agents
+        run: mise run check:agents

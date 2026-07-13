@@ -55,6 +55,8 @@ One mini guide per concern, in `docs/contributing/`. Read the guide before worki
 | [tooling-standard.md](docs/contributing/tooling-standard.md)         | tool ownership per concern, ecosystem defaults         |
 | [github-actions-style.md](docs/contributing/github-actions-style.md) | workflow naming, paths filters, parallelism            |
 | [project-docs.md](docs/contributing/project-docs.md)                 | project plans, progress notes, lifecycle               |
+| [ponytail.md](docs/contributing/ponytail.md)                         | the pre-code frugality ladder, persona intensities     |
+| [evidence-discipline.md](docs/contributing/evidence-discipline.md)   | verified-vs-assumed claims, cite-don't-claim returns   |
 
 ## GitHub Actions
 

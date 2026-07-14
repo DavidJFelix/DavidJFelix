@@ -63,8 +63,22 @@ runs:
         CLOUDFLARE_ACCOUNT_ID: ${{ inputs.cloudflare-account-id }}
       run: bun "$GITHUB_WORKSPACE/bin/deploy-preview-worker.ts"
 
-    # workers.dev URLs are live immediately, so a few quick attempts suffice
-    # instead of the prod gate's long propagation retries.
+    # `wrangler deploy` returns once the API accepts the script, but a FRESH
+    # worker's workers.dev hostname starts serving at the edge eventually --
+    # and not monotonically, per exact URL (an early 200 can be followed by
+    # 404s, and one route can serve a stale cached 404 while its siblings are
+    # fine). Gate every downstream check behind sustained readiness of the
+    # same bare route URLs they fetch, so smoke/screenshot failures always
+    # mean app bugs, never propagation lag. A redeploy to an existing preview
+    # converges on the first rounds.
+    - name: await preview ready
+      shell: bash
+      env:
+        READY_URL: ${{ steps.deploy.outputs.url }}
+        READY_ROUTES: ${{ inputs.smoke-routes }}
+      run: bun "$GITHUB_WORKSPACE/bin/await-url-ready.ts"
+
+    # Readiness is proven above; these retries only cover transient blips.
     - name: smoke test
       id: smoke
       shell: bash

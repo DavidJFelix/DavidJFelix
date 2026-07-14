@@ -4,10 +4,10 @@
 // local production server, it points the SAME checks at a deployed preview URL.
 // A route passes when it returns 200, the body is a complete HTML document, and
 // the first hashed JS/CSS asset it references itself serves. Each route gets a
-// few attempts to ride out edge propagation after a fresh `wrangler versions
-// upload`. Parameterized by SMOKE_URL (base) + SMOKE_ROUTES so one
-// implementation covers every app and can target a local boot or a remote
-// preview.
+// few attempts to cover transient blips; edge propagation after a fresh deploy
+// is bin/await-url-ready.ts's job, gated before this runs. Parameterized by
+// SMOKE_URL (base) + SMOKE_ROUTES so one implementation covers every app and
+// can target a local boot or a remote preview.
 //
 // Usage: SMOKE_URL=https://pr-1-app.acct.workers.dev SMOKE_ROUTES=/,/about bun bin/smoke-url.ts
 

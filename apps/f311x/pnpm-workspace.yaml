@@ -17,4 +17,8 @@ overrides:
   '@distilled.cloud/core': 0.28.2
   '@distilled.cloud/neon': 0.28.2
   '@distilled.cloud/planetscale': 0.28.2
-  '@effect/platform-node-shared': 4.0.0-beta.97
+  # effect is capped at beta.94: beta.97 removed Schedule.either, which
+  # alchemy 2.0.0-beta.61 (the newest v2 beta) still calls in its state store
+  # and Cloudflare resources -- deploys die with "TypeError: Schedule.either
+  # is not a function". Lift the cap when alchemy catches up to the new API.
+  '@effect/platform-node-shared': 4.0.0-beta.94

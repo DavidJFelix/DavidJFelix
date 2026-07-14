@@ -19,7 +19,7 @@ export default Alchemy.Stack(
   },
   Effect.gen(function* () {
     const accountId = yield* Config.string('CLOUDFLARE_ACCOUNT_ID')
-    const apiToken = yield* Cloudflare.AccountApiToken('CIToken', {
+    const apiToken = yield* Cloudflare.ApiToken.AccountApiToken('CIToken', {
       accountId,
       policies: [
         {

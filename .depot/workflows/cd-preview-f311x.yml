@@ -101,7 +101,9 @@ jobs:
           retention-days: 14
       # Shared with every wrangler app's preview via bin/comment-preview.ts; the
       # marker/title/footer make it f311x-specific. $GITHUB_WORKSPACE resolves
-      # the repo-root script despite the app-dir working directory.
+      # the repo-root script despite the app-dir working directory. Per-stage
+      # outcomes keep the deployed-app link in the comment when only smoke or
+      # screenshots fail.
       - name: comment preview url
         if: ${{ !cancelled() }}
         env:
@@ -110,8 +112,9 @@ jobs:
           PREVIEW_MARKER: '<!-- f311x-preview -->'
           PREVIEW_TITLE: f311x preview
           PREVIEW_FOOTER: 'Stage `pr-${{ github.event.pull_request.number }}`; torn down automatically when this PR closes.'
-          PREVIEW_STATUS: >-
-            ${{ (steps.smoke.outcome == 'success' && steps.e2e.outcome == 'success') && '✅ passed' || '❌ failed' }}
+          PREVIEW_DEPLOY_OUTCOME: ${{ steps.deploy.outcome }}
+          PREVIEW_SMOKE_OUTCOME: ${{ steps.smoke.outcome }}
+          PREVIEW_E2E_OUTCOME: ${{ steps.e2e.outcome }}
         run: bun "$GITHUB_WORKSPACE/bin/comment-preview.ts"
   teardown:
     name: destroy preview stage

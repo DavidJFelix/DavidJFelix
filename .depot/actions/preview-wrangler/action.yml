@@ -117,6 +117,8 @@ runs:
         path: apps/*/playwright-report/
         retention-days: 14
 
+    # Per-stage outcomes let the comment keep linking the deployed app when only
+    # smoke or screenshots fail -- the link is what makes the failure debuggable.
     - name: comment preview url
       if: ${{ !cancelled() }}
       shell: bash
@@ -126,7 +128,7 @@ runs:
         PREVIEW_URL: ${{ steps.deploy.outputs.url }}
         PREVIEW_MARKER: "<!-- preview-${{ inputs.worker-name }} -->"
         PREVIEW_TITLE: ${{ inputs.worker-name }} preview
-        PREVIEW_STATUS: >-
-          ${{ (steps.smoke.outcome == 'success' && steps.e2e.outcome == 'success')
-          && '✅ passed' || '❌ failed' }}
+        PREVIEW_DEPLOY_OUTCOME: ${{ steps.deploy.outcome }}
+        PREVIEW_SMOKE_OUTCOME: ${{ steps.smoke.outcome }}
+        PREVIEW_E2E_OUTCOME: ${{ steps.e2e.outcome }}
       run: bun "$GITHUB_WORKSPACE/bin/comment-preview.ts"

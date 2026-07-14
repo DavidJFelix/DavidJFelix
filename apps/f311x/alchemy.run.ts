@@ -17,7 +17,7 @@ import * as Effect from 'effect/Effect'
 // const WorkspaceBucket = Cloudflare.R2Bucket('AgentWorkspace')
 // const Gateway = Cloudflare.AiGateway('Gateway')
 
-export const Website = Cloudflare.Vite(
+export const Website = Cloudflare.Website.Vite(
   'Website',
   Effect.gen(function* () {
     const stage = yield* Alchemy.Stage

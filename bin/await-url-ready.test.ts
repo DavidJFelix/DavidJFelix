@@ -1,16 +1,27 @@
-import {expect, test} from 'bun:test'
-import {awaitReady, probeUrl} from './await-url-ready'
+import {expect, setSystemTime, test} from 'bun:test'
+import {type AwaitReadyOptions, awaitReady, probeUrl} from './await-url-ready'
 
-// Deterministic clock: sleep() is the only thing that advances time, so tests
-// control exactly how the deadline plays out.
-function fakeClock() {
-  let t = 0
-  return {
-    now: () => t,
-    sleep: (ms: number) => {
-      t += ms
-      return Promise.resolve()
-    },
+// awaitReady reads Date.now, which setSystemTime mocks; the injected sleep
+// advances that mocked clock instead of actually sleeping (Bun fakes dates,
+// not timers), so deadline behavior plays out instantly and deterministically.
+// Resetting in finally keeps the mocked clock from leaking into other files.
+async function runWithFakeTime(options: Omit<AwaitReadyOptions, 'sleep'>) {
+  // Nonzero base: Bun treats epoch 0 as setSystemTime's "reset" sentinel and
+  // silently ignores it, leaving Date.now real. With real time and no-op
+  // sleeps the deadline loop degenerates into a memory-eating spin, so fail
+  // fast if the mock ever stops taking effect.
+  let t = 1_000_000
+  setSystemTime(new Date(t))
+  if (Date.now() !== t) throw new Error('setSystemTime did not mock Date.now')
+  const sleep = (ms: number) => {
+    t += ms
+    setSystemTime(new Date(t))
+    return Promise.resolve()
+  }
+  try {
+    return await awaitReady({...options, sleep})
+  } finally {
+    setSystemTime()
   }
 }
 
@@ -35,10 +46,9 @@ const base = {
 }
 
 test('ready once early 404s give way to consecutive successes', async () => {
-  const clock = fakeClock()
   const {probe} = scriptedProbe(['HTTP 404', 'HTTP 404', 'HTTP 200', 'HTTP 200', 'HTTP 200'])
 
-  const result = await awaitReady({...base, probe, ...clock})
+  const result = await runWithFakeTime({...base, probe})
 
   expect(result.ready).toBe(true)
   expect(result.probes).toBe(5)
@@ -46,10 +56,9 @@ test('ready once early 404s give way to consecutive successes', async () => {
 })
 
 test('a flap after a success restarts the streak instead of counting toward it', async () => {
-  const clock = fakeClock()
   const {probe} = scriptedProbe(['HTTP 200', 'HTTP 404', 'HTTP 200', 'HTTP 200', 'HTTP 200'])
 
-  const result = await awaitReady({...base, probe, ...clock})
+  const result = await runWithFakeTime({...base, probe})
 
   // The 404 on probe 2 reset the streak, so readiness needs the three fresh
   // 200s of probes 3-5; had the pre-flap 200 counted, probe 4 would have done.
@@ -58,10 +67,9 @@ test('a flap after a success restarts the streak instead of counting toward it',
 })
 
 test('persistent 404 fails at the deadline with the last result', async () => {
-  const clock = fakeClock()
   const {probe} = scriptedProbe(['HTTP 404'])
 
-  const result = await awaitReady({...base, deadlineMs: 5_000, probe, ...clock})
+  const result = await runWithFakeTime({...base, deadlineMs: 5_000, probe})
 
   expect(result.ready).toBe(false)
   expect(result.probes).toBe(5)
@@ -70,10 +78,9 @@ test('persistent 404 fails at the deadline with the last result', async () => {
 })
 
 test('every probe carries a unique cache-busting query on the target url', async () => {
-  const clock = fakeClock()
   const {probe, seen} = scriptedProbe(['HTTP 404', 'HTTP 200', 'HTTP 200', 'HTTP 200'])
 
-  await awaitReady({...base, probe, ...clock})
+  await runWithFakeTime({...base, probe})
 
   expect(new Set(seen).size).toBe(seen.length)
   for (const url of seen) {

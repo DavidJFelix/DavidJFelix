@@ -31,7 +31,6 @@ export interface AwaitReadyOptions {
   intervalMs: number
   probe: (url: string) => Promise<Probe>
   sleep: (ms: number) => Promise<unknown>
-  now: () => number
   log: (line: string) => void
 }
 
@@ -74,12 +73,12 @@ export async function probeUrl(
  * worker consistently, not that it did so once.
  */
 export async function awaitReady(options: AwaitReadyOptions): Promise<AwaitReadyResult> {
-  const {url, deadlineMs, consecutive, intervalMs, probe, sleep, now, log} = options
-  const start = now()
+  const {url, deadlineMs, consecutive, intervalMs, probe, sleep, log} = options
+  const start = Date.now()
   let streak = 0
   let probes = 0
   let lastDetail = 'never probed'
-  while (now() - start < deadlineMs) {
+  while (Date.now() - start < deadlineMs) {
     // A unique query string per probe defeats any cached miss on the path.
     const target = new URL(url)
     target.searchParams.set('ready-probe', String(probes))
@@ -87,27 +86,27 @@ export async function awaitReady(options: AwaitReadyOptions): Promise<AwaitReady
     probes += 1
     if (result.ok) {
       if (streak === 0 && probes > 1) {
-        log(`first success after ${seconds(now() - start)} (${result.detail})`)
+        log(`first success after ${seconds(Date.now() - start)} (${result.detail})`)
       }
       streak += 1
       if (streak >= consecutive) {
-        return {ready: true, probes, elapsedMs: now() - start, lastDetail: result.detail}
+        return {ready: true, probes, elapsedMs: Date.now() - start, lastDetail: result.detail}
       }
     } else {
       if (streak > 0) {
         log(
           `readiness flapped after ${streak} success(es): ${result.detail} at ` +
-            `${seconds(now() - start)} — restarting the streak`,
+            `${seconds(Date.now() - start)} — restarting the streak`,
         )
       } else if (result.detail !== lastDetail) {
-        log(`not ready (${result.detail}) at ${seconds(now() - start)}`)
+        log(`not ready (${result.detail}) at ${seconds(Date.now() - start)}`)
       }
       streak = 0
     }
     lastDetail = result.detail
     await sleep(intervalMs)
   }
-  return {ready: false, probes, elapsedMs: now() - start, lastDetail}
+  return {ready: false, probes, elapsedMs: Date.now() - start, lastDetail}
 }
 
 if (import.meta.main) {
@@ -135,7 +134,6 @@ async function main(): Promise<void> {
     intervalMs,
     probe: probeUrl,
     sleep: Bun.sleep,
-    now: Date.now,
     log: console.log,
   })
   if (!result.ready) {

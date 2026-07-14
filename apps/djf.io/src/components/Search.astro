@@ -13,6 +13,10 @@ const trigger = css({
 
 // Keyboard hint is meaningless on touch and eats header width, so it only
 // renders from md up.
+// The hint is cap-height-only text, which sits on the baseline and leaves the
+// font's descent zone empty — with an inherited line box the chip reads
+// bottom-heavy. lineHeight 1 shrinks that dead zone and the extra 1px of top
+// padding offsets what remains, so the glyphs sit visually centered.
 const hint = css({
   display: {base: 'none', md: 'inline-block'},
   borderWidth: '1px',
@@ -20,6 +24,9 @@ const hint = css({
   borderColor: 'border',
   borderRadius: 'sm',
   px: '1.5',
+  pt: '3px',
+  pb: '2px',
+  lineHeight: '1',
   fontSize: 'xs',
   color: 'text.muted',
 })

@@ -25,13 +25,19 @@ async function runWithFakeTime(options: Omit<AwaitReadyOptions, 'sleep'>) {
   }
 }
 
-// Probe stub that replays a scripted sequence of details; the last entry
-// repeats forever. 'HTTP 200' is a success, everything else a failure.
-function scriptedProbe(details: Array<string>) {
+// Probe stub scripted per route path: each visit to a path consumes the next
+// detail in its list, and the last entry repeats forever. 'HTTP 200' is a
+// success, everything else a failure; unscripted paths always succeed.
+function routeProbe(script: Record<string, Array<string>>) {
   const seen: Array<string> = []
+  const visits = new Map<string, number>()
   const probe = (url: string) => {
     seen.push(url)
-    const detail = details[Math.min(seen.length - 1, details.length - 1)] ?? 'HTTP 200'
+    const path = new URL(url).pathname
+    const details = script[path] ?? ['HTTP 200']
+    const visit = visits.get(path) ?? 0
+    visits.set(path, visit + 1)
+    const detail = details[Math.min(visit, details.length - 1)] ?? 'HTTP 200'
     return Promise.resolve({ok: detail === 'HTTP 200', detail})
   }
   return {probe, seen}
@@ -39,6 +45,7 @@ function scriptedProbe(details: Array<string>) {
 
 const base = {
   url: 'https://app-pr-1.acct.workers.dev/',
+  routes: ['/'],
   deadlineMs: 60_000,
   consecutive: 3,
   intervalMs: 1_000,
@@ -46,46 +53,60 @@ const base = {
 }
 
 test('ready once early 404s give way to consecutive successes', async () => {
-  const {probe} = scriptedProbe(['HTTP 404', 'HTTP 404', 'HTTP 200', 'HTTP 200', 'HTTP 200'])
+  const {probe} = routeProbe({'/': ['HTTP 404', 'HTTP 404', 'HTTP 200']})
 
   const result = await runWithFakeTime({...base, probe})
 
   expect(result.ready).toBe(true)
-  expect(result.probes).toBe(5)
-  expect(result.lastDetail).toBe('HTTP 200')
+  expect(result.rounds).toBe(5)
+  expect(result.lastDetail).toBe('all 1 route(s) OK')
 })
 
 test('a flap after a success restarts the streak instead of counting toward it', async () => {
-  const {probe} = scriptedProbe(['HTTP 200', 'HTTP 404', 'HTTP 200', 'HTTP 200', 'HTTP 200'])
+  const {probe} = routeProbe({'/': ['HTTP 200', 'HTTP 404', 'HTTP 200']})
 
   const result = await runWithFakeTime({...base, probe})
 
-  // The 404 on probe 2 reset the streak, so readiness needs the three fresh
-  // 200s of probes 3-5; had the pre-flap 200 counted, probe 4 would have done.
+  // The 404 on round 2 reset the streak, so readiness needs the three fresh
+  // 200s of rounds 3-5; had the pre-flap 200 counted, round 4 would have done.
   expect(result.ready).toBe(true)
-  expect(result.probes).toBe(5)
+  expect(result.rounds).toBe(5)
 })
 
-test('persistent 404 fails at the deadline with the last result', async () => {
-  const {probe} = scriptedProbe(['HTTP 404'])
+test('persistent 404 fails at the deadline with the failing route named', async () => {
+  const {probe} = routeProbe({'/': ['HTTP 404']})
 
   const result = await runWithFakeTime({...base, deadlineMs: 5_000, probe})
 
   expect(result.ready).toBe(false)
-  expect(result.probes).toBe(5)
+  expect(result.rounds).toBe(5)
   expect(result.elapsedMs).toBe(5_000)
-  expect(result.lastDetail).toBe('HTTP 404')
+  expect(result.lastDetail).toBe('/ -> HTTP 404')
 })
 
-test('every probe carries a unique cache-busting query on the target url', async () => {
-  const {probe, seen} = scriptedProbe(['HTTP 404', 'HTTP 200', 'HTTP 200', 'HTTP 200'])
+test('one stale route holds the gate even while the others serve', async () => {
+  // The PR #341 failure shape: /chat serves immediately, but / keeps serving
+  // a stale 404 (per-URL cache) for a while after deploy. The gate must not
+  // report ready until every route serves.
+  const {probe} = routeProbe({'/': ['HTTP 404', 'HTTP 404', 'HTTP 200'], '/chat': ['HTTP 200']})
 
-  await runWithFakeTime({...base, probe})
+  const result = await runWithFakeTime({...base, routes: ['/', '/chat'], probe})
 
-  expect(new Set(seen).size).toBe(seen.length)
-  for (const url of seen) {
-    expect(url).toStartWith('https://app-pr-1.acct.workers.dev/?ready-probe=')
-  }
+  expect(result.ready).toBe(true)
+  expect(result.rounds).toBe(5)
+})
+
+test('probes the exact bare route urls downstream checks will fetch', async () => {
+  // No query-string cache-busting, no path rewriting: responses are cached
+  // per full URL, so probing anything but the exact URL smoke and Playwright
+  // fetch lets a stale per-URL 404 slip through the gate.
+  const {probe, seen} = routeProbe({})
+
+  await runWithFakeTime({...base, routes: ['/', '/chat'], probe})
+
+  expect(new Set(seen)).toEqual(
+    new Set(['https://app-pr-1.acct.workers.dev/', 'https://app-pr-1.acct.workers.dev/chat']),
+  )
 })
 
 test('probeUrl treats a 2xx response as ready', async () => {

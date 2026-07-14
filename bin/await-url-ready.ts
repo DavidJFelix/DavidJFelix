@@ -1,23 +1,32 @@
 #!/usr/bin/env bun
 // Readiness gate for freshly deployed *.workers.dev preview URLs. `wrangler
-// deploy` returns once the Cloudflare API accepts the script, but the edge
-// route for a NEW hostname (a fresh `<worker>-pr-<N>` Worker, or a version
-// preview alias on the PR's first upload) starts serving eventually -- and not
-// monotonically: an early 200 can be followed by 404s from paths that have not
-// converged yet. That gap made the preview pipelines flaky: one lucky 200 in
-// the smoke retries waved Playwright through into a still-flapping edge, and a
-// plain rerun (hostname propagated by then) passed.
+// deploy` returns once the Cloudflare API accepts the script, but a NEW
+// hostname (a fresh `<worker>-pr-<N>` Worker, or a version preview alias on
+// the PR's first upload) starts serving at the edge eventually -- and not
+// monotonically: an early 200 can be followed by 404s from paths that have
+// not converged yet. That gap made the preview pipelines flaky: one lucky 200
+// in the smoke retries waved Playwright through into a still-flapping edge,
+// and a plain rerun (hostname propagated by then) passed.
 //
-// This gate turns the race into an event: poll the URL until it serves N
-// CONSECUTIVE successes spaced apart in time (cache-busted so no intermediary
-// can replay a pre-propagation miss), bounded by a hard deadline. Sustained
-// success -- not a bigger retry budget -- is what non-monotonic propagation
-// requires: a single 200 does not count as ready. Downstream checks then never
-// race propagation, so their failures always mean app bugs, never platform
-// lag. A redeploy to an already-propagated hostname converges on the first
-// probes, in seconds.
+// Two hard-won rules shape this gate:
 //
-// Usage: READY_URL=https://app-pr-1.acct.workers.dev bun bin/await-url-ready.ts
+// 1. SUSTAINED success, not a bigger retry budget: readiness means N
+//    consecutive all-routes-OK rounds spaced apart in time. A failure after a
+//    success restarts the streak, so a single 200 never counts as ready.
+// 2. Probe EXACTLY what downstream fetches. Responses are cached per full
+//    URL, so a 404 cached during propagation can outlive it for that one URL
+//    while the same worker serves every other URL fine (observed on PR #341:
+//    /chat 200 while bare / served 404 for 25+ seconds -- yet cache-busted
+//    probes of / returned 200 and waved the checks through). No query-string
+//    busting, no special headers: the gate's job is to observe the reality
+//    the smoke and screenshot checks are about to hit, not engineer around it.
+//
+// Downstream checks then never race propagation, so their failures always
+// mean app bugs, never platform lag. A redeploy to an already-propagated
+// hostname converges on the first rounds, in seconds.
+//
+// Usage: READY_URL=https://app-pr-1.acct.workers.dev READY_ROUTES=/,/chat \
+//        bun bin/await-url-ready.ts
 
 export interface Probe {
   ok: boolean
@@ -26,6 +35,7 @@ export interface Probe {
 
 export interface AwaitReadyOptions {
   url: string
+  routes: Array<string>
   deadlineMs: number
   consecutive: number
   intervalMs: number
@@ -36,7 +46,7 @@ export interface AwaitReadyOptions {
 
 export interface AwaitReadyResult {
   ready: boolean
-  probes: number
+  rounds: number
   elapsedMs: number
   lastDetail: string
 }
@@ -47,19 +57,16 @@ function seconds(ms: number): string {
 
 /**
  * One readiness probe: does the URL currently serve a successful response?
- * Status-only on purpose -- content correctness is the smoke test's job; this
- * gate only asks whether the edge routes requests to the worker at all.
+ * A plain fetch on purpose -- same request shape as bin/smoke-url.ts and the
+ * browser, so the gate sees the same (possibly cached) response they will.
+ * Status-only, also on purpose: content correctness is the smoke test's job.
  */
 export async function probeUrl(
   url: string,
   fetchImpl: (url: string, init?: RequestInit) => Promise<Response> = fetch,
 ): Promise<Probe> {
   try {
-    const res = await fetchImpl(url, {
-      signal: AbortSignal.timeout(10_000),
-      // Ask intermediaries not to serve a response cached before propagation.
-      headers: {'cache-control': 'no-cache'},
-    })
+    const res = await fetchImpl(url, {signal: AbortSignal.timeout(10_000)})
     return {ok: res.ok, detail: `HTTP ${res.status}`}
   } catch (err) {
     return {ok: false, detail: err instanceof Error ? err.message : String(err)}
@@ -67,46 +74,51 @@ export async function probeUrl(
 }
 
 /**
- * Poll until the URL serves `consecutive` successes in a row, `intervalMs`
- * apart, or the deadline passes. A failure after a success is propagation
- * flapping -- the streak restarts, because "ready" means the edge serves the
- * worker consistently, not that it did so once.
+ * Poll every route until one round has all of them OK `consecutive` times in
+ * a row, `intervalMs` apart, or the deadline passes. Any route failing after
+ * a good round is propagation flapping -- the streak restarts, because
+ * "ready" means the edge serves every route consistently, not that each
+ * served once.
  */
 export async function awaitReady(options: AwaitReadyOptions): Promise<AwaitReadyResult> {
-  const {url, deadlineMs, consecutive, intervalMs, probe, sleep, log} = options
+  const {url, routes, deadlineMs, consecutive, intervalMs, probe, sleep, log} = options
   const start = Date.now()
   let streak = 0
-  let probes = 0
+  let rounds = 0
   let lastDetail = 'never probed'
   while (Date.now() - start < deadlineMs) {
-    // A unique query string per probe defeats any cached miss on the path.
-    const target = new URL(url)
-    target.searchParams.set('ready-probe', String(probes))
-    const result = await probe(target.toString())
-    probes += 1
-    if (result.ok) {
-      if (streak === 0 && probes > 1) {
-        log(`first success after ${seconds(Date.now() - start)} (${result.detail})`)
+    const results = await Promise.all(
+      routes.map(async route => ({route, ...(await probe(new URL(route, url).toString()))})),
+    )
+    rounds += 1
+    const failures = results.filter(result => !result.ok)
+    const detail =
+      failures.length === 0
+        ? `all ${routes.length} route(s) OK`
+        : failures.map(failure => `${failure.route} -> ${failure.detail}`).join('; ')
+    if (failures.length === 0) {
+      if (streak === 0 && rounds > 1) {
+        log(`first all-OK round after ${seconds(Date.now() - start)}`)
       }
       streak += 1
       if (streak >= consecutive) {
-        return {ready: true, probes, elapsedMs: Date.now() - start, lastDetail: result.detail}
+        return {ready: true, rounds, elapsedMs: Date.now() - start, lastDetail: detail}
       }
     } else {
       if (streak > 0) {
         log(
-          `readiness flapped after ${streak} success(es): ${result.detail} at ` +
+          `readiness flapped after ${streak} all-OK round(s): ${detail} at ` +
             `${seconds(Date.now() - start)} — restarting the streak`,
         )
-      } else if (result.detail !== lastDetail) {
-        log(`not ready (${result.detail}) at ${seconds(Date.now() - start)}`)
+      } else if (detail !== lastDetail) {
+        log(`not ready (${detail}) at ${seconds(Date.now() - start)}`)
       }
       streak = 0
     }
-    lastDetail = result.detail
+    lastDetail = detail
     await sleep(intervalMs)
   }
-  return {ready: false, probes, elapsedMs: Date.now() - start, lastDetail}
+  return {ready: false, rounds, elapsedMs: Date.now() - start, lastDetail}
 }
 
 if (import.meta.main) {
@@ -119,16 +131,18 @@ async function main(): Promise<void> {
     console.error('::error::READY_URL must be set to the deployed URL to await')
     process.exit(1)
   }
+  const routes = (process.env.READY_ROUTES ?? '/').split(',')
   const deadlineMs = Number(process.env.READY_DEADLINE_MS ?? 180_000)
   const consecutive = Number(process.env.READY_CONSECUTIVE ?? 4)
   const intervalMs = Number(process.env.READY_INTERVAL_MS ?? 3_000)
 
   console.log(
-    `awaiting ${consecutive} consecutive successes from ${url} ` +
+    `awaiting ${consecutive} consecutive all-OK rounds for ${routes.join(', ')} at ${url} ` +
       `(probing every ${seconds(intervalMs)}, deadline ${seconds(deadlineMs)})`,
   )
   const result = await awaitReady({
     url,
+    routes,
     deadlineMs,
     consecutive,
     intervalMs,
@@ -139,7 +153,7 @@ async function main(): Promise<void> {
   if (!result.ready) {
     console.error(
       `::error::${url} still not ready after ${seconds(result.elapsedMs)} ` +
-        `(${result.probes} probes; last result: ${result.lastDetail}). A fresh ` +
+        `(${result.rounds} rounds; last result: ${result.lastDetail}). A fresh ` +
         'workers.dev hostname that never converges usually means the deploy did ' +
         'not actually enable workers.dev for the worker, or Cloudflare routing ' +
         'is degraded.',
@@ -147,7 +161,7 @@ async function main(): Promise<void> {
     process.exit(1)
   }
   console.log(
-    `ready: ${result.lastDetail} sustained for ${consecutive} consecutive probes, ` +
-      `converged after ${seconds(result.elapsedMs)} (${result.probes} probes)`,
+    `ready: ${routes.length} route(s) sustained for ${consecutive} consecutive rounds, ` +
+      `converged after ${seconds(result.elapsedMs)} (${result.rounds} rounds)`,
   )
 }

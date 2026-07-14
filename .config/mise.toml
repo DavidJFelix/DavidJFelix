@@ -11,14 +11,14 @@ oxlint = "1"
 prettier = "3.9.5"
 actionlint = "1"
 ghalint = "1"
-zizmor = "1.26.1"
+zizmor = "1.27.0"
 pinact = "4.1.0"
 "npm:cspell" = "10.0.1"
 # Warden CLI: AI code review run locally (`warden run`) and in CI (the Depot
 # ci-warden.yml workflow uses the getsentry/warden action, which bundles its
 # own copy). Pinned like cspell via mise's npm backend; there is no root
 # package.json. Config lives in /warden.toml.
-"npm:@sentry/warden" = "0.39.0"
+"npm:@sentry/warden" = "0.40.0"
 depot = { version = "latest", exe = "depot" }
 "npm:@earendil-works/pi-coding-agent" = { version = "latest", allow_builds = ["@google/genai", "protobufjs"] }
 

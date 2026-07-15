@@ -15,8 +15,8 @@ const trigger = css({
 // renders from md up.
 // The hint is cap-height-only text, which sits on the baseline and leaves the
 // font's descent zone empty — with an inherited line box the chip reads
-// bottom-heavy. lineHeight 1 shrinks that dead zone and the extra 1px of top
-// padding offsets what remains, so the glyphs sit visually centered.
+// bottom-heavy. lineHeight 1 shrinks that dead zone to about a pixel, a
+// remainder we accept to keep the padding on the spacing scale.
 const hint = css({
   display: {base: 'none', md: 'inline-block'},
   borderWidth: '1px',
@@ -24,8 +24,7 @@ const hint = css({
   borderColor: 'border',
   borderRadius: 'sm',
   px: '1.5',
-  pt: '3px',
-  pb: '2px',
+  py: '0.5',
   lineHeight: '1',
   fontSize: 'xs',
   color: 'text.muted',

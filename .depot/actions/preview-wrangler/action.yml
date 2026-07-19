@@ -60,8 +60,22 @@ runs:
         CLOUDFLARE_ACCOUNT_ID: ${{ inputs.cloudflare-account-id }}
       run: bun "$GITHUB_WORKSPACE/bin/upload-preview.ts"
 
-    # workers.dev preview URLs are live immediately, so a few quick attempts
-    # suffice instead of the prod gate's long propagation retries.
+    # The pr-<N> alias hostname is brand new on the PR's first upload, and a
+    # fresh workers.dev hostname starts serving at the edge eventually -- not
+    # monotonically, per exact URL (an early 200 can be followed by 404s, and
+    # one route can serve a stale cached 404 while its siblings are fine).
+    # Gate every downstream check behind sustained readiness of the same bare
+    # route URLs they fetch, so smoke/screenshot failures always mean app
+    # bugs, never propagation lag. Later uploads to the same alias converge
+    # on the first rounds.
+    - name: await preview ready
+      shell: bash
+      env:
+        READY_URL: ${{ steps.deploy.outputs.url }}
+        READY_ROUTES: ${{ inputs.smoke-routes }}
+      run: bun "$GITHUB_WORKSPACE/bin/await-url-ready.ts"
+
+    # Readiness is proven above; these retries only cover transient blips.
     - name: smoke test
       id: smoke
       shell: bash
@@ -117,6 +131,8 @@ runs:
         path: apps/*/playwright-report/
         retention-days: 14
 
+    # Per-stage outcomes let the comment keep linking the deployed app when only
+    # smoke or screenshots fail -- the link is what makes the failure debuggable.
     - name: comment preview url
       if: ${{ !cancelled() }}
       shell: bash
@@ -126,7 +142,7 @@ runs:
         PREVIEW_URL: ${{ steps.deploy.outputs.url }}
         PREVIEW_MARKER: "<!-- preview-${{ inputs.worker-name }} -->"
         PREVIEW_TITLE: ${{ inputs.worker-name }} preview
-        PREVIEW_STATUS: >-
-          ${{ (steps.smoke.outcome == 'success' && steps.e2e.outcome == 'success')
-          && '✅ passed' || '❌ failed' }}
+        PREVIEW_DEPLOY_OUTCOME: ${{ steps.deploy.outcome }}
+        PREVIEW_SMOKE_OUTCOME: ${{ steps.smoke.outcome }}
+        PREVIEW_E2E_OUTCOME: ${{ steps.e2e.outcome }}
       run: bun "$GITHUB_WORKSPACE/bin/comment-preview.ts"

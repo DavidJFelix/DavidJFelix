@@ -25,7 +25,7 @@ assertions into one test per page, and moves the visual baseline to the static c
 since the home gallery now renders live mock.shop data. A label-triggered bot workflow (mirroring
 djf.io's) regenerates the app's visual baselines on the CI runner, and both snapshot bots are now
 path-scoped so the shared `update-snapshots` label only fires the bot whose app the PR touches.
-Review follow-ups from the PR: the webfonts are self-hosted from `@fontsource-variable` bundles so
+Review follow-ups from the PR: the web fonts are self-hosted from `@fontsource-variable` bundles so
 no visitor request reaches Google's CDN, focused fields get a visible pigment halo on top of the
 border-color swap, field hints are associated with their controls via `aria-describedby`, and the
 active nav link carries `aria-current`.

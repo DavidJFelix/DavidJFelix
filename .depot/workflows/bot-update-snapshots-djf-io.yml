@@ -19,6 +19,12 @@ name: Bot Update Snapshots djf.io
 on:
   pull_request:
     types: [labeled]
+    # The `update-snapshots` label is shared with the other snapshot bots;
+    # the paths filter (evaluated against the PR's changed files) keeps this
+    # one from firing on PRs that do not touch the app.
+    paths:
+      - 'apps/djf.io/**'
+      - '.depot/workflows/bot-update-snapshots-djf-io.yml'
 concurrency:
   group: bot-update-snapshots-djf-io-${{ github.event.pull_request.number }}
   cancel-in-progress: true

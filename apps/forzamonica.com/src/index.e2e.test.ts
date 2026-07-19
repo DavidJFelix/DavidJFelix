@@ -69,7 +69,7 @@ test('commissions page renders the form and how-it-works', async ({page}) => {
 })
 
 // One test per page: each navigation pays a cold fetch of the webfont
-// stylesheet, so three gotos can overrun a single test budget.
+// stylesheet, so back-to-back page loads can overrun a single test budget.
 for (const [path, heading] of [
   ['/policies/shipping', 'Shipping policy'],
   ['/policies/returns', 'Returns policy'],

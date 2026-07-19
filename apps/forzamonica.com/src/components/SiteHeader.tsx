@@ -40,11 +40,16 @@ function activeNavItem(pathname: string, kind: ProductKind | undefined): NavItem
   return null
 }
 
-export function SiteHeader({cartQuantity}: {cartQuantity: number}) {
+type SiteHeaderProps = {cartQuantity: number}
+
+export function SiteHeader({cartQuantity}: SiteHeaderProps) {
   const location = useRouterState({select: (state) => state.location})
   const {kind} = location.search as {kind?: ProductKind}
   const active = activeNavItem(location.pathname, kind)
-  const linkClass = (item: NavItem) => cx(navLink, active === item ? navLinkActive : undefined)
+  const navProps = (item: NavItem) => ({
+    className: cx(navLink, active === item ? navLinkActive : undefined),
+    'aria-current': active === item ? ('page' as const) : undefined,
+  })
   return (
     <header className={css({bg: 'paper', borderBottom: '1px solid', borderColor: 'border'})}>
       <div
@@ -65,16 +70,16 @@ export function SiteHeader({cartQuantity}: {cartQuantity: number}) {
           forzamonica <span className={css({fontStyle: 'normal', fontWeight: 'normal'})}>art</span>
         </Link>
         <nav className={css({display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '1'})}>
-          <Link to="/" className={linkClass('Shop')}>
+          <Link to="/" {...navProps('Shop')}>
             Shop
           </Link>
-          <Link to="/" search={{kind: 'Original'}} className={linkClass('Originals')}>
+          <Link to="/" search={{kind: 'Original'}} {...navProps('Originals')}>
             Originals
           </Link>
-          <Link to="/commissions" className={linkClass('Commissions')}>
+          <Link to="/commissions" {...navProps('Commissions')}>
             Commissions
           </Link>
-          <Link to="/about" className={linkClass('About')}>
+          <Link to="/about" {...navProps('About')}>
             About
           </Link>
         </nav>

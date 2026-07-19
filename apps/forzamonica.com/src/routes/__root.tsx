@@ -11,12 +11,6 @@ import {fetchCartQuantity} from '@/lib/shopify/cart.ts'
 
 import appCss from '../styles.css?url'
 
-// Newsreader (display serif, used mostly italic) + Karla (UI sans), per the
-// design system's font tokens. Loaded from Google Fonts; substitute
-// self-hosted files if licensed binaries arrive later.
-const FONTS_URL =
-  'https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Karla:ital,wght@0,400;0,500;0,700;1,400&display=swap'
-
 export const Route = createRootRoute({
   head: () => ({
     meta: [
@@ -28,12 +22,9 @@ export const Route = createRootRoute({
         content: 'Little paintings, made slowly — watercolor prints and originals by Monica.',
       },
     ],
-    links: [
-      {rel: 'preconnect', href: 'https://fonts.googleapis.com'},
-      {rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous'},
-      {rel: 'stylesheet', href: FONTS_URL},
-      {rel: 'stylesheet', href: appCss},
-    ],
+    // Fonts are self-hosted (see src/styles.css), so appCss is the only
+    // stylesheet and no visitor request leaves the site's origin for type.
+    links: [{rel: 'stylesheet', href: appCss}],
   }),
   // Re-runs on every navigation, keeping the header badge in sync with cart
   // mutations (which all end in router.invalidate()).

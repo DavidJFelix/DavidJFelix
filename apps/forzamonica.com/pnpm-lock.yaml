@@ -11,6 +11,12 @@ importers:
       '@ark-ui/react':
         specifier: ^5.37.2
         version: 5.37.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@fontsource-variable/karla':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource-variable/newsreader':
+        specifier: ^5.3.0
+        version: 5.3.0
       '@sentry/cloudflare':
         specifier: ^10.60.0
         version: 10.62.0(@cloudflare/workers-types@5.20260704.1)
@@ -41,7 +47,7 @@ importers:
     devDependencies:
       '@cloudflare/vite-plugin':
         specifier: 1.42.1
-        version: 1.42.1(vite@8.0.16(@types/node@25.9.4)(esbuild@0.28.1)(jiti@2.7.0))(workerd@1.20260617.1)(wrangler@4.105.0(@cloudflare/workers-types@5.20260704.1))
+        version: 1.42.1(vite@8.0.16(@types/node@25.9.4)(esbuild@0.28.1)(jiti@2.7.0))(workerd@1.20260625.1)(wrangler@4.105.0(@cloudflare/workers-types@5.20260704.1))
       '@cloudflare/workers-types':
         specifier: 5.20260704.1
         version: 5.20260704.1
@@ -672,6 +678,12 @@ packages:
 
   '@floating-ui/utils@0.2.11':
     resolution: {integrity: sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg==}
+
+  '@fontsource-variable/karla@5.3.0':
+    resolution: {integrity: sha512-CypH/IGhvpU0I4sue6YG+ZDyx5heglFJAiU2NClTkKOh+jsqjZ7AAgWKGG59+X1dGCN/9L4BLLacCXD7TBBETA==}
+
+  '@fontsource-variable/newsreader@5.3.0':
+    resolution: {integrity: sha512-rrzYi43qMpbzwuFtf9OkWH8sxAPVPcQQQEwXpPtwaKYeJ8yVg5aLs5kawmo1f2Q1t1M38TLmEKCkGVDsYwgdFw==}
 
   '@hono/node-server@1.19.14':
     resolution: {integrity: sha512-GwtvgtXxnWsucXvbQXkRgqksiH2Qed37H9xHZocE5sA3N8O8O8/8FA3uclQXxXVzc9XBZuEOMK7+r02FmSpHtw==}
@@ -3626,21 +3638,15 @@ snapshots:
 
   '@cloudflare/kv-asset-handler@0.5.0': {}
 
-  '@cloudflare/unenv-preset@2.16.1(unenv@2.0.0-rc.24)(workerd@1.20260617.1)':
-    dependencies:
-      unenv: 2.0.0-rc.24
-    optionalDependencies:
-      workerd: 1.20260617.1
-
   '@cloudflare/unenv-preset@2.16.1(unenv@2.0.0-rc.24)(workerd@1.20260625.1)':
     dependencies:
       unenv: 2.0.0-rc.24
     optionalDependencies:
       workerd: 1.20260625.1
 
-  '@cloudflare/vite-plugin@1.42.1(vite@8.0.16(@types/node@25.9.4)(esbuild@0.28.1)(jiti@2.7.0))(workerd@1.20260617.1)(wrangler@4.105.0(@cloudflare/workers-types@5.20260704.1))':
+  '@cloudflare/vite-plugin@1.42.1(vite@8.0.16(@types/node@25.9.4)(esbuild@0.28.1)(jiti@2.7.0))(workerd@1.20260625.1)(wrangler@4.105.0(@cloudflare/workers-types@5.20260704.1))':
     dependencies:
-      '@cloudflare/unenv-preset': 2.16.1(unenv@2.0.0-rc.24)(workerd@1.20260617.1)
+      '@cloudflare/unenv-preset': 2.16.1(unenv@2.0.0-rc.24)(workerd@1.20260625.1)
       miniflare: 4.20260617.1
       unenv: 2.0.0-rc.24
       vite: 8.0.16(@types/node@25.9.4)(esbuild@0.28.1)(jiti@2.7.0)
@@ -3910,6 +3916,10 @@ snapshots:
       '@floating-ui/utils': 0.2.11
 
   '@floating-ui/utils@0.2.11': {}
+
+  '@fontsource-variable/karla@5.3.0': {}
+
+  '@fontsource-variable/newsreader@5.3.0': {}
 
   '@hono/node-server@1.19.14(hono@4.12.27)':
     dependencies:

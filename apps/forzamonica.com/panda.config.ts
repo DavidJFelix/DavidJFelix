@@ -141,7 +141,12 @@ const field = defineSlotRecipe({
       outline: 'none',
       width: 'full',
       transition: 'border-color token(durations.quick) token(easings.out)',
-      _focus: {borderColor: 'focusRing'},
+      // outline is dropped, so focus needs more than the 1.5px border-color
+      // swap to clear WCAG 2.4.7 -- add a soft halo in the same pigment.
+      _focus: {
+        borderColor: 'focusRing',
+        boxShadow: '0 0 0 3px color-mix(in srgb, token(colors.focusRing) 30%, transparent)',
+      },
       _placeholder: {color: 'ink.faint'},
     },
     hint: {fontSize: '12px', color: 'ink.muted'},
@@ -217,8 +222,10 @@ export default defineConfig({
       slotRecipes: {field, quantityField},
       tokens: {
         fonts: {
-          display: {value: '"Newsreader", Georgia, serif'},
-          sans: {value: '"Karla", "Helvetica Neue", Arial, sans-serif'},
+          // The "Variable" family names come from the self-hosted
+          // @fontsource-variable packages imported in src/styles.css.
+          display: {value: '"Newsreader Variable", Georgia, serif'},
+          sans: {value: '"Karla Variable", "Helvetica Neue", Arial, sans-serif'},
         },
         colors: {
           paper: {

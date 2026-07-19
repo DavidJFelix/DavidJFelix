@@ -1,1 +1,8 @@
 @layer reset, base, tokens, recipes, utilities;
+
+/* Self-hosted webfonts (design-system voice: Newsreader display italic over
+   Karla UI sans). Bundled from @fontsource-variable so no visitor request ever
+   reaches Google's CDN; Newsreader keeps its optical-size axis. */
+@import "@fontsource-variable/karla/index.css";
+@import "@fontsource-variable/newsreader/opsz.css";
+@import "@fontsource-variable/newsreader/opsz-italic.css";

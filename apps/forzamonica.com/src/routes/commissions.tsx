@@ -1,5 +1,5 @@
 import {createFileRoute} from '@tanstack/react-router'
-import {useState} from 'react'
+import {useId, useState} from 'react'
 
 import {css, cx} from 'styled-system/css'
 import {card, field} from 'styled-system/recipes'
@@ -146,6 +146,7 @@ function CommissionsPage() {
 function CommissionForm() {
   const [sent, setSent] = useState(false)
   const fieldClasses = field()
+  const ideaHintId = useId()
 
   if (sent) {
     return (
@@ -228,9 +229,10 @@ function CommissionForm() {
           name="idea"
           rows={5}
           placeholder="I'd love a painting of…"
+          aria-describedby={ideaHintId}
           className={cx(fieldClasses.control, css({resize: 'vertical', lineHeight: '1.5'}))}
         />
-        <span className={fieldClasses.hint}>
+        <span id={ideaHintId} className={fieldClasses.hint}>
           Colors, mood, occasion — anything helps. You can email photos after.
         </span>
       </label>

@@ -1,5 +1,5 @@
 import {createFileRoute, Link, useRouter} from '@tanstack/react-router'
-import {useEffect, useRef, useState} from 'react'
+import {useEffect, useId, useRef, useState} from 'react'
 
 import {css, cx} from 'styled-system/css'
 import {button, card, field} from 'styled-system/recipes'
@@ -152,6 +152,7 @@ function GiftNoteField({note}: {note: string}) {
   const [draft, setDraft] = useState(note)
   const [error, setError] = useState<string | null>(null)
   const fieldClasses = field()
+  const describedById = useId()
 
   // Re-sync the draft whenever the loader refreshes server truth.
   useEffect(() => {
@@ -179,14 +180,19 @@ function GiftNoteField({note}: {note: string}) {
         type="text"
         value={draft}
         placeholder="Happy birthday, Sam!"
+        aria-describedby={describedById}
         onChange={(event) => setDraft(event.target.value)}
         onBlur={() => void commit()}
         className={fieldClasses.control}
       />
       {error ? (
-        <span className={fieldClasses.error}>{error}</span>
+        <span id={describedById} className={fieldClasses.error}>
+          {error}
+        </span>
       ) : (
-        <span className={fieldClasses.hint}>Handwritten by me, price left off</span>
+        <span id={describedById} className={fieldClasses.hint}>
+          Handwritten by me, price left off
+        </span>
       )}
     </label>
   )

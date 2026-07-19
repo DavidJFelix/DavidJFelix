@@ -22,4 +22,6 @@ pick up the new chrome, and page titles read "-- forzamonica art".
 Storefront queries gain product type, availability, line cost, and cart note fields; whole-number
 prices render bare ($45, not $45.00). The e2e suite tracks the new copy, splits the policy
 assertions into one test per page, and moves the visual baseline to the static commissions page,
-since the home gallery now renders live mock.shop data.
+since the home gallery now renders live mock.shop data. A label-triggered bot workflow (mirroring
+djf.io's) regenerates the app's visual baselines on the CI runner, and both snapshot bots are now
+path-scoped so the shared `update-snapshots` label only fires the bot whose app the PR touches.

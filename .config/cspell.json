@@ -31,7 +31,7 @@
     "playwright-report",
     "test-results"
   ],
-  "ignoreRegExpList": ["did:plc:[a-z0-9]+"],
+  "ignoreRegExpList": ["did:plc:[a-z0-9]+", "data:image/svg\\+xml[^\"]+"],
   "words": [
     "achievability",
     "actioned",
@@ -139,6 +139,7 @@
     "monicandavid",
     "msgpackr",
     "myshopify",
+    "Neue",
     "nitro",
     "noerror",
     "nuxi",

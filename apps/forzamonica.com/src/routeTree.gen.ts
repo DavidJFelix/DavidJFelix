@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as CommissionsRouteImport } from './routes/commissions'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as BugsRouteImport } from './routes/bugs'
 import { Route as AboutRouteImport } from './routes/about'
@@ -20,6 +21,11 @@ import { Route as PoliciesReturnsRouteImport } from './routes/policies/returns'
 import { Route as PoliciesPrivacyRouteImport } from './routes/policies/privacy'
 import { Route as DiagSplatRouteImport } from './routes/diag/$'
 
+const CommissionsRoute = CommissionsRouteImport.update({
+  id: '/commissions',
+  path: '/commissions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CartRoute = CartRouteImport.update({
   id: '/cart',
   path: '/cart',
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/bugs': typeof BugsRoute
   '/cart': typeof CartRoute
+  '/commissions': typeof CommissionsRoute
   '/diag/$': typeof DiagSplatRoute
   '/policies/privacy': typeof PoliciesPrivacyRoute
   '/policies/returns': typeof PoliciesReturnsRoute
@@ -88,6 +95,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/bugs': typeof BugsRoute
   '/cart': typeof CartRoute
+  '/commissions': typeof CommissionsRoute
   '/diag/$': typeof DiagSplatRoute
   '/policies/privacy': typeof PoliciesPrivacyRoute
   '/policies/returns': typeof PoliciesReturnsRoute
@@ -101,6 +109,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/bugs': typeof BugsRoute
   '/cart': typeof CartRoute
+  '/commissions': typeof CommissionsRoute
   '/diag/$': typeof DiagSplatRoute
   '/policies/privacy': typeof PoliciesPrivacyRoute
   '/policies/returns': typeof PoliciesReturnsRoute
@@ -115,6 +124,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/bugs'
     | '/cart'
+    | '/commissions'
     | '/diag/$'
     | '/policies/privacy'
     | '/policies/returns'
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/bugs'
     | '/cart'
+    | '/commissions'
     | '/diag/$'
     | '/policies/privacy'
     | '/policies/returns'
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/bugs'
     | '/cart'
+    | '/commissions'
     | '/diag/$'
     | '/policies/privacy'
     | '/policies/returns'
@@ -152,6 +164,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   BugsRoute: typeof BugsRoute
   CartRoute: typeof CartRoute
+  CommissionsRoute: typeof CommissionsRoute
   DiagSplatRoute: typeof DiagSplatRoute
   PoliciesPrivacyRoute: typeof PoliciesPrivacyRoute
   PoliciesReturnsRoute: typeof PoliciesReturnsRoute
@@ -162,6 +175,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/commissions': {
+      id: '/commissions'
+      path: '/commissions'
+      fullPath: '/commissions'
+      preLoaderRoute: typeof CommissionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cart': {
       id: '/cart'
       path: '/cart'
@@ -240,6 +260,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   BugsRoute: BugsRoute,
   CartRoute: CartRoute,
+  CommissionsRoute: CommissionsRoute,
   DiagSplatRoute: DiagSplatRoute,
   PoliciesPrivacyRoute: PoliciesPrivacyRoute,
   PoliciesReturnsRoute: PoliciesReturnsRoute,

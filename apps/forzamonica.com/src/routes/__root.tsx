@@ -19,7 +19,7 @@ export const Route = createRootRoute({
       {title: 'forzamonica art'},
       {
         name: 'description',
-        content: 'Little paintings, made slowly — watercolor prints and originals by Monica.',
+        content: 'Original watercolors and archival prints by Monica Felix.',
       },
     ],
     // Fonts are self-hosted (see src/styles.css), so appCss is the only

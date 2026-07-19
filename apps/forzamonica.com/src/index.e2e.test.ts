@@ -13,7 +13,7 @@ import {expect, test} from '@playwright/test'
 test('home page renders the gallery hero and shop chrome', async ({page}) => {
   await page.goto('/')
   await expect(
-    page.getByRole('heading', {level: 1, name: 'Little paintings, made slowly'}),
+    page.getByRole('heading', {level: 1, name: 'Watercolors by Monica Felix'}),
   ).toBeVisible()
   const filters = page.getByRole('navigation', {name: 'Filter the gallery'})
   await expect(filters.getByRole('link', {name: 'All'})).toBeVisible()
@@ -30,7 +30,7 @@ test('home page renders the gallery hero and shop chrome', async ({page}) => {
 test('old catalog url redirects to the gallery home', async ({page}) => {
   await page.goto('/products')
   await expect(
-    page.getByRole('heading', {level: 1, name: 'Little paintings, made slowly'}),
+    page.getByRole('heading', {level: 1, name: 'Watercolors by Monica Felix'}),
   ).toBeVisible()
   expect(new URL(page.url()).pathname).toBe('/')
 })

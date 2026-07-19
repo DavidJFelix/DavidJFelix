@@ -14,7 +14,7 @@ export const Route = createFileRoute('/commissions')({
 
 const STEPS = [
   ['1', 'You write to me', 'A few sentences and a photo or two is plenty.'],
-  ['2', 'I sketch and quote', 'Small pieces start around $150. You approve before I paint.'],
+  ['2', 'I sketch and quote', 'Pieces start around $150. You approve before I paint.'],
   ['3', 'I paint and ship', 'Usually 2–3 weeks, flat-packed with care instructions.'],
 ] as const
 

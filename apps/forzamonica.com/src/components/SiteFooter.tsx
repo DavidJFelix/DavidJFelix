@@ -34,8 +34,7 @@ export function SiteFooter() {
             <span className={css({fontStyle: 'normal', fontWeight: 'normal'})}>art</span>
           </span>
           <p className={css({textStyle: 'quote', color: 'ink.muted', maxWidth: '300px'})}>
-            “Thanks for looking at my little paintings. Every order is packed by me, with a note.” —
-            Monica
+            “Every piece here is painted, packed, and shipped by me. Thanks for looking.” — Monica
           </p>
         </div>
         <nav aria-label="Shop" className={column}>

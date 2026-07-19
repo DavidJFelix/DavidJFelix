@@ -42,12 +42,10 @@ function GalleryPage() {
           maxWidth: '640px',
         })}
       >
-        <h1 className={css({textStyle: 'displayXl', color: 'ink'})}>
-          Little paintings, made slowly
-        </h1>
+        <h1 className={css({textStyle: 'displayXl', color: 'ink'})}>Watercolors by Monica Felix</h1>
         <p className={css({fontSize: '16px', lineHeight: '1.6', color: 'ink.muted'})}>
-          Hi, I'm Monica. I paint small watercolors of coasts, kitchens, and quiet things. Prints
-          start at $45; originals are one-of-one. If you have something in mind,{' '}
+          Original paintings and archival prints, straight from the studio. Originals are
+          one-of-one; prints are editions of them. If you have something in mind,{' '}
           <Link
             to="/commissions"
             className={css({
@@ -56,7 +54,7 @@ function GalleryPage() {
               textUnderlineOffset: '3px',
             })}
           >
-            ask me about a commission
+            ask about a commission
           </Link>
           .
         </p>
@@ -75,7 +73,7 @@ function GalleryPage() {
       </nav>
       {items.length === 0 ? (
         <p className={css({color: 'ink.muted', pb: '6'})}>
-          Nothing here just now — new paintings arrive slowly, on purpose.
+          Nothing here right now — new work is on the way.
         </p>
       ) : (
         <div

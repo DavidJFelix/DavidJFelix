@@ -7,3 +7,7 @@ node_modules/
 
 # Warden local run artifacts (logs, sessions, cached findings)
 .warden/
+
+# Pi local packages/sessions; keep the project settings tracked.
+.pi/*
+!.pi/settings.json

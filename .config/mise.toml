@@ -21,6 +21,9 @@ pinact = "4.1.0"
 "npm:@sentry/warden" = "0.41.0"
 depot = { version = "latest", exe = "depot" }
 "npm:@earendil-works/pi-coding-agent" = { version = "latest", allow_builds = ["@google/genai", "protobufjs"] }
+# worktrunk (`wt`): git-worktree manager backing the one-workspace-per-agent
+# flow. Landing rule: push + PR from the workspace; `wt merge` is not the flow.
+worktrunk = "latest"
 
 # Repo-root checks, scoped to the config files the root owns. Legacy project
 # dirs and isolated workspace trees are intentionally out of scope, and apps/*

@@ -542,6 +542,65 @@ provenance = "github-attestations"
 version = "3.9.5"
 backend = "npm:prettier"
 
+[[tools.worktrunk]]
+version = "0.65.0"
+backend = "aqua:max-sixty/worktrunk"
+
+[tools.worktrunk."platforms.linux-arm64"]
+checksum = "sha256:9d08816479020f1d8988c944e7d7ad3544328e30ecb1d42e5ee754ddcb17ced4"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.65.0/worktrunk-aarch64-unknown-linux-musl.tar.xz"
+url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/463973941"
+
+[tools.worktrunk."platforms.linux-arm64-musl"]
+checksum = "sha256:9d08816479020f1d8988c944e7d7ad3544328e30ecb1d42e5ee754ddcb17ced4"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.65.0/worktrunk-aarch64-unknown-linux-musl.tar.xz"
+url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/463973941"
+
+[tools.worktrunk."platforms.linux-x64"]
+checksum = "sha256:d9fde1f936c7df759760f6eb16e178e7039733587f1ea9931076dbe256fe6f85"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.65.0/worktrunk-x86_64-unknown-linux-musl.tar.xz"
+url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/463973961"
+
+[tools.worktrunk."platforms.linux-x64-baseline"]
+checksum = "sha256:d9fde1f936c7df759760f6eb16e178e7039733587f1ea9931076dbe256fe6f85"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.65.0/worktrunk-x86_64-unknown-linux-musl.tar.xz"
+url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/463973961"
+
+[tools.worktrunk."platforms.linux-x64-musl"]
+checksum = "sha256:d9fde1f936c7df759760f6eb16e178e7039733587f1ea9931076dbe256fe6f85"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.65.0/worktrunk-x86_64-unknown-linux-musl.tar.xz"
+url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/463973961"
+
+[tools.worktrunk."platforms.linux-x64-musl-baseline"]
+checksum = "sha256:d9fde1f936c7df759760f6eb16e178e7039733587f1ea9931076dbe256fe6f85"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.65.0/worktrunk-x86_64-unknown-linux-musl.tar.xz"
+url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/463973961"
+
+[tools.worktrunk."platforms.macos-arm64"]
+checksum = "sha256:5f8b1e3029a82a521bd571f88b19640a7363ab93b215487a2f674ffcac772be9"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.65.0/worktrunk-aarch64-apple-darwin.tar.xz"
+url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/463973925"
+
+[tools.worktrunk."platforms.macos-x64"]
+checksum = "sha256:1e186ed46e549695c8b325f728f6e38557e50005ae1a710365009941f9468cf9"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.65.0/worktrunk-x86_64-apple-darwin.tar.xz"
+url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/463973949"
+
+[tools.worktrunk."platforms.macos-x64-baseline"]
+checksum = "sha256:1e186ed46e549695c8b325f728f6e38557e50005ae1a710365009941f9468cf9"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.65.0/worktrunk-x86_64-apple-darwin.tar.xz"
+url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/463973949"
+
+[tools.worktrunk."platforms.windows-x64"]
+checksum = "sha256:11da7702f84d1326b72e579eabe69376524cf8cd1ff113da742d8730f8c61d49"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.65.0/worktrunk-x86_64-pc-windows-msvc.zip"
+url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/463973953"
+
+[tools.worktrunk."platforms.windows-x64-baseline"]
+checksum = "sha256:11da7702f84d1326b72e579eabe69376524cf8cd1ff113da742d8730f8c61d49"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.65.0/worktrunk-x86_64-pc-windows-msvc.zip"
+url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/463973953"
+
 [[tools.zizmor]]
 version = "1.27.0"
 backend = "aqua:zizmorcore/zizmor"

@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bun $CLAUDE_PROJECT_DIR/.claude/hooks/session-start.ts"
+            "command": "bash -lc 'source \"$CLAUDE_PROJECT_DIR/.config/mise-agent-env.bash\"; bun \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.ts\"'"
           }
         ]
       }

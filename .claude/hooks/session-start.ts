@@ -12,14 +12,26 @@ import {join, resolve} from 'node:path'
 // the linters) and every app's dependencies, so checks (typecheck / lint /
 // format / test / build) and smoke boots work the same way they do in CI.
 //
-// No-op outside the remote web environment -- local machines manage their own
-// toolchain through mise's shell activation.
-if (process.env.CLAUDE_CODE_REMOTE !== 'true') process.exit(0)
+// Local sessions only need shell activation persisted for later tool calls.
+// Remote web sessions also need the toolchain and app dependencies installed.
+const isRemote = process.env.CLAUDE_CODE_REMOTE === 'true'
 
 const home = homedir()
 const repo = process.env.CLAUDE_PROJECT_DIR ?? resolve(import.meta.dir, '../..')
 const localBin = join(home, '.local', 'bin')
 const shims = join(home, '.local', 'share', 'mise', 'shims')
+const activationFile = join(repo, '.config', 'mise-agent-env.bash')
+const shellQuote = (value: string) => `'${value.replaceAll("'", "'\\''")}'`
+
+// Persist mise activation for every later bash command in the session. Claude
+// Code sources CLAUDE_ENV_FILE between tool calls; BASH_ENV makes each fresh
+// non-interactive bash shell source the activation script on startup.
+const envFile = process.env.CLAUDE_ENV_FILE
+if (envFile) {
+  appendFileSync(envFile, `export BASH_ENV=${shellQuote(activationFile)}\n`)
+}
+
+if (!isRemote) process.exit(0)
 
 // 1. Install mise itself if the container doesn't already have it.
 if (!existsSync(join(localBin, 'mise')) && !Bun.which('mise')) {
@@ -37,18 +49,7 @@ process.env.MISE_TRUSTED_CONFIG_PATHS = repo
 await $`mise trust --yes ${join(repo, '.config', 'mise.toml')}`.nothrow().quiet()
 await $`mise install`.cwd(repo)
 
-// 3. Persist the toolchain on PATH (plus trust) for every later command in the
-//    session, via the env file the harness sources between tool calls.
-const envFile = process.env.CLAUDE_ENV_FILE
-if (envFile) {
-  appendFileSync(
-    envFile,
-    `export PATH="${localBin}:${shims}:$PATH"\n` +
-      `export MISE_TRUSTED_CONFIG_PATHS="${repo}"\n`,
-  )
-}
-
-// 4. Install dependencies for every app. Lockfiles are independent (this repo
+// 3. Install dependencies for every app. Lockfiles are independent (this repo
 //    has no pnpm workspace), so each app installs on its own. CI=true makes
 //    pnpm non-interactive and CI-faithful: it installs frozen from the lockfile
 //    (so `latest` dev deps don't drift between runs) and auto-confirms a
@@ -73,7 +74,7 @@ for (const entry of readdirSync(appsDir, {withFileTypes: true})) {
   }
 }
 
-// 5. Install the Playwright chromium browser that djf.io's e2e suite and
+// 4. Install the Playwright chromium browser that djf.io's e2e suite and
 //    f311x's visual-regression tests need. The binary is shared across apps via
 //    ~/.cache/ms-playwright, so one install covers the repo. Best-effort: a
 //    failure here shouldn't abort the session.

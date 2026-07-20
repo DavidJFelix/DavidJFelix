@@ -1,5 +1,12 @@
 import {TanStackDevtools} from '@tanstack/react-devtools'
-import {createRootRoute, HeadContent, Link, Outlet, Scripts} from '@tanstack/react-router'
+import {
+  createRootRoute,
+  HeadContent,
+  Link,
+  Outlet,
+  Scripts,
+  useRouterState,
+} from '@tanstack/react-router'
 import {TanStackRouterDevtoolsPanel} from '@tanstack/react-router-devtools'
 
 import {css} from 'styled-system/css'
@@ -16,9 +23,14 @@ export const Route = createRootRoute({
     meta: [
       {charSet: 'utf-8'},
       {name: 'viewport', content: 'width=device-width, initial-scale=1'},
-      {title: 'Forza Monica'},
-      {name: 'description', content: 'Forza Monica — the official shop.'},
+      {title: 'forzamonica art'},
+      {
+        name: 'description',
+        content: 'Original watercolors and archival prints by Monica Felix.',
+      },
     ],
+    // Fonts are self-hosted (see src/styles.css), so appCss is the only
+    // stylesheet and no visitor request leaves the site's origin for type.
     links: [{rel: 'stylesheet', href: appCss}],
   }),
   // Re-runs on every navigation, keeping the header badge in sync with cart
@@ -31,15 +43,20 @@ export const Route = createRootRoute({
 
 function RootLayout() {
   const cartQuantity = Route.useLoaderData()
+  const pathname = useRouterState({select: (state) => state.location.pathname})
+  // The root path is the pre-launch coming-soon landing: no shop chrome. The
+  // storefront (and its header/footer) lives under /monica and the other
+  // routes until launch.
+  const isLanding = pathname === '/'
+  // Pages bring their own width containers (the gallery, cart, and commission
+  // layouts each set different maximums), so <main> only fills the column.
   return (
     <>
-      <SiteHeader cartQuantity={cartQuantity} />
-      <main
-        className={css({maxWidth: '5xl', mx: 'auto', px: '4', pb: '16', width: 'full', flex: '1'})}
-      >
+      {isLanding ? null : <SiteHeader cartQuantity={cartQuantity} />}
+      <main className={css({width: 'full', flex: '1'})}>
         <Outlet />
       </main>
-      <SiteFooter />
+      {isLanding ? null : <SiteFooter />}
     </>
   )
 }
@@ -48,6 +65,9 @@ function NotFound() {
   return (
     <section
       className={css({
+        maxWidth: 'page',
+        mx: 'auto',
+        px: '6',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'flex-start',
@@ -55,25 +75,13 @@ function NotFound() {
         py: '20',
       })}
     >
-      <p
-        className={css({
-          fontSize: 'sm',
-          fontWeight: 'semibold',
-          textTransform: 'uppercase',
-          letterSpacing: 'wide',
-          color: 'brand',
-        })}
-      >
-        404
-      </p>
-      <h1 className={css({fontSize: '3xl', fontWeight: 'bold', letterSpacing: 'tight'})}>
-        This page took a wrong turn
-      </h1>
-      <p className={css({color: 'fg.muted', maxWidth: 'prose'})}>
+      <p className={css({textStyle: 'overline', color: 'ink.muted'})}>404</p>
+      <h1 className={css({textStyle: 'displayLg', color: 'ink'})}>This page took a wrong turn</h1>
+      <p className={css({color: 'ink.muted', maxWidth: 'prose'})}>
         The page you are looking for does not exist or has moved.
       </p>
-      <Link to="/products" className={button({size: 'md'})}>
-        Shop the collection
+      <Link to="/monica" className={button()}>
+        Back to the gallery
       </Link>
     </section>
   )
@@ -87,8 +95,8 @@ function RootDocument({children}: {children: React.ReactNode}) {
       </head>
       <body
         className={css({
-          bg: 'canvas',
-          color: 'fg',
+          bg: 'paper',
+          color: 'ink',
           fontFamily: 'sans',
           display: 'flex',
           flexDirection: 'column',

@@ -3,7 +3,7 @@ import {createFileRoute} from '@tanstack/react-router'
 import {PolicyArticle} from '@/components/PolicyArticle.tsx'
 
 export const Route = createFileRoute('/policies/shipping')({
-  head: () => ({meta: [{title: 'Shipping policy — Forza Monica'}]}),
+  head: () => ({meta: [{title: 'Shipping policy — forzamonica art'}]}),
   component: ShippingPolicyPage,
 })
 

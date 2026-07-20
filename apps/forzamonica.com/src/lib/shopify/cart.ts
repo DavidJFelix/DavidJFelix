@@ -7,6 +7,7 @@ import {
   CART_LINES_ADD_MUTATION,
   CART_LINES_REMOVE_MUTATION,
   CART_LINES_UPDATE_MUTATION,
+  CART_NOTE_UPDATE_MUTATION,
   CART_QUANTITY_QUERY,
   CART_QUERY,
   type Cart,
@@ -133,4 +134,20 @@ export const removeCartLine = createServerFn({method: 'POST'})
       {cartId, lineIds: [lineId]},
     )
     return resolveCartMutation(data.cartLinesRemove)
+  })
+
+// Backs the cart page's gift-note field; the note rides along to Shopify
+// checkout with the cart.
+export const updateCartNote = createServerFn({method: 'POST'})
+  .inputValidator((input: {note: string}) => input)
+  .handler(async ({data: {note}}): Promise<Cart | null> => {
+    const cartId = getCookie(CART_COOKIE)
+    if (!cartId) {
+      return null
+    }
+    const data = await storefrontQuery<{cartNoteUpdate: CartMutationPayload}>(
+      CART_NOTE_UPDATE_MUTATION,
+      {cartId, note},
+    )
+    return resolveCartMutation(data.cartNoteUpdate)
   })

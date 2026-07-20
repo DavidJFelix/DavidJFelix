@@ -1,21 +1,16 @@
-# Depot CI Migration
-# Source: .github/workflows/bot-update-snapshots-djf-io.yml
-#
-# Changes made:
-# - Rewrote .github/ path references to .depot/
-# - Changed GitHub runs-on labels to their Depot equivalents
-
-name: Bot Update Snapshots djf.io
-# Regenerate djf.io's Playwright visual baselines on demand. A maintainer adds
-# the `update-snapshots` label to a PR; this re-runs the e2e suite with
-# --update-snapshots on the Linux runner (the only place that can produce the
-# committed `*-chromium-linux.png` baselines) and pushes the result back to the
-# PR branch. Label-triggered and not a merge gate, so this is a Bot workflow.
+name: Bot Update Snapshots forzamonica.com
+# Regenerate forzamonica.com's Playwright visual baselines on demand. A
+# maintainer adds the `update-snapshots` label to a PR; this re-runs the e2e
+# suite with --update-snapshots on the Linux runner (the only place that can
+# produce the committed `*-chromium-linux.png` baselines) and pushes the result
+# back to the PR branch. Label-triggered and not a merge gate, so this is a Bot
+# workflow. Mirrors bot-update-snapshots-djf-io.yml, plus a build step because
+# the local Playwright boot serves the built SSR worker via `vite preview`.
 #
 # Caveat: the commit is pushed with GITHUB_TOKEN, and GitHub deliberately does
-# not re-trigger workflows for bot-token pushes, so the `playwright` check will
-# not re-run automatically on the new commit -- re-run it once from the Actions
-# tab (or push any commit) to turn it green. The bot leaves a comment saying so.
+# not re-trigger workflows for bot-token pushes, so the preview check will not
+# re-run automatically on the new commit -- re-run it once (or push any commit)
+# to turn it green. The bot leaves a comment saying so.
 on:
   pull_request:
     types: [labeled]
@@ -23,10 +18,10 @@ on:
     # the paths filter (evaluated against the PR's changed files) keeps this
     # one from firing on PRs that do not touch the app.
     paths:
-      - 'apps/djf.io/**'
-      - '.depot/workflows/bot-update-snapshots-djf-io.yml'
+      - 'apps/forzamonica.com/**'
+      - '.depot/workflows/bot-update-snapshots-forzamonica-com.yml'
 concurrency:
-  group: bot-update-snapshots-djf-io-${{ github.event.pull_request.number }}
+  group: bot-update-snapshots-forzamonica-com-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 env:
   MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
@@ -37,14 +32,14 @@ jobs:
     # push to a fork's branch.
     if: >-
       github.event.label.name == 'update-snapshots' && github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
+    runs-on: depot-ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: write
       pull-requests: write
     defaults:
       run:
-        working-directory: apps/djf.io
+        working-directory: apps/forzamonica.com
     steps:
       - name: checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -57,6 +52,8 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: playwright install
         run: pnpm exec playwright install --with-deps chromium
+      - name: build
+        run: pnpm run build
       - name: playwright --update-snapshots
         run: pnpm exec playwright test --update-snapshots
       - name: git push
@@ -68,14 +65,14 @@ jobs:
           # Baselines are PNGs *inside* the *-snapshots/ dirs, so the pathspec
           # needs the trailing /** to reach them. Stage first, then check the
           # index, so a brand-new (untracked) snapshot is committed too.
-          git add 'apps/djf.io/**/*-snapshots/**'
+          git add 'apps/forzamonica.com/**/*-snapshots/**'
           if git diff --cached --quiet; then
             echo 'No snapshot changes to commit.'
             exit 0
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'test(djf.io): update Playwright visual baselines'
+          git commit -m 'test(forzamonica.com): update Playwright visual baselines'
           # persist-credentials is false (ghalint policy 013), so push via an
           # explicit token URL instead of a stored credential.
           git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${HEAD_REF}"
@@ -85,7 +82,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.number }}
         run: |
-          gh pr comment "$PR" --body 'Regenerated the Playwright visual baselines and pushed them to this branch. Re-run the **playwright** check once (Actions tab) so it picks up the new commit -- bot-token pushes do not auto-trigger it.'
+          gh pr comment "$PR" --body 'Regenerated the Playwright visual baselines and pushed them to this branch. Re-run the **CD Preview forzamonica.com** check once so it picks up the new commit -- bot-token pushes do not auto-trigger it.'
       - name: gh pr edit
         if: always()
         working-directory: ${{ github.workspace }}

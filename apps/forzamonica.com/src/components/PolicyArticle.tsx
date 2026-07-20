@@ -10,14 +10,15 @@ export function PolicyArticle({title, children}: {title: string; children: React
         display: 'flex',
         flexDirection: 'column',
         gap: '4',
-        py: '12',
-        maxWidth: 'prose',
-        '& p': {color: 'fg.muted'},
+        py: '14',
+        px: '6',
+        mx: 'auto',
+        maxWidth: '780px',
+        width: 'full',
+        '& p': {color: 'ink.muted', lineHeight: '1.6'},
       })}
     >
-      <h1 className={css({fontSize: '3xl', fontWeight: 'bold', letterSpacing: 'tight'})}>
-        {title}
-      </h1>
+      <h1 className={css({textStyle: 'displayLg', color: 'ink'})}>{title}</h1>
       {children}
     </article>
   )

@@ -395,7 +395,7 @@ backend = "npm:@earendil-works/pi-coding-agent"
 allow_builds = '["@google/genai", "protobufjs"]'
 
 [[tools."npm:@sentry/warden"]]
-version = "0.40.0"
+version = "0.41.0"
 backend = "npm:@sentry/warden"
 
 [[tools."npm:cspell"]]
@@ -403,7 +403,7 @@ version = "10.0.1"
 backend = "npm:cspell"
 
 [[tools."npm:oxfmt"]]
-version = "0.58.0"
+version = "0.59.0"
 backend = "npm:oxfmt"
 
 [[tools.oxlint]]

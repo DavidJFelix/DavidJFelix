@@ -2,85 +2,86 @@ import {Link} from '@tanstack/react-router'
 
 import {css} from 'styled-system/css'
 
-const columns = [
-  {
-    heading: 'Shop',
-    links: [
-      {label: 'All products', to: '/products'},
-      {label: 'Cart', to: '/cart'},
-    ],
-  },
-  {
-    heading: 'Company',
-    links: [{label: 'About', to: '/about'}],
-  },
-  {
-    heading: 'Policies',
-    links: [
-      {label: 'Shipping', to: '/policies/shipping'},
-      {label: 'Returns', to: '/policies/returns'},
-      {label: 'Privacy', to: '/policies/privacy'},
-    ],
-  },
-] as const
+const column = css({display: 'flex', flexDirection: 'column', gap: '2.5'})
+const heading = css({textStyle: 'overline', color: 'ink'})
+const link = css({fontSize: '14px', color: 'ink.muted', _hover: {color: 'ink'}})
 
 export function SiteFooter() {
   return (
     <footer
       className={css({
+        bg: 'paper.shade',
         borderTop: '1px solid',
-        borderColor: 'neutral.200',
+        borderColor: 'border',
         mt: '16',
       })}
     >
       <div
         className={css({
-          maxWidth: '5xl',
+          maxWidth: 'page',
           mx: 'auto',
-          px: '4',
-          py: '10',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '8',
+          px: '6',
+          pt: '12',
+          pb: '8',
+          display: 'grid',
+          gridTemplateColumns: {base: '1fr', sm: '1fr 1fr', md: '1.6fr 1fr 1fr 1fr'},
+          gap: '10',
         })}
       >
-        <div
-          className={css({
-            display: 'grid',
-            gridTemplateColumns: {base: '1fr', sm: 'repeat(3, 1fr)'},
-            gap: '8',
-          })}
-        >
-          {columns.map((column) => (
-            <nav
-              key={column.heading}
-              aria-label={column.heading}
-              className={css({display: 'flex', flexDirection: 'column', gap: '2'})}
-            >
-              <h2
-                className={css({
-                  fontSize: 'sm',
-                  fontWeight: 'semibold',
-                  textTransform: 'uppercase',
-                  letterSpacing: 'wide',
-                  color: 'fg.muted',
-                })}
-              >
-                {column.heading}
-              </h2>
-              {column.links.map((link) => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  className={css({fontSize: 'sm', _hover: {color: 'brand'}})}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
-          ))}
+        <div className={css({display: 'flex', flexDirection: 'column', gap: '3'})}>
+          <span className={css({textStyle: 'displayMd', color: 'ink'})}>
+            forzamonica{' '}
+            <span className={css({fontStyle: 'normal', fontWeight: 'normal'})}>art</span>
+          </span>
+          <p className={css({textStyle: 'quote', color: 'ink.muted', maxWidth: '300px'})}>
+            “Every piece here is painted, packed, and shipped by me. Thanks for looking.” — Monica
+          </p>
         </div>
-        <p className={css({fontSize: 'sm', color: 'fg.muted'})}>© 2026 Forza Monica</p>
+        <nav aria-label="Shop" className={column}>
+          <h2 className={heading}>Shop</h2>
+          <Link to="/monica" className={link}>
+            Prints
+          </Link>
+          <Link to="/monica" search={{kind: 'Original'}} className={link}>
+            Originals
+          </Link>
+          <Link to="/commissions" className={link}>
+            Commissions
+          </Link>
+        </nav>
+        <nav aria-label="Studio" className={column}>
+          <h2 className={heading}>Studio</h2>
+          <Link to="/about" className={link}>
+            About Monica
+          </Link>
+          <Link to="/cart" className={link}>
+            Cart
+          </Link>
+        </nav>
+        <nav aria-label="Help" className={column}>
+          <h2 className={heading}>Help</h2>
+          <Link to="/policies/shipping" className={link}>
+            Shipping
+          </Link>
+          <Link to="/policies/returns" className={link}>
+            Returns
+          </Link>
+          <Link to="/policies/privacy" className={link}>
+            Privacy
+          </Link>
+        </nav>
+      </div>
+      <div
+        className={css({
+          maxWidth: 'page',
+          mx: 'auto',
+          px: '6',
+          pb: '6',
+          fontSize: '12px',
+          color: 'ink.faint',
+        })}
+      >
+        © 2026 forzamonica art · Watercolors by Monica Felix
       </div>
     </footer>
   )

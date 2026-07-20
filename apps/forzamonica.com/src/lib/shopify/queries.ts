@@ -16,6 +16,8 @@ export type ProductSummary = {
   id: string
   title: string
   handle: string
+  productType: string
+  availableForSale: boolean
   featuredImage: ProductImage | null
   priceRange: {minVariantPrice: Money}
 }
@@ -31,6 +33,8 @@ export type ProductDetail = {
   id: string
   title: string
   handle: string
+  productType: string
+  availableForSale: boolean
   description: string
   featuredImage: ProductImage | null
   variants: {edges: Array<{node: ProductVariant}>}
@@ -39,6 +43,7 @@ export type ProductDetail = {
 export type CartLine = {
   id: string
   quantity: number
+  cost: {totalAmount: Money}
   merchandise: {
     id: string
     title: string
@@ -46,6 +51,7 @@ export type CartLine = {
     product: {
       title: string
       handle: string
+      productType: string
       featuredImage: ProductImage | null
     }
   }
@@ -55,6 +61,7 @@ export type Cart = {
   id: string
   checkoutUrl: string
   totalQuantity: number
+  note: string | null
   cost: {subtotalAmount: Money}
   lines: {edges: Array<{node: CartLine}>}
 }
@@ -67,6 +74,8 @@ export const PRODUCTS_QUERY = /* GraphQL */ `
           id
           title
           handle
+          productType
+          availableForSale
           featuredImage {
             url
             altText
@@ -89,6 +98,8 @@ export const PRODUCT_QUERY = /* GraphQL */ `
       id
       title
       handle
+      productType
+      availableForSale
       description
       featuredImage {
         url
@@ -116,6 +127,7 @@ const CART_FIELDS = /* GraphQL */ `
     id
     checkoutUrl
     totalQuantity
+    note
     cost {
       subtotalAmount {
         amount
@@ -127,6 +139,12 @@ const CART_FIELDS = /* GraphQL */ `
         node {
           id
           quantity
+          cost {
+            totalAmount {
+              amount
+              currencyCode
+            }
+          }
           merchandise {
             ... on ProductVariant {
               id
@@ -138,6 +156,7 @@ const CART_FIELDS = /* GraphQL */ `
               product {
                 title
                 handle
+                productType
                 featuredImage {
                   url
                   altText
@@ -219,6 +238,21 @@ export const CART_LINES_REMOVE_MUTATION = /* GraphQL */ `
   ${CART_FIELDS}
   mutation CartLinesRemove($cartId: ID!, $lineIds: [ID!]!) {
     cartLinesRemove(cartId: $cartId, lineIds: $lineIds) {
+      cart {
+        ...CartFields
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+`
+
+export const CART_NOTE_UPDATE_MUTATION = /* GraphQL */ `
+  ${CART_FIELDS}
+  mutation CartNoteUpdate($cartId: ID!, $note: String!) {
+    cartNoteUpdate(cartId: $cartId, note: $note) {
       cart {
         ...CartFields
       }

@@ -9,25 +9,22 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as CartRouteImport } from './routes/cart'
-import { Route as BugsRouteImport } from './routes/bugs'
-import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as BugsRouteImport } from './routes/bugs'
+import { Route as CartRouteImport } from './routes/cart'
+import { Route as CommissionsRouteImport } from './routes/commissions'
+import { Route as MonicaRouteImport } from './routes/monica'
+import { Route as DiagSplatRouteImport } from './routes/diag/$'
+import { Route as PoliciesPrivacyRouteImport } from './routes/policies/privacy'
+import { Route as PoliciesReturnsRouteImport } from './routes/policies/returns'
+import { Route as PoliciesShippingRouteImport } from './routes/policies/shipping'
 import { Route as ProductsIndexRouteImport } from './routes/products/index'
 import { Route as ProductsHandleRouteImport } from './routes/products/$handle'
-import { Route as PoliciesShippingRouteImport } from './routes/policies/shipping'
-import { Route as PoliciesReturnsRouteImport } from './routes/policies/returns'
-import { Route as PoliciesPrivacyRouteImport } from './routes/policies/privacy'
-import { Route as DiagSplatRouteImport } from './routes/diag/$'
 
-const CartRoute = CartRouteImport.update({
-  id: '/cart',
-  path: '/cart',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BugsRoute = BugsRouteImport.update({
-  id: '/bugs',
-  path: '/bugs',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -35,9 +32,44 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const BugsRoute = BugsRouteImport.update({
+  id: '/bugs',
+  path: '/bugs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CartRoute = CartRouteImport.update({
+  id: '/cart',
+  path: '/cart',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommissionsRoute = CommissionsRouteImport.update({
+  id: '/commissions',
+  path: '/commissions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MonicaRoute = MonicaRouteImport.update({
+  id: '/monica',
+  path: '/monica',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DiagSplatRoute = DiagSplatRouteImport.update({
+  id: '/diag/$',
+  path: '/diag/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PoliciesPrivacyRoute = PoliciesPrivacyRouteImport.update({
+  id: '/policies/privacy',
+  path: '/policies/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PoliciesReturnsRoute = PoliciesReturnsRouteImport.update({
+  id: '/policies/returns',
+  path: '/policies/returns',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PoliciesShippingRoute = PoliciesShippingRouteImport.update({
+  id: '/policies/shipping',
+  path: '/policies/shipping',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProductsIndexRoute = ProductsIndexRouteImport.update({
@@ -50,32 +82,14 @@ const ProductsHandleRoute = ProductsHandleRouteImport.update({
   path: '/products/$handle',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PoliciesShippingRoute = PoliciesShippingRouteImport.update({
-  id: '/policies/shipping',
-  path: '/policies/shipping',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PoliciesReturnsRoute = PoliciesReturnsRouteImport.update({
-  id: '/policies/returns',
-  path: '/policies/returns',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PoliciesPrivacyRoute = PoliciesPrivacyRouteImport.update({
-  id: '/policies/privacy',
-  path: '/policies/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DiagSplatRoute = DiagSplatRouteImport.update({
-  id: '/diag/$',
-  path: '/diag/$',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/bugs': typeof BugsRoute
   '/cart': typeof CartRoute
+  '/commissions': typeof CommissionsRoute
+  '/monica': typeof MonicaRoute
   '/diag/$': typeof DiagSplatRoute
   '/policies/privacy': typeof PoliciesPrivacyRoute
   '/policies/returns': typeof PoliciesReturnsRoute
@@ -88,6 +102,8 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/bugs': typeof BugsRoute
   '/cart': typeof CartRoute
+  '/commissions': typeof CommissionsRoute
+  '/monica': typeof MonicaRoute
   '/diag/$': typeof DiagSplatRoute
   '/policies/privacy': typeof PoliciesPrivacyRoute
   '/policies/returns': typeof PoliciesReturnsRoute
@@ -101,6 +117,8 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/bugs': typeof BugsRoute
   '/cart': typeof CartRoute
+  '/commissions': typeof CommissionsRoute
+  '/monica': typeof MonicaRoute
   '/diag/$': typeof DiagSplatRoute
   '/policies/privacy': typeof PoliciesPrivacyRoute
   '/policies/returns': typeof PoliciesReturnsRoute
@@ -115,6 +133,8 @@ export interface FileRouteTypes {
     | '/about'
     | '/bugs'
     | '/cart'
+    | '/commissions'
+    | '/monica'
     | '/diag/$'
     | '/policies/privacy'
     | '/policies/returns'
@@ -127,6 +147,8 @@ export interface FileRouteTypes {
     | '/about'
     | '/bugs'
     | '/cart'
+    | '/commissions'
+    | '/monica'
     | '/diag/$'
     | '/policies/privacy'
     | '/policies/returns'
@@ -139,6 +161,8 @@ export interface FileRouteTypes {
     | '/about'
     | '/bugs'
     | '/cart'
+    | '/commissions'
+    | '/monica'
     | '/diag/$'
     | '/policies/privacy'
     | '/policies/returns'
@@ -152,6 +176,8 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   BugsRoute: typeof BugsRoute
   CartRoute: typeof CartRoute
+  CommissionsRoute: typeof CommissionsRoute
+  MonicaRoute: typeof MonicaRoute
   DiagSplatRoute: typeof DiagSplatRoute
   PoliciesPrivacyRoute: typeof PoliciesPrivacyRoute
   PoliciesReturnsRoute: typeof PoliciesReturnsRoute
@@ -162,18 +188,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/cart': {
-      id: '/cart'
-      path: '/cart'
-      fullPath: '/cart'
-      preLoaderRoute: typeof CartRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/bugs': {
-      id: '/bugs'
-      path: '/bugs'
-      fullPath: '/bugs'
-      preLoaderRoute: typeof BugsRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -183,11 +202,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/bugs': {
+      id: '/bugs'
+      path: '/bugs'
+      fullPath: '/bugs'
+      preLoaderRoute: typeof BugsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cart': {
+      id: '/cart'
+      path: '/cart'
+      fullPath: '/cart'
+      preLoaderRoute: typeof CartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/commissions': {
+      id: '/commissions'
+      path: '/commissions'
+      fullPath: '/commissions'
+      preLoaderRoute: typeof CommissionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/monica': {
+      id: '/monica'
+      path: '/monica'
+      fullPath: '/monica'
+      preLoaderRoute: typeof MonicaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/diag/$': {
+      id: '/diag/$'
+      path: '/diag/$'
+      fullPath: '/diag/$'
+      preLoaderRoute: typeof DiagSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/policies/privacy': {
+      id: '/policies/privacy'
+      path: '/policies/privacy'
+      fullPath: '/policies/privacy'
+      preLoaderRoute: typeof PoliciesPrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/policies/returns': {
+      id: '/policies/returns'
+      path: '/policies/returns'
+      fullPath: '/policies/returns'
+      preLoaderRoute: typeof PoliciesReturnsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/policies/shipping': {
+      id: '/policies/shipping'
+      path: '/policies/shipping'
+      fullPath: '/policies/shipping'
+      preLoaderRoute: typeof PoliciesShippingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/products/': {
@@ -204,34 +272,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductsHandleRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/policies/shipping': {
-      id: '/policies/shipping'
-      path: '/policies/shipping'
-      fullPath: '/policies/shipping'
-      preLoaderRoute: typeof PoliciesShippingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/policies/returns': {
-      id: '/policies/returns'
-      path: '/policies/returns'
-      fullPath: '/policies/returns'
-      preLoaderRoute: typeof PoliciesReturnsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/policies/privacy': {
-      id: '/policies/privacy'
-      path: '/policies/privacy'
-      fullPath: '/policies/privacy'
-      preLoaderRoute: typeof PoliciesPrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/diag/$': {
-      id: '/diag/$'
-      path: '/diag/$'
-      fullPath: '/diag/$'
-      preLoaderRoute: typeof DiagSplatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -240,6 +280,8 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   BugsRoute: BugsRoute,
   CartRoute: CartRoute,
+  CommissionsRoute: CommissionsRoute,
+  MonicaRoute: MonicaRoute,
   DiagSplatRoute: DiagSplatRoute,
   PoliciesPrivacyRoute: PoliciesPrivacyRoute,
   PoliciesReturnsRoute: PoliciesReturnsRoute,

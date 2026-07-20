@@ -28,4 +28,6 @@ path-scoped so the shared `update-snapshots` label only fires the bot whose app 
 Review follow-ups from the PR: the web fonts are self-hosted from `@fontsource-variable` bundles so
 no visitor request reaches Google's CDN, focused fields get a visible pigment halo on top of the
 border-color swap, field hints are associated with their controls via `aria-describedby`, and the
-active nav link carries `aria-current`.
+active nav link carries `aria-current`. Until launch the root path serves a chrome-free coming-soon
+landing in the shop's theme, with the gallery (and the rest of the storefront's front door) moved to
+`/monica`; `/products` now redirects there.

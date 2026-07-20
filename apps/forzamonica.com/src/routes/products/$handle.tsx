@@ -46,7 +46,7 @@ function ProductPage() {
           That painting isn't here anymore
         </h1>
         <Link
-          to="/"
+          to="/monica"
           className={css({fontWeight: 'bold', color: 'ink.muted', _hover: {color: 'ink'}})}
         >
           ← Back to the gallery
@@ -81,7 +81,7 @@ function ProductPage() {
   return (
     <section className={css({maxWidth: 'page', mx: 'auto', px: '6', pt: '10', pb: '6'})}>
       <Link
-        to="/"
+        to="/monica"
         className={css({
           display: 'inline-block',
           fontSize: '14px',

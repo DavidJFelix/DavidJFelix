@@ -31,10 +31,10 @@ function activeNavItem(pathname: string, kind: ProductKind | undefined): NavItem
   if (pathname === '/about') {
     return 'About'
   }
-  if (pathname === '/' && kind === 'Original') {
+  if (pathname === '/monica' && kind === 'Original') {
     return 'Originals'
   }
-  if (pathname === '/' || pathname.startsWith('/products')) {
+  if (pathname === '/monica' || pathname.startsWith('/products')) {
     return 'Shop'
   }
   return null
@@ -66,14 +66,17 @@ export function SiteHeader({cartQuantity}: SiteHeaderProps) {
           gap: '3',
         })}
       >
-        <Link to="/" className={css({textStyle: 'displayMd', color: 'ink', whiteSpace: 'nowrap'})}>
+        <Link
+          to="/monica"
+          className={css({textStyle: 'displayMd', color: 'ink', whiteSpace: 'nowrap'})}
+        >
           forzamonica <span className={css({fontStyle: 'normal', fontWeight: 'normal'})}>art</span>
         </Link>
         <nav className={css({display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '1'})}>
-          <Link to="/" {...navProps('Shop')}>
+          <Link to="/monica" {...navProps('Shop')}>
             Shop
           </Link>
-          <Link to="/" search={{kind: 'Original'}} {...navProps('Originals')}>
+          <Link to="/monica" search={{kind: 'Original'}} {...navProps('Originals')}>
             Originals
           </Link>
           <Link to="/commissions" {...navProps('Commissions')}>

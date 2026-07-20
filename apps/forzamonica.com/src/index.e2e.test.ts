@@ -10,8 +10,16 @@ import {expect, test} from '@playwright/test'
 // -- see playwright.config.ts.
 // Lives outside src/routes/ so the TanStack route generator does not pick it up.
 
-test('home page renders the gallery hero and shop chrome', async ({page}) => {
+test('root path serves the coming-soon landing without shop chrome', async ({page}) => {
   await page.goto('/')
+  await expect(page.getByRole('heading', {level: 1, name: 'forzamonica art'})).toBeVisible()
+  await expect(page.getByText('Watercolors by Monica Felix — coming soon.')).toBeVisible()
+  await expect(page.getByRole('banner')).toHaveCount(0)
+  await expect(page.getByRole('contentinfo')).toHaveCount(0)
+})
+
+test('gallery page renders the hero and shop chrome', async ({page}) => {
+  await page.goto('/monica')
   await expect(
     page.getByRole('heading', {level: 1, name: 'Watercolors by Monica Felix'}),
   ).toBeVisible()
@@ -27,16 +35,16 @@ test('home page renders the gallery hero and shop chrome', async ({page}) => {
   await expect(header.getByRole('link', {name: 'Cart'})).toBeVisible()
 })
 
-test('old catalog url redirects to the gallery home', async ({page}) => {
+test('old catalog url redirects to the gallery', async ({page}) => {
   await page.goto('/products')
   await expect(
     page.getByRole('heading', {level: 1, name: 'Watercolors by Monica Felix'}),
   ).toBeVisible()
-  expect(new URL(page.url()).pathname).toBe('/')
+  expect(new URL(page.url()).pathname).toBe('/monica')
 })
 
 test('footer links the sitemap', async ({page}) => {
-  await page.goto('/')
+  await page.goto('/monica')
   const footer = page.getByRole('contentinfo')
   await expect(footer.getByRole('link', {name: 'Prints'})).toBeVisible()
   await expect(footer.getByRole('link', {name: 'Originals'})).toBeVisible()

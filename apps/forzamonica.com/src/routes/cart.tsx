@@ -45,7 +45,7 @@ function CartPage() {
         <p className={css({fontSize: '15px', color: 'ink.muted'})}>
           That's easily fixed — the gallery is right this way.
         </p>
-        <Link to="/" className={button()}>
+        <Link to="/monica" className={button()}>
           Browse the gallery
         </Link>
       </section>

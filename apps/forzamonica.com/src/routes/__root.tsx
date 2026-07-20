@@ -1,5 +1,12 @@
 import {TanStackDevtools} from '@tanstack/react-devtools'
-import {createRootRoute, HeadContent, Link, Outlet, Scripts} from '@tanstack/react-router'
+import {
+  createRootRoute,
+  HeadContent,
+  Link,
+  Outlet,
+  Scripts,
+  useRouterState,
+} from '@tanstack/react-router'
 import {TanStackRouterDevtoolsPanel} from '@tanstack/react-router-devtools'
 
 import {css} from 'styled-system/css'
@@ -36,15 +43,20 @@ export const Route = createRootRoute({
 
 function RootLayout() {
   const cartQuantity = Route.useLoaderData()
+  const pathname = useRouterState({select: (state) => state.location.pathname})
+  // The root path is the pre-launch coming-soon landing: no shop chrome. The
+  // storefront (and its header/footer) lives under /monica and the other
+  // routes until launch.
+  const isLanding = pathname === '/'
   // Pages bring their own width containers (the gallery, cart, and commission
   // layouts each set different maximums), so <main> only fills the column.
   return (
     <>
-      <SiteHeader cartQuantity={cartQuantity} />
+      {isLanding ? null : <SiteHeader cartQuantity={cartQuantity} />}
       <main className={css({width: 'full', flex: '1'})}>
         <Outlet />
       </main>
-      <SiteFooter />
+      {isLanding ? null : <SiteFooter />}
     </>
   )
 }
@@ -68,7 +80,7 @@ function NotFound() {
       <p className={css({color: 'ink.muted', maxWidth: 'prose'})}>
         The page you are looking for does not exist or has moved.
       </p>
-      <Link to="/" className={button()}>
+      <Link to="/monica" className={button()}>
         Back to the gallery
       </Link>
     </section>

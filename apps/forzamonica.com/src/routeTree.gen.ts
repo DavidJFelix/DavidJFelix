@@ -14,6 +14,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as BugsRouteImport } from './routes/bugs'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as CommissionsRouteImport } from './routes/commissions'
+import { Route as MonicaRouteImport } from './routes/monica'
 import { Route as DiagSplatRouteImport } from './routes/diag/$'
 import { Route as PoliciesPrivacyRouteImport } from './routes/policies/privacy'
 import { Route as PoliciesReturnsRouteImport } from './routes/policies/returns'
@@ -44,6 +45,11 @@ const CartRoute = CartRouteImport.update({
 const CommissionsRoute = CommissionsRouteImport.update({
   id: '/commissions',
   path: '/commissions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MonicaRoute = MonicaRouteImport.update({
+  id: '/monica',
+  path: '/monica',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DiagSplatRoute = DiagSplatRouteImport.update({
@@ -83,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/bugs': typeof BugsRoute
   '/cart': typeof CartRoute
   '/commissions': typeof CommissionsRoute
+  '/monica': typeof MonicaRoute
   '/diag/$': typeof DiagSplatRoute
   '/policies/privacy': typeof PoliciesPrivacyRoute
   '/policies/returns': typeof PoliciesReturnsRoute
@@ -96,6 +103,7 @@ export interface FileRoutesByTo {
   '/bugs': typeof BugsRoute
   '/cart': typeof CartRoute
   '/commissions': typeof CommissionsRoute
+  '/monica': typeof MonicaRoute
   '/diag/$': typeof DiagSplatRoute
   '/policies/privacy': typeof PoliciesPrivacyRoute
   '/policies/returns': typeof PoliciesReturnsRoute
@@ -110,6 +118,7 @@ export interface FileRoutesById {
   '/bugs': typeof BugsRoute
   '/cart': typeof CartRoute
   '/commissions': typeof CommissionsRoute
+  '/monica': typeof MonicaRoute
   '/diag/$': typeof DiagSplatRoute
   '/policies/privacy': typeof PoliciesPrivacyRoute
   '/policies/returns': typeof PoliciesReturnsRoute
@@ -125,6 +134,7 @@ export interface FileRouteTypes {
     | '/bugs'
     | '/cart'
     | '/commissions'
+    | '/monica'
     | '/diag/$'
     | '/policies/privacy'
     | '/policies/returns'
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/bugs'
     | '/cart'
     | '/commissions'
+    | '/monica'
     | '/diag/$'
     | '/policies/privacy'
     | '/policies/returns'
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/bugs'
     | '/cart'
     | '/commissions'
+    | '/monica'
     | '/diag/$'
     | '/policies/privacy'
     | '/policies/returns'
@@ -165,6 +177,7 @@ export interface RootRouteChildren {
   BugsRoute: typeof BugsRoute
   CartRoute: typeof CartRoute
   CommissionsRoute: typeof CommissionsRoute
+  MonicaRoute: typeof MonicaRoute
   DiagSplatRoute: typeof DiagSplatRoute
   PoliciesPrivacyRoute: typeof PoliciesPrivacyRoute
   PoliciesReturnsRoute: typeof PoliciesReturnsRoute
@@ -208,6 +221,13 @@ declare module '@tanstack/react-router' {
       path: '/commissions'
       fullPath: '/commissions'
       preLoaderRoute: typeof CommissionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/monica': {
+      id: '/monica'
+      path: '/monica'
+      fullPath: '/monica'
+      preLoaderRoute: typeof MonicaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/diag/$': {
@@ -261,6 +281,7 @@ const rootRouteChildren: RootRouteChildren = {
   BugsRoute: BugsRoute,
   CartRoute: CartRoute,
   CommissionsRoute: CommissionsRoute,
+  MonicaRoute: MonicaRoute,
   DiagSplatRoute: DiagSplatRoute,
   PoliciesPrivacyRoute: PoliciesPrivacyRoute,
   PoliciesReturnsRoute: PoliciesReturnsRoute,

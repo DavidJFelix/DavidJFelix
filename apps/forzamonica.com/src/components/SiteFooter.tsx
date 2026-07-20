@@ -39,10 +39,10 @@ export function SiteFooter() {
         </div>
         <nav aria-label="Shop" className={column}>
           <h2 className={heading}>Shop</h2>
-          <Link to="/" className={link}>
+          <Link to="/monica" className={link}>
             Prints
           </Link>
-          <Link to="/" search={{kind: 'Original'}} className={link}>
+          <Link to="/monica" search={{kind: 'Original'}} className={link}>
             Originals
           </Link>
           <Link to="/commissions" className={link}>

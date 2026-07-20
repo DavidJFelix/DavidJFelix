@@ -1,5 +1,5 @@
 import {createFileRoute, Link, useRouter} from '@tanstack/react-router'
-import {useEffect, useId, useRef, useState} from 'react'
+import {useCallback, useEffect, useId, useRef, useState} from 'react'
 
 import {css, cx} from 'styled-system/css'
 import {button, card, field} from 'styled-system/recipes'
@@ -16,6 +16,12 @@ import type {CartLine} from '@/lib/shopify/queries.ts'
 const FREE_SHIPPING_THRESHOLD = 75
 const FLAT_SHIPPING = 6
 
+// Quantity edits are debounced and the gift note commits on blur, so a click
+// on Check out can otherwise outrun an unsaved change. Rows and the note field
+// register a flush here; checkout settles them all before leaving for Shopify.
+type CommitFlusher = () => Promise<void>
+type RegisterFlush = (key: string, flush: CommitFlusher | null) => void
+
 export const Route = createFileRoute('/cart')({
   loader: () => fetchCart(),
   head: () => ({meta: [{title: 'Cart — forzamonica art'}]}),
@@ -25,6 +31,32 @@ export const Route = createFileRoute('/cart')({
 function CartPage() {
   const cart = Route.useLoaderData()
   const lines = cart?.lines.edges.map((edge) => edge.node) ?? []
+  const flushers = useRef(new Map<string, CommitFlusher>())
+  const [checkingOut, setCheckingOut] = useState(false)
+
+  const registerFlush = useCallback<RegisterFlush>((key, flush) => {
+    if (flush) {
+      flushers.current.set(key, flush)
+    } else {
+      flushers.current.delete(key)
+    }
+  }, [])
+
+  async function handleCheckout(event: React.MouseEvent<HTMLAnchorElement>) {
+    event.preventDefault()
+    if (!cart || checkingOut) {
+      return
+    }
+    setCheckingOut(true)
+    try {
+      await Promise.all(Array.from(flushers.current.values(), (flush) => flush()))
+      window.location.assign(cart.checkoutUrl)
+    } catch {
+      // A pending commit failed; its row is already showing the error --
+      // stay on the cart instead of checking out a stale one.
+      setCheckingOut(false)
+    }
+  }
 
   if (!cart || lines.length === 0) {
     return (
@@ -70,7 +102,7 @@ function CartPage() {
       >
         <ul className={cx(card(), css({px: '6', py: '1', listStyle: 'none'}))}>
           {lines.map((line) => (
-            <CartLineRow key={line.id} line={line} />
+            <CartLineRow key={line.id} line={line} registerFlush={registerFlush} />
           ))}
         </ul>
         <div className={cx(card(), css({p: '6'}))}>
@@ -113,7 +145,10 @@ function CartPage() {
                 })}
               >
                 You're{' '}
-                {formatPrice({amount: String(FREE_SHIPPING_THRESHOLD - subtotal), currencyCode})}{' '}
+                {formatPrice({
+                  amount: (FREE_SHIPPING_THRESHOLD - subtotal).toFixed(2),
+                  currencyCode,
+                })}{' '}
                 away from free shipping.
               </p>
             )}
@@ -130,11 +165,19 @@ function CartPage() {
               })}
             >
               <span>Total</span>
-              <span>{formatPrice({amount: String(subtotal + shipping), currencyCode})}</span>
+              <span>{formatPrice({amount: (subtotal + shipping).toFixed(2), currencyCode})}</span>
             </div>
-            <GiftNoteField note={cart.note ?? ''} />
-            <a href={cart.checkoutUrl} className={button()}>
-              Check out
+            <GiftNoteField note={cart.note ?? ''} registerFlush={registerFlush} />
+            <a
+              href={cart.checkoutUrl}
+              onClick={handleCheckout}
+              aria-disabled={checkingOut}
+              className={cx(
+                button(),
+                checkingOut ? css({opacity: 0.45, pointerEvents: 'none'}) : undefined,
+              )}
+            >
+              {checkingOut ? 'Heading to checkout…' : 'Check out'}
             </a>
             <span className={css({fontSize: '12px', color: 'ink.faint', textAlign: 'center'})}>
               Ships within 3 days · returns within 30
@@ -147,31 +190,56 @@ function CartPage() {
 }
 
 // Committed on blur; the note rides with the cart into Shopify checkout.
-function GiftNoteField({note}: {note: string}) {
+function GiftNoteField({note, registerFlush}: {note: string; registerFlush: RegisterFlush}) {
   const router = useRouter()
   const [draft, setDraft] = useState(note)
   const [error, setError] = useState<string | null>(null)
   const fieldClasses = field()
   const describedById = useId()
+  const inFlight = useRef<Promise<boolean> | null>(null)
 
   // Re-sync the draft whenever the loader refreshes server truth.
   useEffect(() => {
     setDraft(note)
   }, [note])
 
-  async function commit() {
+  // Resolves false on failure instead of rejecting so blur can fire-and-forget
+  // while checkout's flush still learns whether the note actually saved.
+  function commit(): Promise<boolean> {
+    if (inFlight.current) {
+      return inFlight.current
+    }
     if (draft === note) {
-      return
+      return Promise.resolve(true)
     }
     setError(null)
-    try {
-      await updateCartNote({data: {note: draft}})
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not save the note')
-    } finally {
-      await router.invalidate()
-    }
+    const run = (async () => {
+      try {
+        await updateCartNote({data: {note: draft}})
+        return true
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : 'Could not save the note')
+        return false
+      } finally {
+        await router.invalidate()
+        inFlight.current = null
+      }
+    })()
+    inFlight.current = run
+    return run
   }
+
+  const commitRef = useRef(commit)
+  commitRef.current = commit
+
+  useEffect(() => {
+    registerFlush('gift-note', async () => {
+      if (!(await commitRef.current())) {
+        throw new Error('gift note not saved')
+      }
+    })
+    return () => registerFlush('gift-note', null)
+  }, [registerFlush])
 
   return (
     <label className={fieldClasses.root}>
@@ -198,7 +266,7 @@ function GiftNoteField({note}: {note: string}) {
   )
 }
 
-function CartLineRow({line}: {line: CartLine}) {
+function CartLineRow({line, registerFlush}: {line: CartLine; registerFlush: RegisterFlush}) {
   const router = useRouter()
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -206,13 +274,15 @@ function CartLineRow({line}: {line: CartLine}) {
   // value is committed to Shopify (see scheduleQuantityCommit).
   const [quantity, setQuantity] = useState(line.quantity)
   const commitTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const inFlight = useRef(false)
+  const pendingCommit = useRef<(() => Promise<boolean>) | null>(null)
+  const inFlight = useRef<Promise<boolean> | null>(null)
 
   function cancelScheduledCommit() {
     if (commitTimer.current) {
       clearTimeout(commitTimer.current)
       commitTimer.current = null
     }
+    pendingCommit.current = null
   }
 
   // Re-sync the draft (and drop any stale scheduled commit) whenever the
@@ -224,6 +294,7 @@ function CartLineRow({line}: {line: CartLine}) {
         clearTimeout(commitTimer.current)
         commitTimer.current = null
       }
+      pendingCommit.current = null
     }
   }, [line.quantity])
 
@@ -232,45 +303,70 @@ function CartLineRow({line}: {line: CartLine}) {
   // (which then resolves to the empty-cart state instead of a stuck row).
   // inFlight serializes mutations per row, and any explicit mutation
   // supersedes a pending draft commit (e.g. Remove cancels a scheduled
-  // quantity update for the same line).
-  async function mutate(action: () => Promise<unknown>) {
+  // quantity update for the same line). Resolves false on failure instead of
+  // rejecting so click handlers can fire-and-forget while checkout's flush
+  // still learns whether the cart is really settled.
+  function mutate(action: () => Promise<unknown>): Promise<boolean> {
     if (inFlight.current) {
-      return
+      return inFlight.current
     }
     cancelScheduledCommit()
-    inFlight.current = true
     setPending(true)
     setError(null)
-    try {
-      await action()
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not update cart')
-    } finally {
-      await router.invalidate()
-      inFlight.current = false
-      setPending(false)
-    }
+    const run = (async () => {
+      try {
+        await action()
+        return true
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : 'Could not update cart')
+        return false
+      } finally {
+        await router.invalidate()
+        inFlight.current = null
+        setPending(false)
+      }
+    })()
+    inFlight.current = run
+    return run
   }
 
   // Debounce quantity edits so intermediate values while typing (5 -> 1 -> 15)
-  // never reach Shopify.
+  // never reach Shopify. The armed commit is kept in pendingCommit so checkout
+  // can flush it early instead of racing the timer.
   function scheduleQuantityCommit(next: number) {
     setQuantity(next)
     if (commitTimer.current) {
       clearTimeout(commitTimer.current)
     }
-    commitTimer.current = setTimeout(() => {
-      commitTimer.current = null
+    const action = (): Promise<boolean> => {
+      cancelScheduledCommit()
       if (next === line.quantity) {
-        return
+        return Promise.resolve(true)
       }
-      void mutate(() =>
+      return mutate(() =>
         next === 0
           ? removeCartLine({data: {lineId: line.id}})
           : updateCartLine({data: {lineId: line.id, quantity: next}}),
       )
+    }
+    pendingCommit.current = action
+    commitTimer.current = setTimeout(() => {
+      void action()
     }, 500)
   }
+
+  const flushRef = useRef<() => Promise<void>>(async () => {})
+  flushRef.current = async () => {
+    const settled = pendingCommit.current ? await pendingCommit.current() : await inFlight.current
+    if (settled === false) {
+      throw new Error('cart update failed')
+    }
+  }
+
+  useEffect(() => {
+    registerFlush(line.id, () => flushRef.current())
+    return () => registerFlush(line.id, null)
+  }, [line.id, registerFlush])
 
   const product = line.merchandise.product
   const image = product.featuredImage

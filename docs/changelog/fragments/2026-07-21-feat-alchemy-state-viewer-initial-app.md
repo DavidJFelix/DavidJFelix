@@ -15,5 +15,6 @@ secret-free.
 Ships with the standard app rig: mise check tasks, oxlint + biome + oxfmt clean, vitest unit tests
 with a v8 coverage ratchet on `src/lib`, a `smoke` task that boots the built worker in
 `wrangler dev` and probes it, CI (`ci-alchemy-state-viewer.yml`), and CD deploying to workers.dev
-(`cd-deploy-alchemy-state-viewer.yml`). Per-PR previews are deferred: the shared `preview-wrangler`
-action requires a Playwright screenshot suite this app does not have yet.
+(`cd-deploy-alchemy-state-viewer.yml`). Per-PR previews are deferred to the parked
+`alchemy-state-viewer-previews` project: the shared `preview-wrangler` action requires a Playwright
+screenshot suite this app does not have yet.

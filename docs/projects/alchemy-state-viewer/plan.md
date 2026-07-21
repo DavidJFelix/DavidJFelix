@@ -21,9 +21,9 @@ stack outputs). The first SvelteKit app in the monorepo.
 
 - [ ] Human: set the worker secrets (`ALCHEMY_STATE_URL`, `ALCHEMY_STATE_TOKEN`, `APP_PASSWORD`)
       after the first deploy so the viewer reads the real state store.
-- [ ] Per-PR previews: the shared `preview-wrangler` action requires a Playwright screenshot suite;
-      add a minimal e2e suite and a `cd-preview-alchemy-state-viewer.yml` when previews earn their
-      keep.
+- [ ] Per-PR previews: spun out to
+      [alchemy-state-viewer-previews](../alchemy-state-viewer-previews/plan.md) (parked -- needs a
+      minimal Playwright suite first, and previews inherit the worker's Basic-auth secrets).
 - [ ] Possible niceties once real state is browsable: filter/search over FQNs, surfacing
       `getReplacedResources` cleanup backlog, linking downstream FQNs across stages.
 

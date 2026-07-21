@@ -71,6 +71,14 @@ and verified; next is swapping the echo stub for a real model — which must sit
 
 **Status**: Functional
 
+#### [alchemy-state-viewer](./projects/alchemy-state-viewer/plan.md)
+
+Read-only dashboard for alchemy-effect deployment state (SvelteKit on Workers, the monorepo's
+first). Browses the alchemy Cloudflare state store — stacks, stages, resource state, outputs — with
+secrets masked server-side and a Basic-auth gate. Dark until the worker secrets are set.
+
+**Status**: Functional · Blocked (human secrets)
+
 ### Placeholders (live domains; basic layout is the near-term)
 
 #### [monicandavid.com](./projects/monicandavid-com/plan.md)

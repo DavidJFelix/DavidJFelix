@@ -1,0 +1,17 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "alchemy-state-viewer"
+main = ".svelte-kit/cloudflare/_worker.js"
+compatibility_date = "2026-06-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Intentionally served from workers.dev only -- this is a personal
+# infrastructure dashboard, not a public site. Runtime configuration is
+# secrets-only (`wrangler secret put ALCHEMY_STATE_URL / ALCHEMY_STATE_TOKEN /
+# APP_PASSWORD`); see .dev.vars.example.
+
+[assets]
+binding = "ASSETS"
+directory = ".svelte-kit/cloudflare"
+
+[observability]
+enabled = true

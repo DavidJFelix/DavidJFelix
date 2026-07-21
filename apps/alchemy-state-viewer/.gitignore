@@ -1,0 +1,10 @@
+node_modules
+.DS_Store
+.svelte-kit
+.wrangler
+.dev.vars
+.env
+*.local
+
+# vitest coverage output
+coverage/

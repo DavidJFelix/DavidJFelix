@@ -25,6 +25,10 @@ jobs:
         uses: ./.depot/actions/setup-mise
       - name: pnpm install
         run: pnpm install --frozen-lockfile
+      # `pnpm install` already runs `panda codegen` via the prepare script, but
+      # keep it explicit so the build does not depend on install side effects.
+      - name: panda codegen
+        run: pnpm exec panda codegen
       - name: vite build
         run: pnpm exec vite build
       # wrangler.toml's `main`/`assets` point at .svelte-kit/cloudflare, so a

@@ -1,5 +1,6 @@
 <script lang="ts">
-import JsonBlock from '$lib/components/json-block.svelte'
+import {css} from 'styled-system/css'
+import StateSection from '$lib/components/state-section.svelte'
 import StatusBadge from '$lib/components/status-badge.svelte'
 import {isAction, typeOf} from '$lib/state'
 import type {PageServerData} from './$types'
@@ -10,13 +11,58 @@ const stageHref = $derived(
   `/stacks/${encodeURIComponent(data.stack)}/${encodeURIComponent(data.stage)}`,
 )
 const action = $derived(isAction(data.state))
+
+const crumbs = css({
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: '0.4rem',
+  fontSize: '0.85rem',
+  color: 'muted',
+  mb: '0.75rem',
+})
+
+const title = css({fontSize: '1.25rem', m: 0, mb: '1rem', overflowWrap: 'anywhere'})
+
+const overview = css({
+  display: 'grid',
+  gridTemplateColumns: 'max-content 1fr',
+  gap: '0.35rem 1.25rem',
+  m: 0,
+  mb: '1.5rem',
+  bg: 'surface',
+  borderWidth: '1px',
+  borderColor: 'border',
+  borderRadius: '8px',
+  px: '1.25rem',
+  py: '1rem',
+  '& dt': {
+    color: 'muted',
+    fontSize: '0.85rem',
+  },
+  '& dd': {
+    m: 0,
+    fontSize: '0.9rem',
+  },
+})
+
+const kind = css({
+  ms: '0.5rem',
+  fontSize: '0.7rem',
+  color: 'muted',
+  textTransform: 'uppercase',
+  letterSpacing: '0.05em',
+})
+
+const downstreamSection = css({mt: '1.5rem'})
+const downstreamHeading = css({fontSize: '1rem', m: 0, mb: '0.6rem'})
+const downstreamList = css({listStyle: 'none', m: 0, p: 0, display: 'grid', gap: '0.35rem'})
 </script>
 
 <svelte:head>
   <title>{data.fqn} - alchemy state</title>
 </svelte:head>
 
-<nav class="crumbs">
+<nav class={crumbs}>
   <a href="/">stacks</a>
   <span>/</span>
   <a href={stageHref}>{data.stack} @ {data.stage}</a>
@@ -24,11 +70,11 @@ const action = $derived(isAction(data.state))
   <strong>{data.fqn}</strong>
 </nav>
 
-<h1><code>{data.fqn}</code></h1>
+<h1 class={title}><code>{data.fqn}</code></h1>
 
-<dl class="overview">
+<dl class={overview}>
   <dt>Type</dt>
-  <dd><code>{typeOf(data.state)}</code>{#if action}<span class="kind">action</span>{/if}</dd>
+  <dd><code>{typeOf(data.state)}</code>{#if action}<span class={kind}>action</span>{/if}</dd>
   <dt>Status</dt>
   <dd><StatusBadge status={data.state.status} /></dd>
   {#if data.state.logicalId !== undefined}
@@ -50,51 +96,33 @@ const action = $derived(isAction(data.state))
 </dl>
 
 {#if data.state.props !== undefined}
-  <section>
-    <h2>Props <span class="hint">desired state</span></h2>
-    <JsonBlock value={data.state.props} />
-  </section>
+  <StateSection title="Props" hint="desired state" value={data.state.props} />
 {/if}
 
 {#if data.state.attr !== undefined}
-  <section>
-    <h2>Attributes <span class="hint">current state</span></h2>
-    <JsonBlock value={data.state.attr} />
-  </section>
+  <StateSection title="Attributes" hint="current state" value={data.state.attr} />
 {/if}
 
 {#if data.state.input !== undefined}
-  <section>
-    <h2>Input</h2>
-    <JsonBlock value={data.state.input} />
-  </section>
+  <StateSection title="Input" value={data.state.input} />
 {/if}
 
 {#if data.state.output !== undefined}
-  <section>
-    <h2>Output</h2>
-    <JsonBlock value={data.state.output} />
-  </section>
+  <StateSection title="Output" value={data.state.output} />
 {/if}
 
 {#if data.state.old !== undefined}
-  <section>
-    <h2>Old <span class="hint">pre-update / replaced state</span></h2>
-    <JsonBlock value={data.state.old} />
-  </section>
+  <StateSection title="Old" hint="pre-update / replaced state" value={data.state.old} />
 {/if}
 
 {#if data.state.bindings !== undefined && data.state.bindings.length > 0}
-  <section>
-    <h2>Bindings</h2>
-    <JsonBlock value={data.state.bindings} />
-  </section>
+  <StateSection title="Bindings" value={data.state.bindings} />
 {/if}
 
 {#if data.state.downstream !== undefined && data.state.downstream.length > 0}
-  <section>
-    <h2>Downstream</h2>
-    <ul class="downstream">
+  <section class={downstreamSection}>
+    <h2 class={downstreamHeading}>Downstream</h2>
+    <ul class={downstreamList}>
       {#each data.state.downstream as fqn (fqn)}
         <li>
           <a href="{stageHref}/resources/{encodeURIComponent(fqn)}"><code>{fqn}</code></a>
@@ -103,72 +131,3 @@ const action = $derived(isAction(data.state))
     </ul>
   </section>
 {/if}
-
-<style>
-  .crumbs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    font-size: 0.85rem;
-    color: var(--muted);
-    margin-bottom: 0.75rem;
-  }
-
-  h1 {
-    font-size: 1.25rem;
-    margin: 0 0 1rem;
-    overflow-wrap: anywhere;
-  }
-
-  .overview {
-    display: grid;
-    grid-template-columns: max-content 1fr;
-    gap: 0.35rem 1.25rem;
-    margin: 0 0 1.5rem;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 1rem 1.25rem;
-  }
-
-  dt {
-    color: var(--muted);
-    font-size: 0.85rem;
-  }
-
-  dd {
-    margin: 0;
-    font-size: 0.9rem;
-  }
-
-  .kind {
-    margin-left: 0.5rem;
-    font-size: 0.7rem;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  section {
-    margin-top: 1.5rem;
-  }
-
-  h2 {
-    font-size: 1rem;
-    margin: 0 0 0.6rem;
-  }
-
-  .hint {
-    color: var(--muted);
-    font-weight: 400;
-    font-size: 0.8rem;
-  }
-
-  .downstream {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    gap: 0.35rem;
-  }
-</style>

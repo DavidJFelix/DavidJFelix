@@ -4,7 +4,8 @@ A read-only web viewer for [alchemy-effect](https://github.com/DavidJFelix/alche
 Infrastructure-as-Effects state, deployed as a SvelteKit app on Cloudflare Workers. It browses the
 alchemy Cloudflare state store (the `alchemy-state-store` worker) over its HTTP API: stacks, stages,
 per-resource state (props, attributes, bindings, downstream edges, replacement backlog), and stack
-outputs.
+outputs. Styling is Panda CSS (semantic tokens, light/dark via `prefers-color-scheme`); interactive
+components are Ark UI for Svelte (JSON tree views, collapsible sections).
 
 ## How it reads state
 
@@ -19,9 +20,9 @@ human-readable strings.
 
 Two runtime secrets (see `.dev.vars.example`; local dev reads `.dev.vars`):
 
-| Secret                | Purpose                                                                |
-| --------------------- | ---------------------------------------------------------------------- |
-| `ALCHEMY_STATE_URL`   | Base URL of the state store worker                                     |
+| Secret                | Purpose                                                                                                  |
+| --------------------- | -------------------------------------------------------------------------------------------------------- |
+| `ALCHEMY_STATE_URL`   | Base URL of the state store worker                                                                       |
 | `ALCHEMY_STATE_TOKEN` | Bearer token (cached by the alchemy CLI under `~/.alchemy/credentials/<profile>/cloudflare-state-store`) |
 
 Unconfigured, the app renders setup instructions instead of erroring -- that keeps the smoke gate

@@ -2,7 +2,8 @@
 
 A read-only dashboard for alchemy-effect Infrastructure-as-Effects state -- SvelteKit on Cloudflare
 Workers, browsing the alchemy Cloudflare state store's HTTP API (stacks, stages, resource state,
-stack outputs). The first SvelteKit app in the monorepo.
+stack outputs). Panda CSS for styling, Ark UI (Svelte) for components (JSON tree views, collapsible
+sections).
 
 ## Current state (2026-07-21)
 

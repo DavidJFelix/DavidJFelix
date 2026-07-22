@@ -1,25 +1,14 @@
 <script lang="ts">
+import {css} from 'styled-system/css'
 import {page} from '$app/state'
+
+const section = css({py: '3rem', textAlign: 'center'})
+const status = css({fontSize: '2.5rem', m: 0, mb: '0.5rem'})
+const message = css({color: 'muted'})
 </script>
 
-<section>
-  <h1>{page.status}</h1>
-  <p>{page.error?.message ?? 'Something went wrong.'}</p>
-  <p><a href="/">Back to stacks</a></p>
+<section class={section}>
+  <h1 class={status}>{page.status}</h1>
+  <p class={message}>{page.error?.message ?? 'Something went wrong.'}</p>
+  <p class={message}><a href="/">Back to stacks</a></p>
 </section>
-
-<style>
-  section {
-    padding: 3rem 0;
-    text-align: center;
-  }
-
-  h1 {
-    font-size: 2.5rem;
-    margin: 0 0 0.5rem;
-  }
-
-  p {
-    color: var(--muted);
-  }
-</style>

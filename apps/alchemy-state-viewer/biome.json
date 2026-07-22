@@ -3,6 +3,6 @@
   "$schema": "https://biomejs.dev/schemas/2.5.0/schema.json",
   "extends": ["../../biome.jsonc"],
   "files": {
-    "includes": ["**", "!.svelte-kit", "!.wrangler", "!coverage", "!node_modules"]
+    "includes": ["**", "!.svelte-kit", "!.wrangler", "!coverage", "!node_modules", "!styled-system"]
   }
 }

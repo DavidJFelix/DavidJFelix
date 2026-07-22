@@ -1,10 +1,12 @@
 ### feat(alchemy-state-viewer): read-only web viewer for alchemy deployment state
 
-New app `apps/alchemy-state-viewer` -- the monorepo's first SvelteKit app (Svelte 5, cloudflare
-adapter) -- presenting alchemy-effect Infrastructure-as-Effects state in the browser. It proxies the
-alchemy Cloudflare state store's HTTP API server-side and renders stacks, stages, per-resource state
-(props, attributes, bindings, downstream edges, replacement backlog, action rows), and stack
-outputs, with status summaries per stage.
+New app `apps/alchemy-state-viewer` (SvelteKit / Svelte 5, cloudflare adapter) presenting
+alchemy-effect Infrastructure-as-Effects state in the browser. It proxies the alchemy Cloudflare
+state store's HTTP API server-side and renders stacks, stages, per-resource state (props,
+attributes, bindings, downstream edges, replacement backlog, action rows), and stack outputs, with
+status summaries per stage. Styling is Panda CSS (semantic tokens, light/dark); components are Ark
+UI for Svelte -- state JSON renders as interactive tree views (`JsonTreeView`) inside collapsible
+sections, with a Panda recipe for status badges.
 
 Security posture: the state-store bearer token lives only in worker secrets (`ALCHEMY_STATE_TOKEN`);
 persisted secrets (`__redacted__` envelopes) are masked server-side so they never reach the browser;

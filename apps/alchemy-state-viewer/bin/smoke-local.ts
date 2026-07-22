@@ -28,6 +28,8 @@ if (!existsSync('.svelte-kit/cloudflare/_worker.js')) {
 // Spawn the wrangler binary directly (not through `pnpm run`): killing the pnpm
 // wrapper does not cascade to the server, so it would outlive teardown and hold
 // the port. `--inspector-port 0` avoids clashing with anything else on 9229.
+// Blank the committed ALCHEMY_STATE_URL var so the gate exercises the
+// deterministic unconfigured boot instead of reaching for the real store.
 const server = Bun.spawn(
   [
     'node_modules/.bin/wrangler',
@@ -38,6 +40,8 @@ const server = Bun.spawn(
     String(PORT),
     '--inspector-port',
     '0',
+    '--var',
+    'ALCHEMY_STATE_URL:',
   ],
   {
     env: {...process.env, CI: 'true', WRANGLER_SEND_METRICS: 'false'},

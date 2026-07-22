@@ -10,6 +10,14 @@ test('resolves url and token from string env', async () => {
   expect(settings).toEqual({url: 'https://state.example.com', authToken: 'abc'})
 })
 
+test('reads url and token strings from the platform env (wrangler vars/.dev.vars)', async () => {
+  const settings = await resolveStateStoreSettings({
+    env: {},
+    platformEnv: {ALCHEMY_STATE_URL: 'https://state.example.com', ALCHEMY_STATE_TOKEN: 'abc'},
+  })
+  expect(settings).toEqual({url: 'https://state.example.com', authToken: 'abc'})
+})
+
 test('falls back to the Secrets Store binding for the token', async () => {
   const settings = await resolveStateStoreSettings({
     env: URL_ENV,

@@ -20,13 +20,26 @@ const isSecretBinding = (value: unknown): value is SecretsStoreSecretBinding =>
   value !== null &&
   typeof (value as SecretsStoreSecretBinding).get === 'function'
 
+const stringValue = (key: string, params: ResolveStateStoreSettingsParams): string | undefined => {
+  const fromEnv = params.env[key]?.trim()
+  if (fromEnv) return fromEnv
+  const fromPlatform = params.platformEnv?.[key]
+  if (typeof fromPlatform === 'string' && fromPlatform.trim()) return fromPlatform.trim()
+  return undefined
+}
+
 /**
- * Resolve the state-store connection. The URL always comes from
- * `ALCHEMY_STATE_URL`. The bearer token prefers the `ALCHEMY_STATE_TOKEN`
- * string env (local dev via .dev.vars), then falls back to the
- * `ALCHEMY_STATE_TOKEN_SECRET` Secrets Store binding -- the deployed path,
- * which reads the token alchemy already keeps in the account Secrets Store
- * without ever copying its value into this worker.
+ * Resolve the state-store connection. The URL comes from the
+ * `ALCHEMY_STATE_URL` var (committed in wrangler.toml; overridable via env).
+ * The bearer token prefers the `ALCHEMY_STATE_TOKEN` string env (local dev
+ * via .dev.vars), then falls back to the `ALCHEMY_STATE_TOKEN_SECRET`
+ * Secrets Store binding -- the deployed path, which reads the token alchemy
+ * already keeps in the account Secrets Store without ever copying its value
+ * into this worker.
+ *
+ * Both process env and platform env are consulted for the strings: wrangler
+ * serves vars/.dev.vars through the platform env, while `vite dev` and the
+ * smoke gate see plain process env.
  *
  * Returns undefined when unconfigured so routes can render setup
  * instructions instead of erroring -- that keeps the smoke gate secret-free.
@@ -34,9 +47,9 @@ const isSecretBinding = (value: unknown): value is SecretsStoreSecretBinding =>
 export const resolveStateStoreSettings = async (
   params: ResolveStateStoreSettingsParams,
 ): Promise<StateStoreSettings | undefined> => {
-  const url = params.env.ALCHEMY_STATE_URL?.trim()
+  const url = stringValue('ALCHEMY_STATE_URL', params)
   if (!url) return undefined
-  const envToken = params.env.ALCHEMY_STATE_TOKEN?.trim()
+  const envToken = stringValue('ALCHEMY_STATE_TOKEN', params)
   if (envToken) return {url, authToken: envToken}
   const binding = params.platformEnv?.ALCHEMY_STATE_TOKEN_SECRET
   if (isSecretBinding(binding)) {

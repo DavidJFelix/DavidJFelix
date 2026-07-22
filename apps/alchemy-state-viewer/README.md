@@ -18,20 +18,18 @@ strings.
 
 ## Configuration
 
-The deployed worker needs one plain secret plus one Secrets Store binding:
+All runtime configuration is committed in `wrangler.toml` -- there are no manual post-deploy steps:
 
-- `ALCHEMY_STATE_URL` -- base URL of the state store worker
-  (`wrangler secret put ALCHEMY_STATE_URL`).
-- `ALCHEMY_STATE_TOKEN_SECRET` -- a `secrets_store_secrets` binding (in `wrangler.toml`) to the
-  `AlchemyStateStoreToken` secret the alchemy bootstrap already keeps in the account Secrets Store.
-  The token value is never copied into this worker's own secrets, and rotation is picked up
-  automatically. Fill in `store_id` once: `wrangler secrets-store store list`, or dashboard ->
-  Secrets Store.
+- `ALCHEMY_STATE_URL` -- a plain `[vars]` entry (not a secret: the URL is derivable from the
+  account's workers.dev subdomain; the store is protected by its bearer token, not obscurity).
+- `ALCHEMY_STATE_TOKEN_SECRET` -- a `secrets_store_secrets` binding to the `AlchemyStateStoreToken`
+  secret the alchemy bootstrap already keeps in the account Secrets Store. The token value is never
+  copied into this worker's own secrets, and rotation is picked up automatically.
 
-Local dev reads `.dev.vars` instead (see `.dev.vars.example`): `ALCHEMY_STATE_URL` plus an
-`ALCHEMY_STATE_TOKEN` string override, since the real binding is not available locally.
-Unconfigured, the app renders setup instructions instead of erroring -- that keeps the smoke gate
-deterministic and secret-free.
+Local dev reads `.dev.vars` (see `.dev.vars.example`): an `ALCHEMY_STATE_TOKEN` string override,
+since the real binding is not available locally. The smoke gate blanks `ALCHEMY_STATE_URL`
+(`wrangler dev --var`) so it exercises the deterministic unconfigured boot, which renders setup
+instructions instead of erroring.
 
 ## Access control
 

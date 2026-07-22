@@ -14,8 +14,8 @@
     "npm",
     "aws",
     "google",
-    "fullstack"
+    "fullstack",
   ],
   "words": ["codegen", "hstack", "pandacss", "vstack"],
-  "dictionaryDefinitions": []
+  "dictionaryDefinitions": [],
 }

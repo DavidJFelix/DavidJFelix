@@ -8,9 +8,9 @@ outputs, with status summaries per stage.
 
 Security posture: the state-store bearer token lives only in worker secrets (`ALCHEMY_STATE_TOKEN`);
 persisted secrets (`__redacted__` envelopes) are masked server-side so they never reach the browser;
-and the viewer gates every request behind HTTP Basic auth when `APP_PASSWORD` is set. Unconfigured,
-it renders setup instructions instead of erroring, keeping the smoke gate deterministic and
-secret-free.
+and the app does no authentication of its own -- the deployed worker sits behind Cloudflare Access,
+enabled on its workers.dev route before the secrets are set. Unconfigured, it renders setup
+instructions instead of erroring, keeping the smoke gate deterministic and secret-free.
 
 Ships with the standard app rig: mise check tasks, oxlint + biome + oxfmt clean, vitest unit tests
 with a v8 coverage ratchet on `src/lib`, a `smoke` task that boots the built worker in

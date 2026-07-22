@@ -17,8 +17,8 @@ wrangler secret put ALCHEMY_STATE_TOKEN</pre>
       <code>ALCHEMY_STATE_URL</code> is the state store worker URL
       (<code>https://alchemy-state-store.&lt;subdomain&gt;.workers.dev</code>);
       <code>ALCHEMY_STATE_TOKEN</code> is the bearer token the alchemy CLI caches under
-      <code>~/.alchemy/credentials/&lt;profile&gt;/cloudflare-state-store</code>. Set
-      <code>APP_PASSWORD</code> too so the deployed viewer is not public.
+      <code>~/.alchemy/credentials/&lt;profile&gt;/cloudflare-state-store</code>. Put the deployed
+      worker behind Cloudflare Access first -- this app does no authentication of its own.
     </p>
   </section>
 {:else}

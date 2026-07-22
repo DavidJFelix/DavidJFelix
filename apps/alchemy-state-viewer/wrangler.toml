@@ -6,8 +6,9 @@ compatibility_flags = ["nodejs_compat"]
 
 # Intentionally served from workers.dev only -- this is a personal
 # infrastructure dashboard, not a public site. Runtime configuration is
-# secrets-only (`wrangler secret put ALCHEMY_STATE_URL / ALCHEMY_STATE_TOKEN /
-# APP_PASSWORD`); see .dev.vars.example.
+# secrets-only (`wrangler secret put ALCHEMY_STATE_URL / ALCHEMY_STATE_TOKEN`);
+# see .dev.vars.example. The app does no authentication of its own: the
+# deployed worker sits behind Cloudflare Access on its workers.dev route.
 
 [assets]
 binding = "ASSETS"

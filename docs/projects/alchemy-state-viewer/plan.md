@@ -11,19 +11,22 @@ stack outputs). The first SvelteKit app in the monorepo.
   persisted state (`__redacted__` envelopes) are masked server-side before anything reaches the
   browser; `__duration__` envelopes render human-readable.
 - **Guarded.** The state-store bearer token stays server-side (`ALCHEMY_STATE_TOKEN` worker secret).
-  The viewer itself gates every request behind HTTP Basic auth when `APP_PASSWORD` is set;
-  unconfigured it serves setup instructions, which keeps the smoke gate secret-free.
+  The app does no authentication of its own -- the deployed worker sits behind Cloudflare Access on
+  its workers.dev route. Unconfigured it serves setup instructions, which keeps the smoke gate
+  secret-free.
 - **Gated + wired.** Unit tests with a v8 coverage ratchet on `src/lib`, a `smoke` task booting the
   built worker in `wrangler dev`, CI (`ci-alchemy-state-viewer.yml`), and CD
   (`cd-deploy-alchemy-state-viewer.yml`, plain `wrangler deploy` to workers.dev).
 
 ## Next
 
-- [ ] Human: set the worker secrets (`ALCHEMY_STATE_URL`, `ALCHEMY_STATE_TOKEN`, `APP_PASSWORD`)
-      after the first deploy so the viewer reads the real state store.
+- [ ] Human: after the first deploy, enable Cloudflare Access on the worker's workers.dev route,
+      THEN set the worker secrets (`ALCHEMY_STATE_URL`, `ALCHEMY_STATE_TOKEN`) so the viewer reads
+      the real state store. Access must come first -- the app has no auth of its own.
 - [ ] Per-PR previews: spun out to
       [alchemy-state-viewer-previews](../alchemy-state-viewer-previews/plan.md) (parked -- needs a
-      minimal Playwright suite first, and previews inherit the worker's Basic-auth secrets).
+      minimal Playwright suite first, and preview versions inherit the worker's secrets and Access
+      posture).
 - [ ] Possible niceties once real state is browsable: filter/search over FQNs, surfacing
       `getReplacedResources` cleanup backlog, linking downstream FQNs across stages.
 

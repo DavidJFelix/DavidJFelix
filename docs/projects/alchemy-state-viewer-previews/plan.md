@@ -29,15 +29,16 @@ revision.city uses.
 - [ ] A snapshot-update bot workflow (`bot-update-snapshots-*`, path-scoped like djf.io's and
       forzamonica.com's) once baselines exist and start churning.
 
-## Design note: previews inherit the worker's secrets
+## Design note: previews inherit the worker's secrets and Access posture
 
-`wrangler versions upload` creates a version of the same worker, so once `APP_PASSWORD` /
-`ALCHEMY_STATE_*` are set in production, preview versions serve the real (Basic-auth-gated) app --
-and the action's unauthenticated smoke/screenshot probes of `/` will see 401, not the setup page.
-The preview flow must handle that before this lands: either pass Basic credentials into the smoke
-and Playwright requests (a repo secret), or treat a 401-with-challenge as "serving" for smoke and
-keep screenshots to pages that render unauthenticated. Decide when picking this up; the plan should
-not assume the secret-free bring-up state.
+`wrangler versions upload` creates a version of the same worker, so once `ALCHEMY_STATE_*` are set
+in production, preview versions serve real state too -- they must be covered by the same Cloudflare
+Access policy as the production workers.dev route (Access on workers.dev can include preview URLs).
+That in turn means the action's unauthenticated smoke/screenshot probes of `/` will see the Access
+login redirect, not the app. The preview flow must handle that before this lands: authenticate the
+probes with an Access service token (repo secret + `CF-Access-Client-Id`/`-Secret` headers), or
+treat the Access redirect as "serving" for smoke and skip screenshots. Decide when picking this up;
+the plan should not assume the secret-free bring-up state.
 
 ## Related
 

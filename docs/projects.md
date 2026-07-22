@@ -75,7 +75,8 @@ and verified; next is swapping the echo stub for a real model — which must sit
 
 Read-only dashboard for alchemy-effect deployment state (SvelteKit on Workers, the monorepo's
 first). Browses the alchemy Cloudflare state store — stacks, stages, resource state, outputs — with
-secrets masked server-side and a Basic-auth gate. Dark until the worker secrets are set.
+secrets masked server-side; deploys behind Cloudflare Access. Dark until Access + worker secrets
+are set.
 
 **Status**: Functional · Blocked (human secrets) · spin-outs:
 [alchemy-state-viewer-previews](./projects/alchemy-state-viewer-previews/plan.md) (parked)

@@ -17,24 +17,29 @@ human-readable strings.
 
 ## Configuration
 
-Three runtime secrets (see `.dev.vars.example`; local dev reads `.dev.vars`):
+Two runtime secrets (see `.dev.vars.example`; local dev reads `.dev.vars`):
 
 | Secret                | Purpose                                                                |
 | --------------------- | ---------------------------------------------------------------------- |
 | `ALCHEMY_STATE_URL`   | Base URL of the state store worker                                     |
 | `ALCHEMY_STATE_TOKEN` | Bearer token (cached by the alchemy CLI under `~/.alchemy/credentials/<profile>/cloudflare-state-store`) |
-| `APP_PASSWORD`        | HTTP Basic auth password for the viewer itself (any username)          |
 
 Unconfigured, the app renders setup instructions instead of erroring -- that keeps the smoke gate
-deterministic and secret-free. `APP_PASSWORD` is optional in code but mandatory in practice for a
-deployed instance: infrastructure state is sensitive even with secrets masked. Set it (or put
-Cloudflare Access in front of the worker) before pointing real credentials at a deployment.
+deterministic and secret-free.
 
 ```sh
 wrangler secret put ALCHEMY_STATE_URL
 wrangler secret put ALCHEMY_STATE_TOKEN
-wrangler secret put APP_PASSWORD
 ```
+
+## Access control
+
+The app does no authentication of its own. The deployed worker MUST sit behind
+[Cloudflare Access](https://developers.cloudflare.com/cloudflare-one/policies/access/): enable
+Access on the worker's workers.dev route (Zero Trust dashboard) before setting the
+`ALCHEMY_STATE_*` secrets -- infrastructure state is sensitive even with persisted secrets masked.
+Order matters: without the secrets the app only serves setup instructions, so deploy first, gate
+with Access, then configure.
 
 ## Development
 

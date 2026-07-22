@@ -24,7 +24,11 @@ All runtime configuration is committed in `wrangler.toml` -- there are no manual
   account's workers.dev subdomain; the store is protected by its bearer token, not obscurity).
 - `ALCHEMY_STATE_TOKEN_SECRET` -- a `secrets_store_secrets` binding to the `AlchemyStateStoreToken`
   secret the alchemy bootstrap already keeps in the account Secrets Store. The token value is never
-  copied into this worker's own secrets, and rotation is picked up automatically.
+  copied into this worker's own secrets, and rotation is picked up automatically. Deploying with
+  this binding requires the API token to hold Account Secrets Store Edit.
+- `ALCHEMY_STATE_STORE` -- a service binding to the `alchemy-state-store` worker. Same-zone
+  worker-to-worker global fetch is blocked by Cloudflare (error 1042, surfaced as HTTP 404), so
+  deployed requests ride the binding and stay inside Cloudflare.
 
 Local dev reads `.dev.vars` (see `.dev.vars.example`): an `ALCHEMY_STATE_TOKEN` string override,
 since the real binding is not available locally. The smoke gate blanks `ALCHEMY_STATE_URL`

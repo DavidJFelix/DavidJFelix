@@ -1,0 +1,14 @@
+# Copy to .dev.vars (gitignored) for local dev, and set the same values as
+# worker secrets for the deployed app (`wrangler secret put <NAME>`).
+
+# Base URL of the alchemy Cloudflare state store worker.
+ALCHEMY_STATE_URL=https://alchemy-state-store.<your-subdomain>.workers.dev
+
+# Bearer token for the state store. The alchemy CLI caches it per profile
+# under ~/.alchemy/credentials/<profile>/cloudflare-state-store after
+# `alchemy login` / bootstrap.
+ALCHEMY_STATE_TOKEN=
+
+# The app does no authentication of its own. The deployed worker MUST sit
+# behind Cloudflare Access (enable Access on its workers.dev route) before
+# real credentials are configured.

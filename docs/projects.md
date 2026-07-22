@@ -71,6 +71,15 @@ and verified; next is swapping the echo stub for a real model — which must sit
 
 **Status**: Functional
 
+#### [alchemy-state-viewer](./projects/alchemy-state-viewer/plan.md)
+
+Read-only dashboard for alchemy-effect deployment state (SvelteKit + Panda/Ark on Workers). Browses
+the alchemy Cloudflare state store — stacks, stages, resource state, outputs — with secrets masked
+server-side; deploys behind Cloudflare Access. Dark until Access + worker secrets are set.
+
+**Status**: Functional · Blocked (human secrets) · spin-outs:
+[alchemy-state-viewer-previews](./projects/alchemy-state-viewer-previews/plan.md) (parked)
+
 ### Placeholders (live domains; basic layout is the near-term)
 
 #### [monicandavid.com](./projects/monicandavid-com/plan.md)

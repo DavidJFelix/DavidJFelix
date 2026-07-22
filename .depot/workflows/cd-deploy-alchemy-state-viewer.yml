@@ -1,0 +1,44 @@
+name: CD Deploy alchemy-state-viewer
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/alchemy-state-viewer/**'
+      - '.depot/workflows/cd-deploy-alchemy-state-viewer.yml'
+defaults:
+  run:
+    working-directory: apps/alchemy-state-viewer
+jobs:
+  deploy:
+    name: wrangler deploy
+    runs-on: depot-ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - name: checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+      # `pnpm install` already runs `panda codegen` via the prepare script, but
+      # keep it explicit so the build does not depend on install side effects.
+      - name: panda codegen
+        run: pnpm exec panda codegen
+      - name: vite build
+        run: pnpm exec vite build
+      # wrangler.toml's `main`/`assets` point at .svelte-kit/cloudflare, so a
+      # plain `wrangler deploy` picks up the built worker. Runtime secrets
+      # (ALCHEMY_STATE_URL / ALCHEMY_STATE_TOKEN / APP_PASSWORD) are set once
+      # via `wrangler secret put` and persist across deploys.
+      - name: wrangler deploy
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+          workingDirectory: apps/alchemy-state-viewer

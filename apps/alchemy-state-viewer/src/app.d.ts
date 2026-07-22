@@ -2,6 +2,11 @@
 // so the App namespace augments globally without a module marker.
 declare namespace App {
   interface Platform {
-    env?: Record<string, string | undefined>
+    env?: {
+      ALCHEMY_STATE_URL?: string
+      /** `secrets_store_secrets` binding to the alchemy state-store token. */
+      ALCHEMY_STATE_TOKEN_SECRET?: {get: () => Promise<string>}
+      [key: string]: unknown
+    }
   }
 }

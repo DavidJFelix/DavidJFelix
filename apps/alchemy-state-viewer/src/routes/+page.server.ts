@@ -4,8 +4,8 @@ import {rethrowAsHttpError} from '$lib/server/errors'
 import {createStateApi, mapWithConcurrency} from '$lib/server/state-api'
 import type {PageServerLoad} from './$types'
 
-export const load: PageServerLoad = async () => {
-  const settings = resolveStateStoreSettings(env)
+export const load: PageServerLoad = async ({platform}) => {
+  const settings = await resolveStateStoreSettings({env, platformEnv: platform?.env})
   if (settings === undefined) {
     return {configured: false as const}
   }

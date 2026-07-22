@@ -6,8 +6,8 @@ import {createStateApi} from '$lib/server/state-api'
 import {maskState, type PersistedStateView} from '$lib/state'
 import type {PageServerLoad} from './$types'
 
-export const load: PageServerLoad = async ({params}) => {
-  const settings = resolveStateStoreSettings(env)
+export const load: PageServerLoad = async ({params, platform}) => {
+  const settings = await resolveStateStoreSettings({env, platformEnv: platform?.env})
   if (settings === undefined) {
     redirect(307, '/')
   }

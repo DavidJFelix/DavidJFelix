@@ -57,17 +57,16 @@ const setupCode = css({
   <section class={setup}>
     <h1 class={title}>Not connected to a state store</h1>
     <p>
-      Point this viewer at your alchemy Cloudflare state store by setting two secrets (see
+      Point this viewer at your alchemy Cloudflare state store (see
       <code>.dev.vars.example</code> for local dev):
     </p>
-    <pre class={setupCode}>wrangler secret put ALCHEMY_STATE_URL
-wrangler secret put ALCHEMY_STATE_TOKEN</pre>
+    <pre class={setupCode}>wrangler secret put ALCHEMY_STATE_URL</pre>
     <p>
       <code>ALCHEMY_STATE_URL</code> is the state store worker URL
-      (<code>https://alchemy-state-store.&lt;subdomain&gt;.workers.dev</code>);
-      <code>ALCHEMY_STATE_TOKEN</code> is the bearer token the alchemy CLI caches under
-      <code>~/.alchemy/credentials/&lt;profile&gt;/cloudflare-state-store</code>. Put the deployed
-      worker behind Cloudflare Access first -- this app does no authentication of its own.
+      (<code>https://alchemy-state-store.&lt;subdomain&gt;.workers.dev</code>). The bearer token is
+      read through the <code>ALCHEMY_STATE_TOKEN_SECRET</code> Secrets Store binding in
+      <code>wrangler.toml</code> -- fill in its <code>store_id</code> once. Put the deployed worker
+      behind Cloudflare Access first -- this app does no authentication of its own.
     </p>
   </section>
 {:else}

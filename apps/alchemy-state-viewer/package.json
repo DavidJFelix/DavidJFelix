@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev --port 3007",
-    "prepare": "panda codegen && svelte-kit sync",
+    "prepare": "svelte-kit sync && panda codegen",
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "pnpm run build && wrangler deploy",

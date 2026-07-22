@@ -10,11 +10,11 @@ components are Ark UI for Svelte (JSON tree views, collapsible sections).
 ## How it reads state
 
 Alchemy persists deployment state in a per-account Cloudflare worker
-(`https://alchemy-state-store.<subdomain>.workers.dev`) behind a bearer token. This app proxies
-that API server-side -- the token never reaches the browser -- and masks every persisted secret:
-alchemy stores `Redacted<T>` values as `{"__redacted__": <value>}` envelopes, which the server
-replaces with a placeholder before rendering. Durations (`{"__duration__": ...}`) are prettified to
-human-readable strings.
+(`https://alchemy-state-store.<subdomain>.workers.dev`) behind a bearer token. This app proxies that
+API server-side -- the token never reaches the browser -- and masks every persisted secret: alchemy
+stores `Redacted<T>` values as `{"__redacted__": <value>}` envelopes, which the server replaces with
+a placeholder before rendering. Durations (`{"__duration__": ...}`) are prettified to human-readable
+strings.
 
 ## Configuration
 
@@ -37,10 +37,10 @@ wrangler secret put ALCHEMY_STATE_TOKEN
 
 The app does no authentication of its own. The deployed worker MUST sit behind
 [Cloudflare Access](https://developers.cloudflare.com/cloudflare-one/policies/access/): enable
-Access on the worker's workers.dev route (Zero Trust dashboard) before setting the
-`ALCHEMY_STATE_*` secrets -- infrastructure state is sensitive even with persisted secrets masked.
-Order matters: without the secrets the app only serves setup instructions, so deploy first, gate
-with Access, then configure.
+Access on the worker's workers.dev route (Zero Trust dashboard) before setting the `ALCHEMY_STATE_*`
+secrets -- infrastructure state is sensitive even with persisted secrets masked. Order matters:
+without the secrets the app only serves setup instructions, so deploy first, gate with Access, then
+configure.
 
 ## Development
 

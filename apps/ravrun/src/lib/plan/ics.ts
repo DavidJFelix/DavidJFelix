@@ -46,6 +46,7 @@ function compactDate(isoDate: string): string {
   return isoDate.replaceAll('-', '')
 }
 
+// cSpell:words VCALENDAR PRODID CALSCALE CALNAME VEVENT DTSTAMP DTSTART DTEND
 export function planToIcs(plan: TrainingPlan): string {
   const lines = [
     'BEGIN:VCALENDAR',

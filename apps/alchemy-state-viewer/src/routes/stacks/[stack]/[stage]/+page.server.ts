@@ -13,6 +13,7 @@ export const load: PageServerLoad = async ({params}) => {
   }
   const api = createStateApi(settings)
   try {
+    // Alchemy state keys are fully qualified names. cSpell:words fqns
     const fqns = (await api.listResources(params.stack, params.stage)).toSorted()
     const resources = await mapWithConcurrency(fqns, 10, async (fqn) => ({
       fqn,

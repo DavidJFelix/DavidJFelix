@@ -9,6 +9,6 @@ test('cn lets a later tailwind utility win on conflict', () => {
   expect(cn('px-2', 'px-4')).toBe('px-4')
 })
 
-test('cn skips falsey values', () => {
+test('cn skips falsy values', () => {
   expect(cn('a', false, null, undefined, 'b')).toBe('a b')
 })

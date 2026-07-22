@@ -51,7 +51,7 @@ The file's location is load-bearing semantics, not a search path -- it cannot mo
   only files under `.config/`. Permanent root file.
 - **Cargo** (`Cargo.toml`): the manifest's directory _is_ the package/workspace root.
   `--manifest-path` repoints but cannot rename or nest it. (`.cargo/config.toml` is a separate Cargo
-  settings file in its own `.cargo/` dotdir -- also not XDG `.config/`.)
+  settings file in its own `.cargo/` dot-directory -- also not XDG `.config/`.)
 - **Renovate** (`.github/renovate.json`): no `.config/` support at all; the off-root location it
   _does_ honor is `.github/`. Use that, not the root.
 

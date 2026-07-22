@@ -46,7 +46,8 @@ export async function resolvePdsEndpoint(did: string): Promise<string> {
 
 type RepoRecord = {uri: string; value: Record<string, unknown>}
 
-// Paginated, unauthenticated read of one collection from the repo's PDS.
+// Paginated, unauthenticated read of one collection from the repo's PDS,
+// via the AT Protocol HTTP API path prefix. cSpell:words xrpc
 async function listAllRecords(pdsBase: string, collection: string): Promise<Array<RepoRecord>> {
   const records: Array<RepoRecord> = []
   let cursor: string | undefined

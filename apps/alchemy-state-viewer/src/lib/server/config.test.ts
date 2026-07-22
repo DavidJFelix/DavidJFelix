@@ -51,6 +51,42 @@ test.each([
   expect(await resolveStateStoreSettings({env: URL_ENV, platformEnv})).toBeUndefined()
 })
 
+test('the deployed token path routes requests through the service binding', async () => {
+  const routed: string[] = []
+  const settings = await resolveStateStoreSettings({
+    env: URL_ENV,
+    platformEnv: {
+      ALCHEMY_STATE_TOKEN_SECRET: {get: () => Promise.resolve('bound-token')},
+      ALCHEMY_STATE_STORE: {
+        fetch: (input: string | URL) => {
+          routed.push(String(input))
+          return Promise.resolve(new Response('ok'))
+        },
+      },
+    },
+  })
+  expect(settings?.fetch).toBeDefined()
+  await settings?.fetch?.('https://state.example.com/state/stacks')
+  expect(routed).toEqual(['https://state.example.com/state/stacks'])
+})
+
+test('the dev token path keeps global fetch even when the service binding exists', async () => {
+  const settings = await resolveStateStoreSettings({
+    env: {...URL_ENV, ALCHEMY_STATE_TOKEN: 'env-token'},
+    platformEnv: {ALCHEMY_STATE_STORE: {fetch: () => Promise.resolve(new Response('ok'))}},
+  })
+  expect(settings?.fetch).toBeUndefined()
+})
+
+test('the deployed token path works without a service binding', async () => {
+  const settings = await resolveStateStoreSettings({
+    env: URL_ENV,
+    platformEnv: {ALCHEMY_STATE_TOKEN_SECRET: {get: () => Promise.resolve('bound-token')}},
+  })
+  expect(settings).toEqual({url: 'https://state.example.com', authToken: 'bound-token'})
+  expect(settings?.fetch).toBeUndefined()
+})
+
 test('a failing binding read propagates', async () => {
   await expect(
     resolveStateStoreSettings({

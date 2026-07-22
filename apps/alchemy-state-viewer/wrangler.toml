@@ -25,6 +25,13 @@ binding = "ALCHEMY_STATE_TOKEN_SECRET"
 store_id = "32c9c129106d4fd0a12015a4eded9fb6"
 secret_name = "AlchemyStateStoreToken"
 
+# Worker-to-worker on the same zone cannot use global fetch (Cloudflare
+# error 1042, surfaced as HTTP 404) -- requests to the state store worker go
+# through this service binding instead, staying inside Cloudflare.
+[[services]]
+binding = "ALCHEMY_STATE_STORE"
+service = "alchemy-state-store"
+
 [assets]
 binding = "ASSETS"
 directory = ".svelte-kit/cloudflare"

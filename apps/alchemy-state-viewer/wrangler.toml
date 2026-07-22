@@ -5,10 +5,25 @@ compatibility_date = "2026-06-01"
 compatibility_flags = ["nodejs_compat"]
 
 # Intentionally served from workers.dev only -- this is a personal
-# infrastructure dashboard, not a public site. Runtime configuration is
-# secrets-only (`wrangler secret put ALCHEMY_STATE_URL / ALCHEMY_STATE_TOKEN`);
-# see .dev.vars.example. The app does no authentication of its own: the
-# deployed worker sits behind Cloudflare Access on its workers.dev route.
+# infrastructure dashboard, not a public site. All runtime configuration is
+# committed here (the vars + binding below); see .dev.vars.example for local
+# dev. The app does no authentication of its own: the deployed worker sits
+# behind Cloudflare Access on its workers.dev route.
+
+# Not a secret: the URL is derivable from the account's workers.dev
+# subdomain, and the store is protected by its bearer token, not obscurity.
+[vars]
+ALCHEMY_STATE_URL = "https://alchemy-state-store.nullserve.workers.dev"
+
+# The state-store bearer token is read from the secret the alchemy bootstrap
+# already keeps in the account Secrets Store -- the value is never copied
+# into this worker's own secrets, and rotation is picked up automatically.
+# `store_id` is the account's Secrets Store id: `wrangler secrets-store store
+# list`, or dashboard -> Secrets Store.
+[[secrets_store_secrets]]
+binding = "ALCHEMY_STATE_TOKEN_SECRET"
+store_id = "32c9c129106d4fd0a12015a4eded9fb6"
+secret_name = "AlchemyStateStoreToken"
 
 [assets]
 binding = "ASSETS"

@@ -21,9 +21,12 @@ sections).
 
 ## Next
 
-- [ ] Human: after the first deploy, enable Cloudflare Access on the worker's workers.dev route,
-      THEN set the worker secrets (`ALCHEMY_STATE_URL`, `ALCHEMY_STATE_TOKEN`) so the viewer reads
-      the real state store. Access must come first -- the app has no auth of its own.
+- [x] Human: enable Cloudflare Access on the viewer's workers.dev route (done 2026-07-22; the app
+      has no auth of its own). All remaining configuration is committed: the `ALCHEMY_STATE_URL` var
+      and the `ALCHEMY_STATE_TOKEN_SECRET` Secrets Store binding (store id filled in) live in
+      `wrangler.toml`, so a deploy is fully self-contained. The token itself is never copied: the
+      binding reads the `AlchemyStateStoreToken` secret alchemy already keeps in the account Secrets
+      Store.
 - [ ] Per-PR previews: spun out to
       [alchemy-state-viewer-previews](../alchemy-state-viewer-previews/plan.md) (parked -- needs a
       minimal Playwright suite first, and preview versions inherit the worker's secrets and Access

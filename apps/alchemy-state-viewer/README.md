@@ -18,29 +18,31 @@ strings.
 
 ## Configuration
 
-Two runtime secrets (see `.dev.vars.example`; local dev reads `.dev.vars`):
+All runtime configuration is committed in `wrangler.toml` -- there are no manual post-deploy steps:
 
-| Secret                | Purpose                                                                                                  |
-| --------------------- | -------------------------------------------------------------------------------------------------------- |
-| `ALCHEMY_STATE_URL`   | Base URL of the state store worker                                                                       |
-| `ALCHEMY_STATE_TOKEN` | Bearer token (cached by the alchemy CLI under `~/.alchemy/credentials/<profile>/cloudflare-state-store`) |
+- `ALCHEMY_STATE_URL` -- a plain `[vars]` entry (not a secret: the URL is derivable from the
+  account's workers.dev subdomain; the store is protected by its bearer token, not obscurity).
+- `ALCHEMY_STATE_TOKEN_SECRET` -- a `secrets_store_secrets` binding to the `AlchemyStateStoreToken`
+  secret the alchemy bootstrap already keeps in the account Secrets Store. The token value is never
+  copied into this worker's own secrets, and rotation is picked up automatically.
 
-Unconfigured, the app renders setup instructions instead of erroring -- that keeps the smoke gate
-deterministic and secret-free.
-
-```sh
-wrangler secret put ALCHEMY_STATE_URL
-wrangler secret put ALCHEMY_STATE_TOKEN
-```
+Local dev reads `.dev.vars` (see `.dev.vars.example`): an `ALCHEMY_STATE_TOKEN` string override,
+since the real binding is not available locally. The smoke gate blanks `ALCHEMY_STATE_URL`
+(`wrangler dev --var`) so it exercises the deterministic unconfigured boot, which renders setup
+instructions instead of erroring.
 
 ## Access control
 
 The app does no authentication of its own. The deployed worker MUST sit behind
 [Cloudflare Access](https://developers.cloudflare.com/cloudflare-one/policies/access/): enable
-Access on the worker's workers.dev route (Zero Trust dashboard) before setting the `ALCHEMY_STATE_*`
-secrets -- infrastructure state is sensitive even with persisted secrets masked. Order matters:
-without the secrets the app only serves setup instructions, so deploy first, gate with Access, then
-configure.
+Access on the worker's workers.dev route (Zero Trust dashboard) before configuring
+`ALCHEMY_STATE_URL` -- infrastructure state is sensitive even with persisted secrets masked. Order
+matters: without configuration the app only serves setup instructions, so deploy first, gate with
+Access, then configure.
+
+Note the residual scope either way: the state store has a single bearer token and it authorizes the
+full API, writes included, even though this viewer only reads. A read-only grant would need support
+in alchemy itself.
 
 ## Development
 

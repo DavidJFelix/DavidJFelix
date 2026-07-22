@@ -13,8 +13,10 @@ import {
   rkeyFromUri,
 } from './standard-site'
 
-// cSpell:ignore moldv oucwc jzfcijpj
+// Sample TIDs are opaque server-assigned ids, not words.
+// cSpell:ignore 3moldv46oucwc
 const TID_A = '3moldv46oucwc'
+// cSpell:ignore 3jzfcijpj2z2a
 const TID_B = '3jzfcijpj2z2a'
 
 test('isTid accepts a 13-char base32-sortable TID', () => {

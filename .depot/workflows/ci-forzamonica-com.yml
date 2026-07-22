@@ -11,7 +11,7 @@ on:
     branches: [main]
     paths:
       - 'apps/forzamonica.com/**'
-      - '.config/cspell.json'
+      - '.config/cspell.jsonc'
       - '.config/mise.toml'
       - 'biome.jsonc'
       - '.oxlintrc.json'
@@ -22,7 +22,7 @@ on:
   pull_request:
     paths:
       - 'apps/forzamonica.com/**'
-      - '.config/cspell.json'
+      - '.config/cspell.jsonc'
       - '.config/mise.toml'
       - 'biome.jsonc'
       - '.oxlintrc.json'

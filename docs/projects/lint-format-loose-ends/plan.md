@@ -18,7 +18,10 @@ decisions already made.
   `bracketSpacing: false`) so code fences embedded in docs format to the same style Biome enforces
   in real source.
 
-### 2. `.config/cspell.json` → `.config/cspell.jsonc`
+### 2. `.config/cspell.json` → `.config/cspell.jsonc` (done 2026-07-22)
+
+Landed with the cspell dictionary audit rather than waiting on `ci-pipeline-efficiency` Task 1 --
+the ~12 per-app workflow path filters were updated by hand in the same PR. Original scope:
 
 - Rename to JSONC and add a comment explaining the ATProto-DID `ignoreRegExpList` entry (added
   during djf.io's standard.site work; unexplained in plain JSON).

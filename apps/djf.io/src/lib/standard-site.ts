@@ -16,7 +16,7 @@ export const DOCUMENT_COLLECTION = 'site.standard.document'
 // Singleton publication record key: a server-assigned TID, committed once. The
 // publication is a singleton, so (unlike per-post documents, whose TIDs are
 // resolved live) its key can be a constant and publicationUri() stays offline.
-// cSpell:ignore moldv oucwc
+// The TID is an opaque server-assigned id, not words. cSpell:ignore 3moldv46oucwc
 export const PUBLICATION_RKEY = '3moldv46oucwc'
 
 // Publication metadata. `name`/`description` reuse the RSS feed strings (see

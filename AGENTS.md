@@ -54,7 +54,7 @@ The non-negotiable rules, one line each. Follow the link before working in that 
 - **Lint findings**: fix them; never disable rules or exclude files to dodge one --
   [linting.md](docs/contributing/linting.md)
 - **Spelling**: fix typos; the global dictionary takes only globally recognizable words; system
-  tokens and IDs are admitted beside their source, never repo-wide --
+  vocab gets a named topic dictionary or sits beside its source; IDs are ignored inline, in full --
   [spelling.md](docs/contributing/spelling.md)
 - **Project docs are ephemeral**: plans and progress live in `docs/projects/<name>/`; when done,
   capture in the changelog and delete -- [project-docs.md](docs/contributing/project-docs.md)

@@ -12,8 +12,6 @@ const plan = generatePlan({
   durationWeeks: 20,
 })
 
-// cSpell:words VCALENDAR VEVENT DTSTAMP DTSTART DTEND
-
 // One all-day VEVENT per workout, wrapped in a valid VCALENDAR. All-day
 // events use DTSTART;VALUE=DATE with an exclusive next-day DTEND.
 test('exports every workout as an all-day calendar event', () => {

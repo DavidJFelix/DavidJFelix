@@ -15,9 +15,9 @@ For _where_ those config files live and _what format_ they take, see
 
 ### Universal (all file types, all projects)
 
-| Concern     | Tool   | Config                | Enforced by                            |
-| ----------- | ------ | --------------------- | -------------------------------------- |
-| Spell check | cspell | `.config/cspell.json` | root `mise run spell` + `ci-spell.yml` |
+| Concern     | Tool   | Config                 | Enforced by                            |
+| ----------- | ------ | ---------------------- | -------------------------------------- |
+| Spell check | cspell | `.config/cspell.jsonc` | root `mise run spell` + `ci-spell.yml` |
 
 ### JavaScript / TypeScript
 
@@ -88,7 +88,7 @@ The ownership map above covers quality tooling; this covers the rest of what age
 - **Spell check** is a single repo-wide gate. cspell is a root tool (mise's npm backend:
   `npm:cspell` in `.config/mise.toml`), run via `mise run spell` over the repo's own sources
   (`apps/`, `docs/`, `bin/`, root markdown, `.config/`, `.github/`). Noise is filtered by
-  `ignorePaths` in `.config/cspell.json` (node_modules, build output, generated trees, lockfiles).
+  `ignorePaths` in `.config/cspell.jsonc` (node_modules, build output, generated trees, lockfiles).
   The `ci-spell.yml` workflow runs it on every push and PR — no paths filter, because it's
   universal. Apps do **not** carry their own cspell dependency or `spell` script; the root gate
   covers them.

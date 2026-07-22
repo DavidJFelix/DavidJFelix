@@ -29,6 +29,4 @@ right home for a reading list.
 - [ ] **The Meritocracy Trap: How America's Foundational Myth Feeds Inequality, Dismantles the
       Middle Class, and Devours the Elite** — print
 
-<!-- cSpell:words Jeremey -->
-
 - [ ] **How to Decide** — print. Recommended by Jeremey D.

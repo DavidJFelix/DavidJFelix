@@ -1,33 +1,39 @@
 # Spelling
 
 <!-- The examples in this guide quote intentional non-words. -->
-<!-- cSpell:ignore applicaiton falsey millis creds impls fqns wght -->
+<!-- cSpell:ignore applicaiton millis creds impls wght 3moldv46oucwc -->
 
-CSpell is the spell checker (root `.config/cspell.json`, run by `mise run spell`). Its value is
+CSpell is the spell checker (root `.config/cspell.jsonc`, run by `mise run spell`). Its value is
 catching real typos, and every admission mechanism below weakens that check a little -- so each
 unknown word gets the narrowest fix that still ties it to the source that needs it. Work down this
 ladder and stop at the first rung that fits:
 
-1. **Is it a typo?** Fix the spelling. This is the default assumption -- `falsey` becomes `falsy`,
-   `applicaiton` becomes `application`. Don't reach for any mechanism below until you're sure the
-   word is intentional.
+1. **Is it a typo?** Fix the spelling. This is the default assumption -- `applicaiton` becomes
+   `application`. Don't reach for any mechanism below until you're sure the word is intentional.
+   Spellings the repo has deliberately rejected live in `flagWords` in the config; cspell reports
+   those with the preferred replacement (this repo writes `falsey`), so take the suggestion.
 2. **Is it a word you'd recognize globally** -- a real word the dictionaries lack, a domain term, a
-   company, product, or person name (`burndown`, `posthog`, `workerd`, `higdon`)? Add it to `words`
-   in `.config/cspell.json`. This is the only repo-wide list, so it holds nothing but words that
-   stand on their own; anything you'd need the source file open to understand does not belong here.
+   company or product name (`burndown`, `posthog`, `workerd`)? Add it to `words` in
+   `.config/cspell.jsonc`, in the section it belongs to, with a comment when the reason isn't
+   obvious. This is the only repo-wide list, so it holds nothing but words that stand on their own;
+   anything you'd need the source file open to understand does not belong here. Person names go in
+   `.config/dictionaries/people-names.txt` instead, each above a comment saying who they are.
 3. **Is it an abbreviation?** Prefer the full word: `millis` becomes `milliseconds`, `creds` becomes
    `credentials`, `impls` becomes `implementations`. Established short forms (`ms`) are fine where
    the context expects them. Abbreviations do not go in the global dictionary.
 4. **Is it a token required by a downstream system** -- a wire-format field name, a spec property, a
-   file-name convention (`DTSTART` in iCalendar output, `millis` in Effect's Duration encoding,
-   `wght` in fontsource file names)? Keep it next to its source: a `cSpell:words` comment in the
-   file that speaks that protocol (`// cSpell:words fqns`, `<!-- cSpell:words NXDOMAIN -->`), or a
-   local wordlist for that system when several files share it. If a cluster of flags is just
-   compound words in one area, `cSpell:enableCompoundWords` scoped there beats listing them one by
-   one.
+   file-name convention? Keep it with the system that requires it. Vocabulary shared by more than
+   one file gets a named topic dictionary in `.config/dictionaries/` (iCalendar property names, DNS
+   response codes). A one-file token gets a `cSpell:words` comment in the file that speaks the
+   protocol (`// cSpell:words millis` for Effect's Duration field, `wght` in fontsource file names).
+   If a cluster of flags is just compound words in one area, `cSpell:enableCompoundWords` scoped
+   there beats listing them one by one.
 5. **Is it an identifier that is _supposed_ to be nonsense** -- a TID, a UUID, a generated worker or
-   branch suffix? `cSpell:ignore` the exact token on a comment beside its source. For a block dense
-   with structured IDs, a tightly anchored `ignoreRegExpList` entry is acceptable (the
+   branch suffix? `cSpell:ignore` it on a comment beside its source, saying what the string is.
+   Ignore the entire identifier, not its fragments, so the entry stays greppable against the id it
+   exempts (`cSpell:ignore 3moldv46oucwc`); cspell splits entries on `/`, so for a path-like id use
+   its longest slash-free segment and name the full id in the comment prose. For a block dense with
+   structured IDs, a tightly anchored `ignoreRegExpList` entry is acceptable (the
    `did:plc:[a-z0-9]+` entry is the model: the prefix guarantees it can never swallow prose). Never
    ignore anything that looks like a real word.
 
@@ -38,7 +44,7 @@ rungs 2-4 are for.
 
 The global `words` list tracks need, not history: when a word's last use disappears (an ephemeral
 project doc deleted, a feature removed), the entry comes out. To audit, empty `words` in
-`.config/cspell.json` (working tree only, then restore) and run `mise run spell` -- every word the
+`.config/cspell.jsonc` (working tree only, then restore) and run `mise run spell` -- every word the
 repo still needs flags with its locations, and entries that flag nowhere are dead. The edit must be
 made to the real config file: cspell merges discovered configs, so pointing `--config` at a copy
 elsewhere silently re-admits everything the original allowed.

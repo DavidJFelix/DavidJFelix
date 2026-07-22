@@ -18,7 +18,7 @@ compatibility_flags = ["nodejs_compat"]
 # list`, or dashboard -> Secrets Store.
 [[secrets_store_secrets]]
 binding = "ALCHEMY_STATE_TOKEN_SECRET"
-store_id = "REPLACE_WITH_SECRETS_STORE_ID"
+store_id = "32c9c129106d4fd0a12015a4eded9fb6"
 secret_name = "AlchemyStateStoreToken"
 
 [assets]

@@ -22,8 +22,9 @@ exception here.
   names.
 - **Generated files**: e.g. `routeTree.gen.ts` from `@tanstack/router-plugin` -- leave as the tool
   emits them.
-- **Ecosystem-standard meta files**: `README.md`, `LICENSE`, `CONTRIBUTING.md`, `AGENTS.md`,
-  `CLAUDE.md`, `CONTEXT-MAP.md`, `SKILL.md`, `Cargo.toml`, `Cargo.lock` -- names that tools and
-  conventions mandate or expect; keep their casing.
+- **Ecosystem-standard meta files**: `README.md`, `LICENSE` (and the `LICENSE.md`, `LICENSE-MIT`,
+  `LICENSE-APACHE`, `NOTICE.md` variants), `CONTRIBUTING.md`, `AGENTS.md`, `CLAUDE.md`,
+  `CONTEXT-MAP.md`, `SKILL.md`, `Cargo.toml`, `Cargo.lock` -- names that tools and conventions
+  mandate or expect; keep their casing.
 
 When in doubt, prefer kebab-case.

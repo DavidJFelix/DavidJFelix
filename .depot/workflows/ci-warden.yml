@@ -61,7 +61,7 @@ jobs:
       WARDEN_OPENROUTER_API_KEY: ${{ secrets.WARDEN_OPENROUTER_API_KEY }}
     steps:
       - name: checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
@@ -79,11 +79,11 @@ jobs:
       # separately minted report-only app token would be needed for that.
       - name: warden analyze
         id: warden-analyze
-        uses: getsentry/warden@b18e8ed3b6c657778afd20950b399abb50c195d5 # v0.40.0
+        uses: getsentry/warden@8c97e4585c238ad78b79b1ff082b4024bb0e6c57 # v0.42.0
         with:
           mode: analyze
       - name: warden report
-        uses: getsentry/warden@b18e8ed3b6c657778afd20950b399abb50c195d5 # v0.40.0
+        uses: getsentry/warden@8c97e4585c238ad78b79b1ff082b4024bb0e6c57 # v0.42.0
         with:
           mode: report
           findings-file: ${{ steps.warden-analyze.outputs.findings-file }}
@@ -102,7 +102,7 @@ jobs:
       WARDEN_OPENROUTER_API_KEY: ${{ secrets.WARDEN_OPENROUTER_API_KEY }}
     steps:
       - name: checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # merge-base and the two-dot diff need real history for both the
           # dispatched branch and the base, not a depth-1 snapshot.

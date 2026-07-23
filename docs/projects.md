@@ -97,10 +97,11 @@ placeholder; the builder's LLM must sit behind auth (mechanism TBD).
 
 #### [revision.city](./projects/revision-city/plan.md)
 
-A centralized version-control service for managing reviews and diffs. Live placeholder; MVP shape to
-be scoped.
+A centralized version-control service for managing reviews and diffs. The diffs half is live: a
+GitHub diff viewer (ported from Pierre's diffshub) under `/diffs`. Reviews MVP shape still to be
+scoped.
 
-**Status**: Placeholder
+**Status**: Functional
 
 #### [startchi.com](./projects/startchi-com/plan.md)
 

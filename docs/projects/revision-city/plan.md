@@ -17,10 +17,14 @@ diffs as first-class objects.
 > to a multiple-choice pick, so this plan deliberately does not propose or pin a direction. Until
 > David writes it up, the MVP shape is the open, blocking question — nothing downstream is scoped.
 
-## Current state (2026-06-19)
+## Current state (2026-07-23)
 
 - Live at revision.city (TanStack Start on Cloudflare; custom domain + www wired).
-- `src/routes/index.tsx` renders a single centered `<h1>` (Panda `css()`); no real layout yet.
+- Landing page with header/hero/feature cards; the Diffs card links to `/diffs`.
+- The diffs half is functional: a GitHub diff viewer ported from Pierre's diffshub lives under
+  `/diffs` (`src/diffs/` feature tree + `src/routes/diffs/`), rewritten to Panda CSS and TanStack
+  Start server routes; see [2026-07-23-progress.md](2026-07-23-progress.md).
+- Reviews remain unscoped pending the MVP-shape doc (the Phase 2 gate below).
 
 ## Stack
 

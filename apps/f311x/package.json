@@ -28,17 +28,17 @@
     "@sentry/cloudflare": "^10.60.0",
     "@sentry/react": "^10.60.0",
     "@tailwindcss/vite": "^4.3.1",
-    "@tanstack/ai": "^0.40.0",
-    "@tanstack/ai-react": "^0.16.0",
+    "@tanstack/ai": "^0.42.0",
+    "@tanstack/ai-react": "^0.18.0",
     "@tanstack/react-devtools": "latest",
     "@tanstack/react-router": "latest",
     "@tanstack/react-router-devtools": "latest",
     "@tanstack/react-start": "latest",
     "@tanstack/router-plugin": "^1.168.18",
-    "alchemy": "2.0.0-beta.61",
+    "alchemy": "2.0.0-beta.63",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "effect": "4.0.0-beta.94",
+    "effect": "4.0.0-beta.99",
     "lucide-react": "^1.18.0",
     "marked": "^18.0.5",
     "posthog-js": "^1.393.0",
@@ -56,8 +56,8 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "5.20260711.1",
-    "@effect/platform-node": "4.0.0-beta.94",
+    "@cloudflare/workers-types": "5.20260719.1",
+    "@effect/platform-node": "4.0.0-beta.99",
     "@playwright/test": "1.61.1",
     "@tailwindcss/typography": "0.5.20",
     "@tanstack/devtools-vite": "latest",
@@ -71,8 +71,8 @@
     "@vitejs/plugin-react": "6.0.3",
     "@vitest/coverage-v8": "4.1.10",
     "jsdom": "29.1.1",
-    "vite": "8.1.4",
+    "vite": "8.1.5",
     "vitest": "4.1.10",
-    "wrangler": "4.110.0"
+    "wrangler": "4.112.0"
   }
 }

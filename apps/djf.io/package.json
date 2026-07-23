@@ -43,20 +43,20 @@
     "mdast-util-gfm": "^3.1.0",
     "mdast-util-to-markdown": "^2.1.2",
     "posthog-js": "^1.391.2",
-    "satori": "^0.26.0",
+    "satori": "^0.28.0",
     "sharp": "^0.35.1"
   },
   "devDependencies": {
-    "@atproto/api": "0.20.28",
+    "@atproto/api": "0.20.30",
     "@pandacss/dev": "1.11.4",
     "@playwright/test": "1.61.1",
-    "@sentry/cloudflare": "10.65.0",
+    "@sentry/cloudflare": "10.67.0",
     "@types/hast": "3.0.5",
     "@vitest/coverage-v8": "4.1.10",
     "gray-matter": "4.0.3",
     "pagefind": "1.5.2",
     "vitest": "4.1.10",
-    "wrangler": "4.110.0"
+    "wrangler": "4.112.0"
   },
   "engines": {
     "node": ">=24"

@@ -53,6 +53,10 @@ const setupCode = css({
 })
 </script>
 
+<svelte:head>
+  <title>alchemy state</title>
+</svelte:head>
+
 {#if !data.configured}
   <section class={setup}>
     <h1 class={title}>Not connected to a state store</h1>

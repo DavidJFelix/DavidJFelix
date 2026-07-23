@@ -20,10 +20,6 @@ const header = css({
 const brand = css({fontWeight: '600', letterSpacing: '0.01em', color: 'text'})
 </script>
 
-<svelte:head>
-  <title>alchemy state</title>
-</svelte:head>
-
 <div class={shell}>
   <header class={header}>
     <a class={brand} href="/">alchemy state</a>

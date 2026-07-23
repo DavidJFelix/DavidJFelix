@@ -16,7 +16,7 @@ export type DiffsViewerRoute =
 // viewer needs to render. Extracted from the route file so it can be unit
 // tested without spinning up the router. Empty paths redirect to the /diffs
 // home page; GitHub paths are canonicalized via normalizeGitHubPath so direct
-// navigation matches the hrefs getPatchViewerHref produces from form input.
+// navigation matches the href values getPatchViewerHref produces from form input.
 // Non-GitHub hosts are passed through unchanged because their canonical form
 // is unknown. Redirect targets carry the /diffs mount prefix; upstreamPath and
 // url stay upstream-relative for fetching.

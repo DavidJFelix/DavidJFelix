@@ -188,9 +188,9 @@ function StatsDisplay({
   themeCycle,
   viewerRef,
 }: StatsDisplayProps) {
-  const [isBrrt, setIsBrrt] = useState(false);
+  const [isAutoScrolling, setIsAutoScrolling] = useState(false);
   const [scrollTester] = useState(
-    () => new AutoScrollTester(viewerRef, setIsBrrt)
+    () => new AutoScrollTester(viewerRef, setIsAutoScrolling)
   );
 
   // Mirror the inline (F3) hint with an actual keybinding so the label
@@ -276,11 +276,11 @@ function StatsDisplay({
               rounded: 'diffs.md',
               transition: TRANSITION_COLORS,
             })}
-            title={isBrrt ? 'Pause autoscroll' : 'Start autoscroll'}
-            aria-label={isBrrt ? 'Pause autoscroll' : 'Start autoscroll'}
-            aria-pressed={isBrrt}
+            title={isAutoScrolling ? 'Pause autoscroll' : 'Start autoscroll'}
+            aria-label={isAutoScrolling ? 'Pause autoscroll' : 'Start autoscroll'}
+            aria-pressed={isAutoScrolling}
           >
-            <AutoScrollToggleIcon running={isBrrt} />
+            <AutoScrollToggleIcon running={isAutoScrolling} />
           </button>
           <StatusIcon
             className={cx(

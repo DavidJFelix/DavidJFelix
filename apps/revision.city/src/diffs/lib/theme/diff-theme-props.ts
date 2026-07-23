@@ -19,7 +19,7 @@ import {
   requireThemeValueName,
   type ThemeNameSelection,
   type ThemePair,
-} from './ThemeSource';
+} from './theme-source';
 
 export type DiffThemeValue = string | (ThemeLike & { name: string });
 export type DiffThemeInput = DiffThemeValue | ThemePair<DiffThemeValue>;

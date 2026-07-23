@@ -229,7 +229,7 @@ async function resolveGitHubPullRefs(
   options: GitHubDiffFileServerOptions
 ): Promise<GitHubDiffRefs> {
   const data = await fetchGitHubJSON(
-    createGitHubAPIURL(
+    createGitHubApiUrl(
       `/repos/${encodeURLSegment(repo.owner)}/${encodeURLSegment(repo.repo)}/pulls/${encodeURLSegment(number)}`
     ),
     fetcher,
@@ -278,7 +278,7 @@ async function resolveGitHubPullMergeBaseSha(
     headSha
   );
   const data = await fetchGitHubJSON(
-    createGitHubAPIURL(
+    createGitHubApiUrl(
       `/repos/${encodeURLSegment(baseRepo.owner)}/${encodeURLSegment(baseRepo.repo)}/compare/${encodeURLSegment(compareRange)}`
     ),
     fetcher,
@@ -312,7 +312,7 @@ async function resolveGitHubCommitRefs(
   options: GitHubDiffFileServerOptions
 ): Promise<GitHubDiffRefs> {
   const data = await fetchGitHubJSON(
-    createGitHubAPIURL(
+    createGitHubApiUrl(
       `/repos/${encodeURLSegment(repo.owner)}/${encodeURLSegment(repo.repo)}/commits/${encodeURLSegment(sha)}`
     ),
     fetcher,
@@ -339,7 +339,7 @@ async function resolveGitHubCompareRefs(
   options: GitHubDiffFileServerOptions
 ): Promise<GitHubDiffRefs> {
   const data = await fetchGitHubJSON(
-    createGitHubAPIURL(
+    createGitHubApiUrl(
       `/repos/${encodeURLSegment(repo.owner)}/${encodeURLSegment(repo.repo)}/compare/${encodeURLSegment(range)}`
     ),
     fetcher,
@@ -378,7 +378,7 @@ async function readCompareHeadSha(
   }
 
   const lastPageData = await fetchGitHubJSON(
-    createGitHubAPIURL(
+    createGitHubApiUrl(
       `/repos/${encodeURLSegment(repo.owner)}/${encodeURLSegment(repo.repo)}/compare/${encodeURLSegment(range)}`,
       { page: String(totalCommits), per_page: '1' }
     ),
@@ -416,7 +416,7 @@ async function fetchGitHubFileContents(
   options: GitHubDiffFileServerOptions
 ): Promise<Response> {
   if (options.tokenSource === 'request' && options.token != null) {
-    const url = createGitHubAPIURL(
+    const url = createGitHubApiUrl(
       `/repos/${encodeURLSegment(repoRef.owner)}/${encodeURLSegment(repoRef.repo)}/contents/${encodePath(path)}`,
       { ref: repoRef.ref }
     );
@@ -537,7 +537,7 @@ function createEmptyFallbackFile(
   };
 }
 
-function createGitHubAPIURL(
+function createGitHubApiUrl(
   path: string,
   searchParams?: Record<string, string>
 ): string {

@@ -10,12 +10,22 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as BugsRouteImport } from './routes/bugs'
+import { Route as DiffsRouteRouteImport } from './routes/diffs/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DiffsIndexRouteImport } from './routes/diffs/index'
+import { Route as DiffsSplatRouteImport } from './routes/diffs/$'
 import { Route as DiagSplatRouteImport } from './routes/diag/$'
+import { Route as DiffsApiGithubDiffFileRouteImport } from './routes/diffs/api/github-diff-file'
+import { Route as DiffsApiDiffRouteImport } from './routes/diffs/api/diff'
 
 const BugsRoute = BugsRouteImport.update({
   id: '/bugs',
   path: '/bugs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DiffsRouteRoute = DiffsRouteRouteImport.update({
+  id: '/diffs',
+  path: '/diffs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -23,38 +33,97 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DiffsIndexRoute = DiffsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DiffsRouteRoute,
+} as any)
+const DiffsSplatRoute = DiffsSplatRouteImport.update({
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => DiffsRouteRoute,
+} as any)
 const DiagSplatRoute = DiagSplatRouteImport.update({
   id: '/diag/$',
   path: '/diag/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DiffsApiGithubDiffFileRoute = DiffsApiGithubDiffFileRouteImport.update({
+  id: '/api/github-diff-file',
+  path: '/api/github-diff-file',
+  getParentRoute: () => DiffsRouteRoute,
+} as any)
+const DiffsApiDiffRoute = DiffsApiDiffRouteImport.update({
+  id: '/api/diff',
+  path: '/api/diff',
+  getParentRoute: () => DiffsRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/diffs': typeof DiffsRouteRouteWithChildren
   '/bugs': typeof BugsRoute
   '/diag/$': typeof DiagSplatRoute
+  '/diffs/$': typeof DiffsSplatRoute
+  '/diffs/': typeof DiffsIndexRoute
+  '/diffs/api/diff': typeof DiffsApiDiffRoute
+  '/diffs/api/github-diff-file': typeof DiffsApiGithubDiffFileRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bugs': typeof BugsRoute
   '/diag/$': typeof DiagSplatRoute
+  '/diffs/$': typeof DiffsSplatRoute
+  '/diffs': typeof DiffsIndexRoute
+  '/diffs/api/diff': typeof DiffsApiDiffRoute
+  '/diffs/api/github-diff-file': typeof DiffsApiGithubDiffFileRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/diffs': typeof DiffsRouteRouteWithChildren
   '/bugs': typeof BugsRoute
   '/diag/$': typeof DiagSplatRoute
+  '/diffs/$': typeof DiffsSplatRoute
+  '/diffs/': typeof DiffsIndexRoute
+  '/diffs/api/diff': typeof DiffsApiDiffRoute
+  '/diffs/api/github-diff-file': typeof DiffsApiGithubDiffFileRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/bugs' | '/diag/$'
+  fullPaths:
+    | '/'
+    | '/diffs'
+    | '/bugs'
+    | '/diag/$'
+    | '/diffs/$'
+    | '/diffs/'
+    | '/diffs/api/diff'
+    | '/diffs/api/github-diff-file'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/bugs' | '/diag/$'
-  id: '__root__' | '/' | '/bugs' | '/diag/$'
+  to:
+    | '/'
+    | '/bugs'
+    | '/diag/$'
+    | '/diffs/$'
+    | '/diffs'
+    | '/diffs/api/diff'
+    | '/diffs/api/github-diff-file'
+  id:
+    | '__root__'
+    | '/'
+    | '/diffs'
+    | '/bugs'
+    | '/diag/$'
+    | '/diffs/$'
+    | '/diffs/'
+    | '/diffs/api/diff'
+    | '/diffs/api/github-diff-file'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DiffsRouteRoute: typeof DiffsRouteRouteWithChildren
   BugsRoute: typeof BugsRoute
   DiagSplatRoute: typeof DiagSplatRoute
 }
@@ -68,12 +137,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BugsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/diffs': {
+      id: '/diffs'
+      path: '/diffs'
+      fullPath: '/diffs'
+      preLoaderRoute: typeof DiffsRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/diffs/': {
+      id: '/diffs/'
+      path: '/'
+      fullPath: '/diffs/'
+      preLoaderRoute: typeof DiffsIndexRouteImport
+      parentRoute: typeof DiffsRouteRoute
+    }
+    '/diffs/$': {
+      id: '/diffs/$'
+      path: '/$'
+      fullPath: '/diffs/$'
+      preLoaderRoute: typeof DiffsSplatRouteImport
+      parentRoute: typeof DiffsRouteRoute
     }
     '/diag/$': {
       id: '/diag/$'
@@ -82,11 +172,44 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DiagSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/diffs/api/github-diff-file': {
+      id: '/diffs/api/github-diff-file'
+      path: '/api/github-diff-file'
+      fullPath: '/diffs/api/github-diff-file'
+      preLoaderRoute: typeof DiffsApiGithubDiffFileRouteImport
+      parentRoute: typeof DiffsRouteRoute
+    }
+    '/diffs/api/diff': {
+      id: '/diffs/api/diff'
+      path: '/api/diff'
+      fullPath: '/diffs/api/diff'
+      preLoaderRoute: typeof DiffsApiDiffRouteImport
+      parentRoute: typeof DiffsRouteRoute
+    }
   }
 }
 
+interface DiffsRouteRouteChildren {
+  DiffsSplatRoute: typeof DiffsSplatRoute
+  DiffsIndexRoute: typeof DiffsIndexRoute
+  DiffsApiDiffRoute: typeof DiffsApiDiffRoute
+  DiffsApiGithubDiffFileRoute: typeof DiffsApiGithubDiffFileRoute
+}
+
+const DiffsRouteRouteChildren: DiffsRouteRouteChildren = {
+  DiffsSplatRoute: DiffsSplatRoute,
+  DiffsIndexRoute: DiffsIndexRoute,
+  DiffsApiDiffRoute: DiffsApiDiffRoute,
+  DiffsApiGithubDiffFileRoute: DiffsApiGithubDiffFileRoute,
+}
+
+const DiffsRouteRouteWithChildren = DiffsRouteRoute._addFileChildren(
+  DiffsRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DiffsRouteRoute: DiffsRouteRouteWithChildren,
   BugsRoute: BugsRoute,
   DiagSplatRoute: DiagSplatRoute,
 }

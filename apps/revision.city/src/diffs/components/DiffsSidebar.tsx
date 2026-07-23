@@ -21,6 +21,8 @@ import {
   useState,
 } from 'react';
 
+import { css, cx } from 'styled-system/css';
+
 import { CHROME_ICON_BUTTON_CLASS } from './chrome-button-styles';
 import { DiffsCommentsList } from './DiffsCommentsList';
 import { DiffsStats } from './DiffsStats';
@@ -39,7 +41,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/diffs/components/DropdownMenu';
-import { cn } from '@/diffs/lib/cn';
 import { filterDiffsFileTreeSource } from '@/diffs/lib/filter-diffs-file-tree-source';
 import { getDiffsFileTreeAvailableStatuses } from '@/diffs/lib/get-diffs-file-tree-available-statuses';
 import { diffsChromeMapping } from '@/diffs/lib/theme/diffs-chrome-mapping';
@@ -56,6 +57,13 @@ type SidebarTab = 'files' | 'comments';
 type SidebarStatusPanel = 'diffStats' | 'systemMonitor';
 
 const MOBILE_MEDIA_QUERY = '(max-width: 767px)';
+
+// Shared 16/12px icon size for the tab-row toggle buttons (search, filter,
+// mobile close), matching the header's own ICON_SIZE_CLASS.
+const ICON_SIZE_CLASS = css({
+  w: { base: '4', md: '3' },
+  h: { base: '4', md: '3' },
+});
 
 interface DiffsSidebarProps {
   className?: string;
@@ -200,11 +208,20 @@ export const DiffsSidebar = memo(function DiffsSidebar({
         aria-hidden={!mobileOverlayOpen}
         aria-label="Close file tree"
         tabIndex={mobileOverlayOpen ? 0 : -1}
-        className={cn(
-          'z-20 cursor-default bg-background/60 backdrop-blur-xs transition-opacity [grid-column:1/-1] [grid-row:1/-1] md:hidden',
+        className={cx(
+          css({
+            zIndex: '20',
+            cursor: 'default',
+            bg: 'diffs.background/60',
+            backdropFilter: 'blur(4px)',
+            transition: 'opacity 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+            gridColumn: '1 / -1',
+            gridRow: '1 / -1',
+            display: { md: 'none' },
+          }),
           mobileOverlayOpen
-            ? 'pointer-events-auto opacity-100'
-            : 'pointer-events-none opacity-0'
+            ? css({ pointerEvents: 'auto', opacity: '1' })
+            : css({ pointerEvents: 'none', opacity: '0' })
         )}
         onClick={onMobileClose}
       />
@@ -213,10 +230,25 @@ export const DiffsSidebar = memo(function DiffsSidebar({
         mobileOverlayOpen={mobileOverlayOpen}
         themeStyle={sidebarStyle}
       >
-        <div className="flex items-center gap-3 px-4 pt-5 pb-2 md:px-3 md:pt-0.5 md:pb-0">
+        <div
+          className={css({
+            display: 'flex',
+            alignItems: 'center',
+            gap: '3',
+            px: { base: '4', md: '3' },
+            pt: { base: '5', md: '0.5' },
+            pb: { base: '2', md: '0' },
+          })}
+        >
           <ButtonGroup
             aria-label="Sidebar sections"
-            className="mr-auto flex min-w-0 gap-3 bg-transparent md:gap-2"
+            className={css({
+              mr: 'auto',
+              display: 'flex',
+              minW: '0',
+              gap: { base: '3', md: '2' },
+              bg: 'transparent',
+            })}
             variant="ghost"
             value={activeTab}
             onValueChange={(value) => setActiveTab(value as SidebarTab)}
@@ -224,21 +256,22 @@ export const DiffsSidebar = memo(function DiffsSidebar({
             <ButtonGroupItem
               value="files"
               size="icon-only"
-              className="shadow-none"
+              className={css({ boxShadow: 'none' })}
             >
-              <IconFileTree className="size-4 md:size-3" />
-              <span className="sr-only">Files</span>
+              <IconFileTree className={ICON_SIZE_CLASS} />
+              <span className={css({ srOnly: true })}>Files</span>
             </ButtonGroupItem>
             <ButtonGroupItem
               value="comments"
               size="icon-only"
-              className={cn(
-                'shadow-none',
-                totalCommentCount > 0 && 'w-auto gap-1 pr-1'
+              className={cx(
+                css({ boxShadow: 'none' }),
+                totalCommentCount > 0 &&
+                  css({ w: 'auto', gap: '1', pr: '1' })
               )}
             >
-              <IconComment className="size-4 md:size-3" />
-              <span className="sr-only">Comments</span>
+              <IconComment className={ICON_SIZE_CLASS} />
+              <span className={css({ srOnly: true })}>Comments</span>
               {totalCommentCount > 0 && (
                 <span
                   aria-hidden="true"
@@ -249,7 +282,20 @@ export const DiffsSidebar = memo(function DiffsSidebar({
                   // for the unselected ghost variant, accent-foreground
                   // when this tab is selected), so the pill stays
                   // on-palette in both states.
-                  className="inline-flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-[color-mix(in_srgb,currentColor_18%,transparent)] px-1 text-[10px] leading-none font-medium tabular-nums"
+                  className={css({
+                    display: 'inline-flex',
+                    h: '3.5',
+                    minW: '3.5',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    rounded: 'full',
+                    bg: 'color-mix(in srgb, currentColor 18%, transparent)',
+                    px: '1',
+                    fontSize: '10px',
+                    lineHeight: '1',
+                    fontWeight: 'medium',
+                    fontVariantNumeric: 'tabular-nums',
+                  })}
                 >
                   {totalCommentCount}
                 </span>
@@ -273,20 +319,23 @@ export const DiffsSidebar = memo(function DiffsSidebar({
             <Button
               variant="ghost"
               size="icon-only"
-              className={cn(CHROME_ICON_BUTTON_CLASS, 'md:hidden')}
+              className={cx(
+                CHROME_ICON_BUTTON_CLASS,
+                css({ display: { md: 'none' } })
+              )}
               aria-label="Close file tree"
               onClick={onMobileClose}
             >
-              <IconXSquircle className="size-4 md:size-3" />
+              <IconXSquircle className={ICON_SIZE_CLASS} />
             </Button>
           )}
         </div>
-        <div className="mt-3 min-h-0 flex-1">
+        <div className={css({ mt: '3', minH: '0', flex: '1' })}>
           <div
             role="region"
             aria-label="Files"
             hidden={activeTab !== 'files'}
-            className="h-full min-h-0"
+            className={css({ h: 'full', minH: '0' })}
           >
             <DiffsFileTree
               source={filteredSource}
@@ -298,7 +347,7 @@ export const DiffsSidebar = memo(function DiffsSidebar({
             role="region"
             aria-label="Comments"
             hidden={activeTab !== 'comments'}
-            className="h-full min-h-0"
+            className={css({ h: 'full', minH: '0' })}
           >
             <DiffsCommentsList
               commentSections={commentSections}
@@ -339,16 +388,49 @@ function SidebarWrapper({
 }: SidebarWrapperProps) {
   return (
     <div
-      className={cn(
+      className={cx(
         className,
-        'contain-strict z-30 flex h-full min-h-0 flex-col transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform motion-reduce:transition-none md:z-auto md:translate-y-0 md:will-change-auto',
+        css({
+          contain: 'strict',
+          zIndex: { base: '30', md: 'auto' },
+          display: 'flex',
+          h: 'full',
+          minH: '0',
+          flexDirection: 'column',
+          transition: 'transform 300ms cubic-bezier(0.32, 0.72, 0, 1)',
+          willChange: { base: 'transform', md: 'auto' },
+          transform: { md: 'translateY(0)' },
+          _motionReduce: { transition: 'none' },
+        }),
         // Fall back to the neutral diffs chrome background when no Shiki
         // theme bg is available yet (initial render before the resolver
         // returns).
-        themeStyle == null && 'bg-[var(--diffs-sidebar-bg)]',
+        themeStyle == null && css({ bg: 'var(--diffs-sidebar-bg)' }),
         mobileOverlayOpen
-          ? 'pointer-events-auto translate-y-0 overflow-hidden rounded-t-xl shadow-[0_0_0_1px_var(--border-opaque),_0_16px_32px_rgb(0_0_0_/0.25)] md:h-full md:overflow-visible md:rounded-none md:border-0 md:shadow-none'
-          : 'pointer-events-none translate-y-[calc(100%+1.5rem)] overflow-hidden rounded-xl md:pointer-events-auto md:h-full md:overflow-visible md:rounded-none pt-3 border-r border-[var(--border-opaque)]'
+          ? css({
+              pointerEvents: 'auto',
+              transform: 'translateY(0)',
+              overflow: { base: 'hidden', md: 'visible' },
+              roundedTop: 'diffs.xl',
+              boxShadow: {
+                base:
+                  '0 0 0 1px var(--border-opaque), 0 16px 32px rgb(0 0 0 / 0.25)',
+                md: 'none',
+              },
+              h: { md: 'full' },
+              rounded: { md: '0' },
+              borderWidth: { md: '0' },
+            })
+          : css({
+              pointerEvents: { base: 'none', md: 'auto' },
+              transform: 'translateY(calc(100% + 1.5rem))',
+              overflow: { base: 'hidden', md: 'visible' },
+              rounded: { base: 'diffs.xl', md: '0' },
+              h: { md: 'full' },
+              pt: '3',
+              borderRightWidth: '1px',
+              borderColor: 'var(--border-opaque)',
+            })
       )}
       style={themeStyle}
     >
@@ -428,26 +510,55 @@ function FileTreeFilterButton({
           size="icon-only"
           aria-label="Filter by Git status"
           aria-pressed={isFiltered}
-          className={cn(CHROME_ICON_BUTTON_CLASS, 'relative')}
+          className={cx(
+            CHROME_ICON_BUTTON_CLASS,
+            css({ position: 'relative' })
+          )}
         >
-          <IconFilter className="size-4 md:size-3" />
+          <IconFilter className={ICON_SIZE_CLASS} />
           {isFiltered && (
-            <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full border-[1px] border-[var(--diffs-sidebar-bg)] bg-blue-500 dark:bg-blue-400" />
+            <span
+              className={css({
+                position: 'absolute',
+                top: '-0.5',
+                right: '-0.5',
+                w: '2',
+                h: '2',
+                rounded: 'full',
+                borderWidth: '1px',
+                borderColor: 'var(--diffs-sidebar-bg)',
+                bg: 'blue.500',
+                _dark: { bg: 'blue.400' },
+              })}
+            />
           )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="p-2"
+        className={css({ p: '2' })}
         style={dropdownThemeStyle}
       >
-        <DropdownMenuLabel className="flex flex-col px-2 font-normal">
+        <DropdownMenuLabel
+          className={css({
+            display: 'flex',
+            flexDirection: 'column',
+            px: '2',
+            fontWeight: 'normal',
+          })}
+        >
           Filter by Git status
-          <small className="text-muted-foreground text-xs">
+          <small
+            className={css({
+              color: 'diffs.muted.foreground',
+              fontSize: 'xs',
+              lineHeight: '1rem',
+            })}
+          >
             {isMac ? 'Option' : 'Alt'}-click to show only one status
           </small>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator className="mx-2" />
+        <DropdownMenuSeparator className={css({ mx: '2' })} />
         {visibleItems.map(({ status, label, short, color }) => (
           <DropdownMenuCheckboxItem
             key={status}
@@ -466,12 +577,22 @@ function FileTreeFilterButton({
             }}
             className={
               isFiltered && !selectedStatuses.has(status)
-                ? 'text-muted-foreground'
-                : ''
+                ? css({ color: 'diffs.muted.foreground' })
+                : undefined
             }
           >
             <span
-              className="mr-2 w-4 shrink-0 rounded-sm text-center font-mono text-xs font-semibold"
+              className={css({
+                mr: '2',
+                w: '4',
+                flexShrink: '0',
+                rounded: 'diffs.sm',
+                textAlign: 'center',
+                fontFamily: 'diffs.mono',
+                fontSize: 'xs',
+                lineHeight: '1rem',
+                fontWeight: 'semibold',
+              })}
               style={{
                 color,
                 backgroundColor: `color-mix(in srgb, ${color} 15%, transparent)`,
@@ -482,13 +603,13 @@ function FileTreeFilterButton({
             {label}
           </DropdownMenuCheckboxItem>
         ))}
-        <DropdownMenuSeparator className="mx-2" />
+        <DropdownMenuSeparator className={css({ mx: '2' })} />
         <DropdownMenuItem
-          className="px-2"
+          className={css({ px: '2' })}
           disabled={!isFiltered}
           onSelect={onClear}
         >
-          <IconXSquircle className="mr-2 opacity-50" />
+          <IconXSquircle className={css({ mr: '2', opacity: '0.5' })} />
           Clear filter
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -520,7 +641,7 @@ function FileTreeSearchToggle({ model }: { model: FileTree }) {
         }
       }}
     >
-      <IconSearch className="size-4 md:size-3" />
+      <IconSearch className={ICON_SIZE_CLASS} />
     </Button>
   );
 }

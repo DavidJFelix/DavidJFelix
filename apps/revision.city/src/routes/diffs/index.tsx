@@ -1,3 +1,4 @@
+// cSpell:ignore ghostty -- example repository slug
 import {IconArrow, IconArrowRightShort} from '@pierre/icons'
 import {createFileRoute, Link} from '@tanstack/react-router'
 import {memo} from 'react'

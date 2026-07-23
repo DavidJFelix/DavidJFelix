@@ -6,7 +6,7 @@
 import { themeToTreeStyles, type TreeThemeStyles } from '@pierre/trees';
 
 import { deriveChromeTokens } from './derive-chrome-tokens';
-import type { ActiveThemeSnapshot } from './ThemeSource';
+import type { ActiveThemeSnapshot } from './theme-source';
 
 export interface TreeThemePropsOptions {
   // When true, compare deriveChromeTokens(active.theme)?.fg against the theme's

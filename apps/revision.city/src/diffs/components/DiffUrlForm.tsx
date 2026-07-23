@@ -193,7 +193,7 @@ export function DiffUrlForm({
             willChange: 'auto',
             _groupFocusWithin: { opacity: '0.5' },
             _groupHover: { opacity: '0.5' },
-            '.group:is(:hover, [data-hover]) &:hover, .group:focus-within &:hover':
+            '&:hover:is(.group:is(:hover, [data-hover]) *, .group:focus-within *)':
               { opacity: '0.75' },
           })}
           onClick={() => {

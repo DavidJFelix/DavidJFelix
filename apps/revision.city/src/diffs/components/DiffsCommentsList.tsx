@@ -1,9 +1,11 @@
+// cSpell:ignore ochin Convo -- theme/icon names
 import type { AnnotationSide } from '@pierre/diffs';
 import { IconConvoFill, IconPlus } from '@pierre/icons';
 import { memo, type MouseEvent } from 'react';
 
+import { css, cx } from 'styled-system/css';
+
 import { CommentAuthorAvatar } from './CommentAuthorAvatar';
-import { cn } from '@/diffs/lib/cn';
 import type {
   CommentLineType,
   DiffsSavedCommentEntry,
@@ -33,7 +35,7 @@ function getCommentLineClassName(
   lineType: CommentLineType
 ): string {
   if (lineType === 'context') {
-    return 'text-muted-foreground';
+    return css({ color: 'diffs.muted.foreground' });
   }
   // The themed chrome sets --diffs-comment-add-fg / -del-fg with a shade
   // chosen from the active Shiki surface's luminance, so addition/deletion
@@ -43,8 +45,14 @@ function getCommentLineClassName(
   // on a dark card). The Tailwind shades stay as fallbacks for the
   // first-render window before the chrome style applies.
   return side === 'additions'
-    ? 'text-[var(--diffs-comment-add-fg,#047857)] dark:text-[var(--diffs-comment-add-fg,#34d399)]'
-    : 'text-[var(--diffs-comment-del-fg,#be123c)] dark:text-[var(--diffs-comment-del-fg,#fb7185)]';
+    ? css({
+        color: 'var(--diffs-comment-add-fg, #047857)',
+        _dark: { color: 'var(--diffs-comment-add-fg, #34d399)' },
+      })
+    : css({
+        color: 'var(--diffs-comment-del-fg, #be123c)',
+        _dark: { color: 'var(--diffs-comment-del-fg, #fb7185)' },
+      });
 }
 
 // Wraps a click handler so users can drag-select text inside the row without
@@ -82,13 +90,42 @@ export const DiffsCommentsList = memo(function DiffsCommentsList({
 }: DiffsCommentsListProps) {
   if (commentSections.length === 0) {
     return (
-      <div className="text-muted-foreground flex h-full min-h-0 flex-col items-center justify-center gap-2 px-7 text-center text-sm">
-        <IconConvoFill size={24} className="mb-2" />
-        <div className="flex flex-col">
-          <strong className="font-medium">No comments yet</strong>
+      <div
+        className={css({
+          color: 'diffs.muted.foreground',
+          display: 'flex',
+          h: 'full',
+          minH: '0',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '2',
+          px: '7',
+          textAlign: 'center',
+          fontSize: 'sm',
+          lineHeight: '1.25rem',
+        })}
+      >
+        <IconConvoFill size={24} className={css({ mb: '2' })} />
+        <div className={css({ display: 'flex', flexDirection: 'column' })}>
+          <strong className={css({ fontWeight: 'medium' })}>
+            No comments yet
+          </strong>
           <p>
             Hover over a line and click the{' '}
-            <span className="light:text-white light:bg-[rgb(0,159,255)] inline-flex h-[20px] w-[20px] items-center justify-center rounded-[4px] align-top dark:bg-[rgb(0,159,255)] dark:text-black">
+            <span
+              className={css({
+                display: 'inline-flex',
+                h: '20px',
+                w: '20px',
+                alignItems: 'center',
+                justifyContent: 'center',
+                rounded: '4px',
+                verticalAlign: 'top',
+                _light: { color: 'white', bg: 'rgb(0, 159, 255)' },
+                _dark: { bg: 'rgb(0, 159, 255)', color: 'black' },
+              })}
+            >
               <IconPlus />
             </span>{' '}
             button to add fake code comments.
@@ -100,9 +137,17 @@ export const DiffsCommentsList = memo(function DiffsCommentsList({
 
   return (
     <div
-      className={cn(
+      className={cx(
         'cv-mini-scrollbar',
-        'h-full min-h-0 overflow-auto overscroll-contain pl-3 pb-3 pr-[max(0px,calc(12px-var(--cv-mini-gutter-vertical)))]'
+        css({
+          h: 'full',
+          minH: '0',
+          overflow: 'auto',
+          overscrollBehavior: 'contain',
+          pl: '3',
+          pb: '3',
+          pr: 'max(0px, calc(12px - var(--cv-mini-gutter-vertical)))',
+        })
       )}
     >
       {commentSections.map((section) => (
@@ -110,19 +155,55 @@ export const DiffsCommentsList = memo(function DiffsCommentsList({
           {onSelectItem != null ? (
             <button
               type="button"
-              className="text-muted-foreground hover:text-foreground focus-visible:ring-ring block w-full cursor-pointer p-3 pb-2 text-left text-sm font-medium break-all outline-none focus-visible:ring-2"
+              className={css({
+                color: 'diffs.muted.foreground',
+                _hover: { color: 'diffs.foreground' },
+                display: 'block',
+                w: 'full',
+                cursor: 'pointer',
+                p: '3',
+                pb: '2',
+                textAlign: 'left',
+                fontSize: 'sm',
+                lineHeight: '1.25rem',
+                fontWeight: 'medium',
+                wordBreak: 'break-all',
+                outline: 'none',
+                _focusVisible: { boxShadow: '0 0 0 2px var(--ring)' },
+              })}
               onClick={(event) =>
                 handleRowClick(event, () => onSelectItem(section.itemId))
               }
             >
-              <span className="select-text">{section.path}</span>
+              <span className={css({ userSelect: 'text' })}>
+                {section.path}
+              </span>
             </button>
           ) : (
-            <div className="text-muted-foreground p-3 pb-2 text-sm font-medium break-all">
+            <div
+              className={css({
+                color: 'diffs.muted.foreground',
+                p: '3',
+                pb: '2',
+                fontSize: 'sm',
+                lineHeight: '1.25rem',
+                fontWeight: 'medium',
+                wordBreak: 'break-all',
+              })}
+            >
               {section.path}
             </div>
           )}
-          <div className="rounded-lg border border-[var(--diffs-card-border,rgb(0_0_0_/_0.1))] dark:border-[var(--diffs-card-border,rgb(255_255_255_/_0.15))]">
+          <div
+            className={css({
+              rounded: 'diffs.lg',
+              borderWidth: '1px',
+              borderColor: 'var(--diffs-card-border, rgb(0 0 0 / 0.1))',
+              _dark: {
+                borderColor: 'var(--diffs-card-border, rgb(255 255 255 / 0.15))',
+              },
+            })}
+          >
             {section.comments.map((comment) => (
               <button
                 key={comment.key}
@@ -139,19 +220,58 @@ export const DiffsCommentsList = memo(function DiffsCommentsList({
                 // on each card visibly trails the rest of the UI (header,
                 // file tree, diff body) which snap instantly. Hover bg is
                 // snappy enough without an interpolated transition.
-                className="focus-visible:ring-ring flex w-full cursor-pointer items-start gap-2 border-b border-[var(--diffs-card-border,rgb(0_0_0_/_0.1))] bg-[var(--diffs-card-bg,var(--card))] p-3 text-left text-sm outline-none first:rounded-t-lg last:rounded-b-lg last:border-b-0 hover:bg-[var(--diffs-card-hover-bg,var(--muted))] focus-visible:ring-2 dark:border-[var(--diffs-card-border,rgb(255_255_255_/_0.15))]"
+                className={css({
+                  display: 'flex',
+                  w: 'full',
+                  cursor: 'pointer',
+                  alignItems: 'flex-start',
+                  gap: '2',
+                  borderBottomWidth: '1px',
+                  borderColor: 'var(--diffs-card-border, rgb(0 0 0 / 0.1))',
+                  bg: 'var(--diffs-card-bg, var(--card))',
+                  p: '3',
+                  textAlign: 'left',
+                  fontSize: 'sm',
+                  lineHeight: '1.25rem',
+                  outline: 'none',
+                  _first: { roundedTop: 'diffs.lg' },
+                  _last: { roundedBottom: 'diffs.lg', borderBottomWidth: '0' },
+                  _hover: { bg: 'var(--diffs-card-hover-bg, var(--muted))' },
+                  _focusVisible: { boxShadow: '0 0 0 2px var(--ring)' },
+                  _dark: {
+                    borderColor:
+                      'var(--diffs-card-border, rgb(255 255 255 / 0.15))',
+                  },
+                })}
                 onClick={(event) =>
                   handleRowClick(event, () => onSelectComment?.(comment))
                 }
               >
-                <CommentAuthorAvatar seed={comment.author} className="size-5" />
-                <div className="flex flex-col items-start gap-0.5 select-text">
-                  <div className="text-muted-foreground flex gap-1">
+                <CommentAuthorAvatar
+                  seed={comment.author}
+                  className={css({ w: '5', h: '5' })}
+                />
+                <div
+                  className={css({
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    gap: '0.5',
+                    userSelect: 'text',
+                  })}
+                >
+                  <div
+                    className={css({
+                      color: 'diffs.muted.foreground',
+                      display: 'flex',
+                      gap: '1',
+                    })}
+                  >
                     {comment.author} commented on{' '}
                     <span
-                      className={cn(
+                      className={cx(
                         getCommentLineClassName(comment.side, comment.lineType),
-                        'font-medium'
+                        css({ fontWeight: 'medium' })
                       )}
                     >
                       {getCommentLineLabel(
@@ -161,7 +281,14 @@ export const DiffsCommentsList = memo(function DiffsCommentsList({
                       )}
                     </span>
                   </div>
-                  <p className="text-foreground w-full break-words whitespace-pre-wrap">
+                  <p
+                    className={css({
+                      color: 'diffs.foreground',
+                      w: 'full',
+                      overflowWrap: 'break-word',
+                      whiteSpace: 'pre-wrap',
+                    })}
+                  >
                     {comment.message}
                   </p>
                 </div>

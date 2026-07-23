@@ -1,3 +1,4 @@
+// cSpell:ignore ASTLRU -- worker pool option name from @pierre/diffs
 import { DEFAULT_THEMES } from '@pierre/diffs';
 import {
   type WorkerInitializationRenderOptions,

@@ -6,7 +6,7 @@ import type { CSSProperties } from 'react';
 
 // Re-applies the resolved chrome style on the portaled content element itself,
 // since the chrome variables on the wrapper don't reach it. Spreading the full
-// chrome style keeps the menu internals (hover, separators, checkmarks) on the
+// chrome style keeps the menu internals (hover, separators, check marks) on the
 // theme, while the overrides swap the wrapper's sidebar background for the
 // elevated popover surface tokens. The base DropdownMenuContent classes
 // (border/shadow/bg-popover) cover the brief window before the theme resolves,

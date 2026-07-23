@@ -130,7 +130,7 @@ function resolvePatchURLInput(
     return undefined;
   }
 
-  if (!isAllowedHTTPSURL(parsedURL)) {
+  if (!isAllowedHttpsUrl(parsedURL)) {
     return undefined;
   }
 
@@ -240,7 +240,7 @@ function resolveAuthenticatedGitHubPatchRequest(
     return {
       kind: 'github-pull',
       label: 'authenticated pull metadata',
-      pullURL: createGitHubDiffAPIURL(source),
+      pullURL: createGitHubDiffApiUrl(source),
       repo: source.repo,
       requestHeaders: createGitHubJSONAPIHeaders(token),
       sourceURL,
@@ -338,7 +338,7 @@ function normalizeGitHubPath(path: string): string {
   return `/${pullTabMatch[1]}/${pullTabMatch[2]}/pull/${pullTabMatch[3]}`;
 }
 
-function isAllowedHTTPSURL(url: URL): boolean {
+function isAllowedHttpsUrl(url: URL): boolean {
   return (
     url.protocol === 'https:' &&
     url.port === '' &&
@@ -347,18 +347,18 @@ function isAllowedHTTPSURL(url: URL): boolean {
   );
 }
 
-function createGitHubDiffAPIURL(source: GitHubDiffSource): string {
+function createGitHubDiffApiUrl(source: GitHubDiffSource): string {
   switch (source.kind) {
     case 'pull':
-      return createGitHubAPIURL(
+      return createGitHubApiUrl(
         `/repos/${encodeURLSegment(source.repo.owner)}/${encodeURLSegment(source.repo.repo)}/pulls/${encodeURLSegment(source.number)}`
       );
     case 'commit':
-      return createGitHubAPIURL(
+      return createGitHubApiUrl(
         `/repos/${encodeURLSegment(source.repo.owner)}/${encodeURLSegment(source.repo.repo)}/commits/${encodeURLSegment(source.sha)}`
       );
     case 'compare':
-      return createGitHubAPIURL(
+      return createGitHubApiUrl(
         `/repos/${encodeURLSegment(source.repo.owner)}/${encodeURLSegment(source.repo.repo)}/compare/${encodeURLSegment(source.range)}`
       );
   }
@@ -371,7 +371,7 @@ function createGitHubDiffTarget(
 ): DirectPatchFetchTarget {
   return {
     label: `authenticated ${source.kind} diff API`,
-    patchURL: createGitHubDiffAPIURL(source),
+    patchURL: createGitHubDiffApiUrl(source),
     requestHeaders: createGitHubDiffAPIHeaders(token),
     sourceURL,
   };
@@ -383,7 +383,7 @@ function createGitHubAuthHeaders(token: string): Record<string, string> {
   };
 }
 
-function createGitHubAPIURL(path: string): string {
+function createGitHubApiUrl(path: string): string {
   return new URL(path, GITHUB_API_ROOT).href;
 }
 
@@ -590,7 +590,7 @@ async function fetchGitHubPullPatchTarget(
 
   return fetchDirectPatchTarget(
     {
-      patchURL: createGitHubAPIURL(
+      patchURL: createGitHubApiUrl(
         `/repos/${encodeURLSegment(compareBaseRepo.owner)}/${encodeURLSegment(compareBaseRepo.repo)}/compare/${encodeURLSegment(compareRange)}`
       ),
       label: 'authenticated pull compare diff API',
@@ -682,7 +682,7 @@ async function fetchGitHubDiagnosticStatus(
   token: string
 ): Promise<number> {
   try {
-    const response = await fetch(createGitHubAPIURL(path), {
+    const response = await fetch(createGitHubApiUrl(path), {
       cache: 'no-store',
       headers: {
         'User-Agent': 'revision-city-diffs',

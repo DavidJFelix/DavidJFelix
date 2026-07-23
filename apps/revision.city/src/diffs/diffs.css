@@ -99,7 +99,7 @@
 }
 
 /* This stylesheet only loads on /diffs routes, so styling body directly is
-   already scoped; unlayered rules also win over the root shell's layered Panda
+   already scoped; rules outside any cascade layer also win over the root shell's layered Panda
    utility classes. */
 body {
   background-color: var(--diffs-sidebar-bg);

@@ -109,7 +109,7 @@ export function deriveChromeTokens(theme: ThemeLike): ChromeTokens | undefined {
   const surfaceIsDark = colorUtils.isDarkSurface(sidebarBg, fg);
   // Hairline between diff files. When the editor surface matches the sidebar
   // (the common case) reuse the chrome border verbatim so the separator can't
-  // drift; only when the palettes genuinely diverge (slack-ochin) derive it
+  // drift; only when the palettes genuinely diverge (mixed-palette themes) derive it
   // from the editor surface so it contrasts the diff body.
   const separator =
     editorBg == null || colorUtils.surfacesMatch(editorBg, sidebarBg)

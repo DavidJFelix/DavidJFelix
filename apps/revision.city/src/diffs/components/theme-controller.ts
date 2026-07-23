@@ -12,7 +12,7 @@ export { docsThemeCatalog } from './theme-catalog';
 //
 // It is a module singleton: created once per process on the server (where the
 // browser guards make it a constant) and once per page-load on the client,
-// surviving client-side navigations.
+// surviving client-side navigation.
 
 // The persistence keys the pre-paint no-flash bootstrap script (which reads
 // `theme`) and existing users' saved selections depend on, so changing them

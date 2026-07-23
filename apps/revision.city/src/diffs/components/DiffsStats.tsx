@@ -1,3 +1,4 @@
+// cSpell:ignore Diffstat -- @pierre/icons export name
 import { IconSymbolDiffstatFill } from '@pierre/icons';
 import { memo, useEffect } from 'react';
 

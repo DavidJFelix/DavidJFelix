@@ -10,12 +10,13 @@ import {resolveDiffsViewerRoute} from '@/diffs/lib/resolve-diffs-viewer-route'
 // `domain` query param. Non-canonical GitHub paths redirect to their
 // canonical form before rendering.
 export const Route = createFileRoute('/diffs/$')({
-  validateSearch: (search: Record<string, unknown>) => ({
-    domain:
+  validateSearch: (search: Record<string, unknown>): {domain?: string} => {
+    const domain =
       typeof search.domain === 'string' && search.domain !== ''
         ? search.domain
-        : undefined,
-  }),
+        : undefined
+    return domain == null ? {} : {domain}
+  },
   beforeLoad: ({params, search}) => {
     const route = resolveDiffsViewerRoute(splatSegments(params._splat), search.domain)
     if (route.kind === 'redirect') {

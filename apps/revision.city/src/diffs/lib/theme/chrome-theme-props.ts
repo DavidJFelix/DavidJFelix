@@ -6,7 +6,7 @@ import type { CSSProperties } from 'react';
 
 import { deriveChromeTokens } from './derive-chrome-tokens';
 import type { ChromeMapping } from './diffs-chrome-mapping';
-import type { ActiveThemeSnapshot } from './ThemeSource';
+import type { ActiveThemeSnapshot } from './theme-source';
 
 export type { ChromeMapping };
 

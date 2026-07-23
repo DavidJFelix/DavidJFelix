@@ -1,3 +1,4 @@
+// cSpell:ignore Diffstat -- @pierre/icons export name
 import type { DiffIndicators } from '@pierre/diffs';
 import {
   IconCheck,

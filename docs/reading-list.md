@@ -28,4 +28,5 @@ right home for a reading list.
 - [ ] **The SaaS Playbook: Build a Multimillion-Dollar Startup Without Venture Capital** — print
 - [ ] **The Meritocracy Trap: How America's Foundational Myth Feeds Inequality, Dismantles the
       Middle Class, and Devours the Elite** — print
+
 - [ ] **How to Decide** — print. Recommended by Jeremey D.

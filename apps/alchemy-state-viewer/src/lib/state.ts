@@ -88,6 +88,7 @@ export const statusTone = (status: string | undefined): StatusTone => {
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object' && !Array.isArray(value)
 
+// Effect's Duration wire encoding fixes the field names. cSpell:words millis
 const formatDuration = (encoded: unknown): string | undefined => {
   if (!isPlainObject(encoded)) return undefined
   const {_tag: tag, millis, nanos} = encoded

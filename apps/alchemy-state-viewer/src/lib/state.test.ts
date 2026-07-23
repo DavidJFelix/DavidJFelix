@@ -35,6 +35,7 @@ test('maskState only treats single-key envelopes as markers', () => {
   expect(maskState(value)).toEqual({__redacted__: 'x', other: 1})
 })
 
+// Effect's Duration wire encoding fixes the field names. cSpell:words millis
 test.each([
   [{_tag: 'Millis', millis: 1500}, '1500ms'],
   [{_tag: 'Nanos', nanos: '123'}, '123ns'],

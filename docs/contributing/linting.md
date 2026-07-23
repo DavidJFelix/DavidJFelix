@@ -18,4 +18,5 @@ disappear -- fix the actual issue. Two shortcuts are specifically banned:
   `noSvgWithoutTitle` -- give the SVG a `<title>` or `role="img"` + `aria-label` instead (see any
   `apps/*/public/favicon.svg`).
 
-Which linter owns which file type is defined in [tooling-standard.md](tooling-standard.md).
+Which linter owns which file type is defined in [tooling-standard.md](tooling-standard.md). Spelling
+findings have their own ladder -- see [spelling.md](spelling.md).

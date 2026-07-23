@@ -1,0 +1,10 @@
+# People named in docs and code. One name per line, with the person above it,
+# so every entry stays tied to who it is.
+# Dietrich Gebert, author of ponytail (docs/contributing/ponytail.md)
+gebert
+# Hal Higdon, running coach referenced by ravrun's training plans
+higdon
+# Jeremey D., book recommender on the reading list
+jeremey
+# Peter Riegel, whose race-time formula anchors ravrun's pace math
+riegel

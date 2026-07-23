@@ -22,7 +22,7 @@ algorithm; read it. The answer falls into three tiers.
 ### Tier 1 -- auto-discovers `.config/`: put it there
 
 The tool natively searches `.config/<name>` with no extra wiring, so the CLI, CI, and editor
-integrations all find it. This is the happy path. In this repo: **cspell** (`.config/cspell.json`,
+integrations all find it. This is the happy path. In this repo: **cspell** (`.config/cspell.jsonc`,
 entry in its `searchPlaces`) and **mise** (`.config/mise.toml`, a documented project-local path) --
 both already placed this way.
 
@@ -51,7 +51,7 @@ The file's location is load-bearing semantics, not a search path -- it cannot mo
   only files under `.config/`. Permanent root file.
 - **Cargo** (`Cargo.toml`): the manifest's directory _is_ the package/workspace root.
   `--manifest-path` repoints but cannot rename or nest it. (`.cargo/config.toml` is a separate Cargo
-  settings file in its own `.cargo/` dotdir -- also not XDG `.config/`.)
+  settings file in its own `.cargo/` dot-directory -- also not XDG `.config/`.)
 - **Renovate** (`.github/renovate.json`): no `.config/` support at all; the off-root location it
   _does_ honor is `.github/`. Use that, not the root.
 
@@ -78,7 +78,7 @@ that app.
 - **Repo-wide config lives at the root scope** (`.config/` or root): the mise toolchain, the root
   Biome / Prettier / Oxlint baseline, the cspell gate.
 - **`.config/` nests too** -- it is not a root-only directory.
-  `apps/calendar-visualizer/.config/cspell.json` is a per-app cspell config in that app's own
+  `apps/calendar-visualizer/.config/cspell.jsonc` is a per-app cspell config in that app's own
   `.config/`: the same Tier-1 placement, scoped one level down.
 
 If you find a root config that only one app reads, push it down into that app.

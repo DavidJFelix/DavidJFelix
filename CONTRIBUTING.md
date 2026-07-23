@@ -50,6 +50,7 @@ One mini guide per concern, in `docs/contributing/`. Read the guide before worki
 | [file-naming.md](docs/contributing/file-naming.md)                   | kebab-case rule and the framework-imposed exceptions   |
 | [testing.md](docs/contributing/testing.md)                           | test style, smoke/e2e runtime gates, coverage ratchets |
 | [linting.md](docs/contributing/linting.md)                           | fix findings, don't silence them                       |
+| [spelling.md](docs/contributing/spelling.md)                         | the unknown-word ladder; dictionary vs local vs ignore |
 | [configuration-style.md](docs/contributing/configuration-style.md)   | config file placement, scoping, and format             |
 | [scripting-style.md](docs/contributing/scripting-style.md)           | language order, bun scripts, the sed/perl ban          |
 | [tooling-standard.md](docs/contributing/tooling-standard.md)         | tool ownership per concern, ecosystem defaults         |

@@ -25,7 +25,7 @@
     "lint": "biome check . && oxlint",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
-    "spell": "cspell --config ../../../.config/cspell.json \"**\""
+    "spell": "cspell --config ../../../.config/cspell.jsonc \"**\""
   },
   "browserslist": "> 0.5%, last 2 versions, not dead",
   "packageManager": "pnpm@11.11.0",

@@ -122,7 +122,7 @@ changed.
 The path filter must include:
 
 1. The app or package subtree the workflow exercises (e.g. `apps/djf.io/**`).
-2. Any shared config the workflow depends on (`biome.jsonc`, `.config/cspell.json`,
+2. Any shared config the workflow depends on (`biome.jsonc`, `.config/cspell.jsonc`,
    `.config/mise.toml`, root `package.json`, lockfile, etc.).
 3. The workflow file itself, so changes to the workflow re-trigger it.
 
@@ -134,14 +134,14 @@ on:
     branches: [main]
     paths:
       - 'apps/djf.io/**'
-      - '.config/cspell.json'
+      - '.config/cspell.jsonc'
       - '.config/mise.toml'
       - 'biome.jsonc'
       - '.depot/workflows/ci-djf-io.yml'
   pull_request:
     paths:
       - 'apps/djf.io/**'
-      - '.config/cspell.json'
+      - '.config/cspell.jsonc'
       - '.config/mise.toml'
       - 'biome.jsonc'
       - '.depot/workflows/ci-djf-io.yml'

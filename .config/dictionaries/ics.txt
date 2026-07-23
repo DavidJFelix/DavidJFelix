@@ -1,0 +1,11 @@
+# iCalendar (RFC 5545) property names, as emitted by the ICS exports in this
+# repo (apps/ravrun). Entries match case-insensitively; add properties as the
+# exports grow.
+calname
+calscale
+dtend
+dtstamp
+dtstart
+prodid
+vcalendar
+vevent

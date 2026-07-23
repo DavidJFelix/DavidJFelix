@@ -1,0 +1,241 @@
+/* Global stylesheet for the /diffs routes, ported from Pierre's diffshub app
+   (Tailwind utilities were rewritten as Panda styles in the components; this
+   file keeps the theme variables and the plain-CSS surface the @pierre/diffs
+   viewer hooks into). Loaded only by the /diffs route layout. */
+
+@import '@fontsource-variable/geist';
+@import '@fontsource-variable/jetbrains-mono';
+
+:root,
+.light {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --border-opaque: color-mix(in oklch, var(--border) 100%, var(--diffs-sidebar-bg) 0%);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --diffs-sidebar-bg: #f7f7f7;
+  color-scheme: light;
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --border-opaque: color-mix(in oklch, var(--diffs-sidebar-bg) 90%, oklch(1 0 0));
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --diffs-sidebar-bg: #101010;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.205 0 0);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.205 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.922 0 0);
+    --primary-foreground: oklch(0.205 0 0);
+    --secondary: oklch(0.269 0 0);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(0.708 0 0);
+    --accent: oklch(0.269 0 0);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: oklch(1 0 0 / 10%);
+    --border-opaque: color-mix(in oklch, var(--diffs-sidebar-bg) 90%, oklch(1 0 0));
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.556 0 0);
+    --diffs-sidebar-bg: #101010;
+    color-scheme: dark;
+  }
+}
+
+:root {
+  --font-geist-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-jetbrains-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* Font hook read by the @pierre/diffs viewer for diff/code text. */
+  --diffs-font-family: var(--font-jetbrains-mono);
+  --cv-gutter-vertical: 0px;
+  --cv-gutter-horizontal: 0px;
+  --cv-mini-gutter-vertical: 0px;
+  --cv-mini-gutter-horizontal: 0px;
+  /* Default border color for Panda's reset (mirrors the shadcn convention the
+     source app relied on via Tailwind preflight). */
+  --global-color-border: var(--border);
+  color-scheme: light;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* This stylesheet only loads on /diffs routes, so styling body directly is
+   already scoped; unlayered rules also win over the root shell's layered Panda
+   utility classes. */
+body {
+  background-color: var(--diffs-sidebar-bg);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans);
+}
+
+@media (width <= 768px) {
+  body {
+    background-color: light-dark(#fff, oklch(14.5% 0 0));
+  }
+}
+
+* {
+  outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
+}
+
+textarea {
+  outline-offset: 1px;
+}
+
+code {
+  font-family: var(--diffs-font-family);
+  font-size: 95%;
+  font-weight: 500;
+  color: var(--primary);
+  letter-spacing: -0.025em;
+}
+
+.inline-link {
+  color: var(--foreground);
+  text-decoration-line: underline;
+  text-decoration-color: var(--muted-foreground);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition-property: text-decoration-color, text-underline-offset;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.inline-link:hover {
+  color: var(--foreground);
+  text-decoration-color: var(--foreground);
+}
+
+.cv-scrollbar {
+  /* Themed thumb from the diffs chrome mapping (derive-chrome-tokens);
+     light-dark fallback for non-themed contexts. */
+  --cv-scrollbar-thumb-bg: var(
+    --diffs-scrollbar-thumb-bg,
+    light-dark(
+      color-mix(in lab, var(--background) 85%, black),
+      color-mix(in lab, var(--background) 80%, white)
+    )
+  );
+  scrollbar-gutter: stable;
+}
+
+.cv-scrollbar::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.cv-scrollbar::-webkit-scrollbar-track {
+  /* Themed editor surface so the gutter isn't a dark band beside the diff;
+     transparent fallback keeps default behavior. */
+  background: var(--diffs-scrollbar-track-bg, transparent);
+  /* Reuse the inter-file separator so the gutter edge reads as one hairline
+     with the file boundaries. */
+  border-left: 1px solid var(--diffs-diff-separator, var(--border-opaque));
+  margin-top: -1px;
+}
+
+.cv-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--cv-scrollbar-thumb-bg);
+  background-clip: content-box;
+  border: 2px solid transparent;
+  border-radius: 6px;
+}
+
+.cv-mini-scrollbar {
+  --cv-mini-scrollbar-thumb-bg: transparent;
+  scrollbar-gutter: stable;
+}
+
+.cv-mini-scrollbar::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.cv-mini-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cv-mini-scrollbar:hover {
+  --cv-mini-scrollbar-thumb-bg: light-dark(
+    color-mix(in lab, var(--background) 85%, black),
+    color-mix(in lab, var(--background) 80%, white)
+  );
+}
+
+.cv-mini-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--cv-mini-scrollbar-thumb-bg);
+  background-clip: content-box;
+  border: 3px solid transparent;
+  border-radius: 5px;
+}
+
+@supports (-moz-appearance: none) {
+  .cv-scrollbar {
+    scrollbar-color: var(--cv-scrollbar-thumb-bg) var(--diffs-scrollbar-track-bg, transparent);
+  }
+  .cv-mini-scrollbar {
+    scrollbar-color: var(--cv-mini-scrollbar-thumb-bg) transparent;
+    scrollbar-width: thin;
+  }
+}
+
+.diffs-border-deleted {
+  display: inline-flex;
+  align-items: stretch;
+}
+
+.diffs-border-deleted::before {
+  flex-shrink: 0;
+  display: block;
+  content: '';
+  width: 4px;
+  height: 24px;
+  background-image: linear-gradient(
+    0deg,
+    light-dark(#ff2e3f, #ff6762) 50%,
+    light-dark(#ffdbd6, #3e1715) 50%
+  );
+  background-repeat: repeat;
+  background-size: 2px 2px;
+  background-size: calc(1lh / round(1lh / 2px)) calc(1lh / round(1lh / 2px));
+  border-radius: 4px 0 0 4px;
+}

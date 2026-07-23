@@ -1,4 +1,4 @@
-import {createFileRoute} from '@tanstack/react-router'
+import {createFileRoute, Link} from '@tanstack/react-router'
 
 import {css} from 'styled-system/css'
 
@@ -14,9 +14,13 @@ function Home() {
   const description = 'A centralized home for managing reviews and diffs as first-class objects.'
 
   const features = [
-    {name: 'Reviews', body: 'Manage reviews as first-class objects, not afterthoughts.'},
-    {name: 'Diffs', body: 'See and discuss changes with clarity. In development.'},
-  ]
+    {
+      name: 'Reviews',
+      body: 'Manage reviews as first-class objects, not afterthoughts.',
+      href: undefined,
+    },
+    {name: 'Diffs', body: 'See and discuss changes with clarity.', href: '/diffs'},
+  ] as const
 
   return (
     <div className={css({minHeight: '100dvh', display: 'flex', flexDirection: 'column'})}>
@@ -94,29 +98,52 @@ function Home() {
             p: '0',
           })}
         >
-          {features.map((f) => (
-            <li
-              key={f.name}
-              className={css({
-                borderWidth: '1px',
-                borderColor: 'neutral.200',
-                rounded: 'xl',
-                p: '6',
-              })}
-            >
-              <h2 className={css({fontSize: 'lg', fontWeight: 'semibold'})}>{f.name}</h2>
-              <p
-                className={css({
-                  mt: '2',
-                  fontSize: 'sm',
-                  color: 'neutral.600',
-                  lineHeight: 'relaxed',
-                })}
-              >
-                {f.body}
-              </p>
-            </li>
-          ))}
+          {features.map((f) => {
+            const card = (
+              <>
+                <h2 className={css({fontSize: 'lg', fontWeight: 'semibold'})}>{f.name}</h2>
+                <p
+                  className={css({
+                    mt: '2',
+                    fontSize: 'sm',
+                    color: 'neutral.600',
+                    lineHeight: 'relaxed',
+                  })}
+                >
+                  {f.body}
+                </p>
+              </>
+            )
+            const cardStyle = css({
+              display: 'block',
+              borderWidth: '1px',
+              borderColor: 'neutral.200',
+              rounded: 'xl',
+              p: '6',
+            })
+            return (
+              <li key={f.name}>
+                {f.href ? (
+                  <Link
+                    to={f.href}
+                    className={css({
+                      display: 'block',
+                      borderWidth: '1px',
+                      borderColor: 'neutral.200',
+                      rounded: 'xl',
+                      p: '6',
+                      transition: 'border-color 150ms ease',
+                      _hover: {borderColor: 'neutral.400'},
+                    })}
+                  >
+                    {card}
+                  </Link>
+                ) : (
+                  <div className={cardStyle}>{card}</div>
+                )}
+              </li>
+            )
+          })}
         </ul>
       </main>
 

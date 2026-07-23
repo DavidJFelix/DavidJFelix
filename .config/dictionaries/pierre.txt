@@ -1,0 +1,6 @@
+# Vocabulary from Pierre's open source ecosystem (PierreJS monorepo), the
+# upstream source of the revision.city /diffs viewer port. Used in changelog
+# entries, project docs, and provenance comments.
+diffshub
+pierrecdn
+PierreJS

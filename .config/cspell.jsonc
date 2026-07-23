@@ -13,6 +13,7 @@
     "dns",
     "ics",
     "people-names",
+    "pierre",
   ],
   // Topic dictionaries: system vocabularies and names shared by more than one
   // file. Entries and the reasons for them live in the .txt files themselves.
@@ -27,6 +28,11 @@
       "name": "people-names",
       "path": "dictionaries/people-names.txt",
       "description": "People named in docs and code",
+    },
+    {
+      "name": "pierre",
+      "path": "dictionaries/pierre.txt",
+      "description": "Pierre ecosystem vocabulary (diffs viewer port provenance)",
     },
   ],
   // Spellings this repo rejects outright; cspell reports the replacement. The

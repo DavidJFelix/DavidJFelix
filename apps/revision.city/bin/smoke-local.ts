@@ -14,7 +14,7 @@ import {existsSync} from 'node:fs'
 
 const PORT = Number(process.env.SMOKE_PORT ?? 4173)
 const BASE_URL = `http://127.0.0.1:${PORT}`
-const ROUTES = (process.env.SMOKE_ROUTES ?? '/').split(',')
+const ROUTES = (process.env.SMOKE_ROUTES ?? '/,/diffs').split(',')
 const READY_TIMEOUT_MS = 60_000
 
 if (!existsSync('dist')) {

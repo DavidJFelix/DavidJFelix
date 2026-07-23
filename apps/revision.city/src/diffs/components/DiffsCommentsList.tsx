@@ -1,41 +1,38 @@
 // cSpell:ignore ochin Convo -- theme/icon names
-import type { AnnotationSide } from '@pierre/diffs';
-import { IconConvoFill, IconPlus } from '@pierre/icons';
-import { memo, type MouseEvent } from 'react';
+import type {AnnotationSide} from '@pierre/diffs'
+import {IconConvoFill, IconPlus} from '@pierre/icons'
+import {type MouseEvent, memo} from 'react'
 
-import { css, cx } from 'styled-system/css';
-
-import { CommentAuthorAvatar } from './CommentAuthorAvatar';
+import {css, cx} from 'styled-system/css'
+import {isNullish} from '@/diffs/lib/nullish'
 import type {
   CommentLineType,
   DiffsSavedCommentEntry,
   DiffsSavedCommentItem,
-} from '@/diffs/lib/types';
+} from '@/diffs/lib/types'
+import {CommentAuthorAvatar} from './CommentAuthorAvatar'
 
 interface DiffsCommentsListProps {
-  commentSections: readonly DiffsSavedCommentItem[];
-  onSelectComment?(comment: DiffsSavedCommentEntry): void;
-  onSelectItem?(itemId: string): void;
+  commentSections: readonly DiffsSavedCommentItem[]
+  onSelectComment?(comment: DiffsSavedCommentEntry): void
+  onSelectItem?(itemId: string): void
 }
 
 function getCommentLineLabel(
   side: AnnotationSide,
   lineNumber: number,
-  lineType: CommentLineType
+  lineType: CommentLineType,
 ): string {
   if (lineType === 'context') {
-    return `Line ${lineNumber}`;
+    return `Line ${lineNumber}`
   }
-  const sigil = side === 'additions' ? '+' : '-';
-  return `Line ${sigil}${lineNumber}`;
+  const sigil = side === 'additions' ? '+' : '-'
+  return `Line ${sigil}${lineNumber}`
 }
 
-function getCommentLineClassName(
-  side: AnnotationSide,
-  lineType: CommentLineType
-): string {
+function getCommentLineClassName(side: AnnotationSide, lineType: CommentLineType): string {
   if (lineType === 'context') {
-    return css({ color: 'diffs.muted.foreground' });
+    return css({color: 'diffs.muted.foreground'})
   }
   // The themed chrome sets --diffs-comment-add-fg / -del-fg with a shade
   // chosen from the active Shiki surface's luminance, so addition/deletion
@@ -47,12 +44,12 @@ function getCommentLineClassName(
   return side === 'additions'
     ? css({
         color: 'var(--diffs-comment-add-fg, #047857)',
-        _dark: { color: 'var(--diffs-comment-add-fg, #34d399)' },
+        _dark: {color: 'var(--diffs-comment-add-fg, #34d399)'},
       })
     : css({
         color: 'var(--diffs-comment-del-fg, #be123c)',
-        _dark: { color: 'var(--diffs-comment-del-fg, #fb7185)' },
-      });
+        _dark: {color: 'var(--diffs-comment-del-fg, #fb7185)'},
+      })
 }
 
 // Wraps a click handler so users can drag-select text inside the row without
@@ -60,27 +57,21 @@ function getCommentLineClassName(
 // button; bail out only when the resulting selection is anchored inside this
 // row, so a pre-existing selection elsewhere on the page (e.g. in the diff
 // viewer) does not block keyboard/mouse activation of the row.
-function handleRowClick(
-  event: MouseEvent<HTMLButtonElement>,
-  run: () => void
-): void {
+function handleRowClick(event: MouseEvent<HTMLButtonElement>, run: () => void): void {
   if (event.button !== 0) {
-    return;
+    return
   }
-  const selection =
-    typeof window !== 'undefined' ? window.getSelection() : null;
-  if (selection != null && selection.toString().length > 0) {
-    const row = event.currentTarget;
-    const anchorInRow =
-      selection.anchorNode != null && row.contains(selection.anchorNode);
-    const focusInRow =
-      selection.focusNode != null && row.contains(selection.focusNode);
+  const selection = typeof window !== 'undefined' ? window.getSelection() : null
+  if (!isNullish(selection) && selection.toString().length > 0) {
+    const row = event.currentTarget
+    const anchorInRow = !isNullish(selection.anchorNode) && row.contains(selection.anchorNode)
+    const focusInRow = !isNullish(selection.focusNode) && row.contains(selection.focusNode)
     if (anchorInRow || focusInRow) {
-      event.preventDefault();
-      return;
+      event.preventDefault()
+      return
     }
   }
-  run();
+  run()
 }
 
 export const DiffsCommentsList = memo(function DiffsCommentsList({
@@ -106,11 +97,9 @@ export const DiffsCommentsList = memo(function DiffsCommentsList({
           lineHeight: '1.25rem',
         })}
       >
-        <IconConvoFill size={24} className={css({ mb: '2' })} />
-        <div className={css({ display: 'flex', flexDirection: 'column' })}>
-          <strong className={css({ fontWeight: 'medium' })}>
-            No comments yet
-          </strong>
+        <IconConvoFill size={24} className={css({mb: '2'})} />
+        <div className={css({display: 'flex', flexDirection: 'column'})}>
+          <strong className={css({fontWeight: 'medium'})}>No comments yet</strong>
           <p>
             Hover over a line and click the{' '}
             <span
@@ -122,8 +111,8 @@ export const DiffsCommentsList = memo(function DiffsCommentsList({
                 justifyContent: 'center',
                 rounded: '4px',
                 verticalAlign: 'top',
-                _light: { color: 'white', bg: 'rgb(0, 159, 255)' },
-                _dark: { bg: 'rgb(0, 159, 255)', color: 'black' },
+                _light: {color: 'white', bg: 'rgb(0, 159, 255)'},
+                _dark: {bg: 'rgb(0, 159, 255)', color: 'black'},
               })}
             >
               <IconPlus />
@@ -132,7 +121,7 @@ export const DiffsCommentsList = memo(function DiffsCommentsList({
           </p>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -147,17 +136,17 @@ export const DiffsCommentsList = memo(function DiffsCommentsList({
           pl: '3',
           pb: '3',
           pr: 'max(0px, calc(12px - var(--cv-mini-gutter-vertical)))',
-        })
+        }),
       )}
     >
       {commentSections.map((section) => (
         <section key={section.itemId}>
-          {onSelectItem != null ? (
+          {!isNullish(onSelectItem) ? (
             <button
               type="button"
               className={css({
                 color: 'diffs.muted.foreground',
-                _hover: { color: 'diffs.foreground' },
+                _hover: {color: 'diffs.foreground'},
                 display: 'block',
                 w: 'full',
                 cursor: 'pointer',
@@ -169,15 +158,11 @@ export const DiffsCommentsList = memo(function DiffsCommentsList({
                 fontWeight: 'medium',
                 wordBreak: 'break-all',
                 outline: 'none',
-                _focusVisible: { boxShadow: '0 0 0 2px var(--ring)' },
+                _focusVisible: {boxShadow: '0 0 0 2px var(--ring)'},
               })}
-              onClick={(event) =>
-                handleRowClick(event, () => onSelectItem(section.itemId))
-              }
+              onClick={(event) => handleRowClick(event, () => onSelectItem(section.itemId))}
             >
-              <span className={css({ userSelect: 'text' })}>
-                {section.path}
-              </span>
+              <span className={css({userSelect: 'text'})}>{section.path}</span>
             </button>
           ) : (
             <div
@@ -234,23 +219,17 @@ export const DiffsCommentsList = memo(function DiffsCommentsList({
                   fontSize: 'sm',
                   lineHeight: '1.25rem',
                   outline: 'none',
-                  _first: { roundedTop: 'diffs.lg' },
-                  _last: { roundedBottom: 'diffs.lg', borderBottomWidth: '0' },
-                  _hover: { bg: 'var(--diffs-card-hover-bg, var(--muted))' },
-                  _focusVisible: { boxShadow: '0 0 0 2px var(--ring)' },
+                  _first: {roundedTop: 'diffs.lg'},
+                  _last: {roundedBottom: 'diffs.lg', borderBottomWidth: '0'},
+                  _hover: {bg: 'var(--diffs-card-hover-bg, var(--muted))'},
+                  _focusVisible: {boxShadow: '0 0 0 2px var(--ring)'},
                   _dark: {
-                    borderColor:
-                      'var(--diffs-card-border, rgb(255 255 255 / 0.15))',
+                    borderColor: 'var(--diffs-card-border, rgb(255 255 255 / 0.15))',
                   },
                 })}
-                onClick={(event) =>
-                  handleRowClick(event, () => onSelectComment?.(comment))
-                }
+                onClick={(event) => handleRowClick(event, () => onSelectComment?.(comment))}
               >
-                <CommentAuthorAvatar
-                  seed={comment.author}
-                  className={css({ w: '5', h: '5' })}
-                />
+                <CommentAuthorAvatar seed={comment.author} className={css({w: '5', h: '5'})} />
                 <div
                   className={css({
                     display: 'flex',
@@ -271,14 +250,10 @@ export const DiffsCommentsList = memo(function DiffsCommentsList({
                     <span
                       className={cx(
                         getCommentLineClassName(comment.side, comment.lineType),
-                        css({ fontWeight: 'medium' })
+                        css({fontWeight: 'medium'}),
                       )}
                     >
-                      {getCommentLineLabel(
-                        comment.side,
-                        comment.lineNumber,
-                        comment.lineType
-                      )}
+                      {getCommentLineLabel(comment.side, comment.lineNumber, comment.lineType)}
                     </span>
                   </div>
                   <p
@@ -298,5 +273,5 @@ export const DiffsCommentsList = memo(function DiffsCommentsList({
         </section>
       ))}
     </div>
-  );
-});
+  )
+})

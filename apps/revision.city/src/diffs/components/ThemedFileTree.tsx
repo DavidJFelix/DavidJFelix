@@ -1,14 +1,13 @@
-import { FileTree, type FileTreeProps } from '@pierre/trees/react';
-import type { CSSProperties } from 'react';
-import { useMemo } from 'react';
-
-import { useTreeThemeProps } from './use-tree-theme-props';
-import type { ThemeInput } from '@/diffs/lib/theme/theme-source';
+import {FileTree, type FileTreeProps} from '@pierre/trees/react'
+import type {CSSProperties} from 'react'
+import {useMemo} from 'react'
+import type {ThemeInput} from '@/diffs/lib/theme/theme-source'
+import {useTreeThemeProps} from './use-tree-theme-props'
 
 interface ThemedFileTreeProps extends FileTreeProps {
   // Per-component override (omitted => follow the provider).
-  theme?: ThemeInput;
-  reconcileForegroundFromChrome?: boolean;
+  theme?: ThemeInput
+  reconcileForegroundFromChrome?: boolean
 }
 
 // Sugar over useTreeThemeProps: applies the active theme's tree styles to the
@@ -21,10 +20,10 @@ export function ThemedFileTree({
 }: ThemedFileTreeProps) {
   const themeProps = useTreeThemeProps(theme, {
     reconcileForegroundFromChrome,
-  });
+  })
   const mergedStyle = useMemo(
-    () => ({ ...themeProps.style, ...style }) as CSSProperties,
-    [themeProps.style, style]
-  );
-  return <FileTree {...props} style={mergedStyle} />;
+    () => ({...themeProps.style, ...style}) as CSSProperties,
+    [themeProps.style, style],
+  )
+  return <FileTree {...props} style={mergedStyle} />
 }

@@ -1,18 +1,18 @@
 // cSpell:ignore Diffstat -- @pierre/icons export name
-import { IconSymbolDiffstatFill } from '@pierre/icons';
-import { memo, useEffect } from 'react';
+import {IconSymbolDiffstatFill} from '@pierre/icons'
+import {memo, useEffect} from 'react'
 
-import { css } from 'styled-system/css';
-
-import { StatItem } from './StatItem';
-import { StatusRow } from './StatusRow';
-import type { DiffsStats as DiffsStatsData } from '@/diffs/lib/types';
+import {css} from 'styled-system/css'
+import {isNullish} from '@/diffs/lib/nullish'
+import type {DiffsStats as DiffsStatsData} from '@/diffs/lib/types'
+import {StatItem} from './StatItem'
+import {StatusRow} from './StatusRow'
 
 interface DiffsStatsProps {
-  expanded: boolean;
-  onToggle(): void;
-  stats: DiffsStatsData | null;
-  streaming: boolean;
+  expanded: boolean
+  onToggle(): void
+  stats: DiffsStatsData | null
+  streaming: boolean
 }
 
 export const DiffsStats = memo(function DiffsStats({
@@ -24,16 +24,16 @@ export const DiffsStats = memo(function DiffsStats({
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'F2') {
-        event.preventDefault();
-        onToggle();
+        event.preventDefault()
+        onToggle()
       }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [onToggle]);
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [onToggle])
 
-  if (stats == null) {
-    return null;
+  if (isNullish(stats)) {
+    return null
   }
 
   return (
@@ -51,8 +51,8 @@ export const DiffsStats = memo(function DiffsStats({
             gap: '1',
             fontSize: 'sm',
             lineHeight: '1.25rem',
-            _hover: { color: 'diffs.foreground' },
-            _focus: { outline: 'none' },
+            _hover: {color: 'diffs.foreground'},
+            _focus: {outline: 'none'},
           })}
           aria-expanded={expanded}
         >
@@ -60,7 +60,7 @@ export const DiffsStats = memo(function DiffsStats({
           <span
             className={css({
               color: 'diffs.muted.foreground/50',
-              display: { base: 'none', md: 'inline' },
+              display: {base: 'none', md: 'inline'},
             })}
           >
             (F2)
@@ -69,7 +69,7 @@ export const DiffsStats = memo(function DiffsStats({
         </button>
       </StatusRow>
       {expanded && (
-        <div className={css({ ml: '10', mr: { md: '3' } })}>
+        <div className={css({ml: '10', mr: {md: '3'}})}>
           <StatItem
             label="Files"
             value={stats.fileCount}
@@ -84,7 +84,7 @@ export const DiffsStats = memo(function DiffsStats({
             valueClassName={css({
               color: 'green.600',
               fontWeight: 'semibold',
-              _dark: { color: 'green.400' },
+              _dark: {color: 'green.400'},
             })}
           />
           <StatItem
@@ -93,7 +93,7 @@ export const DiffsStats = memo(function DiffsStats({
             valueClassName={css({
               color: 'red.600',
               fontWeight: 'semibold',
-              _dark: { color: 'red.400' },
+              _dark: {color: 'red.400'},
             })}
           />
           <StatItem
@@ -107,8 +107,8 @@ export const DiffsStats = memo(function DiffsStats({
         </div>
       )}
     </>
-  );
-});
+  )
+})
 
 function StreamingIndicator() {
   return (
@@ -128,10 +128,10 @@ function StreamingIndicator() {
         letterSpacing: 'wide',
         color: 'yellow.700',
         textTransform: 'uppercase',
-        _dark: { color: 'yellow.300' },
+        _dark: {color: 'yellow.300'},
       })}
     >
       streaming
     </span>
-  );
+  )
 }

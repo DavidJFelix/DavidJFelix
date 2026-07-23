@@ -1,6 +1,6 @@
-import type { GitStatus } from '@pierre/trees';
-
-import type { DiffsFileTreeSource } from './types';
+import type {GitStatus} from '@pierre/trees'
+import {isNullish} from './nullish'
+import type {DiffsFileTreeSource} from './types'
 
 // Returns a filtered copy of the source keeping only paths whose effective git
 // status is in `selectedStatuses`. An empty selection means "no filter" and
@@ -10,28 +10,24 @@ import type { DiffsFileTreeSource } from './types';
 // the filtered `paths` keep their original relative order from the source.
 export function filterDiffsFileTreeSource(
   source: DiffsFileTreeSource,
-  selectedStatuses: ReadonlySet<GitStatus>
+  selectedStatuses: ReadonlySet<GitStatus>,
 ): DiffsFileTreeSource {
-  if (selectedStatuses.size === 0) return source;
+  if (selectedStatuses.size === 0) return source
 
-  const pathStatusMap = new Map<string, GitStatus>(
-    source.gitStatus.map((e) => [e.path, e.status])
-  );
+  const pathStatusMap = new Map<string, GitStatus>(source.gitStatus.map((e) => [e.path, e.status]))
 
   const filteredPaths = source.paths.filter((path) => {
-    const status = pathStatusMap.get(path) ?? 'modified';
-    return selectedStatuses.has(status);
-  });
+    const status = pathStatusMap.get(path) ?? 'modified'
+    return selectedStatuses.has(status)
+  })
 
-  const filteredGitStatus = source.gitStatus.filter((e) =>
-    selectedStatuses.has(e.status)
-  );
+  const filteredGitStatus = source.gitStatus.filter((e) => selectedStatuses.has(e.status))
 
-  const filteredPathToItemId = new Map<string, string>();
+  const filteredPathToItemId = new Map<string, string>()
   for (const path of filteredPaths) {
-    const id = source.pathToItemId.get(path);
-    if (id != null) {
-      filteredPathToItemId.set(path, id);
+    const id = source.pathToItemId.get(path)
+    if (!isNullish(id)) {
+      filteredPathToItemId.set(path, id)
     }
   }
 
@@ -40,5 +36,5 @@ export function filterDiffsFileTreeSource(
     pathCount: filteredPaths.length,
     paths: filteredPaths,
     pathToItemId: filteredPathToItemId,
-  };
+  }
 }

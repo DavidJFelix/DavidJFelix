@@ -1,14 +1,13 @@
 import type {CodeViewHandle} from '@pierre/diffs/react'
 import type {ThemeLike} from '@pierre/theming'
-import {act, createRef} from 'react'
 import type {CSSProperties} from 'react'
+import {act, createRef} from 'react'
 import {createRoot, type Root} from 'react-dom/client'
 import {expect, test} from 'vitest'
-
+import type {ChromeMapping} from '@/diffs/lib/theme/chrome-theme-props'
 import {ThemedCodeView} from './ThemedCodeView'
 import {ThemedSurface} from './ThemedSurface'
 import {ThemeSourceProvider} from './ThemeSourceProvider'
-import type {ChromeMapping} from '@/diffs/lib/theme/chrome-theme-props'
 
 // jsdom (the vitest environment configured for this app) does not implement
 // ResizeObserver; stub it so a mounted CodeView/surface that observes its
@@ -61,7 +60,7 @@ async function flushReact(): Promise<void> {
 
 test('React themed component overrides: ThemedCodeView preserves caller themeType while applying the active theme pair', async () => {
   const container = document.createElement('div')
-  document.body.append(container)
+  document.body.appendChild(container)
   const codeViewRef = createRef<CodeViewHandle<undefined>>()
   let root: Root | undefined
 
@@ -104,7 +103,7 @@ test('React themed component overrides: ThemedCodeView preserves caller themeTyp
 
 test('React themed component overrides: per-component theme pairs use the provider color scheme', async () => {
   const container = document.createElement('div')
-  document.body.append(container)
+  document.body.appendChild(container)
   let root: Root | undefined
   await act(async () => {
     root = createRoot(container)

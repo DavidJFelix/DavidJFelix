@@ -1,11 +1,12 @@
-import type { CodeViewLayout } from '@pierre/diffs';
-import type { FileTreeOptions } from '@pierre/trees';
+import type {CodeViewLayout} from '@pierre/diffs'
+import type {FileTreeOptions} from '@pierre/trees'
+import {isNullish} from './nullish'
 
 export const CODE_VIEW_LAYOUT: CodeViewLayout = {
   paddingTop: 0,
   gap: 1,
   paddingBottom: 0,
-};
+}
 
 export const CODE_VIEW_CUSTOM_CSS = `
 [data-diffs-header] {
@@ -24,36 +25,31 @@ export const CODE_VIEW_CUSTOM_CSS = `
     background-color: var(--diffs-annotation-border);
   }
 }
-`;
+`
 
-export const CODE_VIEW_FILE_TREE_ITEM_HEIGHT = 24;
-export const CODE_VIEW_BATCH_COUNT = 25;
-export const CODE_VIEW_BATCH_COUNT_MAX = 96;
+export const CODE_VIEW_FILE_TREE_ITEM_HEIGHT = 24
+export const CODE_VIEW_BATCH_COUNT = 25
+export const CODE_VIEW_BATCH_COUNT_MAX = 96
 
 export function getInitialBatchSize(): number {
-  const viewportHeight = getViewportHeight();
-  if (viewportHeight == null) {
-    return CODE_VIEW_BATCH_COUNT;
+  const viewportHeight = getViewportHeight()
+  if (isNullish(viewportHeight)) {
+    return CODE_VIEW_BATCH_COUNT
   }
 
   return Math.min(
     CODE_VIEW_BATCH_COUNT_MAX,
-    Math.max(
-      CODE_VIEW_BATCH_COUNT,
-      Math.ceil(viewportHeight / CODE_VIEW_FILE_TREE_ITEM_HEIGHT)
-    )
-  );
+    Math.max(CODE_VIEW_BATCH_COUNT, Math.ceil(viewportHeight / CODE_VIEW_FILE_TREE_ITEM_HEIGHT)),
+  )
 }
 
 function getViewportHeight(): number | null {
   if (typeof window === 'undefined') {
-    return null;
+    return null
   }
 
-  const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
-  return Number.isFinite(viewportHeight) && viewportHeight > 0
-    ? viewportHeight
-    : null;
+  const viewportHeight = window.visualViewport?.height ?? window.innerHeight
+  return Number.isFinite(viewportHeight) && viewportHeight > 0 ? viewportHeight : null
 }
 
 // Hide the built-in search input until the user opts into search via the
@@ -100,7 +96,7 @@ const HIDDEN_SEARCH_UNSAFE_CSS = `
       }
     }
   }
-`;
+`
 
 /** In `@layer unsafe` so it overrides core tree `padding-inline` without host vars. */
 const SIDEBAR_VIRTUALIZED_SCROLL_UNSAFE_CSS = `
@@ -125,7 +121,7 @@ const SIDEBAR_VIRTUALIZED_SCROLL_UNSAFE_CSS = `
       padding-inline-end: max(0px, calc(14px - var(--trees-scrollbar-gutter)));
     }
   }
-`;
+`
 
 // In this view everything is assumed to be changing, so the folder dot that
 // signals "contains a git change" is superfluous and is hidden globally.
@@ -133,7 +129,7 @@ const SUPPRESS_FOLDER_DOT_UNSAFE_CSS = `
   [data-item-contains-git-change='true'] > [data-item-section='git'] {
     display: none;
   }
-`;
+`
 
 // Folders get higher contrast and medium weight to stand out from regular file
 // entries, which use the default muted tree fg color.
@@ -142,7 +138,7 @@ const FOLDER_LABEL_UNSAFE_CSS = `
     color: color-mix(in lab, light-dark(#000, #fff) 25%, var(--trees-fg));
     font-weight: 500;
   }
-`;
+`
 
 // Options shared across all mounts of this tree. Lives at module scope so the
 // reference stays stable and useFileTree() never churns its initial snapshot.
@@ -154,4 +150,4 @@ export const BASE_FILE_TREE_OPTIONS = {
   search: true,
   stickyFolders: true,
   unsafeCSS: `${HIDDEN_SEARCH_UNSAFE_CSS}\n${SIDEBAR_VIRTUALIZED_SCROLL_UNSAFE_CSS}\n${SUPPRESS_FOLDER_DOT_UNSAFE_CSS}\n${FOLDER_LABEL_UNSAFE_CSS}`,
-} as const satisfies Omit<FileTreeOptions, 'paths' | 'preparedInput'>;
+} as const satisfies Omit<FileTreeOptions, 'paths' | 'preparedInput'>

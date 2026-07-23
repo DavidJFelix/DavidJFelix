@@ -6,15 +6,12 @@
 // as a small client-session cache option in case we want to re-enable raw patch
 // reuse for repeated visits without changing the viewer flow again.
 
-const patchTextByGitHubPath = new Map<string, string>();
+const patchTextByGitHubPath = new Map<string, string>()
 
 export function getCachedPatchText(githubPath: string): string | undefined {
-  return patchTextByGitHubPath.get(githubPath);
+  return patchTextByGitHubPath.get(githubPath)
 }
 
-export function setCachedPatchText(
-  githubPath: string,
-  patchText: string
-): void {
-  patchTextByGitHubPath.set(githubPath, patchText);
+export function setCachedPatchText(githubPath: string, patchText: string): void {
+  patchTextByGitHubPath.set(githubPath, patchText)
 }

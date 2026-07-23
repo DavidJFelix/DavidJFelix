@@ -1,31 +1,27 @@
-import type {
-  ColorMode,
-  ThemeController,
-  ThemeControllerState,
-} from '@pierre/theming';
-import { createThemeResolver } from '@pierre/theming';
-import { useThemeController } from '@pierre/theming/react';
-import { useContext, useMemo } from 'react';
-
-import { ThemeControllerContext } from './use-theme-source';
-import { docsThemeCatalog } from '@/diffs/components/theme-catalog';
+import type {ColorMode, ThemeController, ThemeControllerState} from '@pierre/theming'
+import {createThemeResolver} from '@pierre/theming'
+import {useThemeController} from '@pierre/theming/react'
+import {useContext, useMemo} from 'react'
+import {docsThemeCatalog} from '@/diffs/components/theme-catalog'
+import {isNullish} from '@/diffs/lib/nullish'
+import {ThemeControllerContext} from './use-theme-source'
 
 export interface ThemeSelectionResult {
   // Current selection.
-  colorMode: ColorMode;
-  darkThemeName: string;
-  lightThemeName: string;
+  colorMode: ColorMode
+  darkThemeName: string
+  lightThemeName: string
   // Catalog.
-  darkThemeNames: readonly string[];
-  lightThemeNames: readonly string[];
+  darkThemeNames: readonly string[]
+  lightThemeNames: readonly string[]
   // Setters (no-op when there is no controller, e.g. under an override provider).
-  setColorMode(mode: ColorMode): void;
-  setDarkThemeName(name: string): void;
-  setLightThemeName(name: string): void;
+  setColorMode(mode: ColorMode): void
+  setDarkThemeName(name: string): void
+  setLightThemeName(name: string): void
 }
 
-const NOOP = () => {};
-const EMPTY_THEMES: readonly string[] = [];
+const NOOP = () => {}
+const EMPTY_THEMES: readonly string[] = []
 
 // A stable empty state for the fallback controller. useThemeController wraps
 // useSyncExternalStore, which compares snapshot identity — so getState MUST
@@ -36,7 +32,7 @@ const FALLBACK_STATE: ThemeControllerState = {
   lightThemeName: '',
   mode: 'system',
   resolvedColorScheme: 'light',
-};
+}
 
 // A no-op controller used when no ThemeControllerContext is present (an
 // override-only provider). It never notifies and always reports FALLBACK_STATE,
@@ -50,18 +46,18 @@ const FALLBACK_CONTROLLER: ThemeController = {
   setColorMode: () => {},
   setThemeNameForScheme: () => {},
   destroy: () => {},
-};
+}
 
 // Reads the controller behind the provider: the current mode + theme
 // names, the catalogs, and setters. Under an override-only provider (no
 // controller) it returns empty catalogs and no-op setters so consumers stay safe.
 export function useThemeSelection(): ThemeSelectionResult {
-  const controller = useContext(ThemeControllerContext);
+  const controller = useContext(ThemeControllerContext)
   // Always read through a controller (a stable no-op one when none is present)
   // so the hook count never changes between renders.
-  const state = useThemeController(controller ?? FALLBACK_CONTROLLER);
+  const state = useThemeController(controller ?? FALLBACK_CONTROLLER)
   return useMemo<ThemeSelectionResult>(() => {
-    if (controller == null) {
+    if (isNullish(controller)) {
       return {
         colorMode: 'system',
         darkThemeName: '',
@@ -71,19 +67,17 @@ export function useThemeSelection(): ThemeSelectionResult {
         setColorMode: NOOP,
         setDarkThemeName: NOOP,
         setLightThemeName: NOOP,
-      };
+      }
     }
     return {
       colorMode: state.mode,
       darkThemeName: state.darkThemeName,
       lightThemeName: state.lightThemeName,
-      darkThemeNames: docsThemeCatalog.getThemeNames({ colorScheme: 'dark' }),
-      lightThemeNames: docsThemeCatalog.getThemeNames({ colorScheme: 'light' }),
+      darkThemeNames: docsThemeCatalog.getThemeNames({colorScheme: 'dark'}),
+      lightThemeNames: docsThemeCatalog.getThemeNames({colorScheme: 'light'}),
       setColorMode: (mode: ColorMode) => controller.setColorMode(mode),
-      setDarkThemeName: (name: string) =>
-        controller.setThemeNameForScheme('dark', name),
-      setLightThemeName: (name: string) =>
-        controller.setThemeNameForScheme('light', name),
-    };
-  }, [controller, state.mode, state.darkThemeName, state.lightThemeName]);
+      setDarkThemeName: (name: string) => controller.setThemeNameForScheme('dark', name),
+      setLightThemeName: (name: string) => controller.setThemeNameForScheme('light', name),
+    }
+  }, [controller, state.mode, state.darkThemeName, state.lightThemeName])
 }

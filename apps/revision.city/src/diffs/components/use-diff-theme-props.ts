@@ -1,14 +1,14 @@
-import type { ThemesType, ThemeTypes } from '@pierre/diffs';
-import { useMemo } from 'react';
-
-import { useThemeSelection } from './use-theme-selection';
-import { useThemeSource } from './use-theme-source';
+import type {ThemesType, ThemeTypes} from '@pierre/diffs'
+import {useMemo} from 'react'
+import {isNullish} from '@/diffs/lib/nullish'
 import {
   type DiffThemeInput,
   diffThemeProps,
   diffThemeSelectionFromInput,
-} from '@/diffs/lib/theme/diff-theme-props';
-import { hasThemeNameSelection } from '@/diffs/lib/theme/theme-source';
+} from '@/diffs/lib/theme/diff-theme-props'
+import {hasThemeNameSelection} from '@/diffs/lib/theme/theme-source'
+import {useThemeSelection} from './use-theme-selection'
+import {useThemeSource} from './use-theme-source'
 
 // Names-now diffs hook. Reads the selection (names + scheme) — for the provider
 // path it comes from the controller; for an override `theme` prop the names are
@@ -19,33 +19,25 @@ import { hasThemeNameSelection } from '@/diffs/lib/theme/theme-source';
 // case (a single fixed theme or a { light, dark } pair); when given, its names
 // replace the provider selection.
 export function useDiffThemeProps(theme?: DiffThemeInput): {
-  theme: ThemesType;
-  themeType: ThemeTypes;
+  theme: ThemesType
+  themeType: ThemeTypes
 } {
-  const selection = useThemeSelection();
-  const { activeTheme, source } = useThemeSource();
+  const selection = useThemeSelection()
+  const {activeTheme, source} = useThemeSource()
   return useMemo(() => {
-    if (theme != null) {
-      return diffThemeProps(
-        diffThemeSelectionFromInput(theme, activeTheme.colorScheme)
-      );
+    if (!isNullish(theme)) {
+      return diffThemeProps(diffThemeSelectionFromInput(theme, activeTheme.colorScheme))
     }
     const sourceSelection = hasThemeNameSelection(source)
       ? source.getThemeNameSelection()
-      : undefined;
-    if (sourceSelection != null) {
-      return diffThemeProps(sourceSelection);
+      : undefined
+    if (!isNullish(sourceSelection)) {
+      return diffThemeProps(sourceSelection)
     }
     return diffThemeProps({
       lightThemeName: selection.lightThemeName,
       darkThemeName: selection.darkThemeName,
       colorScheme: activeTheme.colorScheme,
-    });
-  }, [
-    theme,
-    selection.lightThemeName,
-    selection.darkThemeName,
-    source,
-    activeTheme.colorScheme,
-  ]);
+    })
+  }, [theme, selection.lightThemeName, selection.darkThemeName, source, activeTheme.colorScheme])
 }

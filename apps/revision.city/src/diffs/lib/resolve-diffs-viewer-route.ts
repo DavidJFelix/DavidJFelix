@@ -1,16 +1,17 @@
-import { normalizeGitHubPath } from './normalize-github-path';
-import { DIFFS_BASE_PATH } from './site';
+import {normalizeGitHubPath} from './normalize-github-path'
+import {isNullish} from './nullish'
+import {DIFFS_BASE_PATH} from './site'
 
-const GITHUB_HOST = 'github.com';
+const GITHUB_HOST = 'github.com'
 
 export type DiffsViewerRoute =
-  | { kind: 'redirect'; target: string }
+  | {kind: 'redirect'; target: string}
   | {
-      kind: 'render';
-      upstreamPath: string;
-      url: string;
-      domain: string | undefined;
-    };
+      kind: 'render'
+      upstreamPath: string
+      url: string
+      domain: string | undefined
+    }
 
 // Resolves the catch-all viewer route into either a redirect or the props the
 // viewer needs to render. Extracted from the route file so it can be unit
@@ -22,33 +23,32 @@ export type DiffsViewerRoute =
 // url stay upstream-relative for fetching.
 export function resolveDiffsViewerRoute(
   pathSegments: readonly string[],
-  requestedDomainInput: string | undefined
+  requestedDomainInput: string | undefined,
 ): DiffsViewerRoute {
   if (pathSegments.length === 0) {
-    return { kind: 'redirect', target: DIFFS_BASE_PATH };
+    return {kind: 'redirect', target: DIFFS_BASE_PATH}
   }
 
   const domain =
-    requestedDomainInput == null || requestedDomainInput === ''
+    isNullish(requestedDomainInput) || requestedDomainInput === ''
       ? undefined
-      : requestedDomainInput;
-  const joinedPath = `/${pathSegments.join('/')}`;
-  const upstreamPath =
-    domain == null ? normalizeGitHubPath(joinedPath) : joinedPath;
+      : requestedDomainInput
+  const joinedPath = `/${pathSegments.join('/')}`
+  const upstreamPath = isNullish(domain) ? normalizeGitHubPath(joinedPath) : joinedPath
 
   if (upstreamPath !== joinedPath) {
-    const query = domain == null ? '' : `?domain=${encodeURIComponent(domain)}`;
+    const query = isNullish(domain) ? '' : `?domain=${encodeURIComponent(domain)}`
     return {
       kind: 'redirect',
       target: `${DIFFS_BASE_PATH}${upstreamPath}${query}`,
-    };
+    }
   }
 
-  const host = domain ?? GITHUB_HOST;
+  const host = domain ?? GITHUB_HOST
   return {
     domain,
     kind: 'render',
     upstreamPath,
     url: `https://${host}${upstreamPath}`,
-  };
+  }
 }

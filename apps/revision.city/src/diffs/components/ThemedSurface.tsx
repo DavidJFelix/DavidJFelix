@@ -1,17 +1,16 @@
-import type { CSSProperties, ElementType, ReactNode } from 'react';
-
-import { useChromeThemeProps } from './use-chrome-theme-props';
-import type { ChromeMapping } from '@/diffs/lib/theme/chrome-theme-props';
-import { diffsChromeMapping } from '@/diffs/lib/theme/diffs-chrome-mapping';
-import type { ThemeInput } from '@/diffs/lib/theme/theme-source';
+import type {CSSProperties, ElementType, ReactNode} from 'react'
+import type {ChromeMapping} from '@/diffs/lib/theme/chrome-theme-props'
+import {diffsChromeMapping} from '@/diffs/lib/theme/diffs-chrome-mapping'
+import type {ThemeInput} from '@/diffs/lib/theme/theme-source'
+import {useChromeThemeProps} from './use-chrome-theme-props'
 
 interface ThemedSurfaceProps {
-  as?: ElementType;
-  children?: ReactNode;
-  className?: string;
-  mapping?: ChromeMapping;
-  style?: CSSProperties;
-  theme?: ThemeInput;
+  as?: ElementType
+  children?: ReactNode
+  className?: string
+  mapping?: ChromeMapping
+  style?: CSSProperties
+  theme?: ThemeInput
 }
 
 // A themed chrome host. Renders `as` (default div) with the chrome style applied
@@ -25,11 +24,11 @@ export function ThemedSurface({
   style,
   theme,
 }: ThemedSurfaceProps) {
-  const Component = as ?? 'div';
-  const themeProps = useChromeThemeProps(mapping, theme);
+  const Component = as ?? 'div'
+  const themeProps = useChromeThemeProps(mapping, theme)
   return (
-    <Component className={className} style={{ ...themeProps.style, ...style }}>
+    <Component className={className} style={{...themeProps.style, ...style}}>
       {children}
     </Component>
-  );
+  )
 }

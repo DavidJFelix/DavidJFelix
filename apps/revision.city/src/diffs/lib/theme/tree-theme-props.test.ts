@@ -36,7 +36,7 @@ function referenceUpgradedTreeStyles(theme: ThemeLike): Record<string, string> {
     }
     if (
       c['list.focusOutline'] === undefined &&
-      c['focusBorder'] === undefined &&
+      c.focusBorder === undefined &&
       c['sideBar.foreground'] === undefined
     ) {
       treeStyles['--trees-theme-focus-ring'] = primaryFg

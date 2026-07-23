@@ -1,77 +1,69 @@
-import type { AnnotationSide, SelectedLineRange } from '@pierre/diffs';
-import type { FileTreeGitStatusPatch, GitStatusEntry } from '@pierre/trees';
+import type {AnnotationSide, SelectedLineRange} from '@pierre/diffs'
+import type {FileTreeGitStatusPatch, GitStatusEntry} from '@pierre/trees'
 
-export type ViewerLoadState =
-  | 'fetching'
-  | 'streaming'
-  | 'parsing'
-  | 'ready'
-  | 'error';
+export type ViewerLoadState = 'fetching' | 'streaming' | 'parsing' | 'ready' | 'error'
 
 export interface SavedCommentMetadata {
-  kind: 'saved';
-  key: string;
-  author: string;
-  message: string;
-  range: SelectedLineRange;
+  kind: 'saved'
+  key: string
+  author: string
+  message: string
+  range: SelectedLineRange
 }
 
 export interface DraftCommentMetadata {
-  kind: 'draft';
-  key: string;
-  message: string;
-  range: SelectedLineRange;
+  kind: 'draft'
+  key: string
+  message: string
+  range: SelectedLineRange
 }
 
-export type CommentMetadata = SavedCommentMetadata | DraftCommentMetadata;
+export type CommentMetadata = SavedCommentMetadata | DraftCommentMetadata
 
 export interface DiffsCommentSidebarFile {
-  fileOrder: number;
-  path: string;
+  fileOrder: number
+  path: string
 }
 
-export type DiffsCommentFileByItemId = ReadonlyMap<
-  string,
-  DiffsCommentSidebarFile
->;
+export type DiffsCommentFileByItemId = ReadonlyMap<string, DiffsCommentSidebarFile>
 
 // Whether the line the comment is anchored to is a real addition/deletion or
 // an unchanged context line shown in the diff. Tracked so the sidebar can
 // render "Line N" without a misleading + / - sigil for context lines.
-export type CommentLineType = 'change' | 'context';
+export type CommentLineType = 'change' | 'context'
 
 export interface DiffsSavedCommentEvent {
-  author: string;
-  itemId: string;
-  key: string;
-  lineNumber: number;
-  lineType: CommentLineType;
-  message: string;
-  range: SelectedLineRange;
-  side: AnnotationSide;
+  author: string
+  itemId: string
+  key: string
+  lineNumber: number
+  lineType: CommentLineType
+  message: string
+  range: SelectedLineRange
+  side: AnnotationSide
 }
 
 export interface DiffsDeletedCommentEvent {
-  itemId: string;
-  key: string;
+  itemId: string
+  key: string
 }
 
 export interface DiffsSavedCommentEntry {
-  author: string;
-  itemId: string;
-  key: string;
-  lineNumber: number;
-  lineType: CommentLineType;
-  message: string;
-  range: SelectedLineRange;
-  side: AnnotationSide;
+  author: string
+  itemId: string
+  key: string
+  lineNumber: number
+  lineType: CommentLineType
+  message: string
+  range: SelectedLineRange
+  side: AnnotationSide
 }
 
 export interface DiffsSavedCommentItem {
-  comments: DiffsSavedCommentEntry[];
-  fileOrder: number;
-  itemId: string;
-  path: string;
+  comments: DiffsSavedCommentEntry[]
+  fileOrder: number
+  itemId: string
+  path: string
 }
 
 // The fully pre-computed input this tree needs for a given fetch. It is built
@@ -93,17 +85,17 @@ export interface DiffsSavedCommentItem {
 // read-only side; pathCount is what keeps later in-place growth invisible to
 // this snapshot.
 export interface DiffsFileTreeSource {
-  gitStatus: readonly GitStatusEntry[];
-  gitStatusPatch?: FileTreeGitStatusPatch;
-  pathCount: number;
-  paths: readonly string[];
-  pathToItemId: ReadonlyMap<string, string>;
-  previousSource?: DiffsFileTreeSource;
+  gitStatus: readonly GitStatusEntry[]
+  gitStatusPatch?: FileTreeGitStatusPatch
+  pathCount: number
+  paths: readonly string[]
+  pathToItemId: ReadonlyMap<string, string>
+  previousSource?: DiffsFileTreeSource
 }
 
 export interface DiffsStats {
-  addedLines: number;
-  deletedLines: number;
-  fileCount: number;
-  totalLinesOfCode: number;
+  addedLines: number
+  deletedLines: number
+  fileCount: number
+  totalLinesOfCode: number
 }

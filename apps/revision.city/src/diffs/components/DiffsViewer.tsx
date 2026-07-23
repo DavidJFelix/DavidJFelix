@@ -10,75 +10,75 @@ import {
   type LineAnnotation,
   type SelectedLineRange,
   type ThemeTypes,
-} from '@pierre/diffs';
-import { type CodeViewHandle, useStableCallback } from '@pierre/diffs/react';
-import { IconChevronSm } from '@pierre/icons';
-import { memo, type RefObject, useMemo, useRef, useState } from 'react';
+} from '@pierre/diffs'
+import {type CodeViewHandle, useStableCallback} from '@pierre/diffs/react'
+import {IconChevronSm} from '@pierre/icons'
+import {memo, type RefObject, useMemo, useRef, useState} from 'react'
 
-import { css, cx } from 'styled-system/css';
-
-import { DraftAnnotation } from './DraftAnnotation';
-import { ExampleAnnotation } from './ExampleAnnotation';
-import { ThemedCodeView } from './ThemedCodeView';
-import { useChromeThemeProps } from './use-chrome-theme-props';
-import type { AvatarName } from '@/diffs/lib/annotation';
-import { buildAnnotationThemeStyle } from '@/diffs/lib/annotation-theme-style';
-import { classifyCommentLineType } from '@/diffs/lib/classify-comment-line-type';
-import { CODE_VIEW_CUSTOM_CSS, CODE_VIEW_LAYOUT } from '@/diffs/lib/constants';
-import { isDiffItem } from '@/diffs/lib/is-diff-item';
-import { isDraftAnnotation } from '@/diffs/lib/is-draft-annotation';
-import { isDraftMetadata } from '@/diffs/lib/is-draft-metadata';
-import { isSavedAnnotation } from '@/diffs/lib/is-saved-annotation';
-import { diffsChromeMapping } from '@/diffs/lib/theme/diffs-chrome-mapping';
+import {css, cx} from 'styled-system/css'
+import type {AvatarName} from '@/diffs/lib/annotation'
+import {buildAnnotationThemeStyle} from '@/diffs/lib/annotation-theme-style'
+import {classifyCommentLineType} from '@/diffs/lib/classify-comment-line-type'
+import {CODE_VIEW_CUSTOM_CSS, CODE_VIEW_LAYOUT} from '@/diffs/lib/constants'
+import {isDiffItem} from '@/diffs/lib/is-diff-item'
+import {isDraftAnnotation} from '@/diffs/lib/is-draft-annotation'
+import {isDraftMetadata} from '@/diffs/lib/is-draft-metadata'
+import {isSavedAnnotation} from '@/diffs/lib/is-saved-annotation'
+import {isNullish} from '@/diffs/lib/nullish'
+import {diffsChromeMapping} from '@/diffs/lib/theme/diffs-chrome-mapping'
 import type {
   CommentMetadata,
   DiffsDeletedCommentEvent,
   DiffsSavedCommentEvent,
-} from '@/diffs/lib/types';
+} from '@/diffs/lib/types'
+import {DraftAnnotation} from './DraftAnnotation'
+import {ExampleAnnotation} from './ExampleAnnotation'
+import {ThemedCodeView} from './ThemedCodeView'
+import {useChromeThemeProps} from './use-chrome-theme-props'
 
 function getNextItemVersion(item: CodeViewItem<CommentMetadata>): number {
-  return typeof item.version === 'number' ? item.version + 1 : 1;
+  return typeof item.version === 'number' ? item.version + 1 : 1
 }
 
 function updateViewerDiffItem(
   viewer: CodeViewHandle<CommentMetadata>,
   itemId: string,
-  updateItem: (item: CodeViewDiffItem<CommentMetadata>) => boolean
+  updateItem: (item: CodeViewDiffItem<CommentMetadata>) => boolean,
 ): CodeViewDiffItem<CommentMetadata> | undefined {
-  const item = viewer.getItem(itemId);
-  if (item == null || !isDiffItem(item)) {
-    return undefined;
+  const item = viewer.getItem(itemId)
+  if (isNullish(item) || !isDiffItem(item)) {
+    return undefined
   }
 
   if (!updateItem(item)) {
-    return undefined;
+    return undefined
   }
 
-  item.version = getNextItemVersion(item);
-  return viewer.updateItem(item) ? item : undefined;
+  item.version = getNextItemVersion(item)
+  return viewer.updateItem(item) ? item : undefined
 }
 
 interface ActiveDraftComment {
-  itemId: string;
-  key: string;
+  itemId: string
+  key: string
 }
 
 interface DiffsViewerProps {
-  className?: string;
-  diffStyle: 'split' | 'unified';
-  onCommentDeleted(comment: DiffsDeletedCommentEvent): void;
-  onCommentSaved(comment: DiffsSavedCommentEvent): void;
-  overflow: 'wrap' | 'scroll';
-  showBackgrounds: boolean;
-  diffIndicators: DiffIndicators;
-  lineNumbers: boolean;
-  scrollRef: RefObject<HTMLDivElement | null>;
-  themeType: ThemeTypes;
-  viewerRef: RefObject<CodeViewHandle<CommentMetadata> | null>;
-  initialItems: CodeViewItem<CommentMetadata>[];
-  loadDiffFiles?: FileDiffContentsLoader;
-  onLineLinkChange(selection: CodeViewLineSelection | null): void;
-  onViewerReady(): void;
+  className?: string
+  diffStyle: 'split' | 'unified'
+  onCommentDeleted(comment: DiffsDeletedCommentEvent): void
+  onCommentSaved(comment: DiffsSavedCommentEvent): void
+  overflow: 'wrap' | 'scroll'
+  showBackgrounds: boolean
+  diffIndicators: DiffIndicators
+  lineNumbers: boolean
+  scrollRef: RefObject<HTMLDivElement | null>
+  themeType: ThemeTypes
+  viewerRef: RefObject<CodeViewHandle<CommentMetadata> | null>
+  initialItems: CodeViewItem<CommentMetadata>[]
+  loadDiffFiles?: FileDiffContentsLoader
+  onLineLinkChange(selection: CodeViewLineSelection | null): void
+  onViewerReady(): void
 }
 
 export const DiffsViewer = memo(function DiffsViewer({
@@ -98,190 +98,182 @@ export const DiffsViewer = memo(function DiffsViewer({
   onLineLinkChange,
   onViewerReady,
 }: DiffsViewerProps) {
-  const nextCommentKeyRef = useRef(0);
-  const activeDraftRef = useRef<ActiveDraftComment | null>(null);
-  const [selectedLines, setSelectedLines] =
-    useState<CodeViewLineSelection | null>(null);
-  const { style: chromeStyle } = useChromeThemeProps(diffsChromeMapping);
+  const nextCommentKeyRef = useRef(0)
+  const activeDraftRef = useRef<ActiveDraftComment | null>(null)
+  const [selectedLines, setSelectedLines] = useState<CodeViewLineSelection | null>(null)
+  const {style: chromeStyle} = useChromeThemeProps(diffsChromeMapping)
   // Preserve the previous `undefined`-means-not-resolved contract that
   // buildAnnotationThemeStyle and the className fallbacks depend on.
-  const themeChromeStyle =
-    Object.keys(chromeStyle).length > 0 ? chromeStyle : undefined;
+  const themeChromeStyle = Object.keys(chromeStyle).length > 0 ? chromeStyle : undefined
   const annotationThemeStyle = useMemo(
     () => buildAnnotationThemeStyle(themeChromeStyle),
-    [themeChromeStyle]
-  );
+    [themeChromeStyle],
+  )
 
-  const handleSetSelection = useStableCallback(
-    (selection: CodeViewLineSelection | null) => {
-      setSelectedLines(selection);
-    }
-  );
+  const handleSetSelection = useStableCallback((selection: CodeViewLineSelection | null) => {
+    setSelectedLines(selection)
+  })
 
-  const handleToggleCommentSelection = useStableCallback(
-    (selection: CodeViewLineSelection) => {
-      setSelectedLines((prev) =>
-        prev?.id === selection.id &&
-        areSelectionsEqual(prev.range, selection.range)
-          ? null
-          : selection
-      );
-    }
-  );
+  const handleToggleCommentSelection = useStableCallback((selection: CodeViewLineSelection) => {
+    setSelectedLines((prev) =>
+      prev?.id === selection.id && areSelectionsEqual(prev.range, selection.range)
+        ? null
+        : selection,
+    )
+  })
 
   const handleLineSelectionEnd = useStableCallback(
     (range: SelectedLineRange | null, item: CodeViewItem<CommentMetadata>) => {
-      if (range == null || item.type !== 'diff') {
-        onLineLinkChange(null);
+      if (isNullish(range) || item.type !== 'diff') {
+        onLineLinkChange(null)
       } else {
-        onLineLinkChange({ id: item.id, range });
+        onLineLinkChange({id: item.id, range})
       }
+    },
+  )
+
+  const handleViewerRef = useStableCallback((viewer: CodeViewHandle<CommentMetadata> | null) => {
+    viewerRef.current = viewer
+    if (!isNullish(viewer)) {
+      onViewerReady()
     }
-  );
+  })
 
-  const handleViewerRef = useStableCallback(
-    (viewer: CodeViewHandle<CommentMetadata> | null) => {
-      viewerRef.current = viewer;
-      if (viewer != null) {
-        onViewerReady();
-      }
+  const handleCreateDraftComment = useStableCallback((range: SelectedLineRange, itemId: string) => {
+    const side = range.endSide ?? range.side
+    if (isNullish(side)) {
+      return
     }
-  );
 
-  const handleCreateDraftComment = useStableCallback(
-    (range: SelectedLineRange, itemId: string) => {
-      const side = range.endSide ?? range.side;
-      if (side == null) {
-        return;
-      }
-
-      const lineNumber = range.end;
-      const commentKey = `draft-${nextCommentKeyRef.current++}`;
-      const { current: viewer } = viewerRef;
-      if (viewer == null) {
-        return;
-      }
-
-      const draftAnnotation: DiffLineAnnotation<CommentMetadata> = {
-        side,
-        lineNumber,
-        metadata: {
-          kind: 'draft',
-          key: commentKey,
-          message: '',
-          range,
-        },
-      };
-
-      const { current: activeDraft } = activeDraftRef;
-      if (activeDraft != null && activeDraft.itemId !== itemId) {
-        updateViewerDiffItem(viewer, activeDraft.itemId, (item) => {
-          if (item.annotations == null) {
-            return false;
-          }
-
-          const nextAnnotations = item.annotations.filter(
-            (annotation) => annotation.metadata.key !== activeDraft.key
-          );
-          if (nextAnnotations.length === item.annotations.length) {
-            return false;
-          }
-
-          item.annotations = nextAnnotations;
-          return true;
-        });
-      }
-
-      const updatedItem = updateViewerDiffItem(viewer, itemId, (item) => {
-        const nonDraftAnnotations = (item.annotations ?? []).filter(
-          (annotation) => !isDraftMetadata(annotation.metadata)
-        );
-        item.annotations = [...nonDraftAnnotations, draftAnnotation];
-        return true;
-      });
-
-      if (updatedItem != null) {
-        activeDraftRef.current = { itemId, key: commentKey };
-      }
+    const lineNumber = range.end
+    const commentKey = `draft-${nextCommentKeyRef.current++}`
+    const {current: viewer} = viewerRef
+    if (isNullish(viewer)) {
+      return
     }
-  );
 
-  const handleRemoveComment = useStableCallback(
-    (itemId: string, key: string) => {
-      const { current: viewer } = viewerRef;
-      if (viewer == null) {
-        return;
-      }
-      const item = viewer.getItem(itemId);
-      const removedAnnotation =
-        item != null && isDiffItem(item)
-          ? item.annotations?.find(
-              (annotation) => annotation.metadata.key === key
-            )
-          : undefined;
+    const draftAnnotation: DiffLineAnnotation<CommentMetadata> = {
+      side,
+      lineNumber,
+      metadata: {
+        kind: 'draft',
+        key: commentKey,
+        message: '',
+        range,
+      },
+    }
 
-      updateViewerDiffItem(viewer, itemId, (item) => {
-        if (item.annotations == null) {
-          return false;
+    const {current: activeDraft} = activeDraftRef
+    if (!isNullish(activeDraft) && activeDraft.itemId !== itemId) {
+      updateViewerDiffItem(viewer, activeDraft.itemId, (item) => {
+        if (isNullish(item.annotations)) {
+          return false
         }
 
         const nextAnnotations = item.annotations.filter(
-          (annotation) => annotation.metadata.key !== key
-        );
-
+          (annotation) => annotation.metadata.key !== activeDraft.key,
+        )
         if (nextAnnotations.length === item.annotations.length) {
-          return false;
+          return false
         }
 
-        item.annotations = nextAnnotations;
-        return true;
-      });
-
-      const { current: activeDraft } = activeDraftRef;
-      if (activeDraft?.itemId === itemId && activeDraft.key === key) {
-        activeDraftRef.current = null;
-      }
-
-      setSelectedLines(null);
-      onLineLinkChange(null);
-      if (removedAnnotation != null && isSavedAnnotation(removedAnnotation)) {
-        onCommentDeleted({ itemId, key });
-      }
+        item.annotations = nextAnnotations
+        return true
+      })
     }
-  );
+
+    const updatedItem = updateViewerDiffItem(viewer, itemId, (item) => {
+      const nonDraftAnnotations = (item.annotations ?? []).filter(
+        (annotation) => !isDraftMetadata(annotation.metadata),
+      )
+      item.annotations = [...nonDraftAnnotations, draftAnnotation]
+      return true
+    })
+
+    if (!isNullish(updatedItem)) {
+      activeDraftRef.current = {itemId, key: commentKey}
+    }
+  })
+
+  const handleRemoveComment = useStableCallback((itemId: string, key: string) => {
+    const {current: viewer} = viewerRef
+    if (isNullish(viewer)) {
+      return
+    }
+    const item = viewer.getItem(itemId)
+    const removedAnnotation =
+      !isNullish(item) && isDiffItem(item)
+        ? item.annotations?.find((annotation) => annotation.metadata.key === key)
+        : undefined
+
+    updateViewerDiffItem(viewer, itemId, (item) => {
+      if (isNullish(item.annotations)) {
+        return false
+      }
+
+      const nextAnnotations = item.annotations.filter(
+        (annotation) => annotation.metadata.key !== key,
+      )
+
+      if (nextAnnotations.length === item.annotations.length) {
+        return false
+      }
+
+      item.annotations = nextAnnotations
+      return true
+    })
+
+    const {current: activeDraft} = activeDraftRef
+    if (activeDraft?.itemId === itemId && activeDraft.key === key) {
+      activeDraftRef.current = null
+    }
+
+    setSelectedLines(null)
+    onLineLinkChange(null)
+    if (!isNullish(removedAnnotation) && isSavedAnnotation(removedAnnotation)) {
+      onCommentDeleted({itemId, key})
+    }
+  })
 
   const handleSaveDraftComment = useStableCallback(
-    (itemId: string, key: string, message: string, author: AvatarName) => {
-      const trimmedMessage = message.trim();
-      const { current: viewer } = viewerRef;
-      if (trimmedMessage.length === 0 || viewer == null) {
-        return;
+    ({
+      itemId,
+      key,
+      message,
+      author,
+    }: {
+      itemId: string
+      key: string
+      message: string
+      author: AvatarName
+    }) => {
+      const trimmedMessage = message.trim()
+      const {current: viewer} = viewerRef
+      if (trimmedMessage.length === 0 || isNullish(viewer)) {
+        return
       }
 
-      const item = viewer.getItem(itemId);
-      if (item == null || !isDiffItem(item)) {
-        return;
+      const item = viewer.getItem(itemId)
+      if (isNullish(item) || !isDiffItem(item)) {
+        return
       }
 
       const draftAnnotation = item?.annotations?.find(
-        (annotation) => annotation.metadata.key === key
-      );
-      if (draftAnnotation == null || !isDraftAnnotation(draftAnnotation)) {
-        return;
+        (annotation) => annotation.metadata.key === key,
+      )
+      if (isNullish(draftAnnotation) || !isDraftAnnotation(draftAnnotation)) {
+        return
       }
 
       const updatedItem = updateViewerDiffItem(viewer, itemId, (item) => {
-        if (item.annotations == null) {
-          return false;
+        if (isNullish(item.annotations)) {
+          return false
         }
 
-        const nextAnnotations: DiffLineAnnotation<CommentMetadata>[] =
-          item.annotations.map((annotation) => {
-            if (
-              annotation.metadata.key !== key ||
-              !isDraftAnnotation(annotation)
-            ) {
-              return annotation;
+        const nextAnnotations: DiffLineAnnotation<CommentMetadata>[] = item.annotations.map(
+          (annotation) => {
+            if (annotation.metadata.key !== key || !isDraftAnnotation(annotation)) {
+              return annotation
             }
 
             return {
@@ -293,36 +285,37 @@ export const DiffsViewer = memo(function DiffsViewer({
                 message: trimmedMessage,
                 range: annotation.metadata.range,
               },
-            };
-          });
+            }
+          },
+        )
 
-        let didChange = false;
+        let didChange = false
         for (let index = 0; index < nextAnnotations.length; index++) {
           if (nextAnnotations[index] !== item.annotations[index]) {
-            didChange = true;
-            break;
+            didChange = true
+            break
           }
         }
 
         if (!didChange) {
-          return false;
+          return false
         }
 
-        item.annotations = nextAnnotations;
-        return true;
-      });
+        item.annotations = nextAnnotations
+        return true
+      })
 
-      if (updatedItem == null) {
-        return;
+      if (isNullish(updatedItem)) {
+        return
       }
 
-      const { current: activeDraft } = activeDraftRef;
+      const {current: activeDraft} = activeDraftRef
       if (activeDraft?.itemId === itemId && activeDraft.key === key) {
-        activeDraftRef.current = null;
+        activeDraftRef.current = null
       }
 
-      setSelectedLines(null);
-      onLineLinkChange(null);
+      setSelectedLines(null)
+      onLineLinkChange(null)
       onCommentSaved({
         author,
         itemId,
@@ -331,51 +324,49 @@ export const DiffsViewer = memo(function DiffsViewer({
         lineType: classifyCommentLineType(
           item.fileDiff,
           draftAnnotation.side,
-          draftAnnotation.lineNumber
+          draftAnnotation.lineNumber,
         ),
         message: trimmedMessage,
         range: draftAnnotation.metadata.range,
         side: draftAnnotation.side,
-      });
-    }
-  );
+      })
+    },
+  )
 
   const handleToggleItemCollapsed = useStableCallback((itemId: string) => {
-    const { current: viewerHandle } = viewerRef;
-    const viewer = viewerHandle?.getInstance();
-    const item = viewerHandle?.getItem(itemId);
-    if (viewerHandle == null || viewer == null || item == null) {
-      return;
+    const {current: viewerHandle} = viewerRef
+    const viewer = viewerHandle?.getInstance()
+    const item = viewerHandle?.getItem(itemId)
+    if (isNullish(viewerHandle) || isNullish(viewer) || isNullish(item)) {
+      return
     }
 
     // NOTE(amadeus): If the top of the item is before the scrollTop, then
     // we'll want to apply a scroll fix on the next render to ensure we
     // keep the collapsed file in view and anchored.
-    const itemTop = viewer.getTopForItem(itemId);
-    item.collapsed = item.collapsed !== true;
-    item.version = getNextItemVersion(item);
+    const itemTop = viewer.getTopForItem(itemId)
+    item.collapsed = item.collapsed !== true
+    item.version = getNextItemVersion(item)
     if (!viewerHandle.updateItem(item)) {
-      return;
+      return
     }
 
-    if (itemTop != null && itemTop < viewer.getScrollTop()) {
+    if (!isNullish(itemTop) && itemTop < viewer.getScrollTop()) {
       viewer.scrollTo({
         type: 'item',
         id: item.id,
         align: 'start',
-      });
+      })
     }
-  });
+  })
 
   const renderCommentAnnotation = useStableCallback(
     (
-      annotation:
-        | DiffLineAnnotation<CommentMetadata>
-        | LineAnnotation<CommentMetadata>,
-      item: CodeViewItem<CommentMetadata>
+      annotation: DiffLineAnnotation<CommentMetadata> | LineAnnotation<CommentMetadata>,
+      item: CodeViewItem<CommentMetadata>,
     ) => {
       if (!('side' in annotation) || item.type !== 'diff') {
-        return null;
+        return null
       }
 
       if (isDraftAnnotation(annotation)) {
@@ -386,11 +377,11 @@ export const DiffsViewer = memo(function DiffsViewer({
             onCancel={handleRemoveComment}
             onSave={handleSaveDraftComment}
           />
-        );
+        )
       }
 
       if (!isSavedAnnotation(annotation)) {
-        return null;
+        return null
       }
 
       return (
@@ -400,28 +391,23 @@ export const DiffsViewer = memo(function DiffsViewer({
           onDelete={handleRemoveComment}
           onToggleSelection={handleToggleCommentSelection}
         />
-      );
-    }
-  );
+      )
+    },
+  )
 
-  const renderHeaderPrefix = useStableCallback(
-    (item: CodeViewItem<CommentMetadata>) => {
-      if (item.type !== 'diff') {
-        return null;
-      }
-
-      return (
-        <CollapseDiffButton
-          disabled={
-            item.fileDiff.splitLineCount === 0 &&
-            item.fileDiff.unifiedLineCount === 0
-          }
-          collapsed={item.collapsed}
-          onToggle={() => handleToggleItemCollapsed(item.id)}
-        />
-      );
+  const renderHeaderPrefix = useStableCallback((item: CodeViewItem<CommentMetadata>) => {
+    if (item.type !== 'diff') {
+      return null
     }
-  );
+
+    return (
+      <CollapseDiffButton
+        disabled={item.fileDiff.splitLineCount === 0 && item.fileDiff.unifiedLineCount === 0}
+        collapsed={item.collapsed}
+        onToggle={() => handleToggleItemCollapsed(item.id)}
+      />
+    )
+  })
 
   // NOTE(amadeus): For some insane reason, the react compiler did not know how
   // to properly memoize this, so we pulled it into a `useMemo` for safety...
@@ -447,12 +433,12 @@ export const DiffsViewer = memo(function DiffsViewer({
         // FIXME(amadeus): Move all `onX` methods onto the react component maybe?
         onGutterUtilityClick(range, context) {
           if (context.item.type !== 'diff') {
-            return;
+            return
           }
-          handleCreateDraftComment(range, context.item.id);
+          handleCreateDraftComment(range, context.item.id)
         },
         onLineSelectionEnd(range, context) {
-          handleLineSelectionEnd(range, context.item);
+          handleLineSelectionEnd(range, context.item)
         },
       }) satisfies CodeViewOptions<CommentMetadata>,
     [
@@ -465,8 +451,8 @@ export const DiffsViewer = memo(function DiffsViewer({
       overflow,
       showBackgrounds,
       themeType,
-    ]
-  );
+    ],
+  )
   return (
     <ThemedCodeView<CommentMetadata>
       ref={handleViewerRef}
@@ -484,7 +470,7 @@ export const DiffsViewer = memo(function DiffsViewer({
           overflowY: 'auto',
           overflowX: 'clip',
           overscrollBehavior: 'contain',
-          borderBottomWidth: { base: '1px', md: '0' },
+          borderBottomWidth: {base: '1px', md: '0'},
           borderColor: 'diffs.border',
           w: 'full',
           contain: 'strict',
@@ -496,7 +482,7 @@ export const DiffsViewer = memo(function DiffsViewer({
             boxShadow:
               '0 -1px 0 var(--diffs-diff-separator, var(--border-opaque)), 0 1px 0 var(--diffs-diff-separator, var(--border-opaque))',
           },
-        })
+        }),
       )}
       options={options}
       style={annotationThemeStyle}
@@ -505,13 +491,13 @@ export const DiffsViewer = memo(function DiffsViewer({
       renderAnnotation={renderCommentAnnotation}
       renderHeaderPrefix={renderHeaderPrefix}
     />
-  );
-});
+  )
+})
 
 interface CollapseDiffButtonProps {
-  disabled?: boolean;
-  collapsed?: boolean;
-  onToggle(): void;
+  disabled?: boolean
+  collapsed?: boolean
+  onToggle(): void
 }
 
 function CollapseDiffButton({
@@ -525,9 +511,7 @@ function CollapseDiffButton({
       disabled={disabled}
       aria-expanded={!disabled && !collapsed}
       aria-hidden={disabled}
-      aria-label={
-        disabled ? undefined : collapsed ? 'Expand diff' : 'Collapse diff'
-      }
+      aria-label={disabled ? undefined : collapsed ? 'Expand diff' : 'Collapse diff'}
       className={css({
         color: 'diffs.muted.foreground',
         ml: '-8px',
@@ -540,13 +524,13 @@ function CollapseDiffButton({
         rounded: 'diffs.md',
         transition:
           'color 150ms cubic-bezier(0.4, 0, 0.2, 1), background-color 150ms cubic-bezier(0.4, 0, 0.2, 1), border-color 150ms cubic-bezier(0.4, 0, 0.2, 1), opacity 150ms cubic-bezier(0.4, 0, 0.2, 1)',
-        _hover: { bg: 'diffs.muted', color: 'diffs.foreground' },
-        _disabled: { pointerEvents: 'none', opacity: '0.5' },
+        _hover: {bg: 'diffs.muted', color: 'diffs.foreground'},
+        _disabled: {pointerEvents: 'none', opacity: '0.5'},
       })}
       onClick={(event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        onToggle();
+        event.preventDefault()
+        event.stopPropagation()
+        onToggle()
       }}
     >
       <IconChevronSm
@@ -557,9 +541,9 @@ function CollapseDiffButton({
             h: '4',
             transition: 'transform 150ms cubic-bezier(0.4, 0, 0.2, 1)',
           }),
-          (disabled || collapsed) && css({ transform: 'rotate(-90deg)' })
+          (disabled || collapsed) && css({transform: 'rotate(-90deg)'}),
         )}
       />
     </button>
-  );
+  )
 }

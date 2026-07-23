@@ -11,24 +11,24 @@ import {
   type ThemeRegistrationResolved,
   type ThemesType,
   type ThemeTypes,
-} from '@pierre/diffs';
-import type { ThemeLike } from '@pierre/theming';
+} from '@pierre/diffs'
+import type {ThemeLike} from '@pierre/theming'
 
 import {
   isThemePair,
   requireThemeValueName,
   type ThemeNameSelection,
   type ThemePair,
-} from './theme-source';
+} from './theme-source'
 
-export type DiffThemeValue = string | (ThemeLike & { name: string });
-export type DiffThemeInput = DiffThemeValue | ThemePair<DiffThemeValue>;
+export type DiffThemeValue = string | (ThemeLike & {name: string})
+export type DiffThemeInput = DiffThemeValue | ThemePair<DiffThemeValue>
 
-const seededDiffThemeNames = new Set<string>();
+const seededDiffThemeNames = new Set<string>()
 
 export function diffThemeProps(sel: ThemeNameSelection): {
-  theme: ThemesType;
-  themeType: ThemeTypes;
+  theme: ThemesType
+  themeType: ThemeTypes
 } {
   return {
     theme: {
@@ -36,33 +36,31 @@ export function diffThemeProps(sel: ThemeNameSelection): {
       light: sel.lightThemeName as DiffsThemeNames,
     },
     themeType: sel.colorScheme,
-  };
+  }
 }
 
 export function diffThemeSelectionFromInput(
   input: DiffThemeInput,
-  colorScheme: 'dark' | 'light'
+  colorScheme: 'dark' | 'light',
 ): ThemeNameSelection {
   if (isThemePair(input)) {
     return {
       lightThemeName: nameForDiffThemeValue(input.light),
       darkThemeName: nameForDiffThemeValue(input.dark),
       colorScheme,
-    };
+    }
   }
-  const name = nameForDiffThemeValue(input);
-  return { lightThemeName: name, darkThemeName: name, colorScheme };
+  const name = nameForDiffThemeValue(input)
+  return {lightThemeName: name, darkThemeName: name, colorScheme}
 }
 
 function nameForDiffThemeValue(value: DiffThemeValue): string {
-  if (typeof value === 'string') return value;
+  if (typeof value === 'string') return value
 
-  const name = requireThemeValueName(value);
+  const name = requireThemeValueName(value)
   if (!seededDiffThemeNames.has(name)) {
-    seededDiffThemeNames.add(name);
-    registerCustomTheme(name, () =>
-      Promise.resolve(value as ThemeRegistrationResolved)
-    );
+    seededDiffThemeNames.add(name)
+    registerCustomTheme(name, () => Promise.resolve(value as ThemeRegistrationResolved))
   }
-  return name;
+  return name
 }

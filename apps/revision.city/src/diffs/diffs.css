@@ -3,8 +3,8 @@
    file keeps the theme variables and the plain-CSS surface the @pierre/diffs
    viewer hooks into). Loaded only by the /diffs route layout. */
 
-@import '@fontsource-variable/geist';
-@import '@fontsource-variable/jetbrains-mono';
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/jetbrains-mono";
 
 :root,
 .light {
@@ -83,8 +83,8 @@
 }
 
 :root {
-  --font-geist-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
-  --font-jetbrains-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-geist-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-jetbrains-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
   /* Font hook read by the @pierre/diffs viewer for diff/code text. */
   --diffs-font-family: var(--font-jetbrains-mono);
   --cv-gutter-vertical: 0px;
@@ -226,7 +226,7 @@ code {
 .diffs-border-deleted::before {
   flex-shrink: 0;
   display: block;
-  content: '';
+  content: "";
   width: 4px;
   height: 24px;
   background-image: linear-gradient(
@@ -236,6 +236,13 @@ code {
   );
   background-repeat: repeat;
   background-size: 2px 2px;
-  background-size: calc(1lh / round(1lh / 2px)) calc(1lh / round(1lh / 2px));
   border-radius: 4px 0 0 4px;
+}
+
+/* Snap the stripe size to the line height so the dashes tile evenly; browsers
+   without round() keep the fixed 2px fallback above. */
+@supports (background-size: calc(1lh / round(1lh / 2px))) {
+  .diffs-border-deleted::before {
+    background-size: calc(1lh / round(1lh / 2px)) calc(1lh / round(1lh / 2px));
+  }
 }

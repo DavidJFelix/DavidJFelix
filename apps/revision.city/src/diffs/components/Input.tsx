@@ -1,6 +1,6 @@
-import * as React from 'react';
+import * as React from 'react'
 
-import { cva, cx, type RecipeVariantProps } from 'styled-system/css';
+import {cva, cx, type RecipeVariantProps} from 'styled-system/css'
 
 // Sizes are kept in lockstep with `Button` so an Input + Button paired in the
 // same row line up at the same height/radius/padding rhythm.
@@ -15,9 +15,9 @@ const inputVariants = cva({
     transition:
       'color 150ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1)',
     outline: 'none',
-    _placeholder: { color: 'diffs.muted.foreground' },
-    _selection: { bg: 'diffs.primary', color: 'diffs.primary.foreground' },
-    _dark: { bg: 'diffs.input/30' },
+    _placeholder: {color: 'diffs.muted.foreground'},
+    _selection: {bg: 'diffs.primary', color: 'diffs.primary.foreground'},
+    _dark: {bg: 'diffs.input/30'},
     '&::file-selector-button': {
       color: 'diffs.foreground',
       display: 'inline-flex',
@@ -36,11 +36,9 @@ const inputVariants = cva({
     },
     '&[aria-invalid="true"]': {
       borderColor: 'diffs.destructive',
-      boxShadow:
-        '0 0 0 3px color-mix(in oklab, var(--destructive) 20%, transparent)',
+      boxShadow: '0 0 0 3px color-mix(in oklab, var(--destructive) 20%, transparent)',
       _dark: {
-        boxShadow:
-          '0 0 0 3px color-mix(in oklab, var(--destructive) 40%, transparent)',
+        boxShadow: '0 0 0 3px color-mix(in oklab, var(--destructive) 40%, transparent)',
       },
     },
   },
@@ -51,8 +49,8 @@ const inputVariants = cva({
         rounded: 'diffs.md',
         px: '3',
         py: '1',
-        fontSize: { base: 'base', md: 'sm' },
-        lineHeight: { base: '1.5rem', md: '1.25rem' },
+        fontSize: {base: 'base', md: 'sm'},
+        lineHeight: {base: '1.5rem', md: '1.25rem'},
         '&::file-selector-button': {
           h: '7',
           fontSize: 'sm',
@@ -84,23 +82,23 @@ const inputVariants = cva({
   defaultVariants: {
     inputSize: 'default',
   },
-});
+})
 
 // `inputSize` is used instead of `size` because `size` is a native HTML input
 // attribute (character-width hint) and we don't want our variant prop to
 // shadow it.
 export type InputProps = Omit<React.ComponentProps<'input'>, 'size'> &
-  RecipeVariantProps<typeof inputVariants>;
+  RecipeVariantProps<typeof inputVariants>
 
-function Input({ className, type, inputSize, ...props }: InputProps) {
+function Input({className, type, inputSize, ...props}: InputProps) {
   return (
     <input
       type={type}
       data-slot="input"
-      className={cx(inputVariants({ inputSize }), className)}
+      className={cx(inputVariants({inputSize}), className)}
       {...props}
     />
-  );
+  )
 }
 
-export { Input, inputVariants };
+export {Input, inputVariants}

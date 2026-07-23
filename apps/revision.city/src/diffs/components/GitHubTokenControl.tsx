@@ -1,22 +1,24 @@
-import { IconBrandGithub } from '@pierre/icons';
-import { type FormEvent, memo, useState } from 'react';
+// cSpell:ignore lpignore -- LastPass form-fill opt-out attribute
+import {IconBrandGithub} from '@pierre/icons'
+import {type FormEvent, memo, useState} from 'react'
 
-import { Button } from '@/diffs/components/Button';
-import { Input } from '@/diffs/components/Input';
-import { cn } from '@/diffs/lib/cn';
+import {css, cx} from 'styled-system/css'
+
+import {Button} from '@/diffs/components/Button'
+import {Input} from '@/diffs/components/Input'
 
 export const CREATE_TOKEN_URL =
-  'https://github.com/settings/personal-access-tokens/new?name=Diffs%20Private%20Repo%20Read%20Access&description=Read+private+PRs+and+expand+collapsed+hunks&expires_in=90&contents=read&pull_requests=read&issues=read';
+  'https://github.com/settings/personal-access-tokens/new?name=Diffs%20Private%20Repo%20Read%20Access&description=Read+private+PRs+and+expand+collapsed+hunks&expires_in=90&contents=read&pull_requests=read&issues=read'
 
 export const CLASSIC_TOKEN_URL =
-  'https://github.com/settings/tokens/new?description=Diffs%20Private%20Repo%20Read%20Access&scopes=repo&default_expires_at=90';
+  'https://github.com/settings/tokens/new?description=Diffs%20Private%20Repo%20Read%20Access&scopes=repo&default_expires_at=90'
 
 interface GitHubTokenControlProps {
-  active: boolean;
-  className?: string;
-  onClear(): void;
-  onSave(token: string): void;
-  title?: string;
+  active: boolean
+  className?: string
+  onClear(): void
+  onSave(token: string): void
+  title?: string
 }
 
 export const GitHubTokenControl = memo(function GitHubTokenControl({
@@ -26,28 +28,58 @@ export const GitHubTokenControl = memo(function GitHubTokenControl({
   onSave,
   title = 'GitHub Token',
 }: GitHubTokenControlProps) {
-  const [draftToken, setDraftToken] = useState('');
-  const canSave = draftToken.trim() !== '';
+  const [draftToken, setDraftToken] = useState('')
+  const canSave = draftToken.trim() !== ''
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+    event.preventDefault()
     if (!canSave) {
-      return;
+      return
     }
-    onSave(draftToken);
-    setDraftToken('');
-  };
+    onSave(draftToken)
+    setDraftToken('')
+  }
 
   return (
-    <section className={cn('px-2 py-1.5', className)} aria-label={title}>
-      <div className="flex items-center gap-1.5 text-sm font-medium">
-        <IconBrandGithub className="size-4" />
-        <span className="min-w-0 flex-1">{title}</span>
+    <section className={cx(css({px: '2', py: '1.5'}), className)} aria-label={title}>
+      <div
+        className={css({
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1.5',
+          fontSize: 'sm',
+          lineHeight: '1.25rem',
+          fontWeight: 'medium',
+        })}
+      >
+        <IconBrandGithub className={css({w: '4', h: '4'})} />
+        <span className={css({minW: '0', flex: '1'})}>{title}</span>
         <span
-          className={cn(
-            'rounded-full border px-1.5 py-0.5 text-[10px] leading-none tracking-wide uppercase',
+          className={cx(
+            css({
+              rounded: 'full',
+              borderWidth: '1px',
+              px: '1.5',
+              py: '0.5',
+              fontSize: '10px',
+              lineHeight: '1',
+              letterSpacing: 'wide',
+              textTransform: 'uppercase',
+            }),
             active
-              ? 'border-green-600 bg-green-500 text-white dark:border-green-500 dark:bg-green-400 dark:text-black'
-              : 'text-muted-foreground border-current/20'
+              ? css({
+                  borderColor: 'green.600',
+                  bg: 'green.500',
+                  color: 'white',
+                  _dark: {
+                    borderColor: 'green.500',
+                    bg: 'green.400',
+                    color: 'black',
+                  },
+                })
+              : css({
+                  color: 'diffs.muted.foreground',
+                  borderColor: 'color-mix(in oklab, currentcolor 20%, transparent)',
+                }),
           )}
         >
           {active ? 'Active' : 'Optional'}
@@ -55,17 +87,32 @@ export const GitHubTokenControl = memo(function GitHubTokenControl({
       </div>
       {active ? (
         <>
-          <p className="text-muted-foreground mt-1 max-w-124 text-[13px] text-pretty">
+          <p
+            className={css({
+              color: 'diffs.muted.foreground',
+              mt: '1',
+              maxW: '31rem',
+              fontSize: '13px',
+              textWrap: 'pretty',
+            })}
+          >
             Using your PAT from localStorage. Clear it to create a new one.
           </p>
-          <div className="mt-2 flex items-center gap-2">
+          <div
+            className={css({
+              mt: '2',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '2',
+            })}
+          >
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={() => {
-                setDraftToken('');
-                onClear();
+                setDraftToken('')
+                onClear()
               }}
             >
               Clear saved token
@@ -74,7 +121,15 @@ export const GitHubTokenControl = memo(function GitHubTokenControl({
         </>
       ) : (
         <>
-          <p className="text-muted-foreground mt-1 max-w-124 text-[13px] text-pretty">
+          <p
+            className={css({
+              color: 'diffs.muted.foreground',
+              mt: '1',
+              maxW: '31rem',
+              fontSize: '13px',
+              textWrap: 'pretty',
+            })}
+          >
             <a
               className="inline-link"
               href={CREATE_TOKEN_URL}
@@ -94,9 +149,9 @@ export const GitHubTokenControl = memo(function GitHubTokenControl({
             </a>{' '}
             with repo scope. Saved only in localStorage.
           </p>
-          <form className="mt-2 flex gap-1.5" onSubmit={handleSubmit}>
+          <form className={css({mt: '2', display: 'flex', gap: '1.5'})} onSubmit={handleSubmit}>
             <Input
-              className="bg-background flex-1"
+              className={css({bg: 'diffs.background', flex: '1'})}
               inputSize="sm"
               type="password"
               autoComplete="off"
@@ -104,9 +159,7 @@ export const GitHubTokenControl = memo(function GitHubTokenControl({
               data-lpignore="true"
               placeholder="Paste token"
               value={draftToken}
-              onChange={({ currentTarget }) =>
-                setDraftToken(currentTarget.value)
-              }
+              onChange={({currentTarget}) => setDraftToken(currentTarget.value)}
             />
             <Button type="submit" size="sm" disabled={!canSave}>
               Save
@@ -115,5 +168,5 @@ export const GitHubTokenControl = memo(function GitHubTokenControl({
         </>
       )}
     </section>
-  );
-});
+  )
+})

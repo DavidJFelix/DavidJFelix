@@ -1,33 +1,30 @@
-import { useStableCallback } from '@pierre/diffs/react';
+import {useStableCallback} from '@pierre/diffs/react'
 import type {
   FileTreeBatchOperation,
   FileTree as FileTreeModel,
   FileTreeOptions,
-} from '@pierre/trees';
-import { useFileTree } from '@pierre/trees/react';
-import { type CSSProperties, memo, useEffect, useRef, useState } from 'react';
-
-import { ThemedFileTree } from './ThemedFileTree';
+} from '@pierre/trees'
+import {useFileTree} from '@pierre/trees/react'
+import {type CSSProperties, memo, useEffect, useRef, useState} from 'react'
+import {css} from 'styled-system/css'
 import {
   BASE_FILE_TREE_OPTIONS,
   CODE_VIEW_FILE_TREE_ITEM_HEIGHT,
   getInitialBatchSize,
-} from '@/diffs/lib/constants';
-import type { DiffsFileTreeSource } from '@/diffs/lib/types';
-import { css } from 'styled-system/css';
+} from '@/diffs/lib/constants'
+import {isNullish} from '@/diffs/lib/nullish'
+import type {DiffsFileTreeSource} from '@/diffs/lib/types'
+import {ThemedFileTree} from './ThemedFileTree'
 
 // The upstream app deep-imported this from the pierre monorepo's trees
 // package internals; the published @pierre/trees does not export it. It is a
 // plain string alias upstream, so declare it locally.
-type FileTreePublicId = string;
+type FileTreePublicId = string
 
-type FileTreeSortComparator = Exclude<
-  NonNullable<FileTreeOptions['sort']>,
-  'default'
->;
+type FileTreeSortComparator = Exclude<NonNullable<FileTreeOptions['sort']>, 'default'>
 // Keeps @pierre/trees from applying its default semantic sort so the sidebar
 // follows the same patch path sequence that drives the code view.
-const PRESERVE_INPUT_ORDER_SORT: FileTreeSortComparator = () => 0;
+const PRESERVE_INPUT_ORDER_SORT: FileTreeSortComparator = () => 0
 
 // Layout-only overrides. Colors flow through from the resolved Shiki theme
 // (via themeToTreeStyles) so the sidebar matches the diff theme, but the
@@ -38,15 +35,15 @@ const DENSITY_OVERRIDE_STYLES = {
   '--trees-density-override': 0.8,
   '--trees-padding-inline-override': 8,
   '--trees-git-renamed-color-override': 'light-dark(#007aff, #007aff)',
-} as CSSProperties;
+} as CSSProperties
 
 interface DiffsFileTreeProps {
   // Callback invoked with the underlying tree model once it's mounted, and
   // again with `null` on unmount. Lets parents drive imperative APIs like
   // search open/close without owning the model creation.
-  onModelReady(model: FileTreeModel | null): void;
-  onSelectItem(itemId: string): void;
-  source: DiffsFileTreeSource;
+  onModelReady(model: FileTreeModel | null): void
+  onSelectItem(itemId: string): void
+  source: DiffsFileTreeSource
 }
 
 export const DiffsFileTree = memo(function DiffsFileTree({
@@ -54,32 +51,30 @@ export const DiffsFileTree = memo(function DiffsFileTree({
   onSelectItem,
   source,
 }: DiffsFileTreeProps) {
-  const sourceRef = useRef(source);
-  const previousSourceRef = useRef(source);
-  const [initialVisibleRowCount] = useState(getInitialBatchSize);
-  sourceRef.current = source;
+  const sourceRef = useRef(source)
+  const previousSourceRef = useRef(source)
+  const [initialVisibleRowCount] = useState(getInitialBatchSize)
+  sourceRef.current = source
   // `source.paths` aliases the streaming accumulator's live array, so it keeps
   // growing on later publishes. The FileTree model consumes its path list
   // exactly once via useFileTree's useState initializer; capture a bounded
   // snapshot here so the first model build uses only what `pathCount`
   // describes and so subsequent streaming re-renders don't re-slice the
   // ever-growing live array.
-  const initialPathsRef = useRef<readonly string[] | null>(null);
-  initialPathsRef.current ??= source.paths.slice(0, source.pathCount);
-  const onSelectionChange = useStableCallback(
-    (selectedPaths: readonly FileTreePublicId[]) => {
-      if (selectedPaths.length !== 1 || onSelectItem == null) {
-        return;
-      }
-      const [path] = selectedPaths;
-      const itemId = sourceRef.current.pathToItemId.get(path);
-      if (itemId != null) {
-        onSelectItem(itemId);
-      }
+  const initialPathsRef = useRef<readonly string[] | null>(null)
+  initialPathsRef.current ??= source.paths.slice(0, source.pathCount)
+  const onSelectionChange = useStableCallback((selectedPaths: readonly FileTreePublicId[]) => {
+    if (selectedPaths.length !== 1 || isNullish(onSelectItem)) {
+      return
     }
-  );
+    const [path] = selectedPaths
+    const itemId = sourceRef.current.pathToItemId.get(path)
+    if (!isNullish(itemId)) {
+      onSelectItem(itemId)
+    }
+  })
 
-  const { model } = useFileTree({
+  const {model} = useFileTree({
     ...BASE_FILE_TREE_OPTIONS,
     gitStatus: source.gitStatus,
     paths: initialPathsRef.current,
@@ -87,15 +82,15 @@ export const DiffsFileTree = memo(function DiffsFileTree({
     onSelectionChange,
     itemHeight: CODE_VIEW_FILE_TREE_ITEM_HEIGHT,
     initialVisibleRowCount,
-  });
+  })
 
   useEffect(() => {
-    const previousSource = previousSourceRef.current;
+    const previousSource = previousSourceRef.current
     if (previousSource === source) {
-      return;
+      return
     }
 
-    previousSourceRef.current = source;
+    previousSourceRef.current = source
     // The streaming patch loader links each tree-source snapshot to the prior
     // one through `previousSource`. When the link matches what this component
     // last applied, the new paths array is guaranteed to extend the previous
@@ -108,33 +103,30 @@ export const DiffsFileTree = memo(function DiffsFileTree({
     // Both snapshots alias the live accumulator's paths array, so we read the
     // delta bounds from each snapshot's captured `pathCount` instead of the
     // shared array's current length.
-    if (
-      source.previousSource != null &&
-      source.previousSource === previousSource
-    ) {
-      const previousPathCount = previousSource.pathCount;
+    if (!isNullish(source.previousSource) && source.previousSource === previousSource) {
+      const previousPathCount = previousSource.pathCount
       if (source.pathCount > previousPathCount) {
-        const operations: FileTreeBatchOperation[] = [];
+        const operations: FileTreeBatchOperation[] = []
         for (let index = previousPathCount; index < source.pathCount; index++) {
-          operations.push({ type: 'add', path: source.paths[index] });
+          operations.push({type: 'add', path: source.paths[index]})
         }
         if (operations.length > 0) {
-          model.batch(operations);
+          model.batch(operations)
         }
       }
-      if (source.gitStatusPatch != null) {
-        model.applyGitStatusPatch(source.gitStatusPatch);
+      if (!isNullish(source.gitStatusPatch)) {
+        model.applyGitStatusPatch(source.gitStatusPatch)
       }
     } else {
-      model.resetPaths(source.paths.slice(0, source.pathCount));
-      model.setGitStatus(source.gitStatus);
+      model.resetPaths(source.paths.slice(0, source.pathCount))
+      model.setGitStatus(source.gitStatus)
     }
-  }, [model, source]);
+  }, [model, source])
 
   useEffect(() => {
-    onModelReady(model);
-    return () => onModelReady(null);
-  }, [model, onModelReady]);
+    onModelReady(model)
+    return () => onModelReady(null)
+  }, [model, onModelReady])
 
   return (
     <ThemedFileTree
@@ -143,11 +135,11 @@ export const DiffsFileTree = memo(function DiffsFileTree({
         minH: '0',
         overflow: 'auto',
         overscrollBehavior: 'contain',
-        ml: { md: '3' },
+        ml: {md: '3'},
       })}
       model={model}
       reconcileForegroundFromChrome
       style={DENSITY_OVERRIDE_STYLES}
     />
-  );
-});
+  )
+})

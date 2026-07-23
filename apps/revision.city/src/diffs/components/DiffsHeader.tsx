@@ -1,5 +1,5 @@
 // cSpell:ignore Diffstat -- @pierre/icons export name
-import type { DiffIndicators } from '@pierre/diffs';
+import type {DiffIndicators} from '@pierre/diffs'
 import {
   IconCheck,
   IconChevronSm,
@@ -16,9 +16,9 @@ import {
   IconGearFill,
   IconShare,
   IconSymbolDiffstat,
-} from '@pierre/icons';
-import { type ColorMode } from '@pierre/theming';
-import { Link } from '@tanstack/react-router';
+} from '@pierre/icons'
+import {type ColorMode} from '@pierre/theming'
+import {Link} from '@tanstack/react-router'
 import {
   type CSSProperties,
   type Dispatch,
@@ -28,29 +28,29 @@ import {
   useMemo,
   useRef,
   useState,
-} from 'react';
+} from 'react'
 
-import { css, cx } from 'styled-system/css';
-
-import { CHROME_ICON_BUTTON_CLASS } from './chrome-button-styles';
-import { DiffUrlForm } from './DiffUrlForm';
-import { useChromeThemeProps } from './use-chrome-theme-props';
-import { Button } from '@/diffs/components/Button';
-import { ButtonGroup, ButtonGroupItem } from '@/diffs/components/ButtonGroup';
+import {css, cx} from 'styled-system/css'
+import {Button} from '@/diffs/components/Button'
+import {ButtonGroup, ButtonGroupItem} from '@/diffs/components/ButtonGroup'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/diffs/components/DropdownMenu';
-import { GitHubTokenControl } from '@/diffs/components/GitHubTokenControl';
-import { Switch } from '@/diffs/components/Switch';
-import { docsThemeCatalog } from '@/diffs/components/theme-catalog';
-import { diffsChromeMapping } from '@/diffs/lib/theme/diffs-chrome-mapping';
-import { getDropdownThemeStyle } from '@/diffs/lib/theme/dropdown-chrome-style';
+} from '@/diffs/components/DropdownMenu'
+import {GitHubTokenControl} from '@/diffs/components/GitHubTokenControl'
+import {Switch} from '@/diffs/components/Switch'
+import {docsThemeCatalog} from '@/diffs/components/theme-catalog'
+import {isNullish} from '@/diffs/lib/nullish'
+import {diffsChromeMapping} from '@/diffs/lib/theme/diffs-chrome-mapping'
+import {getDropdownThemeStyle} from '@/diffs/lib/theme/dropdown-chrome-style'
+import {CHROME_ICON_BUTTON_CLASS} from './chrome-button-styles'
+import {DiffUrlForm} from './DiffUrlForm'
+import {useChromeThemeProps} from './use-chrome-theme-props'
 
-type LightThemeName = string;
-type DarkThemeName = string;
+type LightThemeName = string
+type DarkThemeName = string
 
 const SETTING_ROW_CLASS = css({
   w: 'full',
@@ -63,48 +63,48 @@ const SETTING_ROW_CLASS = css({
   py: '1.5',
   fontSize: 'sm',
   lineHeight: '1.25rem',
-});
+})
 
 const ICON_SIZE_CLASS = css({
-  w: { base: '4', md: '3' },
-  h: { base: '4', md: '3' },
-});
+  w: {base: '4', md: '3'},
+  h: {base: '4', md: '3'},
+})
 
 // Menu items that must keep a transparent focus background (setting rows that
 // host their own controls). The [role] selector outranks the DropdownMenuItem
 // recipe's own focus background, since Panda's cx concatenates rather than
 // merges conflicting utilities.
 const MENU_ITEM_FOCUS_TRANSPARENT_CLASS = css({
-  '&[role="menuitem"]': { _focus: { bg: 'transparent' } },
-});
+  '&[role="menuitem"]': {_focus: {bg: 'transparent'}},
+})
 
 interface HeaderProps {
-  className?: string;
-  collapseMode: 'expanded' | 'collapsed';
-  colorMode: ColorMode;
-  darkThemeName: DarkThemeName;
-  diffIndicators: DiffIndicators;
-  diffStyle: 'split' | 'unified';
-  fileTreeAvailable: boolean;
-  fileTreeOverlayOpen: boolean;
-  githubTokenActive: boolean;
-  initialUrl: string;
-  lightThemeName: LightThemeName;
-  lineNumbers: boolean;
-  overflow: 'wrap' | 'scroll';
-  onClearGitHubToken(): void;
-  onSaveGitHubToken(token: string): void;
-  onToggleCollapseMode(): void;
-  onToggleFileTreeOverlay(): void;
-  setColorMode(mode: ColorMode): void;
-  setDarkThemeName(name: DarkThemeName): void;
-  setDiffIndicators: Dispatch<SetStateAction<DiffIndicators>>;
-  setDiffStyle: Dispatch<SetStateAction<'split' | 'unified'>>;
-  setLightThemeName(name: LightThemeName): void;
-  setLineNumbers: Dispatch<SetStateAction<boolean>>;
-  setOverflow: Dispatch<SetStateAction<'wrap' | 'scroll'>>;
-  setShowBackgrounds: Dispatch<SetStateAction<boolean>>;
-  showBackgrounds: boolean;
+  className?: string
+  collapseMode: 'expanded' | 'collapsed'
+  colorMode: ColorMode
+  darkThemeName: DarkThemeName
+  diffIndicators: DiffIndicators
+  diffStyle: 'split' | 'unified'
+  fileTreeAvailable: boolean
+  fileTreeOverlayOpen: boolean
+  githubTokenActive: boolean
+  initialUrl: string
+  lightThemeName: LightThemeName
+  lineNumbers: boolean
+  overflow: 'wrap' | 'scroll'
+  onClearGitHubToken(): void
+  onSaveGitHubToken(token: string): void
+  onToggleCollapseMode(): void
+  onToggleFileTreeOverlay(): void
+  setColorMode(mode: ColorMode): void
+  setDarkThemeName(name: DarkThemeName): void
+  setDiffIndicators: Dispatch<SetStateAction<DiffIndicators>>
+  setDiffStyle: Dispatch<SetStateAction<'split' | 'unified'>>
+  setLightThemeName(name: LightThemeName): void
+  setLineNumbers: Dispatch<SetStateAction<boolean>>
+  setOverflow: Dispatch<SetStateAction<'wrap' | 'scroll'>>
+  setShowBackgrounds: Dispatch<SetStateAction<boolean>>
+  showBackgrounds: boolean
 }
 
 export const DiffsHeader = memo(function DiffsHeader({
@@ -135,21 +135,20 @@ export const DiffsHeader = memo(function DiffsHeader({
   setShowBackgrounds,
   showBackgrounds,
 }: HeaderProps) {
-  const [currentUrl, setCurrentUrl] = useState(initialUrl);
+  const [currentUrl, setCurrentUrl] = useState(initialUrl)
   // Only show the external-link button when the input still reflects the
   // committed URL — otherwise we'd be pointing at a draft the user is editing.
-  const showExternalLink = currentUrl === initialUrl;
+  const showExternalLink = currentUrl === initialUrl
   // Mirror the sidebar's themed chrome so the header bar lives on the same
   // Shiki surface (background, text, icons, borders) instead of the global
   // light/dark palette. Falls back to the diffs-sidebar-bg CSS variable
   // on first render while the theme is still resolving.
-  const { style: headerChromeStyle } = useChromeThemeProps(diffsChromeMapping);
-  const themeChromeStyle =
-    Object.keys(headerChromeStyle).length > 0 ? headerChromeStyle : undefined;
+  const {style: headerChromeStyle} = useChromeThemeProps(diffsChromeMapping)
+  const themeChromeStyle = Object.keys(headerChromeStyle).length > 0 ? headerChromeStyle : undefined
   const dropdownThemeStyle = useMemo(
     () => getDropdownThemeStyle(themeChromeStyle),
-    [themeChromeStyle]
-  );
+    [themeChromeStyle],
+  )
   return (
     <div
       className={cx(
@@ -157,31 +156,31 @@ export const DiffsHeader = memo(function DiffsHeader({
           zIndex: '10',
           contain: 'layout paint',
           display: 'flex',
-          flexWrap: { base: 'wrap', md: 'nowrap' },
+          flexWrap: {base: 'wrap', md: 'nowrap'},
           alignItems: 'center',
           gap: '2.5',
-          pt: { base: '3', md: '1.5' },
-          pb: { base: '2', md: '1.5' },
-          px: { base: '4', md: '3' },
+          pt: {base: '3', md: '1.5'},
+          pb: {base: '2', md: '1.5'},
+          px: {base: '4', md: '3'},
           borderBottomWidth: '1px',
           borderColor: 'var(--border-opaque)',
         }),
-        themeChromeStyle == null &&
+        isNullish(themeChromeStyle) &&
           css({
-            bg: { base: 'diffs.background', md: 'var(--diffs-sidebar-bg)' },
+            bg: {base: 'diffs.background', md: 'var(--diffs-sidebar-bg)'},
           }),
-        className
+        className,
       )}
       style={themeChromeStyle}
     >
       <Link
         to="/diffs"
         className={css({
-          position: { base: 'absolute', md: 'static' },
+          position: {base: 'absolute', md: 'static'},
           top: '4',
           left: '50%',
           display: 'inline-flex',
-          transform: { base: 'translateX(-50%)', md: 'translateX(0)' },
+          transform: {base: 'translateX(-50%)', md: 'translateX(0)'},
           transition: 'transform 200ms cubic-bezier(0.4, 0, 0.2, 1)',
           _hover: {
             transform: {
@@ -203,18 +202,18 @@ export const DiffsHeader = memo(function DiffsHeader({
         </span>
       </Link>
       <DiffUrlForm
-        className={css({ order: { base: '9999', md: '0' }, mr: { md: 'auto' } })}
+        className={css({order: {base: '9999', md: '0'}, mr: {md: 'auto'}})}
         initialUrl={initialUrl}
         onUrlChange={setCurrentUrl}
         placeholder="https://github.com/org/repo/123"
-        inputClassName={css({ w: { base: 'full', md: 'auto' } })}
+        inputClassName={css({w: {base: 'full', md: 'auto'}})}
       />
       <div
         className={css({
           display: 'flex',
-          w: { base: 'full', md: 'auto' },
+          w: {base: 'full', md: 'auto'},
           alignItems: 'center',
-          justifyContent: { base: 'space-between', md: 'flex-end' },
+          justifyContent: {base: 'space-between', md: 'flex-end'},
           gap: '2',
         })}
       >
@@ -225,12 +224,12 @@ export const DiffsHeader = memo(function DiffsHeader({
           aria-pressed={fileTreeOverlayOpen}
           disabled={!fileTreeAvailable}
           title={fileTreeOverlayOpen ? 'Hide file tree' : 'Show file tree'}
-          className={cx(CHROME_ICON_BUTTON_CLASS, css({ display: { md: 'none' } }))}
+          className={cx(CHROME_ICON_BUTTON_CLASS, css({display: {md: 'none'}}))}
           onClick={onToggleFileTreeOverlay}
         >
           <IconFileTreeFill className={ICON_SIZE_CLASS} />
         </Button>
-        <div className={css({ display: 'flex', alignItems: 'center', gap: '2' })}>
+        <div className={css({display: 'flex', alignItems: 'center', gap: '2'})}>
           {showExternalLink && (
             <>
               <Button
@@ -239,10 +238,7 @@ export const DiffsHeader = memo(function DiffsHeader({
                 size="icon-md"
                 aria-label="Open source in new tab"
                 title="Open source in new tab"
-                className={cx(
-                  CHROME_ICON_BUTTON_CLASS,
-                  css({ display: { base: 'none', md: 'flex' } })
-                )}
+                className={cx(CHROME_ICON_BUTTON_CLASS, css({display: {base: 'none', md: 'flex'}}))}
               >
                 <a href={initialUrl} target="_blank" rel="noreferrer noopener">
                   <IconShare className={ICON_SIZE_CLASS} />
@@ -251,30 +247,21 @@ export const DiffsHeader = memo(function DiffsHeader({
               <div
                 className={css({
                   bg: 'diffs.border',
-                  display: { base: 'none', md: 'block' },
+                  display: {base: 'none', md: 'block'},
                   h: '3',
                   w: '1px',
                 })}
               />
             </>
           )}
-          <div className={css({ display: 'flex', alignItems: 'center' })}>
+          <div className={css({display: 'flex', alignItems: 'center'})}>
             <Button
               type="button"
               variant="ghost"
               size="icon-md"
-              title={
-                diffStyle === 'split'
-                  ? 'Switch to unified view'
-                  : 'Switch to split view'
-              }
-              className={cx(
-                CHROME_ICON_BUTTON_CLASS,
-                css({ display: { base: 'none', md: 'flex' } })
-              )}
-              onClick={() =>
-                setDiffStyle(diffStyle === 'split' ? 'unified' : 'split')
-              }
+              title={diffStyle === 'split' ? 'Switch to unified view' : 'Switch to split view'}
+              className={cx(CHROME_ICON_BUTTON_CLASS, css({display: {base: 'none', md: 'flex'}}))}
+              onClick={() => setDiffStyle(diffStyle === 'split' ? 'unified' : 'split')}
             >
               {diffStyle === 'split' ? (
                 <IconDiffSplit className={ICON_SIZE_CLASS} />
@@ -287,11 +274,7 @@ export const DiffsHeader = memo(function DiffsHeader({
               variant="ghost"
               size="icon-md"
               aria-pressed={collapseMode === 'collapsed'}
-              title={
-                collapseMode === 'expanded'
-                  ? 'Collapse all files'
-                  : 'Expand all files'
-              }
+              title={collapseMode === 'expanded' ? 'Collapse all files' : 'Expand all files'}
               className={CHROME_ICON_BUTTON_CLASS}
               onClick={onToggleCollapseMode}
             >
@@ -324,7 +307,7 @@ export const DiffsHeader = memo(function DiffsHeader({
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
-                className={css({ w: '72', p: '2' })}
+                className={css({w: '72', p: '2'})}
                 style={dropdownThemeStyle}
               >
                 <GitHubTokenControl
@@ -332,83 +315,64 @@ export const DiffsHeader = memo(function DiffsHeader({
                   onClear={onClearGitHubToken}
                   onSave={onSaveGitHubToken}
                 />
-                <div className={css({ bg: 'diffs.border/70', my: '2', h: '1px' })} />
+                <div className={css({bg: 'diffs.border/70', my: '2', h: '1px'})} />
                 <DropdownMenuItem
-                  className={css({ cursor: 'default', p: '0' })}
+                  className={css({cursor: 'default', p: '0'})}
                   onSelect={(e) => e.preventDefault()}
                 >
-                  <label className={SETTING_ROW_CLASS}>
-                    <span className={css({ minW: '0', flex: '1' })}>
-                      Backgrounds
-                    </span>
+                  <label htmlFor="diffs-setting-backgrounds" className={SETTING_ROW_CLASS}>
+                    <span className={css({minW: '0', flex: '1'})}>Backgrounds</span>
                     <Switch
+                      id="diffs-setting-backgrounds"
                       checked={showBackgrounds}
                       onCheckedChange={setShowBackgrounds}
                     />
                   </label>
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  className={css({ cursor: 'default', p: '0' })}
+                  className={css({cursor: 'default', p: '0'})}
                   onSelect={(e) => e.preventDefault()}
                 >
-                  <label className={SETTING_ROW_CLASS}>
-                    <span className={css({ minW: '0', flex: '1' })}>
-                      Line numbers
-                    </span>
+                  <label htmlFor="diffs-setting-line-numbers" className={SETTING_ROW_CLASS}>
+                    <span className={css({minW: '0', flex: '1'})}>Line numbers</span>
                     <Switch
+                      id="diffs-setting-line-numbers"
                       checked={lineNumbers}
                       onCheckedChange={setLineNumbers}
                     />
                   </label>
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  className={css({ cursor: 'default', p: '0' })}
+                  className={css({cursor: 'default', p: '0'})}
                   onSelect={(e) => e.preventDefault()}
                 >
-                  <label className={SETTING_ROW_CLASS}>
-                    <span className={css({ minW: '0', flex: '1' })}>
-                      Word wrap
-                    </span>
+                  <label htmlFor="diffs-setting-word-wrap" className={SETTING_ROW_CLASS}>
+                    <span className={css({minW: '0', flex: '1'})}>Word wrap</span>
                     <Switch
+                      id="diffs-setting-word-wrap"
                       checked={overflow === 'wrap'}
-                      onCheckedChange={(checked) =>
-                        setOverflow(checked ? 'wrap' : 'scroll')
-                      }
+                      onCheckedChange={(checked) => setOverflow(checked ? 'wrap' : 'scroll')}
                     />
                   </label>
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  className={cx(
-                    css({ w: 'full', px: '2' }),
-                    MENU_ITEM_FOCUS_TRANSPARENT_CLASS
-                  )}
+                  className={cx(css({w: 'full', px: '2'}), MENU_ITEM_FOCUS_TRANSPARENT_CLASS)}
                   onSelect={(e) => e.preventDefault()}
                 >
                   <span>Indicator style</span>
                   <ButtonGroup
-                    className={css({ ml: 'auto' })}
+                    className={css({ml: 'auto'})}
                     value={diffIndicators}
-                    onValueChange={(value) =>
-                      setDiffIndicators(value as DiffIndicators)
-                    }
+                    onValueChange={(value) => setDiffIndicators(value as DiffIndicators)}
                   >
-                    <ButtonGroupItem
-                      value="bars"
-                      className={css({ w: '7', h: '7', p: '0' })}
-                    >
-                      <IconCodeStyleBars className={css({ w: '3', h: '3' })} />
+                    <ButtonGroupItem value="bars" className={css({w: '7', h: '7', p: '0'})}>
+                      <IconCodeStyleBars className={css({w: '3', h: '3'})} />
                     </ButtonGroupItem>
-                    <ButtonGroupItem
-                      value="classic"
-                      className={css({ w: '7', h: '7', p: '0' })}
-                    >
-                      <IconSymbolDiffstat className={css({ w: '3', h: '3' })} />
+                    <ButtonGroupItem value="classic" className={css({w: '7', h: '7', p: '0'})}>
+                      <IconSymbolDiffstat className={css({w: '3', h: '3'})} />
                     </ButtonGroupItem>
-                    <ButtonGroupItem
-                      value="none"
-                      className={css({ w: '7', h: '7', p: '0' })}
-                    >
-                      <IconEyeSlash className={css({ w: '3', h: '3' })} />
+                    <ButtonGroupItem value="none" className={css({w: '7', h: '7', p: '0'})}>
+                      <IconEyeSlash className={css({w: '3', h: '3'})} />
                     </ButtonGroupItem>
                   </ButtonGroup>
                 </DropdownMenuItem>
@@ -421,27 +385,27 @@ export const DiffsHeader = memo(function DiffsHeader({
         className={css({
           borderColor: 'diffs.border/80',
           w: 'full',
-          display: { md: 'none' },
+          display: {md: 'none'},
         })}
       />
     </div>
-  );
-});
+  )
+})
 
 function colorModeIcon(colorMode: ColorMode) {
-  if (colorMode === 'light') return IconColorLight;
-  if (colorMode === 'dark') return IconColorDark;
-  return IconColorAuto;
+  if (colorMode === 'light') return IconColorLight
+  if (colorMode === 'dark') return IconColorDark
+  return IconColorAuto
 }
 
 interface ThemeDropdownProps {
-  colorMode: ColorMode;
-  darkThemeName: DarkThemeName;
-  lightThemeName: LightThemeName;
-  setColorMode(mode: ColorMode): void;
-  setDarkThemeName(name: DarkThemeName): void;
-  setLightThemeName(name: LightThemeName): void;
-  themeDropdownStyle?: CSSProperties;
+  colorMode: ColorMode
+  darkThemeName: DarkThemeName
+  lightThemeName: LightThemeName
+  setColorMode(mode: ColorMode): void
+  setDarkThemeName(name: DarkThemeName): void
+  setLightThemeName(name: LightThemeName): void
+  themeDropdownStyle?: CSSProperties
 }
 
 // Theme picker shown next to the gear icon. Avoids horizontal sub-menus
@@ -460,13 +424,13 @@ function ThemeDropdown({
   setLightThemeName,
   themeDropdownStyle,
 }: ThemeDropdownProps) {
-  const TriggerIcon = colorModeIcon(colorMode);
-  const [view, setView] = useState<'main' | 'light' | 'dark'>('main');
+  const TriggerIcon = colorModeIcon(colorMode)
+  const [view, setView] = useState<'main' | 'light' | 'dark'>('main')
   // Only offer a reset when at least one slot drifts from the default
   // theme pair, so the link stays out of the way until it's useful.
   const themesAreCustom =
     lightThemeName !== docsThemeCatalog.defaultLightThemeName ||
-    darkThemeName !== docsThemeCatalog.defaultDarkThemeName;
+    darkThemeName !== docsThemeCatalog.defaultDarkThemeName
   return (
     // `modal={false}` lets the user scroll and click the code view while the
     // theme picker is open. The default Radix DropdownMenu blocks pointer
@@ -475,7 +439,7 @@ function ThemeDropdown({
     <DropdownMenu
       modal={false}
       onOpenChange={(open) => {
-        if (!open) setView('main');
+        if (!open) setView('main')
       }}
     >
       <DropdownMenuTrigger asChild>
@@ -491,40 +455,33 @@ function ThemeDropdown({
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className={css({ w: '72', p: '2' })}
+        className={css({w: '72', p: '2'})}
         style={themeDropdownStyle}
       >
         {view === 'main' ? (
           <>
             <DropdownMenuItem
-              className={cx(
-                css({ cursor: 'default', p: '0' }),
-                MENU_ITEM_FOCUS_TRANSPARENT_CLASS
-              )}
+              className={cx(css({cursor: 'default', p: '0'}), MENU_ITEM_FOCUS_TRANSPARENT_CLASS)}
               onSelect={(event) => event.preventDefault()}
             >
               <ButtonGroup
-                className={css({ w: 'full' })}
+                className={css({w: 'full'})}
                 value={colorMode}
                 onValueChange={(value) => {
-                  if (
-                    value === 'system' ||
-                    value === 'light' ||
-                    value === 'dark'
-                  ) {
-                    setColorMode(value);
+                  if (value === 'system' || value === 'light' || value === 'dark') {
+                    setColorMode(value)
                   }
                 }}
               >
-                <ButtonGroupItem value="system" className={css({ flex: '1' })}>
+                <ButtonGroupItem value="system" className={css({flex: '1'})}>
                   <IconColorAuto />
                   Auto
                 </ButtonGroupItem>
-                <ButtonGroupItem value="light" className={css({ flex: '1' })}>
+                <ButtonGroupItem value="light" className={css({flex: '1'})}>
                   <IconColorLight />
                   Light
                 </ButtonGroupItem>
-                <ButtonGroupItem value="dark" className={css({ flex: '1' })}>
+                <ButtonGroupItem value="dark" className={css({flex: '1'})}>
                   <IconColorDark />
                   Dark
                 </ButtonGroupItem>
@@ -539,14 +496,12 @@ function ThemeDropdown({
                 gap: '2',
               })}
               onSelect={(event) => {
-                event.preventDefault();
-                setView('light');
+                event.preventDefault()
+                setView('light')
               }}
             >
               <IconColorLight />
-              <span className={css({ minW: '0', flex: '1', truncate: true })}>
-                {lightThemeName}
-              </span>
+              <span className={css({minW: '0', flex: '1', truncate: true})}>{lightThemeName}</span>
               <IconChevronSm
                 aria-hidden
                 className={css({
@@ -563,14 +518,12 @@ function ThemeDropdown({
                 gap: '2',
               })}
               onSelect={(event) => {
-                event.preventDefault();
-                setView('dark');
+                event.preventDefault()
+                setView('dark')
               }}
             >
               <IconColorDark />
-              <span className={css({ minW: '0', flex: '1', truncate: true })}>
-                {darkThemeName}
-              </span>
+              <span className={css({minW: '0', flex: '1', truncate: true})}>{darkThemeName}</span>
               <IconChevronSm
                 aria-hidden
                 className={css({
@@ -589,14 +542,14 @@ function ThemeDropdown({
                     justifyContent: 'center',
                     fontSize: 'xs',
                     lineHeight: '1rem',
-                    _hover: { color: 'diffs.foreground' },
+                    _hover: {color: 'diffs.foreground'},
                   }),
-                  MENU_ITEM_FOCUS_TRANSPARENT_CLASS
+                  MENU_ITEM_FOCUS_TRANSPARENT_CLASS,
                 )}
                 onSelect={(event) => {
-                  event.preventDefault();
-                  setLightThemeName(docsThemeCatalog.defaultLightThemeName);
-                  setDarkThemeName(docsThemeCatalog.defaultDarkThemeName);
+                  event.preventDefault()
+                  setLightThemeName(docsThemeCatalog.defaultLightThemeName)
+                  setDarkThemeName(docsThemeCatalog.defaultDarkThemeName)
                 }}
               >
                 Reset to default themes
@@ -610,29 +563,29 @@ function ThemeDropdown({
             currentDark={darkThemeName}
             onBack={() => setView('main')}
             onPickLight={(theme) => {
-              setLightThemeName(theme);
-              setColorMode('light');
-              setView('main');
+              setLightThemeName(theme)
+              setColorMode('light')
+              setView('main')
             }}
             onPickDark={(theme) => {
-              setDarkThemeName(theme);
-              setColorMode('dark');
-              setView('main');
+              setDarkThemeName(theme)
+              setColorMode('dark')
+              setView('main')
             }}
           />
         )}
       </DropdownMenuContent>
     </DropdownMenu>
-  );
+  )
 }
 
 interface ThemeListProps {
-  view: 'light' | 'dark';
-  currentLight: LightThemeName;
-  currentDark: DarkThemeName;
-  onBack(): void;
-  onPickLight(theme: LightThemeName): void;
-  onPickDark(theme: DarkThemeName): void;
+  view: 'light' | 'dark'
+  currentLight: LightThemeName
+  currentDark: DarkThemeName
+  onBack(): void
+  onPickLight(theme: LightThemeName): void
+  onPickDark(theme: DarkThemeName): void
 }
 
 // Inline list of theme names shown after the user enters the light or dark
@@ -647,35 +600,35 @@ function ThemeList({
   onPickLight,
   onPickDark,
 }: ThemeListProps) {
-  const isLight = view === 'light';
+  const isLight = view === 'light'
   const themes = docsThemeCatalog.getThemeNames({
     colorScheme: isLight ? 'light' : 'dark',
-  });
-  const current = isLight ? currentLight : currentDark;
-  const HeaderIcon = isLight ? IconColorLight : IconColorDark;
+  })
+  const current = isLight ? currentLight : currentDark
+  const HeaderIcon = isLight ? IconColorLight : IconColorDark
   // Auto-scroll so the currently-selected row sits at the second visible
   // position when the list opens. The current theme lands right under the
   // user's cursor (Radix opens the menu under the trigger) and the row
   // above it makes the previous theme easy to reach with one tap of the
   // up arrow — sequential browsing through themes feels natural without
   // the user having to hunt for the active row first.
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const selectedItemRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const selectedItemRef = useRef<HTMLDivElement>(null)
   useLayoutEffect(() => {
-    const container = scrollContainerRef.current;
-    const selected = selectedItemRef.current;
-    if (container == null || selected == null) return;
+    const container = scrollContainerRef.current
+    const selected = selectedItemRef.current
+    if (isNullish(container) || isNullish(selected)) return
     // `offsetTop` measures from the nearest positioned ancestor, which the
     // scroll container is not — use bounding rects so the math works
     // regardless of where ancestors set `position`. Subtract one row
     // height so the selected row appears as the second-from-top visible
     // row instead of flush with the top.
-    const containerTop = container.getBoundingClientRect().top;
-    const selectedTop = selected.getBoundingClientRect().top;
-    const offsetWithinScroll = selectedTop - containerTop + container.scrollTop;
-    const rowHeight = selected.offsetHeight;
-    container.scrollTop = Math.max(0, offsetWithinScroll - rowHeight);
-  }, [view]);
+    const containerTop = container.getBoundingClientRect().top
+    const selectedTop = selected.getBoundingClientRect().top
+    const offsetWithinScroll = selectedTop - containerTop + container.scrollTop
+    const rowHeight = selected.offsetHeight
+    container.scrollTop = Math.max(0, offsetWithinScroll - rowHeight)
+  }, [view])
   return (
     <>
       <DropdownMenuItem
@@ -686,8 +639,8 @@ function ThemeList({
           gap: '2',
         })}
         onSelect={(event) => {
-          event.preventDefault();
-          onBack();
+          event.preventDefault()
+          onBack()
         }}
       >
         <IconChevronSm
@@ -698,7 +651,7 @@ function ThemeList({
           })}
         />
         <HeaderIcon />
-        <span className={css({ flex: '1', truncate: true })}>
+        <span className={css({flex: '1', truncate: true})}>
           {isLight ? 'Light theme' : 'Dark theme'}
         </span>
       </DropdownMenuItem>
@@ -711,7 +664,7 @@ function ThemeList({
             maxH: '320px',
             overflowY: 'auto',
             overscrollBehavior: 'contain',
-          })
+          }),
         )}
       >
         {themes.map((theme) => (
@@ -719,24 +672,24 @@ function ThemeList({
             key={theme}
             ref={current === theme ? selectedItemRef : undefined}
             onSelect={(event) => {
-              event.preventDefault();
+              event.preventDefault()
               if (isLight) {
-                onPickLight(theme);
+                onPickLight(theme)
               } else {
-                onPickDark(theme);
+                onPickDark(theme)
               }
             }}
             selected={current === theme}
           >
-            <span className={css({ flex: '1', truncate: true })}>{theme}</span>
+            <span className={css({flex: '1', truncate: true})}>{theme}</span>
             {current === theme ? (
-              <IconCheck className={css({ ml: 'auto' })} />
+              <IconCheck className={css({ml: 'auto'})} />
             ) : (
-              <div className={css({ ml: '2', h: '4', w: '4' })} />
+              <div className={css({ml: '2', h: '4', w: '4'})} />
             )}
           </DropdownMenuItem>
         ))}
       </div>
     </>
-  );
+  )
 }

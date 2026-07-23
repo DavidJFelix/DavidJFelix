@@ -1,18 +1,19 @@
-export const COMMIT_HASH_METADATA_PATTERN = /^From\s+([a-f0-9]+)\s/im;
+import {isNullish} from './nullish'
+export const COMMIT_HASH_METADATA_PATTERN = /^From\s+([a-f0-9]+)\s/im
 
-const commitPrefixEncoder = new TextEncoder();
-const commitPrefixDecoder = new TextDecoder();
+const commitPrefixEncoder = new TextEncoder()
+const commitPrefixDecoder = new TextDecoder()
 
 export function getPatchTreePathPrefix(
   patchMetadata: string | undefined,
-  patchIndex: number
+  patchIndex: number,
 ): string {
-  const commitHash = patchMetadata?.match(COMMIT_HASH_METADATA_PATTERN)?.[1];
-  return commitHash != null
+  const commitHash = patchMetadata?.match(COMMIT_HASH_METADATA_PATTERN)?.[1]
+  return !isNullish(commitHash)
     ? detachCommitPrefix(commitHash.slice(0, 5))
-    : `Commit ${patchIndex + 1}`;
+    : `Commit ${patchIndex + 1}`
 }
 
 function detachCommitPrefix(value: string): string {
-  return commitPrefixDecoder.decode(commitPrefixEncoder.encode(value));
+  return commitPrefixDecoder.decode(commitPrefixEncoder.encode(value))
 }

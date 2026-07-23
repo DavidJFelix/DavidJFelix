@@ -1,10 +1,10 @@
-import { Toaster as Sonner } from 'sonner';
+import {Toaster as Sonner} from 'sonner'
 
-import { css } from 'styled-system/css';
+import {css} from 'styled-system/css'
 
-import { useTheme } from '@/diffs/components/ThemeProvider';
+import {useTheme} from '@/diffs/components/ThemeProvider'
 
-type ToasterProps = React.ComponentProps<typeof Sonner>;
+type ToasterProps = React.ComponentProps<typeof Sonner>
 
 // The `.toaster &` ancestor selectors mirror the source app's
 // `group-[.toaster]:` utilities: sonner applies these classes to elements
@@ -16,22 +16,22 @@ const toastClass = css({
     borderColor: 'diffs.border',
     boxShadow: 'lg',
   },
-});
+})
 
 const descriptionClass = css({
-  '.toast &': { color: 'diffs.muted.foreground' },
-});
+  '.toast &': {color: 'diffs.muted.foreground'},
+})
 
 const actionButtonClass = css({
-  '.toast &': { bg: 'diffs.primary', color: 'diffs.primary.foreground' },
-});
+  '.toast &': {bg: 'diffs.primary', color: 'diffs.primary.foreground'},
+})
 
 const cancelButtonClass = css({
-  '.toast &': { bg: 'diffs.muted', color: 'diffs.muted.foreground' },
-});
+  '.toast &': {bg: 'diffs.muted', color: 'diffs.muted.foreground'},
+})
 
-const Toaster = ({ ...props }: ToasterProps) => {
-  const { colorMode = 'system' } = useTheme();
+const Toaster = ({...props}: ToasterProps) => {
+  const {colorMode = 'system'} = useTheme()
 
   return (
     <Sonner
@@ -47,7 +47,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }}
       {...props}
     />
-  );
-};
+  )
+}
 
-export { Toaster };
+export {Toaster}

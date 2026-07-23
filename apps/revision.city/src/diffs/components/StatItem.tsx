@@ -1,17 +1,16 @@
-import { css, cx } from 'styled-system/css';
+import {css, cx} from 'styled-system/css'
 
-const NUMBER_FORMATTER = new Intl.NumberFormat('en-US');
+const NUMBER_FORMATTER = new Intl.NumberFormat('en-US')
 
 interface StatItemProps {
-  label: string;
-  value: string | number;
-  valueClassName?: string;
+  label: string
+  value: string | number
+  valueClassName?: string
 }
 
-export function StatItem({ label, value, valueClassName }: StatItemProps) {
-  const isZero = value === 0 || value === '0';
-  const formatted =
-    typeof value === 'number' ? NUMBER_FORMATTER.format(value) : value;
+export function StatItem({label, value, valueClassName}: StatItemProps) {
+  const isZero = value === 0 || value === '0'
+  const formatted = typeof value === 'number' ? NUMBER_FORMATTER.format(value) : value
   return (
     <div
       className={css({
@@ -21,11 +20,11 @@ export function StatItem({ label, value, valueClassName }: StatItemProps) {
         justifyContent: 'space-between',
         borderTopWidth: '1px',
         py: '1',
-        pr: { base: '4', md: '0' },
+        pr: {base: '4', md: '0'},
         fontSize: '12px',
       })}
     >
-      <div className={css({ color: 'diffs.muted.foreground' })}>{label}</div>
+      <div className={css({color: 'diffs.muted.foreground'})}>{label}</div>
       <span
         className={cx(
           css({
@@ -33,7 +32,7 @@ export function StatItem({ label, value, valueClassName }: StatItemProps) {
             textAlign: 'right',
             fontVariantNumeric: 'tabular-nums',
           }),
-          valueClassName
+          valueClassName,
         )}
         style={{
           fontFamily: 'var(--font-jetbrains-mono)',
@@ -43,5 +42,5 @@ export function StatItem({ label, value, valueClassName }: StatItemProps) {
         {formatted}
       </span>
     </div>
-  );
+  )
 }

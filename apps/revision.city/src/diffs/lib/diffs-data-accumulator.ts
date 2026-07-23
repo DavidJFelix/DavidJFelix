@@ -3,56 +3,57 @@ import {
   type CodeViewItem,
   type FileDiffMetadata,
   parsePatchFiles,
-} from '@pierre/diffs';
-import type { FileTreeGitStatusPatch, GitStatusEntry } from '@pierre/trees';
+} from '@pierre/diffs'
+import type {FileTreeGitStatusPatch, GitStatusEntry} from '@pierre/trees'
 
-import { getPatchTreePathPrefix } from './git-patch-metadata';
-import { mapChangeTypeToGitStatus } from './map-change-type-to-git-status';
+import {getPatchTreePathPrefix} from './git-patch-metadata'
+import {mapChangeTypeToGitStatus} from './map-change-type-to-git-status'
+import {isNullish} from './nullish'
 import type {
   CommentMetadata,
   DiffsCommentFileByItemId,
   DiffsCommentSidebarFile,
-  DiffsStats,
   DiffsFileTreeSource,
-} from './types';
+  DiffsStats,
+} from './types'
 
 export interface DiffsDataAccumulator {
-  diffStats: DiffsStats;
-  fileIndex: number;
-  gitStatusByPath: Map<string, GitStatusEntry>;
-  itemIdToFile: Map<string, DiffsCommentSidebarFile>;
-  items: CodeViewItem<CommentMetadata>[];
+  diffStats: DiffsStats
+  fileIndex: number
+  gitStatusByPath: Map<string, GitStatusEntry>
+  itemIdToFile: Map<string, DiffsCommentSidebarFile>
+  items: CodeViewItem<CommentMetadata>[]
   // The last tree source emitted by snapshotDiffsTreeSource for this
   // accumulator. Each new snapshot links back to this so the consumer can
   // recognize append-only growth and skip the full PathStore rebuild.
-  lastTreeSource: DiffsFileTreeSource | undefined;
-  nextCollisionSuffixByBase: Map<string, number>;
-  pendingGitStatusRemovePaths: Set<string>;
-  pendingGitStatusSetByPath: Map<string, GitStatusEntry>;
-  pendingItems: CodeViewItem<CommentMetadata>[];
-  pendingItemById: Map<string, CodeViewItem<CommentMetadata>>;
-  pathToItemId: Map<string, string>;
-  pathStateByTreePath: Map<string, CodeViewPathState>;
-  paths: string[];
+  lastTreeSource: DiffsFileTreeSource | undefined
+  nextCollisionSuffixByBase: Map<string, number>
+  pendingGitStatusRemovePaths: Set<string>
+  pendingGitStatusSetByPath: Map<string, GitStatusEntry>
+  pendingItems: CodeViewItem<CommentMetadata>[]
+  pendingItemById: Map<string, CodeViewItem<CommentMetadata>>
+  pathToItemId: Map<string, string>
+  pathStateByTreePath: Map<string, CodeViewPathState>
+  paths: string[]
 }
 
 export interface DiffsItemIdRename {
-  oldId: string;
-  newId: string;
+  oldId: string
+  newId: string
 }
 
 interface CodeViewPathState {
-  currentItem: CodeViewItem<CommentMetadata>;
-  currentItemId: string;
-  currentType: ChangeTypes;
-  sawDeleted: boolean;
+  currentItem: CodeViewItem<CommentMetadata>
+  currentItemId: string
+  currentType: ChangeTypes
+  sawDeleted: boolean
 }
 
 export interface LoadedDiffsData {
-  itemIdToFile: DiffsCommentFileByItemId;
-  diffStats: DiffsStats;
-  items: CodeViewItem<CommentMetadata>[];
-  treeSource: DiffsFileTreeSource;
+  itemIdToFile: DiffsCommentFileByItemId
+  diffStats: DiffsStats
+  items: CodeViewItem<CommentMetadata>[]
+  treeSource: DiffsFileTreeSource
 }
 
 export function createDiffsDataAccumulator(): DiffsDataAccumulator {
@@ -76,83 +77,79 @@ export function createDiffsDataAccumulator(): DiffsDataAccumulator {
     pathToItemId: new Map(),
     pathStateByTreePath: new Map(),
     paths: [],
-  };
+  }
 }
 
 export function appendFileDiffToDiffsData(
   accumulator: DiffsDataAccumulator,
   fileDiff: FileDiffMetadata,
-  treePathPrefix: string | undefined
+  treePathPrefix: string | undefined,
 ): DiffsItemIdRename | undefined {
-  const { diffStats } = accumulator;
-  diffStats.fileCount++;
-  diffStats.totalLinesOfCode += fileDiff.unifiedLineCount;
+  const {diffStats} = accumulator
+  diffStats.fileCount++
+  diffStats.totalLinesOfCode += fileDiff.unifiedLineCount
   for (const hunk of fileDiff.hunks) {
-    diffStats.addedLines += hunk.additionLines;
-    diffStats.deletedLines += hunk.deletionLines;
+    diffStats.addedLines += hunk.additionLines
+    diffStats.deletedLines += hunk.deletionLines
   }
 
-  const path = fileDiff.name;
-  const treePath = treePathPrefix == null ? path : `${treePathPrefix}/${path}`;
+  const path = fileDiff.name
+  const treePath = isNullish(treePathPrefix) ? path : `${treePathPrefix}/${path}`
   const previousPathState =
-    path.length === 0
-      ? undefined
-      : accumulator.pathStateByTreePath.get(treePath);
-  const itemIdRename =
-    previousPathState == null
-      ? undefined
-      : renameCurrentPathItem(accumulator, treePath, previousPathState);
+    path.length === 0 ? undefined : accumulator.pathStateByTreePath.get(treePath)
+  const itemIdRename = isNullish(previousPathState)
+    ? undefined
+    : renameCurrentPathItem(accumulator, treePath, previousPathState)
   const id = accumulator.itemIdToFile.has(treePath)
     ? createFallbackItemId(accumulator, treePath)
-    : treePath;
+    : treePath
   // Streaming cache keys read fileIndex before this append, so keep advancing
   // it even though item ids are now path-based.
-  accumulator.fileIndex++;
-  const fileOrder = accumulator.items.length;
+  accumulator.fileIndex++
+  const fileOrder = accumulator.items.length
 
   const item: CodeViewItem<CommentMetadata> = {
     id,
     type: 'diff',
     fileDiff,
     version: 0,
-  };
-  accumulator.items.push(item);
-  accumulator.pendingItems.push(item);
-  accumulator.pendingItemById.set(id, item);
+  }
+  accumulator.items.push(item)
+  accumulator.pendingItems.push(item)
+  accumulator.pendingItemById.set(id, item)
 
-  accumulator.itemIdToFile.set(id, { fileOrder, path });
+  accumulator.itemIdToFile.set(id, {fileOrder, path})
   if (path.length === 0) {
-    return itemIdRename;
+    return itemIdRename
   }
 
-  if (previousPathState == null) {
-    accumulator.paths.push(treePath);
+  if (isNullish(previousPathState)) {
+    accumulator.paths.push(treePath)
   }
-  accumulator.pathToItemId.set(treePath, id);
-  updateGitStatusByPath(
+  accumulator.pathToItemId.set(treePath, id)
+  updateGitStatusByPath({
     accumulator,
     treePath,
-    fileDiff.type,
-    previousPathState?.sawDeleted === true
-  );
+    changeType: fileDiff.type,
+    hadDeletedEntry: previousPathState?.sawDeleted === true,
+  })
   accumulator.pathStateByTreePath.set(treePath, {
     currentItem: item,
     currentItemId: id,
     currentType: fileDiff.type,
-    sawDeleted:
-      previousPathState?.sawDeleted === true || fileDiff.type === 'deleted',
-  });
+    sawDeleted: previousPathState?.sawDeleted === true || fileDiff.type === 'deleted',
+  })
 
-  return itemIdRename;
+  return itemIdRename
 }
 
 export function takePendingDiffsItems(
-  accumulator: DiffsDataAccumulator
+  accumulator: DiffsDataAccumulator,
 ): CodeViewItem<CommentMetadata>[] {
-  const { pendingItems } = accumulator;
-  accumulator.pendingItems = [];
-  accumulator.pendingItemById.clear();
-  return pendingItems;
+  const {pendingItems} = accumulator
+  accumulator.pendingItems = []
+  accumulator.pendingItemById.clear()
+  return pendingItems
 }
 
 // Produces a tree source snapshot, linking it to the previous snapshot from
@@ -161,45 +158,39 @@ export function takePendingDiffsItems(
 // delta with model.batch instead of rebuilding the whole PathStore. Consumers
 // that recreate the accumulator (e.g. a new request) discard the prior link
 // implicitly because lastTreeSource is undefined on a fresh accumulator.
-export function snapshotDiffsTreeSource(
-  accumulator: DiffsDataAccumulator
-): DiffsFileTreeSource {
-  const previousSource = accumulator.lastTreeSource;
-  const gitStatusPatch = takePendingGitStatusPatch(accumulator);
+export function snapshotDiffsTreeSource(accumulator: DiffsDataAccumulator): DiffsFileTreeSource {
+  const previousSource = accumulator.lastTreeSource
+  const gitStatusPatch = takePendingGitStatusPatch(accumulator)
   const snapshot: DiffsFileTreeSource = {
     gitStatus: Array.from(accumulator.gitStatusByPath.values()),
-    gitStatusPatch: previousSource == null ? undefined : gitStatusPatch,
+    gitStatusPatch: isNullish(previousSource) ? undefined : gitStatusPatch,
     pathCount: accumulator.paths.length,
     paths: accumulator.paths,
     pathToItemId: accumulator.pathToItemId,
     previousSource,
-  };
-  accumulator.lastTreeSource = snapshot;
-  return snapshot;
+  }
+  accumulator.lastTreeSource = snapshot
+  return snapshot
 }
 
 function takePendingGitStatusPatch(
-  accumulator: DiffsDataAccumulator
+  accumulator: DiffsDataAccumulator,
 ): FileTreeGitStatusPatch | undefined {
-  const { pendingGitStatusRemovePaths, pendingGitStatusSetByPath } =
-    accumulator;
-  if (
-    pendingGitStatusRemovePaths.size === 0 &&
-    pendingGitStatusSetByPath.size === 0
-  ) {
-    return undefined;
+  const {pendingGitStatusRemovePaths, pendingGitStatusSetByPath} = accumulator
+  if (pendingGitStatusRemovePaths.size === 0 && pendingGitStatusSetByPath.size === 0) {
+    return undefined
   }
 
-  const patch: FileTreeGitStatusPatch = {};
+  const patch: FileTreeGitStatusPatch = {}
   if (pendingGitStatusRemovePaths.size > 0) {
-    patch.remove = [...pendingGitStatusRemovePaths];
-    pendingGitStatusRemovePaths.clear();
+    patch.remove = [...pendingGitStatusRemovePaths]
+    pendingGitStatusRemovePaths.clear()
   }
   if (pendingGitStatusSetByPath.size > 0) {
-    patch.set = [...pendingGitStatusSetByPath.values()];
-    pendingGitStatusSetByPath.clear();
+    patch.set = [...pendingGitStatusSetByPath.values()]
+    pendingGitStatusSetByPath.clear()
   }
-  return patch;
+  return patch
 }
 
 // Moves the current CodeView item for a path off the canonical tree id so the
@@ -207,155 +198,141 @@ function takePendingGitStatusPatch(
 function renameCurrentPathItem(
   accumulator: DiffsDataAccumulator,
   treePath: string,
-  pathState: CodeViewPathState
+  pathState: CodeViewPathState,
 ): DiffsItemIdRename | undefined {
-  const oldId = pathState.currentItemId;
-  const newId = createSupersededItemId(
-    accumulator,
-    treePath,
-    pathState.currentType
-  );
-  pathState.currentItem.id = newId;
-  pathState.currentItemId = newId;
+  const oldId = pathState.currentItemId
+  const newId = createSupersededItemId(accumulator, treePath, pathState.currentType)
+  pathState.currentItem.id = newId
+  pathState.currentItemId = newId
 
-  const file = accumulator.itemIdToFile.get(oldId);
-  if (file != null) {
-    accumulator.itemIdToFile.delete(oldId);
-    accumulator.itemIdToFile.set(newId, file);
+  const file = accumulator.itemIdToFile.get(oldId)
+  if (!isNullish(file)) {
+    accumulator.itemIdToFile.delete(oldId)
+    accumulator.itemIdToFile.set(newId, file)
   }
 
-  const pendingItem = accumulator.pendingItemById.get(oldId);
-  if (pendingItem != null) {
-    accumulator.pendingItemById.delete(oldId);
-    accumulator.pendingItemById.set(newId, pendingItem);
-    return undefined;
+  const pendingItem = accumulator.pendingItemById.get(oldId)
+  if (!isNullish(pendingItem)) {
+    accumulator.pendingItemById.delete(oldId)
+    accumulator.pendingItemById.set(newId, pendingItem)
+    return undefined
   }
 
-  return { oldId, newId };
+  return {oldId, newId}
 }
 
 function createSupersededItemId(
   accumulator: DiffsDataAccumulator,
   treePath: string,
-  changeType: ChangeTypes
+  changeType: ChangeTypes,
 ): string {
-  const semanticSuffix = changeType === 'deleted' ? '?deleted' : '?previous';
-  return createUniqueItemId(accumulator, `${treePath}${semanticSuffix}`);
+  const semanticSuffix = changeType === 'deleted' ? '?deleted' : '?previous'
+  return createUniqueItemId(accumulator, `${treePath}${semanticSuffix}`)
 }
 
-function createFallbackItemId(
-  accumulator: DiffsDataAccumulator,
-  treePath: string
-): string {
-  return createUniqueItemId(accumulator, `${treePath}?2`);
+function createFallbackItemId(accumulator: DiffsDataAccumulator, treePath: string): string {
+  return createUniqueItemId(accumulator, `${treePath}?2`)
 }
 
 // Resolves rare id collisions by advancing a per-base suffix instead of scanning
 // accumulated items.
-function createUniqueItemId(
-  accumulator: DiffsDataAccumulator,
-  baseId: string
-): string {
+function createUniqueItemId(accumulator: DiffsDataAccumulator, baseId: string): string {
   if (!accumulator.itemIdToFile.has(baseId)) {
-    return baseId;
+    return baseId
   }
 
-  let suffix = accumulator.nextCollisionSuffixByBase.get(baseId) ?? 2;
-  let itemId = `${baseId}-${suffix}`;
+  let suffix = accumulator.nextCollisionSuffixByBase.get(baseId) ?? 2
+  let itemId = `${baseId}-${suffix}`
   while (accumulator.itemIdToFile.has(itemId)) {
-    suffix++;
-    itemId = `${baseId}-${suffix}`;
+    suffix++
+    itemId = `${baseId}-${suffix}`
   }
-  accumulator.nextCollisionSuffixByBase.set(baseId, suffix + 1);
-  return itemId;
+  accumulator.nextCollisionSuffixByBase.set(baseId, suffix + 1)
+  return itemId
 }
 
 // Maintains the file tree status for a real path while repeated patch entries
 // replace the path's final CodeView item.
-function updateGitStatusByPath(
-  accumulator: DiffsDataAccumulator,
-  treePath: string,
-  changeType: ChangeTypes,
+interface UpdateGitStatusByPathParams {
+  accumulator: DiffsDataAccumulator
+  treePath: string
+  changeType: ChangeTypes
   hadDeletedEntry: boolean
-): void {
+}
+
+function updateGitStatusByPath({
+  accumulator,
+  treePath,
+  changeType,
+  hadDeletedEntry,
+}: UpdateGitStatusByPathParams): void {
   if (hadDeletedEntry && changeType !== 'deleted') {
     if (accumulator.gitStatusByPath.delete(treePath)) {
-      recordGitStatusRemove(accumulator, treePath);
+      recordGitStatusRemove(accumulator, treePath)
     }
-    return;
+    return
   }
 
   // Modified files are excluded so they render as the visual default. Only
   // added, deleted, and renamed files retain status indicators.
-  const gitStatusEntry = mapChangeTypeToGitStatus(changeType);
+  const gitStatusEntry = mapChangeTypeToGitStatus(changeType)
   if (gitStatusEntry === 'modified') {
     if (accumulator.gitStatusByPath.delete(treePath)) {
-      recordGitStatusRemove(accumulator, treePath);
+      recordGitStatusRemove(accumulator, treePath)
     }
   } else {
-    const previousStatus = accumulator.gitStatusByPath.get(treePath)?.status;
+    const previousStatus = accumulator.gitStatusByPath.get(treePath)?.status
     if (previousStatus === gitStatusEntry) {
-      return;
+      return
     }
 
     const entry = {
       path: treePath,
       status: gitStatusEntry,
-    };
-    accumulator.gitStatusByPath.set(treePath, entry);
-    recordGitStatusSet(accumulator, entry);
+    }
+    accumulator.gitStatusByPath.set(treePath, entry)
+    recordGitStatusSet(accumulator, entry)
   }
 }
 
-function recordGitStatusSet(
-  accumulator: DiffsDataAccumulator,
-  entry: GitStatusEntry
-): void {
-  accumulator.pendingGitStatusRemovePaths.delete(entry.path);
-  accumulator.pendingGitStatusSetByPath.set(entry.path, entry);
+function recordGitStatusSet(accumulator: DiffsDataAccumulator, entry: GitStatusEntry): void {
+  accumulator.pendingGitStatusRemovePaths.delete(entry.path)
+  accumulator.pendingGitStatusSetByPath.set(entry.path, entry)
 }
 
-function recordGitStatusRemove(
-  accumulator: DiffsDataAccumulator,
-  path: string
-): void {
-  accumulator.pendingGitStatusSetByPath.delete(path);
-  accumulator.pendingGitStatusRemovePaths.add(path);
+function recordGitStatusRemove(accumulator: DiffsDataAccumulator, path: string): void {
+  accumulator.pendingGitStatusSetByPath.delete(path)
+  accumulator.pendingGitStatusRemovePaths.add(path)
 }
 
-export function snapshotDiffsData(
-  accumulator: DiffsDataAccumulator
-): LoadedDiffsData {
+export function snapshotDiffsData(accumulator: DiffsDataAccumulator): LoadedDiffsData {
   return {
     itemIdToFile: new Map(accumulator.itemIdToFile),
-    diffStats: { ...accumulator.diffStats },
+    diffStats: {...accumulator.diffStats},
     items: accumulator.items.slice(),
     treeSource: snapshotDiffsTreeSource(accumulator),
-  };
+  }
 }
 
 // Converts raw patch text into the exact state slices consumed by the diff
 // viewer, sidebar tree, stats panel, and comment index in one linear pass.
-export function buildDiffsData(
-  patchContent: string,
-  githubPath: string
-): LoadedDiffsData {
+export function buildDiffsData(patchContent: string, githubPath: string): LoadedDiffsData {
   const parsedPatches = parsePatchFiles(
     patchContent,
     // Use the url as a cache key
-    encodeURIComponent(githubPath)
-  );
+    encodeURIComponent(githubPath),
+  )
 
-  const accumulator = createDiffsDataAccumulator();
-  const shouldPrefixTreePaths = parsedPatches.length > 1;
+  const accumulator = createDiffsDataAccumulator()
+  const shouldPrefixTreePaths = parsedPatches.length > 1
   for (const [patchIndex, patch] of parsedPatches.entries()) {
     const treePathPrefix = shouldPrefixTreePaths
       ? getPatchTreePathPrefix(patch.patchMetadata, patchIndex)
-      : undefined;
+      : undefined
     for (const fileDiff of patch.files) {
-      appendFileDiffToDiffsData(accumulator, fileDiff, treePathPrefix);
+      appendFileDiffToDiffsData(accumulator, fileDiff, treePathPrefix)
     }
   }
 
-  return snapshotDiffsData(accumulator);
+  return snapshotDiffsData(accumulator)
 }

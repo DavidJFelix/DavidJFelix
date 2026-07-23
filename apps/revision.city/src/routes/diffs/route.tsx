@@ -5,9 +5,9 @@ import {ScrollbarGutterVariables} from '@/diffs/components/ScrollbarGutterVariab
 import {ThemeProvider} from '@/diffs/components/ThemeProvider'
 import {Toaster} from '@/diffs/components/Toaster'
 import {WorkerPoolContext} from '@/diffs/components/WorkerPoolContext'
-import {SITE_DESCRIPTION, SITE_NAME} from '@/diffs/lib/site'
-
 import diffsCss from '@/diffs/diffs.css?url'
+import {isNullish} from '@/diffs/lib/nullish'
+import {SITE_DESCRIPTION, SITE_NAME} from '@/diffs/lib/site'
 
 // Applies the persisted (or OS) color scheme to <html> before first paint so
 // the diffs UI never flashes the wrong scheme. The literals mirror
@@ -18,8 +18,7 @@ import diffsCss from '@/diffs/diffs.css?url'
 const themeBootstrapScript = `(${String(function applyInitialTheme() {
   try {
     const storedTheme = window.localStorage.getItem('theme')
-    const theme =
-      storedTheme === 'light' || storedTheme === 'dark' ? storedTheme : 'system'
+    const theme = storedTheme === 'light' || storedTheme === 'dark' ? storedTheme : 'system'
     const resolvedTheme =
       theme === 'system'
         ? window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -33,15 +32,12 @@ const themeBootstrapScript = `(${String(function applyInitialTheme() {
     root.style.colorScheme = resolvedTheme
 
     let themeColorMeta = document.querySelector('meta[name="theme-color"]')
-    if (themeColorMeta == null) {
+    if (isNullish(themeColorMeta)) {
       themeColorMeta = document.createElement('meta')
       themeColorMeta.setAttribute('name', 'theme-color')
       document.head.appendChild(themeColorMeta)
     }
-    themeColorMeta.setAttribute(
-      'content',
-      resolvedTheme === 'dark' ? '#0a0a0a' : '#ffffff',
-    )
+    themeColorMeta.setAttribute('content', resolvedTheme === 'dark' ? '#0a0a0a' : '#ffffff')
   } catch {
     // Ignore storage/media failures and let CSS defaults apply.
   }

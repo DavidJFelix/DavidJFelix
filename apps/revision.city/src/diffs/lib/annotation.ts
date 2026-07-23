@@ -1,4 +1,4 @@
-import { css } from 'styled-system/css';
+import {css} from 'styled-system/css'
 
 export const annotationCardBase = css({
   m: '2',
@@ -15,7 +15,7 @@ export const annotationCardBase = css({
   color: 'var(--diffs-annotation-fg, var(--card-foreground))',
   boxShadow:
     'var(--diffs-annotation-shadow, 0 2px 4px rgb(0 0 0 / 0.025), 0 4px 8px rgb(0 0 0 / 0.025))',
-});
+})
 
 // All available reviewer personas. Purely local identities used to give draft
 // and saved comments a stable name/color; no avatar images are shipped.
@@ -39,7 +39,7 @@ const PERSONA_NAMES = [
   'rey',
   'sky',
   'tam',
-] as const;
+] as const
 
 // Avatar backgrounds personas hash into; distinguishable in light and dark.
 const PERSONA_COLORS = [
@@ -53,14 +53,14 @@ const PERSONA_COLORS = [
   '#4d7c0f',
   '#b45309',
   '#0f766e',
-] as const;
+] as const
 
-export type AvatarName = (typeof PERSONA_NAMES)[number];
+export type AvatarName = (typeof PERSONA_NAMES)[number]
 
 export interface Persona {
-  name: AvatarName;
-  color: string;
-  initial: string;
+  name: AvatarName
+  color: string
+  initial: string
 }
 
 function buildPersona(name: AvatarName): Persona {
@@ -68,22 +68,22 @@ function buildPersona(name: AvatarName): Persona {
     name,
     color: PERSONA_COLORS[djb2Hash(name) % PERSONA_COLORS.length],
     initial: name[0].toUpperCase(),
-  };
+  }
 }
 
 function djb2Hash(seed: string): number {
-  let hash = 5381;
+  let hash = 5381
   for (let i = 0; i < seed.length; i++) {
-    hash = ((hash << 5) + hash + seed.charCodeAt(i)) >>> 0;
+    hash = ((hash << 5) + hash + seed.charCodeAt(i)) >>> 0
   }
-  return hash;
+  return hash
 }
 
 // Picks a random persona from the list. Intended for use as a useState lazy
 // initializer so each new draft form gets a fresh identity on mount.
 export function getRandomPersona(): Persona {
-  const name = PERSONA_NAMES[Math.floor(Math.random() * PERSONA_NAMES.length)];
-  return buildPersona(name);
+  const name = PERSONA_NAMES[Math.floor(Math.random() * PERSONA_NAMES.length)]
+  return buildPersona(name)
 }
 
 // Returns a persona for the given name or seed. If the seed is an exact
@@ -92,7 +92,7 @@ export function getRandomPersona(): Persona {
 // falls back to a djb2 hash to spread arbitrary comment keys across the list.
 export function getCommentPersona(seed: string): Persona {
   if (PERSONA_NAMES.includes(seed as AvatarName)) {
-    return buildPersona(seed as AvatarName);
+    return buildPersona(seed as AvatarName)
   }
-  return buildPersona(PERSONA_NAMES[djb2Hash(seed) % PERSONA_NAMES.length]);
+  return buildPersona(PERSONA_NAMES[djb2Hash(seed) % PERSONA_NAMES.length])
 }

@@ -2,7 +2,8 @@
 // settings, the sidebar's Git-status filter). Radix renders DropdownMenuContent
 // in a portal at the document root, so the chrome CSS variables applied to the
 // header/sidebar wrapper don't cascade to the menu.
-import type { CSSProperties } from 'react';
+import type {CSSProperties} from 'react'
+import {isNullish} from '../nullish'
 
 // Re-applies the resolved chrome style on the portaled content element itself,
 // since the chrome variables on the wrapper don't reach it. Spreading the full
@@ -12,10 +13,10 @@ import type { CSSProperties } from 'react';
 // (border/shadow/bg-popover) cover the brief window before the theme resolves,
 // so this returns undefined until the chrome is ready.
 export function getDropdownThemeStyle(
-  themeChromeStyle: CSSProperties | undefined
+  themeChromeStyle: CSSProperties | undefined,
 ): CSSProperties | undefined {
-  if (themeChromeStyle == null) {
-    return undefined;
+  if (isNullish(themeChromeStyle)) {
+    return undefined
   }
 
   return {
@@ -24,5 +25,5 @@ export function getDropdownThemeStyle(
     borderColor: 'var(--diffs-popover-border, var(--border))',
     boxShadow: 'var(--diffs-popover-shadow, 0 4px 8px rgb(0 0 0 / 0.07))',
     color: 'var(--diffs-popover-fg, var(--popover-foreground))',
-  };
+  }
 }

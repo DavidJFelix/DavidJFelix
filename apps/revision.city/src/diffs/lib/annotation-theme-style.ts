@@ -1,4 +1,5 @@
-import type { CSSProperties } from 'react';
+import type {CSSProperties} from 'react'
+import {isNullish} from './nullish'
 
 const ANNOTATION_THEME_STYLE_KEYS = [
   '--diffs-annotation-bg',
@@ -14,24 +15,24 @@ const ANNOTATION_THEME_STYLE_KEYS = [
   // Main scrollbar thumb + gutter tint; this element is the cv-scrollbar host.
   '--diffs-scrollbar-thumb-bg',
   '--diffs-scrollbar-track-bg',
-] as const;
+] as const
 
 export function buildAnnotationThemeStyle(
-  themeChromeStyle: CSSProperties | undefined
+  themeChromeStyle: CSSProperties | undefined,
 ): CSSProperties | undefined {
-  if (themeChromeStyle == null) {
-    return undefined;
+  if (isNullish(themeChromeStyle)) {
+    return undefined
   }
 
   const source = themeChromeStyle as CSSProperties &
-    Partial<Record<(typeof ANNOTATION_THEME_STYLE_KEYS)[number], string>>;
-  const style: Record<string, string> = {};
+    Partial<Record<(typeof ANNOTATION_THEME_STYLE_KEYS)[number], string>>
+  const style: Record<string, string> = {}
   for (const key of ANNOTATION_THEME_STYLE_KEYS) {
-    const value = source[key];
+    const value = source[key]
     if (typeof value === 'string') {
-      style[key] = value;
+      style[key] = value
     }
   }
 
-  return Object.keys(style).length > 0 ? (style as CSSProperties) : undefined;
+  return Object.keys(style).length > 0 ? (style as CSSProperties) : undefined
 }

@@ -89,10 +89,9 @@ function DiffsHomePage() {
           Diffs
         </h2>
         <p className={css({color: 'diffs.muted.foreground', textWrap: 'pretty'})}>
-          View code changes from any public GitHub diff—PRs, comparisons,
-          commits, diffs, and patches—with a super-freaking-fast, beautiful, and
-          virtualized interface by putting <code>revision.city/diffs/</code> in
-          front of any <code>github.com</code> path.
+          View code changes from any public GitHub diff—PRs, comparisons, commits, diffs, and
+          patches—with a super-freaking-fast, beautiful, and virtualized interface by putting{' '}
+          <code>revision.city/diffs/</code> in front of any <code>github.com</code> path.
         </p>
         <div
           className={css({
@@ -203,8 +202,8 @@ function DiffsHomePage() {
             >
               v6...v7 of Linux
             </Link>
-            . This sometimes crashes mobile browsers, and GitHub unreliably
-            serves diffs over 100k lines with a delayed first byte.
+            . This sometimes crashes mobile browsers, and GitHub unreliably serves diffs over 100k
+            lines with a delayed first byte.
           </p>
         </div>
       </section>
@@ -280,9 +279,7 @@ const HomeFetchForm = memo(function HomeFetchForm() {
               },
             })}
           >
-            <IconArrow
-              className={css({w: '4', h: '4', transform: 'rotate(180deg)'})}
-            />
+            <IconArrow className={css({w: '4', h: '4', transform: 'rotate(180deg)'})} />
           </Button>
         )}
       </DiffUrlForm>

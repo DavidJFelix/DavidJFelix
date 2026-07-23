@@ -1,31 +1,30 @@
-import type { DiffsSavedCommentEntry } from './types';
+import {isNullish} from './nullish'
+import type {DiffsSavedCommentEntry} from './types'
 
 export function insertCommentInLineOrder(
   comments: readonly DiffsSavedCommentEntry[],
-  entry: DiffsSavedCommentEntry
+  entry: DiffsSavedCommentEntry,
 ): DiffsSavedCommentEntry[] {
-  let existingIndex = -1;
+  let existingIndex = -1
   for (let index = 0; index < comments.length; index++) {
     if (comments[index]?.key === entry.key) {
-      existingIndex = index;
-      break;
+      existingIndex = index
+      break
     }
   }
 
   const nextComments =
-    existingIndex === -1
-      ? [...comments]
-      : comments.filter((_, index) => index !== existingIndex);
+    existingIndex === -1 ? [...comments] : comments.filter((_, index) => index !== existingIndex)
 
-  let insertIndex = nextComments.length;
+  let insertIndex = nextComments.length
   for (let index = 0; index < nextComments.length; index++) {
-    const comment = nextComments[index];
-    if (comment != null && entry.lineNumber < comment.lineNumber) {
-      insertIndex = index;
-      break;
+    const comment = nextComments[index]
+    if (!isNullish(comment) && entry.lineNumber < comment.lineNumber) {
+      insertIndex = index
+      break
     }
   }
 
-  nextComments.splice(insertIndex, 0, entry);
-  return nextComments;
+  nextComments.splice(insertIndex, 0, entry)
+  return nextComments
 }

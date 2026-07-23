@@ -1,5 +1,5 @@
-import type { ChangeTypes } from '@pierre/diffs';
-import type { GitStatus } from '@pierre/trees';
+import type {ChangeTypes} from '@pierre/diffs'
+import type {GitStatus} from '@pierre/trees'
 
 // Translates the diff-level change type surfaced by @pierre/diffs into the
 // git-status vocabulary the file tree understands. Both rename variants fold
@@ -8,13 +8,13 @@ import type { GitStatus } from '@pierre/trees';
 export function mapChangeTypeToGitStatus(type: ChangeTypes): GitStatus {
   switch (type) {
     case 'new':
-      return 'added';
+      return 'added'
     case 'deleted':
-      return 'deleted';
+      return 'deleted'
     case 'rename-pure':
     case 'rename-changed':
-      return 'renamed';
+      return 'renamed'
     case 'change':
-      return 'modified';
+      return 'modified'
   }
 }

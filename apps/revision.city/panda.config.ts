@@ -25,8 +25,7 @@ export default defineConfig({
         menuIn: {
           from: {
             opacity: '0',
-            transform:
-              'translate(var(--menu-slide-x, 0), var(--menu-slide-y, 0)) scale(0.95)',
+            transform: 'translate(var(--menu-slide-x, 0), var(--menu-slide-y, 0)) scale(0.95)',
           },
           to: {opacity: '1', transform: 'translate(0, 0) scale(1)'},
         },
@@ -34,8 +33,7 @@ export default defineConfig({
           from: {opacity: '1', transform: 'translate(0, 0) scale(1)'},
           to: {
             opacity: '0',
-            transform:
-              'translate(var(--menu-slide-x, 0), var(--menu-slide-y, 0)) scale(0.95)',
+            transform: 'translate(var(--menu-slide-x, 0), var(--menu-slide-y, 0)) scale(0.95)',
           },
         },
       },

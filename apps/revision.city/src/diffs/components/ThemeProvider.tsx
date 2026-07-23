@@ -1,5 +1,5 @@
-import type { ColorMode, ColorScheme } from '@pierre/theming';
-import { useThemeController } from '@pierre/theming/react';
+import type {ColorMode, ColorScheme} from '@pierre/theming'
+import {useThemeController} from '@pierre/theming/react'
 import {
   createContext,
   type ReactNode,
@@ -8,26 +8,26 @@ import {
   useEffect,
   useMemo,
   useState,
-} from 'react';
-
-import { themeController } from './theme-controller';
+} from 'react'
+import {isNullish} from '@/diffs/lib/nullish'
+import {themeController} from './theme-controller'
 
 interface ThemeProviderProps {
-  attribute?: 'class' | `data-${string}` | Array<'class' | `data-${string}`>;
-  children: ReactNode;
-  enableColorScheme?: boolean;
-  value?: Partial<Record<ColorScheme, string>>;
+  attribute?: 'class' | `data-${string}` | Array<'class' | `data-${string}`>
+  children: ReactNode
+  enableColorScheme?: boolean
+  value?: Partial<Record<ColorScheme, string>>
 }
 
 interface ThemeContextValue {
-  colorMode?: ColorMode;
-  colorModes: ColorMode[];
-  resolvedColorScheme?: ColorScheme;
-  setColorMode: (mode: ColorMode) => void;
+  colorMode?: ColorMode
+  colorModes: ColorMode[]
+  resolvedColorScheme?: ColorScheme
+  setColorMode: (mode: ColorMode) => void
 }
 
-const COLOR_MODES: ColorMode[] = ['light', 'dark', 'system'];
-const COLOR_SCHEMES: ColorScheme[] = ['light', 'dark'];
+const COLOR_MODES: ColorMode[] = ['light', 'dark', 'system']
+const COLOR_SCHEMES: ColorScheme[] = ['light', 'dark']
 
 // Navbar tint (iOS Safari's <meta name="theme-color">) for each resolved color
 // scheme. These match the global body `--background` (oklch(1)/oklch(0.145))
@@ -37,7 +37,7 @@ const COLOR_SCHEMES: ColorScheme[] = ['light', 'dark'];
 const SCHEME_THEME_COLOR: Record<ColorScheme, string> = {
   light: '#ffffff',
   dark: '#0a0a0a',
-};
+}
 
 // Points the document's theme-color meta at `color` (the iOS Safari navbar
 // tint), creating the meta if it isn't there yet. The meta is intentionally
@@ -45,16 +45,16 @@ const SCHEME_THEME_COLOR: Record<ColorScheme, string> = {
 // next to the one it manages. Creating it imperatively keeps exactly one,
 // owned entirely by this code.
 function setThemeColorMeta(color: string) {
-  let meta = document.querySelector('meta[name="theme-color"]');
-  if (meta == null) {
-    meta = document.createElement('meta');
-    meta.setAttribute('name', 'theme-color');
-    document.head.appendChild(meta);
+  let meta = document.querySelector('meta[name="theme-color"]')
+  if (isNullish(meta)) {
+    meta = document.createElement('meta')
+    meta.setAttribute('name', 'theme-color')
+    document.head.appendChild(meta)
   }
-  meta.setAttribute('content', color);
+  meta.setAttribute('content', color)
 }
 
-const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
+const ThemeContext = createContext<ThemeContextValue | undefined>(undefined)
 
 // Applies the already-resolved color scheme to <html>: the class/data-attribute
 // contract, the native color-scheme, and the iOS navbar tint. The resolved
@@ -66,33 +66,33 @@ function applyColorScheme({
   resolvedColorScheme,
   value,
 }: {
-  attribute: ThemeProviderProps['attribute'];
-  enableColorScheme: boolean;
-  resolvedColorScheme: ColorScheme;
-  value: Partial<Record<ColorScheme, string>> | undefined;
+  attribute: ThemeProviderProps['attribute']
+  enableColorScheme: boolean
+  resolvedColorScheme: ColorScheme
+  value: Partial<Record<ColorScheme, string>> | undefined
 }) {
-  const root = document.documentElement;
-  const resolvedValue = value?.[resolvedColorScheme] ?? resolvedColorScheme;
-  const attributes = Array.isArray(attribute) ? attribute : [attribute];
-  const classValues = COLOR_SCHEMES.map((scheme) => value?.[scheme] ?? scheme);
+  const root = document.documentElement
+  const resolvedValue = value?.[resolvedColorScheme] ?? resolvedColorScheme
+  const attributes = Array.isArray(attribute) ? attribute : [attribute]
+  const classValues = COLOR_SCHEMES.map((scheme) => value?.[scheme] ?? scheme)
 
   for (const currentAttribute of attributes) {
     if (currentAttribute === 'class') {
-      root.classList.remove(...classValues);
-      root.classList.add(resolvedValue);
-      continue;
+      root.classList.remove(...classValues)
+      root.classList.add(resolvedValue)
+      continue
     }
-    if (currentAttribute != null) {
-      root.setAttribute(currentAttribute, resolvedValue);
+    if (!isNullish(currentAttribute)) {
+      root.setAttribute(currentAttribute, resolvedValue)
     }
   }
 
   if (enableColorScheme) {
-    root.style.colorScheme = resolvedColorScheme;
+    root.style.colorScheme = resolvedColorScheme
   }
 
   // Keep the iOS navbar tint in step with the resolved color scheme.
-  setThemeColorMeta(SCHEME_THEME_COLOR[resolvedColorScheme]);
+  setThemeColorMeta(SCHEME_THEME_COLOR[resolvedColorScheme])
 }
 
 // Thin React binding over the @pierre/theming controller (the single owner of
@@ -106,7 +106,7 @@ export function ThemeProvider({
   enableColorScheme = true,
   value,
 }: ThemeProviderProps) {
-  const state = useThemeController(themeController);
+  const state = useThemeController(themeController)
 
   // The controller reads persisted state synchronously on module load, so on
   // the client useThemeController would surface the stored mode on the very
@@ -115,13 +115,13 @@ export function ThemeProvider({
   // useTheme() matches the SSR markup first, then flips. The DOM application
   // below still uses the real resolved scheme (the pre-paint bootstrap script
   // already painted it), so this gate is invisible.
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(false)
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    setMounted(true)
+  }, [])
 
-  const colorMode = mounted ? state.mode : undefined;
-  const resolvedColorScheme = mounted ? state.resolvedColorScheme : undefined;
+  const colorMode = mounted ? state.mode : undefined
+  const resolvedColorScheme = mounted ? state.resolvedColorScheme : undefined
 
   useEffect(() => {
     applyColorScheme({
@@ -129,12 +129,12 @@ export function ThemeProvider({
       enableColorScheme,
       resolvedColorScheme: state.resolvedColorScheme,
       value,
-    });
-  }, [attribute, enableColorScheme, state.resolvedColorScheme, value]);
+    })
+  }, [attribute, enableColorScheme, state.resolvedColorScheme, value])
 
   const setColorMode = useCallback((next: ColorMode) => {
-    themeController.setColorMode(next);
-  }, []);
+    themeController.setColorMode(next)
+  }, [])
 
   const contextValue = useMemo<ThemeContextValue>(
     () => ({
@@ -143,14 +143,10 @@ export function ThemeProvider({
       resolvedColorScheme,
       setColorMode,
     }),
-    [colorMode, resolvedColorScheme, setColorMode]
-  );
+    [colorMode, resolvedColorScheme, setColorMode],
+  )
 
-  return (
-    <ThemeContext.Provider value={contextValue}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={contextValue}>{children}</ThemeContext.Provider>
 }
 
 export function useTheme(): ThemeContextValue {
@@ -159,5 +155,5 @@ export function useTheme(): ThemeContextValue {
       colorModes: [],
       setColorMode: () => {},
     }
-  );
+  )
 }

@@ -1,90 +1,78 @@
-import { type DiffIndicators } from '@pierre/diffs';
-import { type CodeViewHandle, useWorkerPool } from '@pierre/diffs/react';
-import { type ColorMode } from '@pierre/theming';
-import { useThemeController } from '@pierre/theming/react';
-import {
-  type ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import {type DiffIndicators} from '@pierre/diffs'
+import {type CodeViewHandle, useWorkerPool} from '@pierre/diffs/react'
+import {type ColorMode} from '@pierre/theming'
+import {useThemeController} from '@pierre/theming/react'
+import {type ReactNode, useCallback, useEffect, useMemo, useRef, useState} from 'react'
 
-import { css } from 'styled-system/css';
-
-import { DiffsHeader } from './DiffsHeader';
-import { DiffsSidebar } from './DiffsSidebar';
-import { DiffsStatusPanel } from './DiffsStatusPanel';
-import { DiffsViewer } from './DiffsViewer';
-import { ThemeSourceProvider } from './ThemeSourceProvider';
-import { useGitHubToken } from './use-github-token';
-import { usePatchLoader } from './use-patch-loader';
-import { useThemeCycle } from './use-theme-cycle';
-import {
-  docsThemeCatalog,
-  themeController,
-} from '@/diffs/components/theme-controller';
-import { createGitHubDiffFileLoader } from '@/diffs/lib/github-diff-file-loader';
-import { removeSavedCommentSidebarEntry } from '@/diffs/lib/remove-saved-comment-sidebar-entry';
-import type { DarkThemeName, LightThemeName } from '@/diffs/lib/theme-names';
+import {css} from 'styled-system/css'
+import {docsThemeCatalog, themeController} from '@/diffs/components/theme-controller'
+import {createGitHubDiffFileLoader} from '@/diffs/lib/github-diff-file-loader'
+import {isNullish} from '@/diffs/lib/nullish'
+import {removeSavedCommentSidebarEntry} from '@/diffs/lib/remove-saved-comment-sidebar-entry'
+import type {DarkThemeName, LightThemeName} from '@/diffs/lib/theme-names'
 import type {
   CommentMetadata,
   DiffsDeletedCommentEvent,
   DiffsSavedCommentEntry,
   DiffsSavedCommentEvent,
-} from '@/diffs/lib/types';
-import { upsertSavedCommentSidebarEntry } from '@/diffs/lib/upsert-saved-comment-sidebar-entry';
+} from '@/diffs/lib/types'
+import {upsertSavedCommentSidebarEntry} from '@/diffs/lib/upsert-saved-comment-sidebar-entry'
+import {DiffsHeader} from './DiffsHeader'
+import {DiffsSidebar} from './DiffsSidebar'
+import {DiffsStatusPanel} from './DiffsStatusPanel'
+import {DiffsViewer} from './DiffsViewer'
+import {ThemeSourceProvider} from './ThemeSourceProvider'
+import {useGitHubToken} from './use-github-token'
+import {usePatchLoader} from './use-patch-loader'
+import {useThemeCycle} from './use-theme-cycle'
 
 interface ReviewUIProps {
-  domain?: string;
-  initialUrl: string;
-  path: string;
+  domain?: string
+  initialUrl: string
+  path: string
 }
 
-export function ReviewUI({ domain, initialUrl, path }: ReviewUIProps) {
+export function ReviewUI({domain, initialUrl, path}: ReviewUIProps) {
   // Provide the diffs-scoped theme context, then render the body BELOW it so
   // the diffs hook + selection hook can read the controller context.
   return (
     <ThemeSourceProvider controller={themeController}>
       <ReviewUIInner domain={domain} initialUrl={initialUrl} path={path} />
     </ThemeSourceProvider>
-  );
+  )
 }
 
-function ReviewUIInner({ domain, initialUrl, path }: ReviewUIProps) {
-  const isWorkerPoolReadyOrDisable = useIsWorkerPoolReadyOrDisabled();
-  const [diffStyle, setDiffStyle] = useState<'split' | 'unified'>('split');
-  const [collapseMode, setCollapseMode] = useState<'expanded' | 'collapsed'>(
-    'expanded'
-  );
-  const [fileTreeOverlayOpen, setFileTreeOverlayOpen] = useState(false);
-  const [overflow, setOverflow] = useState<'wrap' | 'scroll'>('scroll');
-  const [showBackgrounds, setShowBackgrounds] = useState(true);
-  const [diffIndicators, setDiffIndicators] = useState<DiffIndicators>('bars');
-  const [lineNumbers, setLineNumbers] = useState(true);
+function ReviewUIInner({domain, initialUrl, path}: ReviewUIProps) {
+  const isWorkerPoolReadyOrDisable = useIsWorkerPoolReadyOrDisabled()
+  const [diffStyle, setDiffStyle] = useState<'split' | 'unified'>('split')
+  const [collapseMode, setCollapseMode] = useState<'expanded' | 'collapsed'>('expanded')
+  const [fileTreeOverlayOpen, setFileTreeOverlayOpen] = useState(false)
+  const [overflow, setOverflow] = useState<'wrap' | 'scroll'>('scroll')
+  const [showBackgrounds, setShowBackgrounds] = useState(true)
+  const [diffIndicators, setDiffIndicators] = useState<DiffIndicators>('bars')
+  const [lineNumbers, setLineNumbers] = useState(true)
   const {
     clearToken: clearGitHubToken,
     hasToken: hasGitHubToken,
     setToken: setGitHubToken,
     token: githubToken,
     tokenVersion: githubTokenVersion,
-  } = useGitHubToken();
-  const githubTokenRef = useRef(githubToken);
-  const githubTokenVersionRef = useRef(githubTokenVersion);
+  } = useGitHubToken()
+  const githubTokenRef = useRef(githubToken)
+  const githubTokenVersionRef = useRef(githubTokenVersion)
   useEffect(() => {
-    githubTokenRef.current = githubToken;
-  }, [githubToken]);
+    githubTokenRef.current = githubToken
+  }, [githubToken])
   useEffect(() => {
-    githubTokenVersionRef.current = githubTokenVersion;
-  }, [githubTokenVersion]);
-  const getGitHubToken = useCallback(() => githubTokenRef.current, []);
+    githubTokenVersionRef.current = githubTokenVersion
+  }, [githubTokenVersion])
+  const getGitHubToken = useCallback(() => githubTokenRef.current, [])
   // All theming state — color mode and the light/dark theme-name picks — lives
   // in the single @pierre/theming controller (the same instance the app-wide
   // ThemeProvider is bound to). Reading it here means picking Auto/Light/Dark
   // flips both the CodeView's `themeType` and the app's <html> class, and the
   // theme-name picks persist with no separate local state.
-  const themeState = useThemeController(themeController);
+  const themeState = useThemeController(themeController)
 
   // The controller reads persisted values synchronously when its module loads
   // on the client, so useSyncExternalStore would surface them on the very first
@@ -94,30 +82,28 @@ function ReviewUIInner({ domain, initialUrl, path }: ReviewUIProps) {
   // the SSR markup, then flips to the user's selection. This also keeps the
   // long-lived WorkerPool and the CodeView from mounting against the default
   // palette before the persisted values apply.
-  const [themesHydrated, setThemesHydrated] = useState(false);
+  const [themesHydrated, setThemesHydrated] = useState(false)
   useEffect(() => {
-    setThemesHydrated(true);
-  }, []);
+    setThemesHydrated(true)
+  }, [])
 
-  const colorMode: ColorMode = themesHydrated ? themeState.mode : 'system';
-  const appResolvedTheme = themesHydrated
-    ? themeState.resolvedColorScheme
-    : undefined;
+  const colorMode: ColorMode = themesHydrated ? themeState.mode : 'system'
+  const appResolvedTheme = themesHydrated ? themeState.resolvedColorScheme : undefined
   const lightThemeName = themesHydrated
     ? themeState.lightThemeName
-    : docsThemeCatalog.defaultLightThemeName;
+    : docsThemeCatalog.defaultLightThemeName
   const darkThemeName = themesHydrated
     ? themeState.darkThemeName
-    : docsThemeCatalog.defaultDarkThemeName;
+    : docsThemeCatalog.defaultDarkThemeName
   const setColorMode = useCallback((mode: ColorMode) => {
-    themeController.setColorMode(mode);
-  }, []);
+    themeController.setColorMode(mode)
+  }, [])
   const setLightThemeName = useCallback((name: LightThemeName) => {
-    themeController.setThemeNameForScheme('light', name);
-  }, []);
+    themeController.setThemeNameForScheme('light', name)
+  }, [])
   const setDarkThemeName = useCallback((name: DarkThemeName) => {
-    themeController.setThemeNameForScheme('dark', name);
-  }, []);
+    themeController.setThemeNameForScheme('dark', name)
+  }, [])
   // The cycle button in the System Monitor sweeps through every Shiki
   // theme so reviewers can preview the full set without manually picking
   // each one. The hook captures the user's current pick when cycling
@@ -129,23 +115,23 @@ function ReviewUIInner({ domain, initialUrl, path }: ReviewUIProps) {
     setLightThemeName,
     setDarkThemeName,
     setColorMode,
-  });
+  })
 
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const viewerRef = useRef<CodeViewHandle<CommentMetadata> | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const viewerRef = useRef<CodeViewHandle<CommentMetadata> | null>(null)
   const loadDiffFiles = useMemo(
     () =>
-      domain == null && hasGitHubToken
+      isNullish(domain) && hasGitHubToken
         ? createGitHubDiffFileLoader(path, {
             getAuthVersion: () => githubTokenVersionRef.current,
             getToken: () => githubTokenRef.current,
           })
         : undefined,
-    [domain, hasGitHubToken, path]
-  );
+    [domain, hasGitHubToken, path],
+  )
   const handlePatchLoadStart = useCallback(() => {
-    setFileTreeOverlayOpen(false);
-  }, []);
+    setFileTreeOverlayOpen(false)
+  }, [])
   const {
     applyCollapseModeToLoaded,
     commentFileByItemId,
@@ -168,86 +154,81 @@ function ReviewUIInner({ domain, initialUrl, path }: ReviewUIProps) {
     onLoadStart: handlePatchLoadStart,
     path,
     viewerRef,
-  });
+  })
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(max-width: 767px)');
+    const mediaQuery = window.matchMedia('(max-width: 767px)')
     const updateMobileState = (matches: boolean) => {
-      setDiffStyle(matches ? 'unified' : 'split');
-      if (!matches) setFileTreeOverlayOpen(false);
-    };
-    const handleChange = (event: MediaQueryListEvent) => {
-      updateMobileState(event.matches);
-    };
-
-    updateMobileState(mediaQuery.matches);
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
-  const handleSelectTreeItem = useCallback((itemId: string) => {
-    setFileTreeOverlayOpen(false);
-    const viewer = viewerRef.current;
-    if (viewer == null) {
-      return;
+      setDiffStyle(matches ? 'unified' : 'split')
+      if (!matches) setFileTreeOverlayOpen(false)
     }
-    const item = viewer.getItem(itemId);
-    if (item != null && item.collapsed === true) {
-      item.collapsed = false;
-      item.version = typeof item.version === 'number' ? item.version + 1 : 1;
-      viewer.updateItem(item);
+    const handleChange = (event: MediaQueryListEvent) => {
+      updateMobileState(event.matches)
+    }
+
+    updateMobileState(mediaQuery.matches)
+    mediaQuery.addEventListener('change', handleChange)
+    return () => mediaQuery.removeEventListener('change', handleChange)
+  }, [])
+  const handleSelectTreeItem = useCallback((itemId: string) => {
+    setFileTreeOverlayOpen(false)
+    const viewer = viewerRef.current
+    if (isNullish(viewer)) {
+      return
+    }
+    const item = viewer.getItem(itemId)
+    if (!isNullish(item) && item.collapsed === true) {
+      item.collapsed = false
+      item.version = typeof item.version === 'number' ? item.version + 1 : 1
+      viewer.updateItem(item)
     }
     viewer.scrollTo({
       type: 'item',
       id: itemId,
       align: 'start',
       behavior: 'smooth',
-    });
-  }, []);
+    })
+  }, [])
   const handleToggleCollapseMode = useCallback(() => {
-    const next = collapseMode === 'expanded' ? 'collapsed' : 'expanded';
-    setCollapseMode(next);
-    applyCollapseModeToLoaded(next);
-  }, [applyCollapseModeToLoaded, collapseMode]);
+    const next = collapseMode === 'expanded' ? 'collapsed' : 'expanded'
+    setCollapseMode(next)
+    applyCollapseModeToLoaded(next)
+  }, [applyCollapseModeToLoaded, collapseMode])
   const handleCommentSaved = useCallback(
     (comment: DiffsSavedCommentEvent) => {
       setCommentSections((prev) =>
-        upsertSavedCommentSidebarEntry(prev, commentFileByItemId, comment)
-      );
+        upsertSavedCommentSidebarEntry(prev, commentFileByItemId, comment),
+      )
     },
-    [commentFileByItemId, setCommentSections]
-  );
+    [commentFileByItemId, setCommentSections],
+  )
   const handleCommentDeleted = useCallback(
     (comment: DiffsDeletedCommentEvent) => {
-      setCommentSections((prev) =>
-        removeSavedCommentSidebarEntry(prev, comment)
-      );
+      setCommentSections((prev) => removeSavedCommentSidebarEntry(prev, comment))
     },
-    [setCommentSections]
-  );
+    [setCommentSections],
+  )
   const handleToggleFileTreeOverlay = useCallback(() => {
-    setFileTreeOverlayOpen((open) => !open);
-  }, []);
+    setFileTreeOverlayOpen((open) => !open)
+  }, [])
   const handleCloseFileTreeOverlay = useCallback(() => {
-    setFileTreeOverlayOpen(false);
-  }, []);
-  const handleSelectComment = useCallback(
-    (comment: DiffsSavedCommentEntry) => {
-      setFileTreeOverlayOpen(false);
-      viewerRef.current?.setSelectedLines({
-        id: comment.itemId,
-        range: comment.range,
-      });
-      viewerRef.current?.scrollTo({
-        type: 'line',
-        id: comment.itemId,
-        lineNumber: comment.range.end,
-        side: comment.range.endSide ?? comment.range.side,
-        align: 'center',
-        behavior: 'smooth-auto',
-      });
-    },
-    []
-  );
+    setFileTreeOverlayOpen(false)
+  }, [])
+  const handleSelectComment = useCallback((comment: DiffsSavedCommentEntry) => {
+    setFileTreeOverlayOpen(false)
+    viewerRef.current?.setSelectedLines({
+      id: comment.itemId,
+      range: comment.range,
+    })
+    viewerRef.current?.scrollTo({
+      type: 'line',
+      id: comment.itemId,
+      lineNumber: comment.range.end,
+      side: comment.range.endSide ?? comment.range.side,
+      align: 'center',
+      behavior: 'smooth-auto',
+    })
+  }, [])
   // Withhold the viewer until the persisted themes have been read from
   // localStorage. Otherwise on client-side navigation back into a diff the
   // CodeView would mount during the brief render where lightThemeName/darkThemeName
@@ -256,13 +237,12 @@ function ReviewUIInner({ domain, initialUrl, path }: ReviewUIProps) {
   const viewerAvailable =
     isWorkerPoolReadyOrDisable &&
     themesHydrated &&
-    (loadState === 'ready' ||
-      (loadState === 'streaming' && initialItems.length > 0));
+    (loadState === 'ready' || (loadState === 'streaming' && initialItems.length > 0))
 
   return (
     <ReviewGrid>
       <DiffsHeader
-        className={css({ gridArea: 'header' })}
+        className={css({gridArea: 'header'})}
         collapseMode={collapseMode}
         colorMode={colorMode}
         darkThemeName={darkThemeName}
@@ -273,7 +253,7 @@ function ReviewUIInner({ domain, initialUrl, path }: ReviewUIProps) {
         lineNumbers={lineNumbers}
         overflow={overflow}
         fileTreeOverlayOpen={fileTreeOverlayOpen}
-        fileTreeAvailable={treeSource != null}
+        fileTreeAvailable={!isNullish(treeSource)}
         githubTokenActive={hasGitHubToken}
         onClearGitHubToken={clearGitHubToken}
         onSaveGitHubToken={setGitHubToken}
@@ -289,10 +269,10 @@ function ReviewUIInner({ domain, initialUrl, path }: ReviewUIProps) {
         setShowBackgrounds={setShowBackgrounds}
         showBackgrounds={showBackgrounds}
       />
-      {viewerAvailable && treeSource != null ? (
+      {viewerAvailable && !isNullish(treeSource) ? (
         <>
           <DiffsSidebar
-            className={css({ gridArea: { base: 'viewer', md: 'tree' } })}
+            className={css({gridArea: {base: 'viewer', md: 'tree'}})}
             commentSections={commentSections}
             diffStats={diffStats}
             mobileOverlayOpen={fileTreeOverlayOpen}
@@ -307,7 +287,7 @@ function ReviewUIInner({ domain, initialUrl, path }: ReviewUIProps) {
           />
           <DiffsViewer
             key={viewerKey}
-            className={css({ gridArea: 'viewer' })}
+            className={css({gridArea: 'viewer'})}
             diffStyle={diffStyle}
             overflow={overflow}
             showBackgrounds={showBackgrounds}
@@ -325,41 +305,35 @@ function ReviewUIInner({ domain, initialUrl, path }: ReviewUIProps) {
           />
         </>
       ) : (
-        <DiffsStatusPanel
-          errorMessage={errorMessage}
-          onRetry={retryLoad}
-          state={loadState}
-        />
+        <DiffsStatusPanel errorMessage={errorMessage} onRetry={retryLoad} state={loadState} />
       )}
     </ReviewGrid>
-  );
+  )
 }
 
 function useIsWorkerPoolReadyOrDisabled() {
-  const workerPool = useWorkerPool();
-  const [isReady, setIsReady] = useState(
-    () => workerPool?.isInitialized() ?? true
-  );
-  const isReadyRef = useRef(isReady);
+  const workerPool = useWorkerPool()
+  const [isReady, setIsReady] = useState(() => workerPool?.isInitialized() ?? true)
+  const isReadyRef = useRef(isReady)
   useEffect(() => {
     // The callback will always be fired immediately with the new state, so we
     // don't need to check for it in the effect
     return workerPool?.subscribeToStatChanges((stats) => {
-      const isReady = stats.managerState === 'initialized';
+      const isReady = stats.managerState === 'initialized'
       if (isReady !== isReadyRef.current) {
-        setIsReady(isReady);
-        isReadyRef.current = isReady;
+        setIsReady(isReady)
+        isReadyRef.current = isReady
       }
-    });
-  }, [workerPool]);
-  return isReady;
+    })
+  }, [workerPool])
+  return isReady
 }
 
 interface ReviewGridProps {
-  children: ReactNode;
+  children: ReactNode
 }
 
-function ReviewGrid({ children }: ReviewGridProps) {
+function ReviewGrid({children}: ReviewGridProps) {
   return (
     <div
       className={css({
@@ -382,5 +356,5 @@ function ReviewGrid({ children }: ReviewGridProps) {
     >
       {children}
     </div>
-  );
+  )
 }

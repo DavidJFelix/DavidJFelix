@@ -2,19 +2,19 @@
 // style. Runs deriveChromeTokens on the active theme and hands the derived
 // tokens to a caller-supplied mapping (diffs uses diffsChromeMapping).
 // Returns a spreadable { style } that is an empty object until a theme resolves.
-import type { CSSProperties } from 'react';
+import type {CSSProperties} from 'react'
+import {isNullish} from '../nullish'
+import {deriveChromeTokens} from './derive-chrome-tokens'
+import type {ChromeMapping} from './diffs-chrome-mapping'
+import type {ActiveThemeSnapshot} from './theme-source'
 
-import { deriveChromeTokens } from './derive-chrome-tokens';
-import type { ChromeMapping } from './diffs-chrome-mapping';
-import type { ActiveThemeSnapshot } from './theme-source';
-
-export type { ChromeMapping };
+export type {ChromeMapping}
 
 export function chromeThemeProps(
   active: ActiveThemeSnapshot,
-  mapping: ChromeMapping
-): { style: CSSProperties } {
-  const theme = active.theme;
-  if (theme == null) return { style: {} };
-  return { style: mapping(deriveChromeTokens(theme), theme) ?? {} };
+  mapping: ChromeMapping,
+): {style: CSSProperties} {
+  const theme = active.theme
+  if (isNullish(theme)) return {style: {}}
+  return {style: mapping(deriveChromeTokens(theme), theme) ?? {}}
 }

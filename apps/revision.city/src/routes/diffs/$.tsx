@@ -3,6 +3,7 @@ import {createFileRoute, redirect} from '@tanstack/react-router'
 import {css} from 'styled-system/css'
 
 import {ReviewUI} from '@/diffs/components/ReviewUI'
+import {isNullish} from '@/diffs/lib/nullish'
 import {resolveDiffsViewerRoute} from '@/diffs/lib/resolve-diffs-viewer-route'
 
 // Viewer route that mirrors the upstream path below /diffs. GitHub is the
@@ -12,10 +13,8 @@ import {resolveDiffsViewerRoute} from '@/diffs/lib/resolve-diffs-viewer-route'
 export const Route = createFileRoute('/diffs/$')({
   validateSearch: (search: Record<string, unknown>): {domain?: string} => {
     const domain =
-      typeof search.domain === 'string' && search.domain !== ''
-        ? search.domain
-        : undefined
-    return domain == null ? {} : {domain}
+      typeof search.domain === 'string' && search.domain !== '' ? search.domain : undefined
+    return isNullish(domain) ? {} : {domain}
   },
   beforeLoad: ({params, search}) => {
     const route = resolveDiffsViewerRoute(splatSegments(params._splat), search.domain)
@@ -49,11 +48,7 @@ function DiffsViewByPathPage() {
         gap: '2',
       })}
     >
-      <ReviewUI
-        domain={route.domain}
-        initialUrl={route.url}
-        path={route.upstreamPath}
-      />
+      <ReviewUI domain={route.domain} initialUrl={route.url} path={route.upstreamPath} />
     </div>
   )
 }

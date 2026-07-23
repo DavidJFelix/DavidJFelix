@@ -1,8 +1,8 @@
-import { createThemeController, type ThemePersistence } from '@pierre/theming';
+import {createThemeController, type ThemePersistence} from '@pierre/theming'
+import {isNullish} from '@/diffs/lib/nullish'
+import {docsThemeCatalog} from './theme-catalog'
 
-import { docsThemeCatalog } from './theme-catalog';
-
-export { docsThemeCatalog } from './theme-catalog';
+export {docsThemeCatalog} from './theme-catalog'
 
 // The single owner of the diffs app's theming state. Color mode (light/
 // dark/system), the light/dark theme-name picks, and their persistence all
@@ -19,21 +19,21 @@ export { docsThemeCatalog } from './theme-catalog';
 // would orphan saved preferences.
 // TODO(theming): migrate off these legacy keys and use
 // createThemeController's built-in `storageKey` persistence shape instead.
-const MODE_KEY = 'theme';
-const LIGHT_THEME_KEY = 'diffs-light-theme';
-const DARK_THEME_KEY = 'diffs-dark-theme';
+const MODE_KEY = 'theme'
+const LIGHT_THEME_KEY = 'diffs-light-theme'
+const DARK_THEME_KEY = 'diffs-dark-theme'
 
 function readKey(key: string): string | null {
   try {
-    return globalThis.localStorage?.getItem(key) ?? null;
+    return globalThis.localStorage?.getItem(key) ?? null
   } catch {
-    return null;
+    return null
   }
 }
 
 function writeKey(key: string, value: string): void {
   try {
-    globalThis.localStorage?.setItem(key, value);
+    globalThis.localStorage?.setItem(key, value)
   } catch {
     // Storage may be unavailable (private mode / denied) — non-fatal.
   }
@@ -44,31 +44,28 @@ function writeKey(key: string, value: string): void {
 // reads), and the theme names under the diffs-prefixed keys.
 const docsPersistence: ThemePersistence = {
   load() {
-    const mode = readKey(MODE_KEY);
-    const light = readKey(LIGHT_THEME_KEY);
-    const dark = readKey(DARK_THEME_KEY);
-    if (mode == null && light == null && dark == null) return null;
-    const validMode =
-      mode === 'light' || mode === 'dark' || mode === 'system'
-        ? mode
-        : 'system';
+    const mode = readKey(MODE_KEY)
+    const light = readKey(LIGHT_THEME_KEY)
+    const dark = readKey(DARK_THEME_KEY)
+    if (isNullish(mode) && isNullish(light) && isNullish(dark)) return null
+    const validMode = mode === 'light' || mode === 'dark' || mode === 'system' ? mode : 'system'
     return {
       mode: validMode,
       lightThemeName: light ?? docsThemeCatalog.defaultLightThemeName,
       darkThemeName: dark ?? docsThemeCatalog.defaultDarkThemeName,
-    };
+    }
   },
   save(selection) {
-    writeKey(MODE_KEY, selection.mode);
-    writeKey(LIGHT_THEME_KEY, selection.lightThemeName);
-    writeKey(DARK_THEME_KEY, selection.darkThemeName);
+    writeKey(MODE_KEY, selection.mode)
+    writeKey(LIGHT_THEME_KEY, selection.lightThemeName)
+    writeKey(DARK_THEME_KEY, selection.darkThemeName)
   },
-};
+}
 
 export const themeController = createThemeController({
   catalog: docsThemeCatalog,
   persistence: docsPersistence,
   defaultMode: 'system',
-});
+})
 
-export const docsThemeResolver = themeController.resolver;
+export const docsThemeResolver = themeController.resolver

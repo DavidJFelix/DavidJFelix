@@ -13,4 +13,4 @@ overrides:
   # the __VITE_PRELOAD__ marker -- every page then throws a ReferenceError and
   # search dies. Pin to 1.1.4 until rolldown fixes the metadata regression;
   # the Search e2e suite covers the unpin.
-  rolldown: 1.1.4
+  rolldown: 1.2.0

@@ -10,7 +10,7 @@ import type {
   DiffsSavedCommentEntry,
   DiffsSavedCommentItem,
 } from '@/diffs/lib/types'
-import {CommentAuthorAvatar} from './CommentAuthorAvatar'
+import {CommentAuthorAvatar} from './comment-author-avatar'
 
 interface DiffsCommentsListProps {
   commentSections: readonly DiffsSavedCommentItem[]

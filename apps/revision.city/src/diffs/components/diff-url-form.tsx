@@ -4,7 +4,7 @@ import {useRouter} from '@tanstack/react-router'
 import {type FormEvent, type ReactNode, useEffect, useRef, useState, useTransition} from 'react'
 import {createPortal} from 'react-dom'
 import {css, cx} from 'styled-system/css'
-import {Button} from '@/diffs/components/Button'
+import {Button} from '@/diffs/components/button'
 import {getPatchViewerHref} from '@/diffs/lib/get-patch-viewer-href'
 import {isNullish} from '@/diffs/lib/nullish'
 

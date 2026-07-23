@@ -14,7 +14,7 @@ import {
 } from '@/diffs/lib/constants'
 import {isNullish} from '@/diffs/lib/nullish'
 import type {DiffsFileTreeSource} from '@/diffs/lib/types'
-import {ThemedFileTree} from './ThemedFileTree'
+import {ThemedFileTree} from './themed-file-tree'
 
 // The upstream app deep-imported this from the pierre monorepo's trees
 // package internals; the published @pierre/trees does not export it. It is a

@@ -2,7 +2,7 @@ import {createFileRoute, redirect} from '@tanstack/react-router'
 
 import {css} from 'styled-system/css'
 
-import {ReviewUI} from '@/diffs/components/ReviewUI'
+import {ReviewUI} from '@/diffs/components/review-ui'
 import {isNullish} from '@/diffs/lib/nullish'
 import {resolveDiffsViewerRoute} from '@/diffs/lib/resolve-diffs-viewer-route'
 

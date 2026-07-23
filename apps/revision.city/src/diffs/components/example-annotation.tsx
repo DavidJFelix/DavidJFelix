@@ -3,10 +3,10 @@ import {IconX} from '@pierre/icons'
 import {memo} from 'react'
 
 import {css, cx} from 'styled-system/css'
-import {Button} from '@/diffs/components/Button'
+import {Button} from '@/diffs/components/button'
 import {annotationCardBase} from '@/diffs/lib/annotation'
 import type {SavedCommentMetadata} from '@/diffs/lib/types'
-import {CommentAuthorAvatar} from './CommentAuthorAvatar'
+import {CommentAuthorAvatar} from './comment-author-avatar'
 
 interface ExampleAnnotationProps {
   annotation: DiffLineAnnotation<SavedCommentMetadata>

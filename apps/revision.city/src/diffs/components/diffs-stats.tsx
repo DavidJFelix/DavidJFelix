@@ -5,8 +5,8 @@ import {memo, useEffect} from 'react'
 import {css} from 'styled-system/css'
 import {isNullish} from '@/diffs/lib/nullish'
 import type {DiffsStats as DiffsStatsData} from '@/diffs/lib/types'
-import {StatItem} from './StatItem'
-import {StatusRow} from './StatusRow'
+import {StatItem} from './stat-item'
+import {StatusRow} from './status-row'
 
 interface DiffsStatsProps {
   expanded: boolean

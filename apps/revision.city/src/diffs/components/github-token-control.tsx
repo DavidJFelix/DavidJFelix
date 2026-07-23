@@ -4,8 +4,8 @@ import {type FormEvent, memo, useState} from 'react'
 
 import {css, cx} from 'styled-system/css'
 
-import {Button} from '@/diffs/components/Button'
-import {Input} from '@/diffs/components/Input'
+import {Button} from '@/diffs/components/button'
+import {Input} from '@/diffs/components/input'
 
 export const CREATE_TOKEN_URL =
   'https://github.com/settings/personal-access-tokens/new?name=Diffs%20Private%20Repo%20Read%20Access&description=Read+private+PRs+and+expand+collapsed+hunks&expires_in=90&contents=read&pull_requests=read&issues=read'

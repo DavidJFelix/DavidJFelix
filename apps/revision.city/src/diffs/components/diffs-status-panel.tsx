@@ -1,7 +1,7 @@
 import {IconCiWarningFill, IconRefresh} from '@pierre/icons'
 
 import {css, cx} from 'styled-system/css'
-import {Button} from '@/diffs/components/Button'
+import {Button} from '@/diffs/components/button'
 import {isNullish} from '@/diffs/lib/nullish'
 import {diffsChromeMapping} from '@/diffs/lib/theme/diffs-chrome-mapping'
 import type {ViewerLoadState} from '@/diffs/lib/types'

@@ -2,7 +2,7 @@ import * as React from 'react'
 
 import {css, cx} from 'styled-system/css'
 
-import {Button, type ButtonProps} from './Button'
+import {Button, type ButtonProps} from './button'
 
 interface ButtonGroupContextValue {
   selectedValue?: string

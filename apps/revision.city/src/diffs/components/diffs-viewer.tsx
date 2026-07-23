@@ -31,9 +31,9 @@ import type {
   DiffsDeletedCommentEvent,
   DiffsSavedCommentEvent,
 } from '@/diffs/lib/types'
-import {DraftAnnotation} from './DraftAnnotation'
-import {ExampleAnnotation} from './ExampleAnnotation'
-import {ThemedCodeView} from './ThemedCodeView'
+import {DraftAnnotation} from './draft-annotation'
+import {ExampleAnnotation} from './example-annotation'
+import {ThemedCodeView} from './themed-code-view'
 import {useChromeThemeProps} from './use-chrome-theme-props'
 
 function getNextItemVersion(item: CodeViewItem<CommentMetadata>): number {

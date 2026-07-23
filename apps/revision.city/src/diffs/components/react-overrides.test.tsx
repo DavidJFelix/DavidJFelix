@@ -5,9 +5,9 @@ import {act, createRef} from 'react'
 import {createRoot, type Root} from 'react-dom/client'
 import {expect, test} from 'vitest'
 import type {ChromeMapping} from '@/diffs/lib/theme/chrome-theme-props'
-import {ThemedCodeView} from './ThemedCodeView'
-import {ThemedSurface} from './ThemedSurface'
-import {ThemeSourceProvider} from './ThemeSourceProvider'
+import {ThemeSourceProvider} from './theme-source-provider'
+import {ThemedCodeView} from './themed-code-view'
+import {ThemedSurface} from './themed-surface'
 
 // jsdom (the vitest environment configured for this app) does not implement
 // ResizeObserver; stub it so a mounted CodeView/surface that observes its

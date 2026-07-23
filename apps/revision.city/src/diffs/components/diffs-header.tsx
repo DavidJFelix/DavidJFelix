@@ -31,22 +31,22 @@ import {
 } from 'react'
 
 import {css, cx} from 'styled-system/css'
-import {Button} from '@/diffs/components/Button'
-import {ButtonGroup, ButtonGroupItem} from '@/diffs/components/ButtonGroup'
+import {Button} from '@/diffs/components/button'
+import {ButtonGroup, ButtonGroupItem} from '@/diffs/components/button-group'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/diffs/components/DropdownMenu'
-import {GitHubTokenControl} from '@/diffs/components/GitHubTokenControl'
-import {Switch} from '@/diffs/components/Switch'
+} from '@/diffs/components/dropdown-menu'
+import {GitHubTokenControl} from '@/diffs/components/github-token-control'
+import {Switch} from '@/diffs/components/switch'
 import {docsThemeCatalog} from '@/diffs/components/theme-catalog'
 import {isNullish} from '@/diffs/lib/nullish'
 import {diffsChromeMapping} from '@/diffs/lib/theme/diffs-chrome-mapping'
 import {getDropdownThemeStyle} from '@/diffs/lib/theme/dropdown-chrome-style'
 import {CHROME_ICON_BUTTON_CLASS} from './chrome-button-styles'
-import {DiffUrlForm} from './DiffUrlForm'
+import {DiffUrlForm} from './diff-url-form'
 import {useChromeThemeProps} from './use-chrome-theme-props'
 
 type LightThemeName = string

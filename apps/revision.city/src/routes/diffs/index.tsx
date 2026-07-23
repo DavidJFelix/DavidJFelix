@@ -5,9 +5,9 @@ import {memo} from 'react'
 
 import {css, cx} from 'styled-system/css'
 
-import {Button} from '@/diffs/components/Button'
-import {DiffUrlForm} from '@/diffs/components/DiffUrlForm'
-import {GitHubTokenControl} from '@/diffs/components/GitHubTokenControl'
+import {Button} from '@/diffs/components/button'
+import {DiffUrlForm} from '@/diffs/components/diff-url-form'
+import {GitHubTokenControl} from '@/diffs/components/github-token-control'
 import {useGitHubToken} from '@/diffs/components/use-github-token'
 
 export const Route = createFileRoute('/diffs/')({

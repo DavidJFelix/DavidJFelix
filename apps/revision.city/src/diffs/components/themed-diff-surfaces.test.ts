@@ -1,8 +1,8 @@
 import {expect, test} from 'vitest'
 
-import {ThemedCodeView} from './ThemedCodeView'
-import {ThemedFile} from './ThemedFile'
-import {ThemedFileDiff} from './ThemedFileDiff'
+import {ThemedCodeView} from './themed-code-view'
+import {ThemedFile} from './themed-file'
+import {ThemedFileDiff} from './themed-file-diff'
 
 test('themed diffs surfaces: exports React diff surface components', () => {
   expect(ThemedCodeView).toBeDefined()

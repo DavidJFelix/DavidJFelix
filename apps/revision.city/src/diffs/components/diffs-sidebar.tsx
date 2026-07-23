@@ -15,8 +15,8 @@ import {
 } from 'react'
 
 import {css, cx} from 'styled-system/css'
-import {Button} from '@/diffs/components/Button'
-import {ButtonGroup, ButtonGroupItem} from '@/diffs/components/ButtonGroup'
+import {Button} from '@/diffs/components/button'
+import {ButtonGroup, ButtonGroupItem} from '@/diffs/components/button-group'
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -25,7 +25,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/diffs/components/DropdownMenu'
+} from '@/diffs/components/dropdown-menu'
 import {filterDiffsFileTreeSource} from '@/diffs/lib/filter-diffs-file-tree-source'
 import {getDiffsFileTreeAvailableStatuses} from '@/diffs/lib/get-diffs-file-tree-available-statuses'
 import {isNullish} from '@/diffs/lib/nullish'
@@ -39,12 +39,12 @@ import type {
   DiffsStats as DiffsStatsData,
 } from '@/diffs/lib/types'
 import {CHROME_ICON_BUTTON_CLASS} from './chrome-button-styles'
-import {DiffsCommentsList} from './DiffsCommentsList'
-import {DiffsFileTree} from './DiffsFileTree'
-import {DiffsStats} from './DiffsStats'
+import {DiffsCommentsList} from './diffs-comments-list'
+import {DiffsFileTree} from './diffs-file-tree'
+import {DiffsStats} from './diffs-stats'
 import {useChromeThemeProps} from './use-chrome-theme-props'
 import type {ThemeCycleControls} from './use-theme-cycle'
-import {WorkerPoolStatus} from './WorkerPoolStatus'
+import {WorkerPoolStatus} from './worker-pool-status'
 
 type SidebarTab = 'files' | 'comments'
 type SidebarStatusPanel = 'diffStats' | 'systemMonitor'

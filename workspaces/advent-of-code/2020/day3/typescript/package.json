@@ -7,7 +7,7 @@
     "@types/lodash": "4.17.24",
     "@types/node": "24.13.3",
     "prettier": "3.9.5",
-    "typescript": "6.0.3"
+    "typescript": "7.0.2"
   },
   "scripts": {
     "build": "tsc"

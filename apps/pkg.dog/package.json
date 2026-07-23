@@ -29,7 +29,7 @@
     "@pandacss/dev": "1.11.4",
     "@playwright/test": "1.61.1",
     "@vitest/coverage-v8": "4.1.10",
-    "typescript": "6.0.3",
+    "typescript": "7.0.2",
     "vitest": "4.1.10",
     "vue-tsc": "3.3.7",
     "wrangler": "4.110.0"

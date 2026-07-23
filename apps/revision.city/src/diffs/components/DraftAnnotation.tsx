@@ -2,6 +2,8 @@ import type { DiffLineAnnotation } from '@pierre/diffs';
 import { IconArrowRight } from '@pierre/icons';
 import { useEffect, useRef, useState } from 'react';
 
+import { css, cx } from 'styled-system/css';
+
 import { CommentAuthorAvatar } from './CommentAuthorAvatar';
 import { Button } from '@/diffs/components/Button';
 import {
@@ -9,7 +11,6 @@ import {
   type AvatarName,
   getRandomPersona,
 } from '@/diffs/lib/annotation';
-import { cn } from '@/diffs/lib/cn';
 import type { DraftCommentMetadata } from '@/diffs/lib/types';
 
 interface DraftAnnotationProps {
@@ -62,13 +63,16 @@ export function DraftAnnotation({
 
   return (
     <form
-      className={cn(annotationCardBase, 'flex-col md:flex-row')}
+      className={cx(
+        annotationCardBase,
+        css({ flexDirection: { base: 'column', md: 'row' } })
+      )}
       onSubmit={(event) => {
         event.preventDefault();
         handleSave();
       }}
     >
-      <div className="flex w-full gap-2.5">
+      <div className={css({ display: 'flex', w: 'full', gap: '2.5' })}>
         <CommentAuthorAvatar seed={persona.name} />
         <textarea
           ref={textareaRef}
@@ -90,15 +94,44 @@ export function DraftAnnotation({
           }}
           placeholder="Add a comment…"
           rows={2}
-          className="field-sizing-content w-full resize-none rounded-sm bg-transparent py-1.5 text-[14px] text-inherit placeholder:text-[var(--diffs-popover-muted-fg,var(--muted-foreground))] focus:outline-none"
+          className={css({
+            fieldSizing: 'content',
+            w: 'full',
+            resize: 'none',
+            rounded: 'diffs.sm',
+            bg: 'transparent',
+            py: '1.5',
+            fontSize: '14px',
+            color: 'inherit',
+            _placeholder: {
+              color: 'var(--diffs-popover-muted-fg, var(--muted-foreground))',
+            },
+            _focus: { outline: 'none' },
+          })}
         />
       </div>
-      <div className="flex w-full justify-between gap-3 pl-10.5 md:w-auto md:justify-end md:pl-0">
+      <div
+        className={css({
+          display: 'flex',
+          w: { base: 'full', md: 'auto' },
+          justifyContent: { base: 'space-between', md: 'flex-end' },
+          gap: '3',
+          pl: { base: '10.5', md: '0' },
+        })}
+      >
         <Button
           type="button"
           variant="muted"
           onClick={tryCancel}
-          className="text-muted-foreground hover:text-foreground gap-1 font-normal hover:no-underline md:hidden"
+          className={css({
+            color: 'diffs.muted.foreground',
+            gap: '1',
+            fontWeight: 'normal',
+            display: { md: 'none' },
+            '&[data-slot="button"]': {
+              _hover: { color: 'diffs.foreground', textDecorationLine: 'none' },
+            },
+          })}
         >
           Cancel
         </Button>
@@ -107,18 +140,32 @@ export function DraftAnnotation({
           variant="default"
           size="icon-md"
           disabled={trimmedMessage.length === 0}
-          className="hidden rounded-full bg-blue-500 hover:bg-blue-600 md:flex"
+          className={css({
+            display: { base: 'none', md: 'flex' },
+            rounded: 'full',
+            bg: 'blue.500',
+            '&[data-slot="button"]': { _hover: { bg: 'blue.600' } },
+          })}
         >
-          <IconArrowRight className="size-4 rotate-[-90deg]" />
+          <IconArrowRight
+            className={css({ w: '4', h: '4', transform: 'rotate(-90deg)' })}
+          />
         </Button>
         <Button
           type="submit"
           variant="default"
           disabled={trimmedMessage.length === 0}
-          className="gap-1.5 bg-blue-500 hover:bg-blue-600 md:hidden"
+          className={css({
+            display: { md: 'none' },
+            gap: '1.5',
+            bg: 'blue.500',
+            '&[data-slot="button"]': { _hover: { bg: 'blue.600' } },
+          })}
         >
           Submit
-          <IconArrowRight className="-mr-0.5 size-3" />
+          <IconArrowRight
+            className={css({ mr: '-0.5', w: '3', h: '3' })}
+          />
         </Button>
       </div>
     </form>

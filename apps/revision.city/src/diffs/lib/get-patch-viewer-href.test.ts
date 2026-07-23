@@ -1,3 +1,4 @@
+// cSpell:ignore pierrecomputer asdfadfadsf -- upstream fixture slugs and garbage-input case
 import {expect, test} from 'vitest'
 
 import {getPatchViewerHref} from './get-patch-viewer-href'
@@ -5,7 +6,7 @@ import {getPatchViewerHref} from './get-patch-viewer-href'
 // Every case is the same shape (an input string in, an href or undefined out),
 // so the whole suite is one case table. Case names fold in the original
 // describe context (e.g. "full GitHub URLs: ...") the source file used to
-// group these under. Viewer hrefs carry the /diffs mount prefix; see
+// group these under. Viewer href values carry the /diffs mount prefix; see
 // get-patch-viewer-href.ts.
 test.each([
   {

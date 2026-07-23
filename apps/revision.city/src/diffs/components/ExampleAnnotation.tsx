@@ -2,10 +2,11 @@ import type { CodeViewLineSelection, DiffLineAnnotation } from '@pierre/diffs';
 import { IconX } from '@pierre/icons';
 import { memo } from 'react';
 
+import { css, cx } from 'styled-system/css';
+
 import { CommentAuthorAvatar } from './CommentAuthorAvatar';
 import { Button } from '@/diffs/components/Button';
 import { annotationCardBase } from '@/diffs/lib/annotation';
-import { cn } from '@/diffs/lib/cn';
 import type { SavedCommentMetadata } from '@/diffs/lib/types';
 
 interface ExampleAnnotationProps {
@@ -26,9 +27,17 @@ export const ExampleAnnotation = memo(function ExampleAnnotation({
     <div
       role="button"
       tabIndex={0}
-      className={cn(
+      className={cx(
         annotationCardBase,
-        'group relative cursor-pointer hover:border-[var(--diffs-annotation-hover-border,var(--diffs-annotation-border,var(--border)))]'
+        'group',
+        css({
+          position: 'relative',
+          cursor: 'pointer',
+          _hover: {
+            borderColor:
+              'var(--diffs-annotation-hover-border, var(--diffs-annotation-border, var(--border)))',
+          },
+        })
       )}
       onClick={() => onToggleSelection(selection)}
       onKeyDown={(event) => {
@@ -48,15 +57,39 @@ export const ExampleAnnotation = memo(function ExampleAnnotation({
           event.stopPropagation();
           onDelete(itemId, annotation.metadata.key);
         }}
-        className="pointer-events-none absolute top-0 right-0 z-1 inline-flex translate-x-[35%] -translate-y-[35%] cursor-pointer items-center justify-center rounded-full bg-neutral-500 opacity-0 shadow-[inherit] transition-opacity duration-100 group-hover:pointer-events-auto group-hover:opacity-100"
+        className={css({
+          pointerEvents: 'none',
+          position: 'absolute',
+          top: '0',
+          right: '0',
+          zIndex: '1',
+          display: 'inline-flex',
+          transform: 'translateX(35%) translateY(-35%)',
+          cursor: 'pointer',
+          alignItems: 'center',
+          justifyContent: 'center',
+          rounded: 'full',
+          bg: 'neutral.500',
+          opacity: '0',
+          boxShadow: 'inherit',
+          transition: 'opacity 100ms cubic-bezier(0.4, 0, 0.2, 1)',
+          // PORT-TODO: the original Tailwind also had
+          // `group-hover:pointer-events-auto group-hover:opacity-100`, revealing
+          // this delete button when the card (`.group`, set above) is hovered.
+          // Per the port brief, group-hover is flagged rather than implemented
+          // here, so as converted this button stays permanently hidden
+          // (opacity 0, pointer-events none). Restoring the reveal needs a
+          // manual ancestor selector, e.g. `'.group:hover &': { pointerEvents:
+          // 'auto', opacity: '1' }` (same pattern as Toaster.tsx's `.toaster &`).
+        })}
       >
         <IconX size={12} />
       </Button>
-      <div className="flex flex-col">
-        <strong className="mt-1 block text-[14px]">
+      <div className={css({ display: 'flex', flexDirection: 'column' })}>
+        <strong className={css({ mt: '1', display: 'block', fontSize: '14px' })}>
           {annotation.metadata.author}
         </strong>
-        <p className="m-0 text-[14px] whitespace-pre-wrap">
+        <p className={css({ m: '0', fontSize: '14px', whiteSpace: 'pre-wrap' })}>
           {annotation.metadata.message}
         </p>
       </div>

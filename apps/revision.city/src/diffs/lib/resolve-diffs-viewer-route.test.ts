@@ -1,3 +1,4 @@
+// cSpell:ignore pierrecomputer -- upstream fixture slug
 import {expect, test} from 'vitest'
 
 import {resolveDiffsViewerRoute} from './resolve-diffs-viewer-route'
@@ -38,7 +39,7 @@ test.each([
     expectedUrl: 'https://github.com/owner/repo/pull/123',
   },
   {
-    name: 'GitHub (default host) redirects: non-hex SHA-shaped segment is left unrewritten',
+    name: 'GitHub (default host) redirects: non-hex SHA-shaped segment is left unmodified',
     pathSegments: ['owner', 'repo', 'pull', '123', 'changes', 'reviews'],
     domainInput: undefined,
     expectedDomain: undefined,

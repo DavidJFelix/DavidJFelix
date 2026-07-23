@@ -16,13 +16,13 @@ function makeResolver(
     },
     resolveTheme(name) {
       const theme = themes[name]
-      if (theme == null) return Promise.reject(new Error(`no theme ${name}`))
+      if (theme === undefined) return Promise.reject(new Error(`no theme ${name}`))
       warm.set(name, theme)
       return Promise.resolve(theme as never)
     },
     getResolvedOrResolveTheme(name) {
       const cached = warm.get(name)
-      if (cached != null) return cached as never
+      if (cached !== undefined) return cached as never
       return this.resolveTheme(name)
     },
     // Unused by the adapters; present to satisfy the interface.

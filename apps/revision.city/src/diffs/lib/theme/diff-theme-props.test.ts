@@ -67,11 +67,16 @@ test('diffThemeSelectionFromInput: loaded ThemeLike inputs seed by theme.name an
 })
 
 test('DiffThemeInput: diff override types require names on ThemeLike object inputs', () => {
-  acceptDiffThemeInput({name: 'named-object', type: 'dark'})
-  acceptDiffThemeInput({
-    light: {name: 'named-light-object', type: 'light'},
-    dark: 'named-dark-theme',
-  })
+  // acceptDiffThemeInput returns void; the runtime assertions confirm these
+  // accepted shapes are actually callable, alongside the @ts-expect-error
+  // compile-time checks below for the rejected shapes.
+  expect(acceptDiffThemeInput({name: 'named-object', type: 'dark'})).toBeUndefined()
+  expect(
+    acceptDiffThemeInput({
+      light: {name: 'named-light-object', type: 'light'},
+      dark: 'named-dark-theme',
+    }),
+  ).toBeUndefined()
 
   // @ts-expect-error Diff surfaces pass names to the worker/highlighter, so
   // object overrides must expose the name used to register the theme.

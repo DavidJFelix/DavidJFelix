@@ -25,19 +25,19 @@ function referenceUpgradedTreeStyles(theme: ThemeLike): Record<string, string> {
   const c = theme.colors ?? {}
   const primaryFg = deriveChromeTokens(theme)?.fg
   const treeStyles = themeToTreeStyles(theme)
-  if (primaryFg != null && primaryFg !== c['sideBar.foreground'] && primaryFg !== '') {
+  if (primaryFg !== undefined && primaryFg !== c['sideBar.foreground'] && primaryFg !== '') {
     treeStyles.color = primaryFg
     treeStyles['--trees-theme-sidebar-fg'] = primaryFg
-    if (c['sideBarSectionHeader.foreground'] == null) {
+    if (c['sideBarSectionHeader.foreground'] === undefined) {
       treeStyles['--trees-theme-sidebar-header-fg'] = primaryFg
     }
-    if (c['list.activeSelectionForeground'] == null) {
+    if (c['list.activeSelectionForeground'] === undefined) {
       treeStyles['--trees-theme-list-active-selection-fg'] = primaryFg
     }
     if (
-      c['list.focusOutline'] == null &&
-      c['focusBorder'] == null &&
-      c['sideBar.foreground'] == null
+      c['list.focusOutline'] === undefined &&
+      c['focusBorder'] === undefined &&
+      c['sideBar.foreground'] === undefined
     ) {
       treeStyles['--trees-theme-focus-ring'] = primaryFg
     }

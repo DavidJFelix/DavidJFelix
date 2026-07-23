@@ -14,6 +14,10 @@
 # own .prettierignore, which a root-level run would not honor).
 apps/
 
+# Verbatim license legal codes keep their canonical line structure; rewrapping
+# a legal text is not a formatting fix.
+docs/LICENSE.CC0-1.0.md
+
 # Out-of-scope trees: legacy dirs, isolated workspace trees, vendored skills
 # whose content hashes are pinned in skills-lock.json, and the .claude symlink
 # surface into .agents.

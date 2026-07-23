@@ -97,8 +97,10 @@ GitHub issue per [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md).
 ## Licensing
 
 [LICENSE.md](LICENSE.md) is the map: code is dual-licensed MIT OR Apache-2.0, `docs/` is CC0-1.0,
-and blog content is CC-BY-4.0. When adding a project that carries a `package.json`, set
-`"license": "(MIT OR Apache-2.0)"`; for a `Cargo.toml`, set `license = "MIT OR Apache-2.0"`.
+and blog content is CC-BY-4.0. License texts are named `LICENSE.<SPDX-identifier>.md`. When adding a
+project that carries a `package.json`, set `"license": "(MIT OR Apache-2.0)"`; for a `Cargo.toml`,
+set `license = "MIT OR Apache-2.0"`; in both cases copy the root [LICENSE.MIT.md](LICENSE.MIT.md)
+and [LICENSE.Apache-2.0.md](LICENSE.Apache-2.0.md) into the package directory so it stands alone.
 Third-party, vendored, or course-derived code keeps its original license -- record the attribution
 in a `NOTICE.md` beside it (see [apps/revision.city/NOTICE.md](apps/revision.city/NOTICE.md)) and
 list the exception in [LICENSE.md](LICENSE.md). Contributions are accepted under the dual license

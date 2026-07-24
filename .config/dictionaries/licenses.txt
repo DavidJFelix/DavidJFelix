@@ -1,0 +1,6 @@
+# Vocabulary from verbatim license legal codes, which must not be edited:
+# the CC0 dedication (docs/LICENSE, dotfiles/LICENSE) and the CC BY 4.0
+# legal code (apps/djf.io/src/content/LICENSE).
+creativecommons
+sublicensable
+waivable

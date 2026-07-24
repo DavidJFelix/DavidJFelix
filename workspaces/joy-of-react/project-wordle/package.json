@@ -2,6 +2,7 @@
   "name": "word-game",
   "version": "0.1.0",
   "private": true,
+  "license": "SEE LICENSE IN LICENSE.md",
   "author": "Josh Comeau <me@joshwcomeau.com>",
   "dependencies": {
     "new-component": "6.0.0",

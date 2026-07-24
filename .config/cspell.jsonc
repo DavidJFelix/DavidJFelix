@@ -12,6 +12,7 @@
     "software-terms",
     "dns",
     "ics",
+    "licenses",
     "people-names",
     "pierre",
   ],
@@ -19,6 +20,11 @@
   // file. Entries and the reasons for them live in the .txt files themselves.
   "dictionaryDefinitions": [
     {"name": "dns", "path": "dictionaries/dns.txt", "description": "DNS response codes"},
+    {
+      "name": "licenses",
+      "path": "dictionaries/licenses.txt",
+      "description": "Vocabulary from verbatim license legal codes",
+    },
     {
       "name": "ics",
       "path": "dictionaries/ics.txt",

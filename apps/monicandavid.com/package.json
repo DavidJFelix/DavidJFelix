@@ -1,6 +1,7 @@
 {
   "name": "@davidjfelix/monicandavid.com",
   "private": true,
+  "license": "(MIT OR Apache-2.0)",
   "type": "module",
   "scripts": {
     "dev": "vite dev --port 3003",

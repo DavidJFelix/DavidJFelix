@@ -1,6 +1,7 @@
 {
   "name": "@davidjfelix/onvibes.org",
   "private": true,
+  "license": "(MIT OR Apache-2.0)",
   "type": "module",
   "scripts": {
     "prepare": "panda codegen",

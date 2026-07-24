@@ -58,13 +58,28 @@ jobs:
           ALCHEMY_NO_TUI: '1'
           ALCHEMY_TELEMETRY_DISABLED: '1'
         run: bun bin/deploy-preview.ts
-      # workers.dev is live immediately (no custom-domain DNS), so a few quick
-      # attempts suffice instead of the prod gate's long propagation retries.
+      # A fresh pr-<N> stage Worker's workers.dev hostname reaches the edge
+      # eventually and non-monotonically, per URL (PR #364: the stage's first
+      # deploy served 404s past smoke's whole retry budget; the rerun passed).
+      # Same readiness gate as the shared preview actions, on the fixed routes
+      # smoke and screenshots fetch: the page and the chat endpoint (probeable
+      # by GET; smoke POSTs it). $GITHUB_WORKSPACE resolves the repo-root
+      # script despite the app-dir working directory.
+      - name: await url ready
+        env:
+          READY_URL: ${{ steps.deploy.outputs.url }}
+          READY_ROUTES: /,/agents/chat-agent/default
+        run: bun "$GITHUB_WORKSPACE/bin/await-url-ready.ts"
+      # Readiness of the fixed routes is proven above. The hashed client JS
+      # asset is named per build inside the HTML, so the gate cannot probe it;
+      # smoke's all-or-nothing chain keeps a longer retry window to ride out
+      # that one URL's convergence (observed lagging / on the gate's first
+      # outing, PR #368).
       - name: smoke test
         id: smoke
         env:
           SMOKE_URLS: ${{ steps.deploy.outputs.url }}
-          SMOKE_ATTEMPTS: '4'
+          SMOKE_ATTEMPTS: '12'
           SMOKE_RETRY_DELAY_MS: '5000'
         run: bun bin/smoke-test.ts
       - name: resolve playwright version

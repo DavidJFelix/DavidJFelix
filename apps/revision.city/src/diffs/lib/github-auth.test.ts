@@ -29,7 +29,9 @@ const stubGitHubFetch = (overrides: {token?: unknown; user?: unknown; tokenStatu
       )
     }
     if (url.startsWith('https://api.github.com/user')) {
-      return jsonResponse(overrides.user ?? {login: 'test-user', avatar_url: 'https://a.test/i.png'})
+      return jsonResponse(
+        overrides.user ?? {login: 'test-user', avatar_url: 'https://a.test/i.png'},
+      )
     }
     throw new Error(`Unexpected fetch: ${url}`)
   })

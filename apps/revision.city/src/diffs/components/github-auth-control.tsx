@@ -15,9 +15,9 @@ interface GitHubAuthControlProps {
   title?: string
 }
 
-// Sign-in state for the GitHub App session. Sign-in and sign-out are
-// full-page navigations through the auth routes, so the diff reloads with the
-// new session applied.
+// Sign-in state for the GitHub App session. Signing in or out navigates the
+// whole page through the auth routes, so the diff reloads with the new
+// session applied.
 export const GitHubAuthControl = memo(function GitHubAuthControl({
   className,
   title = 'GitHub Account',

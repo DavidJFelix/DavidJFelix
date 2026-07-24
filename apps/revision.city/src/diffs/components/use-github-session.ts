@@ -15,9 +15,8 @@ export interface GitHubSession {
 const LOADING_SESSION: GitHubSession = {status: 'loading'}
 const ANONYMOUS_SESSION: GitHubSession = {status: 'anonymous'}
 
-// Sign-in and sign-out are full-page navigations, so the session cannot change
-// within a page lifetime; a single fetch per load is shared by every hook
-// instance.
+// Signing in or out reloads the page, so the session cannot change within a
+// page lifetime; a single fetch per load is shared by every hook instance.
 let sessionPromise: Promise<GitHubSession> | undefined
 
 // Reports whether the browser holds a GitHub session cookie. The token itself

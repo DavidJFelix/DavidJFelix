@@ -51,9 +51,9 @@ function ReviewUIInner({domain, initialUrl, path}: ReviewUIProps) {
   const [showBackgrounds, setShowBackgrounds] = useState(true)
   const [diffIndicators, setDiffIndicators] = useState<DiffIndicators>('bars')
   const [lineNumbers, setLineNumbers] = useState(true)
-  // Sign-in and sign-out are full-page navigations, so the session is fixed
-  // for the life of this component; the cookie rides along on the same-origin
-  // API fetches without any client-side token plumbing.
+  // Signing in or out reloads the page, so the session is fixed for the life
+  // of this component; the cookie rides along on the same-origin API fetches
+  // without any client-side token plumbing.
   const githubSession = useGitHubSession()
   // All theming state — color mode and the light/dark theme-name picks — lives
   // in the single @pierre/theming controller (the same instance the app-wide

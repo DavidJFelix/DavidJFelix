@@ -22,7 +22,7 @@ import {DiffsSidebar} from './diffs-sidebar'
 import {DiffsStatusPanel} from './diffs-status-panel'
 import {DiffsViewer} from './diffs-viewer'
 import {ThemeSourceProvider} from './theme-source-provider'
-import {useGitHubToken} from './use-github-token'
+import {useGitHubSession} from './use-github-session'
 import {usePatchLoader} from './use-patch-loader'
 import {useThemeCycle} from './use-theme-cycle'
 
@@ -51,22 +51,10 @@ function ReviewUIInner({domain, initialUrl, path}: ReviewUIProps) {
   const [showBackgrounds, setShowBackgrounds] = useState(true)
   const [diffIndicators, setDiffIndicators] = useState<DiffIndicators>('bars')
   const [lineNumbers, setLineNumbers] = useState(true)
-  const {
-    clearToken: clearGitHubToken,
-    hasToken: hasGitHubToken,
-    setToken: setGitHubToken,
-    token: githubToken,
-    tokenVersion: githubTokenVersion,
-  } = useGitHubToken()
-  const githubTokenRef = useRef(githubToken)
-  const githubTokenVersionRef = useRef(githubTokenVersion)
-  useEffect(() => {
-    githubTokenRef.current = githubToken
-  }, [githubToken])
-  useEffect(() => {
-    githubTokenVersionRef.current = githubTokenVersion
-  }, [githubTokenVersion])
-  const getGitHubToken = useCallback(() => githubTokenRef.current, [])
+  // Sign-in and sign-out are full-page navigations, so the session is fixed
+  // for the life of this component; the cookie rides along on the same-origin
+  // API fetches without any client-side token plumbing.
+  const githubSession = useGitHubSession()
   // All theming state — color mode and the light/dark theme-name picks — lives
   // in the single @pierre/theming controller (the same instance the app-wide
   // ThemeProvider is bound to). Reading it here means picking Auto/Light/Dark
@@ -121,13 +109,10 @@ function ReviewUIInner({domain, initialUrl, path}: ReviewUIProps) {
   const viewerRef = useRef<CodeViewHandle<CommentMetadata> | null>(null)
   const loadDiffFiles = useMemo(
     () =>
-      isNullish(domain) && hasGitHubToken
-        ? createGitHubDiffFileLoader(path, {
-            getAuthVersion: () => githubTokenVersionRef.current,
-            getToken: () => githubTokenRef.current,
-          })
+      isNullish(domain) && githubSession.status === 'authenticated'
+        ? createGitHubDiffFileLoader(path)
         : undefined,
-    [domain, hasGitHubToken, path],
+    [domain, githubSession.status, path],
   )
   const handlePatchLoadStart = useCallback(() => {
     setFileTreeOverlayOpen(false)
@@ -149,8 +134,6 @@ function ReviewUIInner({domain, initialUrl, path}: ReviewUIProps) {
   } = usePatchLoader({
     collapseMode,
     domain,
-    getGitHubToken,
-    githubTokenVersion,
     onLoadStart: handlePatchLoadStart,
     path,
     viewerRef,
@@ -254,9 +237,6 @@ function ReviewUIInner({domain, initialUrl, path}: ReviewUIProps) {
         overflow={overflow}
         fileTreeOverlayOpen={fileTreeOverlayOpen}
         fileTreeAvailable={!isNullish(treeSource)}
-        githubTokenActive={hasGitHubToken}
-        onClearGitHubToken={clearGitHubToken}
-        onSaveGitHubToken={setGitHubToken}
         onToggleCollapseMode={handleToggleCollapseMode}
         onToggleFileTreeOverlay={handleToggleFileTreeOverlay}
         setColorMode={setColorMode}

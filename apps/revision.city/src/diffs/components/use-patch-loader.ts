@@ -51,8 +51,6 @@ const GENERIC_PATCH_LOAD_ERROR_MESSAGE = 'We couldn’t load that diff. Check th
 interface UsePatchLoaderOptions {
   collapseMode: 'expanded' | 'collapsed'
   domain?: string
-  getGitHubToken?(): string | undefined
-  githubTokenVersion?: number | string
   onLoadStart(): void
   path: string
   viewerRef: RefObject<CodeViewHandle<CommentMetadata> | null>
@@ -77,8 +75,6 @@ interface UsePatchLoaderResult {
 export function usePatchLoader({
   collapseMode,
   domain,
-  getGitHubToken,
-  githubTokenVersion = 0,
   onLoadStart,
   path,
   viewerRef,
@@ -249,13 +245,12 @@ export function usePatchLoader({
           }
         }
 
-        const response = await fetch(
-          `/diffs/api/diff?${patchSearchParams}`,
-          createPatchRequestInit(
-            controller.signal,
-            isNullish(domain) || domain === '' ? getGitHubToken?.() : undefined,
-          ),
-        )
+        // GitHub auth is the HttpOnly session cookie, which rides along on
+        // this same-origin request; the client never handles a token.
+        const response = await fetch(`/diffs/api/diff?${patchSearchParams}`, {
+          cache: 'no-store',
+          signal: controller.signal,
+        })
 
         // This only catches route setup errors. GitHub fetch failures are
         // delivered while consuming the stream so the UI can enter the
@@ -450,16 +445,7 @@ export function usePatchLoader({
     return () => {
       controller.abort()
     }
-  }, [
-    domain,
-    getGitHubToken,
-    githubTokenVersion,
-    loadAttempt,
-    onLoadStart,
-    path,
-    tryApplyLineHashTarget,
-    viewerRef,
-  ])
+  }, [domain, loadAttempt, onLoadStart, path, tryApplyLineHashTarget, viewerRef])
 
   useEffect(() => {
     window.addEventListener('hashchange', tryApplyLineHashTarget)
@@ -540,20 +526,6 @@ function applyDiffsItemIdRename(
 
 function getNextItemVersion(item: {version?: string | number}): number {
   return typeof item.version === 'number' ? item.version + 1 : 1
-}
-
-function createPatchRequestInit(signal: AbortSignal, token: string | undefined): RequestInit {
-  const normalizedToken = token?.trim()
-  if (isNullish(normalizedToken) || normalizedToken === '') {
-    return {cache: 'no-store', signal}
-  }
-  return {
-    cache: 'no-store',
-    headers: {
-      Authorization: `Bearer ${normalizedToken}`,
-    },
-    signal,
-  }
 }
 
 function getPatchLoadErrorMessage(error: unknown): string {

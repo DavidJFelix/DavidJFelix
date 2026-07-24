@@ -16,8 +16,6 @@ type GitHubFileLoaderFetch = (
 interface GitHubDiffFileLoaderOptions {
   endpoint?: string
   fetch?: GitHubFileLoaderFetch
-  getAuthVersion?(): number | string
-  getToken?(): string | undefined
 }
 
 interface LoadedDiffFilesResponse {
@@ -26,8 +24,8 @@ interface LoadedDiffFilesResponse {
 }
 
 // Creates a Diffs `loadDiffFiles` callback for GitHub routes supported by
-// Diffs. Browser code only talks to Diffs's same-origin API route so the
-// server can attach optional GitHub auth and share caches across viewers.
+// Diffs. Browser code only talks to Diffs's same-origin API route; the server
+// reads GitHub auth from the session cookie that rides along on the request.
 export function createGitHubDiffFileLoader(
   path: string,
   options: GitHubDiffFileLoaderOptions = {},
@@ -38,8 +36,6 @@ export function createGitHubDiffFileLoader(
 
   const endpoint = options.endpoint ?? '/diffs/api/github-diff-file'
   const fetcher = options.fetch ?? fetch
-  const getAuthVersion = options.getAuthVersion ?? (() => 0)
-  const getToken = options.getToken ?? (() => undefined)
   const loadedFilesCache = new Map<string, Promise<FileDiffLoadedFiles>>()
 
   return (fileDiff) => {
@@ -52,7 +48,7 @@ export function createGitHubDiffFileLoader(
       case 'change':
       case 'rename-changed':
       case 'rename-pure': {
-        const cacheKey = `${getAuthVersion()}\0${getFileDiffVersion(fileDiff)}\0${fileDiff.type}\0${fileDiff.prevName ?? ''}\0${fileDiff.name}`
+        const cacheKey = `${getFileDiffVersion(fileDiff)}\0${fileDiff.type}\0${fileDiff.prevName ?? ''}\0${fileDiff.name}`
         const cached = loadedFilesCache.get(cacheKey)
         if (!isNullish(cached)) {
           return cached
@@ -64,7 +60,6 @@ export function createGitHubDiffFileLoader(
           type: fileDiff.type,
           name: fileDiff.name,
           prevName: fileDiff.prevName,
-          token: getToken(),
           fetcher,
         }).catch((error: unknown) => {
           loadedFilesCache.delete(cacheKey)
@@ -89,7 +84,6 @@ interface FetchLoadedDiffFilesParams {
   type: string
   name: string
   prevName: string | undefined
-  token: string | undefined
   fetcher: GitHubFileLoaderFetch
 }
 
@@ -99,13 +93,11 @@ async function fetchLoadedDiffFiles({
   type,
   name,
   prevName,
-  token,
   fetcher,
 }: FetchLoadedDiffFilesParams): Promise<FileDiffLoadedFiles> {
-  const response = await fetcher(
-    createEndpointURL({endpoint, sourcePath, type, name, prevName}),
-    createEndpointRequestInit(token),
-  )
+  const response = await fetcher(createEndpointURL({endpoint, sourcePath, type, name, prevName}), {
+    cache: 'no-store',
+  })
   if (!response.ok) {
     const detail = await readLoaderErrorDetail(response)
     throw new Error(
@@ -138,19 +130,6 @@ function createEndpointURL({
     searchParams.set('prevName', prevName)
   }
   return `${endpoint}?${searchParams}`
-}
-
-function createEndpointRequestInit(token: string | undefined): RequestInit {
-  const normalizedToken = token?.trim()
-  if (isNullish(normalizedToken) || normalizedToken === '') {
-    return {cache: 'no-store'}
-  }
-  return {
-    cache: 'no-store',
-    headers: {
-      Authorization: `Bearer ${normalizedToken}`,
-    },
-  }
 }
 
 async function readLoaderErrorDetail(response: Response): Promise<string> {

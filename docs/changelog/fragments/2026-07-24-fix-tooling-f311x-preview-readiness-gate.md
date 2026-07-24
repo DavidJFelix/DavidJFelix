@@ -7,8 +7,12 @@ a comment claiming workers.dev is live immediately. PR #364 disproved that comme
 first-ever deploy created a fresh worker whose newly enabled workers.dev hostname served 404s past
 the whole retry budget, and a plain rerun (hostname propagated by then) passed.
 
-The workflow now runs the same readiness gate as the shared actions between deploy and smoke --
-sustained consecutive all-OK rounds against the exact URL smoke and screenshots fetch, bounded by
-the gate's three-minute deadline -- and the disproven comment is replaced with the observed
-behavior. Smoke keeps its short retries, which only need to cover transient blips once readiness is
-proven.
+The workflow now runs the same readiness gate as the shared actions between deploy and smoke,
+holding the fixed routes smoke and screenshots fetch -- the page and the chat endpoint, which
+answers GET with the same routing smoke's POST exercises -- to sustained consecutive all-OK rounds
+within the gate's three-minute deadline. Propagation converges per URL, and the gate's first outing
+proved the page alone is not enough: with `/` sustained-ready, smoke still failed on its sibling
+fetches. The one URL the gate cannot probe is the hashed client JS asset, named per build inside the
+HTML, so smoke's all-or-nothing content chain widens from four attempts over twenty seconds to
+twelve over a minute to ride out that last URL's convergence. The disproven "live immediately"
+comment is replaced with the observed behavior.

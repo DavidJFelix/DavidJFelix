@@ -3,4 +3,6 @@
 # entries, project docs, and provenance comments.
 diffshub
 pierrecdn
+# GitHub org of Pierre Computer Company, the PierreJS upstream
+pierrecomputer
 PierreJS

@@ -1,6 +1,7 @@
 {
   "name": "@davidjfelix/pkg.dog",
   "private": true,
+  "license": "(MIT OR Apache-2.0)",
   "type": "module",
   "scripts": {
     "dev": "nuxt dev --port 3004",

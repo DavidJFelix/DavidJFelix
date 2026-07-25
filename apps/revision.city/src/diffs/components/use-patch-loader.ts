@@ -247,7 +247,7 @@ export function usePatchLoader({
 
         // GitHub auth is the HttpOnly session cookie, which rides along on
         // this same-origin request; the client never handles a token.
-        const response = await fetch(`/diffs/api/diff?${patchSearchParams}`, {
+        const response = await fetch(`/api/diffs/diff?${patchSearchParams}`, {
           cache: 'no-store',
           signal: controller.signal,
         })

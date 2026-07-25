@@ -5,7 +5,7 @@ import {handleDiffRequest} from '@/diffs/lib/diff-endpoint'
 // allow-listed alternate) diff URL, follows authenticated fallbacks when the
 // visitor is signed in with GitHub, and streams the diff through so files
 // render as they arrive. Runs in the worker.
-export const Route = createFileRoute('/diffs/api/diff')({
+export const Route = createFileRoute('/api/diffs/diff')({
   server: {
     handlers: {
       GET: ({request}) => handleDiffRequest(request),

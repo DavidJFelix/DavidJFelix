@@ -46,14 +46,14 @@ async function signIn(
   fetchImpl = stubGitHubFetch(),
 ): Promise<{sessionCookie: string; callbackResponse: Response}> {
   const login = handleGitHubLoginRequest(
-    new Request(`${ORIGIN}/diffs/api/auth/login?returnTo=/diffs/o/r/pull/1`),
+    new Request(`${ORIGIN}/api/auth/github/login?returnTo=/diffs/o/r/pull/1`),
     {credentials: CREDENTIALS},
   )
   const stateCookie = cookiePair(getSetCookies(login)[0] ?? '')
   const state = new URL(login.headers.get('location') ?? '').searchParams.get('state')
 
   const callbackResponse = await handleGitHubOAuthCallbackRequest(
-    new Request(`${ORIGIN}/diffs/api/auth/callback?code=abc&state=${state}`, {
+    new Request(`${ORIGIN}/api/auth/github/callback?code=abc&state=${state}`, {
       headers: {cookie: stateCookie},
     }),
     {credentials: CREDENTIALS, fetch: fetchImpl},
@@ -66,7 +66,7 @@ async function signIn(
 
 test('login redirects to GitHub authorize with client id, callback URL, and a state cookie', () => {
   const response = handleGitHubLoginRequest(
-    new Request(`${ORIGIN}/diffs/api/auth/login?returnTo=/diffs/o/r/pull/1`),
+    new Request(`${ORIGIN}/api/auth/github/login?returnTo=/diffs/o/r/pull/1`),
     {credentials: CREDENTIALS},
   )
 
@@ -74,7 +74,7 @@ test('login redirects to GitHub authorize with client id, callback URL, and a st
   const location = new URL(response.headers.get('location') ?? '')
   expect(location.origin + location.pathname).toBe('https://github.com/login/oauth/authorize')
   expect(location.searchParams.get('client_id')).toBe(CREDENTIALS.clientId)
-  expect(location.searchParams.get('redirect_uri')).toBe(`${ORIGIN}/diffs/api/auth/callback`)
+  expect(location.searchParams.get('redirect_uri')).toBe(`${ORIGIN}/api/auth/github/callback`)
   expect(location.searchParams.get('state')).toBeTruthy()
 
   const [stateCookie] = getSetCookies(response)
@@ -82,19 +82,19 @@ test('login redirects to GitHub authorize with client id, callback URL, and a st
   expect(stateCookie).toContain('HttpOnly')
   expect(stateCookie).toContain('SameSite=Lax')
   expect(stateCookie).toContain('Secure')
-  expect(stateCookie).toContain('Path=/diffs')
+  expect(stateCookie).toContain('Path=/')
 })
 
 test('login omits Secure on plain-HTTP local dev', () => {
   const response = handleGitHubLoginRequest(
-    new Request('http://localhost:3005/diffs/api/auth/login'),
+    new Request('http://localhost:3005/api/auth/github/login'),
     {credentials: CREDENTIALS},
   )
   expect(getSetCookies(response)[0]).not.toContain('Secure')
 })
 
 test('login returns 503 when the app credentials are not configured', () => {
-  const response = handleGitHubLoginRequest(new Request(`${ORIGIN}/diffs/api/auth/login`), {
+  const response = handleGitHubLoginRequest(new Request(`${ORIGIN}/api/auth/github/login`), {
     credentials: undefined,
   })
   expect(response.status).toBe(503)
@@ -123,13 +123,13 @@ test('callback exchanges the code, stores the session cookie, and returns to the
 })
 
 test('callback rejects a state mismatch without setting a session', async () => {
-  const login = handleGitHubLoginRequest(new Request(`${ORIGIN}/diffs/api/auth/login`), {
+  const login = handleGitHubLoginRequest(new Request(`${ORIGIN}/api/auth/github/login`), {
     credentials: CREDENTIALS,
   })
   const stateCookie = cookiePair(getSetCookies(login)[0] ?? '')
 
   const response = await handleGitHubOAuthCallbackRequest(
-    new Request(`${ORIGIN}/diffs/api/auth/callback?code=abc&state=forged`, {
+    new Request(`${ORIGIN}/api/auth/github/callback?code=abc&state=forged`, {
       headers: {cookie: stateCookie},
     }),
     {credentials: CREDENTIALS, fetch: stubGitHubFetch()},
@@ -141,7 +141,7 @@ test('callback rejects a state mismatch without setting a session', async () => 
 
 test('callback with a GitHub error param returns to the diff signed out', async () => {
   const response = await handleGitHubOAuthCallbackRequest(
-    new Request(`${ORIGIN}/diffs/api/auth/callback?error=access_denied`),
+    new Request(`${ORIGIN}/api/auth/github/callback?error=access_denied`),
     {credentials: CREDENTIALS, fetch: stubGitHubFetch()},
   )
   expect(response.status).toBe(302)
@@ -159,7 +159,7 @@ test('callback surfaces a token-exchange error response as a 502', async () => {
 test('session reports the signed-in login without exposing the token', async () => {
   const {sessionCookie} = await signIn()
   const response = await handleGitHubSessionRequest(
-    new Request(`${ORIGIN}/diffs/api/auth/session`, {headers: {cookie: sessionCookie}}),
+    new Request(`${ORIGIN}/api/auth/github/session`, {headers: {cookie: sessionCookie}}),
     {credentials: CREDENTIALS, fetch: stubGitHubFetch()},
   )
 
@@ -174,7 +174,7 @@ test('session reports the signed-in login without exposing the token', async () 
 
 test('session reports anonymous without a cookie', async () => {
   const response = await handleGitHubSessionRequest(
-    new Request(`${ORIGIN}/diffs/api/auth/session`),
+    new Request(`${ORIGIN}/api/auth/github/session`),
     {credentials: CREDENTIALS, fetch: stubGitHubFetch()},
   )
   expect(await response.json()).toEqual({authenticated: false})
@@ -182,7 +182,7 @@ test('session reports anonymous without a cookie', async () => {
 
 test('logout clears the session cookie and returns to the diff', () => {
   const response = handleGitHubLogoutRequest(
-    new Request(`${ORIGIN}/diffs/api/auth/logout?returnTo=/diffs/o/r/pull/1`),
+    new Request(`${ORIGIN}/api/auth/github/logout?returnTo=/diffs/o/r/pull/1`),
   )
   expect(response.status).toBe(302)
   expect(response.headers.get('location')).toBe('/diffs/o/r/pull/1')
@@ -194,7 +194,7 @@ test('logout clears the session cookie and returns to the diff', () => {
 test('resolveGitHubAuth returns the access token for a non-expiring session', async () => {
   const {sessionCookie} = await signIn()
   const auth = await resolveGitHubAuth(
-    new Request(`${ORIGIN}/diffs/api/diff`, {headers: {cookie: sessionCookie}}),
+    new Request(`${ORIGIN}/api/diffs/diff`, {headers: {cookie: sessionCookie}}),
     {credentials: CREDENTIALS, fetch: stubGitHubFetch()},
   )
   expect(auth.session?.accessToken).toBe('ghu_token')
@@ -217,7 +217,7 @@ test('resolveGitHubAuth refreshes an expired token and re-issues the cookie', as
     token: {access_token: 'ghu_new', expires_in: 28_800, refresh_token: 'ghr_next'},
   })
   const auth = await resolveGitHubAuth(
-    new Request(`${ORIGIN}/diffs/api/diff`, {headers: {cookie: sessionCookie}}),
+    new Request(`${ORIGIN}/api/diffs/diff`, {headers: {cookie: sessionCookie}}),
     {credentials: CREDENTIALS, fetch: refreshFetch},
   )
 
@@ -236,7 +236,7 @@ test('resolveGitHubAuth drops the session when the refresh fails', async () => {
   )
 
   const auth = await resolveGitHubAuth(
-    new Request(`${ORIGIN}/diffs/api/diff`, {headers: {cookie: sessionCookie}}),
+    new Request(`${ORIGIN}/api/diffs/diff`, {headers: {cookie: sessionCookie}}),
     {credentials: CREDENTIALS, fetch: stubGitHubFetch({token: {error: 'bad_refresh_token'}})},
   )
 
@@ -246,7 +246,7 @@ test('resolveGitHubAuth drops the session when the refresh fails', async () => {
 
 test('resolveGitHubAuth ignores a malformed cookie', async () => {
   const auth = await resolveGitHubAuth(
-    new Request(`${ORIGIN}/diffs/api/diff`, {headers: {cookie: 'diffs-github-auth=not-json'}}),
+    new Request(`${ORIGIN}/api/diffs/diff`, {headers: {cookie: 'diffs-github-auth=not-json'}}),
     {credentials: CREDENTIALS, fetch: stubGitHubFetch()},
   )
   expect(auth.session).toBeUndefined()
@@ -255,7 +255,7 @@ test('resolveGitHubAuth ignores a malformed cookie', async () => {
 test('unsafe returnTo values fall back to /diffs', () => {
   for (const returnTo of ['https://evil.test/x', '//evil.test/x', 'diffs', '/a\\b']) {
     const response = handleGitHubLogoutRequest(
-      new Request(`${ORIGIN}/diffs/api/auth/logout?returnTo=${encodeURIComponent(returnTo)}`),
+      new Request(`${ORIGIN}/api/auth/github/logout?returnTo=${encodeURIComponent(returnTo)}`),
     )
     expect(response.headers.get('location')).toBe('/diffs')
   }

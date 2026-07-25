@@ -34,7 +34,7 @@ export function createGitHubDiffFileLoader(
     return undefined
   }
 
-  const endpoint = options.endpoint ?? '/diffs/api/github-diff-file'
+  const endpoint = options.endpoint ?? '/api/diffs/github-diff-file'
   const fetcher = options.fetch ?? fetch
   const loadedFilesCache = new Map<string, Promise<FileDiffLoadedFiles>>()
 

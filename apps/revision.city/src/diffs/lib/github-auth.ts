@@ -17,10 +17,10 @@ const DEFAULT_COOKIE_MAX_AGE_SECONDS = 180 * 24 * 60 * 60
 // never reaches GitHub.
 const EXPIRY_MARGIN_MS = 60 * 1000
 const DEFAULT_RETURN_PATH = '/diffs'
-const CALLBACK_PATH = '/diffs/api/auth/callback'
-// Every consumer of the session lives under /diffs, so the cookie never rides
-// along on requests to the rest of the site.
-const COOKIE_PATH = '/diffs'
+const CALLBACK_PATH = '/api/auth/github/callback'
+// The session is read under /api and set from redirects landing on /diffs, so
+// the cookie is site-wide rather than scoped to either subtree.
+const COOKIE_PATH = '/'
 
 type AuthFetch = (
   input: Parameters<typeof fetch>[0],

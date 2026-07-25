@@ -1,8 +1,8 @@
 import {useEffect, useState} from 'react'
 
-const SESSION_ENDPOINT = '/diffs/api/auth/session'
-const LOGIN_ENDPOINT = '/diffs/api/auth/login'
-const LOGOUT_ENDPOINT = '/diffs/api/auth/logout'
+const SESSION_ENDPOINT = '/api/auth/github/session'
+const LOGIN_ENDPOINT = '/api/auth/github/login'
+const LOGOUT_ENDPOINT = '/api/auth/github/logout'
 
 export type GitHubSessionStatus = 'loading' | 'anonymous' | 'authenticated'
 

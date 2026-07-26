@@ -1,3 +1,4 @@
+import {resolveGitHubAuth, withSetCookieHeaders} from './github-auth'
 import {
   encodeURLSegment,
   type GitHubDiffSource,
@@ -52,13 +53,19 @@ interface PatchFetchResult {
 
 // Validates the accepted path or URL, normalizes it to a raw diff URL, and
 // returns a streaming proxy response so the client can render files as they
-// arrive instead of waiting for the full patch text.
+// arrive instead of waiting for the full patch text. GitHub auth comes from
+// the signed-in session cookie, never from the client request itself.
 export async function handleDiffRequest(request: Request): Promise<Response> {
+  const auth = await resolveGitHubAuth(request)
+  const response = await createDiffResponse(request, auth.session?.accessToken)
+  return withSetCookieHeaders(response, auth.setCookieHeaders)
+}
+
+async function createDiffResponse(request: Request, token: string | undefined): Promise<Response> {
   const searchParams = new URL(request.url).searchParams
   const path = searchParams.get('path')
   const domain = searchParams.get('domain')
   const url = searchParams.get('url')
-  const token = parseBearerToken(request.headers.get('authorization'))
 
   if (isNullish(path) && isNullish(url)) {
     return createTextResponse('Path or URL parameter is required', {
@@ -605,18 +612,18 @@ async function getGitHubAuthFailureHint(
 
   const tokenStatus = await fetchGitHubDiagnosticStatus('/user', token)
   if (tokenStatus === 401) {
-    return ' GitHub rejected the token as invalid or expired.'
+    return ' GitHub rejected the sign-in as expired or revoked. Sign out and back in.'
   }
   if (tokenStatus === 403) {
-    return ' GitHub accepted the token but blocked it. Check SSO authorization, rate limits, or token policy.'
+    return ' GitHub accepted the sign-in but blocked it. Check SSO authorization or rate limits.'
   }
   if (tokenStatus !== 200) {
-    return ' GitHub token validation failed; check that the token is still valid.'
+    return ' GitHub sign-in validation failed. Sign out and back in.'
   }
 
   const source = readGitHubSourceFromURL(target.sourceURL)
   if (isNullish(source)) {
-    return ' GitHub accepted the token, but the patch endpoint was not accessible.'
+    return ' GitHub accepted the sign-in, but the patch endpoint was not accessible.'
   }
 
   const repoStatus = await fetchGitHubDiagnosticStatus(
@@ -624,20 +631,20 @@ async function getGitHubAuthFailureHint(
     token,
   )
   if (repoStatus === 401) {
-    return ' GitHub rejected the token as invalid or expired.'
+    return ' GitHub rejected the sign-in as expired or revoked. Sign out and back in.'
   }
   if (repoStatus === 403) {
-    return ` GitHub accepted the token but blocked access to ${source.repo.owner}/${source.repo.repo}. Check SSO authorization, rate limits, or token policy.`
+    return ` GitHub accepted the sign-in but blocked access to ${source.repo.owner}/${source.repo.repo}. Check SSO authorization or rate limits.`
   }
   if (repoStatus === 404) {
-    return ` GitHub accepted the token, but it cannot access ${source.repo.owner}/${source.repo.repo}. For a fine-grained token, select this repository and grant Contents: read and Pull requests: read.`
+    return ` GitHub accepted the sign-in, but it cannot access ${source.repo.owner}/${source.repo.repo}. Install the GitHub App on the account that owns the repository and grant it access to this repository.`
   }
 
   if (source.kind === 'pull') {
-    return ` GitHub accepted the token and repository access, but pull request #${source.number} was not readable. Grant Pull requests: read or confirm the PR exists.`
+    return ` GitHub accepted the sign-in and repository access, but pull request #${source.number} was not readable. Confirm the PR exists.`
   }
 
-  return ' GitHub accepted the token, but the requested diff was not readable.'
+  return ' GitHub accepted the sign-in, but the requested diff was not readable.'
 }
 
 async function fetchGitHubDiagnosticStatus(path: string, token: string): Promise<number> {
@@ -761,7 +768,7 @@ function createTextResponse(
   const headers = new Headers({
     'Content-Type': 'text/plain; charset=utf-8',
     'Cache-Control': CACHE_CONTROL,
-    Vary: 'Authorization',
+    Vary: 'Cookie',
   })
   if (!isNullish(sourceURL)) {
     headers.set('X-Patch-Source', sourceURL)

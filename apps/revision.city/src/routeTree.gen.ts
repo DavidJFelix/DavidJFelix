@@ -15,8 +15,12 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as DiffsIndexRouteImport } from './routes/diffs/index'
 import { Route as DiffsSplatRouteImport } from './routes/diffs/$'
 import { Route as DiagSplatRouteImport } from './routes/diag/$'
-import { Route as DiffsApiGithubDiffFileRouteImport } from './routes/diffs/api/github-diff-file'
-import { Route as DiffsApiDiffRouteImport } from './routes/diffs/api/diff'
+import { Route as ApiDiffsGithubDiffFileRouteImport } from './routes/api/diffs/github-diff-file'
+import { Route as ApiDiffsDiffRouteImport } from './routes/api/diffs/diff'
+import { Route as ApiAuthGithubSessionRouteImport } from './routes/api/auth/github/session'
+import { Route as ApiAuthGithubLogoutRouteImport } from './routes/api/auth/github/logout'
+import { Route as ApiAuthGithubLoginRouteImport } from './routes/api/auth/github/login'
+import { Route as ApiAuthGithubCallbackRouteImport } from './routes/api/auth/github/callback'
 
 const BugsRoute = BugsRouteImport.update({
   id: '/bugs',
@@ -48,15 +52,35 @@ const DiagSplatRoute = DiagSplatRouteImport.update({
   path: '/diag/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DiffsApiGithubDiffFileRoute = DiffsApiGithubDiffFileRouteImport.update({
-  id: '/api/github-diff-file',
-  path: '/api/github-diff-file',
-  getParentRoute: () => DiffsRouteRoute,
+const ApiDiffsGithubDiffFileRoute = ApiDiffsGithubDiffFileRouteImport.update({
+  id: '/api/diffs/github-diff-file',
+  path: '/api/diffs/github-diff-file',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const DiffsApiDiffRoute = DiffsApiDiffRouteImport.update({
-  id: '/api/diff',
-  path: '/api/diff',
-  getParentRoute: () => DiffsRouteRoute,
+const ApiDiffsDiffRoute = ApiDiffsDiffRouteImport.update({
+  id: '/api/diffs/diff',
+  path: '/api/diffs/diff',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthGithubSessionRoute = ApiAuthGithubSessionRouteImport.update({
+  id: '/api/auth/github/session',
+  path: '/api/auth/github/session',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthGithubLogoutRoute = ApiAuthGithubLogoutRouteImport.update({
+  id: '/api/auth/github/logout',
+  path: '/api/auth/github/logout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthGithubLoginRoute = ApiAuthGithubLoginRouteImport.update({
+  id: '/api/auth/github/login',
+  path: '/api/auth/github/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthGithubCallbackRoute = ApiAuthGithubCallbackRouteImport.update({
+  id: '/api/auth/github/callback',
+  path: '/api/auth/github/callback',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -66,8 +90,12 @@ export interface FileRoutesByFullPath {
   '/diag/$': typeof DiagSplatRoute
   '/diffs/$': typeof DiffsSplatRoute
   '/diffs/': typeof DiffsIndexRoute
-  '/diffs/api/diff': typeof DiffsApiDiffRoute
-  '/diffs/api/github-diff-file': typeof DiffsApiGithubDiffFileRoute
+  '/api/diffs/diff': typeof ApiDiffsDiffRoute
+  '/api/diffs/github-diff-file': typeof ApiDiffsGithubDiffFileRoute
+  '/api/auth/github/callback': typeof ApiAuthGithubCallbackRoute
+  '/api/auth/github/login': typeof ApiAuthGithubLoginRoute
+  '/api/auth/github/logout': typeof ApiAuthGithubLogoutRoute
+  '/api/auth/github/session': typeof ApiAuthGithubSessionRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -75,8 +103,12 @@ export interface FileRoutesByTo {
   '/diag/$': typeof DiagSplatRoute
   '/diffs/$': typeof DiffsSplatRoute
   '/diffs': typeof DiffsIndexRoute
-  '/diffs/api/diff': typeof DiffsApiDiffRoute
-  '/diffs/api/github-diff-file': typeof DiffsApiGithubDiffFileRoute
+  '/api/diffs/diff': typeof ApiDiffsDiffRoute
+  '/api/diffs/github-diff-file': typeof ApiDiffsGithubDiffFileRoute
+  '/api/auth/github/callback': typeof ApiAuthGithubCallbackRoute
+  '/api/auth/github/login': typeof ApiAuthGithubLoginRoute
+  '/api/auth/github/logout': typeof ApiAuthGithubLogoutRoute
+  '/api/auth/github/session': typeof ApiAuthGithubSessionRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -86,8 +118,12 @@ export interface FileRoutesById {
   '/diag/$': typeof DiagSplatRoute
   '/diffs/$': typeof DiffsSplatRoute
   '/diffs/': typeof DiffsIndexRoute
-  '/diffs/api/diff': typeof DiffsApiDiffRoute
-  '/diffs/api/github-diff-file': typeof DiffsApiGithubDiffFileRoute
+  '/api/diffs/diff': typeof ApiDiffsDiffRoute
+  '/api/diffs/github-diff-file': typeof ApiDiffsGithubDiffFileRoute
+  '/api/auth/github/callback': typeof ApiAuthGithubCallbackRoute
+  '/api/auth/github/login': typeof ApiAuthGithubLoginRoute
+  '/api/auth/github/logout': typeof ApiAuthGithubLogoutRoute
+  '/api/auth/github/session': typeof ApiAuthGithubSessionRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -98,8 +134,12 @@ export interface FileRouteTypes {
     | '/diag/$'
     | '/diffs/$'
     | '/diffs/'
-    | '/diffs/api/diff'
-    | '/diffs/api/github-diff-file'
+    | '/api/diffs/diff'
+    | '/api/diffs/github-diff-file'
+    | '/api/auth/github/callback'
+    | '/api/auth/github/login'
+    | '/api/auth/github/logout'
+    | '/api/auth/github/session'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -107,8 +147,12 @@ export interface FileRouteTypes {
     | '/diag/$'
     | '/diffs/$'
     | '/diffs'
-    | '/diffs/api/diff'
-    | '/diffs/api/github-diff-file'
+    | '/api/diffs/diff'
+    | '/api/diffs/github-diff-file'
+    | '/api/auth/github/callback'
+    | '/api/auth/github/login'
+    | '/api/auth/github/logout'
+    | '/api/auth/github/session'
   id:
     | '__root__'
     | '/'
@@ -117,8 +161,12 @@ export interface FileRouteTypes {
     | '/diag/$'
     | '/diffs/$'
     | '/diffs/'
-    | '/diffs/api/diff'
-    | '/diffs/api/github-diff-file'
+    | '/api/diffs/diff'
+    | '/api/diffs/github-diff-file'
+    | '/api/auth/github/callback'
+    | '/api/auth/github/login'
+    | '/api/auth/github/logout'
+    | '/api/auth/github/session'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -126,6 +174,12 @@ export interface RootRouteChildren {
   DiffsRouteRoute: typeof DiffsRouteRouteWithChildren
   BugsRoute: typeof BugsRoute
   DiagSplatRoute: typeof DiagSplatRoute
+  ApiDiffsDiffRoute: typeof ApiDiffsDiffRoute
+  ApiDiffsGithubDiffFileRoute: typeof ApiDiffsGithubDiffFileRoute
+  ApiAuthGithubCallbackRoute: typeof ApiAuthGithubCallbackRoute
+  ApiAuthGithubLoginRoute: typeof ApiAuthGithubLoginRoute
+  ApiAuthGithubLogoutRoute: typeof ApiAuthGithubLogoutRoute
+  ApiAuthGithubSessionRoute: typeof ApiAuthGithubSessionRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -172,19 +226,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DiagSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/diffs/api/github-diff-file': {
-      id: '/diffs/api/github-diff-file'
-      path: '/api/github-diff-file'
-      fullPath: '/diffs/api/github-diff-file'
-      preLoaderRoute: typeof DiffsApiGithubDiffFileRouteImport
-      parentRoute: typeof DiffsRouteRoute
+    '/api/diffs/github-diff-file': {
+      id: '/api/diffs/github-diff-file'
+      path: '/api/diffs/github-diff-file'
+      fullPath: '/api/diffs/github-diff-file'
+      preLoaderRoute: typeof ApiDiffsGithubDiffFileRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/diffs/api/diff': {
-      id: '/diffs/api/diff'
-      path: '/api/diff'
-      fullPath: '/diffs/api/diff'
-      preLoaderRoute: typeof DiffsApiDiffRouteImport
-      parentRoute: typeof DiffsRouteRoute
+    '/api/diffs/diff': {
+      id: '/api/diffs/diff'
+      path: '/api/diffs/diff'
+      fullPath: '/api/diffs/diff'
+      preLoaderRoute: typeof ApiDiffsDiffRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/github/session': {
+      id: '/api/auth/github/session'
+      path: '/api/auth/github/session'
+      fullPath: '/api/auth/github/session'
+      preLoaderRoute: typeof ApiAuthGithubSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/github/logout': {
+      id: '/api/auth/github/logout'
+      path: '/api/auth/github/logout'
+      fullPath: '/api/auth/github/logout'
+      preLoaderRoute: typeof ApiAuthGithubLogoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/github/login': {
+      id: '/api/auth/github/login'
+      path: '/api/auth/github/login'
+      fullPath: '/api/auth/github/login'
+      preLoaderRoute: typeof ApiAuthGithubLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/github/callback': {
+      id: '/api/auth/github/callback'
+      path: '/api/auth/github/callback'
+      fullPath: '/api/auth/github/callback'
+      preLoaderRoute: typeof ApiAuthGithubCallbackRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -192,15 +274,11 @@ declare module '@tanstack/react-router' {
 interface DiffsRouteRouteChildren {
   DiffsSplatRoute: typeof DiffsSplatRoute
   DiffsIndexRoute: typeof DiffsIndexRoute
-  DiffsApiDiffRoute: typeof DiffsApiDiffRoute
-  DiffsApiGithubDiffFileRoute: typeof DiffsApiGithubDiffFileRoute
 }
 
 const DiffsRouteRouteChildren: DiffsRouteRouteChildren = {
   DiffsSplatRoute: DiffsSplatRoute,
   DiffsIndexRoute: DiffsIndexRoute,
-  DiffsApiDiffRoute: DiffsApiDiffRoute,
-  DiffsApiGithubDiffFileRoute: DiffsApiGithubDiffFileRoute,
 }
 
 const DiffsRouteRouteWithChildren = DiffsRouteRoute._addFileChildren(
@@ -212,6 +290,12 @@ const rootRouteChildren: RootRouteChildren = {
   DiffsRouteRoute: DiffsRouteRouteWithChildren,
   BugsRoute: BugsRoute,
   DiagSplatRoute: DiagSplatRoute,
+  ApiDiffsDiffRoute: ApiDiffsDiffRoute,
+  ApiDiffsGithubDiffFileRoute: ApiDiffsGithubDiffFileRoute,
+  ApiAuthGithubCallbackRoute: ApiAuthGithubCallbackRoute,
+  ApiAuthGithubLoginRoute: ApiAuthGithubLoginRoute,
+  ApiAuthGithubLogoutRoute: ApiAuthGithubLogoutRoute,
+  ApiAuthGithubSessionRoute: ApiAuthGithubSessionRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

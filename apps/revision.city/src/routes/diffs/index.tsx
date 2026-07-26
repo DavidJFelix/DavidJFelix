@@ -7,8 +7,7 @@ import {css, cx} from 'styled-system/css'
 
 import {Button} from '@/diffs/components/button'
 import {DiffUrlForm} from '@/diffs/components/diff-url-form'
-import {GitHubTokenControl} from '@/diffs/components/github-token-control'
-import {useGitHubToken} from '@/diffs/components/use-github-token'
+import {GitHubAuthControl} from '@/diffs/components/github-auth-control'
 
 export const Route = createFileRoute('/diffs/')({
   component: DiffsHomePage,
@@ -139,7 +138,7 @@ function DiffsHomePage() {
           })}
         >
           <HomeFetchForm />
-          <HomeGitHubTokenForm />
+          <HomeGitHubAuthForm />
         </div>
         <div className={css({'& > * + *': {mt: '2'}})}>
           <h3
@@ -287,19 +286,15 @@ const HomeFetchForm = memo(function HomeFetchForm() {
   )
 })
 
-const HomeGitHubTokenForm = memo(function HomeGitHubTokenForm() {
-  const {clearToken, hasToken, setToken} = useGitHubToken()
+const HomeGitHubAuthForm = memo(function HomeGitHubAuthForm() {
   return (
-    <GitHubTokenControl
-      active={hasToken}
+    <GitHubAuthControl
       className={css({
         borderColor: 'diffs.border/70',
         borderTopWidth: '1px',
         px: '4',
         py: '3',
       })}
-      onClear={clearToken}
-      onSave={setToken}
       title="Private GitHub access"
     />
   )

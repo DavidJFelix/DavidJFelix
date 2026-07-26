@@ -39,7 +39,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/diffs/components/dropdown-menu'
-import {GitHubTokenControl} from '@/diffs/components/github-token-control'
+import {GitHubAuthControl} from '@/diffs/components/github-auth-control'
 import {Switch} from '@/diffs/components/switch'
 import {docsThemeCatalog} from '@/diffs/components/theme-catalog'
 import {isNullish} from '@/diffs/lib/nullish'
@@ -87,13 +87,10 @@ interface HeaderProps {
   diffStyle: 'split' | 'unified'
   fileTreeAvailable: boolean
   fileTreeOverlayOpen: boolean
-  githubTokenActive: boolean
   initialUrl: string
   lightThemeName: LightThemeName
   lineNumbers: boolean
   overflow: 'wrap' | 'scroll'
-  onClearGitHubToken(): void
-  onSaveGitHubToken(token: string): void
   onToggleCollapseMode(): void
   onToggleFileTreeOverlay(): void
   setColorMode(mode: ColorMode): void
@@ -116,13 +113,10 @@ export const DiffsHeader = memo(function DiffsHeader({
   diffStyle,
   fileTreeAvailable,
   fileTreeOverlayOpen,
-  githubTokenActive,
   initialUrl,
   lightThemeName,
   lineNumbers,
   overflow,
-  onClearGitHubToken,
-  onSaveGitHubToken,
   onToggleCollapseMode,
   onToggleFileTreeOverlay,
   setColorMode,
@@ -310,11 +304,7 @@ export const DiffsHeader = memo(function DiffsHeader({
                 className={css({w: '72', p: '2'})}
                 style={dropdownThemeStyle}
               >
-                <GitHubTokenControl
-                  active={githubTokenActive}
-                  onClear={onClearGitHubToken}
-                  onSave={onSaveGitHubToken}
-                />
+                <GitHubAuthControl />
                 <div className={css({bg: 'diffs.border/70', my: '2', h: '1px'})} />
                 <DropdownMenuItem
                   className={css({cursor: 'default', p: '0'})}

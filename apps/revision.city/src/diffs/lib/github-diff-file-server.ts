@@ -550,9 +550,7 @@ async function assertGitHubResponseOK(response: Response, label: string): Promis
 
   const detail = (await response.text()).trim()
   if (isGitHubRateLimitResponse(response, detail)) {
-    throw new Error(
-      'GitHub rate limit exceeded. Add a GitHub token in Diffs settings to raise the limit.',
-    )
+    throw new Error('GitHub rate limit exceeded. Sign in with GitHub to raise the limit.')
   }
 
   throw new Error(

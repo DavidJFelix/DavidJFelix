@@ -1,10 +1,12 @@
-import {resolveGitHubAuth, withSetCookieHeaders} from './github-auth'
+import type {GitHubAccessRemedy} from './github-access-remedy'
+import {type GitHubAuthSession, resolveGitHubAuth, withSetCookieHeaders} from './github-auth'
 import {
   encodeURLSegment,
   type GitHubDiffSource,
   type GitHubRepo,
   parseGitHubDiffSource,
 } from './github-diff-source'
+import {diagnoseGitHubAccess} from './github-repo-access'
 import {isNullish} from './nullish'
 
 const CACHE_CONTROL = 'no-store'
@@ -51,26 +53,41 @@ interface PatchFetchResult {
   target: DirectPatchFetchTarget
 }
 
+// The signed-in viewer, carried down the fetch chain so a failure can be
+// diagnosed against the same identity that made the attempt.
+interface DiffViewerAuth {
+  login?: string
+  token?: string
+}
+
+interface PatchFailure {
+  message: string
+  remedy?: GitHubAccessRemedy
+  status: number
+}
+
 // Validates the accepted path or URL, normalizes it to a raw diff URL, and
 // returns a streaming proxy response so the client can render files as they
 // arrive instead of waiting for the full patch text. GitHub auth comes from
 // the signed-in session cookie, never from the client request itself.
 export async function handleDiffRequest(request: Request): Promise<Response> {
   const auth = await resolveGitHubAuth(request)
-  const response = await createDiffResponse(request, auth.session?.accessToken)
+  const response = await createDiffResponse(request, auth.session)
   return withSetCookieHeaders(response, auth.setCookieHeaders)
 }
 
-async function createDiffResponse(request: Request, token: string | undefined): Promise<Response> {
+async function createDiffResponse(
+  request: Request,
+  session: GitHubAuthSession | undefined,
+): Promise<Response> {
   const searchParams = new URL(request.url).searchParams
   const path = searchParams.get('path')
   const domain = searchParams.get('domain')
   const url = searchParams.get('url')
+  const token = session?.accessToken
 
   if (isNullish(path) && isNullish(url)) {
-    return createTextResponse('Path or URL parameter is required', {
-      status: 400,
-    })
+    return createErrorResponse({message: 'Path or URL parameter is required', status: 400})
   }
 
   try {
@@ -80,14 +97,16 @@ async function createDiffResponse(request: Request, token: string | undefined): 
     // patch endpoint.
     const patchRequest = resolvePatchRequest({path, domain, url, token})
     if (isNullish(patchRequest)) {
-      return createTextResponse('Invalid GitHub patch URL format', {
-        status: 400,
-      })
+      return createErrorResponse({message: 'Invalid GitHub patch URL format', status: 400})
     }
 
-    return await createPatchStreamResponse(patchRequest, request.signal)
+    return await createPatchStreamResponse(patchRequest, request.signal, {
+      login: session?.login,
+      token,
+    })
   } catch (error) {
-    return createTextResponse(error instanceof Error ? error.message : 'Unknown error', {
+    return createErrorResponse({
+      message: error instanceof Error ? error.message : 'Unknown error',
       status: 500,
     })
   }
@@ -153,6 +172,7 @@ function resolvePatchURLInput(
     const publicRequest: ResolvedPatchRequest = {
       label: 'public patch-diff URL',
       patchURL: parsedURL.href,
+      sourceURL: createGitHubSourceURL(parsedURL.pathname.slice('/raw'.length)),
     }
     if (!isNullish(token)) {
       const gitHubPath = parsedURL.pathname.slice('/raw'.length)
@@ -180,6 +200,10 @@ function resolveGitHubPatchRequest(
     : ({
         label: 'public github.com diff URL',
         patchURL,
+        // Carried even on the unauthenticated attempt so a failure can still be
+        // traced back to a repository, which is what makes "sign in and grant
+        // access" answerable for signed-out visitors.
+        sourceURL: createGitHubSourceURL(path),
       } satisfies ResolvedPatchRequest)
   if (!isNullish(token)) {
     const authenticatedWebRequest = resolveAuthenticatedGitHubWebPatchRequest(path, token)
@@ -223,7 +247,7 @@ function resolveAuthenticatedGitHubPatchRequest(
     return undefined
   }
 
-  const sourceURL = `https://${GITHUB_HOST}${removeDiffExtension(normalizedPath)}`
+  const sourceURL = createGitHubSourceURL(path)
   if (source.kind === 'pull') {
     return {
       kind: 'github-pull',
@@ -294,6 +318,12 @@ function resolveGitHubPath(path: string): string | undefined {
   }
 
   return `https://${GITHUB_HOST}${patchPath}`
+}
+
+// The human-facing github.com URL a patch attempt stands for, which is what the
+// access diagnosis parses back into an owner, repository, and diff source.
+function createGitHubSourceURL(path: string): string {
+  return `https://${GITHUB_HOST}${removeDiffExtension(normalizeGitHubPath(path))}`
 }
 
 function removeDiffExtension(path: string): string {
@@ -378,22 +408,6 @@ function createGitHubJSONAPIHeaders(token: string): Record<string, string> {
   }
 }
 
-function parseBearerToken(value: string | null): string | undefined {
-  if (isNullish(value)) {
-    return undefined
-  }
-
-  const match = /^Bearer\s+(.+)$/i.exec(value.trim())
-  const token = match?.[1]?.trim()
-  return isNullish(token) || token === '' ? undefined : token
-}
-
-function getAuthorizationToken(
-  requestHeaders: Record<string, string> | undefined,
-): string | undefined {
-  return parseBearerToken(requestHeaders?.Authorization ?? null)
-}
-
 interface TextResponseOptions {
   status?: number
   sourceURL?: string
@@ -407,7 +421,7 @@ function createPatchTextResponse(
   options: Omit<TextResponseOptions, 'status'>,
 ): Response {
   if (!NON_WHITESPACE_PATTERN.test(patchText)) {
-    return createTextResponse(EMPTY_PATCH_MESSAGE, {status: 422})
+    return createErrorResponse({message: EMPTY_PATCH_MESSAGE, status: 422})
   }
 
   return createTextResponse(patchText, options)
@@ -419,6 +433,7 @@ function createPatchTextResponse(
 async function createPatchStreamResponse(
   patchRequest: ResolvedPatchRequest,
   requestSignal: AbortSignal,
+  viewer: DiffViewerAuth,
 ): Promise<Response> {
   const upstreamController = new AbortController()
   const abortUpstream = () => upstreamController.abort()
@@ -441,10 +456,10 @@ async function createPatchStreamResponse(
       }
 
       requestSignal.removeEventListener('abort', abortUpstream)
-      return createTextResponse('Failed to fetch patch.', {status: 502})
+      return createErrorResponse({message: 'Failed to fetch patch.', status: 502})
     }
 
-    const failure = await getPatchResponseFailure(response, responseTarget)
+    const failure = await getPatchResponseFailure(response, responseTarget, viewer)
     if (isNullish(failure)) {
       break
     }
@@ -457,15 +472,15 @@ async function createPatchStreamResponse(
     }
 
     requestSignal.removeEventListener('abort', abortUpstream)
-    return createTextResponse(failure.message, {
-      status: failure.status,
+    return createErrorResponse({
+      ...failure,
       sourceURL: responseTarget.sourceURL ?? responseTarget.patchURL,
     })
   }
 
   if (isNullish(response) || isNullish(responseTarget)) {
     requestSignal.removeEventListener('abort', abortUpstream)
-    return createTextResponse('Failed to fetch patch.', {status: 502})
+    return createErrorResponse({message: 'Failed to fetch patch.', status: 502})
   }
 
   const options = {
@@ -576,13 +591,26 @@ async function fetchGitHubPullPatchTarget(
 async function getPatchResponseFailure(
   response: Response,
   target: DirectPatchFetchTarget,
-): Promise<{message: string; status: number} | undefined> {
+  viewer: DiffViewerAuth,
+): Promise<PatchFailure | undefined> {
   if (!response.ok) {
     const status = response.status >= 400 ? response.status : 502
-    const authHint = await getGitHubAuthFailureHint(response, target)
+    // A diagnosed access failure replaces the transport-level message wholesale:
+    // it names the actual obstacle and carries the step out of it, where
+    // "authenticated pull metadata: 404 Not Found" only names the attempt.
+    const accessFailure = await diagnoseGitHubAccess({
+      login: viewer.login,
+      source: readGitHubSourceFromURL(target.sourceURL),
+      status,
+      token: viewer.token,
+    })
+    if (!isNullish(accessFailure)) {
+      return {...accessFailure, status}
+    }
+
     return {
       status,
-      message: `Failed to fetch patch from ${target.label ?? 'upstream'}: ${response.status} ${response.statusText}.${authHint}`,
+      message: `Failed to fetch patch from ${target.label ?? 'upstream'}: ${response.status} ${response.statusText}.`,
     }
   }
 
@@ -596,70 +624,6 @@ async function getPatchResponseFailure(
   }
 
   return undefined
-}
-
-async function getGitHubAuthFailureHint(
-  response: Response,
-  target: DirectPatchFetchTarget,
-): Promise<string> {
-  const token = getAuthorizationToken(target.requestHeaders)
-  if (
-    isNullish(token) ||
-    (response.status !== 401 && response.status !== 403 && response.status !== 404)
-  ) {
-    return ''
-  }
-
-  const tokenStatus = await fetchGitHubDiagnosticStatus('/user', token)
-  if (tokenStatus === 401) {
-    return ' GitHub rejected the sign-in as expired or revoked. Sign out and back in.'
-  }
-  if (tokenStatus === 403) {
-    return ' GitHub accepted the sign-in but blocked it. Check SSO authorization or rate limits.'
-  }
-  if (tokenStatus !== 200) {
-    return ' GitHub sign-in validation failed. Sign out and back in.'
-  }
-
-  const source = readGitHubSourceFromURL(target.sourceURL)
-  if (isNullish(source)) {
-    return ' GitHub accepted the sign-in, but the patch endpoint was not accessible.'
-  }
-
-  const repoStatus = await fetchGitHubDiagnosticStatus(
-    `/repos/${encodeURLSegment(source.repo.owner)}/${encodeURLSegment(source.repo.repo)}`,
-    token,
-  )
-  if (repoStatus === 401) {
-    return ' GitHub rejected the sign-in as expired or revoked. Sign out and back in.'
-  }
-  if (repoStatus === 403) {
-    return ` GitHub accepted the sign-in but blocked access to ${source.repo.owner}/${source.repo.repo}. Check SSO authorization or rate limits.`
-  }
-  if (repoStatus === 404) {
-    return ` GitHub accepted the sign-in, but it cannot access ${source.repo.owner}/${source.repo.repo}. Install the GitHub App on the account that owns the repository and grant it access to this repository.`
-  }
-
-  if (source.kind === 'pull') {
-    return ` GitHub accepted the sign-in and repository access, but pull request #${source.number} was not readable. Confirm the PR exists.`
-  }
-
-  return ' GitHub accepted the sign-in, but the requested diff was not readable.'
-}
-
-async function fetchGitHubDiagnosticStatus(path: string, token: string): Promise<number> {
-  try {
-    const response = await fetch(createGitHubApiUrl(path), {
-      cache: 'no-store',
-      headers: {
-        'User-Agent': 'revision-city-diffs',
-        ...createGitHubJSONAPIHeaders(token),
-      },
-    })
-    return response.status
-  } catch {
-    return 0
-  }
 }
 
 function readGitHubSourceFromURL(sourceURL: string | undefined): GitHubDiffSource | undefined {
@@ -777,4 +741,19 @@ function createTextResponse(
     status,
     headers,
   })
+}
+
+// Failures answer in JSON so the viewer can render the way out as a button
+// rather than as one more sentence of prose the reader has to act on manually.
+function createErrorResponse({
+  message,
+  remedy,
+  sourceURL,
+  status,
+}: PatchFailure & {sourceURL?: string}): Response {
+  const headers = new Headers({'Cache-Control': CACHE_CONTROL, Vary: 'Cookie'})
+  if (!isNullish(sourceURL)) {
+    headers.set('X-Patch-Source', sourceURL)
+  }
+  return Response.json({message, remedy}, {status, headers})
 }

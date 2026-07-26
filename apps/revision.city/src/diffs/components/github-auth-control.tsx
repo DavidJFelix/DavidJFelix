@@ -5,6 +5,7 @@ import {css, cx} from 'styled-system/css'
 
 import {Button} from '@/diffs/components/button'
 import {
+  getCurrentReturnPath,
   getGitHubLoginURL,
   getGitHubLogoutURL,
   useGitHubSession,
@@ -128,10 +129,4 @@ function navigateToLogin(): void {
 
 function navigateToLogout(): void {
   window.location.assign(getGitHubLogoutURL(getCurrentReturnPath()))
-}
-
-// The hash never reaches the server, so the round-trip lands on the same
-// path and search; line-hash targets are simply dropped.
-function getCurrentReturnPath(): string {
-  return `${window.location.pathname}${window.location.search}`
 }

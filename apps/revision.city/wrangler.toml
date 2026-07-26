@@ -20,6 +20,15 @@ preview_urls = true
 # them from .dev.vars (gitignored). Without them the auth routes return 503 and
 # the viewer stays public-only.
 
+[vars]
+# The app's public slug -- the last segment of its github.com/apps/<slug> URL,
+# not a secret. src/diffs/lib/github-repo-access.ts builds the "grant access"
+# link from it when a signed-in visitor hits a repository the app cannot see and
+# has no installation of its own to read the slug from. Leave it empty and that
+# one case degrades to an explanation with no button; every other case still
+# links straight at the existing installation.
+GITHUB_APP_SLUG = ""
+
 # Custom domains, wired up in the Cloudflare dashboard.
 routes = [
   { pattern = "revision.city", custom_domain = true },

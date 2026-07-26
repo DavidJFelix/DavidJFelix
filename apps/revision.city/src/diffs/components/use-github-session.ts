@@ -47,6 +47,12 @@ export function getGitHubLogoutURL(returnTo: string): string {
   return `${LOGOUT_ENDPOINT}?${new URLSearchParams({returnTo})}`
 }
 
+// The hash never reaches the server, so an auth round-trip lands on the same
+// path and search; line-hash targets are simply dropped.
+export function getCurrentReturnPath(): string {
+  return `${window.location.pathname}${window.location.search}`
+}
+
 function loadGitHubSession(): Promise<GitHubSession> {
   sessionPromise ??= fetchGitHubSession()
   return sessionPromise

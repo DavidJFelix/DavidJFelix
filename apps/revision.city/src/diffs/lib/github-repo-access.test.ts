@@ -2,7 +2,7 @@
 import {expect, test, vi} from 'vitest'
 
 import {parseGitHubDiffSource} from './github-diff-source'
-import {diagnoseGitHubAccess} from './github-repo-access'
+import {diagnoseGitHubAccess, resolveGitHubManageAccessURL} from './github-repo-access'
 
 const TOKEN = 'ghu_token'
 const PULL_SOURCE = parseGitHubDiffSource('/acme/widgets/pull/7')
@@ -173,6 +173,42 @@ test('separates a readable repository from an unreadable pull request', async ()
 
   expect(failure?.remedy).toBeUndefined()
   expect(failure?.message).toContain('pull request #7')
+})
+
+test('manages access at the installation itself when there is exactly one', async () => {
+  const url = await resolveGitHubManageAccessURL({
+    fetch: stubGitHub({installations: [installation()]}),
+    token: TOKEN,
+  })
+
+  expect(url).toBe('https://github.com/organizations/acme/settings/installations/42')
+})
+
+test('lets GitHub ask which account when there are several installations', async () => {
+  const url = await resolveGitHubManageAccessURL({
+    fetch: stubGitHub({
+      installations: [installation(), installation({id: 43, account: {login: 'other-org'}})],
+    }),
+    token: TOKEN,
+  })
+
+  expect(url).toBe('https://github.com/apps/revision-city/installations/new')
+})
+
+test('sends a visitor with no installation to the install page', async () => {
+  vi.stubEnv('GITHUB_APP_SLUG', 'revision-city')
+  const url = await resolveGitHubManageAccessURL({fetch: stubGitHub({}), token: TOKEN})
+  vi.unstubAllEnvs()
+
+  expect(url).toBe('https://github.com/apps/revision-city/installations/new')
+})
+
+test('falls back to the installed-apps list when no app slug is known', async () => {
+  vi.stubEnv('GITHUB_APP_SLUG', '')
+  const url = await resolveGitHubManageAccessURL({fetch: stubGitHub({}), token: TOKEN})
+  vi.unstubAllEnvs()
+
+  expect(url).toBe('https://github.com/settings/installations')
 })
 
 test('reports an SSO or rate-limit block on the repository as its own case', async () => {

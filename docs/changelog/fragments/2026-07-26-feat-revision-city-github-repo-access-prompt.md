@@ -22,7 +22,17 @@ in a new tab, and the diff reloads by itself when the reader comes back to this 
 is not the signed-in account, the copy says up front that GitHub may route the grant to an owner for
 approval. Remedy URLs are re-checked against github.com before the panel renders one.
 
+Hitting the wall is no longer the only way to reach the grant. The signed-in GitHub panel -- in the
+header dropdown and on the `/diffs` home page alike -- carries a standing "Manage repository access"
+link, so a repository can be granted before anyone tries to read a diff from it, and a second one
+added later without waiting to be blocked again. Which GitHub page that lands on depends on
+installations only the session's token can read, so it resolves at the click through a new
+`/api/auth/github/installations` route: the installation's own settings page when there is exactly
+one, the install page's account picker when there are none or several, and the visitor's list of
+installed apps as a last resort. A visitor whose session lapsed between page load and click is sent
+through sign-in rather than an error.
+
 The app's public slug comes from a new `GITHUB_APP_SLUG` worker var, falling back to the slug
-reported by any installation the visitor already has. It is only needed for the case where the
-visitor has no installation to read it from; unset, that one case degrades to an explanation with no
-button.
+reported by any installation the visitor already has. It is only needed to name the install page for
+a visitor with no installation to read it from; unset, those cases fall back to an explanation with
+no button and to GitHub's installed-apps list respectively.

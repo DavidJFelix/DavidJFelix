@@ -3,6 +3,9 @@ import {useEffect, useState} from 'react'
 const SESSION_ENDPOINT = '/api/auth/github/session'
 const LOGIN_ENDPOINT = '/api/auth/github/login'
 const LOGOUT_ENDPOINT = '/api/auth/github/logout'
+// Resolves to a GitHub URL server-side, since which page to land on depends on
+// installations only the session's token can read.
+export const GITHUB_MANAGE_ACCESS_ENDPOINT = '/api/auth/github/installations'
 
 export type GitHubSessionStatus = 'loading' | 'anonymous' | 'authenticated'
 

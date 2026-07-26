@@ -6,6 +6,7 @@ import {css, cx} from 'styled-system/css'
 import {Button} from '@/diffs/components/button'
 import {
   getCurrentReturnPath,
+  GITHUB_MANAGE_ACCESS_ENDPOINT,
   getGitHubLoginURL,
   getGitHubLogoutURL,
   useGitHubSession,
@@ -84,9 +85,23 @@ export const GitHubAuthControl = memo(function GitHubAuthControl({
             })}
           >
             Signed in as <strong>{session.login}</strong>. Private diffs and file expansion use your
-            GitHub access.
+            GitHub access, one repository at a time — grant the ones you review.
           </p>
-          <div className={css({mt: '2', display: 'flex', alignItems: 'center', gap: '2'})}>
+          <div
+            className={css({
+              mt: '2',
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              gap: '2',
+            })}
+          >
+            {/* A new tab keeps the diff behind this panel loaded and in place. */}
+            <Button asChild variant="outline" size="sm">
+              <a href={GITHUB_MANAGE_ACCESS_ENDPOINT} target="_blank" rel="noreferrer">
+                Manage repository access
+              </a>
+            </Button>
             <Button type="button" variant="outline" size="sm" onClick={navigateToLogout}>
               Sign out
             </Button>

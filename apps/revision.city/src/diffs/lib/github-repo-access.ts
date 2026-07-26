@@ -129,7 +129,8 @@ async function describeMissingRepoAccess({
   token,
 }: DescribeMissingRepoAccessParams): Promise<GitHubAccessFailure> {
   const repoName = formatRepo(repo)
-  const {appSlug, ownerInstallation} = await readGitHubAppInstallations(repo.owner, token, fetcher)
+  const {appSlug, installations} = await readGitHubAppInstallations(token, fetcher)
+  const ownerInstallation = findInstallationForOwner(installations, repo.owner)
   const grantURL = ownerInstallation?.configureURL ?? createGitHubAppInstallURL(appSlug)
   // Granting access to someone else's account or organization may be a
   // permission the visitor does not hold; GitHub turns the same flow into a
@@ -147,35 +148,69 @@ async function describeMissingRepoAccess({
     : {message, remedy: {kind: 'grant-repo-access', url: grantURL}}
 }
 
+export interface ResolveGitHubManageAccessURLParams {
+  fetch?: AccessFetch
+  token: string
+}
+
+// Where a signed-in visitor goes to change which repositories the app may read,
+// with no particular repository in mind. One installation has one obvious page;
+// none or several means letting GitHub ask which account they meant. The list of
+// every app they have installed is the last resort, for a deploy that has not
+// been told the app's slug and cannot name the install page.
+export async function resolveGitHubManageAccessURL({
+  fetch: fetcher = fetch,
+  token,
+}: ResolveGitHubManageAccessURLParams): Promise<string> {
+  const {appSlug, installations} = await readGitHubAppInstallations(token, fetcher)
+  const soleInstallation = installations.length === 1 ? installations[0] : undefined
+  return (
+    soleInstallation?.configureURL ??
+    createGitHubAppInstallURL(appSlug) ??
+    GITHUB_INSTALLATION_SETTINGS_ROOT
+  )
+}
+
+interface GitHubAppInstallation {
+  accountLogin?: string
+  configureURL: string
+}
+
 interface GitHubAppInstallations {
   appSlug?: string
-  ownerInstallation?: {configureURL: string}
+  installations: GitHubAppInstallation[]
 }
 
 // Lists the app's installations this token can see. Any of them names the app's
-// slug, which builds the install URL for owners with no installation at all.
+// slug, which builds the install URL for accounts with no installation at all.
 async function readGitHubAppInstallations(
-  owner: string,
   token: string,
   fetcher: AccessFetch,
 ): Promise<GitHubAppInstallations> {
   const data = await fetchGitHubJSON('/user/installations', token, fetcher)
-  const installations =
-    isRecord(data) && Array.isArray(data.installations) ? data.installations : []
+  const entries = isRecord(data) && Array.isArray(data.installations) ? data.installations : []
 
   let appSlug: string | undefined
-  let ownerInstallation: {configureURL: string} | undefined
-  for (const installation of installations) {
-    if (!isRecord(installation)) {
+  const installations: GitHubAppInstallation[] = []
+  for (const entry of entries) {
+    if (!isRecord(entry)) {
       continue
     }
-    appSlug ??= readOptionalString(installation.app_slug)
-    if (readAccountLogin(installation)?.toLowerCase() === owner.toLowerCase()) {
-      ownerInstallation = {configureURL: readInstallationConfigureURL(installation, owner)}
-    }
+    appSlug ??= readOptionalString(entry.app_slug)
+    const accountLogin = readAccountLogin(entry)
+    installations.push({accountLogin, configureURL: readInstallationConfigureURL(entry)})
   }
 
-  return {appSlug, ownerInstallation}
+  return {appSlug, installations}
+}
+
+function findInstallationForOwner(
+  installations: readonly GitHubAppInstallation[],
+  owner: string,
+): GitHubAppInstallation | undefined {
+  return installations.find(
+    (installation) => installation.accountLogin?.toLowerCase() === owner.toLowerCase(),
+  )
 }
 
 function readAccountLogin(installation: Record<string, unknown>): string | undefined {
@@ -186,18 +221,16 @@ function readAccountLogin(installation: Record<string, unknown>): string | undef
 // GitHub reports the installation's own settings page, which is where
 // repository selection is edited. The URL is reconstructed only if that field
 // is missing, since the personal and organization forms differ.
-function readInstallationConfigureURL(
-  installation: Record<string, unknown>,
-  owner: string,
-): string {
+function readInstallationConfigureURL(installation: Record<string, unknown>): string {
   const htmlURL = readOptionalString(installation.html_url)
   if (!isNullish(htmlURL)) {
     return htmlURL
   }
 
   const id = typeof installation.id === 'number' ? String(installation.id) : ''
+  const account = readAccountLogin(installation) ?? ''
   return installation.target_type === 'Organization'
-    ? `${GITHUB_ORGANIZATIONS_ROOT}/${encodeURLSegment(owner)}/settings/installations/${id}`
+    ? `${GITHUB_ORGANIZATIONS_ROOT}/${encodeURLSegment(account)}/settings/installations/${id}`
     : `${GITHUB_INSTALLATION_SETTINGS_ROOT}/${id}`
 }
 

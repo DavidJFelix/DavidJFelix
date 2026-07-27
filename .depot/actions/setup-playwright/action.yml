@@ -9,7 +9,11 @@ description: >-
   on every fresh runner. Cold runs fall back to `playwright install` /
   `install-deps` and repopulate both caches. Run after pnpm install, with the
   job's working directory in the app: the Playwright version and `pnpm exec`
-  resolve against the app's node_modules.
+  resolve against the app's node_modules. Reference this action from workflow
+  steps only -- never from inside another composite action. Run steps in a
+  nested composite do not inherit the job's default working-directory, so the
+  version resolve and `pnpm exec` would run at the repo root and fail; the
+  preview-wrangler and preview-worker composites inline these steps instead.
 
 runs:
   using: composite

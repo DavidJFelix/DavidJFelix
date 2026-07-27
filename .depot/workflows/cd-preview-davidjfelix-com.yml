@@ -20,6 +20,7 @@ on:
       - 'apps/davidjfelix.com/**'
       - '.depot/workflows/cd-preview-davidjfelix-com.yml'
       - '.depot/actions/preview-wrangler/**'
+      - '.depot/actions/setup-playwright/**'
       - 'bin/**'
 concurrency:
   group: preview-davidjfelix-com-${{ github.event.pull_request.number }}

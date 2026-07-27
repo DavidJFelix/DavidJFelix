@@ -17,6 +17,8 @@ on:
     paths:
       - 'apps/f311x/**'
       - '.depot/workflows/cd-preview-f311x.yml'
+      - '.depot/actions/setup-playwright/**'
+      - 'bin/install-playwright-deps.ts'
 # One preview per PR; a new push cancels an in-flight preview. A close event
 # shares the group so teardown supersedes any running preview.
 concurrency:
@@ -82,23 +84,10 @@ jobs:
           SMOKE_ATTEMPTS: '12'
           SMOKE_RETRY_DELAY_MS: '5000'
         run: bun bin/smoke-test.ts
-      - name: resolve playwright version
-        id: pw-version
-        run: |
-          version=$(node -p "require('@playwright/test/package.json').version")
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-      - name: cache playwright browsers
-        id: pw-cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.pw-version.outputs.version }}
-      - name: playwright install
-        if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install --with-deps chromium
-      - name: playwright install-deps
-        if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: pnpm exec playwright install-deps chromium
+      # Browsers and apt debs both restore from cache; warm runs skip the apt
+      # mirrors entirely.
+      - name: setup playwright
+        uses: ./.depot/actions/setup-playwright
       # PREVIEW_URL set => playwright.config.ts skips the local boot and points
       # at the deployed preview. `pnpm run` (not `mise run`) avoids the e2e
       # task's local build dependency, which the preview path doesn't need.

@@ -18,6 +18,8 @@ on:
       - '.oxfmtrc.json'
       - '.prettierrc.json'
       - '.depot/workflows/ci-djf-io.yml'
+      - '.depot/actions/setup-playwright/**'
+      - 'bin/install-playwright-deps.ts'
   pull_request:
     paths:
       - 'apps/djf.io/**'
@@ -28,6 +30,8 @@ on:
       - '.oxfmtrc.json'
       - '.prettierrc.json'
       - '.depot/workflows/ci-djf-io.yml'
+      - '.depot/actions/setup-playwright/**'
+      - 'bin/install-playwright-deps.ts'
 env:
   MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
 defaults:
@@ -134,23 +138,10 @@ jobs:
         uses: ./.depot/actions/setup-mise
       - name: pnpm install
         run: pnpm install --frozen-lockfile
-      - name: resolve playwright version
-        id: pw-version
-        run: |
-          version=$(node -p "require('@playwright/test/package.json').version")
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-      - name: cache playwright browsers
-        id: pw-cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.pw-version.outputs.version }}
-      - name: playwright install
-        if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install --with-deps chromium
-      - name: playwright install-deps
-        if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: pnpm exec playwright install-deps chromium
+      # Browsers and apt debs both restore from cache; warm runs skip the apt
+      # mirrors entirely.
+      - name: setup playwright
+        uses: ./.depot/actions/setup-playwright
       - name: playwright
         run: mise run test:e2e
       - name: upload-artifact

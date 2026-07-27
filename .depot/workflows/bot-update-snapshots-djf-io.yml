@@ -55,8 +55,11 @@ jobs:
         uses: ./.depot/actions/setup-mise
       - name: pnpm install
         run: pnpm install --frozen-lockfile
-      - name: playwright install
-        run: pnpm exec playwright install --with-deps chromium
+      # Browsers and apt debs both restore from cache (the same keys the CI
+      # playwright job uses), so baselines regenerate in the exact environment
+      # that verifies them.
+      - name: setup playwright
+        uses: ./.depot/actions/setup-playwright
       - name: playwright --update-snapshots
         run: pnpm exec playwright test --update-snapshots
       - name: git push

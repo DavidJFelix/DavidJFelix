@@ -20,6 +20,7 @@ on:
       - 'apps/pkg.dog/**'
       - '.depot/workflows/cd-preview-pkg-dog.yml'
       - '.depot/actions/preview-wrangler/**'
+      - '.depot/actions/setup-playwright/**'
       - 'bin/**'
 concurrency:
   group: preview-pkg-dog-${{ github.event.pull_request.number }}

@@ -19,6 +19,7 @@ on:
       - 'apps/calendar-visualizer/**'
       - '.depot/workflows/cd-preview-calendar-visualizer.yml'
       - '.depot/actions/preview-wrangler/**'
+      - '.depot/actions/setup-playwright/**'
       - 'bin/**'
 # One preview per PR; a new push cancels an in-flight preview.
 concurrency:

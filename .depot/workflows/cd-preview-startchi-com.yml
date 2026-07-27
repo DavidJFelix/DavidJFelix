@@ -20,6 +20,7 @@ on:
       - 'apps/startchi.com/**'
       - '.depot/workflows/cd-preview-startchi-com.yml'
       - '.depot/actions/preview-wrangler/**'
+      - '.depot/actions/setup-playwright/**'
       - 'bin/**'
 concurrency:
   group: preview-startchi-com-${{ github.event.pull_request.number }}

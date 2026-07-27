@@ -273,7 +273,6 @@ test('manage-access redirects a signed-in visitor to their installation on GitHu
           installations: [
             {
               id: 7,
-              app_slug: 'revision-city',
               html_url: 'https://github.com/settings/installations/7',
               account: {login: 'test-user'},
             },

@@ -28,11 +28,8 @@ link, so a repository can be granted before anyone tries to read a diff from it,
 added later without waiting to be blocked again. Which GitHub page that lands on depends on
 installations only the session's token can read, so it resolves at the click through a new
 `/api/auth/github/installations` route: the installation's own settings page when there is exactly
-one, the install page's account picker when there are none or several, and the visitor's list of
-installed apps as a last resort. A visitor whose session lapsed between page load and click is sent
-through sign-in rather than an error.
+one, and the install page's account picker when there are none or several. A visitor whose session
+lapsed between page load and click is sent through sign-in rather than an error.
 
-The app's public slug comes from a new `GITHUB_APP_SLUG` worker var, falling back to the slug
-reported by any installation the visitor already has. It is only needed to name the install page for
-a visitor with no installation to read it from; unset, those cases fall back to an explanation with
-no button and to GitHub's installed-apps list respectively.
+The app's public slug is a constant rather than configuration -- one GitHub App serves every deploy
+today, and a second environment would want an app of its own before this needed to vary.

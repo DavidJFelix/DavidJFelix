@@ -4,7 +4,10 @@ import {isNullish} from './nullish'
 
 const GITHUB_API_ROOT = 'https://api.github.com'
 const GITHUB_API_VERSION = '2022-11-28'
-const GITHUB_APPS_ROOT = 'https://github.com/apps'
+// The app's install page. Its slug is public -- the tail of the app's
+// github.com/apps URL -- and hardcoded because there is one app today. Running a
+// second environment would mean a second app, and this would become config.
+const GITHUB_APP_INSTALL_URL = 'https://github.com/apps/revisioncity/installations/new'
 const GITHUB_INSTALLATION_SETTINGS_ROOT = 'https://github.com/settings/installations'
 const GITHUB_ORGANIZATIONS_ROOT = 'https://github.com/organizations'
 const USER_AGENT = 'revision-city-diffs'
@@ -129,9 +132,9 @@ async function describeMissingRepoAccess({
   token,
 }: DescribeMissingRepoAccessParams): Promise<GitHubAccessFailure> {
   const repoName = formatRepo(repo)
-  const {appSlug, installations} = await readGitHubAppInstallations(token, fetcher)
+  const installations = await readGitHubAppInstallations(token, fetcher)
   const ownerInstallation = findInstallationForOwner(installations, repo.owner)
-  const grantURL = ownerInstallation?.configureURL ?? createGitHubAppInstallURL(appSlug)
+  const grantURL = ownerInstallation?.configureURL ?? GITHUB_APP_INSTALL_URL
   // Granting access to someone else's account or organization may be a
   // permission the visitor does not hold; GitHub turns the same flow into a
   // request to an owner, which is worth saying before they click.
@@ -143,9 +146,7 @@ async function describeMissingRepoAccess({
     ? `The revision.city GitHub App is not installed on ${repo.owner}, so it cannot see ${repoName}. Install it and grant access to the repository.${approvalNote}`
     : `The revision.city GitHub App is installed on ${repo.owner} but was not granted access to ${repoName}. Add the repository to the installation, or check the URL if the name is wrong.${approvalNote}`
 
-  return isNullish(grantURL)
-    ? {message}
-    : {message, remedy: {kind: 'grant-repo-access', url: grantURL}}
+  return {message, remedy: {kind: 'grant-repo-access', url: grantURL}}
 }
 
 export interface ResolveGitHubManageAccessURLParams {
@@ -155,20 +156,14 @@ export interface ResolveGitHubManageAccessURLParams {
 
 // Where a signed-in visitor goes to change which repositories the app may read,
 // with no particular repository in mind. One installation has one obvious page;
-// none or several means letting GitHub ask which account they meant. The list of
-// every app they have installed is the last resort, for a deploy that has not
-// been told the app's slug and cannot name the install page.
+// none or several means letting GitHub ask which account they meant.
 export async function resolveGitHubManageAccessURL({
   fetch: fetcher = fetch,
   token,
 }: ResolveGitHubManageAccessURLParams): Promise<string> {
-  const {appSlug, installations} = await readGitHubAppInstallations(token, fetcher)
+  const installations = await readGitHubAppInstallations(token, fetcher)
   const soleInstallation = installations.length === 1 ? installations[0] : undefined
-  return (
-    soleInstallation?.configureURL ??
-    createGitHubAppInstallURL(appSlug) ??
-    GITHUB_INSTALLATION_SETTINGS_ROOT
-  )
+  return soleInstallation?.configureURL ?? GITHUB_APP_INSTALL_URL
 }
 
 interface GitHubAppInstallation {
@@ -176,32 +171,19 @@ interface GitHubAppInstallation {
   configureURL: string
 }
 
-interface GitHubAppInstallations {
-  appSlug?: string
-  installations: GitHubAppInstallation[]
-}
-
-// Lists the app's installations this token can see. Any of them names the app's
-// slug, which builds the install URL for accounts with no installation at all.
+// Lists the app's installations this token can see, each paired with the page
+// where its repository selection is edited.
 async function readGitHubAppInstallations(
   token: string,
   fetcher: AccessFetch,
-): Promise<GitHubAppInstallations> {
+): Promise<GitHubAppInstallation[]> {
   const data = await fetchGitHubJSON('/user/installations', token, fetcher)
   const entries = isRecord(data) && Array.isArray(data.installations) ? data.installations : []
 
-  let appSlug: string | undefined
-  const installations: GitHubAppInstallation[] = []
-  for (const entry of entries) {
-    if (!isRecord(entry)) {
-      continue
-    }
-    appSlug ??= readOptionalString(entry.app_slug)
-    const accountLogin = readAccountLogin(entry)
-    installations.push({accountLogin, configureURL: readInstallationConfigureURL(entry)})
-  }
-
-  return {appSlug, installations}
+  return entries.filter(isRecord).map((entry) => ({
+    accountLogin: readAccountLogin(entry),
+    configureURL: readInstallationConfigureURL(entry),
+  }))
 }
 
 function findInstallationForOwner(
@@ -232,16 +214,6 @@ function readInstallationConfigureURL(installation: Record<string, unknown>): st
   return installation.target_type === 'Organization'
     ? `${GITHUB_ORGANIZATIONS_ROOT}/${encodeURLSegment(account)}/settings/installations/${id}`
     : `${GITHUB_INSTALLATION_SETTINGS_ROOT}/${id}`
-}
-
-// The slug is public (it is the app's own github.com URL), so it is a plain
-// worker var rather than a secret. A discovered slug wins because it comes from
-// GitHub for this exact app; the var covers visitors with no installation yet.
-function createGitHubAppInstallURL(discoveredSlug: string | undefined): string | undefined {
-  const slug = discoveredSlug ?? readOptionalString(process.env.GITHUB_APP_SLUG)
-  return isNullish(slug)
-    ? undefined
-    : `${GITHUB_APPS_ROOT}/${encodeURLSegment(slug)}/installations/new`
 }
 
 async function fetchGitHubStatus(

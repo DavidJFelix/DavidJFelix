@@ -25,6 +25,7 @@ import {
   takePendingDiffsItems,
 } from '@/diffs/lib/diffs-data-accumulator'
 import {getPatchTreePathPrefix} from '@/diffs/lib/git-patch-metadata'
+import {type GitHubAccessRemedy, parseGitHubAccessRemedy} from '@/diffs/lib/github-access-remedy'
 import {
   type DiffsLineHashTarget,
   formatDiffsLineHash,
@@ -62,6 +63,7 @@ interface UsePatchLoaderResult {
   commentSections: DiffsSavedCommentItem[]
   diffStats: DiffsStats | null
   errorMessage: string | null
+  errorRemedy: GitHubAccessRemedy | null
   initialItems: CodeViewItem<CommentMetadata>[]
   loadState: ViewerLoadState
   onLineLinkChange(selection: CodeViewLineSelection | null): void
@@ -91,6 +93,7 @@ export function usePatchLoader({
   const [commentSections, setCommentSections] = useState<DiffsSavedCommentItem[]>([])
   const [loadState, setLoadState] = useState<ViewerLoadState>('fetching')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [errorRemedy, setErrorRemedy] = useState<GitHubAccessRemedy | null>(null)
   const [loadAttempt, setLoadAttempt] = useState(0)
   const [viewerKey, setViewerKey] = useState(0)
   const requestIdRef = useRef(0)
@@ -212,6 +215,7 @@ export function usePatchLoader({
     setCommentSections([])
     onLoadStart()
     setErrorMessage(null)
+    setErrorRemedy(null)
     setLoadState('fetching')
 
     async function loadPatch() {
@@ -256,8 +260,7 @@ export function usePatchLoader({
         // delivered while consuming the stream so the UI can enter the
         // streaming state as soon as the local transport opens.
         if (!response.ok) {
-          const detail = (await response.text()).trim()
-          throw new Error(detail.length > 0 ? detail : `Request failed (${response.status}).`)
+          throw await createPatchRequestError(response)
         }
 
         if (isNullish(response.body)) {
@@ -436,6 +439,7 @@ export function usePatchLoader({
           return
         }
         setErrorMessage(getPatchLoadErrorMessage(error))
+        setErrorRemedy(getPatchLoadErrorRemedy(error))
         setLoadState('error')
       }
     }
@@ -465,6 +469,7 @@ export function usePatchLoader({
     commentSections,
     diffStats,
     errorMessage,
+    errorRemedy,
     initialItems,
     loadState,
     onLineLinkChange: handleLineLinkChange,
@@ -528,11 +533,39 @@ function getNextItemVersion(item: {version?: string | number}): number {
   return typeof item.version === 'number' ? item.version + 1 : 1
 }
 
+// The diff endpoint answers failures in JSON, carrying both the message and the
+// step that unblocks the reader. The remedy rides on the error's `cause` so the
+// existing throw/catch path keeps working unchanged.
+async function createPatchRequestError(response: Response): Promise<Error> {
+  const body = (await response.text()).trim()
+  const payload = parseJSONObject(body)
+  const message = typeof payload?.message === 'string' ? payload.message.trim() : ''
+  if (message !== '') {
+    return new Error(message, {cause: parseGitHubAccessRemedy(payload?.remedy)})
+  }
+  return new Error(body === '' ? `Request failed (${response.status}).` : body)
+}
+
+function parseJSONObject(body: string): Record<string, unknown> | undefined {
+  try {
+    const parsed: unknown = JSON.parse(body)
+    return typeof parsed === 'object' && parsed !== null
+      ? (parsed as Record<string, unknown>)
+      : undefined
+  } catch {
+    return undefined
+  }
+}
+
 function getPatchLoadErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message.trim() !== '') {
     return error.message
   }
   return GENERIC_PATCH_LOAD_ERROR_MESSAGE
+}
+
+function getPatchLoadErrorRemedy(error: unknown): GitHubAccessRemedy | null {
+  return (error instanceof Error ? parseGitHubAccessRemedy(error.cause) : undefined) ?? null
 }
 
 function replaceLocationHash(hash: string | null): void {

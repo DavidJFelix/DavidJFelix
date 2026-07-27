@@ -3,6 +3,9 @@ import {useEffect, useState} from 'react'
 const SESSION_ENDPOINT = '/api/auth/github/session'
 const LOGIN_ENDPOINT = '/api/auth/github/login'
 const LOGOUT_ENDPOINT = '/api/auth/github/logout'
+// Resolves to a GitHub URL server-side, since which page to land on depends on
+// installations only the session's token can read.
+export const GITHUB_MANAGE_ACCESS_ENDPOINT = '/api/auth/github/installations'
 
 export type GitHubSessionStatus = 'loading' | 'anonymous' | 'authenticated'
 
@@ -45,6 +48,12 @@ export function getGitHubLoginURL(returnTo: string): string {
 
 export function getGitHubLogoutURL(returnTo: string): string {
   return `${LOGOUT_ENDPOINT}?${new URLSearchParams({returnTo})}`
+}
+
+// The hash never reaches the server, so an auth round-trip lands on the same
+// path and search; line-hash targets are simply dropped.
+export function getCurrentReturnPath(): string {
+  return `${window.location.pathname}${window.location.search}`
 }
 
 function loadGitHubSession(): Promise<GitHubSession> {

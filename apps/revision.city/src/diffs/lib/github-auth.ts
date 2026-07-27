@@ -1,3 +1,4 @@
+import {resolveGitHubManageAccessURL} from './github-repo-access'
 import {isNullish} from './nullish'
 
 const GITHUB_AUTHORIZE_URL = 'https://github.com/login/oauth/authorize'
@@ -149,6 +150,27 @@ export function handleGitHubLogoutRequest(request: Request): Response {
   return createRedirectResponse(returnPath, [
     serializeExpiredCookie(AUTH_COOKIE_NAME, isSecureRequest(requestURL)),
   ])
+}
+
+// Forwards a signed-in visitor to GitHub's own page for editing which
+// repositories the app can read. The destination depends on how many
+// installations they have, so it is resolved on the click rather than on every
+// page load. Signing in is a prerequisite, not a separate errand, so a stale or
+// missing session starts the sign-in instead of reporting an error.
+export async function handleGitHubManageAccessRequest(
+  request: Request,
+  options: GitHubAuthOptions = {},
+): Promise<Response> {
+  const auth = await resolveGitHubAuth(request, options)
+  if (isNullish(auth.session)) {
+    return withSetCookieHeaders(handleGitHubLoginRequest(request, options), auth.setCookieHeaders)
+  }
+
+  const manageAccessURL = await resolveGitHubManageAccessURL({
+    fetch: options.fetch,
+    token: auth.session.accessToken,
+  })
+  return createRedirectResponse(manageAccessURL, auth.setCookieHeaders)
 }
 
 // Reports whether the browser holds a usable session so the UI can render the

@@ -18,7 +18,9 @@ preview_urls = true
 # reads two secrets from the worker env: GITHUB_APP_CLIENT_ID and
 # GITHUB_APP_CLIENT_SECRET. Set them with `wrangler secret put`; local dev reads
 # them from .dev.vars (gitignored). Without them the auth routes return 503 and
-# the viewer stays public-only.
+# the viewer stays public-only. The app's public slug is not config -- it is a
+# constant in src/diffs/lib/github-repo-access.ts, since one app serves every
+# deploy today.
 
 # Custom domains, wired up in the Cloudflare dashboard.
 routes = [

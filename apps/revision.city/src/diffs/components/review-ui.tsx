@@ -123,6 +123,7 @@ function ReviewUIInner({domain, initialUrl, path}: ReviewUIProps) {
     commentSections,
     diffStats,
     errorMessage,
+    errorRemedy,
     initialItems,
     loadState,
     onLineLinkChange,
@@ -285,7 +286,12 @@ function ReviewUIInner({domain, initialUrl, path}: ReviewUIProps) {
           />
         </>
       ) : (
-        <DiffsStatusPanel errorMessage={errorMessage} onRetry={retryLoad} state={loadState} />
+        <DiffsStatusPanel
+          errorMessage={errorMessage}
+          onRetry={retryLoad}
+          remedy={errorRemedy}
+          state={loadState}
+        />
       )}
     </ReviewGrid>
   )

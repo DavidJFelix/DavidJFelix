@@ -3,6 +3,7 @@ import {expect, test, vi} from 'vitest'
 import {
   handleGitHubLoginRequest,
   handleGitHubLogoutRequest,
+  handleGitHubManageAccessRequest,
   handleGitHubOAuthCallbackRequest,
   handleGitHubSessionRequest,
   resolveGitHubAuth,
@@ -259,6 +260,40 @@ test('unsafe returnTo values fall back to /diffs', () => {
     )
     expect(response.headers.get('location')).toBe('/diffs')
   }
+})
+
+test('manage-access redirects a signed-in visitor to their installation on GitHub', async () => {
+  const {sessionCookie} = await signIn()
+  const response = await handleGitHubManageAccessRequest(
+    new Request(`${ORIGIN}/api/auth/github/installations`, {headers: {cookie: sessionCookie}}),
+    {
+      credentials: CREDENTIALS,
+      fetch: vi.fn<FetchLike>(async () =>
+        jsonResponse({
+          installations: [
+            {
+              id: 7,
+              html_url: 'https://github.com/settings/installations/7',
+              account: {login: 'test-user'},
+            },
+          ],
+        }),
+      ),
+    },
+  )
+
+  expect(response.status).toBe(302)
+  expect(response.headers.get('location')).toBe('https://github.com/settings/installations/7')
+})
+
+test('manage-access starts the sign-in when there is no session to manage', async () => {
+  const response = await handleGitHubManageAccessRequest(
+    new Request(`${ORIGIN}/api/auth/github/installations?returnTo=/diffs/o/r/pull/1`),
+    {credentials: CREDENTIALS},
+  )
+
+  expect(response.status).toBe(302)
+  expect(response.headers.get('location')).toContain('https://github.com/login/oauth/authorize')
 })
 
 test('withSetCookieHeaders appends every cookie to the response', () => {

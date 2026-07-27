@@ -5,8 +5,8 @@ import {css, cx} from 'styled-system/css'
 
 import {Button} from '@/diffs/components/button'
 import {
-  getCurrentReturnPath,
   GITHUB_MANAGE_ACCESS_ENDPOINT,
+  getCurrentReturnPath,
   getGitHubLoginURL,
   getGitHubLogoutURL,
   useGitHubSession,

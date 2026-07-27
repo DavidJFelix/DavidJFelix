@@ -22,6 +22,16 @@
       "groupName": "npm patch/minor"
     },
     {
+      "description": "svelte-check and vue-tsc embed the TypeScript JS compiler API, which typescript 7 (native) no longer ships; hold these apps at 6.x until the framework checkers support TS 7 (expected ~7.1)",
+      "matchPackageNames": ["typescript"],
+      "matchFileNames": [
+        "apps/alchemy-state-viewer/**",
+        "apps/monicandavid.com/**",
+        "apps/pkg.dog/**"
+      ],
+      "allowedVersions": "<7"
+    },
+    {
       "matchUpdateTypes": ["patch", "minor"],
       "matchManagers": ["cargo"],
       "groupName": "cargo patch/minor"

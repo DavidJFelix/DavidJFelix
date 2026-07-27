@@ -16,8 +16,8 @@ freshness skill.
 
 ### 2. Pin the `latest`-tagged deps
 
-- `@typescript/native-preview` (tsgo) is pinned to `latest` in davidjfelix.com, djf.io, f311x, and
-  ravrun — unreproducible and invisible to Renovate. Pin real versions once Renovate sees them.
+- Done (2026-07, TypeScript 7 upgrade): `@typescript/native-preview` is gone everywhere — replaced
+  by exact-pinned `typescript` 7 in the tsc-checked apps and removed outright from the Astro apps.
 
 ### 3. Revisit gated auto-merge
 

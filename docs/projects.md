@@ -151,9 +151,8 @@ cache the steps that start cold — the pnpm store, and the blocking web-session
 
 ### [Renovate Rollout](./projects/renovate-rollout/plan.md)
 
-Extend Renovate repo-wide (npm + mise + Cargo + lockFileMaintenance), pin the `latest`-tagged tsgo
-deps, revisit gated auto-merge, and retire the bespoke freshness skill + cron once coverage is
-proven.
+Extend Renovate repo-wide (npm + mise + Cargo + lockFileMaintenance), revisit gated auto-merge, and
+retire the bespoke freshness skill + cron once coverage is proven.
 
 **Status**: Active
 

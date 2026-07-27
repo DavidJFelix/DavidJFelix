@@ -197,5 +197,5 @@ deploys in one step — there is no separate build command.
 | `pnpm deploy`    | Alchemy v2 deploy                                                      |
 | `pnpm destroy`   | Alchemy v2 destroy                                                     |
 | `pnpm lint`      | Oxlint + Biome                                                         |
-| `pnpm typecheck` | `tsgo --noEmit`                                                        |
+| `pnpm typecheck` | `tsc --noEmit`                                                         |
 | `pnpm test`      | Vitest                                                                 |

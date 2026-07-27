@@ -35,7 +35,7 @@ defaults:
     working-directory: apps/ravrun
 jobs:
   typecheck:
-    name: tsgo
+    name: tsc
     runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
     timeout-minutes: 10
     permissions:

@@ -4,7 +4,7 @@
 # .config/mise.toml: CI's `mise install` only reads the root config.
 
 [tasks.typecheck]
-description = "Type-check with tsgo"
+description = "Type-check with tsc"
 run = "pnpm run typecheck"
 
 [tasks.lint]

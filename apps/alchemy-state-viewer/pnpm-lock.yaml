@@ -17,13 +17,13 @@ importers:
         version: 5.20260721.1
       '@pandacss/dev':
         specifier: 1.11.4
-        version: 1.11.4(supports-color@10.2.2)(typescript@5.9.3)
+        version: 1.11.4(typescript@6.0.3)
       '@sveltejs/adapter-cloudflare':
         specifier: 7.2.9
-        version: 7.2.9(@sveltejs/kit@2.70.1(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.56.7)(vite@8.1.5(@types/node@25.9.5)(esbuild@0.28.1)))(svelte@5.56.7)(typescript@5.9.3)(vite@8.1.5(@types/node@25.9.5)(esbuild@0.28.1)))(wrangler@4.112.0(@cloudflare/workers-types@5.20260721.1))
+        version: 7.2.9(@sveltejs/kit@2.70.1(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.56.7)(vite@8.1.5(@types/node@25.9.5)(esbuild@0.28.1)))(svelte@5.56.7)(typescript@6.0.3)(vite@8.1.5(@types/node@25.9.5)(esbuild@0.28.1)))(wrangler@4.112.0(@cloudflare/workers-types@5.20260721.1))
       '@sveltejs/kit':
         specifier: 2.70.1
-        version: 2.70.1(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.56.7)(vite@8.1.5(@types/node@25.9.5)(esbuild@0.28.1)))(svelte@5.56.7)(typescript@5.9.3)(vite@8.1.5(@types/node@25.9.5)(esbuild@0.28.1))
+        version: 2.70.1(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.56.7)(vite@8.1.5(@types/node@25.9.5)(esbuild@0.28.1)))(svelte@5.56.7)(typescript@6.0.3)(vite@8.1.5(@types/node@25.9.5)(esbuild@0.28.1))
       '@sveltejs/vite-plugin-svelte':
         specifier: 6.2.4
         version: 6.2.4(svelte@5.56.7)(vite@8.1.5(@types/node@25.9.5)(esbuild@0.28.1))
@@ -41,10 +41,10 @@ importers:
         version: 5.56.7
       svelte-check:
         specifier: 4.7.3
-        version: 4.7.3(picomatch@4.0.5)(svelte@5.56.7)(typescript@5.9.3)
+        version: 4.7.3(picomatch@4.0.5)(svelte@5.56.7)(typescript@6.0.3)
       typescript:
-        specifier: 5.9.3
-        version: 5.9.3
+        specifier: 6.0.3
+        version: 6.0.3
       vite:
         specifier: 8.1.5
         version: 8.1.5(@types/node@25.9.5)(esbuild@0.28.1)
@@ -2334,13 +2334,13 @@ packages:
     resolution: {integrity: sha512-faYHw0anBbc/kWF3zFTEnxSFOAGUX9GFbOBthvDdLsIlEoWOFOtS0zgCiQYwIskL9iGXZL3kAXD8OoZ4GmMATA==}
     engines: {node: '>= 18'}
 
-  typescript@5.9.3:
-    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+  typescript@6.0.2:
+    resolution: {integrity: sha512-bGdAIrZ0wiGDo5l8c++HWtbaNCWTS4UTv7RaTH/ThVIgjkveJt83m74bBHMJkuCbslY8ixgLBVZJIOiQlQTjfQ==}
     engines: {node: '>=14.17'}
     hasBin: true
 
-  typescript@6.0.2:
-    resolution: {integrity: sha512-bGdAIrZ0wiGDo5l8c++HWtbaNCWTS4UTv7RaTH/ThVIgjkveJt83m74bBHMJkuCbslY8ixgLBVZJIOiQlQTjfQ==}
+  typescript@6.0.3:
+    resolution: {integrity: sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -2999,7 +2999,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@modelcontextprotocol/sdk@1.29.0(supports-color@10.2.2)(zod@4.4.3)':
+  '@modelcontextprotocol/sdk@1.29.0(zod@4.4.3)':
     dependencies:
       '@hono/node-server': 1.19.14(hono@4.12.31)
       ajv: 8.20.0
@@ -3009,8 +3009,8 @@ snapshots:
       cross-spawn: 7.0.6
       eventsource: 3.0.7
       eventsource-parser: 3.1.0
-      express: 5.2.1(supports-color@10.2.2)
-      express-rate-limit: 8.6.0(express@5.2.1(supports-color@10.2.2))(supports-color@10.2.2)
+      express: 5.2.1
+      express-rate-limit: 8.6.0(express@5.2.1)
       hono: 4.12.31
       jose: 6.2.3
       json-schema-typed: 8.0.2
@@ -3074,14 +3074,14 @@ snapshots:
       postcss-selector-parser: 7.1.1
       ts-pattern: 5.9.0
 
-  '@pandacss/dev@1.11.4(supports-color@10.2.2)(typescript@5.9.3)':
+  '@pandacss/dev@1.11.4(typescript@6.0.3)':
     dependencies:
       '@clack/prompts': 0.11.0
       '@pandacss/config': 1.11.4
       '@pandacss/logger': 1.11.4
-      '@pandacss/mcp': 1.11.4(supports-color@10.2.2)(typescript@5.9.3)
-      '@pandacss/node': 1.11.4(typescript@5.9.3)
-      '@pandacss/postcss': 1.11.4(typescript@5.9.3)
+      '@pandacss/mcp': 1.11.4(typescript@6.0.3)
+      '@pandacss/node': 1.11.4(typescript@6.0.3)
+      '@pandacss/postcss': 1.11.4(typescript@6.0.3)
       '@pandacss/preset-base': 1.11.4
       '@pandacss/preset-panda': 1.11.4
       '@pandacss/shared': 1.11.4
@@ -3094,10 +3094,10 @@ snapshots:
       - supports-color
       - typescript
 
-  '@pandacss/extractor@1.11.4(typescript@5.9.3)':
+  '@pandacss/extractor@1.11.4(typescript@6.0.3)':
     dependencies:
       '@pandacss/shared': 1.11.4
-      ts-evaluator: 1.2.0(typescript@5.9.3)
+      ts-evaluator: 1.2.0(typescript@6.0.3)
       ts-morph: 28.0.0
     transitivePeerDependencies:
       - jsdom
@@ -3124,12 +3124,12 @@ snapshots:
       '@pandacss/types': 1.11.4
       kleur: 4.1.5
 
-  '@pandacss/mcp@1.11.4(supports-color@10.2.2)(typescript@5.9.3)':
+  '@pandacss/mcp@1.11.4(typescript@6.0.3)':
     dependencies:
       '@clack/prompts': 0.11.0
-      '@modelcontextprotocol/sdk': 1.29.0(supports-color@10.2.2)(zod@4.4.3)
+      '@modelcontextprotocol/sdk': 1.29.0(zod@4.4.3)
       '@pandacss/logger': 1.11.4
-      '@pandacss/node': 1.11.4(typescript@5.9.3)
+      '@pandacss/node': 1.11.4(typescript@6.0.3)
       '@pandacss/token-dictionary': 1.11.4
       '@pandacss/types': 1.11.4
       zod: 4.4.3
@@ -3139,13 +3139,13 @@ snapshots:
       - supports-color
       - typescript
 
-  '@pandacss/node@1.11.4(typescript@5.9.3)':
+  '@pandacss/node@1.11.4(typescript@6.0.3)':
     dependencies:
       '@pandacss/config': 1.11.4
       '@pandacss/core': 1.11.4
       '@pandacss/generator': 1.11.4
       '@pandacss/logger': 1.11.4
-      '@pandacss/parser': 1.11.4(typescript@5.9.3)
+      '@pandacss/parser': 1.11.4(typescript@6.0.3)
       '@pandacss/plugin-lightningcss': 1.11.4
       '@pandacss/plugin-svelte': 1.11.4
       '@pandacss/plugin-vue': 1.11.4
@@ -3177,11 +3177,11 @@ snapshots:
       - jsdom
       - typescript
 
-  '@pandacss/parser@1.11.4(typescript@5.9.3)':
+  '@pandacss/parser@1.11.4(typescript@6.0.3)':
     dependencies:
       '@pandacss/config': 1.11.4
       '@pandacss/core': 1.11.4
-      '@pandacss/extractor': 1.11.4(typescript@5.9.3)
+      '@pandacss/extractor': 1.11.4(typescript@6.0.3)
       '@pandacss/logger': 1.11.4
       '@pandacss/shared': 1.11.4
       '@pandacss/types': 1.11.4
@@ -3209,9 +3209,9 @@ snapshots:
       '@vue/compiler-sfc': 3.5.25
       magic-string: 0.30.21
 
-  '@pandacss/postcss@1.11.4(typescript@5.9.3)':
+  '@pandacss/postcss@1.11.4(typescript@6.0.3)':
     dependencies:
-      '@pandacss/node': 1.11.4(typescript@5.9.3)
+      '@pandacss/node': 1.11.4(typescript@6.0.3)
       postcss: 8.5.14
     transitivePeerDependencies:
       - jsdom
@@ -3322,14 +3322,14 @@ snapshots:
     dependencies:
       acorn: 8.17.0
 
-  '@sveltejs/adapter-cloudflare@7.2.9(@sveltejs/kit@2.70.1(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.56.7)(vite@8.1.5(@types/node@25.9.5)(esbuild@0.28.1)))(svelte@5.56.7)(typescript@5.9.3)(vite@8.1.5(@types/node@25.9.5)(esbuild@0.28.1)))(wrangler@4.112.0(@cloudflare/workers-types@5.20260721.1))':
+  '@sveltejs/adapter-cloudflare@7.2.9(@sveltejs/kit@2.70.1(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.56.7)(vite@8.1.5(@types/node@25.9.5)(esbuild@0.28.1)))(svelte@5.56.7)(typescript@6.0.3)(vite@8.1.5(@types/node@25.9.5)(esbuild@0.28.1)))(wrangler@4.112.0(@cloudflare/workers-types@5.20260721.1))':
     dependencies:
       '@cloudflare/workers-types': 4.20260702.1
-      '@sveltejs/kit': 2.70.1(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.56.7)(vite@8.1.5(@types/node@25.9.5)(esbuild@0.28.1)))(svelte@5.56.7)(typescript@5.9.3)(vite@8.1.5(@types/node@25.9.5)(esbuild@0.28.1))
+      '@sveltejs/kit': 2.70.1(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.56.7)(vite@8.1.5(@types/node@25.9.5)(esbuild@0.28.1)))(svelte@5.56.7)(typescript@6.0.3)(vite@8.1.5(@types/node@25.9.5)(esbuild@0.28.1))
       worktop: 0.8.0-next.18
       wrangler: 4.112.0(@cloudflare/workers-types@5.20260721.1)
 
-  '@sveltejs/kit@2.70.1(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.56.7)(vite@8.1.5(@types/node@25.9.5)(esbuild@0.28.1)))(svelte@5.56.7)(typescript@5.9.3)(vite@8.1.5(@types/node@25.9.5)(esbuild@0.28.1))':
+  '@sveltejs/kit@2.70.1(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.56.7)(vite@8.1.5(@types/node@25.9.5)(esbuild@0.28.1)))(svelte@5.56.7)(typescript@6.0.3)(vite@8.1.5(@types/node@25.9.5)(esbuild@0.28.1))':
     dependencies:
       '@standard-schema/spec': 1.1.0
       '@sveltejs/acorn-typescript': 1.0.11(acorn@8.17.0)
@@ -3347,7 +3347,7 @@ snapshots:
       svelte: 5.56.7
       vite: 8.1.5(@types/node@25.9.5)(esbuild@0.28.1)
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.3
 
   '@sveltejs/load-config@0.2.0': {}
 
@@ -4104,11 +4104,11 @@ snapshots:
 
   blake3-wasm@2.1.5: {}
 
-  body-parser@2.3.0(supports-color@10.2.2):
+  body-parser@2.3.0:
     dependencies:
       bytes: 3.1.2
       content-type: 2.0.0
-      debug: 4.4.3(supports-color@10.2.2)
+      debug: 4.4.3
       http-errors: 2.0.1
       iconv-lite: 0.7.3
       on-finished: 2.4.1
@@ -4207,11 +4207,9 @@ snapshots:
 
   csstype@3.2.3: {}
 
-  debug@4.4.3(supports-color@10.2.2):
+  debug@4.4.3:
     dependencies:
       ms: 2.1.3
-    optionalDependencies:
-      supports-color: 10.2.2
 
   deepmerge@4.3.1: {}
 
@@ -4333,28 +4331,28 @@ snapshots:
 
   expect-type@1.4.0: {}
 
-  express-rate-limit@8.6.0(express@5.2.1(supports-color@10.2.2))(supports-color@10.2.2):
+  express-rate-limit@8.6.0(express@5.2.1):
     dependencies:
-      debug: 4.4.3(supports-color@10.2.2)
-      express: 5.2.1(supports-color@10.2.2)
+      debug: 4.4.3
+      express: 5.2.1
       ip-address: 10.2.0
     transitivePeerDependencies:
       - supports-color
 
-  express@5.2.1(supports-color@10.2.2):
+  express@5.2.1:
     dependencies:
       accepts: 2.0.0
-      body-parser: 2.3.0(supports-color@10.2.2)
+      body-parser: 2.3.0
       content-disposition: 1.1.0
       content-type: 1.0.5
       cookie: 0.7.2
       cookie-signature: 1.2.2
-      debug: 4.4.3(supports-color@10.2.2)
+      debug: 4.4.3
       depd: 2.0.0
       encodeurl: 2.0.0
       escape-html: 1.0.3
       etag: 1.8.1
-      finalhandler: 2.1.1(supports-color@10.2.2)
+      finalhandler: 2.1.1
       fresh: 2.0.0
       http-errors: 2.0.1
       merge-descriptors: 2.0.0
@@ -4365,9 +4363,9 @@ snapshots:
       proxy-addr: 2.0.7
       qs: 6.15.3
       range-parser: 1.3.0
-      router: 2.2.0(supports-color@10.2.2)
-      send: 1.2.1(supports-color@10.2.2)
-      serve-static: 2.2.1(supports-color@10.2.2)
+      router: 2.2.0
+      send: 1.2.1
+      serve-static: 2.2.1
       statuses: 2.0.2
       type-is: 2.1.0
       vary: 1.1.2
@@ -4400,9 +4398,9 @@ snapshots:
     dependencies:
       to-regex-range: 5.0.1
 
-  finalhandler@2.1.1(supports-color@10.2.2):
+  finalhandler@2.1.1:
     dependencies:
-      debug: 4.4.3(supports-color@10.2.2)
+      debug: 4.4.3
       encodeurl: 2.0.0
       escape-html: 1.0.3
       on-finished: 2.4.1
@@ -4869,9 +4867,9 @@ snapshots:
       '@rolldown/binding-win32-arm64-msvc': 1.1.5
       '@rolldown/binding-win32-x64-msvc': 1.1.5
 
-  router@2.2.0(supports-color@10.2.2):
+  router@2.2.0:
     dependencies:
-      debug: 4.4.3(supports-color@10.2.2)
+      debug: 4.4.3
       depd: 2.0.0
       is-promise: 4.0.0
       parseurl: 1.3.3
@@ -4891,9 +4889,9 @@ snapshots:
 
   semver@7.8.5: {}
 
-  send@1.2.1(supports-color@10.2.2):
+  send@1.2.1:
     dependencies:
-      debug: 4.4.3(supports-color@10.2.2)
+      debug: 4.4.3
       encodeurl: 2.0.0
       escape-html: 1.0.3
       etag: 1.8.1
@@ -4907,12 +4905,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  serve-static@2.2.1(supports-color@10.2.2):
+  serve-static@2.2.1:
     dependencies:
       encodeurl: 2.0.0
       escape-html: 1.0.3
       parseurl: 1.3.3
-      send: 1.2.1(supports-color@10.2.2)
+      send: 1.2.1
     transitivePeerDependencies:
       - supports-color
 
@@ -5025,7 +5023,7 @@ snapshots:
     dependencies:
       has-flag: 4.0.0
 
-  svelte-check@4.7.3(picomatch@4.0.5)(svelte@5.56.7)(typescript@5.9.3):
+  svelte-check@4.7.3(picomatch@4.0.5)(svelte@5.56.7)(typescript@6.0.3):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       '@sveltejs/load-config': 0.2.0
@@ -5034,7 +5032,7 @@ snapshots:
       picocolors: 1.1.1
       sade: 1.8.1
       svelte: 5.56.7
-      typescript: 5.9.3
+      typescript: 6.0.3
     transitivePeerDependencies:
       - picomatch
 
@@ -5086,12 +5084,12 @@ snapshots:
 
   totalist@3.0.1: {}
 
-  ts-evaluator@1.2.0(typescript@5.9.3):
+  ts-evaluator@1.2.0(typescript@6.0.3):
     dependencies:
       ansi-colors: 4.1.3
       crosspath: 2.0.0
       object-path: 0.11.8
-      typescript: 5.9.3
+      typescript: 6.0.3
 
   ts-morph@28.0.0:
     dependencies:
@@ -5108,9 +5106,9 @@ snapshots:
       media-typer: 1.1.0
       mime-types: 3.0.2
 
-  typescript@5.9.3: {}
-
   typescript@6.0.2: {}
+
+  typescript@6.0.3: {}
 
   undici-types@7.24.6: {}
 

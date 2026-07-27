@@ -1,5 +1,5 @@
 {
-  "typescript.tsdk": "node_modules/@typescript/native-preview/lib",
+  "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "files.watcherExclude": {
     "**/routeTree.gen.ts": true

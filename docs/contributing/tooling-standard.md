@@ -23,15 +23,15 @@ For _where_ those config files live and _what format_ they take, see
 
 Applies to every JS/TS app (Astro, React, Vue, Svelte, TanStack Start, Nuxt, plain Node).
 
-| Concern                                                                 | Tool                                | Config                                                                |
-| ----------------------------------------------------------------------- | ----------------------------------- | --------------------------------------------------------------------- |
-| Lint, primary (JS/TS/JSX/TSX + astro/vue/svelte script blocks)          | Oxlint                              | root `.oxlintrc.json`                                                 |
-| Lint, residual (CSS lint + the JS rules oxlint lacks; pruned rule list) | Biome                               | root `biome.jsonc`, app `biome.json` extends it                       |
-| Format (JS/TS/JSX/TSX, JSON/JSONC, CSS, Vue)                            | oxfmt                               | root `.oxfmtrc.json`                                                  |
-| Format (`.astro` frontmatter, `.svelte` script blocks)                  | Biome                               | root `biome.jsonc` (`formatter.includes`)                             |
-| Import organizing                                                       | Biome assist                        | root `biome.jsonc`                                                    |
-| Type checking                                                           | tsgo (`@typescript/native-preview`) | per-app `tsconfig.json`                                               |
-| Markdown / MDX formatting                                               | Prettier (md/mdx only)              | root `.prettierrc.json` (`proseWrap: always`), root `.prettierignore` |
+| Concern                                                                 | Tool                         | Config                                                                |
+| ----------------------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------------- |
+| Lint, primary (JS/TS/JSX/TSX + astro/vue/svelte script blocks)          | Oxlint                       | root `.oxlintrc.json`                                                 |
+| Lint, residual (CSS lint + the JS rules oxlint lacks; pruned rule list) | Biome                        | root `biome.jsonc`, app `biome.json` extends it                       |
+| Format (JS/TS/JSX/TSX, JSON/JSONC, CSS, Vue)                            | oxfmt                        | root `.oxfmtrc.json`                                                  |
+| Format (`.astro` frontmatter, `.svelte` script blocks)                  | Biome                        | root `biome.jsonc` (`formatter.includes`)                             |
+| Import organizing                                                       | Biome assist                 | root `biome.jsonc`                                                    |
+| Type checking                                                           | tsc (`typescript` 7, native) | per-app `tsconfig.json`                                               |
+| Markdown / MDX formatting                                               | Prettier (md/mdx only)       | root `.prettierrc.json` (`proseWrap: always`), root `.prettierignore` |
 
 Oxlint is the primary linter and oxfmt the primary formatter; Biome remains only where oxc does not
 reach -- CSS linting, a pruned list of JS rules oxlint has no equivalent for, `.astro`/`.svelte`
@@ -40,6 +40,12 @@ lint-parity kit (one violating fixture per previously-active Biome rule, asserte
 that took it over); the kit was removed after passing and lives in git history on the migration PR.
 Revisit the Biome remainder as oxlint/oxfmt grow (svelte/astro formatting, CSS linting, import
 sorting).
+
+Type checking is the native `tsc` (`typescript` 7) wherever the check is bare tsc. Framework apps
+keep their framework checker -- `astro check`, `svelte-check`, `vue-tsc` (via `nuxt typecheck`) --
+and those embed the TypeScript JS compiler API that the native compiler no longer ships, so the
+Svelte and Nuxt apps pin `typescript` 6 (Renovate holds it below 7) until the checkers support TS 7,
+expected around 7.1.
 
 ### Rust _(aspirational — not yet implemented)_
 

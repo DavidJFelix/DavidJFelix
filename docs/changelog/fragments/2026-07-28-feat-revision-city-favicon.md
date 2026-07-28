@@ -20,3 +20,21 @@ The `<link>` is declared on the root route, so `/diffs` inherits the mark while 
 own title and description. End-to-end tests cover both halves of that: the link is present on `/`
 and on `/diffs`, and `/favicon.svg` answers 200 as `image/svg+xml` rather than the SPA fallback that
 a build which dropped `public/` would serve.
+
+The mark now also appears in the page, leading the name at the top left of each of the three
+surfaces that have one: the landing header, the diffs home heading, and the diffs viewer header.
+They share a `SiteMark` component, which imports `building-2` from `lucide-react` rather than
+re-copying it, because on this side there is a module graph to import from.
+
+In the page it drops the two things the tab needs. A filled tile beside a wordmark reads as noise at
+page size, and a hard-coded black or white would clash inside the diffs header, whose foreground
+comes from whichever Shiki theme is active -- so the glyph keeps `currentColor` and is sized in
+`em`. That is what lets all three placements sit at different font sizes on differently-colored
+chrome while passing no props at all.
+
+A unit test asserts that the paths Lucide renders are the ones committed in `public/favicon.svg`,
+which turns that file's "re-copy if the drawing changes" note into something CI enforces -- an
+upgrade that redraws the glyph would otherwise move only the imported half, leaving the tab and the
+header showing different buildings. The end-to-end tests measure the mark against the text node
+beside it, rather than the element wrapping them both, so a placement that trails the name instead
+of leading it actually fails.

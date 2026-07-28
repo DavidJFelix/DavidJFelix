@@ -152,6 +152,7 @@
     "unreviewable",
     "upserts",
     "virtuals",
+    "wordmark",
     "worktree",
     // Domain terms: AT Protocol, PostHog event vocabulary, standards.
     "atproto",

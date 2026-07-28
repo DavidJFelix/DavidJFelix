@@ -1,6 +1,7 @@
 import {createFileRoute, Link} from '@tanstack/react-router'
 
 import {css} from 'styled-system/css'
+import {SiteMark} from '@/components/site-mark'
 
 export const Route = createFileRoute('/')({
   component: Home,
@@ -35,7 +36,17 @@ function Home() {
           borderColor: 'neutral.200',
         })}
       >
-        <span className={css({fontWeight: 'semibold', fontSize: 'lg', letterSpacing: 'tight'})}>
+        <span
+          className={css({
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '2',
+            fontWeight: 'semibold',
+            fontSize: 'lg',
+            letterSpacing: 'tight',
+          })}
+        >
+          <SiteMark />
           {title}
         </span>
         <span className={css({fontSize: 'sm', color: 'neutral.500'})}>{tag}</span>

@@ -5,6 +5,7 @@ import {memo} from 'react'
 
 import {css, cx} from 'styled-system/css'
 
+import {SiteMark} from '@/components/site-mark'
 import {Button} from '@/diffs/components/button'
 import {DiffUrlForm} from '@/diffs/components/diff-url-form'
 import {GitHubAuthControl} from '@/diffs/components/github-auth-control'
@@ -85,6 +86,7 @@ function DiffsHomePage() {
             letterSpacing: 'tight',
           })}
         >
+          <SiteMark />
           Diffs
         </h2>
         <p className={css({color: 'diffs.muted.foreground', textWrap: 'pretty'})}>

@@ -1,6 +1,11 @@
 import {createFileRoute} from '@tanstack/react-router'
+import {useState} from 'react'
 
 import {css, cx} from 'styled-system/css'
+import {button, field} from 'styled-system/recipes'
+
+import {Button} from '@/components/Button.tsx'
+import {subscribeToLoops} from '@/lib/loops.ts'
 
 export const Route = createFileRoute('/')({
   component: ComingSoonPage,
@@ -16,8 +21,22 @@ const PIGMENT_DOTS = [
   cx(dot, css({bg: 'pigment.sky'})),
 ]
 
-// Pre-launch landing: just the brand mark and a note, in the shop's theme. The
-// storefront itself lives at /monica until launch.
+const SOCIAL_LINKS = [
+  ['Follow on Instagram', 'https://www.instagram.com/forzamonica', InstagramIcon],
+  ['Follow on Facebook', 'https://www.facebook.com/forzamonica', FacebookIcon],
+] as const
+
+const socialLink = css({
+  display: 'inline-flex',
+  p: '2.5',
+  color: 'ink.muted',
+  transition: 'color token(durations.quick) token(easings.out)',
+  _hover: {color: 'ink'},
+})
+
+// Pre-launch landing: the brand mark, the mailing list, the current shop, and
+// ways to follow along, in the shop's theme. The storefront itself lives at
+// /monica until launch.
 function ComingSoonPage() {
   return (
     <section
@@ -29,6 +48,7 @@ function ComingSoonPage() {
         justifyContent: 'center',
         gap: '6',
         px: '6',
+        py: '16',
         textAlign: 'center',
       })}
     >
@@ -43,6 +63,130 @@ function ComingSoonPage() {
           <span key={dotClass} className={dotClass} />
         ))}
       </div>
+      <NewsletterSignup />
+      <a href="https://www.forzamonica.shop/" className={button({visual: 'secondary'})}>
+        Shop the current collection
+      </a>
+      <nav aria-label="Follow Monica" className={css({display: 'flex', gap: '1'})}>
+        {SOCIAL_LINKS.map(([label, href, Icon]) => (
+          <a key={href} href={href} aria-label={label} className={socialLink}>
+            <Icon />
+          </a>
+        ))}
+      </nav>
     </section>
+  )
+}
+
+type SignupStatus = 'idle' | 'sending' | 'subscribed' | 'error'
+
+// The signup posts straight to the Loops form endpoint from the browser and
+// fails soft into the error state until the endpoint is configured -- see
+// src/lib/loops.ts.
+function NewsletterSignup() {
+  const [status, setStatus] = useState<SignupStatus>('idle')
+  const fieldClasses = field()
+
+  return (
+    <div
+      aria-live="polite"
+      className={css({
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '3',
+        alignItems: 'center',
+        width: 'full',
+        maxWidth: '420px',
+      })}
+    >
+      <p className={css({fontSize: '15px', color: 'ink.muted'})}>
+        Be first to hear when new paintings drop and the shop opens.
+      </p>
+      {status === 'subscribed' ? (
+        <p className={css({fontSize: '15px', fontWeight: 'bold', color: 'success'})}>
+          Thank you — you're on the list.
+        </p>
+      ) : (
+        <form
+          className={css({display: 'flex', flexDirection: 'column', gap: '2.5', width: 'full'})}
+          onSubmit={(event) => {
+            event.preventDefault()
+            const email = new FormData(event.currentTarget).get('email')
+            if (typeof email !== 'string' || email === '') return
+            setStatus('sending')
+            void subscribeToLoops({email}).then((subscribed) =>
+              setStatus(subscribed ? 'subscribed' : 'error'),
+            )
+          }}
+        >
+          <div
+            className={css({
+              display: 'flex',
+              flexDirection: {base: 'column', sm: 'row'},
+              alignItems: 'stretch',
+              gap: '2.5',
+              width: 'full',
+            })}
+          >
+            <input
+              type="email"
+              name="email"
+              required
+              aria-label="Email address"
+              placeholder="you@example.com"
+              className={cx(fieldClasses.control, css({flex: '1'}))}
+            />
+            <Button type="submit" disabled={status === 'sending'}>
+              Notify me
+            </Button>
+          </div>
+          {status === 'error' ? (
+            <p className={css({fontSize: '13px', color: 'error'})}>
+              Something went wrong — please try again in a moment.
+            </p>
+          ) : null}
+        </form>
+      )}
+    </div>
+  )
+}
+
+// Feather-style outline marks (MIT) drawn inline; currentColor keeps them in
+// the link's ink.
+function InstagramIcon() {
+  return (
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+    </svg>
+  )
+}
+
+function FacebookIcon() {
+  return (
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+    </svg>
   )
 }

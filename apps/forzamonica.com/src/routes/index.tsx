@@ -121,7 +121,9 @@ function NewsletterSignup() {
       })}
     >
       <p className={css({fontSize: '15px', color: 'ink.muted'})}>
-        Subscribe to my mailing list to hear about upcoming shows and new paintings.
+        Subscribe to my mailing list to hear about
+        <br />
+        upcoming shows and new paintings.
       </p>
       {status === 'subscribed' ? (
         <p className={css({fontSize: '15px', fontWeight: 'bold', color: 'success'})}>

@@ -31,6 +31,7 @@ import {
 } from 'react'
 
 import {css, cx} from 'styled-system/css'
+import {SiteMark} from '@/components/site-mark'
 import {Button} from '@/diffs/components/button'
 import {ButtonGroup, ButtonGroupItem} from '@/diffs/components/button-group'
 import {
@@ -186,12 +187,16 @@ export const DiffsHeader = memo(function DiffsHeader({
       >
         <span
           className={css({
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '1.5',
             fontWeight: 'semibold',
             letterSpacing: 'tight',
             fontSize: 'lg',
             lineHeight: '1',
           })}
         >
+          <SiteMark />
           Diffs
         </span>
       </Link>

@@ -45,6 +45,11 @@
       "matchUpdateTypes": ["patch", "minor"],
       "matchManagers": ["mise"],
       "groupName": "mise patch/minor"
+    },
+    {
+      "description": "wrangler and @cloudflare/vite-plugin ship as a matched pair (the plugin pins the miniflare/workerd runtime to a specific wrangler release), so group every update type into a single PR that moves both packages across all apps together",
+      "matchPackageNames": ["wrangler", "@cloudflare/vite-plugin"],
+      "groupName": "cloudflare wrangler and vite plugin"
     }
   ]
 }

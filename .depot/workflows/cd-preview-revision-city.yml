@@ -20,6 +20,7 @@ on:
       - 'apps/revision.city/**'
       - '.depot/workflows/cd-preview-revision-city.yml'
       - '.depot/actions/preview-wrangler/**'
+      - '.depot/actions/setup-playwright/**'
       - 'bin/**'
 concurrency:
   group: preview-revision-city-${{ github.event.pull_request.number }}

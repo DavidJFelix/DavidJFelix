@@ -89,6 +89,11 @@ runs:
         SMOKE_RETRY_DELAY_MS: "5000"
       run: bun "$GITHUB_WORKSPACE/bin/smoke-url.ts"
 
+    # Browsers and apt debs both restore from cache; warm runs skip the apt
+    # mirrors entirely. Inlined from .depot/actions/setup-playwright (keep in
+    # sync): nesting that action here breaks -- run steps inside a nested
+    # composite do not inherit the job's default working-directory, so the
+    # version resolve and `pnpm exec` would run at the repo root and fail.
     - name: resolve playwright version
       id: pw-version
       shell: bash
@@ -103,15 +108,20 @@ runs:
         path: ~/.cache/ms-playwright
         key: playwright-${{ runner.os }}-${{ steps.pw-version.outputs.version }}
 
+    - name: cache playwright system deps
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.cache/playwright-apt
+        key: playwright-apt-${{ runner.os }}-${{ steps.pw-version.outputs.version }}
+
     - name: playwright install
       if: steps.pw-cache.outputs.cache-hit != 'true'
       shell: bash
-      run: pnpm exec playwright install --with-deps chromium
+      run: pnpm exec playwright install chromium
 
     - name: playwright install-deps
-      if: steps.pw-cache.outputs.cache-hit == 'true'
       shell: bash
-      run: pnpm exec playwright install-deps chromium
+      run: bun "$GITHUB_WORKSPACE/bin/install-playwright-deps.ts"
 
     # PREVIEW_URL set => playwright.config.ts skips the local boot and points at
     # the deployed preview. `pnpm run` (not `mise run`) avoids the e2e task's

@@ -23,6 +23,7 @@ on:
       - '.depot/workflows/cd-preview-onvibes-org.yml'
       - '.depot/actions/preview-worker/**'
       - '.depot/actions/preview-worker-teardown/**'
+      - '.depot/actions/setup-playwright/**'
       - 'bin/**'
 # One preview per PR; a new push cancels an in-flight preview. A close event
 # shares the group so teardown supersedes any running preview.

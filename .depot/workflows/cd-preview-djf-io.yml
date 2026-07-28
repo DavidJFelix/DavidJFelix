@@ -19,6 +19,7 @@ on:
       - 'apps/djf.io/**'
       - '.depot/workflows/cd-preview-djf-io.yml'
       - '.depot/actions/preview-wrangler/**'
+      - '.depot/actions/setup-playwright/**'
       - 'bin/**'
 concurrency:
   group: preview-djf-io-${{ github.event.pull_request.number }}

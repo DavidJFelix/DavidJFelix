@@ -19,6 +19,7 @@ on:
       - 'apps/ravrun/**'
       - '.depot/workflows/cd-preview-ravrun.yml'
       - '.depot/actions/preview-wrangler/**'
+      - '.depot/actions/setup-playwright/**'
       - 'bin/**'
 concurrency:
   group: preview-ravrun-${{ github.event.pull_request.number }}

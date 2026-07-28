@@ -398,6 +398,9 @@ allow_builds = '["@google/genai", "protobufjs"]'
 version = "0.41.0"
 backend = "npm:@sentry/warden"
 
+[tools."npm:@sentry/warden".options]
+trust_policy_excludes = '["@sentry/warden"]'
+
 [[tools."npm:cspell"]]
 version = "10.0.1"
 backend = "npm:cspell"

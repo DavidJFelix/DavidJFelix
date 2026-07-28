@@ -26,3 +26,8 @@ enabled = true
 # https://<store>.myshopify.com/api/<version>/graphql.json and set the
 # SHOPIFY_STOREFRONT_PUBLIC_TOKEN secret (`wrangler secret put`).
 SHOPIFY_STOREFRONT_API_URL = "https://mock.shop/api"
+
+# The landing's mailing-list signup calls the Loops (loops.so) Contacts API from
+# its server function. Off until the LOOPS_API_KEY secret is set
+# (`wrangler secret put LOOPS_API_KEY`; `.dev.vars` locally) -- submissions fail
+# soft into the form's error state until then.

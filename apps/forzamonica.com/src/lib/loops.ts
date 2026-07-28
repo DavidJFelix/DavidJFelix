@@ -1,29 +1,32 @@
-// Loops (loops.so) newsletter signup. Each Loops form has a public endpoint
-// made for exactly this: the browser POSTs the address as form data, no API
-// key involved (https://loops.so/docs/forms/custom-form).
-//
-// Dark until the endpoint is set: create the form in Loops, then paste its
-// endpoint URL (https://app.loops.so/api/newsletter-form/<form-id>) here.
-export const LOOPS_FORM_ENDPOINT: string | null = null
+// Loops (loops.so) mailing-list signup via the Contacts API
+// (https://loops.so/docs/api-reference). Only ever called from the newsletter
+// server function, so the API key never reaches the client bundle.
 
-export type SubscribeToLoopsParams = {
+const CONTACTS_CREATE_URL = 'https://app.loops.so/api/v1/contacts/create'
+
+export type CreateLoopsContactParams = {
   email: string
-  endpoint?: string | null
+  apiKey: string | undefined
 }
 
-// Resolves false on any failure -- endpoint unset, network error, non-2xx --
-// so the signup form can fail soft into its error state.
-export async function subscribeToLoops(
-  {email, endpoint = LOOPS_FORM_ENDPOINT}: SubscribeToLoopsParams,
+// Resolves true when Loops created the contact or already had it (409) -- both
+// mean "you're on the list" -- and false on any failure (key unset, network
+// error, bad response) so the signup form can fail soft into its error state.
+export async function createLoopsContact(
+  {email, apiKey}: CreateLoopsContactParams,
   fetchImpl: typeof fetch = fetch,
 ): Promise<boolean> {
-  if (!endpoint) return false
+  if (!apiKey) return false
   try {
-    const response = await fetchImpl(endpoint, {
+    const response = await fetchImpl(CONTACTS_CREATE_URL, {
       method: 'POST',
-      body: new URLSearchParams({email}),
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({email, source: 'forzamonica.com landing'}),
     })
-    return response.ok
+    return response.ok || response.status === 409
   } catch {
     return false
   }

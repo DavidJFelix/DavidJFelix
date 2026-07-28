@@ -15,7 +15,7 @@ test('root path serves the coming-soon landing without shop chrome', async ({pag
   await expect(page.getByRole('heading', {level: 1, name: 'forzamonica art'})).toBeVisible()
   await expect(page.getByText('Watercolors by Monica Felix — coming soon.')).toBeVisible()
   await expect(page.getByLabel('Email address')).toBeVisible()
-  await expect(page.getByRole('button', {name: 'Notify me'})).toBeVisible()
+  await expect(page.getByRole('button', {name: 'Subscribe'})).toBeVisible()
   await expect(page.getByRole('link', {name: 'Shop the current collection'})).toHaveAttribute(
     'href',
     'https://www.forzamonica.shop/',

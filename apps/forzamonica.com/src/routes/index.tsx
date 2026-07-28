@@ -5,7 +5,7 @@ import {css, cx} from 'styled-system/css'
 import {button, field} from 'styled-system/recipes'
 
 import {Button} from '@/components/Button.tsx'
-import {subscribeToLoops} from '@/lib/loops.ts'
+import {subscribeToNewsletter} from '@/lib/newsletter.ts'
 
 export const Route = createFileRoute('/')({
   component: ComingSoonPage,
@@ -34,8 +34,8 @@ const socialLink = css({
   _hover: {color: 'ink'},
 })
 
-// Pre-launch landing: the brand mark, the mailing list, the current shop, and
-// ways to follow along, in the shop's theme. The storefront itself lives at
+// Pre-launch landing: the brand mark, ways to follow along, the current shop,
+// and the mailing list, in the shop's theme. The storefront itself lives at
 // /monica until launch.
 function ComingSoonPage() {
   return (
@@ -55,18 +55,6 @@ function ComingSoonPage() {
       <h1 className={css({textStyle: 'displayXl', color: 'ink'})}>
         forzamonica <span className={css({fontStyle: 'normal', fontWeight: 'normal'})}>art</span>
       </h1>
-      <p className={css({fontSize: '16px', color: 'ink.muted'})}>
-        Watercolors by Monica Felix — coming soon.
-      </p>
-      <div className={css({display: 'flex', gap: '2.5'})}>
-        {PIGMENT_DOTS.map((dotClass) => (
-          <span key={dotClass} className={dotClass} />
-        ))}
-      </div>
-      <NewsletterSignup />
-      <a href="https://www.forzamonica.shop/" className={button({visual: 'secondary'})}>
-        Shop the current collection
-      </a>
       <nav aria-label="Follow Monica" className={css({display: 'flex', gap: '1'})}>
         {SOCIAL_LINKS.map(([label, href, Icon]) => (
           <a key={href} href={href} aria-label={label} className={socialLink}>
@@ -74,15 +62,39 @@ function ComingSoonPage() {
           </a>
         ))}
       </nav>
+      <a href="https://www.forzamonica.shop/" className={button()}>
+        Shop the current collection
+      </a>
+      <div
+        className={css({
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '3',
+          mt: '4',
+          width: 'full',
+        })}
+      >
+        <p className={css({fontSize: '16px', color: 'ink.muted'})}>
+          Watercolors by Monica Felix — coming soon.
+        </p>
+        <NewsletterSignup />
+      </div>
+      <div className={css({display: 'flex', gap: '2.5', mt: '4'})}>
+        {PIGMENT_DOTS.map((dotClass) => (
+          <span key={dotClass} className={dotClass} />
+        ))}
+      </div>
     </section>
   )
 }
 
 type SignupStatus = 'idle' | 'sending' | 'subscribed' | 'error'
 
-// The signup posts straight to the Loops form endpoint from the browser and
-// fails soft into the error state until the endpoint is configured -- see
-// src/lib/loops.ts.
+// Reads as a continuation of the coming-soon line above it. The submit runs
+// through the newsletter server function (Loops API, key server-side) and
+// fails soft into the error state until the key is configured -- see
+// src/lib/newsletter.ts.
 function NewsletterSignup() {
   const [status, setStatus] = useState<SignupStatus>('idle')
   const fieldClasses = field()
@@ -100,7 +112,7 @@ function NewsletterSignup() {
       })}
     >
       <p className={css({fontSize: '15px', color: 'ink.muted'})}>
-        Be first to hear when new paintings drop and the shop opens.
+        Subscribe to my mailing list to hear about upcoming shows and new paintings.
       </p>
       {status === 'subscribed' ? (
         <p className={css({fontSize: '15px', fontWeight: 'bold', color: 'success'})}>
@@ -114,7 +126,7 @@ function NewsletterSignup() {
             const email = new FormData(event.currentTarget).get('email')
             if (typeof email !== 'string' || email === '') return
             setStatus('sending')
-            void subscribeToLoops({email}).then((subscribed) =>
+            void subscribeToNewsletter({data: {email}}).then((subscribed) =>
               setStatus(subscribed ? 'subscribed' : 'error'),
             )
           }}
@@ -137,7 +149,7 @@ function NewsletterSignup() {
               className={cx(fieldClasses.control, css({flex: '1'}))}
             />
             <Button type="submit" disabled={status === 'sending'}>
-              Notify me
+              Subscribe
             </Button>
           </div>
           {status === 'error' ? (

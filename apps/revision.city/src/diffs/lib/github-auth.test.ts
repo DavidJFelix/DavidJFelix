@@ -140,6 +140,64 @@ test('callback rejects a state mismatch without setting a session', async () => 
   expect(getSetCookies(response).some((c) => c.startsWith('diffs-github-auth='))).toBe(false)
 })
 
+test('post-install callback redirects a signed-in visitor back without exchanging the code', async () => {
+  const {sessionCookie} = await signIn()
+  const setupFetch = stubGitHubFetch()
+
+  const response = await handleGitHubOAuthCallbackRequest(
+    new Request(
+      `${ORIGIN}/api/auth/github/callback?code=unverified&installation_id=149599025&setup_action=install`,
+      {headers: {cookie: sessionCookie}},
+    ),
+    {credentials: CREDENTIALS, fetch: setupFetch},
+  )
+
+  expect(response.status).toBe(302)
+  expect(response.headers.get('location')).toBe('/diffs')
+  // The code arrived without a state bound to this browser, so it is never
+  // sent to GitHub's token endpoint.
+  expect(setupFetch).not.toHaveBeenCalled()
+})
+
+test('post-install callback keeps the return path from a pending state cookie', async () => {
+  const login = handleGitHubLoginRequest(
+    new Request(`${ORIGIN}/api/auth/github/login?returnTo=/diffs/o/r/pull/1`),
+    {credentials: CREDENTIALS},
+  )
+  const stateCookie = cookiePair(getSetCookies(login)[0] ?? '')
+  const {sessionCookie} = await signIn()
+
+  const response = await handleGitHubOAuthCallbackRequest(
+    new Request(`${ORIGIN}/api/auth/github/callback?code=unverified&setup_action=update`, {
+      headers: {cookie: `${sessionCookie}; ${stateCookie}`},
+    }),
+    {credentials: CREDENTIALS, fetch: stubGitHubFetch()},
+  )
+
+  expect(response.status).toBe(302)
+  expect(response.headers.get('location')).toBe('/diffs/o/r/pull/1')
+})
+
+test('post-install callback starts a state-bound sign-in for a signed-out visitor', async () => {
+  const response = await handleGitHubOAuthCallbackRequest(
+    new Request(
+      `${ORIGIN}/api/auth/github/callback?code=unverified&installation_id=149599025&setup_action=install`,
+    ),
+    {credentials: CREDENTIALS, fetch: stubGitHubFetch()},
+  )
+
+  expect(response.status).toBe(302)
+  const location = new URL(response.headers.get('location') ?? '')
+  expect(location.origin + location.pathname).toBe('https://github.com/login/oauth/authorize')
+  expect(location.searchParams.get('state')).toBeTruthy()
+  // The fresh state cookie survives: nothing appended after it clears it.
+  const stateCookies = getSetCookies(response).filter((cookie) =>
+    cookie.startsWith('diffs-github-oauth-state='),
+  )
+  expect(stateCookies).toHaveLength(1)
+  expect(stateCookies[0]).not.toContain('diffs-github-oauth-state=;')
+})
+
 test('callback with a GitHub error param returns to the diff signed out', async () => {
   const response = await handleGitHubOAuthCallbackRequest(
     new Request(`${ORIGIN}/api/auth/github/callback?error=access_denied`),

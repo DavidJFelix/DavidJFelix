@@ -12,13 +12,14 @@ export default defineConfig({
     // Playwright specs (*.e2e.test.ts) are driven by Playwright, not Vitest.
     exclude: ['**/*.e2e.test.ts', '**/node_modules/**'],
     // Coverage gate scoped to the tested pure logic: price formatting, the
-    // observability relays (src/lib/{posthog-proxy,sentry-tunnel}), and the
-    // client-config resolver. The route glue + client bootstrap are exercised by
-    // build/smoke, not unit coverage.
+    // observability relays (src/lib/{posthog-proxy,sentry-tunnel}), the Loops
+    // signup, and the client-config resolver. The route glue + client bootstrap
+    // are exercised by build/smoke, not unit coverage.
     coverage: {
       provider: 'v8',
       include: [
         'src/lib/format-price.ts',
+        'src/lib/loops.ts',
         'src/lib/posthog-proxy.ts',
         'src/lib/sentry-tunnel.ts',
         'src/observability/config.ts',

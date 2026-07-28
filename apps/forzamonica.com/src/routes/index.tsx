@@ -2,7 +2,7 @@ import {createFileRoute} from '@tanstack/react-router'
 import {useState} from 'react'
 
 import {css, cx} from 'styled-system/css'
-import {button, field} from 'styled-system/recipes'
+import {field} from 'styled-system/recipes'
 
 import {Button} from '@/components/Button.tsx'
 import {subscribeToNewsletter} from '@/lib/newsletter.ts'
@@ -34,13 +34,29 @@ const socialLink = css({
   _hover: {color: 'ink'},
 })
 
-// Pre-launch landing: the brand mark, ways to follow along, the current shop,
-// and the mailing list, in the shop's theme. The storefront itself lives at
-// /monica until launch.
+// Underlined text link in the ghost-button voice (same underline offset and
+// hover pigment), sized as text rather than a button.
+const shopLink = css({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '1.5',
+  fontSize: '15px',
+  fontWeight: 'bold',
+  color: 'ink',
+  textDecoration: 'underline',
+  textUnderlineOffset: '4px',
+  transition: 'color token(durations.quick) token(easings.out)',
+  _hover: {color: 'pigment.sky.deep'},
+})
+
+// Pre-launch landing: the brand mark, the current shop, and the mailing list,
+// with the socials pinned to the top corner, in the shop's theme. The
+// storefront itself lives at /monica until launch.
 function ComingSoonPage() {
   return (
     <section
       className={css({
+        position: 'relative',
         minHeight: '70vh',
         display: 'flex',
         flexDirection: 'column',
@@ -52,39 +68,32 @@ function ComingSoonPage() {
         textAlign: 'center',
       })}
     >
-      <h1 className={css({textStyle: 'displayXl', color: 'ink'})}>
-        forzamonica <span className={css({fontStyle: 'normal', fontWeight: 'normal'})}>art</span>
-      </h1>
-      <nav aria-label="Follow Monica" className={css({display: 'flex', gap: '1'})}>
+      <nav
+        aria-label="Follow Monica"
+        className={css({position: 'absolute', top: '3', right: '3', display: 'flex', gap: '1'})}
+      >
         {SOCIAL_LINKS.map(([label, href, Icon]) => (
           <a key={href} href={href} aria-label={label} className={socialLink}>
             <Icon />
           </a>
         ))}
       </nav>
-      <a href="https://www.forzamonica.shop/" className={button()}>
-        Shop the current collection
-      </a>
-      <div
-        className={css({
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '3',
-          mt: '4',
-          width: 'full',
-        })}
-      >
-        <p className={css({fontSize: '16px', color: 'ink.muted'})}>
-          Watercolors by Monica Felix — coming soon.
-        </p>
-        <NewsletterSignup />
-      </div>
-      <div className={css({display: 'flex', gap: '2.5', mt: '4'})}>
+      <h1 className={css({textStyle: 'displayXl', color: 'ink'})}>
+        forzamonica <span className={css({fontStyle: 'normal', fontWeight: 'normal'})}>art</span>
+      </h1>
+      <p className={css({fontSize: '16px', color: 'ink.muted'})}>
+        Watercolors by Monica Felix — coming soon.
+      </p>
+      <div className={css({display: 'flex', gap: '2.5'})}>
         {PIGMENT_DOTS.map((dotClass) => (
           <span key={dotClass} className={dotClass} />
         ))}
       </div>
+      <a href="https://www.forzamonica.shop/" className={shopLink}>
+        Shop the current collection
+        <ExternalLinkIcon />
+      </a>
+      <NewsletterSignup />
     </section>
   )
 }
@@ -199,6 +208,27 @@ function FacebookIcon() {
       aria-hidden="true"
     >
       <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+    </svg>
+  )
+}
+
+// The box-with-arrow mark: this link leaves the site (for the shop).
+function ExternalLinkIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+      <polyline points="15 3 21 3 21 9" />
+      <line x1="10" y1="14" x2="21" y2="3" />
     </svg>
   )
 }

@@ -1,0 +1,43 @@
+<!--
+  revision.city mark: Lucide's `building-2` glyph on a rounded tile.
+
+  The glyph paths are copied verbatim from `lucide-react` (the app's own
+  dependency) at v1.26.0, Lucide, ISC licensed. They keep their native 24x24
+  scale so the stroke stays exactly as drawn; the surrounding <g> only
+  translates them into the 32x32 tile, leaving 4px of padding on every side.
+  Re-copy from node_modules/lucide-react/dist/esm/icons/building-2.mjs if the
+  dependency's drawing ever changes.
+
+  The tile is filled rather than outlined so the mark stays legible down to
+  16px, and it inverts with the browser chrome for the same reason: a near-black
+  tile would disappear into a dark tab strip. The two colors are the app's own
+  scheme colors (SCHEME_THEME_COLOR in src/diffs/components/theme-provider.tsx).
+
+  Note for editors: XML forbids a double hyphen inside a comment, so this block
+  cannot use the repo's usual em dash.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="revision.city">
+  <style>
+    .tile { fill: #0a0a0a; }
+    .glyph { stroke: #ffffff; }
+    @media (prefers-color-scheme: dark) {
+      .tile { fill: #ffffff; }
+      .glyph { stroke: #0a0a0a; }
+    }
+  </style>
+  <rect class="tile" width="32" height="32" rx="7" />
+  <g
+    class="glyph"
+    transform="translate(4 4)"
+    fill="none"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M10 12h4" />
+    <path d="M10 8h4" />
+    <path d="M14 21v-3a2 2 0 0 0-4 0v3" />
+    <path d="M6 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2" />
+    <path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16" />
+  </g>
+</svg>

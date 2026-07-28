@@ -14,7 +14,12 @@ export const Route = createRootRoute({
       {title: 'revision.city'},
       {name: 'description', content: 'revision.city'},
     ],
-    links: [{rel: 'stylesheet', href: appCss}],
+    links: [
+      // Declared on the root route so every page inherits it; child routes
+      // override title/description but never the mark.
+      {rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg'},
+      {rel: 'stylesheet', href: appCss},
+    ],
   }),
   shellComponent: RootDocument,
 })

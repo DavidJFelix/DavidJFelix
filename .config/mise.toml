@@ -18,7 +18,7 @@ pinact = "4.1.0"
 # ci-warden.yml workflow uses the getsentry/warden action, which bundles its
 # own copy). Pinned like cspell via mise's npm backend; there is no root
 # package.json. Config lives in /warden.toml.
-"npm:@sentry/warden" = "0.41.0"
+"npm:@sentry/warden" = { version = "0.41.0", trust_policy_excludes = ["@sentry/warden"] }
 depot = { version = "latest", exe = "depot" }
 "npm:@earendil-works/pi-coding-agent" = { version = "latest", allow_builds = ["@google/genai", "protobufjs"] }
 # worktrunk (`wt`): git-worktree manager backing the one-workspace-per-agent

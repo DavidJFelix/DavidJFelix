@@ -71,73 +71,73 @@ url_api = "https://api.github.com/repos/rhysd/actionlint/releases/assets/3849249
 provenance = "github-attestations"
 
 [[tools.biome]]
-version = "2.5.0"
+version = "2.5.5"
 backend = "aqua:biomejs/biome"
 
 [tools.biome."platforms.linux-arm64"]
-checksum = "sha256:27c9bc5994dfb5711f5f09a4c3c35749ca9c4a898a063bb062e6b932dbc2571d"
-url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.5.0/biome-linux-arm64"
-url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/445650509"
+checksum = "sha256:836d16eea672a4e92966e019582f606ef4a687496abbf6d547f31a5ef8a33548"
+url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.5.5/biome-linux-arm64"
+url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/484416084"
 provenance = "github-attestations"
 
 [tools.biome."platforms.linux-arm64-musl"]
-checksum = "sha256:fb6b47765cdc5bf4e5af9fdf18c17aa1306c8eb7f227a36d6580d67472a77dbb"
-url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.5.0/biome-linux-arm64-musl"
-url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/445650505"
+checksum = "sha256:0f487c28eca2c87e0eb79b73ad84c9fc0bbab6a6cf3513f5fedbc74ef2ca2d0b"
+url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.5.5/biome-linux-arm64-musl"
+url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/484416087"
 provenance = "github-attestations"
 
 [tools.biome."platforms.linux-x64"]
-checksum = "sha256:e7df298f0551dd90bea4425779369aa3130d9817f4acc4f663ef63c327206a19"
-url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.5.0/biome-linux-x64"
-url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/445650507"
+checksum = "sha256:12ecb833102c8bf8ab6ede7ecd5b6e6fc76e8af95b3ef356933a1f5330afc028"
+url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.5.5/biome-linux-x64"
+url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/484416085"
 provenance = "github-attestations"
 
 [tools.biome."platforms.linux-x64-baseline"]
-checksum = "sha256:e7df298f0551dd90bea4425779369aa3130d9817f4acc4f663ef63c327206a19"
-url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.5.0/biome-linux-x64"
-url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/445650507"
+checksum = "sha256:12ecb833102c8bf8ab6ede7ecd5b6e6fc76e8af95b3ef356933a1f5330afc028"
+url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.5.5/biome-linux-x64"
+url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/484416085"
 provenance = "github-attestations"
 
 [tools.biome."platforms.linux-x64-musl"]
-checksum = "sha256:16620d56fd50c5b3dc689a80611a2b58dd22a55918894b2520b534da877d2e66"
-url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.5.0/biome-linux-x64-musl"
-url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/445650504"
+checksum = "sha256:549fea27c74212aaeb2c737346028facbcca7a93f66cf4aa145388dd8b18d7bc"
+url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.5.5/biome-linux-x64-musl"
+url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/484416086"
 provenance = "github-attestations"
 
 [tools.biome."platforms.linux-x64-musl-baseline"]
-checksum = "sha256:16620d56fd50c5b3dc689a80611a2b58dd22a55918894b2520b534da877d2e66"
-url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.5.0/biome-linux-x64-musl"
-url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/445650504"
+checksum = "sha256:549fea27c74212aaeb2c737346028facbcca7a93f66cf4aa145388dd8b18d7bc"
+url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.5.5/biome-linux-x64-musl"
+url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/484416086"
 provenance = "github-attestations"
 
 [tools.biome."platforms.macos-arm64"]
-checksum = "sha256:9b9e04f749db6b037b0ad38ba0c5cce63b185a7cc3b049e577dad3c18f4adb2c"
-url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.5.0/biome-darwin-arm64"
-url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/445650510"
+checksum = "sha256:6072d68d3a4faf74c2802c106654904f2052f85675a3d1632213dd977a4b64bb"
+url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.5.5/biome-darwin-arm64"
+url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/484416090"
 provenance = "github-attestations"
 
 [tools.biome."platforms.macos-x64"]
-checksum = "sha256:0c7002cc808eebabe7852c8417b9deb1a5615342e6881c588b49367c6c56db8c"
-url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.5.0/biome-darwin-x64"
-url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/445650511"
+checksum = "sha256:81f7f09a1ffacd225a65a29e2506ad02013b95964e684554cc5cc7ae9db005b4"
+url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.5.5/biome-darwin-x64"
+url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/484416089"
 provenance = "github-attestations"
 
 [tools.biome."platforms.macos-x64-baseline"]
-checksum = "sha256:0c7002cc808eebabe7852c8417b9deb1a5615342e6881c588b49367c6c56db8c"
-url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.5.0/biome-darwin-x64"
-url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/445650511"
+checksum = "sha256:81f7f09a1ffacd225a65a29e2506ad02013b95964e684554cc5cc7ae9db005b4"
+url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.5.5/biome-darwin-x64"
+url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/484416089"
 provenance = "github-attestations"
 
 [tools.biome."platforms.windows-x64"]
-checksum = "sha256:84d4e71fdbb4b15b1aa83c1b1cc033aae9856d48a7a857c1381b1bd499430f7c"
-url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.5.0/biome-win32-x64.exe"
-url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/445650508"
+checksum = "sha256:f24c77f79d02dff42bfa4ee62e31b0522754d87eaaa3202435c7126cdb30ebd2"
+url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.5.5/biome-win32-x64.exe"
+url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/484416083"
 provenance = "github-attestations"
 
 [tools.biome."platforms.windows-x64-baseline"]
-checksum = "sha256:84d4e71fdbb4b15b1aa83c1b1cc033aae9856d48a7a857c1381b1bd499430f7c"
-url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.5.0/biome-win32-x64.exe"
-url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/445650508"
+checksum = "sha256:f24c77f79d02dff42bfa4ee62e31b0522754d87eaaa3202435c7126cdb30ebd2"
+url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.5.5/biome-win32-x64.exe"
+url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/484416083"
 provenance = "github-attestations"
 
 [[tools.bun]]
@@ -189,63 +189,63 @@ checksum = "sha256:538f9c846355d9e847b2671bc00c47da4229a0befb24df3282b739770f3b4
 url = "https://github.com/oven-sh/bun/releases/download/bun-v1.3.14/bun-windows-x64-baseline.zip"
 
 [[tools.depot]]
-version = "2.101.66"
+version = "2.101.75"
 backend = "github:depot/cli"
 
 [tools.depot."platforms.linux-arm64"]
-checksum = "sha256:326d50d0de043def2678bf3015ae206a2e7cfef94bceecf29f4b4a050eeb256a"
-url = "https://github.com/depot/cli/releases/download/v2.101.66/depot_2.101.66_linux_arm64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/460242738"
+checksum = "sha256:1302f715ece787151f8b3797c85a964d717a2ea5fc3004bae9b558a4665d55fc"
+url = "https://github.com/depot/cli/releases/download/v2.101.75/depot_2.101.75_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/485201415"
 
 [tools.depot."platforms.linux-arm64-musl"]
-checksum = "sha256:326d50d0de043def2678bf3015ae206a2e7cfef94bceecf29f4b4a050eeb256a"
-url = "https://github.com/depot/cli/releases/download/v2.101.66/depot_2.101.66_linux_arm64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/460242738"
+checksum = "sha256:1302f715ece787151f8b3797c85a964d717a2ea5fc3004bae9b558a4665d55fc"
+url = "https://github.com/depot/cli/releases/download/v2.101.75/depot_2.101.75_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/485201415"
 
 [tools.depot."platforms.linux-x64"]
-checksum = "sha256:bad82209950ccc56a1d607b87138b81736bb3c62a6d9f351e94900f28437f2ef"
-url = "https://github.com/depot/cli/releases/download/v2.101.66/depot_2.101.66_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/460242737"
+checksum = "sha256:04cf3787bbde5a29a24c733ddda843f3481d62cb1f3ff8ce030e44a3f79b679e"
+url = "https://github.com/depot/cli/releases/download/v2.101.75/depot_2.101.75_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/485201412"
 
 [tools.depot."platforms.linux-x64-baseline"]
-checksum = "sha256:bad82209950ccc56a1d607b87138b81736bb3c62a6d9f351e94900f28437f2ef"
-url = "https://github.com/depot/cli/releases/download/v2.101.66/depot_2.101.66_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/460242737"
+checksum = "sha256:04cf3787bbde5a29a24c733ddda843f3481d62cb1f3ff8ce030e44a3f79b679e"
+url = "https://github.com/depot/cli/releases/download/v2.101.75/depot_2.101.75_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/485201412"
 
 [tools.depot."platforms.linux-x64-musl"]
-checksum = "sha256:bad82209950ccc56a1d607b87138b81736bb3c62a6d9f351e94900f28437f2ef"
-url = "https://github.com/depot/cli/releases/download/v2.101.66/depot_2.101.66_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/460242737"
+checksum = "sha256:04cf3787bbde5a29a24c733ddda843f3481d62cb1f3ff8ce030e44a3f79b679e"
+url = "https://github.com/depot/cli/releases/download/v2.101.75/depot_2.101.75_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/485201412"
 
 [tools.depot."platforms.linux-x64-musl-baseline"]
-checksum = "sha256:bad82209950ccc56a1d607b87138b81736bb3c62a6d9f351e94900f28437f2ef"
-url = "https://github.com/depot/cli/releases/download/v2.101.66/depot_2.101.66_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/460242737"
+checksum = "sha256:04cf3787bbde5a29a24c733ddda843f3481d62cb1f3ff8ce030e44a3f79b679e"
+url = "https://github.com/depot/cli/releases/download/v2.101.75/depot_2.101.75_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/485201412"
 
 [tools.depot."platforms.macos-arm64"]
-checksum = "sha256:41268e4483be6e81d8eb26f1b33f442699d7ee4d545ec73ea9db5d481c19ea75"
-url = "https://github.com/depot/cli/releases/download/v2.101.66/depot_2.101.66_darwin_arm64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/460242741"
+checksum = "sha256:b89341c8946611f712e5be731b5e2ef4fff98fc5d01d0ceb22718a80d78fa7a1"
+url = "https://github.com/depot/cli/releases/download/v2.101.75/depot_2.101.75_darwin_arm64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/485201417"
 
 [tools.depot."platforms.macos-x64"]
-checksum = "sha256:3b631892418f08567c9432d3f5d2c81b555d7fa786084715c777998ecc540a79"
-url = "https://github.com/depot/cli/releases/download/v2.101.66/depot_2.101.66_darwin_amd64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/460242736"
+checksum = "sha256:d9d740262674b2b52e89b8a8e975393689cd739dd68995ff2150d0f1be554d81"
+url = "https://github.com/depot/cli/releases/download/v2.101.75/depot_2.101.75_darwin_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/485201418"
 
 [tools.depot."platforms.macos-x64-baseline"]
-checksum = "sha256:3b631892418f08567c9432d3f5d2c81b555d7fa786084715c777998ecc540a79"
-url = "https://github.com/depot/cli/releases/download/v2.101.66/depot_2.101.66_darwin_amd64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/460242736"
+checksum = "sha256:d9d740262674b2b52e89b8a8e975393689cd739dd68995ff2150d0f1be554d81"
+url = "https://github.com/depot/cli/releases/download/v2.101.75/depot_2.101.75_darwin_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/485201418"
 
 [tools.depot."platforms.windows-x64"]
-checksum = "sha256:9bc3b32101fa463f82418b76e6f784e73076f33a4b6d2fd83a6fa64a66247ec1"
-url = "https://github.com/depot/cli/releases/download/v2.101.66/depot_2.101.66_windows_amd64.zip"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/460242743"
+checksum = "sha256:992a8e28dc6e3c67642208e331bcc9a22190bb37538dc0519a3b2738d9ab87f0"
+url = "https://github.com/depot/cli/releases/download/v2.101.75/depot_2.101.75_windows_amd64.zip"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/485201413"
 
 [tools.depot."platforms.windows-x64-baseline"]
-checksum = "sha256:9bc3b32101fa463f82418b76e6f784e73076f33a4b6d2fd83a6fa64a66247ec1"
-url = "https://github.com/depot/cli/releases/download/v2.101.66/depot_2.101.66_windows_amd64.zip"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/460242743"
+checksum = "sha256:992a8e28dc6e3c67642208e331bcc9a22190bb37538dc0519a3b2738d9ab87f0"
+url = "https://github.com/depot/cli/releases/download/v2.101.75/depot_2.101.75_windows_amd64.zip"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/485201413"
 
 [[tools.ghalint]]
 version = "1.5.6"
@@ -340,55 +340,55 @@ url_api = "https://api.github.com/repos/suzuki-shunsuke/ghalint/releases/assets/
 url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.5.6/multiple.intoto.jsonl"
 
 [[tools.node]]
-version = "26.3.1"
+version = "26.5.0"
 backend = "core:node"
 
 [tools.node."platforms.linux-arm64"]
-checksum = "sha256:2f0829b201e9db20996ae15bce62138df1e3d317775b005778b05cf7b19714f1"
-url = "https://nodejs.org/dist/v26.3.1/node-v26.3.1-linux-arm64.tar.gz"
+checksum = "sha256:308e5fe89a82461ba5a6cf15ff5221b2cdbd7ae87600aa72bb3c3fbdc66412d1"
+url = "https://nodejs.org/dist/v26.5.0/node-v26.5.0-linux-arm64.tar.gz"
 
 [tools.node."platforms.linux-arm64-musl"]
-checksum = "sha256:e9d31a59e9164ad4be47e3148fc54964a9c275394f367e127eed1a0b3009c706"
-url = "https://unofficial-builds.nodejs.org/download/release/v26.3.1/node-v26.3.1-linux-arm64-musl.tar.gz"
+checksum = "sha256:1ab31aef6561191693f366cacd75bbcefa0301e49a18bc05554c21893bbdb490"
+url = "https://unofficial-builds.nodejs.org/download/release/v26.5.0/node-v26.5.0-linux-arm64-musl.tar.gz"
 
 [tools.node."platforms.linux-x64"]
-checksum = "sha256:e892cd615e637edebcf22f9653d80fba63167ad6754d20881fd52cc37be81441"
-url = "https://nodejs.org/dist/v26.3.1/node-v26.3.1-linux-x64.tar.gz"
+checksum = "sha256:22b5f47ad6ae78837e4c2b846019965ce1a06ba143de176102294a1bf44fc677"
+url = "https://nodejs.org/dist/v26.5.0/node-v26.5.0-linux-x64.tar.gz"
 
 [tools.node."platforms.linux-x64-baseline"]
-checksum = "sha256:e892cd615e637edebcf22f9653d80fba63167ad6754d20881fd52cc37be81441"
-url = "https://nodejs.org/dist/v26.3.1/node-v26.3.1-linux-x64.tar.gz"
+checksum = "sha256:22b5f47ad6ae78837e4c2b846019965ce1a06ba143de176102294a1bf44fc677"
+url = "https://nodejs.org/dist/v26.5.0/node-v26.5.0-linux-x64.tar.gz"
 
 [tools.node."platforms.linux-x64-musl"]
-checksum = "sha256:4d1a7bebcc0ee2534edc2d5f93cad34435ed4b601766d26b706c043727d4cca5"
-url = "https://unofficial-builds.nodejs.org/download/release/v26.3.1/node-v26.3.1-linux-x64-musl.tar.gz"
+checksum = "sha256:00f1398411a4216c5a6ecaad3b825a0da5ec00e79ee8c173ab65a094d97b9ad8"
+url = "https://unofficial-builds.nodejs.org/download/release/v26.5.0/node-v26.5.0-linux-x64-musl.tar.gz"
 
 [tools.node."platforms.linux-x64-musl-baseline"]
-checksum = "sha256:4d1a7bebcc0ee2534edc2d5f93cad34435ed4b601766d26b706c043727d4cca5"
-url = "https://unofficial-builds.nodejs.org/download/release/v26.3.1/node-v26.3.1-linux-x64-musl.tar.gz"
+checksum = "sha256:00f1398411a4216c5a6ecaad3b825a0da5ec00e79ee8c173ab65a094d97b9ad8"
+url = "https://unofficial-builds.nodejs.org/download/release/v26.5.0/node-v26.5.0-linux-x64-musl.tar.gz"
 
 [tools.node."platforms.macos-arm64"]
-checksum = "sha256:3f624ab0d774553c0d28b968e141d8c676a35a2811fb0b7b356ba9cbdce15f74"
-url = "https://nodejs.org/dist/v26.3.1/node-v26.3.1-darwin-arm64.tar.gz"
+checksum = "sha256:ee920559aaa2391569cff4d737e3b83963430e3a14dedd91bfe0ff53171b5af9"
+url = "https://nodejs.org/dist/v26.5.0/node-v26.5.0-darwin-arm64.tar.gz"
 
 [tools.node."platforms.macos-x64"]
-checksum = "sha256:3ec9e5a28c641c088f3d04ad38721bfdedb2f8aa8c031979fa93df08b5a92e58"
-url = "https://nodejs.org/dist/v26.3.1/node-v26.3.1-darwin-x64.tar.gz"
+checksum = "sha256:98293394c945a24e64e00b4177bf075ec963ea70b34d1d2e24bd4a71716d334f"
+url = "https://nodejs.org/dist/v26.5.0/node-v26.5.0-darwin-x64.tar.gz"
 
 [tools.node."platforms.macos-x64-baseline"]
-checksum = "sha256:3ec9e5a28c641c088f3d04ad38721bfdedb2f8aa8c031979fa93df08b5a92e58"
-url = "https://nodejs.org/dist/v26.3.1/node-v26.3.1-darwin-x64.tar.gz"
+checksum = "sha256:98293394c945a24e64e00b4177bf075ec963ea70b34d1d2e24bd4a71716d334f"
+url = "https://nodejs.org/dist/v26.5.0/node-v26.5.0-darwin-x64.tar.gz"
 
 [tools.node."platforms.windows-x64"]
-checksum = "sha256:45001b289ebffe7b22260898f3750059183d8246042b88e8ffa4337e65e6763e"
-url = "https://nodejs.org/dist/v26.3.1/node-v26.3.1-win-x64.zip"
+checksum = "sha256:d3b2277dbcccfdf24ef6302928f64f484cff1d77a6d3caa3a28f4d20ce9158f6"
+url = "https://nodejs.org/dist/v26.5.0/node-v26.5.0-win-x64.zip"
 
 [tools.node."platforms.windows-x64-baseline"]
-checksum = "sha256:45001b289ebffe7b22260898f3750059183d8246042b88e8ffa4337e65e6763e"
-url = "https://nodejs.org/dist/v26.3.1/node-v26.3.1-win-x64.zip"
+checksum = "sha256:d3b2277dbcccfdf24ef6302928f64f484cff1d77a6d3caa3a28f4d20ce9158f6"
+url = "https://nodejs.org/dist/v26.5.0/node-v26.5.0-win-x64.zip"
 
 [[tools."npm:@earendil-works/pi-coding-agent"]]
-version = "0.80.2"
+version = "0.82.1"
 backend = "npm:@earendil-works/pi-coding-agent"
 
 [tools."npm:@earendil-works/pi-coding-agent".options]
@@ -397,6 +397,9 @@ allow_builds = '["@google/genai", "protobufjs"]'
 [[tools."npm:@sentry/warden"]]
 version = "0.41.0"
 backend = "npm:@sentry/warden"
+
+[tools."npm:@sentry/warden".options]
+trust_policy_excludes = '["@sentry/warden"]'
 
 [[tools."npm:cspell"]]
 version = "10.0.1"
@@ -407,7 +410,7 @@ version = "0.59.0"
 backend = "npm:oxfmt"
 
 [[tools.oxlint]]
-version = "1.70.0"
+version = "1.76.0"
 backend = "npm:oxlint"
 
 [[tools.pinact]]
@@ -481,61 +484,61 @@ url_api = "https://api.github.com/repos/suzuki-shunsuke/pinact/releases/assets/4
 provenance = "github-attestations"
 
 [[tools.pnpm]]
-version = "11.8.0"
+version = "11.17.0"
 backend = "aqua:pnpm/pnpm"
 
 [tools.pnpm."platforms.linux-arm64"]
-checksum = "sha256:251222a30b3dcf6bc1c30c44fe3fdcd0bd4b2b06dd29f6a549647e56fa51548c"
-url = "https://github.com/pnpm/pnpm/releases/download/v11.8.0/pnpm-linux-arm64.tar.gz"
-url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/451113106"
+checksum = "sha256:730d17de742a3efbb020ba91d7acfc0456c6ba6ad1cd8eb49f4c229fe9f504d3"
+url = "https://github.com/pnpm/pnpm/releases/download/v11.17.0/pnpm-linux-arm64.tar.gz"
+url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/487422123"
 provenance = "github-attestations"
 
 [tools.pnpm."platforms.linux-arm64-musl"]
-checksum = "sha256:dbc5077793d76d6318ea9a0b9c250327b12afaab4473b02549ee232f2d7b55b3"
-url = "https://github.com/pnpm/pnpm/releases/download/v11.8.0/pnpm-linux-arm64-musl.tar.gz"
-url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/451113101"
+checksum = "sha256:cc072c0e7bdd290f52fb9afdcea778ede69f96f0f4dae63623163fc11d4beec3"
+url = "https://github.com/pnpm/pnpm/releases/download/v11.17.0/pnpm-linux-arm64-musl.tar.gz"
+url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/487422121"
 provenance = "github-attestations"
 
 [tools.pnpm."platforms.linux-x64"]
-checksum = "sha256:86b9aa5362b06cc61f5e829e41614ffda2fbda09993b8e84176feaa3c97b9532"
-url = "https://github.com/pnpm/pnpm/releases/download/v11.8.0/pnpm-linux-x64.tar.gz"
-url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/451113102"
+checksum = "sha256:bdb1db01bf0f757495405a59a09c5c287f315889dc98d3b14bc374b9fe43a0bf"
+url = "https://github.com/pnpm/pnpm/releases/download/v11.17.0/pnpm-linux-x64.tar.gz"
+url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/487422122"
 provenance = "github-attestations"
 
 [tools.pnpm."platforms.linux-x64-baseline"]
-checksum = "sha256:86b9aa5362b06cc61f5e829e41614ffda2fbda09993b8e84176feaa3c97b9532"
-url = "https://github.com/pnpm/pnpm/releases/download/v11.8.0/pnpm-linux-x64.tar.gz"
-url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/451113102"
+checksum = "sha256:bdb1db01bf0f757495405a59a09c5c287f315889dc98d3b14bc374b9fe43a0bf"
+url = "https://github.com/pnpm/pnpm/releases/download/v11.17.0/pnpm-linux-x64.tar.gz"
+url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/487422122"
 provenance = "github-attestations"
 
 [tools.pnpm."platforms.linux-x64-musl"]
-checksum = "sha256:c22f99ca91ec4bab1f37114ed3eacc23e68da72573f42e72ebfafaeaa1131167"
-url = "https://github.com/pnpm/pnpm/releases/download/v11.8.0/pnpm-linux-x64-musl.tar.gz"
-url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/451113103"
+checksum = "sha256:db2e4eeecab336bd41bbbc7a39626b166f1a15bb189efcf6a1dafdf159f23fe7"
+url = "https://github.com/pnpm/pnpm/releases/download/v11.17.0/pnpm-linux-x64-musl.tar.gz"
+url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/487422116"
 provenance = "github-attestations"
 
 [tools.pnpm."platforms.linux-x64-musl-baseline"]
-checksum = "sha256:c22f99ca91ec4bab1f37114ed3eacc23e68da72573f42e72ebfafaeaa1131167"
-url = "https://github.com/pnpm/pnpm/releases/download/v11.8.0/pnpm-linux-x64-musl.tar.gz"
-url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/451113103"
+checksum = "sha256:db2e4eeecab336bd41bbbc7a39626b166f1a15bb189efcf6a1dafdf159f23fe7"
+url = "https://github.com/pnpm/pnpm/releases/download/v11.17.0/pnpm-linux-x64-musl.tar.gz"
+url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/487422116"
 provenance = "github-attestations"
 
 [tools.pnpm."platforms.macos-arm64"]
-checksum = "sha256:7c9ef7523abf1190a2fde2b81dd652260d1679ba471c09950e8a08fa772c06e2"
-url = "https://github.com/pnpm/pnpm/releases/download/v11.8.0/pnpm-darwin-arm64.tar.gz"
-url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/451113105"
+checksum = "sha256:1e9a35d76f9d382af365d95c64f3abf7815e24350653f5bb1a37e4546265bc2b"
+url = "https://github.com/pnpm/pnpm/releases/download/v11.17.0/pnpm-darwin-arm64.tar.gz"
+url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/487422117"
 provenance = "github-attestations"
 
 [tools.pnpm."platforms.windows-x64"]
-checksum = "sha256:8cf6951ade777eeb7e4665fdcaefe77942724b217690eb3fa2f0b27c67b4310c"
-url = "https://github.com/pnpm/pnpm/releases/download/v11.8.0/pnpm-win32-x64.zip"
-url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/451113107"
+checksum = "sha256:3025c174a6dcffec14a071a5c854cb0c350a09a8c7c2857a75f75cc7b29b939c"
+url = "https://github.com/pnpm/pnpm/releases/download/v11.17.0/pnpm-win32-x64.zip"
+url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/487422118"
 provenance = "github-attestations"
 
 [tools.pnpm."platforms.windows-x64-baseline"]
-checksum = "sha256:8cf6951ade777eeb7e4665fdcaefe77942724b217690eb3fa2f0b27c67b4310c"
-url = "https://github.com/pnpm/pnpm/releases/download/v11.8.0/pnpm-win32-x64.zip"
-url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/451113107"
+checksum = "sha256:3025c174a6dcffec14a071a5c854cb0c350a09a8c7c2857a75f75cc7b29b939c"
+url = "https://github.com/pnpm/pnpm/releases/download/v11.17.0/pnpm-win32-x64.zip"
+url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/487422118"
 provenance = "github-attestations"
 
 [[tools.prettier]]
@@ -543,63 +546,63 @@ version = "3.9.5"
 backend = "npm:prettier"
 
 [[tools.worktrunk]]
-version = "0.65.0"
+version = "0.69.2"
 backend = "aqua:max-sixty/worktrunk"
 
 [tools.worktrunk."platforms.linux-arm64"]
-checksum = "sha256:9d08816479020f1d8988c944e7d7ad3544328e30ecb1d42e5ee754ddcb17ced4"
-url = "https://github.com/max-sixty/worktrunk/releases/download/v0.65.0/worktrunk-aarch64-unknown-linux-musl.tar.xz"
-url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/463973941"
+checksum = "sha256:3364091396da3f1b5c1bc89f50d130780564a80c23a323a38b3845554661c95a"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.69.2/worktrunk-aarch64-unknown-linux-musl.tar.xz"
+url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/489103701"
 
 [tools.worktrunk."platforms.linux-arm64-musl"]
-checksum = "sha256:9d08816479020f1d8988c944e7d7ad3544328e30ecb1d42e5ee754ddcb17ced4"
-url = "https://github.com/max-sixty/worktrunk/releases/download/v0.65.0/worktrunk-aarch64-unknown-linux-musl.tar.xz"
-url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/463973941"
+checksum = "sha256:3364091396da3f1b5c1bc89f50d130780564a80c23a323a38b3845554661c95a"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.69.2/worktrunk-aarch64-unknown-linux-musl.tar.xz"
+url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/489103701"
 
 [tools.worktrunk."platforms.linux-x64"]
-checksum = "sha256:d9fde1f936c7df759760f6eb16e178e7039733587f1ea9931076dbe256fe6f85"
-url = "https://github.com/max-sixty/worktrunk/releases/download/v0.65.0/worktrunk-x86_64-unknown-linux-musl.tar.xz"
-url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/463973961"
+checksum = "sha256:f63910c119ed419238eb6b060c3a513bd8731994deeb31eda4f42e84d86d0a0a"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.69.2/worktrunk-x86_64-unknown-linux-musl.tar.xz"
+url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/489103718"
 
 [tools.worktrunk."platforms.linux-x64-baseline"]
-checksum = "sha256:d9fde1f936c7df759760f6eb16e178e7039733587f1ea9931076dbe256fe6f85"
-url = "https://github.com/max-sixty/worktrunk/releases/download/v0.65.0/worktrunk-x86_64-unknown-linux-musl.tar.xz"
-url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/463973961"
+checksum = "sha256:f63910c119ed419238eb6b060c3a513bd8731994deeb31eda4f42e84d86d0a0a"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.69.2/worktrunk-x86_64-unknown-linux-musl.tar.xz"
+url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/489103718"
 
 [tools.worktrunk."platforms.linux-x64-musl"]
-checksum = "sha256:d9fde1f936c7df759760f6eb16e178e7039733587f1ea9931076dbe256fe6f85"
-url = "https://github.com/max-sixty/worktrunk/releases/download/v0.65.0/worktrunk-x86_64-unknown-linux-musl.tar.xz"
-url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/463973961"
+checksum = "sha256:f63910c119ed419238eb6b060c3a513bd8731994deeb31eda4f42e84d86d0a0a"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.69.2/worktrunk-x86_64-unknown-linux-musl.tar.xz"
+url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/489103718"
 
 [tools.worktrunk."platforms.linux-x64-musl-baseline"]
-checksum = "sha256:d9fde1f936c7df759760f6eb16e178e7039733587f1ea9931076dbe256fe6f85"
-url = "https://github.com/max-sixty/worktrunk/releases/download/v0.65.0/worktrunk-x86_64-unknown-linux-musl.tar.xz"
-url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/463973961"
+checksum = "sha256:f63910c119ed419238eb6b060c3a513bd8731994deeb31eda4f42e84d86d0a0a"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.69.2/worktrunk-x86_64-unknown-linux-musl.tar.xz"
+url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/489103718"
 
 [tools.worktrunk."platforms.macos-arm64"]
-checksum = "sha256:5f8b1e3029a82a521bd571f88b19640a7363ab93b215487a2f674ffcac772be9"
-url = "https://github.com/max-sixty/worktrunk/releases/download/v0.65.0/worktrunk-aarch64-apple-darwin.tar.xz"
-url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/463973925"
+checksum = "sha256:cd451d1101eed9461fefa285269055510179b29690457fbfaf5e667d3ff0a273"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.69.2/worktrunk-aarch64-apple-darwin.tar.xz"
+url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/489103688"
 
 [tools.worktrunk."platforms.macos-x64"]
-checksum = "sha256:1e186ed46e549695c8b325f728f6e38557e50005ae1a710365009941f9468cf9"
-url = "https://github.com/max-sixty/worktrunk/releases/download/v0.65.0/worktrunk-x86_64-apple-darwin.tar.xz"
-url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/463973949"
+checksum = "sha256:42f829277c3ef5e503fe8a59fb603b4a57affb9fa9e65d0997e7d35af53cc472"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.69.2/worktrunk-x86_64-apple-darwin.tar.xz"
+url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/489103710"
 
 [tools.worktrunk."platforms.macos-x64-baseline"]
-checksum = "sha256:1e186ed46e549695c8b325f728f6e38557e50005ae1a710365009941f9468cf9"
-url = "https://github.com/max-sixty/worktrunk/releases/download/v0.65.0/worktrunk-x86_64-apple-darwin.tar.xz"
-url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/463973949"
+checksum = "sha256:42f829277c3ef5e503fe8a59fb603b4a57affb9fa9e65d0997e7d35af53cc472"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.69.2/worktrunk-x86_64-apple-darwin.tar.xz"
+url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/489103710"
 
 [tools.worktrunk."platforms.windows-x64"]
-checksum = "sha256:11da7702f84d1326b72e579eabe69376524cf8cd1ff113da742d8730f8c61d49"
-url = "https://github.com/max-sixty/worktrunk/releases/download/v0.65.0/worktrunk-x86_64-pc-windows-msvc.zip"
-url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/463973953"
+checksum = "sha256:c4343fb59d4938433a600aeb7a2af52fed2e412889c6fa6788d74982c87a1a43"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.69.2/worktrunk-x86_64-pc-windows-msvc.zip"
+url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/489103713"
 
 [tools.worktrunk."platforms.windows-x64-baseline"]
-checksum = "sha256:11da7702f84d1326b72e579eabe69376524cf8cd1ff113da742d8730f8c61d49"
-url = "https://github.com/max-sixty/worktrunk/releases/download/v0.65.0/worktrunk-x86_64-pc-windows-msvc.zip"
-url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/463973953"
+checksum = "sha256:c4343fb59d4938433a600aeb7a2af52fed2e412889c6fa6788d74982c87a1a43"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.69.2/worktrunk-x86_64-pc-windows-msvc.zip"
+url_api = "https://api.github.com/repos/max-sixty/worktrunk/releases/assets/489103713"
 
 [[tools.zizmor]]
 version = "1.27.0"

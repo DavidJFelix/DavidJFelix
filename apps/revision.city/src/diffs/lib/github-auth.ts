@@ -107,12 +107,18 @@ export async function handleGitHubOAuthCallbackRequest(
 
   const code = requestURL.searchParams.get('code')
   const state = requestURL.searchParams.get('state')
-  if (
-    isNullish(code) ||
-    isNullish(state) ||
-    isNullish(stateCookie) ||
-    state !== stateCookie.state
-  ) {
+  const stateIsVerified =
+    !isNullish(code) && !isNullish(state) && !isNullish(stateCookie) && state === stateCookie.state
+  if (!stateIsVerified) {
+    // GitHub also sends the browser here after the app is installed or its
+    // repository selection changes (?setup_action=install|update). That flow
+    // starts on github.com rather than at our /login, so there is no state
+    // cookie binding it to this browser and the accompanying code must not be
+    // exchanged. The installation itself already succeeded, so land the
+    // visitor back in the app instead of reporting a failed sign-in.
+    if (!isNullish(requestURL.searchParams.get('setup_action'))) {
+      return handleGitHubInstallationSetupRedirect({request, options, returnPath, clearStateCookie})
+    }
     return createAuthTextResponse('Invalid OAuth state. Start the sign-in again.', 400, [
       clearStateCookie,
     ])
@@ -142,6 +148,36 @@ export async function handleGitHubOAuthCallbackRequest(
     clearStateCookie,
     serializeSessionCookie(session, secure),
   ])
+}
+
+interface HandleGitHubInstallationSetupRedirectParams {
+  request: Request
+  options: GitHubAuthOptions
+  returnPath: string
+  clearStateCookie: string
+}
+
+// Lands a visitor returning from GitHub's app installation flow. A signed-in
+// visitor's token already sees the new installation, so they go straight back
+// to where they were; anyone else is routed through the normal sign-in, which
+// binds a fresh state to this browser -- GitHub has just been authorized, so
+// that round-trip completes without another prompt.
+async function handleGitHubInstallationSetupRedirect({
+  request,
+  options,
+  returnPath,
+  clearStateCookie,
+}: HandleGitHubInstallationSetupRedirectParams): Promise<Response> {
+  const auth = await resolveGitHubAuth(request, options)
+  if (!isNullish(auth.session)) {
+    return createRedirectResponse(returnPath, [clearStateCookie, ...auth.setCookieHeaders])
+  }
+
+  // The login handler issues its own state cookie, so the stale one is not
+  // cleared here -- a clear appended after it would win and break the flow.
+  const loginURL = new URL('/api/auth/github/login', request.url)
+  loginURL.searchParams.set('returnTo', returnPath)
+  return handleGitHubLoginRequest(new Request(loginURL), options)
 }
 
 export function handleGitHubLogoutRequest(request: Request): Response {

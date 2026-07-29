@@ -72,9 +72,13 @@
     "typescript/prefer-function-type": "warn",
     "typescript/prefer-literal-enum-member": "warn",
     "unicorn/no-document-cookie": "warn",
-    // The pedantic category enables both `no-negated-condition` (eslint core)
-    // and this unicorn port, which report the same finding twice -- verified
-    // identical across all 26 occurrences in the monorepo. Core keeps it.
+    // Negated conditions are still linted -- by the eslint core
+    // `no-negated-condition`, which the pedantic category also turns on. This
+    // unicorn port is its twin, so leaving both enabled reports every finding
+    // twice and fixes it once. Verified interchangeable: same 26 findings across
+    // the monorepo, same edge cases (both skip an `if` with no `else` and an
+    // `else if` chain, both flag `!==` and ternaries), same autofix output.
+    // Off here means one report per finding, not one fewer check.
     "unicorn/no-negated-condition": "off",
     "unicorn/prefer-array-index-of": "warn",
     "unicorn/prefer-node-protocol": "warn",

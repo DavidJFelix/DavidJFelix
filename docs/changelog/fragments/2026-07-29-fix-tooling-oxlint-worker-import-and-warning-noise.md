@@ -14,11 +14,11 @@ Two rules that were reporting nothing useful are now off centrally. `react/react
 in every React app despite all of them compiling with the automatic JSX runtime, which injects the
 factory; oxlint's `settings.react` has no `runtime` key to detect that the way eslint-plugin-react's
 jsx-runtime config does. `unicorn/no-negated-condition` duplicates the eslint core rule the pedantic
-category already enables -- both fire on the same 26 locations repo-wide, neither adding coverage the
-other misses. Together they were more than half of every oxlint finding in the monorepo: 1535 across
-the twelve apps drops to 670, with revision.city going 595 to 222, forzamonica.com 328 to 83, f311x
-158 to 50, and ravrun 146 to 67. No signal is lost -- both rules were unactionable everywhere they
-fired.
+category already enables -- both fire on the same 26 locations repo-wide, neither adding coverage
+the other misses. Together they were more than half of every oxlint finding in the monorepo: 1535
+across the twelve apps drops to 670, with revision.city going 595 to 222, forzamonica.com 328 to 83,
+f311x 158 to 50, and ravrun 146 to 67. No signal is lost -- both rules were unactionable everywhere
+they fired.
 
 Both offs are documented in the linting guide alongside the existing central exceptions, together
 with when a single-line `oxlint-disable-next-line` is legitimate and when to pin the tool back

@@ -123,7 +123,7 @@ function StreamingIndicator() {
         px: '1.5',
         py: '0.5',
         fontSize: '[10px]',
-        lineHeight: '[1]',
+        lineHeight: 'none',
         fontWeight: 'medium',
         letterSpacing: 'wide',
         color: 'yellow.700',

@@ -42,7 +42,7 @@ function GalleryPage() {
           display: 'flex',
           flexDirection: 'column',
           gap: '4',
-          maxWidth: '[640px]',
+          maxWidth: 'breakpoint-sm',
         })}
       >
         <h1 className={css({textStyle: 'displayXl', color: 'ink'})}>Watercolors by Monica Felix</h1>

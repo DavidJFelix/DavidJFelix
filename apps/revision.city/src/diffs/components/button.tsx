@@ -6,7 +6,7 @@ import {cva, cx, type RecipeVariantProps} from 'styled-system/css'
 // Focus ring approximating Tailwind's ring utilities: a 3px box-shadow in the
 // ring color at partial opacity.
 const FOCUS_RING_SHADOW = '[0 0 0 3px color-mix(in oklab, var(--ring) 50%, transparent)]'
-const SHADOW_XS = '[0 1px 2px 0 rgb(0 0 0 / 0.05)]'
+const SHADOW_XS = 'xs'
 
 const buttonVariants = cva({
   base: {

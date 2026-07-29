@@ -15,18 +15,18 @@ const crumbs = css({
   gap: '[0.4rem]',
   fontSize: '[0.85rem]',
   color: 'muted',
-  mb: '[0.75rem]',
+  mb: '3',
 })
 
-const title = css({fontSize: '[1.4rem]', m: '0', mb: '[0.75rem]'})
-const stage = css({color: 'muted', fontWeight: '[400]'})
+const title = css({fontSize: '[1.4rem]', m: '0', mb: '3'})
+const stage = css({color: 'muted', fontWeight: 'normal'})
 
 const summary = css({
   display: 'flex',
   flexWrap: 'wrap',
-  gap: '[0.75rem]',
+  gap: '3',
   m: '0',
-  mb: '[1.25rem]',
+  mb: '5',
 })
 
 const count = css({
@@ -40,7 +40,7 @@ const count = css({
 const empty = css({color: 'muted'})
 
 const table = css({
-  w: '[100%]',
+  w: 'full',
   borderCollapse: 'collapse',
   bg: 'surface',
   borderWidth: '1px',
@@ -56,7 +56,7 @@ const table = css({
   },
   '& th': {
     color: 'muted',
-    fontWeight: '[500]',
+    fontWeight: 'medium',
     fontSize: '[0.8rem]',
   },
   '& tbody tr:last-child td': {
@@ -69,10 +69,10 @@ const kind = css({
   fontSize: '[0.7rem]',
   color: 'muted',
   textTransform: 'uppercase',
-  letterSpacing: '[0.05em]',
+  letterSpacing: 'wider',
 })
 
-const outputSection = css({mt: '[2rem]'})
+const outputSection = css({mt: '8'})
 const outputHeading = css({fontSize: '[1.05rem]', m: '0', mb: '[0.6rem]'})
 </script>
 

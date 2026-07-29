@@ -17,7 +17,7 @@ export const Route = createFileRoute('/diffs/')({
 
 const diffLineBadge = css.raw({
   display: 'inline-flex',
-  roundedRight: '[0.25rem]',
+  roundedRight: 'sm',
   py: '[0.0625rem]',
   pr: '1.5',
   pl: '1.5',
@@ -50,8 +50,8 @@ function DiffsHomePage() {
     <div
       className={css({
         display: 'flex',
-        minH: '[100svh]',
-        minW: '[100vw]',
+        minH: 'svh',
+        minW: 'screen',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
@@ -63,9 +63,9 @@ function DiffsHomePage() {
         className={css({
           position: 'relative',
           display: {base: 'flex', md: 'block'},
-          minH: {base: '[100svh]', md: '0'},
+          minH: {base: 'svh', md: '0'},
           w: '2xl',
-          maxW: '[100vw]',
+          maxW: 'screen',
           flexDirection: 'column',
           justifyContent: 'center',
           '& > * + *': {mt: '4'},
@@ -109,7 +109,7 @@ function DiffsHomePage() {
           <code
             className={cx(
               'diffs-border-deleted',
-              css({roundedLeft: '[0.25rem]', fontWeight: 'normal', color: '[inherit]'}),
+              css({roundedLeft: 'sm', fontWeight: 'normal', color: '[inherit]'}),
             )}
           >
             <span className={css({minW: '0', truncate: true})}>
@@ -120,7 +120,7 @@ function DiffsHomePage() {
           <code
             className={css({
               truncate: true,
-              roundedLeft: '[0.25rem]',
+              roundedLeft: 'sm',
               borderLeftWidth: '4px',
               borderColor: '[#07c480]',
               fontWeight: 'normal',
@@ -214,7 +214,7 @@ function DiffsHomePage() {
         id="home-more"
         className={css({
           w: '2xl',
-          maxW: '[100vw]',
+          maxW: 'screen',
           '& > * + *': {mt: '4'},
           px: '5',
           pb: '8',
@@ -262,7 +262,7 @@ const HomeFetchForm = memo(function HomeFetchForm() {
       <DiffUrlForm
         placeholder="https://github.com/org/repo/123"
         inputClassName={css({
-          fontSize: '[1rem]',
+          fontSize: 'md',
           h: '12',
           w: 'full',
           textAlign: 'start',

@@ -92,7 +92,7 @@ function ButtonGroupItem({className, value, children, onClick, ...props}: Button
           css({
             color: 'diffs.foreground',
             pointerEvents: 'none',
-            boxShadow: '[0 1px 2px 0 rgb(0 0 0 / 0.05)]',
+            boxShadow: 'xs',
           }),
         className,
       )}

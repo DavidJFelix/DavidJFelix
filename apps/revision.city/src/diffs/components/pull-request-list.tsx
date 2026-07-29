@@ -107,7 +107,7 @@ function DraftBadge() {
         px: '1.5',
         py: '0.5',
         fontSize: '[10px]',
-        lineHeight: '[1]',
+        lineHeight: 'none',
         letterSpacing: 'wide',
         textTransform: 'uppercase',
         verticalAlign: 'middle',

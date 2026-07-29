@@ -68,6 +68,21 @@ converting the grandfathered values to real tokens and tightening the gates.
   values were mechanically wrapped in escape hatches to keep rendered output identical — they are
   the burn-down list, greppable per app with `rg "'\[" apps/<app>/src`. Fix by choosing a real token
   (or adding one to the app's theme), not by deleting the brackets.
+- **Burn-down status (2026-07-29, exact-match pass)**: 82 of the 401 wrapped values matched an
+  existing token or sanctioned utility literal byte-for-byte and were converted
+  (alchemy-state-viewer 41, revision.city 27, calendar-visualizer 4, forzamonica.com 4, djf.io 2,
+  plus `[100dvh]` → `dvh` in the four single-hatch apps). 319 remain (revision.city 165,
+  forzamonica.com 87, alchemy-state-viewer 48, djf.io 15, calendar-visualizer 4) — every one
+  verified to have no exact flat-token equivalent. What's left needs a design decision per value:
+  extend the app theme with a token, move the value onto the scale, or accept the bracket. Unit
+  conversions (`8px` vs `0.5rem` tokens) and semantic tokens (which add dark-mode behavior) were
+  deliberately not substituted.
+- Two flags from the pass, undecided: revision.city's `fill: '[currentcolor]'` (x3) differs from the
+  `colors.current` token value `currentColor` only in casing — normalize or keep; and
+  revision.city's `fontSize: '[base]'` (`src/routes/index.tsx`, `src/routes/diffs/index.tsx`) is a
+  pre-existing latent bug — `font-size: base` is not valid CSS and browsers ignore the declaration,
+  so fixing it to a real token (probably `md`) would visibly change rendering and needs its own
+  decision.
 - **Tailwind apps** (f311x, ravrun): `oxlint-tailwindcss` is wired via `jsPlugins` in each app's
   `.oxlintrc.json` with `tailwindcss/no-arbitrary-value` at `warn`. Current findings:
   - f311x `src/routes/index.tsx:70` — `max-w-[80%]` (twice)

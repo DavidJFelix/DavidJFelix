@@ -345,7 +345,7 @@ function ThemeCycleToggle({controls}: ThemeCycleToggleProps) {
         rounded: 'diffs.md',
         px: '1',
         fontSize: '[10px]',
-        lineHeight: '[1]',
+        lineHeight: 'none',
         fontVariantNumeric: 'tabular-nums',
         transition: TRANSITION_COLORS,
       })}
@@ -355,10 +355,7 @@ function ThemeCycleToggle({controls}: ThemeCycleToggleProps) {
     >
       <IconRepeat
         aria-hidden="true"
-        className={cx(
-          css({w: '3', h: '3'}),
-          cycling && css({animation: '[pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite]'}),
-        )}
+        className={cx(css({w: '3', h: '3'}), cycling && css({animation: 'pulse'}))}
       />
       <span>{stepSeconds}s</span>
     </button>

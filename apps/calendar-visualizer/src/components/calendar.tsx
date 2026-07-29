@@ -42,7 +42,7 @@ function Month({monthName, slottedDays}: MonthState) {
     variants: {
       cellType: {
         weekDayHeaders: {
-          fontWeight: '[600]',
+          fontWeight: 'semibold',
           color: 'text',
         },
         day: {},
@@ -133,7 +133,7 @@ function Month({monthName, slottedDays}: MonthState) {
       <h2
         className={css({
           fontSize: 'xl',
-          fontWeight: '[700]',
+          fontWeight: 'bold',
           fontFamily: '[Roboto, sans-serif]',
           color: 'heading',
         })}
@@ -146,7 +146,7 @@ function Month({monthName, slottedDays}: MonthState) {
           gridTemplateRows: 'repeat(6, 1fr)',
           mx: '4',
           gap: '2',
-          width: '[100%]',
+          width: 'full',
         })}
       >
         {weekDayHeaders.map((dayHeader) => (
@@ -198,7 +198,7 @@ function CalendarHeader({children}: CalendarHeaderProps) {
     <h1
       className={css({
         fontSize: '4xl',
-        fontWeight: '[800]',
+        fontWeight: 'extrabold',
         fontFamily: '[Roboto, sans-serif]',
         color: 'title',
       })}

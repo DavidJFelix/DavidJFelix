@@ -193,7 +193,7 @@ export const DiffsHeader = memo(function DiffsHeader({
             fontWeight: 'semibold',
             letterSpacing: 'tight',
             fontSize: 'lg',
-            lineHeight: '[1]',
+            lineHeight: 'none',
           })}
         >
           <SiteMark />

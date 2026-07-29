@@ -44,7 +44,7 @@ export function CommentAuthorAvatar({seed, className}: CommentAuthorAvatarProps)
             rounded: 'full',
             color: 'white',
             fontSize: 'sm',
-            lineHeight: '[1]',
+            lineHeight: 'none',
             fontWeight: 'semibold',
             userSelect: 'none',
           }),

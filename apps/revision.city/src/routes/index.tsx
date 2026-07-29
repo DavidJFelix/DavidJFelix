@@ -22,7 +22,7 @@ export const Route = createFileRoute('/')({
 
 const pageClass = css({
   display: 'flex',
-  minH: '[100svh]',
+  minH: 'svh',
   flexDirection: 'column',
   alignItems: 'center',
 })
@@ -31,7 +31,7 @@ const mainClass = css({
   display: 'flex',
   flex: '1',
   w: '2xl',
-  maxW: '[100vw]',
+  maxW: 'screen',
   flexDirection: 'column',
   justifyContent: 'center',
   '& > * + *': {mt: '4'},
@@ -56,7 +56,7 @@ const taglineClass = css({fontSize: 'lg', fontWeight: 'medium', letterSpacing: '
 
 const pitchClass = css({color: 'diffs.muted.foreground', textWrap: '[pretty]'})
 
-const footerClass = css({w: '2xl', maxW: '[100vw]', px: '6', pb: '8'})
+const footerClass = css({w: '2xl', maxW: 'screen', px: '6', pb: '8'})
 
 const footerRuleClass = css({mb: '6', maxW: '[80px]', opacity: '0.5'})
 
@@ -111,7 +111,7 @@ const roadmapName = css.raw({
   display: 'inline-flex',
   borderLeftWidth: '4px',
   borderColor: 'transparent',
-  roundedLeft: '[0.25rem]',
+  roundedLeft: 'sm',
   py: '[0.0625rem]',
   px: '1.5',
   whiteSpace: 'pre',
@@ -119,7 +119,7 @@ const roadmapName = css.raw({
 
 const addedNameClass = css(roadmapName, {
   borderColor: '[#07c480]',
-  roundedRight: '[0.25rem]',
+  roundedRight: 'sm',
   bg: '[rgb(7 196 128 / 0.15)]',
   color: '[#18a46c]',
   transition: '[background-color 150ms ease]',

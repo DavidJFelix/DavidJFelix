@@ -28,7 +28,7 @@ export function ProductCard({product}: {product: ProductSummary}) {
       <div
         className={css({
           position: 'relative',
-          aspectRatio: '[4 / 3]',
+          aspectRatio: 'landscape',
           background:
             '[repeating-linear-gradient(45deg, token(colors.paper.shade) 0 10px, token(colors.paper.checker) 10px 20px)]',
         })}

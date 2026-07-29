@@ -13,7 +13,7 @@ const description = 'A little blog about our life together. Posts coming soon.'
 
 <div
   class={css({
-    minHeight: '[100dvh]',
+    minHeight: 'dvh',
     display: 'flex',
     flexDirection: 'column',
     bg: 'bg.canvas',

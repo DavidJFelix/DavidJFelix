@@ -5,7 +5,7 @@ import {css} from 'styled-system/css'
 const {value}: {value: unknown} = $props()
 
 const container = css({
-  px: '[1rem]',
+  px: '4',
   py: '[0.9rem]',
   bg: 'surface',
   borderWidth: '1px',
@@ -16,7 +16,7 @@ const container = css({
   fontSize: '[0.85rem]',
   lineHeight: '[1.6]',
   '& [data-part="branch-content"]': {
-    ps: '[1.25rem]',
+    ps: '5',
   },
   '& [data-part="branch-control"]': {
     display: 'flex',

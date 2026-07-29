@@ -15,6 +15,13 @@ emitted CSS is byte-identical and nothing shifts visually. The brackets are the 
 what used to be invisible drift into a greppable burn-down list (`rg "'\[" apps/<app>/src`), tracked
 as scope item 4 of the `lint-format-loose-ends` project. All nine apps typecheck clean.
 
+A same-day exact-match pass then burned down 82 of the 401 brackets: values whose app token
+dictionary already held a byte-identical entry became real tokens (`'[600]'` to `'semibold'`,
+`'[1.25rem]'` on `fontSize` to `'xl'`, `'[100dvh]'` to the preset's `dvh` literal, and so on). The
+319 that remain were each verified to have no exact flat-token equivalent -- px values whose nearest
+tokens are rem-denominated (different behavior under user font scaling), off-scale values, and
+multi-part composites -- so each needs a design decision rather than a mechanical swap.
+
 The two Tailwind v4 apps (f311x, ravrun) get `oxlint-tailwindcss` wired through oxlint's `jsPlugins`
 in a new per-app `.oxlintrc.json` extending the root config, with `tailwindcss/no-arbitrary-value`
 at `warn`: class-string equivalents of the same sin (`max-w-[80%]`, `min-w-[56rem]`) now surface in

@@ -267,7 +267,7 @@ export const DiffsSidebar = memo(function DiffsSidebar({
                     bg: '[color-mix(in srgb, currentColor 18%, transparent)]',
                     px: '1',
                     fontSize: '[10px]',
-                    lineHeight: '[1]',
+                    lineHeight: 'none',
                     fontWeight: 'medium',
                     fontVariantNumeric: 'tabular-nums',
                   })}

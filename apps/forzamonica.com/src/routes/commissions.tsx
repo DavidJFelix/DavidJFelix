@@ -232,7 +232,7 @@ function CommissionForm() {
           rows={5}
           placeholder="I'd love a painting of…"
           aria-describedby={ideaHintId}
-          className={cx(fieldClasses.control, css({resize: 'vertical', lineHeight: '[1.5]'}))}
+          className={cx(fieldClasses.control, css({resize: 'vertical', lineHeight: 'normal'}))}
         />
         <span id={ideaHintId} className={fieldClasses.hint}>
           Colors, mood, occasion — anything helps. You can email photos after.

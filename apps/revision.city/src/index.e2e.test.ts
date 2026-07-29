@@ -7,18 +7,24 @@ import {expect, type Page, test} from '@playwright/test'
 
 test('home page renders the landing', async ({page}) => {
   await page.goto('/')
-  await expect(
-    page.getByRole('heading', {level: 1, name: 'Version control, centered on review.'}),
-  ).toBeVisible()
-  await expect(page.getByRole('heading', {level: 2, name: 'Reviews'})).toBeVisible()
-  await expect(page.getByRole('heading', {level: 2, name: 'Diffs'})).toBeVisible()
+  await expect(page.getByRole('heading', {level: 1, name: 'revision.city'})).toBeVisible()
+  // Diffs is the one open feature, so the page links into the viewer twice:
+  // the added roadmap line and the call-to-action card.
+  await expect(page.getByRole('link', {name: '+ diffs'})).toHaveAttribute('href', '/diffs')
+  await expect(page.getByRole('link', {name: /Open Diffs/u})).toHaveAttribute('href', '/diffs')
 })
 
-test('home page matches the visual baseline', async ({page}) => {
-  await page.goto('/')
-  await page.evaluate(() => document.fonts.ready)
-  await expect(page).toHaveScreenshot('home.png', {maxDiffPixelRatio: 0.01})
-})
+// The home page shares the diffs theme, including the persisted/OS color
+// scheme -- so the baseline covers both schemes, not just Playwright's
+// default light emulation.
+for (const colorScheme of ['light', 'dark'] as const) {
+  test(`home page matches the ${colorScheme} visual baseline`, async ({page}) => {
+    await page.emulateMedia({colorScheme})
+    await page.goto('/')
+    await page.evaluate(() => document.fonts.ready)
+    await expect(page).toHaveScreenshot(`home-${colorScheme}.png`, {maxDiffPixelRatio: 0.01})
+  })
+}
 
 // The mark is declared once on the root route, and lives in public/ rather than
 // the module graph -- so what is worth proving is that child routes inherit the

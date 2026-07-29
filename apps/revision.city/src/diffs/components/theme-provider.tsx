@@ -33,7 +33,7 @@ const COLOR_SCHEMES: ColorScheme[] = ['light', 'dark']
 // scheme. These match the global body `--background` (oklch(1)/oklch(0.145))
 // that iOS samples at the top of the page, so the navbar blends with the page
 // instead of contrasting it. Kept in sync with the same literals hardcoded in
-// the layout's pre-paint bootstrap script (which can't import this module).
+// lib/theme-bootstrap's pre-paint script (which can't import this module).
 const SCHEME_THEME_COLOR: Record<ColorScheme, string> = {
   light: '#ffffff',
   dark: '#0a0a0a',

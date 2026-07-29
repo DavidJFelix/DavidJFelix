@@ -40,8 +40,9 @@ export default defineConfig({
       semanticTokens: {
         // The diffs feature's theme contract: tokens resolve to the CSS
         // variables defined in src/diffs/diffs.css (light/dark blocks), which
-        // only loads on /diffs routes. Namespaced under `diffs` so the rest of
-        // the app keeps the plain Panda palette.
+        // loads only on the routes that adopt the theme (the home page and
+        // /diffs). Namespaced under `diffs` so pages outside the theme keep
+        // the plain Panda palette.
         colors: {
           diffs: {
             background: {value: 'var(--background)'},

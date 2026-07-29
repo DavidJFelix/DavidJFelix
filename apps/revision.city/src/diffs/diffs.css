@@ -1,7 +1,7 @@
-/* Global stylesheet for the /diffs routes, ported from Pierre's diffshub app
+/* Global stylesheet for the themed routes, ported from Pierre's diffshub app
    (Tailwind utilities were rewritten as Panda styles in the components; this
    file keeps the theme variables and the plain-CSS surface the @pierre/diffs
-   viewer hooks into). Loaded only by the /diffs route layout. */
+   viewer hooks into). Loaded by the home route and the /diffs route layout. */
 
 @import "@fontsource-variable/geist";
 @import "@fontsource-variable/jetbrains-mono";
@@ -98,9 +98,9 @@
   -webkit-font-smoothing: antialiased;
 }
 
-/* This stylesheet only loads on /diffs routes, so styling body directly is
-   already scoped; rules outside any cascade layer also win over the root shell's layered Panda
-   utility classes. */
+/* This stylesheet only loads on routes that adopt the diffs theme (home and
+   /diffs), so styling body directly is already scoped; rules outside any cascade layer also win
+   over the root shell's layered Panda utility classes. */
 body {
   background-color: var(--diffs-sidebar-bg);
   color: var(--foreground);

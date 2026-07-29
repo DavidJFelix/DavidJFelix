@@ -7,28 +7,34 @@ import {expect, type Page, test} from '@playwright/test'
 
 test('home page renders the landing', async ({page}) => {
   await page.goto('/')
-  await expect(
-    page.getByRole('heading', {level: 1, name: 'Version control, centered on review.'}),
-  ).toBeVisible()
-  await expect(page.getByRole('heading', {level: 2, name: 'Reviews'})).toBeVisible()
-  await expect(page.getByRole('heading', {level: 2, name: 'Diffs'})).toBeVisible()
+  await expect(page.getByRole('heading', {level: 1, name: 'revision.city'})).toBeVisible()
+  // Diffs is the one open feature, so the page links into the viewer twice:
+  // the added roadmap line and the call-to-action card.
+  await expect(page.getByRole('link', {name: '+ diffs'})).toHaveAttribute('href', '/diffs')
+  await expect(page.getByRole('link', {name: /Open Diffs/u})).toHaveAttribute('href', '/diffs')
 })
 
-test('home page matches the visual baseline', async ({page}) => {
-  await page.goto('/')
-  await page.evaluate(() => document.fonts.ready)
-  await expect(page).toHaveScreenshot('home.png', {maxDiffPixelRatio: 0.01})
+// The home page shares the diffs theme, including the persisted/OS color
+// scheme -- so the baseline covers both schemes, not just Playwright's
+// default light emulation.
+;(['light', 'dark'] as const).forEach((colorScheme) => {
+  test(`home page matches the ${colorScheme} visual baseline`, async ({page}) => {
+    await page.emulateMedia({colorScheme})
+    await page.goto('/')
+    await page.evaluate(() => document.fonts.ready)
+    await expect(page).toHaveScreenshot(`home-${colorScheme}.png`, {maxDiffPixelRatio: 0.01})
+  })
 })
 
 // The mark is declared once on the root route, and lives in public/ rather than
 // the module graph -- so what is worth proving is that child routes inherit the
 // link and that the build actually ships the file behind it.
-for (const path of ['/', '/diffs']) {
+;['/', '/diffs'].forEach((path) => {
   test(`${path} links the favicon`, async ({page}) => {
     await page.goto(path)
     await expect(page.locator('link[rel="icon"]')).toHaveAttribute('href', '/favicon.svg')
   })
-}
+})
 
 // Measures the mark against the bare text node beside it, rather than against
 // the element wrapping them both -- that wrapper starts where the mark starts,
@@ -58,10 +64,12 @@ async function measureMarkAgainstName(page: Page) {
 // each surface. The third placement -- the diffs viewer header -- is not
 // covered here because reaching it means fetching a real diff from GitHub,
 // which this suite stays clear of; it shares the component these two prove.
-for (const [path, name] of [
-  ['/', 'revision.city'],
-  ['/diffs', 'Diffs'],
-] as const) {
+;(
+  [
+    ['/', 'revision.city'],
+    ['/diffs', 'Diffs'],
+  ] as const
+).forEach(([path, name]) => {
   test(`${path} leads ${name} with the mark`, async ({page}) => {
     await page.goto(path)
     await expect(page.locator('[data-slot="site-mark"]').first()).toBeVisible()
@@ -72,7 +80,7 @@ for (const [path, name] of [
     // Ahead of the name rather than trailing it, which is the whole request.
     expect(measured?.markRight).toBeLessThanOrEqual(measured?.nameLeft ?? 0)
   })
-}
+})
 
 test('favicon is served as an svg', async ({request}) => {
   const response = await request.get('/favicon.svg')

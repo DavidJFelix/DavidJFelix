@@ -201,3 +201,28 @@ test('BaseLayout renders the signature footer', async () => {
   })
   expect(html).toMatch(/(©|&copy;) David J Felix/)
 })
+
+// The bootstrap script must apply before first paint: assert it is present
+// and references the pieces of the tri-state contract (storage key, OS media
+// query, color-scheme, and the raw-mode data attribute the toggle reads).
+// Behavior (resolution, listeners) is covered by the e2e suite -- a container
+// render never executes inline scripts.
+test('BaseLayout renders the no-flash theme bootstrap script as the first head script', async () => {
+  const html = await container.renderToString(BaseLayout, {
+    props: {title: 'x'},
+  })
+  const headStart = html.indexOf('<head>')
+  const headEnd = html.indexOf('</head>')
+  const firstScriptIndex = html.indexOf('<script', headStart)
+
+  expect(firstScriptIndex).toBeGreaterThan(-1)
+  expect(firstScriptIndex).toBeLessThan(headEnd)
+
+  const scriptEnd = html.indexOf('</script>', firstScriptIndex)
+  const bootstrapScript = html.slice(firstScriptIndex, scriptEnd)
+
+  expect(bootstrapScript).toContain("localStorage.getItem('theme')")
+  expect(bootstrapScript).toContain('prefers-color-scheme: dark')
+  expect(bootstrapScript).toContain('root.style.colorScheme')
+  expect(bootstrapScript).toContain('root.dataset.themeMode')
+})

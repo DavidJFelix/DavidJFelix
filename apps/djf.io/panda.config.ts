@@ -22,9 +22,9 @@ const scale = (radixScale: Record<string, string>) =>
   )
 
 // Each semantic role resolves light -> dark automatically: base is the light
-// (olive/grass) step, _dark swaps to the matching *Dark step. The _dark
-// condition is driven by [data-theme=dark] on <html> (set by the no-flash theme
-// script), defaulting to the system preference.
+// (olive/grass) step, _dark swaps to the matching *Dark step. _dark is
+// Panda's built-in condition (`.dark &`), driven by the light/dark class the
+// no-flash theme script sets on <html>, defaulting to the system preference.
 const lightDark = (base: string, dark: string) => ({value: {base, _dark: dark}})
 
 export default defineConfig({
@@ -32,11 +32,6 @@ export default defineConfig({
   presets: ['@pandacss/preset-panda'],
   include: ['./src/**/*.{ts,tsx,js,jsx,astro}', './pages/**/*.{ts,tsx,js,jsx,astro}'],
   exclude: [],
-  conditions: {
-    extend: {
-      dark: '[data-theme=dark] &',
-    },
-  },
   theme: {
     extend: {
       tokens: {

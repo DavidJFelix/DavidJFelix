@@ -103,6 +103,7 @@
     "effectful",
     "falsey", // the repo's preferred spelling; the conventional variant is in flagWords
     "footguns",
+    "fouc", // flash of unstyled/wrong-theme content (theme-switcher docs and code)
     "frontmatter",
     "gatekept",
     "geolocates", // the dictionaries lack this verb entirely
@@ -202,6 +203,7 @@
     "modelcontextprotocol", // the @modelcontextprotocol npm scope (Model Context Protocol SDK)
     "msgpackr",
     "Neue", // Helvetica Neue, in font stacks
+    "nuxtjs", // the @nuxtjs npm scope (color-mode module)
     "openclaw",
     "opencode",
     "openrouter",

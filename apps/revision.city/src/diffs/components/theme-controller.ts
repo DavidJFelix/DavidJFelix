@@ -68,4 +68,31 @@ export const themeController = createThemeController({
   defaultMode: 'system',
 })
 
+// Cross-tab sync (repo theming contract): @pierre/theming has no storage
+// listener of its own, so another tab's saved selection is adopted here. The
+// re-save the setters trigger writes identical values, which never re-fires
+// the storage event in other tabs, so this cannot loop.
+function handleStorage(event: StorageEvent): void {
+  const relevant =
+    event.key === null ||
+    event.key === MODE_KEY ||
+    event.key === LIGHT_THEME_KEY ||
+    event.key === DARK_THEME_KEY
+  if (!relevant) return
+  const selection = docsPersistence.load()
+  themeController.setColorMode(selection?.mode ?? 'system')
+  themeController.setThemeNameForScheme(
+    'light',
+    selection?.lightThemeName ?? docsThemeCatalog.defaultLightThemeName,
+  )
+  themeController.setThemeNameForScheme(
+    'dark',
+    selection?.darkThemeName ?? docsThemeCatalog.defaultDarkThemeName,
+  )
+}
+
+if (typeof globalThis.addEventListener === 'function') {
+  globalThis.addEventListener('storage', handleStorage)
+}
+
 export const docsThemeResolver = themeController.resolver

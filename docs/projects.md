@@ -138,6 +138,14 @@ Wire PostHog into every deployed app for product analytics. Full-fleet rollout *
 
 **Status**: Active · Blocked (human activation)
 
+### [Theme Switcher Unification](./projects/theme-switcher-unification/plan.md)
+
+Bring every app's light/dark/system switching to the revision.city quality bar behind one shared
+contract (storage key, DOM classes, pre-paint bootstrap, a11y semantics); then extract the
+hand-rolled core into a standalone package.
+
+**Status**: Active
+
 ## Infrastructure & hygiene
 
 Repo plumbing. Real work, but lower priority than moving the apps forward.

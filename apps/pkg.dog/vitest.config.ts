@@ -11,7 +11,12 @@ export default defineConfig({
     // client plugin are exercised by smoke/e2e, not unit coverage.
     coverage: {
       provider: 'v8',
-      include: ['shared/posthog-proxy.ts', 'shared/sentry-tunnel.ts', 'shared/config.ts'],
+      include: [
+        'shared/posthog-proxy.ts',
+        'shared/sentry-tunnel.ts',
+        'shared/config.ts',
+        'shared/theme-preference.ts',
+      ],
       reporter: ['text', 'text-summary'],
       thresholds: {statements: 100, branches: 90, functions: 100, lines: 100},
     },

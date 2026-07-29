@@ -3,6 +3,18 @@ import {fileURLToPath} from 'node:url'
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2026-06-01',
+  modules: ['@nuxtjs/color-mode'],
+  // Repo-wide theme contract (docs/projects/theme-switcher-unification/plan.md):
+  // tri-state light/dark/system, localStorage key 'theme', no-flash pre-paint
+  // application. v4 defaults already give a bare .dark/.light class on <html>
+  // (classPrefix/classSuffix ''), matching Panda's built-in _dark (.dark &)
+  // condition -- left unset rather than restated.
+  colorMode: {
+    preference: 'system',
+    fallback: 'light',
+    storageKey: 'theme',
+    disableTransition: true,
+  },
   // Deploy as a Cloudflare Worker (module syntax) via Nitro.
   nitro: {
     preset: 'cloudflare_module',

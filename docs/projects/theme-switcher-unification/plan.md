@@ -75,8 +75,9 @@ worth adopting exists; `next-themes` is React-only and Ark UI has no color-mode 
   contract (tri-state, guarded storage, `color-scheme`, listeners, padded hit target) and its Panda
   condition moves from `[data-theme=dark]` to the default `.dark`; the upgraded component is copied
   to onvibes.org and calendar-visualizer. onvibes.org's chat.css hexes become `light-dark()` pairs.
-- **davidjfelix.com**: intentionally dark-only (single static page, declares `color-scheme: dark`);
-  left alone.
+- **davidjfelix.com**: was dark-only; David's call (2026-07-29 review): it gets a color mode too.
+  The page's CSS variables become `light-dark()` pairs with `color-scheme: light dark` as the no-JS
+  default (pure-CSS OS following), plus the shared Astro bootstrap + toggle on top.
 - **SvelteKit apps** (alchemy-state-viewer, monicandavid.com): adopt `mode-watcher` with
   `modeStorageKey="theme"`; alchemy-state-viewer's tokens move `_osDark` -> `_dark`; a small shared
   toggle component per app. mode-watcher's `themeColors` prop is not used (verified bug: system mode
@@ -94,6 +95,7 @@ worth adopting exists; `next-themes` is React-only and Ark UI has no color-mode 
 - [x] ravrun, startchi.com, forzamonica.com: adapted copies + minimal dark palettes where missing
 - [x] revision.city: cross-tab storage listener
 - [x] djf.io: tri-state upgrade; onvibes.org + calendar-visualizer: toggle + tokens
+- [x] davidjfelix.com: `light-dark()` palette + bootstrap + toggle (added at David's request)
 - [x] alchemy-state-viewer, monicandavid.com: mode-watcher adoption
 - [x] pkg.dog: @nuxtjs/color-mode adoption
 - [x] Changelog fragment
@@ -115,5 +117,5 @@ final art.
 
 - Dark palette art direction for forzamonica.com (pastel pigment ramp on dark paper) and the
   small-site templates -- current values are conservative placeholders.
-- Should davidjfelix.com stay dark-only? (Assumed yes; it is a deliberate design.)
+- ~~Should davidjfelix.com stay dark-only?~~ Answered 2026-07-29: no -- it has a color mode now.
 - PR 2 packaging: `workspaces/` tree with per-app `file:` deps vs published npm package.

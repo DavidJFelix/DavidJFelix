@@ -23,5 +23,5 @@ revision.city itself picks up the one contract feature it lacked, cross-tab sync
 Apps that were light-only (forzamonica.com, startchi.com, monicandavid.com, pkg.dog, onvibes.org,
 calendar-visualizer) get conservative first-pass dark palettes through Panda semantic tokens (or
 `light-dark()` in onvibes.org's chat stylesheet), flagged in the plan doc for design review.
-davidjfelix.com stays deliberately dark-only. A follow-up PR extracts the hand-rolled core into a
-standalone package.
+davidjfelix.com, dark-only until now, gets a light palette through `light-dark()` variables and the
+same bootstrap and toggle. A follow-up PR extracts the hand-rolled core into a standalone package.

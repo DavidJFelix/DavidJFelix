@@ -15,6 +15,7 @@
     "licenses",
     "people-names",
     "pierre",
+    "web-platform",
   ],
   // Topic dictionaries: system vocabularies and names shared by more than one
   // file. Entries and the reasons for them live in the .txt files themselves.
@@ -39,6 +40,12 @@
       "name": "pierre",
       "path": "dictionaries/pierre.txt",
       "description": "Pierre ecosystem vocabulary (diffs viewer port provenance)",
+    },
+    {
+      "name": "web-platform",
+      "path": "dictionaries/web-platform.txt",
+      "description": "Web-platform acronyms (case sensitive)",
+      "caseSensitive": true,
     },
   ],
   // Spellings this repo rejects outright; cspell reports the replacement. The
@@ -104,7 +111,6 @@
     "effectful",
     "falsey", // the repo's preferred spelling; the conventional variant is in flagWords
     "footguns",
-    "fouc", // flash of unstyled/wrong-theme content (theme-switcher docs and code)
     "frontmatter",
     "gatekept",
     "geolocates", // the dictionaries lack this verb entirely

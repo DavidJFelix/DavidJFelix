@@ -10,3 +10,6 @@ comeau
 jeremey
 # Peter Riegel, whose race-time formula anchors ravrun's pace math
 riegel
+# Jakub Krehel, author of the vendored better-* interface skills (.agents/skills)
+jakub
+krehel

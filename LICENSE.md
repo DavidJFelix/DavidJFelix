@@ -39,6 +39,9 @@ djf.io application code around that writing stays MIT OR Apache-2.0.
 - `workspaces/joy-of-react/` contains material from Josh W. Comeau's Joy of React course and retains
   Josh's Course Materials License (each project's `LICENSE.md`). It is not covered by the licenses
   above.
+- The `better-*` skills under `.agents/skills/` are vendored from Jakub Krehel's
+  [skills collection](https://github.com/jakubkrehel/skills) and keep their original MIT license;
+  the attribution and license text live in [.agents/skills/NOTICE.md](.agents/skills/NOTICE.md).
 - Vendored or course-derived code keeps its original license; when adding any, record the
   attribution in a `NOTICE.md` beside it rather than changing these files.
 

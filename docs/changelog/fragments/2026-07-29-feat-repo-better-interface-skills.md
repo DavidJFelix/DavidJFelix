@@ -15,3 +15,9 @@ read-only and improvements go upstream. A new
 [interface-style.md](../../contributing/interface-style.md) mini guide records the domain-ownership
 table and how to invoke `/better-interface`; CONTRIBUTING.md, the AGENTS.md hard rules, and the
 `design-reviewer` persona now point at it.
+
+One deliberate local delta on top of upstream: the five styling skills each gain a `pandacss.md`
+reference file translating their recipes into PandaCSS idiom -- conditions like `_focusVisible` and
+`_motionReduce`, semantic tokens with appearance variants, textStyles as the role-based type scale,
+logical shorthands, and utilities like `truncate` and `srOnly` -- linked from each skill's Quick
+Reference table, with the lockfile hashes recomputed to pin the modified folders.

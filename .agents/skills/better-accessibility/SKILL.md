@@ -21,6 +21,7 @@ Rendered-pair contrast measurement and color remediation are covered by the `bet
 | [Screen Readers](screen-readers.md) | Visually hidden content, live regions, toasts, alt text, SVG |
 | [Hit Areas](hit-areas.md) | Target sizes, expanding hit areas, collision rules |
 | [Motion & Zoom](motion-and-zoom.md) | `prefers-reduced-motion`, autoplay and timed UI, 200% zoom, reflow, rem vs px |
+| [PandaCSS](pandacss.md) | Focus rings, motion conditions, hit areas, `srOnly` in Panda syntax |
 
 ## Core Principles
 

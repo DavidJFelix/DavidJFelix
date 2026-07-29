@@ -16,6 +16,7 @@ OKLCH is a perceptually uniform color space where lightness, chroma, and hue are
 | Contrast | APCA/WCAG checks, reporting failures, fixing on request | [accessibility-contrast.md](accessibility-contrast.md) |
 | Gamut & Tailwind | P3 fallbacks, `@theme` scales, gamut clamping | [gamut-and-tailwind.md](gamut-and-tailwind.md) |
 | Usage | Semantic tokens, one meaning per color, primary-action emphasis, appearance variants | [color-usage.md](color-usage.md) |
+| PandaCSS | OKLCH tokens, semantic tokens, appearance conditions in `panda.config.ts` | [pandacss.md](pandacss.md) |
 
 ## Core Principles
 

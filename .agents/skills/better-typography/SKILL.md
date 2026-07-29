@@ -23,6 +23,7 @@ The words themselves (button labels, error messages, empty states) are covered b
 | Wrapping & punctuation | Measure, wrapping, truncation, smart punctuation, RTL | [wrapping-and-punctuation.md](wrapping-and-punctuation.md) |
 | Details & accessibility | Underlines, selection, forms, decorative text, contrast | [details-and-accessibility.md](details-and-accessibility.md) |
 | CSS cheat sheet | Quick lookup of every property covered, with Tailwind equivalents | [css-cheat-sheet.md](css-cheat-sheet.md) |
+| PandaCSS | Type scale as textStyles, wrapping, truncation in Panda syntax | [pandacss.md](pandacss.md) |
 
 ## Core Principles
 

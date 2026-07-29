@@ -21,6 +21,7 @@ Typography (text wrapping, font rendering, tabular numbers, spacing) is covered 
 | [Animations](animations.md) | Interruptible animations, enter/exit transitions, icon animations, scale on press, motion restraint |
 | [Icons](icons.md) | Icon stroke weight, states via `currentColor`, outline vs fill, sizing, RTL flipping |
 | [Performance](performance.md) | Transition specificity, `will-change` usage |
+| [PandaCSS](pandacss.md) | This skill's recipes in Panda syntax: transitions, press scale, radii, keyframes |
 
 ## Core Principles
 

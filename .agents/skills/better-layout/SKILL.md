@@ -17,6 +17,7 @@ Treat the numeric values below as starting points for interfaces without an esta
 | --- | --- |
 | [Grouping & Alignment](grouping-and-alignment.md) | Space vs separators, alignment edges, logical properties, importance ordering |
 | [Spacing & Adaptivity](spacing-and-adaptivity.md) | Spacing between targets, layout margins, progressive disclosure, full-bleed content, breakpoints, i18n growth |
+| [PandaCSS](pandacss.md) | Spacing tokens, logical shorthands, breakpoints, safe areas in Panda syntax |
 
 ## Core Principles
 

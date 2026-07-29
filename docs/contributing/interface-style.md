@@ -37,3 +37,8 @@ repo's dual license with the retained notice in
 [.agents/skills/NOTICE.md](../../.agents/skills/NOTICE.md), and content-pinned in the repo-root
 `skills-lock.json`. Treat them as read-only -- improvements go upstream, and any deliberate local
 edit must recompute the folder hash in the lockfile in the same PR.
+
+One deliberate local delta exists: each of the five styling skills carries a `pandacss.md` reference
+file (plus its Quick Reference row) translating that skill's recipes into PandaCSS idiom, since the
+apps here are mostly Panda. When syncing a skill from upstream, preserve the `pandacss.md` file and
+its table row, and re-verify the translations still match the upstream recipes they mirror.

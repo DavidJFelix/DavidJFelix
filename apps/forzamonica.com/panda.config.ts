@@ -214,6 +214,7 @@ const quantityField = defineSlotRecipe({
 
 export default defineConfig({
   preflight: true,
+  strictTokens: true,
   presets: ['@pandacss/preset-panda'],
   include: ['./src/**/*.{ts,tsx}'],
   exclude: [],

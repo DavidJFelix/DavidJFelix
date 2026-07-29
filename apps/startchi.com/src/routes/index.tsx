@@ -21,7 +21,7 @@ function Home() {
   ]
 
   return (
-    <div className={css({minHeight: '100dvh', display: 'flex', flexDirection: 'column'})}>
+    <div className={css({minHeight: '[100dvh]', display: 'flex', flexDirection: 'column'})}>
       <header
         className={css({
           display: 'flex',

@@ -84,8 +84,8 @@ export function DraftAnnotation({annotation, itemId, onCancel, onSave}: DraftAnn
             rounded: 'diffs.sm',
             bg: 'transparent',
             py: '1.5',
-            fontSize: '14px',
-            color: 'inherit',
+            fontSize: '[14px]',
+            color: '[inherit]',
             _placeholder: {
               color: 'var(--diffs-popover-muted-fg, var(--muted-foreground))',
             },
@@ -103,7 +103,7 @@ export function DraftAnnotation({annotation, itemId, onCancel, onSave}: DraftAnn
           // straight from 5.5 to 6); pl-10.5 in the original Tailwind (v4's
           // formula scale) resolves to 10.5 * 0.25rem, spelled out literally
           // here so it doesn't silently fall back to an unscaled `10.5px`.
-          pl: {base: '2.625rem', md: '0'},
+          pl: {base: '[2.625rem]', md: '0'},
         })}
       >
         <Button

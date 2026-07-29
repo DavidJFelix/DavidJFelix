@@ -193,8 +193,8 @@ export const DiffsSidebar = memo(function DiffsSidebar({
             zIndex: '20',
             cursor: 'default',
             bg: 'diffs.background/60',
-            backdropFilter: 'blur(4px)',
-            transition: 'opacity 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+            backdropFilter: '[blur(4px)]',
+            transition: '[opacity 150ms cubic-bezier(0.4, 0, 0.2, 1)]',
             gridColumn: '1 / -1',
             gridRow: '1 / -1',
             display: {md: 'none'},
@@ -233,7 +233,7 @@ export const DiffsSidebar = memo(function DiffsSidebar({
             value={activeTab}
             onValueChange={(value) => setActiveTab(value as SidebarTab)}
           >
-            <ButtonGroupItem value="files" size="icon-only" className={css({boxShadow: 'none'})}>
+            <ButtonGroupItem value="files" size="icon-only" className={css({boxShadow: '[none]'})}>
               <IconFileTree className={ICON_SIZE_CLASS} />
               <span className={css({srOnly: true})}>Files</span>
             </ButtonGroupItem>
@@ -241,7 +241,7 @@ export const DiffsSidebar = memo(function DiffsSidebar({
               value="comments"
               size="icon-only"
               className={cx(
-                css({boxShadow: 'none'}),
+                css({boxShadow: '[none]'}),
                 totalCommentCount > 0 && css({w: 'auto', gap: '1', pr: '1'}),
               )}
             >
@@ -264,10 +264,10 @@ export const DiffsSidebar = memo(function DiffsSidebar({
                     alignItems: 'center',
                     justifyContent: 'center',
                     rounded: 'full',
-                    bg: 'color-mix(in srgb, currentColor 18%, transparent)',
+                    bg: '[color-mix(in srgb, currentColor 18%, transparent)]',
                     px: '1',
-                    fontSize: '10px',
-                    lineHeight: '1',
+                    fontSize: '[10px]',
+                    lineHeight: '[1]',
                     fontWeight: 'medium',
                     fontVariantNumeric: 'tabular-nums',
                   })}
@@ -362,10 +362,10 @@ function SidebarWrapper({children, className, mobileOverlayOpen, themeStyle}: Si
           h: 'full',
           minH: '0',
           flexDirection: 'column',
-          transition: 'transform 300ms cubic-bezier(0.32, 0.72, 0, 1)',
+          transition: '[transform 300ms cubic-bezier(0.32, 0.72, 0, 1)]',
           willChange: {base: 'transform', md: 'auto'},
           transform: {md: 'translateY(0)'},
-          _motionReduce: {transition: 'none'},
+          _motionReduce: {transition: '[none]'},
         }),
         // Fall back to the neutral diffs chrome background when no Shiki
         // theme bg is available yet (initial render before the resolver
@@ -378,18 +378,18 @@ function SidebarWrapper({children, className, mobileOverlayOpen, themeStyle}: Si
               overflow: {base: 'hidden', md: 'visible'},
               roundedTop: 'diffs.xl',
               boxShadow: {
-                base: '0 0 0 1px var(--border-opaque), 0 16px 32px rgb(0 0 0 / 0.25)',
-                md: 'none',
+                base: '[0 0 0 1px var(--border-opaque), 0 16px 32px rgb(0 0 0 / 0.25)]',
+                md: '[none]',
               },
               h: {md: 'full'},
-              rounded: {md: '0'},
+              rounded: {md: '[0]'},
               borderWidth: {md: '0'},
             })
           : css({
               pointerEvents: {base: 'none', md: 'auto'},
               transform: 'translateY(calc(100% + 1.5rem))',
               overflow: {base: 'hidden', md: 'visible'},
-              rounded: {base: 'diffs.xl', md: '0'},
+              rounded: {base: 'diffs.xl', md: '[0]'},
               h: {md: 'full'},
               pt: '3',
               borderRightWidth: '1px',
@@ -507,7 +507,7 @@ function FileTreeFilterButton({
             className={css({
               color: 'diffs.muted.foreground',
               fontSize: 'xs',
-              lineHeight: '1rem',
+              lineHeight: '[1rem]',
             })}
           >
             {isMac ? 'Option' : 'Alt'}-click to show only one status
@@ -545,7 +545,7 @@ function FileTreeFilterButton({
                 textAlign: 'center',
                 fontFamily: 'diffs.mono',
                 fontSize: 'xs',
-                lineHeight: '1rem',
+                lineHeight: '[1rem]',
                 fontWeight: 'semibold',
               })}
               style={{

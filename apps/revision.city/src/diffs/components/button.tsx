@@ -5,8 +5,8 @@ import {cva, cx, type RecipeVariantProps} from 'styled-system/css'
 
 // Focus ring approximating Tailwind's ring utilities: a 3px box-shadow in the
 // ring color at partial opacity.
-const FOCUS_RING_SHADOW = '0 0 0 3px color-mix(in oklab, var(--ring) 50%, transparent)'
-const SHADOW_XS = '0 1px 2px 0 rgb(0 0 0 / 0.05)'
+const FOCUS_RING_SHADOW = '[0 0 0 3px color-mix(in oklab, var(--ring) 50%, transparent)]'
+const SHADOW_XS = '[0 1px 2px 0 rgb(0 0 0 / 0.05)]'
 
 const buttonVariants = cva({
   base: {
@@ -17,24 +17,24 @@ const buttonVariants = cva({
     whiteSpace: 'nowrap',
     rounded: 'diffs.md',
     fontSize: 'sm',
-    lineHeight: '1.25rem',
+    lineHeight: '[1.25rem]',
     fontWeight: 'medium',
-    transition: 'all 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+    transition: '[all 150ms cubic-bezier(0.4, 0, 0.2, 1)]',
     flexShrink: '0',
     outline: 'none',
     cursor: 'pointer',
     userSelect: 'none',
     '& svg': {pointerEvents: 'none', flexShrink: '0'},
-    _disabled: {pointerEvents: 'none', opacity: '0.5', boxShadow: 'none'},
+    _disabled: {pointerEvents: 'none', opacity: '0.5', boxShadow: '[none]'},
     _focusVisible: {
       borderColor: 'diffs.ring',
       boxShadow: FOCUS_RING_SHADOW,
     },
     '&[aria-invalid="true"]': {
       borderColor: 'diffs.destructive',
-      boxShadow: '0 0 0 3px color-mix(in oklab, var(--destructive) 20%, transparent)',
+      boxShadow: '[0 0 0 3px color-mix(in oklab, var(--destructive) 20%, transparent)]',
       _dark: {
-        boxShadow: '0 0 0 3px color-mix(in oklab, var(--destructive) 40%, transparent)',
+        boxShadow: '[0 0 0 3px color-mix(in oklab, var(--destructive) 40%, transparent)]',
       },
     },
   },
@@ -50,12 +50,12 @@ const buttonVariants = cva({
         color: 'white',
         _hover: {bg: 'teal.500/90'},
         _focusVisible: {
-          boxShadow: '0 0 0 3px color-mix(in oklab, token(colors.teal.500) 20%, transparent)',
+          boxShadow: '[0 0 0 3px color-mix(in oklab, token(colors.teal.500) 20%, transparent)]',
         },
         _dark: {
           bg: 'green.500/60',
           _focusVisible: {
-            boxShadow: '0 0 0 3px color-mix(in oklab, token(colors.green.500) 40%, transparent)',
+            boxShadow: '[0 0 0 3px color-mix(in oklab, token(colors.green.500) 40%, transparent)]',
           },
         },
       },
@@ -64,12 +64,12 @@ const buttonVariants = cva({
         color: 'white',
         _hover: {bg: 'diffs.destructive/90'},
         _focusVisible: {
-          boxShadow: '0 0 0 3px color-mix(in oklab, var(--destructive) 20%, transparent)',
+          boxShadow: '[0 0 0 3px color-mix(in oklab, var(--destructive) 20%, transparent)]',
         },
         _dark: {
           bg: 'diffs.destructive/60',
           _focusVisible: {
-            boxShadow: '0 0 0 3px color-mix(in oklab, var(--destructive) 40%, transparent)',
+            boxShadow: '[0 0 0 3px color-mix(in oklab, var(--destructive) 40%, transparent)]',
           },
         },
       },
@@ -90,7 +90,7 @@ const buttonVariants = cva({
       },
       tertiary: {
         bg: 'neutral.900/10',
-        boxShadow: 'none',
+        boxShadow: '[none]',
       },
       muted: {
         bg: 'diffs.secondary',
@@ -117,7 +117,7 @@ const buttonVariants = cva({
         gap: '1.5',
         px: '1.5',
         fontSize: 'xs',
-        lineHeight: '1rem',
+        lineHeight: '[1rem]',
       },
       default: {h: '9', px: '3.5', py: '2', rounded: 'diffs.lg'},
       sm: {h: '8', rounded: 'diffs.md', gap: '1.5', px: '3'},
@@ -126,7 +126,7 @@ const buttonVariants = cva({
       icon: {w: '9', h: '9'},
       'icon-md': {w: '8', h: '8', rounded: 'diffs.md'},
       'icon-sm': {w: '5', h: '5', rounded: 'diffs.sm'},
-      'icon-only': {w: '4', h: '4', rounded: '0', p: '0'},
+      'icon-only': {w: '4', h: '4', rounded: '[0]', p: '0'},
     },
   },
   defaultVariants: {

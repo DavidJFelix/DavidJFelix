@@ -12,6 +12,7 @@ const lightDark = (base: string, dark: string) => ({value: {base, _dark: dark}})
 export default defineConfig({
   // Whether to use css reset
   preflight: true,
+  strictTokens: true,
 
   // Where to look for your css declarations
   include: ['./src/**/*.{js,jsx,ts,tsx,astro}', './pages/**/*.{js,jsx,ts,tsx,astro}'],

@@ -40,9 +40,9 @@ const buttonClass = css({
   cursor: 'pointer',
   _hover: {bg: 'border'},
   _focusVisible: {
-    outline: '2px solid',
-    outlineColor: 'currentcolor',
-    outlineOffset: '2px',
+    outline: '[2px solid]',
+    outlineColor: '[currentcolor]',
+    outlineOffset: '[2px]',
   },
 })
 const iconClass = css({width: '4.5', height: '4.5'})

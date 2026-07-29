@@ -21,14 +21,14 @@ export function StatItem({label, value, valueClassName}: StatItemProps) {
         borderTopWidth: '1px',
         py: '1',
         pr: {base: '4', md: '0'},
-        fontSize: '12px',
+        fontSize: '[12px]',
       })}
     >
       <div className={css({color: 'diffs.muted.foreground'})}>{label}</div>
       <span
         className={cx(
           css({
-            pl: '1ch',
+            pl: '[1ch]',
             textAlign: 'right',
             fontVariantNumeric: 'tabular-nums',
           }),

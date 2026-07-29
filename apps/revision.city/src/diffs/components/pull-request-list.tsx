@@ -22,7 +22,7 @@ const GROUP_TITLES: Record<PullRequestGroupKind, string> = {
 const mutedTextClass = css({
   color: 'diffs.muted.foreground',
   fontSize: 'sm',
-  lineHeight: '1.25rem',
+  lineHeight: '[1.25rem]',
 })
 
 // The signed-in visitor's open pull requests, grouped by why they can reach
@@ -64,7 +64,7 @@ function PullRequestGroupSection({group}: {group: PullRequestGroup}) {
         className={css({
           color: 'diffs.muted.foreground',
           fontSize: 'sm',
-          lineHeight: '1.25rem',
+          lineHeight: '[1.25rem]',
           fontWeight: 'normal',
         })}
       >
@@ -82,7 +82,7 @@ function PullRequestGroupSection({group}: {group: PullRequestGroup}) {
           flexDirection: 'column',
           gap: '1',
           fontSize: 'sm',
-          lineHeight: '1.25rem',
+          lineHeight: '[1.25rem]',
         })}
       >
         {group.pullRequests.map((pullRequest) => (
@@ -103,11 +103,11 @@ function DraftBadge() {
         color: 'diffs.muted.foreground',
         rounded: 'full',
         borderWidth: '1px',
-        borderColor: 'color-mix(in oklab, currentcolor 20%, transparent)',
+        borderColor: '[color-mix(in oklab, currentcolor 20%, transparent)]',
         px: '1.5',
         py: '0.5',
-        fontSize: '10px',
-        lineHeight: '1',
+        fontSize: '[10px]',
+        lineHeight: '[1]',
         letterSpacing: 'wide',
         textTransform: 'uppercase',
         verticalAlign: 'middle',
@@ -144,7 +144,7 @@ function PullRequestRow({pullRequest}: {pullRequest: PullRequestSummary}) {
             display: 'block',
             fontFamily: 'diffs.mono',
             fontSize: 'xs',
-            lineHeight: '1rem',
+            lineHeight: '[1rem]',
             letterSpacing: 'tight',
             truncate: true,
           })}

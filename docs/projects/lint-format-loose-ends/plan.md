@@ -58,7 +58,29 @@ lintable rules into the existing per-app oxlint gate via the root `.oxlintrc.jso
 - The rules that can't be linted (classes must earn their place, pipelines over loops, params-object
   naming semantics) stay with the review personas — `engineering-reviewer` owns them.
 
-### 4. Fold the legacy JS dirs into the standard — low priority
+### 4. CSS sizing token enforcement — burn down, then promote (added 2026-07-29)
+
+Raw length values (px/em/rem/ex and friends) are now gated in both styling systems; this item tracks
+converting the grandfathered values to real tokens and tightening the gates.
+
+- **Panda apps** (all nine): `strictTokens: true` is on in every `panda.config.ts`, so token-bound
+  properties only accept tokens, `var(--x)`, or the explicit `[...]` escape hatch. Existing raw
+  values were mechanically wrapped in escape hatches to keep rendered output identical — they are
+  the burn-down list, greppable per app with `rg "'\[" apps/<app>/src`. Fix by choosing a real token
+  (or adding one to the app's theme), not by deleting the brackets.
+- **Tailwind apps** (f311x, ravrun): `oxlint-tailwindcss` is wired via `jsPlugins` in each app's
+  `.oxlintrc.json` with `tailwindcss/no-arbitrary-value` at `warn`. Current findings:
+  - f311x `src/routes/index.tsx:70` — `max-w-[80%]` (twice)
+  - ravrun `src/routes/index.tsx:448` — `grid-cols-[auto_repeat(7,minmax(0,1fr))]`, `min-w-[56rem]`
+  - Fix each by extending the theme in `src/styles.css` (`@theme { ... }`) or restructuring, then
+    **promote the rule to `error`**.
+- The daily-ui workspace trees keep their Tailwind-v0-era configs and stay out of scope, same as
+  item 5.
+- Native oxlint cannot see any of this (no CSS parsing, no `no-restricted-syntax`); the Tailwind
+  rules ride the alpha `jsPlugins` engine, and the Panda gate is TypeScript-level via codegen, so
+  neither depends on Biome.
+
+### 5. Fold the legacy JS dirs into the standard — low priority
 
 - `workspaces/joy-of-react/` (two projects with Biome configs extending root but no CI) and
   `workspaces/advent-of-code/2020/*/typescript` (eight projects with no lint/format config) sit

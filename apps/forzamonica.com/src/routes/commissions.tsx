@@ -35,7 +35,7 @@ const choiceLabel = css({
   display: 'inline-flex',
   alignItems: 'center',
   gap: '2.5',
-  fontSize: '15px',
+  fontSize: '[15px]',
   color: 'ink',
   cursor: 'pointer',
   userSelect: 'none',
@@ -47,25 +47,25 @@ const radioInput = css({
   height: '5',
   borderRadius: 'full',
   flexShrink: '0',
-  border: '1.5px solid',
+  border: '[1.5px solid]',
   borderColor: 'border.strong',
   bg: 'surface',
   cursor: 'pointer',
-  transition: 'border token(durations.quick) token(easings.out)',
-  _checked: {border: '6.5px solid', borderColor: 'ink'},
+  transition: '[border token(durations.quick) token(easings.out)]',
+  _checked: {border: '[6.5px solid]', borderColor: 'ink'},
 })
 
 const checkboxInput = css({
   appearance: 'none',
   width: '5',
   height: '5',
-  borderRadius: '6px',
+  borderRadius: '[6px]',
   flexShrink: '0',
-  border: '1.5px solid',
+  border: '[1.5px solid]',
   borderColor: 'border.strong',
   bg: 'surface',
   cursor: 'pointer',
-  transition: 'background token(durations.quick) token(easings.out)',
+  transition: '[background token(durations.quick) token(easings.out)]',
   _checked: {
     bg: 'ink',
     borderColor: 'ink',
@@ -89,7 +89,7 @@ function CommissionsPage() {
       >
         <div className={css({display: 'flex', flexDirection: 'column', gap: '5'})}>
           <h1 className={css({textStyle: 'displayXl', color: 'ink'})}>Let's paint your idea</h1>
-          <p className={css({fontSize: '16px', lineHeight: '1.6', color: 'ink.muted'})}>
+          <p className={css({fontSize: '[16px]', lineHeight: '[1.6]', color: 'ink.muted'})}>
             I take a handful of commissions each month — portraits of places, pets, and the
             occasional wedding bouquet. Tell me what you're imagining and I'll write back within 2
             days with a sketch plan and a quote.
@@ -117,17 +117,19 @@ function CommissionsPage() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontWeight: 'bold',
-                    fontSize: '13px',
+                    fontSize: '[13px]',
                     flexShrink: '0',
                   })}
                 >
                   {number}
                 </span>
                 <div>
-                  <p className={css({fontSize: '14px', fontWeight: 'bold', color: 'ink'})}>
+                  <p className={css({fontSize: '[14px]', fontWeight: 'bold', color: 'ink'})}>
                     {title}
                   </p>
-                  <p className={css({fontSize: '13px', color: 'ink.muted', mt: '0.5'})}>{detail}</p>
+                  <p className={css({fontSize: '[13px]', color: 'ink.muted', mt: '0.5'})}>
+                    {detail}
+                  </p>
                 </div>
               </li>
             ))}
@@ -159,7 +161,7 @@ function CommissionForm() {
         })}
       >
         <h2 className={css({textStyle: 'displayMd', color: 'ink'})}>Got it — thank you!</h2>
-        <p className={css({fontSize: '15px', lineHeight: '1.6', color: 'ink.muted'})}>
+        <p className={css({fontSize: '[15px]', lineHeight: '[1.6]', color: 'ink.muted'})}>
           Your note is in my inbox. I'll write back within 2 days — keep an eye out for an email
           from monica@forzamonica.art.
         </p>
@@ -230,7 +232,7 @@ function CommissionForm() {
           rows={5}
           placeholder="I'd love a painting of…"
           aria-describedby={ideaHintId}
-          className={cx(fieldClasses.control, css({resize: 'vertical', lineHeight: '1.5'}))}
+          className={cx(fieldClasses.control, css({resize: 'vertical', lineHeight: '[1.5]'}))}
         />
         <span id={ideaHintId} className={fieldClasses.hint}>
           Colors, mood, occasion — anything helps. You can email photos after.

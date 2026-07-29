@@ -14,7 +14,7 @@ export const CHROME_ICON_BUTTON_CLASS = css({
     _focusVisible: {
       borderColor: 'transparent',
       color: 'diffs.muted.foreground',
-      boxShadow: 'none',
+      boxShadow: '[none]',
     },
   },
 })

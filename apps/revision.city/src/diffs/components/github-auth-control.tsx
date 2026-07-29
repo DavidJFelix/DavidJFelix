@@ -35,7 +35,7 @@ export const GitHubAuthControl = memo(function GitHubAuthControl({
           alignItems: 'center',
           gap: '1.5',
           fontSize: 'sm',
-          lineHeight: '1.25rem',
+          lineHeight: '[1.25rem]',
           fontWeight: 'medium',
         })}
       >
@@ -48,8 +48,8 @@ export const GitHubAuthControl = memo(function GitHubAuthControl({
               borderWidth: '1px',
               px: '1.5',
               py: '0.5',
-              fontSize: '10px',
-              lineHeight: '1',
+              fontSize: '[10px]',
+              lineHeight: '[1]',
               letterSpacing: 'wide',
               textTransform: 'uppercase',
             }),
@@ -66,7 +66,7 @@ export const GitHubAuthControl = memo(function GitHubAuthControl({
                 })
               : css({
                   color: 'diffs.muted.foreground',
-                  borderColor: 'color-mix(in oklab, currentcolor 20%, transparent)',
+                  borderColor: '[color-mix(in oklab, currentcolor 20%, transparent)]',
                 }),
           )}
         >
@@ -79,9 +79,9 @@ export const GitHubAuthControl = memo(function GitHubAuthControl({
             className={css({
               color: 'diffs.muted.foreground',
               mt: '1',
-              maxW: '31rem',
-              fontSize: '13px',
-              textWrap: 'pretty',
+              maxW: '[31rem]',
+              fontSize: '[13px]',
+              textWrap: '[pretty]',
             })}
           >
             Signed in as <strong>{session.login}</strong>. Private diffs and file expansion use your
@@ -113,9 +113,9 @@ export const GitHubAuthControl = memo(function GitHubAuthControl({
             className={css({
               color: 'diffs.muted.foreground',
               mt: '1',
-              maxW: '31rem',
-              fontSize: '13px',
-              textWrap: 'pretty',
+              maxW: '[31rem]',
+              fontSize: '[13px]',
+              textWrap: '[pretty]',
             })}
           >
             Sign in with GitHub to view private diffs, expand collapsed context, and raise rate

@@ -3,7 +3,7 @@ import {css} from 'styled-system/css'
 export const annotationCardBase = css({
   m: '2',
   display: 'flex',
-  maxW: '600px',
+  maxW: '[600px]',
   gap: '2.5',
   rounded: 'diffs.xl',
   borderWidth: '1px',

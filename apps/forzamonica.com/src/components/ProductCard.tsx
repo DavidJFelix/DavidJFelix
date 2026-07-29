@@ -20,7 +20,7 @@ export function ProductCard({product}: {product: ProductSummary}) {
         css({
           display: 'block',
           overflow: 'hidden',
-          transition: 'box-shadow token(durations.soft) token(easings.out)',
+          transition: '[box-shadow token(durations.soft) token(easings.out)]',
           _hover: {boxShadow: 'lift'},
         }),
       )}
@@ -28,9 +28,9 @@ export function ProductCard({product}: {product: ProductSummary}) {
       <div
         className={css({
           position: 'relative',
-          aspectRatio: '4 / 3',
+          aspectRatio: '[4 / 3]',
           background:
-            'repeating-linear-gradient(45deg, token(colors.paper.shade) 0 10px, token(colors.paper.checker) 10px 20px)',
+            '[repeating-linear-gradient(45deg, token(colors.paper.shade) 0 10px, token(colors.paper.checker) 10px 20px)]',
         })}
       >
         {product.featuredImage ? (
@@ -41,7 +41,7 @@ export function ProductCard({product}: {product: ProductSummary}) {
               width: 'full',
               height: 'full',
               objectFit: 'cover',
-              filter: sold ? 'grayscale(0.6)' : 'none',
+              filter: sold ? '[grayscale(0.6)]' : '[none]',
             })}
           />
         ) : null}
@@ -51,7 +51,7 @@ export function ProductCard({product}: {product: ProductSummary}) {
               position: 'absolute',
               top: '3',
               left: '3',
-              fontSize: '12px',
+              fontSize: '[12px]',
               fontWeight: 'bold',
               color: 'paper',
               bg: 'ink',
@@ -64,7 +64,7 @@ export function ProductCard({product}: {product: ProductSummary}) {
           </span>
         ) : null}
       </div>
-      <div className={css({pt: '4', px: '18px', pb: '18px'})}>
+      <div className={css({pt: '4', px: '[18px]', pb: '[18px]'})}>
         <div
           className={css({
             display: 'flex',
@@ -76,7 +76,7 @@ export function ProductCard({product}: {product: ProductSummary}) {
           <h3 className={css({textStyle: 'title', color: 'ink'})}>{product.title}</h3>
           <span
             className={css({
-              fontSize: '15px',
+              fontSize: '[15px]',
               fontWeight: 'bold',
               whiteSpace: 'nowrap',
               color: sold ? 'ink.faint' : 'ink',

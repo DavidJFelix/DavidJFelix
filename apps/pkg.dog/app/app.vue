@@ -29,7 +29,7 @@ useHead({
   <div
     :class="
       css({
-        minHeight: '100dvh',
+        minHeight: '[100dvh]',
         display: 'flex',
         flexDirection: 'column',
         bg: 'bg.canvas',

@@ -7,20 +7,20 @@ import '../app.css'
 
 const {children}: {children: Snippet} = $props()
 
-const shell = css({maxW: '60rem', mx: 'auto', px: '1.25rem', pb: '4rem'})
+const shell = css({maxW: '[60rem]', mx: 'auto', px: '[1.25rem]', pb: '[4rem]'})
 
 const header = css({
   display: 'flex',
   alignItems: 'baseline',
   justifyContent: 'space-between',
-  gap: '1rem',
-  py: '1.25rem',
+  gap: '[1rem]',
+  py: '[1.25rem]',
   borderBottomWidth: '1px',
   borderColor: 'border',
-  mb: '1.5rem',
+  mb: '[1.5rem]',
 })
 
-const brand = css({fontWeight: '600', letterSpacing: '0.01em', color: 'text'})
+const brand = css({fontWeight: '[600]', letterSpacing: '[0.01em]', color: 'text'})
 </script>
 
 <!-- Shared theme-switcher contract (docs/projects/theme-switcher-unification/plan.md):

@@ -4,14 +4,14 @@ import {css} from 'styled-system/css'
 
 const column = css({display: 'flex', flexDirection: 'column', gap: '2.5'})
 const heading = css({textStyle: 'overline', color: 'ink'})
-const link = css({fontSize: '14px', color: 'ink.muted', _hover: {color: 'ink'}})
+const link = css({fontSize: '[14px]', color: 'ink.muted', _hover: {color: 'ink'}})
 
 export function SiteFooter() {
   return (
     <footer
       className={css({
         bg: 'paper.shade',
-        borderTop: '1px solid',
+        borderTop: '[1px solid]',
         borderColor: 'border',
         mt: '16',
       })}
@@ -33,7 +33,7 @@ export function SiteFooter() {
             forzamonica{' '}
             <span className={css({fontStyle: 'normal', fontWeight: 'normal'})}>art</span>
           </span>
-          <p className={css({textStyle: 'quote', color: 'ink.muted', maxWidth: '300px'})}>
+          <p className={css({textStyle: 'quote', color: 'ink.muted', maxWidth: '[300px]'})}>
             “Every piece here is painted, packed, and shipped by me. Thanks for looking.” — Monica
           </p>
         </div>
@@ -77,7 +77,7 @@ export function SiteFooter() {
           mx: 'auto',
           px: '6',
           pb: '6',
-          fontSize: '12px',
+          fontSize: '[12px]',
           color: 'ink.faint',
         })}
       >

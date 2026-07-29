@@ -51,17 +51,17 @@ export const ExampleAnnotation = memo(function ExampleAnnotation({
           p: '0',
           textAlign: 'left',
           font: 'inherit',
-          color: 'inherit',
+          color: '[inherit]',
           cursor: 'pointer',
         })}
         onClick={() => onToggleSelection(selection)}
       >
         <CommentAuthorAvatar seed={annotation.metadata.author} />
         <span className={css({display: 'flex', flexDirection: 'column'})}>
-          <strong className={css({mt: '1', display: 'block', fontSize: '14px'})}>
+          <strong className={css({mt: '1', display: 'block', fontSize: '[14px]'})}>
             {annotation.metadata.author}
           </strong>
-          <span className={css({m: '0', fontSize: '14px', whiteSpace: 'pre-wrap'})}>
+          <span className={css({m: '0', fontSize: '[14px]', whiteSpace: 'pre-wrap'})}>
             {annotation.metadata.message}
           </span>
         </span>
@@ -88,8 +88,8 @@ export const ExampleAnnotation = memo(function ExampleAnnotation({
           rounded: 'full',
           bg: 'neutral.500',
           opacity: '0',
-          boxShadow: 'inherit',
-          transition: 'opacity 100ms cubic-bezier(0.4, 0, 0.2, 1)',
+          boxShadow: '[inherit]',
+          transition: '[opacity 100ms cubic-bezier(0.4, 0, 0.2, 1)]',
           // Revealed when the annotation card (the `.group` ancestor above) is
           // hovered, mirroring the original group-hover utilities.
           _groupHover: {pointerEvents: 'auto', opacity: '1'},

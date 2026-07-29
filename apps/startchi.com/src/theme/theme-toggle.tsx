@@ -21,7 +21,7 @@ const buttonClass = css({
   color: 'text',
   _hover: {bg: 'neutral.100'},
   _dark: {_hover: {bg: 'neutral.900'}},
-  _focusVisible: {outline: '2px solid', outlineColor: 'sky.500', outlineOffset: '2px'},
+  _focusVisible: {outline: '[2px solid]', outlineColor: 'sky.500', outlineOffset: '[2px]'},
 })
 
 // The icon reflects the raw mode (not the resolved scheme) and is swapped by

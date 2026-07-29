@@ -131,10 +131,10 @@ export function DiffUrlForm({
             display: 'block',
             fieldSizing: 'content',
             h: '9',
-            minW: '24ch',
+            minW: '[24ch]',
             rounded: 'diffs.md',
             fontSize: 'sm',
-            lineHeight: '1.25rem',
+            lineHeight: '[1.25rem]',
             _focusVisible: {outline: 'none'},
           }),
           inputClassName,
@@ -179,7 +179,7 @@ export function DiffUrlForm({
           // `.group ... &:hover` selector provides that.
           className={css({
             opacity: '0',
-            transition: 'opacity 200ms cubic-bezier(0.4, 0, 0.2, 1)',
+            transition: '[opacity 200ms cubic-bezier(0.4, 0, 0.2, 1)]',
             willChange: 'auto',
             _groupFocusWithin: {opacity: '0.5'},
             _groupHover: {opacity: '0.5'},
@@ -215,8 +215,8 @@ export function DiffUrlForm({
                 px: '3',
                 py: '1.5',
                 fontSize: 'xs',
-                lineHeight: '1rem',
-                transition: 'opacity 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+                lineHeight: '[1rem]',
+                transition: '[opacity 150ms cubic-bezier(0.4, 0, 0.2, 1)]',
               }),
               validationError !== null ? css({opacity: '1'}) : css({opacity: '0'}),
             )}
@@ -233,7 +233,7 @@ export function DiffUrlForm({
                 w: '2.5',
                 h: '2.5',
                 transform: 'rotate(45deg)',
-                rounded: '2px',
+                rounded: '[2px]',
               })}
             />
             {lastErrorText.current}

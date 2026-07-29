@@ -20,7 +20,7 @@ import type {ThemeCycleControls} from './use-theme-cycle'
 
 // Mirrors Tailwind's `transition` utility (color/background-color/border-color/opacity).
 const TRANSITION_COLORS =
-  'color 150ms cubic-bezier(0.4, 0, 0.2, 1), background-color 150ms cubic-bezier(0.4, 0, 0.2, 1), border-color 150ms cubic-bezier(0.4, 0, 0.2, 1), opacity 150ms cubic-bezier(0.4, 0, 0.2, 1)'
+  '[color 150ms cubic-bezier(0.4, 0, 0.2, 1), background-color 150ms cubic-bezier(0.4, 0, 0.2, 1), border-color 150ms cubic-bezier(0.4, 0, 0.2, 1), opacity 150ms cubic-bezier(0.4, 0, 0.2, 1)]'
 
 class AutoScrollTester<LAnnotation> {
   private running: 0 | 1 | 2 = 0
@@ -195,7 +195,7 @@ function StatsDisplay({expanded, onToggle, stats, themeCycle, viewerRef}: StatsD
         overscrollBehavior: 'contain',
         borderBottomWidth: {base: '1px', md: '0'},
         fontSize: 'sm',
-        lineHeight: '1.25rem',
+        lineHeight: '[1.25rem]',
       })}
     >
       <StatusRow icon={expanded ? IconEyeSlash : IconEye} className={css({pr: {md: '0'}})}>
@@ -212,7 +212,7 @@ function StatsDisplay({expanded, onToggle, stats, themeCycle, viewerRef}: StatsD
             alignItems: 'center',
             gap: '1',
             fontSize: 'sm',
-            lineHeight: '1.25rem',
+            lineHeight: '[1.25rem]',
             _focus: {outline: 'none'},
           })}
           aria-expanded={expanded}
@@ -344,8 +344,8 @@ function ThemeCycleToggle({controls}: ThemeCycleToggleProps) {
         gap: '1',
         rounded: 'diffs.md',
         px: '1',
-        fontSize: '10px',
-        lineHeight: '1',
+        fontSize: '[10px]',
+        lineHeight: '[1]',
         fontVariantNumeric: 'tabular-nums',
         transition: TRANSITION_COLORS,
       })}
@@ -357,7 +357,7 @@ function ThemeCycleToggle({controls}: ThemeCycleToggleProps) {
         aria-hidden="true"
         className={cx(
           css({w: '3', h: '3'}),
-          cycling && css({animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'}),
+          cycling && css({animation: '[pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite]'}),
         )}
       />
       <span>{stepSeconds}s</span>
@@ -375,7 +375,7 @@ function AutoScrollToggleIcon({running}: AutoScrollToggleIconProps) {
       <svg
         aria-hidden="true"
         viewBox="0 0 16 16"
-        className={css({w: '3', h: '3', fill: 'currentcolor'})}
+        className={css({w: '3', h: '3', fill: '[currentcolor]'})}
       >
         <rect x="4" y="3" width="3" height="10" rx="1" />
         <rect x="9" y="3" width="3" height="10" rx="1" />
@@ -387,7 +387,7 @@ function AutoScrollToggleIcon({running}: AutoScrollToggleIconProps) {
     <svg
       aria-hidden="true"
       viewBox="0 0 16 16"
-      className={css({w: '3', h: '3', fill: 'currentcolor'})}
+      className={css({w: '3', h: '3', fill: '[currentcolor]'})}
     >
       <path d="M5 3.75v8.5a.75.75 0 0 0 1.14.64l6.5-4.25a.75.75 0 0 0 0-1.28l-6.5-4.25A.75.75 0 0 0 5 3.75Z" />
     </svg>

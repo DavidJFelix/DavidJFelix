@@ -98,7 +98,7 @@ const navToggle = css({
   cursor: 'pointer',
   borderRadius: 'sm',
   _hover: {color: 'text'},
-  _focusVisible: {outline: '2px solid', outlineColor: 'focus.ring', outlineOffset: '2px'},
+  _focusVisible: {outline: '[2px solid]', outlineColor: 'focus.ring', outlineOffset: '[2px]'},
 })
 
 // The [hidden] override must beat the display token below, since a class
@@ -207,13 +207,13 @@ const iconMenuOpen = css({display: 'none', '#nav-toggle[aria-expanded=true] &': 
       fontFamily: 'body',
       bg: 'bg.canvas',
       color: 'text',
-      minH: '100vh',
-      lineHeight: '1.6',
+      minH: '[100vh]',
+      lineHeight: '[1.6]',
     })}
   >
     <header
       class={css({
-        borderBottom: '1px solid',
+        borderBottom: '[1px solid]',
         borderBottomColor: 'border.subtle',
         py: '4',
       })}
@@ -340,7 +340,7 @@ const iconMenuOpen = css({display: 'none', '#nav-toggle[aria-expanded=true] &': 
 
     <footer
       class={css({
-        borderTop: '1px solid',
+        borderTop: '[1px solid]',
         borderTopColor: 'border.subtle',
         py: '6',
         mt: '12',

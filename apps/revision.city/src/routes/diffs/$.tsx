@@ -43,7 +43,7 @@ function DiffsViewByPathPage() {
     <div
       className={css({
         display: 'flex',
-        h: '100dvh',
+        h: '[100dvh]',
         flexDirection: 'column',
         gap: '2',
       })}

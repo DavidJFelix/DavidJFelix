@@ -5,30 +5,30 @@ import {css} from 'styled-system/css'
 const {value}: {value: unknown} = $props()
 
 const container = css({
-  px: '1rem',
-  py: '0.9rem',
+  px: '[1rem]',
+  py: '[0.9rem]',
   bg: 'surface',
   borderWidth: '1px',
   borderColor: 'border',
-  borderRadius: '8px',
+  borderRadius: '[8px]',
   overflowX: 'auto',
-  fontFamily: "ui-monospace, 'SF Mono', Menlo, Consolas, monospace",
-  fontSize: '0.85rem',
-  lineHeight: '1.6',
+  fontFamily: "[ui-monospace, 'SF Mono', Menlo, Consolas, monospace]",
+  fontSize: '[0.85rem]',
+  lineHeight: '[1.6]',
   '& [data-part="branch-content"]': {
-    ps: '1.25rem',
+    ps: '[1.25rem]',
   },
   '& [data-part="branch-control"]': {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.3rem',
+    gap: '[0.3rem]',
     cursor: 'pointer',
   },
   '& [data-part="branch-indicator"]': {
     display: 'inline-block',
     color: 'muted',
-    fontSize: '0.7rem',
-    transition: 'transform 0.15s',
+    fontSize: '[0.7rem]',
+    transition: '[transform 0.15s]',
     '&[data-state="open"]': {
       transform: 'rotate(90deg)',
     },
@@ -38,7 +38,7 @@ const container = css({
   },
   '& [data-kind="colon"]': {
     color: 'muted',
-    me: '0.35rem',
+    me: '[0.35rem]',
   },
   '& [data-kind="brace"], & [data-kind="bracket"], & [data-kind="preview-text"]': {
     color: 'muted',

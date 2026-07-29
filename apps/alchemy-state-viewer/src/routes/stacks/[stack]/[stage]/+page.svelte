@@ -12,46 +12,52 @@ const resourceHref = (fqn: string): string =>
 
 const crumbs = css({
   display: 'flex',
-  gap: '0.4rem',
-  fontSize: '0.85rem',
+  gap: '[0.4rem]',
+  fontSize: '[0.85rem]',
   color: 'muted',
-  mb: '0.75rem',
+  mb: '[0.75rem]',
 })
 
-const title = css({fontSize: '1.4rem', m: 0, mb: '0.75rem'})
-const stage = css({color: 'muted', fontWeight: '400'})
+const title = css({fontSize: '[1.4rem]', m: '0', mb: '[0.75rem]'})
+const stage = css({color: 'muted', fontWeight: '[400]'})
 
-const summary = css({display: 'flex', flexWrap: 'wrap', gap: '0.75rem', m: 0, mb: '1.25rem'})
+const summary = css({
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: '[0.75rem]',
+  m: '0',
+  mb: '[1.25rem]',
+})
 
 const count = css({
   display: 'inline-flex',
   alignItems: 'center',
-  gap: '0.35rem',
-  fontSize: '0.85rem',
+  gap: '[0.35rem]',
+  fontSize: '[0.85rem]',
   color: 'muted',
 })
 
 const empty = css({color: 'muted'})
 
 const table = css({
-  w: '100%',
+  w: '[100%]',
   borderCollapse: 'collapse',
   bg: 'surface',
   borderWidth: '1px',
   borderColor: 'border',
-  borderRadius: '8px',
+  borderRadius: '[8px]',
   '& th, & td': {
     textAlign: 'left',
-    px: '0.9rem',
-    py: '0.55rem',
+    px: '[0.9rem]',
+    py: '[0.55rem]',
     borderBottomWidth: '1px',
     borderColor: 'border',
-    fontSize: '0.9rem',
+    fontSize: '[0.9rem]',
   },
   '& th': {
     color: 'muted',
-    fontWeight: '500',
-    fontSize: '0.8rem',
+    fontWeight: '[500]',
+    fontSize: '[0.8rem]',
   },
   '& tbody tr:last-child td': {
     borderBottomWidth: 0,
@@ -59,15 +65,15 @@ const table = css({
 })
 
 const kind = css({
-  ms: '0.4rem',
-  fontSize: '0.7rem',
+  ms: '[0.4rem]',
+  fontSize: '[0.7rem]',
   color: 'muted',
   textTransform: 'uppercase',
-  letterSpacing: '0.05em',
+  letterSpacing: '[0.05em]',
 })
 
-const outputSection = css({mt: '2rem'})
-const outputHeading = css({fontSize: '1.05rem', m: 0, mb: '0.6rem'})
+const outputSection = css({mt: '[2rem]'})
+const outputHeading = css({fontSize: '[1.05rem]', m: '0', mb: '[0.6rem]'})
 </script>
 
 <svelte:head>

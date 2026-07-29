@@ -25,9 +25,9 @@ export function CommentAuthorAvatar({seed, className}: CommentAuthorAvatarProps)
           display: 'block',
           rounded: 'full',
           borderWidth: '1px',
-          borderColor: 'rgb(0 0 0 / 0.1)',
+          borderColor: '[rgb(0 0 0 / 0.1)]',
           content: '""',
-          _dark: {borderColor: 'rgb(255 255 255 / 0.1)'},
+          _dark: {borderColor: '[rgb(255 255 255 / 0.1)]'},
         },
       })}
     >
@@ -44,7 +44,7 @@ export function CommentAuthorAvatar({seed, className}: CommentAuthorAvatarProps)
             rounded: 'full',
             color: 'white',
             fontSize: 'sm',
-            lineHeight: '1',
+            lineHeight: '[1]',
             fontWeight: 'semibold',
             userSelect: 'none',
           }),

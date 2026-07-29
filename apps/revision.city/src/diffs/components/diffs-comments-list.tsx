@@ -94,7 +94,7 @@ export const DiffsCommentsList = memo(function DiffsCommentsList({
           px: '7',
           textAlign: 'center',
           fontSize: 'sm',
-          lineHeight: '1.25rem',
+          lineHeight: '[1.25rem]',
         })}
       >
         <IconConvoFill size={24} className={css({mb: '2'})} />
@@ -105,14 +105,14 @@ export const DiffsCommentsList = memo(function DiffsCommentsList({
             <span
               className={css({
                 display: 'inline-flex',
-                h: '20px',
-                w: '20px',
+                h: '[20px]',
+                w: '[20px]',
                 alignItems: 'center',
                 justifyContent: 'center',
-                rounded: '4px',
+                rounded: '[4px]',
                 verticalAlign: 'top',
-                _light: {color: 'white', bg: 'rgb(0, 159, 255)'},
-                _dark: {bg: 'rgb(0, 159, 255)', color: 'black'},
+                _light: {color: 'white', bg: '[rgb(0, 159, 255)]'},
+                _dark: {bg: '[rgb(0, 159, 255)]', color: 'black'},
               })}
             >
               <IconPlus />
@@ -135,7 +135,7 @@ export const DiffsCommentsList = memo(function DiffsCommentsList({
           overscrollBehavior: 'contain',
           pl: '3',
           pb: '3',
-          pr: 'max(0px, calc(12px - var(--cv-mini-gutter-vertical)))',
+          pr: '[max(0px, calc(12px - var(--cv-mini-gutter-vertical)))]',
         }),
       )}
     >
@@ -154,11 +154,11 @@ export const DiffsCommentsList = memo(function DiffsCommentsList({
                 pb: '2',
                 textAlign: 'left',
                 fontSize: 'sm',
-                lineHeight: '1.25rem',
+                lineHeight: '[1.25rem]',
                 fontWeight: 'medium',
                 wordBreak: 'break-all',
                 outline: 'none',
-                _focusVisible: {boxShadow: '0 0 0 2px var(--ring)'},
+                _focusVisible: {boxShadow: '[0 0 0 2px var(--ring)]'},
               })}
               onClick={(event) => handleRowClick(event, () => onSelectItem(section.itemId))}
             >
@@ -171,7 +171,7 @@ export const DiffsCommentsList = memo(function DiffsCommentsList({
                 p: '3',
                 pb: '2',
                 fontSize: 'sm',
-                lineHeight: '1.25rem',
+                lineHeight: '[1.25rem]',
                 fontWeight: 'medium',
                 wordBreak: 'break-all',
               })}
@@ -217,12 +217,12 @@ export const DiffsCommentsList = memo(function DiffsCommentsList({
                   p: '3',
                   textAlign: 'left',
                   fontSize: 'sm',
-                  lineHeight: '1.25rem',
+                  lineHeight: '[1.25rem]',
                   outline: 'none',
                   _first: {roundedTop: 'diffs.lg'},
                   _last: {roundedBottom: 'diffs.lg', borderBottomWidth: '0'},
                   _hover: {bg: 'var(--diffs-card-hover-bg, var(--muted))'},
-                  _focusVisible: {boxShadow: '0 0 0 2px var(--ring)'},
+                  _focusVisible: {boxShadow: '[0 0 0 2px var(--ring)]'},
                   _dark: {
                     borderColor: 'var(--diffs-card-border, rgb(255 255 255 / 0.15))',
                   },

@@ -14,10 +14,10 @@ const switchRootClass = css({
   borderWidth: '2px',
   borderColor: 'transparent',
   transition:
-    'color 150ms cubic-bezier(0.4, 0, 0.2, 1), background-color 150ms cubic-bezier(0.4, 0, 0.2, 1), border-color 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+    '[color 150ms cubic-bezier(0.4, 0, 0.2, 1), background-color 150ms cubic-bezier(0.4, 0, 0.2, 1), border-color 150ms cubic-bezier(0.4, 0, 0.2, 1)]',
   _focusVisible: {
     outline: 'none',
-    boxShadow: 'var(--background) 0 0 0 2px, var(--ring) 0 0 0 4px',
+    boxShadow: '[var(--background) 0 0 0 2px, var(--ring) 0 0 0 4px]',
   },
   _disabled: {cursor: 'not-allowed', opacity: '0.5'},
   '&[data-state="checked"]': {bg: 'diffs.primary'},
@@ -32,7 +32,7 @@ const switchThumbClass = css({
   w: '3',
   rounded: 'full',
   boxShadow: 'lg',
-  transition: 'transform 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+  transition: '[transform 150ms cubic-bezier(0.4, 0, 0.2, 1)]',
   '&[data-state="checked"]': {transform: 'translateX(0.5rem)'},
   '&[data-state="unchecked"]': {transform: 'translateX(0)'},
 })

@@ -22,7 +22,7 @@ export const Route = createFileRoute('/')({
 
 const pageClass = css({
   display: 'flex',
-  minH: '100svh',
+  minH: '[100svh]',
   flexDirection: 'column',
   alignItems: 'center',
 })
@@ -31,15 +31,15 @@ const mainClass = css({
   display: 'flex',
   flex: '1',
   w: '2xl',
-  maxW: '100vw',
+  maxW: '[100vw]',
   flexDirection: 'column',
   justifyContent: 'center',
   '& > * + *': {mt: '4'},
   px: '6',
   py: '8',
   fontSize: 'sm',
-  lineHeight: '1.25rem',
-  '@media (min-width: 340px)': {fontSize: 'base', lineHeight: '1.5rem'},
+  lineHeight: '[1.25rem]',
+  '@media (min-width: 340px)': {fontSize: '[base]', lineHeight: '[1.5rem]'},
 })
 
 const headingClass = css({
@@ -47,23 +47,23 @@ const headingClass = css({
   alignItems: 'center',
   gap: '1.5',
   fontSize: '2xl',
-  lineHeight: '2rem',
+  lineHeight: '[2rem]',
   fontWeight: 'semibold',
   letterSpacing: 'tight',
 })
 
 const taglineClass = css({fontSize: 'lg', fontWeight: 'medium', letterSpacing: 'tight'})
 
-const pitchClass = css({color: 'diffs.muted.foreground', textWrap: 'pretty'})
+const pitchClass = css({color: 'diffs.muted.foreground', textWrap: '[pretty]'})
 
-const footerClass = css({w: '2xl', maxW: '100vw', px: '6', pb: '8'})
+const footerClass = css({w: '2xl', maxW: '[100vw]', px: '6', pb: '8'})
 
-const footerRuleClass = css({mb: '6', maxW: '80px', opacity: '0.5'})
+const footerRuleClass = css({mb: '6', maxW: '[80px]', opacity: '0.5'})
 
 const footerTextClass = css({
   color: 'diffs.muted.foreground',
   fontSize: 'sm',
-  lineHeight: '1.25rem',
+  lineHeight: '[1.25rem]',
 })
 
 function Home() {
@@ -94,10 +94,10 @@ const roadmapClass = css({
   display: 'grid',
   gridTemplateColumns: 'max-content 1fr',
   columnGap: '3',
-  rowGap: '2px',
+  rowGap: '[2px]',
   fontFamily: 'diffs.mono',
   letterSpacing: 'tight',
-  lineHeight: '22px',
+  lineHeight: '[22px]',
   listStyleType: 'none',
   p: '0',
 })
@@ -111,23 +111,23 @@ const roadmapName = css.raw({
   display: 'inline-flex',
   borderLeftWidth: '4px',
   borderColor: 'transparent',
-  roundedLeft: '0.25rem',
-  py: '0.0625rem',
+  roundedLeft: '[0.25rem]',
+  py: '[0.0625rem]',
   px: '1.5',
   whiteSpace: 'pre',
 })
 
 const addedNameClass = css(roadmapName, {
-  borderColor: '#07c480',
-  roundedRight: '0.25rem',
-  bg: 'rgb(7 196 128 / 0.15)',
-  color: '#18a46c',
-  transition: 'background-color 150ms ease',
-  _hover: {bg: 'rgb(7 196 128 / 0.25)'},
+  borderColor: '[#07c480]',
+  roundedRight: '[0.25rem]',
+  bg: '[rgb(7 196 128 / 0.15)]',
+  color: '[#18a46c]',
+  transition: '[background-color 150ms ease]',
+  _hover: {bg: '[rgb(7 196 128 / 0.25)]'},
   _dark: {
-    bg: 'rgb(7 196 128 / 0.1)',
-    color: '#07c480',
-    _hover: {bg: 'rgb(7 196 128 / 0.2)'},
+    bg: '[rgb(7 196 128 / 0.1)]',
+    color: '[#07c480]',
+    _hover: {bg: '[rgb(7 196 128 / 0.2)]'},
   },
 })
 
@@ -136,7 +136,7 @@ const contextNameClass = css(roadmapName, {color: 'diffs.muted.foreground'})
 const roadmapNoteClass = css({
   color: 'diffs.muted.foreground',
   alignSelf: 'center',
-  textWrap: 'pretty',
+  textWrap: '[pretty]',
 })
 
 function Roadmap() {
@@ -170,7 +170,7 @@ const openDiffsCardClass = css({
   borderWidth: '1px',
   px: '4',
   py: '3',
-  transition: 'border-color 150ms ease',
+  transition: '[border-color 150ms ease]',
   _hover: {borderColor: 'diffs.ring'},
 })
 
@@ -181,8 +181,8 @@ const openDiffsHintClass = css({
   mt: '1',
   color: 'diffs.muted.foreground',
   fontSize: 'sm',
-  lineHeight: '1.25rem',
-  textWrap: 'pretty',
+  lineHeight: '[1.25rem]',
+  textWrap: '[pretty]',
 })
 
 function OpenDiffsCard() {

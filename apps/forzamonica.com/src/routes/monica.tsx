@@ -42,11 +42,11 @@ function GalleryPage() {
           display: 'flex',
           flexDirection: 'column',
           gap: '4',
-          maxWidth: '640px',
+          maxWidth: '[640px]',
         })}
       >
         <h1 className={css({textStyle: 'displayXl', color: 'ink'})}>Watercolors by Monica Felix</h1>
-        <p className={css({fontSize: '16px', lineHeight: '1.6', color: 'ink.muted'})}>
+        <p className={css({fontSize: '[16px]', lineHeight: '[1.6]', color: 'ink.muted'})}>
           Original paintings and archival prints, straight from the studio. Originals are
           one-of-one; prints are editions of them. If you have something in mind,{' '}
           <Link

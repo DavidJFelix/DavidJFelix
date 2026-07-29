@@ -1,4 +1,5 @@
 <script lang="ts">
+import {ModeWatcher} from 'mode-watcher'
 import {onMount} from 'svelte'
 import '../app.css'
 import {initClientObservability} from '../observability/client'
@@ -12,5 +13,10 @@ onMount(() => {
   initClientObservability()
 })
 </script>
+
+<!-- Shared theme-switcher contract (docs/projects/theme-switcher-unification/plan.md):
+     localStorage key "theme", light/dark/system class on <html>, no themeColors
+     (verified bug in system mode). -->
+<ModeWatcher modeStorageKey="theme" defaultMode="system" darkClassNames={['dark']} lightClassNames={['light']} />
 
 {@render children()}

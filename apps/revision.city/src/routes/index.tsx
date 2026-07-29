@@ -5,19 +5,17 @@ import {css} from 'styled-system/css'
 
 import {SiteMark} from '@/components/site-mark'
 import diffsCss from '@/diffs/diffs.css?url'
-import {themeBootstrapScript} from '@/diffs/lib/theme-bootstrap'
 
-// The home page adopts the diffs theme (diffs.css plus the pre-paint scheme
-// bootstrap) rather than the plain Panda palette, so moving between / and
-// /diffs never changes fonts, surfaces, or color scheme. Content-wise it is a
-// front door for the one part of the city that is open: status is told in diff
-// notation -- an added line for diffs, with reviews and repos as context lines
-// that have not landed yet.
+// The home page adopts the diffs theme (diffs.css; the root shell already
+// resolves the color scheme pre-paint) rather than the plain Panda palette, so
+// moving between / and /diffs never changes fonts, surfaces, or color scheme.
+// Content-wise it is a front door for the one part of the city that is open:
+// status is told in diff notation -- an added line for diffs, with reviews and
+// repos as context lines that have not landed yet.
 export const Route = createFileRoute('/')({
   head: () => ({
     meta: [{name: 'description', content: 'Version control, centered on review.'}],
     links: [{rel: 'stylesheet', href: diffsCss}],
-    scripts: [{children: themeBootstrapScript}],
   }),
   component: Home,
 })

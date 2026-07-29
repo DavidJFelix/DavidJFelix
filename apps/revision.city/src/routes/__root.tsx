@@ -1,9 +1,10 @@
 import {TanStackDevtools} from '@tanstack/react-devtools'
-import {createRootRoute, HeadContent, Scripts} from '@tanstack/react-router'
+import {createRootRoute, HeadContent, ScriptOnce, Scripts} from '@tanstack/react-router'
 import {TanStackRouterDevtoolsPanel} from '@tanstack/react-router-devtools'
 
 import {css} from 'styled-system/css'
 
+import {themeBootstrapScript} from '@/diffs/lib/theme-bootstrap'
 import appCss from '../styles.css?url'
 
 export const Route = createRootRoute({
@@ -31,6 +32,10 @@ function RootDocument({children}: {children: React.ReactNode}) {
         <HeadContent />
       </head>
       <body className={css({bg: 'white', color: 'neutral.900', fontFamily: 'sans'})}>
+        {/* Resolves the persisted (or OS) color scheme before first paint.
+            Every page shares the diffs theme, so the scheme is applied once
+            here on the shell rather than by per-route head scripts. */}
+        <ScriptOnce>{themeBootstrapScript}</ScriptOnce>
         {children}
         <TanStackDevtools
           config={{position: 'bottom-right'}}

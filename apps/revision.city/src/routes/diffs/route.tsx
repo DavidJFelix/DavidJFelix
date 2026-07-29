@@ -7,7 +7,6 @@ import {Toaster} from '@/diffs/components/toaster'
 import {WorkerPoolContext} from '@/diffs/components/worker-pool-context'
 import diffsCss from '@/diffs/diffs.css?url'
 import {SITE_DESCRIPTION, SITE_NAME} from '@/diffs/lib/site'
-import {themeBootstrapScript} from '@/diffs/lib/theme-bootstrap'
 
 export const Route = createFileRoute('/diffs')({
   head: () => ({
@@ -23,7 +22,6 @@ export const Route = createFileRoute('/diffs')({
       },
     ],
     links: [{rel: 'stylesheet', href: diffsCss}],
-    scripts: [{children: themeBootstrapScript}],
   }),
   component: DiffsLayout,
 })

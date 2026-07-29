@@ -9,6 +9,7 @@ import {SiteMark} from '@/components/site-mark'
 import {Button} from '@/diffs/components/button'
 import {DiffUrlForm} from '@/diffs/components/diff-url-form'
 import {GitHubAuthControl} from '@/diffs/components/github-auth-control'
+import {PullRequestList} from '@/diffs/components/pull-request-list'
 
 export const Route = createFileRoute('/diffs/')({
   component: DiffsHomePage,
@@ -142,6 +143,7 @@ function DiffsHomePage() {
           <HomeFetchForm />
           <HomeGitHubAuthForm />
         </div>
+        <PullRequestList />
         <div className={css({'& > * + *': {mt: '2'}})}>
           <h3
             className={css({

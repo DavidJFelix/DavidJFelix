@@ -113,6 +113,25 @@ test('unknown paths get the styled 404 inside the shop chrome', async ({page}) =
   await expect(page.getByRole('banner').getByRole('link', {name: 'Shop'})).toBeVisible()
 })
 
+// The mark is declared once on the root route and lives in public/ rather than
+// the module graph -- so what is worth proving is that the landing and the shop
+// chrome both inherit the link, and that the build ships the file behind it.
+for (const path of ['/', '/monica']) {
+  test(`${path} links the favicon`, async ({page}) => {
+    await page.goto(path)
+    await expect(page.locator('link[rel="icon"]')).toHaveAttribute('href', '/favicon.svg')
+  })
+}
+
+test('favicon is served as an svg', async ({request}) => {
+  const response = await request.get('/favicon.svg')
+  expect(response.status()).toBe(200)
+  expect(response.headers()['content-type']).toContain('image/svg+xml')
+  // Really the SVG, rather than the SPA fallback document a build that dropped
+  // public/ would answer an unknown path with.
+  expect(await response.text()).toContain('<svg')
+})
+
 test('commissions page matches the visual baseline', async ({page}) => {
   await page.goto('/commissions')
   await page.evaluate(() => document.fonts.ready)

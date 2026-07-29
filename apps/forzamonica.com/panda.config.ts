@@ -2,7 +2,10 @@ import {defineConfig, defineRecipe, defineSlotRecipe} from '@pandacss/dev'
 
 // Tokens and recipes ported from the forzamonica art design system
 // (claude.ai/design project, ui_kits/shop): cool paper-white + ink base,
-// pastel "pigment" chips, Newsreader display italic over Karla UI sans.
+// pastel "pigment" chips, Newsreader display italic over Karla UI sans. The
+// base palette lives in semanticTokens (base/_dark pairs), added as part of
+// the repo-wide theme-switcher unification -- see
+// docs/projects/theme-switcher-unification/plan.md.
 
 // Plain `button` recipe -- Ark UI has no Button component, so this is a styled
 // native <button>. Used directly and as the base for trigger slots elsewhere.
@@ -227,40 +230,6 @@ export default defineConfig({
           display: {value: '"Newsreader Variable", Georgia, serif'},
           sans: {value: '"Karla Variable", "Helvetica Neue", Arial, sans-serif'},
         },
-        colors: {
-          paper: {
-            DEFAULT: {value: '#f7f9fa'},
-            shade: {value: '#eef2f4'},
-          },
-          surface: {value: '#ffffff'},
-          ink: {
-            DEFAULT: {value: '#1e2a3a'},
-            muted: {value: '#5b6a7c'},
-            faint: {value: '#8a97a6'},
-            hover: {value: '#31445c'},
-          },
-          border: {
-            DEFAULT: {value: '#d4dbe1'},
-            strong: {value: '#aeb9c4'},
-          },
-          // Pigment pastels share one lightness/chroma (oklch 0.85 / 0.07);
-          // only hue varies. Deeps are the small-accent counterparts.
-          pigment: {
-            rose: {
-              DEFAULT: {value: 'oklch(0.85 0.07 20)'},
-              deep: {value: 'oklch(0.55 0.12 20)'},
-            },
-            butter: {value: 'oklch(0.85 0.07 95)'},
-            sage: {
-              DEFAULT: {value: 'oklch(0.85 0.07 150)'},
-              deep: {value: 'oklch(0.55 0.12 150)'},
-            },
-            sky: {
-              DEFAULT: {value: 'oklch(0.85 0.07 230)'},
-              deep: {value: 'oklch(0.55 0.12 250)'},
-            },
-          },
-        },
         sizes: {
           page: {value: '1160px'},
         },
@@ -285,6 +254,56 @@ export default defineConfig({
       },
       semanticTokens: {
         colors: {
+          // The base palette lives here (not tokens.colors) so every value
+          // carries a light/dark pair under the same name components already
+          // consume -- `bg: 'paper'`, `color: 'ink.muted'`, etc. need no
+          // changes for dark mode. `_dark` is Panda's built-in `.dark &`
+          // condition, toggled by the theme bootstrap/provider setting the
+          // `dark` class on <html>; no conditions override is declared here.
+          paper: {
+            DEFAULT: {value: {base: '#f7f9fa', _dark: '#141a21'}},
+            shade: {value: {base: '#eef2f4', _dark: '#1a212a'}},
+            // Second stripe of the "missing image" checkerboard gradient
+            // (ProductCard, about, cart, product detail) -- kept as a token
+            // instead of the inline hex it replaces so the pattern still
+            // reads as a subtle checker on dark paper.
+            checker: {value: {base: '#e4eaee', _dark: '#202730'}},
+          },
+          surface: {value: {base: '#ffffff', _dark: '#1c242e'}},
+          ink: {
+            DEFAULT: {value: {base: '#1e2a3a', _dark: '#dce4ec'}},
+            muted: {value: {base: '#5b6a7c', _dark: '#a9b7c4'}},
+            faint: {value: {base: '#8a97a6', _dark: '#7c8b9a'}},
+            hover: {value: {base: '#31445c', _dark: '#c3d0dc'}},
+          },
+          border: {
+            DEFAULT: {value: {base: '#d4dbe1', _dark: '#2c3642'}},
+            strong: {value: {base: '#aeb9c4', _dark: '#3d4a58'}},
+          },
+          // Pigment pastels share one lightness/chroma in light mode (oklch
+          // 0.85 / 0.07); only hue varies. Deeps are the small-accent
+          // counterparts. Every chip usage in src/ (Badge, the cart-quantity
+          // pill, the commission step circles) paints shared 'ink' text on
+          // top, and ink flips light in dark mode -- so the DEFAULT/butter
+          // backgrounds also need a dark pair (a mid-tone tint the light ink
+          // reads on), not just the deeps. Deeps stay direct-on-paper accents
+          // (links, focus ring, success/error text) and get lightened for
+          // the same reason ink does.
+          pigment: {
+            rose: {
+              DEFAULT: {value: {base: 'oklch(0.85 0.07 20)', _dark: 'oklch(0.48 0.10 20)'}},
+              deep: {value: {base: 'oklch(0.55 0.12 20)', _dark: 'oklch(0.70 0.12 20)'}},
+            },
+            butter: {value: {base: 'oklch(0.85 0.07 95)', _dark: 'oklch(0.48 0.10 95)'}},
+            sage: {
+              DEFAULT: {value: {base: 'oklch(0.85 0.07 150)', _dark: 'oklch(0.48 0.10 150)'}},
+              deep: {value: {base: 'oklch(0.55 0.12 150)', _dark: 'oklch(0.70 0.12 150)'}},
+            },
+            sky: {
+              DEFAULT: {value: {base: 'oklch(0.85 0.07 230)', _dark: 'oklch(0.48 0.10 230)'}},
+              deep: {value: {base: 'oklch(0.55 0.12 250)', _dark: 'oklch(0.70 0.12 250)'}},
+            },
+          },
           fg: {
             DEFAULT: {value: '{colors.ink}'},
             muted: {value: '{colors.ink.muted}'},

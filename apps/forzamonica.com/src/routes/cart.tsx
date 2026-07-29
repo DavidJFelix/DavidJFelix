@@ -392,7 +392,7 @@ function CartLineRow({line, registerFlush}: {line: CartLine; registerFlush: Regi
           borderRadius: 'media',
           overflow: 'hidden',
           background:
-            'repeating-linear-gradient(45deg, token(colors.paper.shade) 0 8px, #e4eaee 8px 16px)',
+            'repeating-linear-gradient(45deg, token(colors.paper.shade) 0 8px, token(colors.paper.checker) 8px 16px)',
         })}
       >
         {image ? (

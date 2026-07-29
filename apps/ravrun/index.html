@@ -1,6 +1,35 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <!-- Pre-paint color-scheme bootstrap: applies the persisted (or OS) mode
+         to <html> before first paint so the page never flashes the wrong
+         scheme. ravrun has no ScriptOnce (no SSR), so this inlines the same
+         contract literally; src/theme/theme-bootstrap.ts is the typed,
+         tested source of this logic (kept for its unit tests and as the
+         source PR 2 will extract from -- this script is not generated from
+         it, so keep the two in sync by hand). Must run before any other
+         head content that could paint. -->
+    <script>
+      ;(() => {
+        try {
+          var storedMode = window.localStorage.getItem('theme')
+          var mode = storedMode === 'light' || storedMode === 'dark' ? storedMode : 'system'
+          var resolvedScheme =
+            mode === 'system'
+              ? window.matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dark'
+                : 'light'
+              : mode
+          var root = document.documentElement
+          root.classList.remove('light', 'dark')
+          root.classList.add(resolvedScheme)
+          root.style.colorScheme = resolvedScheme
+          root.setAttribute('data-theme-mode', mode)
+        } catch {
+          // Ignore storage/media failures and let CSS defaults apply.
+        }
+      })()
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta

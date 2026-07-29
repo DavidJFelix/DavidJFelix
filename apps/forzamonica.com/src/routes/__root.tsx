@@ -4,6 +4,7 @@ import {
   HeadContent,
   Link,
   Outlet,
+  ScriptOnce,
   Scripts,
   useRouterState,
 } from '@tanstack/react-router'
@@ -15,8 +16,20 @@ import {button} from 'styled-system/recipes'
 import {SiteFooter} from '@/components/SiteFooter.tsx'
 import {SiteHeader} from '@/components/SiteHeader.tsx'
 import {fetchCartQuantity} from '@/lib/shopify/cart.ts'
+import {createThemeBootstrapScript, type ThemeColorPair} from '@/theme/theme-bootstrap.ts'
+import {ThemeProvider} from '@/theme/theme-provider.tsx'
 
 import appCss from '../styles.css?url'
+
+// Navbar tint (iOS Safari's <meta name="theme-color">) for each resolved
+// color scheme; matches the paper token's base/_dark values in
+// panda.config.ts.
+const THEME_COLORS: ThemeColorPair = {light: '#f7f9fa', dark: '#141a21'}
+
+const themeBootstrapScript = createThemeBootstrapScript({
+  storageKey: 'theme',
+  themeColors: THEME_COLORS,
+})
 
 export const Route = createRootRoute({
   head: () => ({
@@ -108,7 +121,10 @@ function RootDocument({children}: {children: React.ReactNode}) {
           minHeight: '100vh',
         })}
       >
-        {children}
+        {/* Resolves the persisted (or OS) color scheme before first paint so
+            the page never flashes the wrong scheme. */}
+        <ScriptOnce>{themeBootstrapScript}</ScriptOnce>
+        <ThemeProvider themeColors={THEME_COLORS}>{children}</ThemeProvider>
         <TanStackDevtools
           config={{position: 'bottom-right'}}
           plugins={[

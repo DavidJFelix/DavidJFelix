@@ -30,7 +30,7 @@ export function ProductCard({product}: {product: ProductSummary}) {
           position: 'relative',
           aspectRatio: '4 / 3',
           background:
-            'repeating-linear-gradient(45deg, token(colors.paper.shade) 0 10px, #e4eaee 10px 20px)',
+            'repeating-linear-gradient(45deg, token(colors.paper.shade) 0 10px, token(colors.paper.checker) 10px 20px)',
         })}
       >
         {product.featuredImage ? (

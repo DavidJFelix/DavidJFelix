@@ -3,6 +3,7 @@ import {Link, useRouterState} from '@tanstack/react-router'
 import {css, cx} from 'styled-system/css'
 
 import type {ProductKind} from '@/lib/product-kind.ts'
+import {ThemeToggle} from '@/theme/theme-toggle.tsx'
 
 const navLink = css({
   fontSize: '15px',

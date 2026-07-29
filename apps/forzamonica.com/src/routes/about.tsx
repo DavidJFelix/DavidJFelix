@@ -25,7 +25,7 @@ function AboutPage() {
             height: '200px',
             borderRadius: 'full',
             background:
-              'repeating-linear-gradient(45deg, token(colors.paper.shade) 0 10px, #e4eaee 10px 20px)',
+              'repeating-linear-gradient(45deg, token(colors.paper.shade) 0 10px, token(colors.paper.checker) 10px 20px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

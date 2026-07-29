@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:is(.dark *));
+
 /* Base look formerly provided by the Tailwind Play CDN's inline
    `<style type="text/tailwindcss">`. Expressed with v4 theme variables to avoid
-   `@apply`-with-variant quirks. Dark mode follows prefers-color-scheme (matching
-   the CDN default); Playwright snapshots render in light mode. */
+   `@apply`-with-variant quirks. Dark mode follows the `.dark` class the theme
+   bootstrap sets on <html> (src/theme/); Playwright snapshots render in light
+   mode. `color-scheme` is set by the bootstrap script, not here. */
 @layer base {
-  html {
-    color-scheme: light dark;
-  }
   * {
     border-color: var(--color-gray-200);
   }
@@ -16,13 +16,11 @@
     color: var(--color-gray-950);
   }
 
-  @media (prefers-color-scheme: dark) {
-    * {
-      border-color: var(--color-gray-800);
-    }
-    body {
-      background-color: var(--color-gray-900);
-      color: var(--color-gray-200);
-    }
+  .dark * {
+    border-color: var(--color-gray-800);
+  }
+  .dark body {
+    background-color: var(--color-gray-900);
+    color: var(--color-gray-200);
   }
 }

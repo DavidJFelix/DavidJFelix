@@ -126,8 +126,8 @@ function Month({monthName, slottedDays}: MonthState) {
         alignSelf: 'stretch',
         padding: '4',
         border: '1px solid',
-        borderColor: 'stone.300',
-        backgroundColor: 'stone.50',
+        borderColor: 'border',
+        backgroundColor: 'canvas',
       })}
     >
       <h2
@@ -135,7 +135,7 @@ function Month({monthName, slottedDays}: MonthState) {
           fontSize: 'xl',
           fontWeight: '700',
           fontFamily: 'Roboto, sans-serif',
-          color: 'red.700',
+          color: 'heading',
         })}
       >
         {monthName}
@@ -200,7 +200,7 @@ function CalendarHeader({children}: CalendarHeaderProps) {
         fontSize: '4xl',
         fontWeight: '800',
         fontFamily: 'Roboto, sans-serif',
-        color: 'stone.950',
+        color: 'title',
       })}
     >
       {children}

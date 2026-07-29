@@ -1,6 +1,8 @@
 ---
+import {css} from '../../styled-system/css'
 import Analytics from '../components/Analytics.astro'
 import {Calendar} from '../components/calendar'
+import ThemeToggle from '../components/theme-toggle.astro'
 import '../index.css'
 
 // Only ship analytics on builds that carry the key (production deploy). The
@@ -12,6 +14,39 @@ const posthogEnabled = Boolean(import.meta.env.PUBLIC_POSTHOG_KEY)
 
 <html lang="en">
   <head>
+    <!--
+      Pre-paint theme bootstrap: applies the persisted (or OS) color scheme to
+      <html> before first paint so the page never flashes the wrong scheme.
+      Literal and is:inline because Astro inline scripts cannot import build
+      output; this mirrors the typed function at
+      apps/f311x/src/theme/theme-bootstrap.ts (applyInitialTheme), stringified
+      there and hand-inlined here. Contract:
+      docs/projects/theme-switcher-unification/plan.md. Kept current after
+      load by src/components/theme-toggle.astro. First script in <head> --
+      this whole page is inlined as a single document rather than composed
+      through a shared layout, so it belongs here rather than in a BaseLayout.
+    -->
+    <script is:inline>
+      ;(() => {
+        try {
+          const stored = localStorage.getItem('theme')
+          const mode = stored === 'light' || stored === 'dark' ? stored : 'system'
+          const resolved =
+            mode === 'system'
+              ? matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dark'
+                : 'light'
+              : mode
+          const root = document.documentElement
+          root.classList.remove('light', 'dark')
+          root.classList.add(resolved)
+          root.style.colorScheme = resolved
+          root.dataset.themeMode = mode
+        } catch {
+          /* storage/media failures fall through to the CSS defaults */
+        }
+      })()
+    </script>
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width" />
@@ -19,7 +54,26 @@ const posthogEnabled = Boolean(import.meta.env.PUBLIC_POSTHOG_KEY)
     <title>Calendar Visualizer</title>
     {posthogEnabled && <Analytics />}
   </head>
-  <body>
+  <!--
+    `day` (not `canvas`) for the page bg: it is the same white/stone.950 the
+    normal day cells already used, keeping the page and the day cells at the
+    same shade the way they already were (both unstyled/white before this
+    change) -- `canvas` is reserved for the month card, which was always a
+    hair off from that.
+  -->
+  <body class={css({bg: 'day', color: 'text'})}>
+    <header
+      class={css({
+        display: 'flex',
+        justifyContent: 'flex-end',
+        maxWidth: '1200px',
+        mx: 'auto',
+        px: '4',
+        pt: '2',
+      })}
+    >
+      <ThemeToggle />
+    </header>
     <Calendar />
   </body>
 </html>

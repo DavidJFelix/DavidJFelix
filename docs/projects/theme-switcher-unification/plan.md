@@ -89,14 +89,14 @@ worth adopting exists; `next-themes` is React-only and Ark UI has no color-mode 
 
 ### PR 1 -- parity (this PR)
 
-- [ ] Contract doc (this file) + comparison recorded
-- [ ] f311x: canonical `src/theme/` implementation, wired and tested
-- [ ] ravrun, startchi.com, forzamonica.com: adapted copies + minimal dark palettes where missing
-- [ ] revision.city: cross-tab storage listener
-- [ ] djf.io: tri-state upgrade; onvibes.org + calendar-visualizer: toggle + tokens
-- [ ] alchemy-state-viewer, monicandavid.com: mode-watcher adoption
-- [ ] pkg.dog: @nuxtjs/color-mode adoption
-- [ ] Changelog fragment
+- [x] Contract doc (this file) + comparison recorded
+- [x] f311x: canonical `src/theme/` implementation, wired and tested
+- [x] ravrun, startchi.com, forzamonica.com: adapted copies + minimal dark palettes where missing
+- [x] revision.city: cross-tab storage listener
+- [x] djf.io: tri-state upgrade; onvibes.org + calendar-visualizer: toggle + tokens
+- [x] alchemy-state-viewer, monicandavid.com: mode-watcher adoption
+- [x] pkg.dog: @nuxtjs/color-mode adoption
+- [x] Changelog fragment
 
 New dark palettes (forzamonica.com, startchi.com, monicandavid.com, pkg.dog, onvibes.org,
 calendar-visualizer) are deliberately conservative first passes -- flagged for design review, not

@@ -173,6 +173,7 @@
     "artipacked", // a zizmor audit rule name
     "atumsoft",
     "clippy",
+    "codemode", // the @cloudflare/codemode npm package (a dep of the agents SDK)
     "consolas",
     "dall", // DALL-E
     "devbox",
@@ -198,6 +199,7 @@
     "mattpocock", // renovate config preset handle
     "menlo",
     "miniflare",
+    "modelcontextprotocol", // the @modelcontextprotocol npm scope (Model Context Protocol SDK)
     "msgpackr",
     "Neue", // Helvetica Neue, in font stacks
     "openclaw",

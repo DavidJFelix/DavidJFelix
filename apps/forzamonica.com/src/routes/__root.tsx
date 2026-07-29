@@ -31,7 +31,12 @@ export const Route = createRootRoute({
     ],
     // Fonts are self-hosted (see src/styles.css), so appCss is the only
     // stylesheet and no visitor request leaves the site's origin for type.
-    links: [{rel: 'stylesheet', href: appCss}],
+    links: [
+      // Declared on the root route so every page inherits the mark; child
+      // routes override title and description but never the icon.
+      {rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg'},
+      {rel: 'stylesheet', href: appCss},
+    ],
   }),
   // Re-runs on every navigation, keeping the header badge in sync with cart
   // mutations (which all end in router.invalidate()).

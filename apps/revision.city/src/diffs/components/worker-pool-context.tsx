@@ -43,6 +43,11 @@ const PoolOptions: WorkerPoolOptions = {
   ),
   totalASTLRUCacheSize: WorkerResourceLimits.totalASTLRUCacheSize,
   workerFactory() {
+    // The default export is created by Vite's ?worker transform and typed by vite/client's
+    // `declare module '*?worker'`, which is what tsc resolves and enforces. Since oxlint 1.73 the
+    // import resolver follows the specifier past the suffix to the untransformed module, which
+    // exports nothing, so it reports a default that only exists after the transform.
+    // oxlint-disable-next-line import/namespace -- resolver false positive, see above
     return new DiffsRenderWorkerModule.default()
   },
 }

@@ -19,6 +19,7 @@ on:
       - '.github/zizmor.yml'
       - '.github/actionlint.yaml'
       - '.config/mise.toml'
+      - '.config/mise.lock'
   pull_request:
     paths:
       - '.depot/workflows/**'
@@ -26,6 +27,7 @@ on:
       - '.github/zizmor.yml'
       - '.github/actionlint.yaml'
       - '.config/mise.toml'
+      - '.config/mise.lock'
 jobs:
   lint:
     name: actionlint + ghalint + zizmor + pinact

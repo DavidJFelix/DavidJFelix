@@ -58,6 +58,12 @@
     "react/jsx-no-target-blank": "error",
     "react/no-array-index-key": "error",
     "react/no-danger": "error",
+    // Off, not dodged: every React app compiles with the automatic JSX runtime
+    // ("jsx": "react-jsx"), which injects the factory, so React never needs to
+    // be in scope. oxlint's `settings.react` has no `runtime` key to detect
+    // this the way eslint-plugin-react's jsx-runtime config does, so the
+    // pedantic-category default has to be turned off here.
+    "react/react-in-jsx-scope": "off",
     "typescript/adjacent-overload-signatures": "warn",
     "typescript/no-empty-interface": "error",
     "typescript/no-explicit-any": "warn",
@@ -66,6 +72,14 @@
     "typescript/prefer-function-type": "warn",
     "typescript/prefer-literal-enum-member": "warn",
     "unicorn/no-document-cookie": "warn",
+    // Negated conditions are still linted -- by the eslint core
+    // `no-negated-condition`, which the pedantic category also turns on. This
+    // unicorn port is its twin, so leaving both enabled reports every finding
+    // twice and fixes it once. Verified interchangeable: same 26 findings across
+    // the monorepo, same edge cases (both skip an `if` with no `else` and an
+    // `else if` chain, both flag `!==` and ternaries), same autofix output.
+    // Off here means one report per finding, not one fewer check.
+    "unicorn/no-negated-condition": "off",
     "unicorn/prefer-array-index-of": "warn",
     "unicorn/prefer-node-protocol": "warn",
     "unicorn/prefer-number-properties": "warn",

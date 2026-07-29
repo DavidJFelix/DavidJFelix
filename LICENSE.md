@@ -40,8 +40,10 @@ djf.io application code around that writing stays MIT OR Apache-2.0.
   Josh's Course Materials License (each project's `LICENSE.md`). It is not covered by the licenses
   above.
 - The `better-*` skills under `.agents/skills/` are vendored from Jakub Krehel's
-  [skills collection](https://github.com/jakubkrehel/skills) and keep their original MIT license;
-  the attribution and license text live in [.agents/skills/NOTICE.md](.agents/skills/NOTICE.md).
+  [skills collection](https://github.com/jakubkrehel/skills), received under the MIT license. They
+  are offered under MIT OR Apache-2.0 like the rest of the repository, as the MIT license permits;
+  the retained copyright and permission notice its terms require live in
+  [.agents/skills/NOTICE.md](.agents/skills/NOTICE.md).
 - Vendored or course-derived code keeps its original license; when adding any, record the
   attribution in a `NOTICE.md` beside it rather than changing these files.
 

@@ -6,9 +6,9 @@ The seven `better-*` interface skills in this directory -- `better-interface`, `
 (<https://github.com/jakubkrehel/skills>), Copyright (c) 2026 Jakub Krehel, received under the MIT
 license. `skills-lock.json` at the repo root pins the vendored content and records the source paths.
 
-In compliance with the MIT license, its full text and the original copyright notice are reproduced
-below. These skills keep their original license; they are not covered by the repository's MIT OR
-Apache-2.0 dual license (see [LICENSE.md](../../LICENSE.md)).
+These skills are offered under MIT OR Apache-2.0 like the rest of the repository (see
+[LICENSE.md](../../LICENSE.md)), as the MIT license permits for sublicensed copies. In compliance
+with its notice condition, the original copyright and permission notice are reproduced below.
 
 ## MIT License
 

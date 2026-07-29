@@ -32,7 +32,8 @@ One skill owns each concern; when domains overlap, the owner decides and the nei
 
 ## Vendoring
 
-The `better-*` skill folders are vendored third-party content: MIT-licensed, attributed in
+The `better-*` skill folders are vendored third-party content: received under MIT, offered under the
+repo's dual license with the retained notice in
 [.agents/skills/NOTICE.md](../../.agents/skills/NOTICE.md), and content-pinned in the repo-root
 `skills-lock.json`. Treat them as read-only -- improvements go upstream, and any deliberate local
 edit must recompute the folder hash in the lockfile in the same PR.

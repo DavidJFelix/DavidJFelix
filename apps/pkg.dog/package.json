@@ -24,7 +24,8 @@
     "@sentry/browser": "^10.60.0",
     "nuxt": "^4.4.8",
     "posthog-js": "^1.393.0",
-    "vue": "^3.5.38"
+    "vue": "^3.5.38",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@nuxtjs/color-mode": "^4.0.1",

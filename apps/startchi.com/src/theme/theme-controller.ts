@@ -8,7 +8,18 @@
 // client it tracks live OS preference changes (matchMedia change) and other
 // tabs' choices (the storage event), so every open tab agrees.
 
-export type ThemeMode = 'light' | 'dark' | 'system'
+import * as z from 'zod/mini'
+
+// The storage schema for the repo theming contract: the `theme` key holds one
+// of these raw strings -- never JSON, because the pre-paint bootstrap must
+// read it without parsing -- and anything else (absent, cleared, garbage)
+// parses to system. zod/mini keeps the client bundle cost to the schema used.
+// The bootstrap's self-contained literal check in theme-bootstrap.ts is this
+// schema's compiled twin; keep the two in agreement.
+const themeModeEnum = z.enum(['light', 'dark', 'system'])
+export const themeModeSchema = z.catch(themeModeEnum, 'system')
+
+export type ThemeMode = z.infer<typeof themeModeEnum>
 export type ResolvedColorScheme = 'light' | 'dark'
 
 export interface ThemeState {
@@ -27,16 +38,13 @@ export interface ThemeControllerOptions {
   storageKey?: string
 }
 
-export const THEME_MODES: ThemeMode[] = ['light', 'dark', 'system']
-
-function isThemeMode(value: string | null): value is ThemeMode {
-  return value === 'light' || value === 'dark' || value === 'system'
-}
+export const THEME_MODES: ThemeMode[] = [...themeModeEnum.options]
 
 function readStoredMode(storageKey: string): ThemeMode {
+  // The schema's catch absorbs invalid values; the try/catch is only for
+  // storage access itself throwing (private mode / denied).
   try {
-    const stored = globalThis.localStorage?.getItem(storageKey) ?? null
-    return isThemeMode(stored) ? stored : 'system'
+    return themeModeSchema.parse(globalThis.localStorage?.getItem(storageKey))
   } catch {
     return 'system'
   }

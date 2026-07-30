@@ -9,18 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as BugsRouteImport } from './routes/bugs'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BugsRouteImport } from './routes/bugs'
 import { Route as DiagSplatRouteImport } from './routes/diag/$'
 
-const BugsRoute = BugsRouteImport.update({
-  id: '/bugs',
-  path: '/bugs',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BugsRoute = BugsRouteImport.update({
+  id: '/bugs',
+  path: '/bugs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DiagSplatRoute = DiagSplatRouteImport.update({
@@ -61,18 +61,18 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/bugs': {
-      id: '/bugs'
-      path: '/bugs'
-      fullPath: '/bugs'
-      preLoaderRoute: typeof BugsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bugs': {
+      id: '/bugs'
+      path: '/bugs'
+      fullPath: '/bugs'
+      preLoaderRoute: typeof BugsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/diag/$': {

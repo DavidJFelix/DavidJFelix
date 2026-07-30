@@ -1,6 +1,14 @@
 import {createThemeController, type ThemePersistence} from '@pierre/theming'
+import * as z from 'zod/mini'
 import {isNullish} from '@/diffs/lib/nullish'
 import {docsThemeCatalog} from './theme-catalog'
+
+// The repo theming contract's storage schema (zod 4, see
+// docs/projects/theme-switcher-unification/plan.md): the mode key holds a raw
+// string -- never JSON, the pre-paint bootstrap reads it without parsing --
+// and anything invalid parses to system. The literal check in
+// lib/theme-bootstrap.ts is this schema's compiled twin; keep them agreeing.
+const themeModeSchema = z.catch(z.enum(['light', 'dark', 'system']), 'system')
 
 export {docsThemeCatalog} from './theme-catalog'
 
@@ -48,7 +56,7 @@ const docsPersistence: ThemePersistence = {
     const light = readKey(LIGHT_THEME_KEY)
     const dark = readKey(DARK_THEME_KEY)
     if (isNullish(mode) && isNullish(light) && isNullish(dark)) return null
-    const validMode = mode === 'light' || mode === 'dark' || mode === 'system' ? mode : 'system'
+    const validMode = themeModeSchema.parse(mode)
     return {
       mode: validMode,
       lightThemeName: light ?? docsThemeCatalog.defaultLightThemeName,

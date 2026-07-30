@@ -2,9 +2,9 @@
 
 ## Status
 
-**Active** (2026-07-29) -- PR 1 in flight: bring every app's color-scheme switching up to the
-revision.city quality bar behind one shared contract. PR 2 (extract a standalone package or
-packages) follows once the contract has proven itself in situ.
+**Active** (2026-07-30) -- PR 1 (parity, #390) merged; a follow-up PR expresses the storage schema
+with zod 4. PR 2 (extract a standalone package or packages) follows once the contract has proven
+itself in situ.
 
 ## Goal
 
@@ -111,6 +111,12 @@ final art.
   package published or file-referenced per app.
 - Svelte and Nuxt apps keep their ecosystem libraries, pinned to the contract by configuration; the
   package only replaces code we would otherwise hand-maintain in five places.
+- The package exports the storage schema as the single source of truth. Since 2026-07-30 the schema
+  is zod 4 (`zod/mini` for tree-shaken client bundles):
+  `z.catch(z.enum(['light', 'dark', 'system']), 'system')`, duplicated per app until the extraction
+  lifts it. The pre-paint inline scripts keep their literal check by constraint (they cannot import
+  anything) -- each carries a comment naming it the schema's compiled twin. mode-watcher and
+  @nuxtjs/color-mode validate internally with the same semantics, so the Svelte apps carry no zod.
 - Decide `@pierre/theming` interop for revision.city (persistence adapter already isolates it).
 
 ## Open questions for David

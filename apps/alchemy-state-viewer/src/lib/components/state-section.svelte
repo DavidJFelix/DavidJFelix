@@ -5,33 +5,33 @@ import JsonView from './json-view.svelte'
 
 const {title, hint, value}: {title: string; hint?: string; value: unknown} = $props()
 
-const root = css({mt: '1.5rem'})
+const root = css({mt: '6'})
 
-const heading = css({fontSize: '1rem', m: 0, mb: '0.6rem'})
+const heading = css({fontSize: 'md', m: '0', mb: '[0.6rem]'})
 
 const trigger = css({
   display: 'inline-flex',
   alignItems: 'center',
-  gap: '0.4rem',
+  gap: '[0.4rem]',
   cursor: 'pointer',
   font: 'inherit',
-  color: 'inherit',
+  color: '[inherit]',
   bg: 'transparent',
   borderWidth: 0,
-  p: 0,
+  p: '0',
 })
 
 const indicator = css({
   display: 'inline-block',
   color: 'muted',
-  fontSize: '0.7rem',
-  transition: 'transform 0.15s',
+  fontSize: '[0.7rem]',
+  transition: '[transform 0.15s]',
   '&[data-state="open"]': {
     transform: 'rotate(90deg)',
   },
 })
 
-const hintStyle = css({color: 'muted', fontWeight: '400', fontSize: '0.8rem'})
+const hintStyle = css({color: 'muted', fontWeight: 'normal', fontSize: '[0.8rem]'})
 </script>
 
 <Collapsible.Root defaultOpen class={root}>

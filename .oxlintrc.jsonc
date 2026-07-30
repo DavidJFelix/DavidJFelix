@@ -9,23 +9,23 @@
     "import",
     "vitest",
     "vue",
-    "oxc"
+    "oxc",
   ],
   "categories": {
     "correctness": "error",
     "suspicious": "warn",
     "pedantic": "warn",
     "perf": "warn",
-    "style": "off"
+    "style": "off",
   },
   "rules": {
     "react/exhaustive-deps": "warn",
     "react/rules-of-hooks": "error",
-    "max-params": ["error", { "max": 3 }],
+    "max-params": ["error", {"max": 3}],
     "typescript/consistent-type-imports": "error",
     "typescript/consistent-type-definitions": "warn",
     "vitest/no-hooks": "error",
-    "vitest/max-nested-describe": ["error", { "max": 0 }],
+    "vitest/max-nested-describe": ["error", {"max": 0}],
     "default-case-last": "warn",
     "eqeqeq": "error",
     "array-callback-return": "error",
@@ -35,7 +35,7 @@
     "no-fallthrough": "error",
     "no-inner-declarations": "error",
     "no-label-var": "error",
-    "no-labels": ["warn", { "allowLoop": true }],
+    "no-labels": ["warn", {"allowLoop": true}],
     "no-lone-blocks": "warn",
     "no-proto": "warn",
     "no-redeclare": "error",
@@ -44,7 +44,7 @@
     "no-self-compare": "error",
     "no-sequences": "warn",
     "no-template-curly-in-string": "warn",
-    "no-use-before-define": ["error", { "functions": false, "variables": false, "classes": false }],
+    "no-use-before-define": ["error", {"functions": false, "variables": false, "classes": false}],
     "prefer-const": "warn",
     "prefer-exponentiation-operator": "warn",
     "prefer-numeric-literals": "warn",
@@ -83,14 +83,14 @@
     "unicorn/prefer-array-index-of": "warn",
     "unicorn/prefer-node-protocol": "warn",
     "unicorn/prefer-number-properties": "warn",
-    "vitest/no-duplicate-hooks": "error"
+    "vitest/no-duplicate-hooks": "error",
   },
   "overrides": [
     {
       "files": ["**/*.d.ts"],
       "rules": {
-        "typescript/triple-slash-reference": "off"
-      }
-    }
-  ]
+        "typescript/triple-slash-reference": "off",
+      },
+    },
+  ],
 }

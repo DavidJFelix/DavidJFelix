@@ -25,7 +25,7 @@ const hint = css({
   borderRadius: 'sm',
   px: '1.5',
   py: '0.5',
-  lineHeight: '1',
+  lineHeight: 'none',
   fontSize: 'xs',
   color: 'text.muted',
 })
@@ -38,7 +38,7 @@ const onlyMac = css({display: 'none', '[data-platform=mac] &': {display: 'inline
 const dialog = css({
   w: 'full',
   maxW: 'xl',
-  mt: '15vh',
+  mt: '[15vh]',
   mx: 'auto',
   bg: 'bg.subtle',
   color: 'text',
@@ -72,7 +72,7 @@ const status = css({color: 'text.muted', px: '3', py: '4'})
 const results = css({
   listStyle: 'none',
   mt: '2',
-  maxH: '60vh',
+  maxH: '[60vh]',
   overflowY: 'auto',
   '& a': {
     display: 'block',

@@ -21,17 +21,17 @@ const toggleButton = css({
   width: '10',
   height: '10',
   borderRadius: 'pill',
-  border: '1.5px solid',
+  border: '[1.5px solid]',
   borderColor: 'border',
   bg: 'transparent',
   color: 'ink',
   cursor: 'pointer',
   transition:
-    'background token(durations.quick) token(easings.out), border-color token(durations.quick) token(easings.out)',
+    '[background token(durations.quick) token(easings.out), border-color token(durations.quick) token(easings.out)]',
   _hover: {bg: 'paper.shade'},
   _focusVisible: {
     borderColor: 'focusRing',
-    boxShadow: '0 0 0 3px color-mix(in srgb, token(colors.focusRing) 30%, transparent)',
+    boxShadow: '[0 0 0 3px color-mix(in srgb, token(colors.focusRing) 30%, transparent)]',
   },
 })
 

@@ -7,7 +7,7 @@
 - **No `describe` blocks**. Flatten tests to top-level -- see
   https://kentcdodds.com/blog/avoid-nesting-when-youre-testing. Do not add `describe` even for
   "grouping". If a test needs context, put it in the test name. Enforced by oxlint
-  `vitest/max-nested-describe` (max 0) and `vitest/no-hooks` in the root `.oxlintrc.json`.
+  `vitest/max-nested-describe` (max 0) and `vitest/no-hooks` in the root `.oxlintrc.jsonc`.
 - **Avoid `beforeEach`/`beforeAll`/`afterEach`/`afterAll`** unless a framework requires it. Prefer
   top-level setup (top-level `await` for async), inline setup inside each test, or a small named
   helper called from each test. Hooks hide control flow and make tests harder to read.

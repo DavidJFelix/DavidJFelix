@@ -36,13 +36,13 @@ function Month({monthName, slottedDays}: MonthState) {
 
   const gridCellVariants = cva({
     base: {
-      border: '1px solid transparent',
+      border: '[1px solid transparent]',
       color: 'text',
     },
     variants: {
       cellType: {
         weekDayHeaders: {
-          fontWeight: '600',
+          fontWeight: 'semibold',
           color: 'text',
         },
         day: {},
@@ -125,7 +125,7 @@ function Month({monthName, slottedDays}: MonthState) {
         gap: '4',
         alignSelf: 'stretch',
         padding: '4',
-        border: '1px solid',
+        border: '[1px solid]',
         borderColor: 'border',
         backgroundColor: 'canvas',
       })}
@@ -133,8 +133,8 @@ function Month({monthName, slottedDays}: MonthState) {
       <h2
         className={css({
           fontSize: 'xl',
-          fontWeight: '700',
-          fontFamily: 'Roboto, sans-serif',
+          fontWeight: 'bold',
+          fontFamily: '[Roboto, sans-serif]',
           color: 'heading',
         })}
       >
@@ -146,7 +146,7 @@ function Month({monthName, slottedDays}: MonthState) {
           gridTemplateRows: 'repeat(6, 1fr)',
           mx: '4',
           gap: '2',
-          width: '100%',
+          width: 'full',
         })}
       >
         {weekDayHeaders.map((dayHeader) => (
@@ -198,8 +198,8 @@ function CalendarHeader({children}: CalendarHeaderProps) {
     <h1
       className={css({
         fontSize: '4xl',
-        fontWeight: '800',
-        fontFamily: 'Roboto, sans-serif',
+        fontWeight: 'extrabold',
+        fontFamily: '[Roboto, sans-serif]',
         color: 'title',
       })}
     >

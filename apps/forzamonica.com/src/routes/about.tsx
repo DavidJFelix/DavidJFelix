@@ -10,7 +10,7 @@ export const Route = createFileRoute('/about')({
 
 function AboutPage() {
   return (
-    <section className={css({maxWidth: '780px', mx: 'auto', px: '6', pt: '14', pb: '6'})}>
+    <section className={css({maxWidth: '[780px]', mx: 'auto', px: '6', pt: '14', pb: '6'})}>
       <div
         className={css({
           display: 'grid',
@@ -21,11 +21,11 @@ function AboutPage() {
       >
         <div
           className={css({
-            width: '200px',
-            height: '200px',
+            width: '[200px]',
+            height: '[200px]',
             borderRadius: 'full',
             background:
-              'repeating-linear-gradient(45deg, token(colors.paper.shade) 0 10px, token(colors.paper.checker) 10px 20px)',
+              '[repeating-linear-gradient(45deg, token(colors.paper.shade) 0 10px, token(colors.paper.checker) 10px 20px)]',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -34,12 +34,12 @@ function AboutPage() {
           <span
             className={css({
               fontFamily: 'mono',
-              fontSize: '12px',
+              fontSize: '[12px]',
               color: 'ink.muted',
               bg: 'paper',
               px: '2.5',
               py: '1',
-              borderRadius: '6px',
+              borderRadius: '[6px]',
             })}
           >
             photo of Monica
@@ -47,11 +47,11 @@ function AboutPage() {
         </div>
         <div className={css({display: 'flex', flexDirection: 'column', gap: '4'})}>
           <h1 className={css({textStyle: 'displayXl', color: 'ink'})}>Hi, I'm Monica</h1>
-          <p className={css({fontSize: '16px', lineHeight: '1.6', color: 'ink.muted'})}>
+          <p className={css({fontSize: '[16px]', lineHeight: '[1.6]', color: 'ink.muted'})}>
             I'm a watercolor painter, and this shop is my studio's front door. Everything in it is
             painted, scanned, printed, and packed by me.
           </p>
-          <p className={css({fontSize: '16px', lineHeight: '1.6', color: 'ink.muted'})}>
+          <p className={css({fontSize: '[16px]', lineHeight: '[1.6]', color: 'ink.muted'})}>
             Prints are made on archival cotton paper. Originals are one-of-one and ship with a
             certificate and a handwritten note.
           </p>

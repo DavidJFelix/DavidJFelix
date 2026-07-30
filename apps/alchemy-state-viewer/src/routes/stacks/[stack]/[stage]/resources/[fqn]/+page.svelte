@@ -15,47 +15,53 @@ const action = $derived(isAction(data.state))
 const crumbs = css({
   display: 'flex',
   flexWrap: 'wrap',
-  gap: '0.4rem',
-  fontSize: '0.85rem',
+  gap: '[0.4rem]',
+  fontSize: '[0.85rem]',
   color: 'muted',
-  mb: '0.75rem',
+  mb: '3',
 })
 
-const title = css({fontSize: '1.25rem', m: 0, mb: '1rem', overflowWrap: 'anywhere'})
+const title = css({fontSize: 'xl', m: '0', mb: '4', overflowWrap: 'anywhere'})
 
 const overview = css({
   display: 'grid',
   gridTemplateColumns: 'max-content 1fr',
-  gap: '0.35rem 1.25rem',
-  m: 0,
-  mb: '1.5rem',
+  gap: '[0.35rem 1.25rem]',
+  m: '0',
+  mb: '6',
   bg: 'surface',
   borderWidth: '1px',
   borderColor: 'border',
-  borderRadius: '8px',
-  px: '1.25rem',
-  py: '1rem',
+  borderRadius: '[8px]',
+  px: '5',
+  py: '4',
   '& dt': {
     color: 'muted',
-    fontSize: '0.85rem',
+    fontSize: '[0.85rem]',
   },
   '& dd': {
-    m: 0,
-    fontSize: '0.9rem',
+    m: '0',
+    fontSize: '[0.9rem]',
   },
 })
 
 const kind = css({
-  ms: '0.5rem',
-  fontSize: '0.7rem',
+  ms: '2',
+  fontSize: '[0.7rem]',
   color: 'muted',
   textTransform: 'uppercase',
-  letterSpacing: '0.05em',
+  letterSpacing: 'wider',
 })
 
-const downstreamSection = css({mt: '1.5rem'})
-const downstreamHeading = css({fontSize: '1rem', m: 0, mb: '0.6rem'})
-const downstreamList = css({listStyle: 'none', m: 0, p: 0, display: 'grid', gap: '0.35rem'})
+const downstreamSection = css({mt: '6'})
+const downstreamHeading = css({fontSize: 'md', m: '0', mb: '[0.6rem]'})
+const downstreamList = css({
+  listStyle: 'none',
+  m: '0',
+  p: '0',
+  display: 'grid',
+  gap: '[0.35rem]',
+})
 </script>
 
 <svelte:head>

@@ -82,7 +82,7 @@ export function DiffsStatusPanel({errorMessage, onRetry, remedy, state}: DiffsSt
               w: '5',
               h: '5',
               transform: 'scaleX(-1)',
-              animation: 'spin 1s linear infinite reverse',
+              animation: '[spin 1s linear infinite reverse]',
             })}
           />
         ) : (
@@ -100,7 +100,7 @@ export function DiffsStatusPanel({errorMessage, onRetry, remedy, state}: DiffsSt
           className={css({
             color: 'diffs.foreground',
             fontSize: 'sm',
-            lineHeight: '1.25rem',
+            lineHeight: '[1.25rem]',
             fontWeight: 'medium',
           })}
         >
@@ -111,8 +111,8 @@ export function DiffsStatusPanel({errorMessage, onRetry, remedy, state}: DiffsSt
             color: 'diffs.muted.foreground',
             mt: '1',
             fontSize: 'sm',
-            lineHeight: '1.25rem',
-            textWrap: 'pretty',
+            lineHeight: '[1.25rem]',
+            textWrap: '[pretty]',
           })}
         >
           {message}
@@ -143,8 +143,8 @@ export function DiffsStatusPanel({errorMessage, onRetry, remedy, state}: DiffsSt
             className={css({
               color: 'diffs.muted.foreground',
               mt: '3',
-              fontSize: '13px',
-              textWrap: 'pretty',
+              fontSize: '[13px]',
+              textWrap: '[pretty]',
             })}
           >
             Come back to this tab when you’re done — the diff reloads on its own.

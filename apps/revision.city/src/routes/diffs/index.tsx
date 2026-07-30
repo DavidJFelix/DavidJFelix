@@ -17,26 +17,26 @@ export const Route = createFileRoute('/diffs/')({
 
 const diffLineBadge = css.raw({
   display: 'inline-flex',
-  roundedRight: '0.25rem',
-  py: '0.0625rem',
+  roundedRight: 'sm',
+  py: '[0.0625rem]',
   pr: '1.5',
   pl: '1.5',
 })
 
 const deletedBadgeClass = css(diffLineBadge, {
-  bg: 'rgb(255 103 98 / 0.15)',
-  color: '#ff2e3f',
-  _dark: {bg: 'rgb(255 103 98 / 0.1)', color: '#ff6762'},
+  bg: '[rgb(255 103 98 / 0.15)]',
+  color: '[#ff2e3f]',
+  _dark: {bg: '[rgb(255 103 98 / 0.1)]', color: '[#ff6762]'},
 })
 
 const addedBadgeClass = css(diffLineBadge, {
-  bg: 'rgb(7 196 128 / 0.15)',
-  color: '#18a46c',
-  _dark: {bg: 'rgb(7 196 128 / 0.1)', color: '#07c480'},
+  bg: '[rgb(7 196 128 / 0.15)]',
+  color: '[#18a46c]',
+  _dark: {bg: '[rgb(7 196 128 / 0.1)]', color: '[#07c480]'},
 })
 
 function Divider() {
-  return <hr className={css({my: '8', maxW: '80px', opacity: '0.5'})} />
+  return <hr className={css({my: '8', maxW: '[80px]', opacity: '0.5'})} />
 }
 
 const EXAMPLE_URLS = [
@@ -50,8 +50,8 @@ function DiffsHomePage() {
     <div
       className={css({
         display: 'flex',
-        minH: '100svh',
-        minW: '100vw',
+        minH: 'svh',
+        minW: 'screen',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
@@ -63,17 +63,17 @@ function DiffsHomePage() {
         className={css({
           position: 'relative',
           display: {base: 'flex', md: 'block'},
-          minH: {base: '100svh', md: '0'},
+          minH: {base: 'svh', md: '0'},
           w: '2xl',
-          maxW: '100vw',
+          maxW: 'screen',
           flexDirection: 'column',
           justifyContent: 'center',
           '& > * + *': {mt: '4'},
           px: '6',
           pt: '8',
           fontSize: 'sm',
-          lineHeight: '1.25rem',
-          '@media (min-width: 340px)': {fontSize: 'base', lineHeight: '1.5rem'},
+          lineHeight: '[1.25rem]',
+          '@media (min-width: 340px)': {fontSize: '[base]', lineHeight: '[1.5rem]'},
         })}
       >
         <h2
@@ -82,7 +82,7 @@ function DiffsHomePage() {
             alignItems: 'center',
             gap: '1.5',
             fontSize: '2xl',
-            lineHeight: '2rem',
+            lineHeight: '[2rem]',
             fontWeight: 'semibold',
             letterSpacing: 'tight',
           })}
@@ -90,7 +90,7 @@ function DiffsHomePage() {
           <SiteMark />
           Diffs
         </h2>
-        <p className={css({color: 'diffs.muted.foreground', textWrap: 'pretty'})}>
+        <p className={css({color: 'diffs.muted.foreground', textWrap: '[pretty]'})}>
           View code changes from any public GitHub diff—PRs, comparisons, commits, diffs, and
           patches—with a super-freaking-fast, beautiful, and virtualized interface by putting{' '}
           <code>revision.city/diffs/</code> in front of any <code>github.com</code> path.
@@ -100,16 +100,16 @@ function DiffsHomePage() {
             color: 'diffs.muted.foreground',
             display: 'flex',
             flexDirection: 'column',
-            gap: '2px',
+            gap: '[2px]',
             fontFamily: 'diffs.mono',
-            lineHeight: '22px',
+            lineHeight: '[22px]',
             letterSpacing: 'tight',
           })}
         >
           <code
             className={cx(
               'diffs-border-deleted',
-              css({roundedLeft: '0.25rem', fontWeight: 'normal', color: 'inherit'}),
+              css({roundedLeft: 'sm', fontWeight: 'normal', color: '[inherit]'}),
             )}
           >
             <span className={css({minW: '0', truncate: true})}>
@@ -120,11 +120,11 @@ function DiffsHomePage() {
           <code
             className={css({
               truncate: true,
-              roundedLeft: '0.25rem',
+              roundedLeft: 'sm',
               borderLeftWidth: '4px',
-              borderColor: '#07c480',
+              borderColor: '[#07c480]',
               fontWeight: 'normal',
-              color: 'inherit',
+              color: '[inherit]',
             })}
           >
             <code className={addedBadgeClass}>+ revision.city/diffs</code>
@@ -149,7 +149,7 @@ function DiffsHomePage() {
             className={css({
               color: 'diffs.muted.foreground',
               fontSize: 'sm',
-              lineHeight: '1.25rem',
+              lineHeight: '[1.25rem]',
               fontWeight: 'normal',
             })}
           >
@@ -162,7 +162,7 @@ function DiffsHomePage() {
               flexDirection: 'column',
               gap: '1',
               fontSize: 'sm',
-              lineHeight: '1.25rem',
+              lineHeight: '[1.25rem]',
             })}
           >
             {EXAMPLE_URLS.map((url) => (
@@ -194,7 +194,7 @@ function DiffsHomePage() {
               color: 'diffs.muted.foreground',
               display: {base: 'none', md: 'block'},
               fontSize: 'sm',
-              lineHeight: '1.25rem',
+              lineHeight: '[1.25rem]',
             })}
           >
             You can also compare millions of lines with ease, like{' '}
@@ -214,7 +214,7 @@ function DiffsHomePage() {
         id="home-more"
         className={css({
           w: '2xl',
-          maxW: '100vw',
+          maxW: 'screen',
           '& > * + *': {mt: '4'},
           px: '5',
           pb: '8',
@@ -225,8 +225,8 @@ function DiffsHomePage() {
           className={css({
             color: 'diffs.muted.foreground',
             fontSize: 'sm',
-            lineHeight: '1.25rem',
-            textWrap: 'pretty',
+            lineHeight: '[1.25rem]',
+            textWrap: '[pretty]',
           })}
         >
           Powered by Pierre&apos;s open source{' '}
@@ -262,7 +262,7 @@ const HomeFetchForm = memo(function HomeFetchForm() {
       <DiffUrlForm
         placeholder="https://github.com/org/repo/123"
         inputClassName={css({
-          fontSize: '1rem',
+          fontSize: 'md',
           h: '12',
           w: 'full',
           textAlign: 'start',

@@ -4,51 +4,51 @@ import type {PageServerData} from './$types'
 
 const {data}: {data: PageServerData} = $props()
 
-const title = css({fontSize: '1.4rem', m: 0, mb: '0.25rem'})
-const meta = css({color: 'muted', m: 0, mb: '1.5rem'})
+const title = css({fontSize: '[1.4rem]', m: '0', mb: '1'})
+const meta = css({color: 'muted', m: '0', mb: '6'})
 const empty = css({color: 'muted'})
 
-const stackList = css({listStyle: 'none', m: 0, p: 0, display: 'grid', gap: '1rem'})
+const stackList = css({listStyle: 'none', m: '0', p: '0', display: 'grid', gap: '4'})
 
 const stackCard = css({
   bg: 'surface',
   borderWidth: '1px',
   borderColor: 'border',
-  borderRadius: '8px',
-  px: '1.25rem',
-  py: '1rem',
+  borderRadius: '[8px]',
+  px: '5',
+  py: '4',
 })
 
-const stackName = css({fontSize: '1.05rem', m: 0, mb: '0.5rem'})
+const stackName = css({fontSize: '[1.05rem]', m: '0', mb: '2'})
 
 const stageList = css({
   listStyle: 'none',
-  m: 0,
-  p: 0,
+  m: '0',
+  p: '0',
   display: 'flex',
   flexWrap: 'wrap',
-  gap: '0.5rem',
+  gap: '2',
 })
 
 const stageChip = css({
   display: 'inline-block',
-  px: '0.7rem',
-  py: '0.2rem',
+  px: '[0.7rem]',
+  py: '[0.2rem]',
   borderWidth: '1px',
   borderColor: 'border',
   borderRadius: 'full',
-  fontSize: '0.85rem',
+  fontSize: '[0.85rem]',
 })
 
-const setup = css({maxW: '42rem'})
+const setup = css({maxW: '2xl'})
 
 const setupCode = css({
-  px: '1rem',
-  py: '0.9rem',
+  px: '4',
+  py: '[0.9rem]',
   bg: 'surface',
   borderWidth: '1px',
   borderColor: 'border',
-  borderRadius: '8px',
+  borderRadius: '[8px]',
   overflowX: 'auto',
 })
 </script>

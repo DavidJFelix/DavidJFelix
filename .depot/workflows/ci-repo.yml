@@ -11,7 +11,7 @@ on:
     branches: [main]
     paths:
       - 'biome.jsonc'
-      - '.oxlintrc.json'
+      - '.oxlintrc.jsonc'
       - '.oxfmtrc.json'
       - '.prettierrc.json'
       - '.config/cspell.jsonc'
@@ -27,7 +27,7 @@ on:
   pull_request:
     paths:
       - 'biome.jsonc'
-      - '.oxlintrc.json'
+      - '.oxlintrc.jsonc'
       - '.oxfmtrc.json'
       - '.prettierrc.json'
       - '.config/cspell.jsonc'

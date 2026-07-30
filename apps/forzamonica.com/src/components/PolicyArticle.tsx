@@ -13,9 +13,9 @@ export function PolicyArticle({title, children}: {title: string; children: React
         py: '14',
         px: '6',
         mx: 'auto',
-        maxWidth: '780px',
+        maxWidth: '[780px]',
         width: 'full',
-        '& p': {color: 'ink.muted', lineHeight: '1.6'},
+        '& p': {color: 'ink.muted', lineHeight: '[1.6]'},
       })}
     >
       <h1 className={css({textStyle: 'displayLg', color: 'ink'})}>{title}</h1>

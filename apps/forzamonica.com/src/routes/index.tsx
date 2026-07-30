@@ -30,7 +30,7 @@ const socialLink = css({
   display: 'inline-flex',
   p: '2.5',
   color: 'ink.muted',
-  transition: 'color token(durations.quick) token(easings.out)',
+  transition: '[color token(durations.quick) token(easings.out)]',
   _hover: {color: 'ink'},
 })
 
@@ -40,12 +40,12 @@ const shopLink = css({
   display: 'inline-flex',
   alignItems: 'center',
   gap: '1.5',
-  fontSize: '15px',
+  fontSize: '[15px]',
   fontWeight: 'bold',
   color: 'ink',
   textDecoration: 'underline',
   textUnderlineOffset: '4px',
-  transition: 'color token(durations.quick) token(easings.out)',
+  transition: '[color token(durations.quick) token(easings.out)]',
   _hover: {color: 'pigment.sky.deep'},
 })
 
@@ -57,7 +57,7 @@ function ComingSoonPage() {
     <section
       className={css({
         position: 'relative',
-        minHeight: '70vh',
+        minHeight: '[70vh]',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -81,7 +81,7 @@ function ComingSoonPage() {
       <h1 className={css({textStyle: 'displayXl', color: 'ink'})}>
         forzamonica <span className={css({fontStyle: 'normal', fontWeight: 'normal'})}>art</span>
       </h1>
-      <p className={css({fontSize: '16px', color: 'ink.muted'})}>
+      <p className={css({fontSize: '[16px]', color: 'ink.muted'})}>
         Watercolors by Monica Felix — coming soon.
       </p>
       <div className={css({display: 'flex', gap: '2.5'})}>
@@ -117,16 +117,16 @@ function NewsletterSignup() {
         gap: '3',
         alignItems: 'center',
         width: 'full',
-        maxWidth: '420px',
+        maxWidth: '[420px]',
       })}
     >
-      <p className={css({fontSize: '15px', color: 'ink.muted'})}>
+      <p className={css({fontSize: '[15px]', color: 'ink.muted'})}>
         Subscribe to my mailing list to hear about
         <br />
         upcoming shows and new paintings.
       </p>
       {status === 'subscribed' ? (
-        <p className={css({fontSize: '15px', fontWeight: 'bold', color: 'success'})}>
+        <p className={css({fontSize: '[15px]', fontWeight: 'bold', color: 'success'})}>
           Thank you — you're on the list.
         </p>
       ) : (
@@ -164,7 +164,7 @@ function NewsletterSignup() {
             </Button>
           </div>
           {status === 'error' ? (
-            <p className={css({fontSize: '13px', color: 'error'})}>
+            <p className={css({fontSize: '[13px]', color: 'error'})}>
               Something went wrong — please try again in a moment.
             </p>
           ) : null}

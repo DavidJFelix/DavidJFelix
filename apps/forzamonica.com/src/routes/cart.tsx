@@ -62,7 +62,7 @@ function CartPage() {
     return (
       <section
         className={css({
-          maxWidth: '560px',
+          maxWidth: '[560px]',
           mx: 'auto',
           px: '6',
           py: '20',
@@ -74,7 +74,7 @@ function CartPage() {
         })}
       >
         <h1 className={css({textStyle: 'displayLg', color: 'ink'})}>Your cart is empty</h1>
-        <p className={css({fontSize: '15px', color: 'ink.muted'})}>
+        <p className={css({fontSize: '[15px]', color: 'ink.muted'})}>
           That's easily fixed — the gallery is right this way.
         </p>
         <Link to="/monica" className={button()}>
@@ -111,7 +111,7 @@ function CartPage() {
               className={css({
                 display: 'flex',
                 justifyContent: 'space-between',
-                fontSize: '15px',
+                fontSize: '[15px]',
                 color: 'ink',
               })}
             >
@@ -124,7 +124,7 @@ function CartPage() {
               className={css({
                 display: 'flex',
                 justifyContent: 'space-between',
-                fontSize: '15px',
+                fontSize: '[15px]',
                 color: 'ink.muted',
               })}
             >
@@ -136,7 +136,7 @@ function CartPage() {
             {freeShipping ? null : (
               <p
                 className={css({
-                  fontSize: '13px',
+                  fontSize: '[13px]',
                   color: 'ink',
                   bg: 'pigment.butter',
                   borderRadius: 'input',
@@ -154,12 +154,12 @@ function CartPage() {
             )}
             <div
               className={css({
-                borderTop: '1px solid',
+                borderTop: '[1px solid]',
                 borderColor: 'border',
                 pt: '3.5',
                 display: 'flex',
                 justifyContent: 'space-between',
-                fontSize: '17px',
+                fontSize: '[17px]',
                 fontWeight: 'bold',
                 color: 'ink',
               })}
@@ -179,7 +179,7 @@ function CartPage() {
             >
               {checkingOut ? 'Heading to checkout…' : 'Check out'}
             </a>
-            <span className={css({fontSize: '12px', color: 'ink.faint', textAlign: 'center'})}>
+            <span className={css({fontSize: '[12px]', color: 'ink.faint', textAlign: 'center'})}>
               Ships within 3 days · returns within 30
             </span>
           </div>
@@ -380,19 +380,19 @@ function CartLineRow({line, registerFlush}: {line: CartLine; registerFlush: Regi
         gap: '4',
         alignItems: 'center',
         py: '4',
-        borderBottom: '1px solid',
+        borderBottom: '[1px solid]',
         borderColor: 'border',
         _last: {borderBottom: 'none'},
       })}
     >
       <div
         className={css({
-          width: '72px',
-          height: '72px',
+          width: '[72px]',
+          height: '[72px]',
           borderRadius: 'media',
           overflow: 'hidden',
           background:
-            'repeating-linear-gradient(45deg, token(colors.paper.shade) 0 8px, token(colors.paper.checker) 8px 16px)',
+            '[repeating-linear-gradient(45deg, token(colors.paper.shade) 0 8px, token(colors.paper.checker) 8px 16px)]',
         })}
       >
         {image ? (
@@ -407,26 +407,26 @@ function CartLineRow({line, registerFlush}: {line: CartLine; registerFlush: Regi
         <Link
           to="/products/$handle"
           params={{handle: product.handle}}
-          className={css({textStyle: 'title', fontSize: '18px', color: 'ink'})}
+          className={css({textStyle: 'title', fontSize: '[18px]', color: 'ink'})}
         >
           {product.title}
         </Link>
         <div className={css({display: 'flex', gap: '2', alignItems: 'center', flexWrap: 'wrap'})}>
           {kind ? <Badge tone={kindTone(kind)}>{kind}</Badge> : null}
           {line.merchandise.title !== 'Default Title' ? (
-            <span className={css({fontSize: '12px', color: 'ink.muted'})}>
+            <span className={css({fontSize: '[12px]', color: 'ink.muted'})}>
               {line.merchandise.title}
             </span>
           ) : null}
         </div>
-        {error ? <p className={css({fontSize: '13px', color: 'error'})}>{error}</p> : null}
+        {error ? <p className={css({fontSize: '[13px]', color: 'error'})}>{error}</p> : null}
         <button
           type="button"
           disabled={pending}
           onClick={() => mutate(() => removeCartLine({data: {lineId: line.id}}))}
           className={css({
             alignSelf: 'flex-start',
-            fontSize: '12px',
+            fontSize: '[12px]',
             color: 'ink.muted',
             cursor: 'pointer',
             textDecoration: 'underline',
@@ -446,7 +446,7 @@ function CartLineRow({line, registerFlush}: {line: CartLine; registerFlush: Regi
           gap: '2.5',
         })}
       >
-        <span className={css({fontSize: '15px', fontWeight: 'bold', color: 'ink'})}>
+        <span className={css({fontSize: '[15px]', fontWeight: 'bold', color: 'ink'})}>
           {formatPrice(line.cost.totalAmount)}
         </span>
         {oneOfOne ? null : (

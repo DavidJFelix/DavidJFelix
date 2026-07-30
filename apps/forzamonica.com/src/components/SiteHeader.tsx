@@ -6,14 +6,14 @@ import type {ProductKind} from '@/lib/product-kind.ts'
 import {ThemeToggle} from '@/theme/theme-toggle.tsx'
 
 const navLink = css({
-  fontSize: '15px',
+  fontSize: '[15px]',
   fontWeight: 'medium',
   color: 'ink.muted',
   px: '3.5',
   py: '2',
   borderRadius: 'pill',
   whiteSpace: 'nowrap',
-  transition: 'background token(durations.quick) token(easings.out)',
+  transition: '[background token(durations.quick) token(easings.out)]',
   _hover: {color: 'ink'},
 })
 
@@ -52,14 +52,14 @@ export function SiteHeader({cartQuantity}: SiteHeaderProps) {
     'aria-current': active === item ? ('page' as const) : undefined,
   })
   return (
-    <header className={css({bg: 'paper', borderBottom: '1px solid', borderColor: 'border'})}>
+    <header className={css({bg: 'paper', borderBottom: '[1px solid]', borderColor: 'border'})}>
       <div
         className={css({
           maxWidth: 'page',
           mx: 'auto',
           px: '6',
           py: '2',
-          minHeight: '72px',
+          minHeight: '[72px]',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -94,16 +94,16 @@ export function SiteHeader({cartQuantity}: SiteHeaderProps) {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '2',
-              fontSize: '15px',
+              fontSize: '[15px]',
               fontWeight: 'bold',
               color: 'ink',
-              border: '1.5px solid',
+              border: '[1.5px solid]',
               borderColor: 'ink',
               borderRadius: 'pill',
               px: '4.5',
               py: '2',
               whiteSpace: 'nowrap',
-              transition: 'background token(durations.quick) token(easings.out)',
+              transition: '[background token(durations.quick) token(easings.out)]',
               _hover: {bg: 'paper.shade'},
             })}
           >
@@ -111,7 +111,7 @@ export function SiteHeader({cartQuantity}: SiteHeaderProps) {
             {cartQuantity > 0 ? (
               <span
                 className={css({
-                  fontSize: '12px',
+                  fontSize: '[12px]',
                   fontWeight: 'bold',
                   color: 'ink',
                   bg: 'pigment.butter',

@@ -9,6 +9,7 @@ const lightDark = (base: string, dark: string) => ({value: {base, _dark: dark}})
 
 export default defineConfig({
   preflight: true,
+  strictTokens: true,
   presets: ['@pandacss/preset-panda'],
   include: ['./src/**/*.{ts,tsx,astro}'],
   exclude: [],

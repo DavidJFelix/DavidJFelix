@@ -480,7 +480,7 @@ export const DiffsViewer = memo(function DiffsViewer({
             overflow: 'clip',
             contain: 'layout paint style',
             boxShadow:
-              '0 -1px 0 var(--diffs-diff-separator, var(--border-opaque)), 0 1px 0 var(--diffs-diff-separator, var(--border-opaque))',
+              '[0 -1px 0 var(--diffs-diff-separator, var(--border-opaque)), 0 1px 0 var(--diffs-diff-separator, var(--border-opaque))]',
           },
         }),
       )}
@@ -514,7 +514,7 @@ function CollapseDiffButton({
       aria-label={disabled ? undefined : collapsed ? 'Expand diff' : 'Collapse diff'}
       className={css({
         color: 'diffs.muted.foreground',
-        ml: '-8px',
+        ml: '[-8px]',
         display: 'inline-flex',
         w: '6',
         h: '6',
@@ -523,7 +523,7 @@ function CollapseDiffButton({
         justifyContent: 'center',
         rounded: 'diffs.md',
         transition:
-          'color 150ms cubic-bezier(0.4, 0, 0.2, 1), background-color 150ms cubic-bezier(0.4, 0, 0.2, 1), border-color 150ms cubic-bezier(0.4, 0, 0.2, 1), opacity 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+          '[color 150ms cubic-bezier(0.4, 0, 0.2, 1), background-color 150ms cubic-bezier(0.4, 0, 0.2, 1), border-color 150ms cubic-bezier(0.4, 0, 0.2, 1), opacity 150ms cubic-bezier(0.4, 0, 0.2, 1)]',
         _hover: {bg: 'diffs.muted', color: 'diffs.foreground'},
         _disabled: {pointerEvents: 'none', opacity: '0.5'},
       })}
@@ -539,7 +539,7 @@ function CollapseDiffButton({
           css({
             w: '4',
             h: '4',
-            transition: 'transform 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+            transition: '[transform 150ms cubic-bezier(0.4, 0, 0.2, 1)]',
           }),
           (disabled || collapsed) && css({transform: 'rotate(-90deg)'}),
         )}

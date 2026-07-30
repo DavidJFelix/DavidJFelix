@@ -21,7 +21,7 @@ export function SelectField({label, hint, className, children, ...props}: Select
           aria-describedby={hint ? hintId : undefined}
           className={cx(
             classes.control,
-            css({appearance: 'none', cursor: 'pointer', pr: '9.5'}),
+            css({appearance: 'none', cursor: 'pointer', pr: '[9.5]'}),
             className,
           )}
           {...props}
@@ -33,11 +33,11 @@ export function SelectField({label, hint, className, children, ...props}: Select
           className={css({
             position: 'absolute',
             right: '3.5',
-            top: '50%',
+            top: '[50%]',
             transform: 'translateY(-50%)',
             pointerEvents: 'none',
             color: 'ink.muted',
-            fontSize: '11px',
+            fontSize: '[11px]',
           })}
         >
           ▾

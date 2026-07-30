@@ -63,7 +63,7 @@ const SETTING_ROW_CLASS = css({
   px: '2',
   py: '1.5',
   fontSize: 'sm',
-  lineHeight: '1.25rem',
+  lineHeight: '[1.25rem]',
 })
 
 const ICON_SIZE_CLASS = css({
@@ -173,10 +173,10 @@ export const DiffsHeader = memo(function DiffsHeader({
         className={css({
           position: {base: 'absolute', md: 'static'},
           top: '4',
-          left: '50%',
+          left: '[50%]',
           display: 'inline-flex',
           transform: {base: 'translateX(-50%)', md: 'translateX(0)'},
-          transition: 'transform 200ms cubic-bezier(0.4, 0, 0.2, 1)',
+          transition: '[transform 200ms cubic-bezier(0.4, 0, 0.2, 1)]',
           _hover: {
             transform: {
               base: 'translateX(-50%) scale(1.1)',
@@ -193,7 +193,7 @@ export const DiffsHeader = memo(function DiffsHeader({
             fontWeight: 'semibold',
             letterSpacing: 'tight',
             fontSize: 'lg',
-            lineHeight: '1',
+            lineHeight: 'none',
           })}
         >
           <SiteMark />
@@ -248,7 +248,7 @@ export const DiffsHeader = memo(function DiffsHeader({
                   bg: 'diffs.border',
                   display: {base: 'none', md: 'block'},
                   h: '3',
-                  w: '1px',
+                  w: '[1px]',
                 })}
               />
             </>
@@ -310,7 +310,7 @@ export const DiffsHeader = memo(function DiffsHeader({
                 style={dropdownThemeStyle}
               >
                 <GitHubAuthControl />
-                <div className={css({bg: 'diffs.border/70', my: '2', h: '1px'})} />
+                <div className={css({bg: 'diffs.border/70', my: '2', h: '[1px]'})} />
                 <DropdownMenuItem
                   className={css({cursor: 'default', p: '0'})}
                   onSelect={(e) => e.preventDefault()}
@@ -536,7 +536,7 @@ function ThemeDropdown({
                     cursor: 'pointer',
                     justifyContent: 'center',
                     fontSize: 'xs',
-                    lineHeight: '1rem',
+                    lineHeight: '[1rem]',
                     _hover: {color: 'diffs.foreground'},
                   }),
                   MENU_ITEM_FOCUS_TRANSPARENT_CLASS,
@@ -656,7 +656,7 @@ function ThemeList({
           'cv-mini-scrollbar',
           css({
             mt: '1',
-            maxH: '320px',
+            maxH: '[320px]',
             overflowY: 'auto',
             overscrollBehavior: 'contain',
           }),

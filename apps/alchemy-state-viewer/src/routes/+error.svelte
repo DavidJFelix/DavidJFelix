@@ -2,8 +2,8 @@
 import {css} from 'styled-system/css'
 import {page} from '$app/state'
 
-const section = css({py: '3rem', textAlign: 'center'})
-const status = css({fontSize: '2.5rem', m: 0, mb: '0.5rem'})
+const section = css({py: '12', textAlign: 'center'})
+const status = css({fontSize: '[2.5rem]', m: '0', mb: '2'})
 const message = css({color: 'muted'})
 </script>
 

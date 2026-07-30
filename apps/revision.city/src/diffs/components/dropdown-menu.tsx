@@ -21,15 +21,15 @@ const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup
 // tw-animate-css utilities: fade+zoom plus a 0.5rem slide away from the
 // anchor side, driven by the menuIn/menuOut keyframes from panda.config.
 const menuMotionStyles = {
-  '&[data-state="open"]': {animation: 'menuIn 150ms ease-out'},
-  '&[data-state="closed"]': {animation: 'menuOut 150ms ease-in'},
+  '&[data-state="open"]': {animation: '[menuIn 150ms ease-out]'},
+  '&[data-state="closed"]': {animation: '[menuOut 150ms ease-in]'},
   '&[data-side="bottom"]': {'--menu-slide-y': '-0.5rem'},
   '&[data-side="top"]': {'--menu-slide-y': '0.5rem'},
   '&[data-side="left"]': {'--menu-slide-x': '0.5rem'},
   '&[data-side="right"]': {'--menu-slide-x': '-0.5rem'},
 } as const
 
-const smallItemPadding = {py: '1.5', fontSize: 'sm', lineHeight: '1.25rem'} as const
+const smallItemPadding = {py: '1.5', fontSize: 'sm', lineHeight: '[1.25rem]'} as const
 
 const DropdownMenuSubTrigger = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.SubTrigger>,
@@ -74,17 +74,17 @@ const DropdownMenuSubContent = React.forwardRef<
         bg: 'diffs.popover',
         color: 'diffs.popover.foreground',
         zIndex: '50',
-        minW: '8rem',
+        minW: '32',
         overflow: 'hidden',
         rounded: 'diffs.md',
         borderWidth: '1px',
-        borderColor: 'rgb(0 0 0 / 0.15)',
+        borderColor: '[rgb(0 0 0 / 0.15)]',
         backgroundClip: 'padding-box',
         p: '1',
         boxShadow: 'lg',
         _dark: {
-          borderColor: 'rgb(255 255 255 / 0.15)',
-          boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.25), 0 4px 6px -4px rgb(0 0 0 / 0.25)',
+          borderColor: '[rgb(255 255 255 / 0.15)]',
+          boxShadow: '[0 10px 15px -3px rgb(0 0 0 / 0.25), 0 4px 6px -4px rgb(0 0 0 / 0.25)]',
         },
         ...menuMotionStyles,
       }),
@@ -183,18 +183,18 @@ const DropdownMenuContent = React.forwardRef<
               bg: 'diffs.popover',
               color: 'diffs.popover.foreground',
               zIndex: '50',
-              minW: '8rem',
-              '& > * + *': {mt: '1px'},
+              minW: '32',
+              '& > * + *': {mt: '[1px]'},
               overflow: 'hidden',
               rounded: 'diffs.lg',
               borderWidth: '1px',
-              borderColor: 'rgb(0 0 0 / 0.1)',
+              borderColor: '[rgb(0 0 0 / 0.1)]',
               backgroundClip: 'padding-box',
               p: '1',
               boxShadow: 'lg',
               _dark: {
-                borderColor: 'rgb(255 255 255 / 0.15)',
-                boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.25), 0 4px 6px -4px rgb(0 0 0 / 0.25)',
+                borderColor: '[rgb(255 255 255 / 0.15)]',
+                boxShadow: '[0 10px 15px -3px rgb(0 0 0 / 0.25), 0 4px 6px -4px rgb(0 0 0 / 0.25)]',
               },
               ...menuMotionStyles,
             }),
@@ -284,7 +284,7 @@ const DropdownMenuCheckboxItem = React.forwardRef<
           rounded: 'diffs.sm',
           ...smallItemPadding,
           transition:
-            'color 150ms cubic-bezier(0.4, 0, 0.2, 1), background-color 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+            '[color 150ms cubic-bezier(0.4, 0, 0.2, 1), background-color 150ms cubic-bezier(0.4, 0, 0.2, 1)]',
           outline: 'none',
           userSelect: 'none',
           _focus: {bg: 'diffs.accent', color: 'diffs.accent.foreground'},
@@ -348,7 +348,7 @@ const DropdownMenuRadioItem = React.forwardRef<
         pl: '8',
         ...smallItemPadding,
         transition:
-          'color 150ms cubic-bezier(0.4, 0, 0.2, 1), background-color 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+          '[color 150ms cubic-bezier(0.4, 0, 0.2, 1), background-color 150ms cubic-bezier(0.4, 0, 0.2, 1)]',
         outline: 'none',
         userSelect: 'none',
         _focus: {bg: 'diffs.accent', color: 'diffs.accent.foreground'},
@@ -370,7 +370,7 @@ const DropdownMenuRadioItem = React.forwardRef<
       })}
     >
       <DropdownMenuPrimitive.ItemIndicator>
-        <Circle className={css({h: '2', w: '2', fill: 'currentcolor'})} />
+        <Circle className={css({h: '2', w: '2', fill: '[currentcolor]'})} />
       </DropdownMenuPrimitive.ItemIndicator>
     </span>
     {children}
@@ -402,7 +402,7 @@ const DropdownMenuSeparator = React.forwardRef<
 >(({className, ...props}, ref) => (
   <DropdownMenuPrimitive.Separator
     ref={ref}
-    className={cx(css({bg: 'diffs.muted', mx: '-1', my: '1', h: '1px'}), className)}
+    className={cx(css({bg: 'diffs.muted', mx: '-1', my: '1', h: '[1px]'}), className)}
     {...props}
   />
 ))
@@ -415,7 +415,7 @@ const DropdownMenuShortcut = ({className, ...props}: React.HTMLAttributes<HTMLSp
         css({
           ml: 'auto',
           fontSize: 'xs',
-          lineHeight: '1rem',
+          lineHeight: '[1rem]',
           letterSpacing: 'widest',
           opacity: '0.6',
         }),

@@ -85,14 +85,14 @@ function ButtonGroupItem({className, value, children, onClick, ...props}: Button
           // `--radius`; the port only kept `--radius` (see panda.config.ts's
           // `diffs.lg` radii token), so this references that directly to
           // keep the item's corners 1px inside the group's rounded-lg edge.
-          rounded: 'calc(var(--radius) - 1px)',
+          rounded: '[calc(var(--radius) - 1px)]',
           gap: '1.5',
         }),
         isSelected &&
           css({
             color: 'diffs.foreground',
             pointerEvents: 'none',
-            boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+            boxShadow: 'xs',
           }),
         className,
       )}

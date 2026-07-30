@@ -118,7 +118,7 @@ function RootDocument({children}: {children: React.ReactNode}) {
           fontFamily: 'sans',
           display: 'flex',
           flexDirection: 'column',
-          minHeight: '100vh',
+          minHeight: '[100vh]',
         })}
       >
         {/* Resolves the persisted (or OS) color scheme before first paint so

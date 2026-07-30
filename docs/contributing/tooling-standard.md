@@ -5,7 +5,7 @@ concern, like-projects share one config.** Per-project overrides only when there
 documented reason.
 
 This document is the reference; the live config lives in `.config/`, root `biome.jsonc` /
-`.oxlintrc.json` / `.prettierrc.json`, and each app's `apps/<name>/` configs.
+`.oxlintrc.jsonc` / `.prettierrc.json`, and each app's `apps/<name>/` configs.
 
 For _where_ those config files live and _what format_ they take, see
 [configuration-style.md](configuration-style.md); for which language to write a script in, see
@@ -25,7 +25,7 @@ Applies to every JS/TS app (Astro, React, Vue, Svelte, TanStack Start, Nuxt, pla
 
 | Concern                                                                 | Tool                         | Config                                                                |
 | ----------------------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------------- |
-| Lint, primary (JS/TS/JSX/TSX + astro/vue/svelte script blocks)          | Oxlint                       | root `.oxlintrc.json`                                                 |
+| Lint, primary (JS/TS/JSX/TSX + astro/vue/svelte script blocks)          | Oxlint                       | root `.oxlintrc.jsonc`                                                |
 | Lint, residual (CSS lint + the JS rules oxlint lacks; pruned rule list) | Biome                        | root `biome.jsonc`, app `biome.json` extends it                       |
 | Format (JS/TS/JSX/TSX, JSON/JSONC, CSS, Vue)                            | oxfmt                        | root `.oxfmtrc.json`                                                  |
 | Format (`.astro` frontmatter, `.svelte` script blocks)                  | Biome                        | root `biome.jsonc` (`formatter.includes`)                             |
@@ -101,7 +101,7 @@ The ownership map above covers quality tooling; this covers the rest of what age
 - **Oxlint + Biome + oxfmt + typecheck + tests** are per-app, declared as mise tasks in each
   `apps/<name>/mise.toml` and run by that app's path-filtered CI workflow. `mise run check` at the
   repo root fans every app's full check out (`bin/run-app-tasks.ts`).
-- **Root config files** (`biome.jsonc`, `.oxlintrc.json`, `.oxfmtrc.json`, etc.) are formatted by
+- **Root config files** (`biome.jsonc`, `.oxlintrc.jsonc`, `.oxfmtrc.json`, etc.) are formatted by
   the root `mise run format` task (oxfmt, plus a Biome lint of Biome's own configs) and gated by
   `ci-repo.yml`.
 - **Repo-owned Markdown** (`docs/`, root `*.md`, `.github/`) is format-gated by the root

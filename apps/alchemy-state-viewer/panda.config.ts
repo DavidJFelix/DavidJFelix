@@ -25,6 +25,7 @@ const badge = defineRecipe({
 
 export default defineConfig({
   preflight: true,
+  strictTokens: true,
   include: ['./src/**/*.{ts,svelte}'],
   outdir: 'styled-system',
   // The badge tone is selected at runtime from statusTone(), so static

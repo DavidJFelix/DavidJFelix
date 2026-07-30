@@ -84,7 +84,7 @@ function ProductPage() {
         to="/monica"
         className={css({
           display: 'inline-block',
-          fontSize: '14px',
+          fontSize: '[14px]',
           fontWeight: 'bold',
           color: 'ink.muted',
           mb: '6',
@@ -105,11 +105,11 @@ function ProductPage() {
           className={css({
             borderRadius: 'card',
             overflow: 'hidden',
-            border: '1px solid',
+            border: '[1px solid]',
             borderColor: 'border',
-            aspectRatio: '4 / 3',
+            aspectRatio: 'landscape',
             background:
-              'repeating-linear-gradient(45deg, token(colors.paper.shade) 0 10px, token(colors.paper.checker) 10px 20px)',
+              '[repeating-linear-gradient(45deg, token(colors.paper.shade) 0 10px, token(colors.paper.checker) 10px 20px)]',
           })}
         >
           {product.featuredImage ? (
@@ -130,12 +130,12 @@ function ProductPage() {
           ) : null}
           <h1 className={css({textStyle: 'displayLg', color: 'ink'})}>{product.title}</h1>
           {selectedVariant ? (
-            <p className={css({fontSize: '24px', fontWeight: 'bold', color: 'ink'})}>
+            <p className={css({fontSize: '[24px]', fontWeight: 'bold', color: 'ink'})}>
               {formatPrice(selectedVariant.price)}
             </p>
           ) : null}
           {product.description ? (
-            <p className={css({fontSize: '15px', lineHeight: '1.6', color: 'ink.muted'})}>
+            <p className={css({fontSize: '[15px]', lineHeight: '[1.6]', color: 'ink.muted'})}>
               {product.description}
             </p>
           ) : null}
@@ -165,16 +165,16 @@ function ProductPage() {
               {sold ? 'Sold' : pending ? 'Adding…' : 'Add to cart'}
             </Button>
           </div>
-          {error ? <p className={css({color: 'error', fontSize: '14px'})}>{error}</p> : null}
+          {error ? <p className={css({color: 'error', fontSize: '[14px]'})}>{error}</p> : null}
           <div
             className={css({
-              borderTop: '1px solid',
+              borderTop: '[1px solid]',
               borderColor: 'border',
               pt: '4',
               display: 'flex',
               flexDirection: 'column',
               gap: '2',
-              fontSize: '13px',
+              fontSize: '[13px]',
               color: 'ink.muted',
             })}
           >

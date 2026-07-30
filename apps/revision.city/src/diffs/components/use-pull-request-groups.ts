@@ -20,9 +20,11 @@ const IDLE_STATE: PullRequestGroupsState = {status: 'idle', groups: []}
 const LOADING_STATE: PullRequestGroupsState = {status: 'loading', groups: []}
 const ERROR_STATE: PullRequestGroupsState = {status: 'error', groups: []}
 
-// Loads the signed-in visitor's open pull requests once per mount. `enabled`
-// keeps the request from firing before the GitHub session is known, so
-// signed-out visitors never hit the endpoint.
+// Loads the signed-in visitor's open pull requests on mount and revalidates
+// whenever the window regains focus, since the list goes stale while the
+// visitor is off merging or opening pull requests elsewhere. `enabled` keeps
+// the request from firing before the GitHub session is known, so signed-out
+// visitors never hit the endpoint.
 export function usePullRequestGroups(enabled: boolean): PullRequestGroupsState {
   const [state, setState] = useState<PullRequestGroupsState>(IDLE_STATE)
 
@@ -32,14 +34,32 @@ export function usePullRequestGroups(enabled: boolean): PullRequestGroupsState {
     }
 
     let cancelled = false
-    setState(LOADING_STATE)
-    void fetchPullRequestGroups().then((loaded) => {
-      if (!cancelled) {
-        setState(loaded)
+    let inFlight = false
+    const load = () => {
+      if (inFlight) {
+        return
       }
-    })
+      inFlight = true
+      // Stale-while-revalidate: only the first load shows a loading state. A
+      // refocus refetch keeps the already loaded groups rendered, and a failed
+      // one keeps them too -- a working list beats an error message.
+      setState((previous) => (previous.status === 'loaded' ? previous : LOADING_STATE))
+      void fetchPullRequestGroups().then((loaded) => {
+        inFlight = false
+        if (cancelled) {
+          return
+        }
+        setState((previous) =>
+          loaded.status === 'error' && previous.status === 'loaded' ? previous : loaded,
+        )
+      })
+    }
+
+    load()
+    window.addEventListener('focus', load)
     return () => {
       cancelled = true
+      window.removeEventListener('focus', load)
     }
   }, [enabled])
 

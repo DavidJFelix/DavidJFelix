@@ -141,6 +141,7 @@
     "respawned",
     "rollouts",
     "rulebook",
+    "slsa", // Supply-chain Levels for Software Artifacts (slsa.dev)
     "stepback",
     "stepbacks",
     "subrequest",

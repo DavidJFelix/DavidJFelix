@@ -1,5 +1,6 @@
 ---
 import Analytics from '../components/analytics.astro'
+import ThemeToggle from '../components/theme-toggle.astro'
 
 const title = 'David J. Felix'
 const description = 'Personal site of David J. Felix.'
@@ -13,6 +14,31 @@ const posthogEnabled = Boolean(import.meta.env.PUBLIC_POSTHOG_KEY)
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    {/* Pre-paint scheme bootstrap on the repo theming contract
+        (docs/projects/theme-switcher-unification/plan.md); the typed source
+        of the same logic is apps/f311x/src/theme/theme-bootstrap.ts. Inlined
+        literally because is:inline scripts cannot import build output. */}
+    <script is:inline>
+      ;(() => {
+        try {
+          const stored = localStorage.getItem('theme')
+          const mode = stored === 'light' || stored === 'dark' ? stored : 'system'
+          const resolved =
+            mode === 'system'
+              ? matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dark'
+                : 'light'
+              : mode
+          const root = document.documentElement
+          root.classList.remove('light', 'dark')
+          root.classList.add(resolved)
+          root.style.colorScheme = resolved
+          root.dataset.themeMode = mode
+        } catch {
+          /* storage/media failures fall through to the CSS defaults */
+        }
+      })()
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
@@ -21,11 +47,15 @@ const posthogEnabled = Boolean(import.meta.env.PUBLIC_POSTHOG_KEY)
     {posthogEnabled && <Analytics />}
     <style>
       :root {
-        color-scheme: dark;
-        --bg: #09090b;
-        --fg: #e4e4e7;
-        --muted: #a1a1aa;
-        --accent: #f4f4f5;
+        /* light dark keeps the no-JS page following the OS; when JS runs the
+           bootstrap pins the resolved scheme on the html style attribute and
+           light-dark() follows it. Values are the zinc ramp: the dark column
+           is the site's original palette, the light column mirrors it. */
+        color-scheme: light dark;
+        --bg: light-dark(#fafafa, #09090b);
+        --fg: light-dark(#3f3f46, #e4e4e7);
+        --muted: light-dark(#52525b, #a1a1aa);
+        --accent: light-dark(#09090b, #f4f4f5);
       }
       * { box-sizing: border-box; }
       html, body { margin: 0; padding: 0; }
@@ -74,6 +104,7 @@ const posthogEnabled = Boolean(import.meta.env.PUBLIC_POSTHOG_KEY)
     </style>
   </head>
   <body>
+    <ThemeToggle />
     <main>
       <h1>David J. Felix</h1>
       <p>Software engineer. This is my corner of the web.</p>

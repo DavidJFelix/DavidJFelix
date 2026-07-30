@@ -37,13 +37,13 @@ function Month({monthName, slottedDays}: MonthState) {
   const gridCellVariants = cva({
     base: {
       border: '1px solid transparent',
-      color: 'stone.700',
+      color: 'text',
     },
     variants: {
       cellType: {
         weekDayHeaders: {
           fontWeight: '600',
-          color: 'stone.700',
+          color: 'text',
         },
         day: {},
         spacer: {},
@@ -51,29 +51,29 @@ function Month({monthName, slottedDays}: MonthState) {
       dayType: {
         normal: {},
         holiday: {
-          backgroundColor: 'red.100',
-          borderColor: 'red.500',
-          color: 'red.950',
+          backgroundColor: 'holiday.bg',
+          borderColor: 'holiday.border',
+          color: 'holiday.text',
         },
         weekend: {
-          backgroundColor: 'stone.200',
-          borderColor: 'stone.300',
-          color: 'stone.950',
+          backgroundColor: 'weekend.bg',
+          borderColor: 'border',
+          color: 'weekend.text',
         },
         planning: {
-          backgroundColor: 'blue.100',
-          borderColor: 'blue.500',
-          color: 'blue.950',
+          backgroundColor: 'planning.bg',
+          borderColor: 'planning.border',
+          color: 'planning.text',
         },
         execution: {
-          backgroundColor: 'green.100',
-          borderColor: 'green.500',
-          color: 'green.950',
+          backgroundColor: 'execution.bg',
+          borderColor: 'execution.border',
+          color: 'execution.text',
         },
         hipsSprint: {
-          backgroundColor: 'purple.100',
-          borderColor: 'purple.500',
-          color: 'purple.950',
+          backgroundColor: 'hipsSprint.bg',
+          borderColor: 'hipsSprint.border',
+          color: 'hipsSprint.text',
         },
       },
     },
@@ -82,8 +82,8 @@ function Month({monthName, slottedDays}: MonthState) {
         cellType: 'day',
         dayType: 'normal',
         css: {
-          backgroundColor: 'white',
-          borderColor: 'stone.300',
+          backgroundColor: 'day',
+          borderColor: 'border',
         },
       },
     ],
@@ -126,8 +126,8 @@ function Month({monthName, slottedDays}: MonthState) {
         alignSelf: 'stretch',
         padding: '4',
         border: '1px solid',
-        borderColor: 'stone.300',
-        backgroundColor: 'stone.50',
+        borderColor: 'border',
+        backgroundColor: 'canvas',
       })}
     >
       <h2
@@ -135,7 +135,7 @@ function Month({monthName, slottedDays}: MonthState) {
           fontSize: 'xl',
           fontWeight: '700',
           fontFamily: 'Roboto, sans-serif',
-          color: 'red.700',
+          color: 'heading',
         })}
       >
         {monthName}
@@ -200,7 +200,7 @@ function CalendarHeader({children}: CalendarHeaderProps) {
         fontSize: '4xl',
         fontWeight: '800',
         fontFamily: 'Roboto, sans-serif',
-        color: 'stone.950',
+        color: 'title',
       })}
     >
       {children}

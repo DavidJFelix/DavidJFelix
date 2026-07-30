@@ -1,5 +1,6 @@
 import {createRootRoute, Link, Outlet} from '@tanstack/react-router'
 import React from 'react'
+import {ThemeToggle} from '../theme/theme-toggle'
 
 const TanStackRouterDevtools =
   process.env.NODE_ENV === 'production'
@@ -39,6 +40,7 @@ function RootComponent() {
         >
           About
         </Link>
+        <ThemeToggle />
       </div>
       <hr />
       <Outlet />

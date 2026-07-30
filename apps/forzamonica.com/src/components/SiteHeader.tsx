@@ -3,6 +3,7 @@ import {Link, useRouterState} from '@tanstack/react-router'
 import {css, cx} from 'styled-system/css'
 
 import type {ProductKind} from '@/lib/product-kind.ts'
+import {ThemeToggle} from '@/theme/theme-toggle.tsx'
 
 const navLink = css({
   fontSize: '15px',
@@ -86,43 +87,46 @@ export function SiteHeader({cartQuantity}: SiteHeaderProps) {
             About
           </Link>
         </nav>
-        <Link
-          to="/cart"
-          className={css({
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '2',
-            fontSize: '15px',
-            fontWeight: 'bold',
-            color: 'ink',
-            border: '1.5px solid',
-            borderColor: 'ink',
-            borderRadius: 'pill',
-            px: '4.5',
-            py: '2',
-            whiteSpace: 'nowrap',
-            transition: 'background token(durations.quick) token(easings.out)',
-            _hover: {bg: 'paper.shade'},
-          })}
-        >
-          Cart
-          {cartQuantity > 0 ? (
-            <span
-              className={css({
-                fontSize: '12px',
-                fontWeight: 'bold',
-                color: 'ink',
-                bg: 'pigment.butter',
-                borderRadius: 'pill',
-                px: '2',
-                py: '0.5',
-              })}
-            >
-              {cartQuantity}
-              <span className={css({srOnly: true})}> items in cart</span>
-            </span>
-          ) : null}
-        </Link>
+        <div className={css({display: 'flex', alignItems: 'center', gap: '3'})}>
+          <Link
+            to="/cart"
+            className={css({
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '2',
+              fontSize: '15px',
+              fontWeight: 'bold',
+              color: 'ink',
+              border: '1.5px solid',
+              borderColor: 'ink',
+              borderRadius: 'pill',
+              px: '4.5',
+              py: '2',
+              whiteSpace: 'nowrap',
+              transition: 'background token(durations.quick) token(easings.out)',
+              _hover: {bg: 'paper.shade'},
+            })}
+          >
+            Cart
+            {cartQuantity > 0 ? (
+              <span
+                className={css({
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  color: 'ink',
+                  bg: 'pigment.butter',
+                  borderRadius: 'pill',
+                  px: '2',
+                  py: '0.5',
+                })}
+              >
+                {cartQuantity}
+                <span className={css({srOnly: true})}> items in cart</span>
+              </span>
+            ) : null}
+          </Link>
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   )

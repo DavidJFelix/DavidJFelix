@@ -2,6 +2,8 @@ import {createFileRoute} from '@tanstack/react-router'
 
 import {css} from 'styled-system/css'
 
+import {ThemeToggle} from '@/theme/theme-toggle'
+
 export const Route = createFileRoute('/')({
   component: Home,
 })
@@ -25,16 +27,20 @@ function Home() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
+          gap: '4',
           px: {base: '6', md: '8'},
           py: '5',
           borderBottomWidth: '1px',
-          borderColor: 'neutral.200',
+          borderColor: 'border',
         })}
       >
         <span className={css({fontWeight: 'semibold', fontSize: 'lg', letterSpacing: 'tight'})}>
           {title}
         </span>
-        <span className={css({fontSize: 'sm', color: 'neutral.500'})}>chicago startups</span>
+        <div className={css({display: 'flex', alignItems: 'center', gap: '4'})}>
+          <span className={css({fontSize: 'sm', color: 'text.muted'})}>chicago startups</span>
+          <ThemeToggle />
+        </div>
       </header>
 
       <main
@@ -54,7 +60,7 @@ function Home() {
           className={css({
             fontSize: 'sm',
             fontWeight: 'medium',
-            color: 'neutral.500',
+            color: 'text.muted',
             textTransform: 'uppercase',
             letterSpacing: 'wider',
           })}
@@ -76,7 +82,7 @@ function Home() {
           className={css({
             mt: '6',
             fontSize: {base: 'lg', md: 'xl'},
-            color: 'neutral.600',
+            color: 'text.muted',
             maxWidth: '2xl',
             lineHeight: 'relaxed',
           })}
@@ -99,7 +105,7 @@ function Home() {
               key={f.name}
               className={css({
                 borderWidth: '1px',
-                borderColor: 'neutral.200',
+                borderColor: 'border',
                 rounded: 'xl',
                 p: '6',
               })}
@@ -109,7 +115,7 @@ function Home() {
                 className={css({
                   mt: '2',
                   fontSize: 'sm',
-                  color: 'neutral.600',
+                  color: 'text.muted',
                   lineHeight: 'relaxed',
                 })}
               >
@@ -125,9 +131,9 @@ function Home() {
           px: {base: '6', md: '8'},
           py: '6',
           borderTopWidth: '1px',
-          borderColor: 'neutral.200',
+          borderColor: 'border',
           fontSize: 'sm',
-          color: 'neutral.500',
+          color: 'text.muted',
         })}
       >
         © 2026 {title}

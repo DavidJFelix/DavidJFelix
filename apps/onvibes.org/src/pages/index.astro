@@ -1,5 +1,6 @@
 ---
 import {css} from 'styled-system/css'
+import ThemeToggle from '../components/theme-toggle.astro'
 import BaseLayout from '../layouts/BaseLayout.astro'
 
 const title = 'onvibes.org'
@@ -20,8 +21,6 @@ const features = [
     display: 'flex',
     flexDirection: 'column',
     fontFamily: 'sans',
-    bg: 'white',
-    color: 'neutral.900',
   })}
 >
     <header
@@ -32,13 +31,16 @@ const features = [
         px: {base: '6', md: '8'},
         py: '5',
         borderBottomWidth: '1px',
-        borderColor: 'neutral.200',
+        borderColor: 'border',
       })}
     >
       <span class={css({fontWeight: 'semibold', fontSize: 'lg', letterSpacing: 'tight'})}>
         {title}
       </span>
-      <span class={css({fontSize: 'sm', color: 'neutral.500'})}>vibecoded apps</span>
+      <div class={css({display: 'flex', alignItems: 'center', gap: '4'})}>
+        <span class={css({fontSize: 'sm', color: 'text.muted'})}>vibecoded apps</span>
+        <ThemeToggle />
+      </div>
     </header>
 
     <main
@@ -58,7 +60,7 @@ const features = [
         class={css({
           fontSize: 'sm',
           fontWeight: 'medium',
-          color: 'neutral.500',
+          color: 'text.muted',
           textTransform: 'uppercase',
           letterSpacing: 'wider',
         })}
@@ -80,7 +82,7 @@ const features = [
         class={css({
           mt: '6',
           fontSize: {base: 'lg', md: 'xl'},
-          color: 'neutral.600',
+          color: 'text.muted',
           maxWidth: '2xl',
           lineHeight: 'relaxed',
         })}
@@ -100,9 +102,9 @@ const features = [
       >
         {
           features.map((f) => (
-            <li class={css({borderWidth: '1px', borderColor: 'neutral.200', rounded: 'xl', p: '6'})}>
+            <li class={css({borderWidth: '1px', borderColor: 'border', rounded: 'xl', p: '6'})}>
               <h2 class={css({fontSize: 'lg', fontWeight: 'semibold'})}>{f.name}</h2>
-              <p class={css({mt: '2', fontSize: 'sm', color: 'neutral.600', lineHeight: 'relaxed'})}>
+              <p class={css({mt: '2', fontSize: 'sm', color: 'text.muted', lineHeight: 'relaxed'})}>
                 {f.body}
               </p>
             </li>
@@ -116,9 +118,9 @@ const features = [
         px: {base: '6', md: '8'},
         py: '6',
         borderTopWidth: '1px',
-        borderColor: 'neutral.200',
+        borderColor: 'border',
         fontSize: 'sm',
-        color: 'neutral.500',
+        color: 'text.muted',
       })}
     >
       © 2026 {title}

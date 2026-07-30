@@ -11,7 +11,7 @@ export default defineConfig({
     // smoke/e2e, not unit coverage.
     coverage: {
       provider: 'v8',
-      include: ['src/lib/**', 'src/observability/config.ts'],
+      include: ['src/lib/**/*.ts', 'src/observability/config.ts'],
       reporter: ['text', 'text-summary'],
       thresholds: {statements: 100, branches: 90, functions: 100, lines: 100},
     },

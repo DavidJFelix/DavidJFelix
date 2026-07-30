@@ -32,8 +32,8 @@ useHead({
         minHeight: '100dvh',
         display: 'flex',
         flexDirection: 'column',
-        bg: 'white',
-        color: 'neutral.900',
+        bg: 'bg.canvas',
+        color: 'text',
         fontFamily: 'sans',
       })
     "
@@ -47,14 +47,17 @@ useHead({
           px: {base: '6', md: '8'},
           py: '5',
           borderBottomWidth: '1px',
-          borderColor: 'neutral.200',
+          borderColor: 'border',
         })
       "
     >
       <span :class="css({fontWeight: 'semibold', fontSize: 'lg', letterSpacing: 'tight'})">
         {{ title }}
       </span>
-      <span :class="css({fontSize: 'sm', color: 'neutral.500'})">{{ tag }}</span>
+      <div :class="css({display: 'flex', alignItems: 'center', gap: '4'})">
+        <span :class="css({fontSize: 'sm', color: 'text.muted'})">{{ tag }}</span>
+        <ThemeToggle />
+      </div>
     </header>
 
     <main
@@ -77,7 +80,7 @@ useHead({
           css({
             fontSize: 'sm',
             fontWeight: 'medium',
-            color: 'neutral.500',
+            color: 'text.muted',
             textTransform: 'uppercase',
             letterSpacing: 'wider',
           })
@@ -103,7 +106,7 @@ useHead({
           css({
             mt: '6',
             fontSize: {base: 'lg', md: 'xl'},
-            color: 'neutral.600',
+            color: 'text.muted',
             maxWidth: '2xl',
             lineHeight: 'relaxed',
           })
@@ -127,10 +130,10 @@ useHead({
         <li
           v-for="feature in features"
           :key="feature.name"
-          :class="css({borderWidth: '1px', borderColor: 'neutral.200', rounded: 'xl', p: '6'})"
+          :class="css({borderWidth: '1px', borderColor: 'border', rounded: 'xl', p: '6'})"
         >
           <h2 :class="css({fontSize: 'lg', fontWeight: 'semibold'})">{{ feature.name }}</h2>
-          <p :class="css({mt: '2', fontSize: 'sm', color: 'neutral.600', lineHeight: 'relaxed'})">
+          <p :class="css({mt: '2', fontSize: 'sm', color: 'text.muted', lineHeight: 'relaxed'})">
             {{ feature.body }}
           </p>
         </li>
@@ -143,9 +146,9 @@ useHead({
           px: {base: '6', md: '8'},
           py: '6',
           borderTopWidth: '1px',
-          borderColor: 'neutral.200',
+          borderColor: 'border',
           fontSize: 'sm',
-          color: 'neutral.500',
+          color: 'text.muted',
         })
       "
     >

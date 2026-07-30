@@ -1,5 +1,6 @@
 <script lang="ts">
 import {css} from 'styled-system/css'
+import ThemeToggle from '$lib/components/theme-toggle.svelte'
 
 const brand = 'Monica & David'
 const description = 'A little blog about our life together. Posts coming soon.'
@@ -15,8 +16,8 @@ const description = 'A little blog about our life together. Posts coming soon.'
     minHeight: '100dvh',
     display: 'flex',
     flexDirection: 'column',
-    bg: 'white',
-    color: 'neutral.900',
+    bg: 'bg.canvas',
+    color: 'text',
     fontFamily: 'sans',
   })}
 >
@@ -28,12 +29,13 @@ const description = 'A little blog about our life together. Posts coming soon.'
       px: {base: '6', md: '8'},
       py: '5',
       borderBottomWidth: '1px',
-      borderColor: 'neutral.200',
+      borderColor: 'border',
     })}
   >
     <span class={css({fontWeight: 'semibold', fontSize: 'lg', letterSpacing: 'tight'})}>
       {brand}
     </span>
+    <ThemeToggle />
   </header>
 
   <main
@@ -53,7 +55,7 @@ const description = 'A little blog about our life together. Posts coming soon.'
       class={css({
         fontSize: 'sm',
         fontWeight: 'medium',
-        color: 'neutral.500',
+        color: 'text.subtle',
         textTransform: 'uppercase',
         letterSpacing: 'wider',
       })}
@@ -75,7 +77,7 @@ const description = 'A little blog about our life together. Posts coming soon.'
       class={css({
         mt: '6',
         fontSize: {base: 'lg', md: 'xl'},
-        color: 'neutral.600',
+        color: 'text.muted',
         maxWidth: '2xl',
         lineHeight: 'relaxed',
       })}
@@ -89,9 +91,9 @@ const description = 'A little blog about our life together. Posts coming soon.'
       px: {base: '6', md: '8'},
       py: '6',
       borderTopWidth: '1px',
-      borderColor: 'neutral.200',
+      borderColor: 'border',
       fontSize: 'sm',
-      color: 'neutral.500',
+      color: 'text.subtle',
     })}
   >
     © 2026 {brand}

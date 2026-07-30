@@ -1,11 +1,13 @@
 ---
+import {css} from 'styled-system/css'
 import Analytics from '../components/Analytics.astro'
 import '../index.css'
 
 // Shared document shell: head boilerplate, the Panda base stylesheet, and
 // analytics wiring live here so every page gets them and head changes happen
 // once. `bodyClass` lets a page keep styling the <body> itself (index.astro's
-// layout styles live there).
+// layout styles live there); `bodyBase` is the theme-aware default every page
+// gets regardless (chat.astro passes no bodyClass of its own).
 interface Props {
   title: string
   description: string
@@ -17,10 +19,43 @@ const {title, description, bodyClass} = Astro.props
 // is injected separately by the @sentry/astro integration when
 // PUBLIC_SENTRY_DSN is set. Both stay off locally/CI/preview.
 const posthogEnabled = Boolean(import.meta.env.PUBLIC_POSTHOG_KEY)
+
+const bodyBase = css({bg: 'bg.canvas', color: 'text'})
 ---
 
 <html lang="en">
   <head>
+    <!--
+      Pre-paint theme bootstrap: applies the persisted (or OS) color scheme to
+      <html> before first paint so the page never flashes the wrong scheme.
+      Literal and is:inline because Astro inline scripts cannot import build
+      output; this mirrors the typed function at
+      apps/f311x/src/theme/theme-bootstrap.ts (applyInitialTheme), stringified
+      there and hand-inlined here. Contract:
+      docs/projects/theme-switcher-unification/plan.md. Kept current after
+      load by src/components/theme-toggle.astro.
+    -->
+    <script is:inline>
+      ;(() => {
+        try {
+          const stored = localStorage.getItem('theme')
+          const mode = stored === 'light' || stored === 'dark' ? stored : 'system'
+          const resolved =
+            mode === 'system'
+              ? matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dark'
+                : 'light'
+              : mode
+          const root = document.documentElement
+          root.classList.remove('light', 'dark')
+          root.classList.add(resolved)
+          root.style.colorScheme = resolved
+          root.dataset.themeMode = mode
+        } catch {
+          /* storage/media failures fall through to the CSS defaults */
+        }
+      })()
+    </script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
@@ -28,7 +63,7 @@ const posthogEnabled = Boolean(import.meta.env.PUBLIC_POSTHOG_KEY)
     <title>{title}</title>
     {posthogEnabled && <Analytics />}
   </head>
-  <body class={bodyClass}>
+  <body class:list={[bodyBase, bodyClass]}>
     <slot />
   </body>
 </html>

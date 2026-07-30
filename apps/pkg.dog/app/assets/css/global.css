@@ -1,1 +1,12 @@
 @layer reset, base, tokens, recipes, utilities;
+
+/* @nuxtjs/color-mode applies the resolved scheme as a class on <html> before
+   first paint, but it does not set `color-scheme` itself -- without this,
+   native scrollbars and form controls stay light-themed even in dark mode. */
+html.dark {
+  color-scheme: dark;
+}
+
+html.light {
+  color-scheme: light;
+}

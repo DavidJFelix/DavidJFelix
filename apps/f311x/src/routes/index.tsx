@@ -12,6 +12,7 @@ import {Loader} from '@/components/ui/loader'
 import {Message, MessageAvatar, MessageContent} from '@/components/ui/message'
 import {PromptInput, PromptInputActions, PromptInputTextarea} from '@/components/ui/prompt-input'
 import {ScrollButton} from '@/components/ui/scroll-button'
+import {ThemeToggle} from '@/theme/theme-toggle'
 
 export const Route = createFileRoute('/')({component: ChatPage})
 
@@ -48,6 +49,7 @@ function ChatPage() {
         <div>
           <h1 className="text-base font-semibold tracking-tight">f311x</h1>
         </div>
+        <ThemeToggle />
       </header>
 
       <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col overflow-hidden">

@@ -1,0 +1,164 @@
+---
+import {css} from '../../styled-system/css'
+
+// Real <button>, tri-state (light -> dark -> system), aria-label naming the
+// mode a click switches to -- the Nuxt UI convention adopted repo-wide, see
+// docs/projects/theme-switcher-unification/plan.md. Padded hit target: p:'2'
+// grows the clickable area, m:'-2' cancels it out of the surrounding layout.
+const button = css({
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  p: '2',
+  m: '-2',
+  color: 'text',
+  bg: 'transparent',
+  border: 'none',
+  borderRadius: 'sm',
+  cursor: 'pointer',
+  _hover: {opacity: '0.7'},
+  _focusVisible: {outline: '2px solid', outlineColor: 'blue.500', outlineOffset: '2px'},
+})
+
+// Icon visibility is driven by data-theme-mode on <html> (set pre-paint by the
+// inline bootstrap script in index.astro and kept current by the script
+// below), so the right icon shows immediately -- no client JS needed to pick
+// it on first paint.
+const sunVisibility = css({display: 'none', '[data-theme-mode=light] &': {display: 'block'}})
+const moonVisibility = css({display: 'none', '[data-theme-mode=dark] &': {display: 'block'}})
+const monitorVisibility = css({display: 'none', '[data-theme-mode=system] &': {display: 'block'}})
+---
+
+<button
+  type="button"
+  id="theme-toggle"
+  class={button}
+  aria-label="Toggle color theme"
+  title="Toggle color theme"
+>
+  <svg
+    class={sunVisibility}
+    xmlns="http://www.w3.org/2000/svg"
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <circle cx="12" cy="12" r="5"></circle>
+    <path
+      d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+    ></path>
+  </svg>
+  <svg
+    class={moonVisibility}
+    xmlns="http://www.w3.org/2000/svg"
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"></path>
+  </svg>
+  <svg
+    class={monitorVisibility}
+    xmlns="http://www.w3.org/2000/svg"
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+    <path d="M8 21h8M12 17v4"></path>
+  </svg>
+</button>
+
+<script>
+  // Plain DOM TS, not a framework component -- the toggle is the only
+  // interactive bit on an otherwise static page (the calendar island itself
+  // has no interactivity). Mirrors the contract in
+  // docs/projects/theme-switcher-unification/plan.md and the typed bootstrap
+  // this pairs with, apps/f311x/src/theme/theme-bootstrap.ts (that one runs
+  // pre-paint via a stringified function; this one runs after hydration and
+  // only reacts to user/OS/cross-tab changes).
+  type ThemeMode = 'light' | 'dark' | 'system'
+
+  const STORAGE_KEY = 'theme'
+  const NEXT: Record<ThemeMode, ThemeMode> = {light: 'dark', dark: 'system', system: 'light'}
+
+  const toggle = document.querySelector<HTMLButtonElement>('#theme-toggle')
+
+  function currentMode(): ThemeMode {
+    const mode = document.documentElement.dataset.themeMode
+    return mode === 'light' || mode === 'dark' ? mode : 'system'
+  }
+
+  function resolveScheme(mode: ThemeMode): 'light' | 'dark' {
+    if (mode !== 'system') return mode
+    return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  }
+
+  function apply(mode: ThemeMode) {
+    const resolved = resolveScheme(mode)
+    const root = document.documentElement
+    root.classList.remove('light', 'dark')
+    root.classList.add(resolved)
+    root.style.colorScheme = resolved
+    root.dataset.themeMode = mode
+
+    if (toggle) {
+      const label = `Switch to ${NEXT[mode]} theme`
+      toggle.setAttribute('aria-label', label)
+      toggle.setAttribute('title', label)
+    }
+  }
+
+  toggle?.addEventListener('click', () => {
+    const next = NEXT[currentMode()]
+    try {
+      localStorage.setItem(STORAGE_KEY, next)
+    } catch {
+      // Storage unavailable (private mode, quota) -- still apply in-memory.
+    }
+    apply(next)
+  })
+
+  // Live OS tracking: re-resolve while in system mode so the page follows the
+  // OS without a reload.
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if (currentMode() === 'system') apply('system')
+  })
+
+  // Cross-tab sync: another tab changed (or cleared) the stored choice. A
+  // storage event fires with key === null when the whole store is cleared.
+  window.addEventListener('storage', (event) => {
+    if (event.key !== null && event.key !== STORAGE_KEY) return
+    let stored: string | null = null
+    try {
+      stored = localStorage.getItem(STORAGE_KEY)
+    } catch {
+      // Storage unavailable -- fall back to system.
+    }
+    const mode: ThemeMode = stored === 'light' || stored === 'dark' ? stored : 'system'
+    apply(mode)
+  })
+
+  // The inline head script already applied the resolved scheme pre-paint;
+  // this just brings the toggle's label in sync since it is authored with a
+  // generic value (the resolved mode is not known until that script runs).
+  apply(currentMode())
+</script>

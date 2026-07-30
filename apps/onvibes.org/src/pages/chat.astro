@@ -1,5 +1,7 @@
 ---
+import {css} from 'styled-system/css'
 import Chat from '../components/Chat.tsx'
+import ThemeToggle from '../components/theme-toggle.astro'
 import BaseLayout from '../layouts/BaseLayout.astro'
 
 const title = 'Chat · onvibes.org'
@@ -7,6 +9,23 @@ const description = 'A simple React chat, wired to onvibes via a Flue agent.'
 ---
 
 <BaseLayout title={title} description={description}>
+  <!--
+    A minimal header, styled to match the landing page's, so the toggle has
+    the same calm, consistent placement on every page even though the chat
+    island owns the rest of the page's chrome.
+  -->
+  <header
+    class={css({
+      display: 'flex',
+      justifyContent: 'flex-end',
+      px: {base: '6', md: '8'},
+      py: '5',
+      borderBottomWidth: '1px',
+      borderColor: 'border',
+    })}
+  >
+    <ThemeToggle />
+  </header>
   <!--
     client:only="react" -- the chat is fully client-driven (crypto.randomUUID
     for the instance id, Flue's streaming hooks), so there's nothing to render

@@ -1,0 +1,6 @@
+# Web-platform acronyms as they appear in docs and code comments. FOUC (flash
+# of unstyled content) is an acronym: only the all-caps form is valid, and the
+# `!` entry forbids the lowercase form outright. The entry has to spell the
+# word it bans, so exempt this file's own mention: cSpell:ignore fouc
+FOUC
+!fouc

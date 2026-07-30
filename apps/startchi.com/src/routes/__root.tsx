@@ -1,10 +1,21 @@
 import {TanStackDevtools} from '@tanstack/react-devtools'
-import {createRootRoute, HeadContent, Scripts} from '@tanstack/react-router'
+import {createRootRoute, HeadContent, ScriptOnce, Scripts} from '@tanstack/react-router'
 import {TanStackRouterDevtoolsPanel} from '@tanstack/react-router-devtools'
 
 import {css} from 'styled-system/css'
 
+import {createThemeBootstrapScript, type ThemeColorPair} from '@/theme/theme-bootstrap'
+import {ThemeProvider} from '@/theme/theme-provider'
 import appCss from '../styles.css?url'
+
+// Navbar tint (iOS Safari's <meta name="theme-color">) for each resolved
+// color scheme; matches the bg.canvas semantic token (panda.config.ts).
+const THEME_COLORS: ThemeColorPair = {light: '#ffffff', dark: '#0a0a0a'}
+
+const themeBootstrapScript = createThemeBootstrapScript({
+  storageKey: 'theme',
+  themeColors: THEME_COLORS,
+})
 
 export const Route = createRootRoute({
   head: () => ({
@@ -25,8 +36,11 @@ function RootDocument({children}: {children: React.ReactNode}) {
       <head>
         <HeadContent />
       </head>
-      <body className={css({bg: 'white', color: 'neutral.900', fontFamily: 'sans'})}>
-        {children}
+      <body className={css({bg: 'bg.canvas', color: 'text', fontFamily: 'sans'})}>
+        {/* Resolves the persisted (or OS) color scheme before first paint so
+            the page never flashes the wrong scheme. */}
+        <ScriptOnce>{themeBootstrapScript}</ScriptOnce>
+        <ThemeProvider themeColors={THEME_COLORS}>{children}</ThemeProvider>
         <TanStackDevtools
           config={{position: 'bottom-right'}}
           plugins={[

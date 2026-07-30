@@ -8,6 +8,21 @@ export default defineConfig({
   jsxFramework: 'react',
   outdir: 'styled-system',
   theme: {
-    extend: {},
+    extend: {
+      semanticTokens: {
+        colors: {
+          bg: {
+            canvas: {value: {base: '{colors.white}', _dark: '{colors.neutral.950}'}},
+          },
+          text: {
+            DEFAULT: {value: {base: '{colors.neutral.900}', _dark: '{colors.neutral.100}'}},
+            muted: {value: {base: '{colors.neutral.600}', _dark: '{colors.neutral.400}'}},
+          },
+          border: {
+            DEFAULT: {value: {base: '{colors.neutral.200}', _dark: '{colors.neutral.800}'}},
+          },
+        },
+      },
+    },
   },
 })

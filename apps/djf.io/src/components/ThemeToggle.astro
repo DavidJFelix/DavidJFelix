@@ -1,10 +1,15 @@
 ---
 import {css} from 'styled-system/css'
 
+// Padding grows the tap target past the WCAG 24px minimum; the negative
+// margin keeps the icon's layout footprint unchanged in the header row (same
+// pattern as the nav hamburger toggle in BaseLayout.astro).
 const button = css({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
+  p: '2',
+  m: '-2',
   color: 'text.muted',
   bg: 'transparent',
   cursor: 'pointer',
@@ -13,16 +18,18 @@ const button = css({
   _focusVisible: {outline: '2px solid', outlineColor: 'focus.ring', outlineOffset: '2px'},
 })
 
-// Icons are swapped by CSS from the data-theme attribute BaseLayout sets before
-// first paint, so the right icon shows immediately without a flash. The moon
-// (switch to dark) shows in light mode; the sun (switch to light) in dark mode.
-const onlyLight = css({'[data-theme=dark] &': {display: 'none'}})
-const onlyDark = css({display: 'none', '[data-theme=dark] &': {display: 'block'}})
+// Icons are swapped by CSS from the raw data-theme-mode attribute BaseLayout's
+// inline script sets on <html> before first paint, so the right icon (sun,
+// moon, or monitor for system) shows immediately with no flash and no client
+// JS state needed to pick it.
+const onlyLightMode = css({display: 'none', '[data-theme-mode=light] &': {display: 'block'}})
+const onlyDarkMode = css({display: 'none', '[data-theme-mode=dark] &': {display: 'block'}})
+const onlySystemMode = css({display: 'none', '[data-theme-mode=system] &': {display: 'block'}})
 ---
 
 <button type="button" id="theme-toggle" class={button} aria-label="Toggle color theme">
   <svg
-    class={onlyLight}
+    class={onlyLightMode}
     xmlns="http://www.w3.org/2000/svg"
     width="18"
     height="18"
@@ -37,7 +44,7 @@ const onlyDark = css({display: 'none', '[data-theme=dark] &': {display: 'block'}
     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"></path>
   </svg>
   <svg
-    class={onlyDark}
+    class={onlyDarkMode}
     xmlns="http://www.w3.org/2000/svg"
     width="18"
     height="18"
@@ -54,15 +61,96 @@ const onlyDark = css({display: 'none', '[data-theme=dark] &': {display: 'block'}
       d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
     ></path>
   </svg>
+  <svg
+    class={onlySystemMode}
+    xmlns="http://www.w3.org/2000/svg"
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+    <path d="M8 21h8M12 17v4"></path>
+  </svg>
 </button>
 
 <script>
+  // Cycle order: each press moves to the next mode, so all three states stay
+  // reachable from a single button (system is never a dead end, unlike the
+  // two-state flip this replaces).
+  const NEXT: Record<string, 'light' | 'dark' | 'system'> = {
+    light: 'dark',
+    dark: 'system',
+    system: 'light',
+  }
+
+  function currentMode(): 'light' | 'dark' | 'system' {
+    const mode = document.documentElement.dataset.themeMode
+    return mode === 'light' || mode === 'dark' ? mode : 'system'
+  }
+
+  function updateLabel(toggle: HTMLButtonElement) {
+    const next = NEXT[currentMode()]
+    const label = `Switch to ${next} theme`
+    toggle.setAttribute('aria-label', label)
+    toggle.setAttribute('title', label)
+  }
+
+  function apply(mode: 'light' | 'dark' | 'system', toggle: HTMLButtonElement) {
+    const resolved =
+      mode === 'system'
+        ? matchMedia('(prefers-color-scheme: dark)').matches
+          ? 'dark'
+          : 'light'
+        : mode
+    const root = document.documentElement
+    root.classList.remove('light', 'dark')
+    root.classList.add(resolved)
+    root.style.colorScheme = resolved
+    root.dataset.themeMode = mode
+    updateLabel(toggle)
+  }
+
   const toggle = document.querySelector<HTMLButtonElement>('#theme-toggle')
   if (toggle) {
+    // The SSR markup carries a static label ("Toggle color theme"); replace it
+    // with the mode-specific one as soon as this script runs, same as the
+    // icon swap, before any interaction.
+    updateLabel(toggle)
+
     toggle.addEventListener('click', () => {
-      const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'
-      document.documentElement.dataset.theme = next
-      localStorage.setItem('theme', next)
+      const next = NEXT[currentMode()]
+      try {
+        localStorage.setItem('theme', next)
+      } catch {
+        /* storage may be unavailable (private mode / denied) -- non-fatal */
+      }
+      apply(next, toggle)
+    })
+
+    // Live OS tracking: while the mode is 'system', a change in the OS
+    // preference re-resolves the scheme without a reload.
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      if (currentMode() === 'system') apply('system', toggle)
+    })
+
+    // Cross-tab sync: another tab's choice (or a cleared store) is reflected
+    // here too. key === null means the whole store was cleared.
+    window.addEventListener('storage', (event) => {
+      if (event.key !== null && event.key !== 'theme') return
+      let stored: string | null = null
+      try {
+        stored = localStorage.getItem('theme')
+      } catch {
+        /* storage may be unavailable -- fall through to system */
+      }
+      const mode = stored === 'light' || stored === 'dark' ? stored : 'system'
+      apply(mode, toggle)
     })
   }
 </script>

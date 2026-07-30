@@ -15,6 +15,7 @@
     "licenses",
     "people-names",
     "pierre",
+    "web-platform",
   ],
   // Topic dictionaries: system vocabularies and names shared by more than one
   // file. Entries and the reasons for them live in the .txt files themselves.
@@ -39,6 +40,12 @@
       "name": "pierre",
       "path": "dictionaries/pierre.txt",
       "description": "Pierre ecosystem vocabulary (diffs viewer port provenance)",
+    },
+    {
+      "name": "web-platform",
+      "path": "dictionaries/web-platform.txt",
+      "description": "Web-platform acronyms (case sensitive)",
+      "caseSensitive": true,
     },
   ],
   // Spellings this repo rejects outright; cspell reports the replacement. The
@@ -86,6 +93,7 @@
     // Real words and dev jargon the bundled dictionaries lack.
     "achievability",
     "actioned",
+    "affordances",
     "artmaking",
     "assed", // as in half-assed (blog voice)
     "backlinks",
@@ -203,6 +211,7 @@
     "modelcontextprotocol", // the @modelcontextprotocol npm scope (Model Context Protocol SDK)
     "msgpackr",
     "Neue", // Helvetica Neue, in font stacks
+    "nuxtjs", // the @nuxtjs npm scope (color-mode module)
     "openclaw",
     "opencode",
     "openrouter",

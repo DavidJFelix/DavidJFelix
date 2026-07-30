@@ -112,7 +112,7 @@ const menuPanel = css({
 })
 
 // Icons swap on the button's own aria-expanded, same pattern as ThemeToggle's
-// data-theme swap: bars while closed, an X while open.
+// data-theme-mode swap: bars while closed, an X while open.
 const iconMenuClosed = css({'#nav-toggle[aria-expanded=true] &': {display: 'none'}})
 const iconMenuOpen = css({display: 'none', '#nav-toggle[aria-expanded=true] &': {display: 'block'}})
 ---
@@ -122,16 +122,34 @@ const iconMenuOpen = css({display: 'none', '#nav-toggle[aria-expanded=true] &': 
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    {/* Resolve the color theme before first paint so there is no flash: an
-        explicit choice in localStorage wins, otherwise follow the system. */}
+    {/* Resolve the color theme before first paint so there is no flash: a
+        persisted mode ('light'/'dark'/'system') wins over the OS preference,
+        and defaults to 'system' when nothing is stored (or storage throws).
+        This mirrors the repo's shared theme contract -- the typed source of
+        the same logic lives at apps/f311x/src/theme/theme-bootstrap.ts (see
+        docs/projects/theme-switcher-unification/plan.md); this app has no
+        bundler step to stringify a typed function into an inline script, so
+        the logic is authored directly as the literal below. */}
     <script is:inline>
-      const storedTheme = localStorage.getItem('theme')
-      document.documentElement.dataset.theme =
-        storedTheme === 'light' || storedTheme === 'dark'
-          ? storedTheme
-          : matchMedia('(prefers-color-scheme: dark)').matches
-            ? 'dark'
-            : 'light'
+      ;(() => {
+        try {
+          const stored = localStorage.getItem('theme')
+          const mode = stored === 'light' || stored === 'dark' ? stored : 'system'
+          const resolved =
+            mode === 'system'
+              ? matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dark'
+                : 'light'
+              : mode
+          const root = document.documentElement
+          root.classList.remove('light', 'dark')
+          root.classList.add(resolved)
+          root.style.colorScheme = resolved
+          root.dataset.themeMode = mode
+        } catch {
+          /* storage/media failures fall through to the CSS defaults */
+        }
+      })()
     </script>
     {/* Tag the platform before first paint so the search hotkey hint renders as
         ⌘K (Mac) or Ctrl K immediately, instead of flashing after hydration. */}

@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import {initClientObservability} from './observability/client'
 import {routeTree} from './routeTree.gen'
 import './styles.css'
+import {ThemeProvider} from './theme/theme-provider'
 
 // Start client-side error monitoring + analytics (browser-only entry). Each stays
 // dark until its VITE_PUBLIC_* var is set at build; both ride the same-origin
@@ -27,5 +28,9 @@ const rootElement = document.getElementById('app')!
 
 if (!rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement)
-  root.render(<RouterProvider router={router} />)
+  root.render(
+    <ThemeProvider>
+      <RouterProvider router={router} />
+    </ThemeProvider>,
+  )
 }

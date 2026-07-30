@@ -34,6 +34,7 @@
     "wrangler": "4.112.0"
   },
   "dependencies": {
-    "@ark-ui/svelte": "^5.22.1"
+    "@ark-ui/svelte": "^5.22.1",
+    "mode-watcher": "^1.1.0"
   }
 }

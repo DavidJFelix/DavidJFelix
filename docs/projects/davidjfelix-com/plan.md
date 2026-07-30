@@ -39,4 +39,5 @@ Astro (static), inline CSS, Cloudflare (static assets).
 
 - App: [`apps/davidjfelix.com`](../../../apps/davidjfelix.com/)
 - Points at [djf.io](../djf-io/plan.md), the content home.
-- Cross-cutting: [Sentry](../sentry-integration/plan.md), [PostHog](../posthog-integration/plan.md).
+- Cross-cutting: Sentry + PostHog observability are live fleet-wide (projects closed 2026-07-30; see
+  the [changelog](../../changelog/)).

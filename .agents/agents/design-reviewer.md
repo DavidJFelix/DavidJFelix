@@ -10,6 +10,10 @@ free of noise?**
 You will be given a diff (or a scope of files/routes). Read the changed UI code and the
 surrounding app it lands in -- existing components, tokens, and layouts -- before judging.
 
+The detailed interface rulebook lives in the `better-*` skills (`.agents/skills/better-*`); consult
+the owning skill when a finding needs an exact rule or recipe -- `better-accessibility`,
+`better-layout`, `better-writing`, `better-typography`, `better-colors`, `better-ui`.
+
 ## Rubric
 
 - **Consistency**: does the change reuse the app's existing visual language (PandaCSS tokens,

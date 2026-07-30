@@ -47,6 +47,7 @@ One mini guide per concern, in `docs/contributing/`. Read the guide before worki
 | Guide                                                                | Owns                                                   |
 | -------------------------------------------------------------------- | ------------------------------------------------------ |
 | [code-style.md](docs/contributing/code-style.md)                     | formatting defaults, functional shape, named arguments |
+| [interface-style.md](docs/contributing/interface-style.md)           | the vendored better-\* interface skills and their use  |
 | [file-naming.md](docs/contributing/file-naming.md)                   | kebab-case rule and the framework-imposed exceptions   |
 | [testing.md](docs/contributing/testing.md)                           | test style, smoke/e2e runtime gates, coverage ratchets |
 | [linting.md](docs/contributing/linting.md)                           | fix findings, don't silence them                       |
@@ -86,6 +87,10 @@ complements it -- nothing else should post competing PR comments. The
 - **`/review` (Standards + Spec).** The holistic on-demand review: does the branch follow the repo's
   documented standards, and does it match the originating issue/PRD? Warden checks neither, so this
   stays.
+- **`/better-interface` (interface review, local).** The cross-discipline interface review over a
+  screen, flow, or feature -- accessibility, layout, copy, typography, color, and polish
+  consolidated into one ranked report. See
+  [interface-style.md](docs/contributing/interface-style.md).
 
 ## Project lifecycle
 

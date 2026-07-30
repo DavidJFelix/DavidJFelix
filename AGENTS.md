@@ -38,6 +38,9 @@ The non-negotiable rules, one line each. Follow the link before working in that 
 - **Code style**: formatters own formatting; immutable data + functions over classes; named
   arguments (`XxxParams`/`XxxProps`/`XxxOptions`); bash under 10 lines --
   [code-style.md](docs/contributing/code-style.md)
+- **Interface style**: UI work follows the vendored `better-*` skills (one owner per domain);
+  `/better-interface` for holistic reviews; the vendored copies are read-only --
+  [interface-style.md](docs/contributing/interface-style.md)
 - **No emojis** in code, commits, or documentation
 - **Commits/PRs**: [conventional commit](https://www.conventionalcommits.org/) PR titles; every PR
   adds a changelog fragment in `docs/changelog/fragments/` -- monthly files are written only by the

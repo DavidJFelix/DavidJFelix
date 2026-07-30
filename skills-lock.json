@@ -7,6 +7,48 @@
       "skillPath": "skills/engineering/ask-matt/SKILL.md",
       "computedHash": "f3ac3351e2a242ce2591e4f8475424d58f62db3f5786332b78f330b15312d1e0"
     },
+    "better-accessibility": {
+      "source": "jakubkrehel/skills",
+      "sourceType": "github",
+      "skillPath": "skills/better-accessibility/SKILL.md",
+      "computedHash": "cff029d37ca93913c9403a7cc0e7e16c6d6cdbdb7b9fa361f74ec9c70982dac6"
+    },
+    "better-colors": {
+      "source": "jakubkrehel/skills",
+      "sourceType": "github",
+      "skillPath": "skills/better-colors/SKILL.md",
+      "computedHash": "22ec1990c7d6cacb38ca3595ed68285de1c205d9f85e7fe16a843388ecb87890"
+    },
+    "better-interface": {
+      "source": "jakubkrehel/skills",
+      "sourceType": "github",
+      "skillPath": "skills/better-interface/SKILL.md",
+      "computedHash": "3350e0a90f8d2ea4dea9228f16fed10d3c8b1d0b1f2d20288bdcbc72c663cb4c"
+    },
+    "better-layout": {
+      "source": "jakubkrehel/skills",
+      "sourceType": "github",
+      "skillPath": "skills/better-layout/SKILL.md",
+      "computedHash": "b51dd6e966495d01d18d238e01ecccad24d946845015a8739934e03972671a81"
+    },
+    "better-typography": {
+      "source": "jakubkrehel/skills",
+      "sourceType": "github",
+      "skillPath": "skills/better-typography/SKILL.md",
+      "computedHash": "956b16e89b97bd1d56b3904110f1690fb324f8316f95f7e3bb615be36b233689"
+    },
+    "better-ui": {
+      "source": "jakubkrehel/skills",
+      "sourceType": "github",
+      "skillPath": "skills/better-ui/SKILL.md",
+      "computedHash": "4ae4f16e8c7fd7df3416a56a73fde5a940bc6a2f277cace15c4f30f5c9ffaffe"
+    },
+    "better-writing": {
+      "source": "jakubkrehel/skills",
+      "sourceType": "github",
+      "skillPath": "skills/better-writing/SKILL.md",
+      "computedHash": "1a70ae32a8be8dfb715710b25dbc12f18303a8112d917951101bf9839129c61d"
+    },
     "codebase-design": {
       "source": "mattpocock/skills",
       "sourceType": "github",

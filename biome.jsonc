@@ -25,7 +25,7 @@
     "lineWidth": 100,
     "attributePosition": "auto",
   },
-  // Oxlint (root .oxlintrc.json) is the primary linter. Biome's linter is
+  // Oxlint (root .oxlintrc.jsonc) is the primary linter. Biome's linter is
   // pruned to the rules oxlint has no equivalent for, at their old recommended
   // severities. The migration PR proved rule-by-rule (via a since-removed
   // lint-parity fixture kit, still in git history) that everything the old

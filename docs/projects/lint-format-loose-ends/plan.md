@@ -35,7 +35,7 @@ the ~12 per-app workflow path filters were updated by hand in the same PR. Origi
 ### 3. Enforce code-style.md mechanically (added 2026-07-02)
 
 The code style guide (`docs/contributing/code-style.md`) landed 2026-07; this item tracks wiring its
-lintable rules into the existing per-app oxlint gate via the root `.oxlintrc.json`.
+lintable rules into the existing per-app oxlint gate via the root `.oxlintrc.jsonc`.
 
 **Done (2026-07-02)** — rules verified zero-violation across all apps + `bin/`, enabled at `error`:
 
@@ -84,7 +84,7 @@ converting the grandfathered values to real tokens and tightening the gates.
   so fixing it to a real token (probably `md`) would visibly change rendering and needs its own
   decision.
 - **Tailwind apps** (f311x, ravrun): `oxlint-tailwindcss` is wired via `jsPlugins` in each app's
-  `.oxlintrc.json` with `tailwindcss/no-arbitrary-value` at `warn`. Current findings:
+  `.oxlintrc.jsonc` with `tailwindcss/no-arbitrary-value` at `warn`. Current findings:
   - f311x `src/routes/index.tsx:70` — `max-w-[80%]` (twice)
   - ravrun `src/routes/index.tsx:448` — `grid-cols-[auto_repeat(7,minmax(0,1fr))]`, `min-w-[56rem]`
   - Fix each by extending the theme in `src/styles.css` (`@theme { ... }`) or restructuring, then

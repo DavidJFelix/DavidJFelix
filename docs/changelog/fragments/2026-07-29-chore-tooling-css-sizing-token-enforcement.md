@@ -23,7 +23,7 @@ tokens are rem-denominated (different behavior under user font scaling), off-sca
 multi-part composites -- so each needs a design decision rather than a mechanical swap.
 
 The two Tailwind v4 apps (f311x, ravrun) get `oxlint-tailwindcss` wired through oxlint's `jsPlugins`
-in a new per-app `.oxlintrc.json` extending the root config, with `tailwindcss/no-arbitrary-value`
+in a new per-app `.oxlintrc.jsonc` extending the root config, with `tailwindcss/no-arbitrary-value`
 at `warn`: class-string equivalents of the same sin (`max-w-[80%]`, `min-w-[56rem]`) now surface in
 the existing lint gate. Four findings exist today, listed in the project plan; the rule is promoted
 to `error` once they are fixed. The daily-ui workspace trees keep their Tailwind-v0-era configs and

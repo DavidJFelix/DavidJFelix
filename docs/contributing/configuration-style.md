@@ -6,7 +6,7 @@ instinct: a config file should be as local, as discoverable-without-clutter, and
 the tool allows.
 
 This guide is the reference; the live config lives in `.config/`, root `biome.jsonc` /
-`.oxlintrc.json` / `.oxfmtrc.json` / `.prettierrc.json`, and each app's `apps/<name>/` configs. For
+`.oxlintrc.jsonc` / `.oxfmtrc.json` / `.prettierrc.json`, and each app's `apps/<name>/` configs. For
 which tool owns which concern, see [tooling-standard.md](tooling-standard.md).
 
 ## 1. Prefer `.config/`; research before defaulting to the repo root
@@ -39,7 +39,7 @@ So for Tier-2 tools the repo root (or the tool's conventional dotfile) is the lo
 Move into `.config/` only if you are prepared to wire the flag through all three surfaces and have
 confirmed the editor still resolves it. Keeping a Tier-2 config at root needs **no** justification
 -- that IS its documented default. Tier-2 tools in this repo, kept at root deliberately: **Biome**
-(`biome.jsonc`), **Oxlint** (`.oxlintrc.json`), **oxfmt** (`.oxfmtrc.json`), **Prettier**
+(`biome.jsonc`), **Oxlint** (`.oxlintrc.jsonc`), **oxfmt** (`.oxfmtrc.json`), **Prettier**
 (`.prettierrc.json`), **zizmor** (`.github/zizmor.yml`), **actionlint** (`.github/actionlint.yaml`).
 
 ### Tier 3 -- pinned by design: its required spot, permanently
@@ -103,7 +103,7 @@ footguns.
    `Cargo.toml`). Awkward for deep nesting; great for everything else.
 5. **JSON** -- ubiquitous and machine-friendly, but **no comments**. Acceptable only when the tool
    truly speaks JSON alone -- `package.json` is the clear case (npm and pnpm reject comments). Don't
-   assume a `.json` extension means strict JSON, though: Oxlint (`.oxlintrc.json`) and Renovate
+   assume a `.json` extension means strict JSON, though: Oxlint (`.oxlintrc.jsonc`) and Renovate
    (`renovate.json`) both accept JSONC, so annotate them freely rather than treating them as strict
    JSON. Wanting to explain a field you cannot annotate is the signal you wanted JSONC.
 6. **YAML** -- last resort, only when a tool mandates it (GitHub Actions, some linters). YAML's

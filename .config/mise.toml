@@ -33,14 +33,14 @@ description = "Check formatting of repo-root config files (oxfmt; Biome lints it
 # --ignore-path: the root .prettierignore ignores everything but md/mdx (it
 # scopes Prettier), which would blank oxfmt's explicit file list too
 run = [
-  "oxfmt --check --ignore-path=.gitignore biome.jsonc .oxfmtrc.json .oxlintrc.json .prettierrc.json .config/cspell.jsonc .github/renovate.json .vscode/settings.json .vscode/extensions.json",
+  "oxfmt --check --ignore-path=.gitignore biome.jsonc .oxfmtrc.json .oxlintrc.jsonc .prettierrc.json .config/cspell.jsonc .github/renovate.json .vscode/settings.json .vscode/extensions.json",
   "biome lint biome.jsonc .vscode/settings.json .vscode/extensions.json",
 ]
 dir = "{{config_root}}"
 
 [tasks."format:fix"]
 description = "Apply formatting fixes to repo-root config files"
-run = "oxfmt --ignore-path=.gitignore biome.jsonc .oxfmtrc.json .oxlintrc.json .prettierrc.json .config/cspell.jsonc .github/renovate.json .vscode/settings.json .vscode/extensions.json"
+run = "oxfmt --ignore-path=.gitignore biome.jsonc .oxfmtrc.json .oxlintrc.jsonc .prettierrc.json .config/cspell.jsonc .github/renovate.json .vscode/settings.json .vscode/extensions.json"
 dir = "{{config_root}}"
 
 [tasks."format:md"]

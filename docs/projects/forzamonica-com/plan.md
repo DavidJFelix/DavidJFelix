@@ -58,8 +58,8 @@ replaces the "placeholder for now" line item from the (now closed) new-domain-si
 
 ### Phase 4 — Polish & instrumentation
 
-- [x] Sentry + PostHog per the cross-app instrumentation projects (wired 2026-06-25; dark until
-      #261)
+- [x] Sentry + PostHog per the cross-app instrumentation projects (wired 2026-06-25; live as of
+      2026-07-30)
 - [x] Per-PR preview + Playwright e2e (#300) — forzamonica was the last wrangler app without them
 - [x] Site map + shared layout (2026-07-02): about page, policy stubs, styled 404, footer, header
       cart badge, per-page titles, e2e for all of it. Catalog kept flat — collections routes

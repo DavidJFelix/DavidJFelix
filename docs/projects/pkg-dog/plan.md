@@ -60,4 +60,5 @@ Nuxt + Vue + PandaCSS (+ Ark UI), Cloudflare Worker.
 
 - App: [`apps/pkg.dog`](../../../apps/pkg.dog/)
 - Premium domains held: pkg.dog and pkgdog.com.
-- Cross-cutting: [Sentry](../sentry-integration/plan.md), [PostHog](../posthog-integration/plan.md).
+- Cross-cutting: Sentry + PostHog observability are live fleet-wide (projects closed 2026-07-30; see
+  the [changelog](../../changelog/)).

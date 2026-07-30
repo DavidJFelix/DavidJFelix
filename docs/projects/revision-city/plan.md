@@ -53,4 +53,5 @@ TanStack Start (React 19) + PandaCSS + Ark UI, Cloudflare Worker.
 ## Related
 
 - App: [`apps/revision.city`](../../../apps/revision.city/)
-- Cross-cutting: [Sentry](../sentry-integration/plan.md), [PostHog](../posthog-integration/plan.md).
+- Cross-cutting: Sentry + PostHog observability are live fleet-wide (projects closed 2026-07-30; see
+  the [changelog](../../changelog/)).

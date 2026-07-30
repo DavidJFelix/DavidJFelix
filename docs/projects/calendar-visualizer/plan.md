@@ -46,4 +46,5 @@ Astro + React + PandaCSS, Cloudflare (static assets).
 ## Related
 
 - App: [`apps/calendar-visualizer`](../../../apps/calendar-visualizer/)
-- Cross-cutting: [Sentry](../sentry-integration/plan.md), [PostHog](../posthog-integration/plan.md).
+- Cross-cutting: Sentry + PostHog observability are live fleet-wide (projects closed 2026-07-30; see
+  the [changelog](../../changelog/)).

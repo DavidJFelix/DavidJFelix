@@ -62,9 +62,9 @@ model behind the chat loop, plus error visibility for the Worker.
       real model must sit behind authentication before it's exposed, to prevent abuse and
       uncontrolled cost. Decide the mechanism (Cloudflare Access vs. accounts vs. token gate) when
       picked up.
-- [ ] Error visibility for the Worker — now delivered by the active
-      [Sentry Integration](../sentry-integration/plan.md) rollout, which f311x leads, rather than a
-      one-off slice. "Why is it broken" shouldn't require a local repro.
+- [x] Error visibility for the Worker — delivered by the fleet-wide Sentry rollout (live as of
+      2026-07-30, projects + DSN vars activated). "Why is it broken" no longer requires a local
+      repro.
 - [ ] Add a test with each new surface. typecheck + build + vitest already gate every PR; keep them
       green.
 

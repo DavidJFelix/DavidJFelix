@@ -40,4 +40,5 @@ SvelteKit and PandaCSS, Cloudflare Worker.
 
 - App: [`apps/monicandavid.com`](../../../apps/monicandavid.com/)
 - Content approach to mirror: [djf.io](../djf-io/plan.md).
-- Cross-cutting: [Sentry](../sentry-integration/plan.md), [PostHog](../posthog-integration/plan.md).
+- Cross-cutting: Sentry + PostHog observability are live fleet-wide (projects closed 2026-07-30; see
+  the [changelog](../../changelog/)).

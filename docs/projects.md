@@ -122,22 +122,6 @@ placeholder on premium domains; the deep build is a research effort.
 
 Span every deployed app.
 
-### [Sentry Integration](./projects/sentry-integration/plan.md)
-
-Wire Sentry into every deployed app for crash/error monitoring. Full-fleet rollout **landed
-2026-06-25** (all 11 apps; server-side on the worker apps); dark until the projects + per-app DSN
-vars exist (issue #261).
-
-**Status**: Active · Blocked (human activation)
-
-### [PostHog Integration](./projects/posthog-integration/plan.md)
-
-Wire PostHog into every deployed app for product analytics. Full-fleet rollout **landed 2026-06-25**
-(all 11 apps reverse-proxy through `/diag`); dark until the projects + per-app key vars exist (issue
-#261).
-
-**Status**: Active · Blocked (human activation)
-
 ### [Theme Switcher Unification](./projects/theme-switcher-unification/plan.md)
 
 Bring every app's light/dark/system switching to the revision.city quality bar behind one shared

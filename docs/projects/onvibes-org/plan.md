@@ -53,4 +53,5 @@ Astro + PandaCSS + React islands, Flue (agents on Durable Objects), Cloudflare W
 
 - Likely spin-outs when picked up: "onvibes showcase", "onvibes builder".
 - App: [`apps/onvibes.org`](../../../apps/onvibes.org/)
-- Cross-cutting: [Sentry](../sentry-integration/plan.md), [PostHog](../posthog-integration/plan.md).
+- Cross-cutting: Sentry + PostHog observability are live fleet-wide (projects closed 2026-07-30; see
+  the [changelog](../../changelog/)).

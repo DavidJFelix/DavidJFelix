@@ -22,7 +22,7 @@ profiles) points here.
 - Blog posts in `src/content/blog/` (MDX), bio homepage, Pagefind search, RSS, sitemap, OG images.
 - standard.site / ATProto integration shipped (posts mirrored as AT records; #252–#254).
 - Playwright e2e is the canonical runtime gate (it subsumes smoke); vitest covers `src/lib` at 100%.
-- Observability (Sentry / PostHog) is wired but dark until activation (#261).
+- Observability (Sentry / PostHog) is live (activated 2026-07-30).
 
 ## Stack
 
@@ -54,4 +54,5 @@ App-level direction. Concrete pushes spin out as their own projects (below) or i
 - [blog-content](../blog-content/plan.md) — the writing.
 - [blog-style-improvement](../blog-style-improvement/plan.md) — visual/UX polish.
 - App: [`apps/djf.io`](../../../apps/djf.io/)
-- Cross-cutting: [Sentry](../sentry-integration/plan.md), [PostHog](../posthog-integration/plan.md).
+- Cross-cutting: Sentry + PostHog observability are live fleet-wide (projects closed 2026-07-30; see
+  the [changelog](../../changelog/)).

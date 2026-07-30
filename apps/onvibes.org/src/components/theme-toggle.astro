@@ -88,13 +88,21 @@ const monitorVisibility = css({display: 'none', '[data-theme-mode=system] &': {d
 </button>
 
 <script>
+  import * as z from 'zod/mini'
+
+  // The repo theming contract's storage schema (see
+  // docs/projects/theme-switcher-unification/plan.md): raw mode strings,
+  // anything invalid parses to system. The pre-paint head script's literal
+  // check is this schema's compiled twin -- it cannot import anything.
+  const themeModeSchema = z.catch(z.enum(['light', 'dark', 'system']), 'system')
+
   // Plain DOM TS, not a framework component -- the toggle is the only
   // interactive bit on an otherwise static page. Mirrors the contract in
   // docs/projects/theme-switcher-unification/plan.md and the typed bootstrap
   // this pairs with, apps/f311x/src/theme/theme-bootstrap.ts (that one runs
   // pre-paint via a stringified function; this one runs after hydration and
   // only reacts to user/OS/cross-tab changes).
-  type ThemeMode = 'light' | 'dark' | 'system'
+  type ThemeMode = z.infer<typeof themeModeSchema>
 
   const STORAGE_KEY = 'theme'
   const NEXT: Record<ThemeMode, ThemeMode> = {light: 'dark', dark: 'system', system: 'light'}
@@ -102,8 +110,7 @@ const monitorVisibility = css({display: 'none', '[data-theme-mode=system] &': {d
   const toggle = document.querySelector<HTMLButtonElement>('#theme-toggle')
 
   function currentMode(): ThemeMode {
-    const mode = document.documentElement.dataset.themeMode
-    return mode === 'light' || mode === 'dark' ? mode : 'system'
+    return themeModeSchema.parse(document.documentElement.dataset.themeMode)
   }
 
   function resolveScheme(mode: ThemeMode): 'light' | 'dark' {
@@ -152,8 +159,7 @@ const monitorVisibility = css({display: 'none', '[data-theme-mode=system] &': {d
     } catch {
       // Storage unavailable -- fall back to system.
     }
-    const mode: ThemeMode = stored === 'light' || stored === 'dark' ? stored : 'system'
-    apply(mode)
+    apply(themeModeSchema.parse(stored))
   })
 
   // The inline head script already applied the resolved scheme pre-paint;

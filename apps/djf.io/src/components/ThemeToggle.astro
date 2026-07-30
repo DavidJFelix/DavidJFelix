@@ -80,18 +80,26 @@ const onlySystemMode = css({display: 'none', '[data-theme-mode=system] &': {disp
 </button>
 
 <script>
+  import * as z from 'zod/mini'
+
+  // The repo theming contract's storage schema (see
+  // docs/projects/theme-switcher-unification/plan.md): raw mode strings,
+  // anything invalid parses to system. The pre-paint head script's literal
+  // check is this schema's compiled twin -- it cannot import anything.
+  const themeModeSchema = z.catch(z.enum(['light', 'dark', 'system']), 'system')
+  type ThemeMode = z.infer<typeof themeModeSchema>
+
   // Cycle order: each press moves to the next mode, so all three states stay
   // reachable from a single button (system is never a dead end, unlike the
   // two-state flip this replaces).
-  const NEXT: Record<string, 'light' | 'dark' | 'system'> = {
+  const NEXT: Record<ThemeMode, ThemeMode> = {
     light: 'dark',
     dark: 'system',
     system: 'light',
   }
 
-  function currentMode(): 'light' | 'dark' | 'system' {
-    const mode = document.documentElement.dataset.themeMode
-    return mode === 'light' || mode === 'dark' ? mode : 'system'
+  function currentMode(): ThemeMode {
+    return themeModeSchema.parse(document.documentElement.dataset.themeMode)
   }
 
   function updateLabel(toggle: HTMLButtonElement) {
@@ -101,7 +109,7 @@ const onlySystemMode = css({display: 'none', '[data-theme-mode=system] &': {disp
     toggle.setAttribute('title', label)
   }
 
-  function apply(mode: 'light' | 'dark' | 'system', toggle: HTMLButtonElement) {
+  function apply(mode: ThemeMode, toggle: HTMLButtonElement) {
     const resolved =
       mode === 'system'
         ? matchMedia('(prefers-color-scheme: dark)').matches
@@ -149,8 +157,7 @@ const onlySystemMode = css({display: 'none', '[data-theme-mode=system] &': {disp
       } catch {
         /* storage may be unavailable -- fall through to system */
       }
-      const mode = stored === 'light' || stored === 'dark' ? stored : 'system'
-      apply(mode, toggle)
+      apply(themeModeSchema.parse(stored), toggle)
     })
   }
 </script>

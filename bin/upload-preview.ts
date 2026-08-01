@@ -61,8 +61,8 @@ async function main(): Promise<void> {
   // Test seam: exercise the upload/parse path without credentials, e.g.
   // UPLOAD_PREVIEW_TEST_CMD='echo https://abc-app.acct.workers.dev'.
   const cmd = process.env.UPLOAD_PREVIEW_TEST_CMD?.split(' ') ?? [
-    'pnpm',
-    'exec',
+    'bun',
+    'x',
     'wrangler',
     'versions',
     'upload',

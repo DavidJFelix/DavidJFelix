@@ -1,0 +1,15 @@
+# Bun install settings. minimumReleaseAge (seconds) is the supply-chain
+# cooldown: dependency resolution skips versions published within the last
+# 24 hours, matching the cooldown pnpm enforced by default. Bun does not
+# inherit bunfig.toml from parent directories, so every app carries its own
+# copy of this file.
+
+# package.json "overrides" context: the @distilled.cloud pins track alchemy
+# 2.0.0-beta.54 (the release-age cooldown rejects day-of releases, see
+# plan.md); @effect/platform-node-shared is capped at beta.94 because effect
+# beta.97 removed Schedule.either, which alchemy 2.0.0-beta.61 still calls in
+# its state store and Cloudflare resources. Lift the cap when alchemy catches
+# up to the new API.
+
+[install]
+minimumReleaseAge = 86400

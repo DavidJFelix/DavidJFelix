@@ -33,6 +33,6 @@ cart's `checkoutUrl`.
 
 ## Development Guidelines
 
-- Use pnpm as the package manager (Wrangler project — bun not yet cleared, see root CLAUDE.md)
+- Use bun as the package manager and script runner
 - Components are PascalCase; everything else lowercase kebab-case
 - Tests co-located, no `describe` blocks, no lifecycle hooks

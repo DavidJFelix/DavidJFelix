@@ -60,7 +60,6 @@
     ".flue-vite.wrangler.jsonc",
     "build",
     ".git",
-    "pnpm-lock.yaml",
     "*.lock",
     "*.min.js",
     "*.min.css",
@@ -193,7 +192,7 @@
     "exercism",
     "forgejo",
     "forza", // Italian ('force'/'go') -- forzamonica.com; cspell bundles no Italian dictionary
-    "genai", // the @google/genai npm package (mise allow_builds, pnpm build allowlists)
+    "genai", // the @google/genai npm package (mise allow_builds, install-script allowlists)
     "getsentry",
     "ghalint",
     "gitea",

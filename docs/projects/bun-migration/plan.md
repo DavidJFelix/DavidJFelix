@@ -109,13 +109,17 @@ Playwright configs need nothing -- webServer commands already spawn `node_module
 
 ## Phases
 
-1. **Decision** -- amend tooling-standard.md to make bun the package manager for apps, or park this
-   project. Nothing below proceeds without this.
-2. **Pilot** -- davidjfelix.com end to end in one PR: lockfile swap, `trustedDependencies`,
-   `bunfig.toml`, mise.toml, scripts, and its three workflows (ci, cd-preview, cd-deploy), with the
-   session-start hook made lockfile-aware. Watch a full preview + deploy cycle and the first
-   Renovate PR before going wider.
-3. **Rollout** -- the remaining 11 apps, one PR per app (steps 1-6 above are identical each time);
-   each app's workflows move with it.
-4. **Retire pnpm** -- session-start hook simplification, the three `bin/` scripts, the
-   `.config/mise.toml` pin, and the docs sweep.
+Executed 2026-08-01 in a single pass (decision approved: bun as package manager and script runner,
+vitest kept and invoked via `bun run test`): all 12 apps migrated (steps 1-6 of the inventory), the
+27 workflows and 3 composite actions rewritten, the session-start hook and `bin/` scripts moved to
+bun, the pnpm mise pin dropped, and the docs swept (tooling standard, AGENTS.md, testing and actions
+style guides, app READMEs). The two legacy `workspaces/joy-of-react` trees keep their pnpm lockfiles
+and migrate when next touched.
+
+Remaining before this project closes into the changelog:
+
+1. Watch the first post-merge CI runs, one preview cycle, and one production deploy per family (the
+   sentry sourcemap upload paths exercise `@sentry/cli` under `trustedDependencies` for the first
+   time in CD).
+2. Verify the first Renovate PR updates `bun.lock` correctly (overlaps the renovate-rollout
+   project).

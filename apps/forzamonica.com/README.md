@@ -17,21 +17,21 @@ secret.
 ## Getting started
 
 ```bash
-pnpm install
-pnpm dev
+bun install
+bun run dev
 ```
 
 App boots on `http://localhost:3002`.
 
 ## Scripts
 
-|                  |                               |
-| ---------------- | ----------------------------- |
-| `pnpm dev`       | Vite dev server (workerd SSR) |
-| `pnpm build`     | Production build              |
-| `pnpm deploy`    | Build + `wrangler deploy`     |
-| `pnpm lint`      | Oxlint + Biome                |
-| `pnpm typecheck` | `tsc --noEmit`                |
-| `pnpm test`      | Vitest                        |
+|                     |                               |
+| ------------------- | ----------------------------- |
+| `bun run dev`       | Vite dev server (workerd SSR) |
+| `bun run build`     | Production build              |
+| `bun run deploy`    | Build + `wrangler deploy`     |
+| `bun run lint`      | Oxlint + Biome                |
+| `bun run typecheck` | `tsc --noEmit`                |
+| `bun run test`      | Vitest                        |
 
 `mise run check` runs the full canonical check suite (see `mise.toml`).

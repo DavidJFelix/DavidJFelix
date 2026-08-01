@@ -90,8 +90,8 @@ async function main(): Promise<void> {
   // Test seam: exercise the deploy/parse path without credentials, e.g.
   // DEPLOY_PREVIEW_WORKER_TEST_CMD='echo https://app-pr-1.acct.workers.dev'.
   const cmd = process.env.DEPLOY_PREVIEW_WORKER_TEST_CMD?.split(' ') ?? [
-    'pnpm',
-    'exec',
+    'bun',
+    'x',
     'wrangler',
     'deploy',
     '-c',

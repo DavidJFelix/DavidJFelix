@@ -137,18 +137,20 @@ Repo plumbing. Real work, but lower priority than moving the apps forward.
 ### [CI Pipeline Efficiency](./projects/ci-pipeline-efficiency/plan.md)
 
 Make CI trigger only the workflows a change can affect (better path filtering, not concurrency), and
-cache the steps that start cold — the pnpm store, and the blocking web-session Playwright install.
+cache the steps that start cold — the bun install cache, and the blocking web-session Playwright
+install.
 
 **Status**: Active
 
 ### [Bun Migration](./projects/bun-migration/plan.md)
 
-Replace pnpm with bun as the package manager and script runner across `apps/`. The feasibility spike
-is complete -- all 12 apps install, build, and test green under bun, lockfile migration is faithful,
-and the remaining work is a mechanical inventory (trust lists, bunfig cooldown, script rewrites, 27
-workflow files). Gated on amending the tooling standard.
+Replace pnpm with bun as the package manager and script runner across `apps/`. Executed 2026-08-01
+after the feasibility spike: all 12 apps moved (bun.lock, trustedDependencies, bunfig cooldown, mise
+tasks), CI workflows and composite actions rewritten, the pnpm toolchain pin dropped, and the docs
+swept. Vitest stays the test runner, invoked via `bun run test`. Remaining: watch the first
+post-merge CI + preview/deploy cycles and the first Renovate PR, then close into the changelog.
 
-**Status**: Deferred (decision pending)
+**Status**: Active (post-merge verification)
 
 ### [Renovate Rollout](./projects/renovate-rollout/plan.md)
 

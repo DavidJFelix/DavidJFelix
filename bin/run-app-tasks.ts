@@ -5,9 +5,8 @@
 // Per-project CI still runs each project's tasks on path-filtered triggers;
 // this is the local "check everything before I push" path.
 //
-// Sets CI=true for each sub-run so pnpm's verify-deps-before-run won't abort on a
-// drifted node_modules in a non-interactive shell
-// (ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY).
+// Sets CI=true for each sub-run so tools behave CI-faithfully in a
+// non-interactive shell (no watch modes, no TTY prompts).
 
 import {existsSync, readdirSync} from 'node:fs'
 

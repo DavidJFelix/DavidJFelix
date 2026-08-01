@@ -8,7 +8,7 @@
     "prepare": "svelte-kit sync && panda codegen",
     "build": "vite build",
     "preview": "vite preview",
-    "deploy": "pnpm run build && wrangler deploy",
+    "deploy": "bun run build && wrangler deploy",
     "typecheck": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "lint": "biome check . && oxlint",
     "lint:fix": "biome check --write . && oxlint --fix",
@@ -36,5 +36,9 @@
   "dependencies": {
     "@ark-ui/svelte": "^5.22.1",
     "mode-watcher": "^1.1.0"
-  }
+  },
+  "trustedDependencies": [
+    "esbuild",
+    "workerd"
+  ]
 }

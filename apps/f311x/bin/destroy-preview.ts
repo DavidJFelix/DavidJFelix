@@ -13,8 +13,8 @@ const DEADLINE_MS = 5 * 60 * 1000
 
 // Test seam: see bin/deploy-preview.ts.
 const cmd = process.env.DESTROY_PREVIEW_TEST_CMD?.split(' ') ?? [
-  'pnpm',
-  'exec',
+  'bun',
+  'x',
   'alchemy',
   'destroy',
   '--stage',

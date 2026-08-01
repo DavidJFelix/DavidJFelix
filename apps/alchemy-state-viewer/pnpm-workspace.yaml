@@ -1,6 +1,0 @@
-allowBuilds:
-  esbuild: true
-  # sharp arrives transitively but is never invoked at runtime here; skip its
-  # native build.
-  sharp: false
-  workerd: true

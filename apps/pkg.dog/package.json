@@ -8,7 +8,7 @@
     "prepare": "panda codegen && nuxt prepare",
     "build": "panda codegen && nuxt build",
     "preview": "nuxt preview",
-    "deploy": "pnpm run build && wrangler deploy",
+    "deploy": "bun run build && wrangler deploy",
     "lint": "biome check . && oxlint",
     "lint:fix": "biome check --write . && oxlint --fix",
     "format": "oxfmt --check . && prettier --check --no-error-on-unmatched-pattern \"**/*.md\" \"**/*.mdx\"",
@@ -36,5 +36,10 @@
     "vitest": "4.1.10",
     "vue-tsc": "3.3.7",
     "wrangler": "4.110.0"
-  }
+  },
+  "trustedDependencies": [
+    "esbuild",
+    "sharp",
+    "workerd"
+  ]
 }

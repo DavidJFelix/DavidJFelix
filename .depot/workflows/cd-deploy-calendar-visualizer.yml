@@ -31,10 +31,10 @@ jobs:
           persist-credentials: false
       - name: mise
         uses: ./.depot/actions/setup-mise
-      - name: pnpm install
-        run: pnpm install --frozen-lockfile
+      - name: bun install
+        run: bun install --frozen-lockfile
       - name: panda codegen
-        run: pnpm exec panda codegen
+        run: bun x panda codegen
       - name: astro build
         env:
           PUBLIC_SENTRY_DSN: ${{ vars.SENTRY_DSN_CALENDAR_VISUALIZER }}
@@ -42,7 +42,7 @@ jobs:
           SENTRY_ORG: ${{ vars.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT_CALENDAR_VISUALIZER }}
           PUBLIC_POSTHOG_KEY: ${{ vars.POSTHOG_KEY_CALENDAR_VISUALIZER }}
-        run: pnpm exec astro build
+        run: bun x astro build
       - name: wrangler deploy
         uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
         with:

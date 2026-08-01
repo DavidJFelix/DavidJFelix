@@ -7,7 +7,7 @@
 // migration, dropped assets binding, dead /api mount) before merge.
 // Deterministic and secret-free.
 //
-// Assumes `pnpm run build` has run (the `smoke` mise task depends on `build`).
+// Assumes `bun run build` has run (the `smoke` mise task depends on `build`).
 // Boots the FLUE worker config -- the artifact CD deploys -- not the Astro
 // adapter's dist/server config, which is only Astro's build-validation shape
 // and contains neither /api nor the Durable Objects.
@@ -27,7 +27,7 @@ if (!existsSync(WORKER_CONFIG)) {
 
 // Boot the built Flue worker (which hosts the Astro worker inside it) in
 // workerd via `wrangler dev`. Spawn the wrangler binary directly (not through
-// `pnpm run`): killing the pnpm wrapper does not cascade to the server, so it
+// `bun run`): killing the bun wrapper does not cascade to the server, so it
 // would outlive teardown and hold the port.
 const server = Bun.spawn(
   [

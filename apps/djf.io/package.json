@@ -15,7 +15,7 @@
     "lint:fix": "biome check --write . && oxlint --fix",
     "format": "oxfmt --check . && biome format . && prettier --check --no-error-on-unmatched-pattern \"**/*.md\" \"**/*.mdx\"",
     "format:fix": "oxfmt . && biome format --write . && prettier --write --no-error-on-unmatched-pattern \"**/*.md\" \"**/*.mdx\"",
-    "test": "pnpm test:unit && pnpm test:e2e",
+    "test": "bun run test:unit && bun run test:e2e",
     "test:unit": "vitest run --coverage",
     "test:unit:watch": "vitest",
     "test:e2e": "playwright test",
@@ -62,5 +62,14 @@
   },
   "engines": {
     "node": ">=24"
+  },
+  "trustedDependencies": [
+    "@sentry/cli",
+    "esbuild",
+    "sharp",
+    "workerd"
+  ],
+  "overrides": {
+    "rolldown": "1.1.4"
   }
 }

@@ -31,10 +31,10 @@ jobs:
           persist-credentials: false
       - name: mise
         uses: ./.depot/actions/setup-mise
-      - name: pnpm install
-        run: pnpm install --frozen-lockfile
+      - name: bun install
+        run: bun install --frozen-lockfile
       - name: panda codegen
-        run: pnpm exec panda codegen
+        run: bun x panda codegen
       - name: astro build
         env:
           PUBLIC_SENTRY_DSN: ${{ vars.SENTRY_DSN_ONVIBES_ORG }}
@@ -42,13 +42,13 @@ jobs:
           SENTRY_ORG: ${{ vars.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT_ONVIBES_ORG }}
           PUBLIC_POSTHOG_KEY: ${{ vars.POSTHOG_KEY_ONVIBES_ORG }}
-        run: pnpm exec astro build
+        run: bun x astro build
       # Flue owns the deployed Worker and hosts the Astro build inside it
       # (src/app.ts): the /api agent API plus its Durable Objects live there.
       # The step also re-injects the [assets] binding flue's build drops (see
       # bin/patch-flue-wrangler.ts).
       - name: flue build
-        run: pnpm run build:worker
+        run: bun run build:worker
       # Deploy the Flue artifact, not dist/server/wrangler.json -- that config
       # is only the Astro adapter's build-validation shape (no /api, no DOs).
       # This must stay `deploy` (not `versions upload`): it applies the Durable

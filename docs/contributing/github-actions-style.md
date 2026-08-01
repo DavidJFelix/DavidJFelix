@@ -73,20 +73,20 @@ name those after what they produce.
 Good:
 
 ```yaml
-- name: pnpm install
-  run: pnpm install --frozen-lockfile
+- name: bun install
+  run: bun install --frozen-lockfile
 
 - name: biome
-  run: pnpm exec biome check .
+  run: bun x biome check .
 
 - name: oxlint
-  run: pnpm exec oxlint
+  run: bun x oxlint
 
 - name: vitest
-  run: pnpm exec vitest run
+  run: bun x vitest run
 
 - name: playwright
-  run: pnpm exec playwright test
+  run: bun x playwright test
 
 - name: wrangler deploy
   uses: cloudflare/wrangler-action@...
@@ -96,19 +96,19 @@ Bad:
 
 ```yaml
 - name: Lint # which linter?
-  run: pnpm lint
+  run: bun run lint
 
 - name: Run tests # vitest? playwright? both?
-  run: pnpm test
+  run: bun run test
 
 - name: Deploy # using what?
   uses: cloudflare/wrangler-action@...
 ```
 
-If a single `pnpm` script wraps multiple tools (e.g. `"lint": "biome check . && oxlint"`), split it
-into separate steps -- one per tool -- so each has its own name and its own log entry. The example
-workflow `ci-actions-lint.yml` runs four tools, so it has four steps: `actionlint`, `ghalint`,
-`zizmor`, `pinact`.
+If a single package.json script wraps multiple tools (e.g. `"lint": "biome check . && oxlint"`),
+split it into separate steps -- one per tool -- so each has its own name and its own log entry. The
+example workflow `ci-actions-lint.yml` runs four tools, so it has four steps: `actionlint`,
+`ghalint`, `zizmor`, `pinact`.
 
 For `uses:` steps, name the action by its tool (`wrangler deploy`, `actions/checkout` -> `checkout`,
 `actions/cache` -> `cache`, `actions/upload-artifact` -> `upload-artifact`).
@@ -198,7 +198,7 @@ jobs:
     runs-on: depot-ubuntu-latest
     steps:
       - uses: actions/checkout@...
-      - run: pnpm --filter ${{ matrix.app }} test
+      - run: bun run --cwd apps/${{ matrix.app }} test
 ```
 
 Example parallel jobs:

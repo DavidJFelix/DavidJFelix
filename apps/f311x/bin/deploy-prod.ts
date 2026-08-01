@@ -17,8 +17,8 @@ const DEADLINE_MS = 10 * 60 * 1000
 // Test seam: lets the timeout/failure/success paths be exercised without
 // credentials (e.g. DEPLOY_PROD_TEST_CMD='sleep 999').
 const cmd = process.env.DEPLOY_PROD_TEST_CMD?.split(' ') ?? [
-  'pnpm',
-  'exec',
+  'bun',
+  'x',
   'alchemy',
   'deploy',
   '--stage',

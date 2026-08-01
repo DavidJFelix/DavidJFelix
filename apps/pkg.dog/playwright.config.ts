@@ -29,7 +29,7 @@ export default defineConfig({
   webServer: PREVIEW_URL
     ? undefined
     : {
-        // Spawn the wrangler binary directly (not via `pnpm exec`) so Playwright's
+        // Spawn the wrangler binary directly (not via `bun x`) so Playwright's
         // teardown kills workerd instead of a wrapper that outlives it.
         command: `node_modules/.bin/wrangler dev --port ${PORT} --ip 127.0.0.1`,
         url: BASE_URL,

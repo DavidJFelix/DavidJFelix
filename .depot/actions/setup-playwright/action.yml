@@ -7,12 +7,12 @@ description: >-
   to). Warm runs install the debs with dpkg and never touch the apt mirrors --
   the slow path that costs minutes of `apt-get update` plus package downloads
   on every fresh runner. Cold runs fall back to `playwright install` /
-  `install-deps` and repopulate both caches. Run after pnpm install, with the
-  job's working directory in the app: the Playwright version and `pnpm exec`
+  `install-deps` and repopulate both caches. Run after bun install, with the
+  job's working directory in the app: the Playwright version and `bun x`
   resolve against the app's node_modules. Reference this action from workflow
   steps only -- never from inside another composite action. Run steps in a
   nested composite do not inherit the job's default working-directory, so the
-  version resolve and `pnpm exec` would run at the repo root and fail; the
+  version resolve and `bun x` would run at the repo root and fail; the
   preview-wrangler and preview-worker composites inline these steps instead.
 
 runs:
@@ -41,7 +41,7 @@ runs:
     - name: playwright install
       if: steps.pw-cache.outputs.cache-hit != 'true'
       shell: bash
-      run: pnpm exec playwright install chromium
+      run: bun x playwright install chromium
 
     - name: playwright install-deps
       shell: bash

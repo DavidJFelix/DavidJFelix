@@ -6,7 +6,7 @@
 // deployed Worker serves no static site -- every prerendered page and hashed
 // client file 404s. Re-inject the assets config here, with the directory
 // re-relativized to the emitted config's location. Runs as the last step of
-// `pnpm run build`.
+// `bun run build`.
 
 import {existsSync} from 'node:fs'
 

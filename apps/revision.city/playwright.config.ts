@@ -28,7 +28,7 @@ export default defineConfig({
   webServer: PREVIEW_URL
     ? undefined
     : {
-        // Spawn the vite binary directly (not via `pnpm exec`) so Playwright's
+        // Spawn the vite binary directly (not via `bun x`) so Playwright's
         // teardown kills workerd instead of a wrapper that outlives it.
         command: `node_modules/.bin/vite preview --host 127.0.0.1 --port ${PORT}`,
         url: BASE_URL,

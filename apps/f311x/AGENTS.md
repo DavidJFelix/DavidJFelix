@@ -159,7 +159,8 @@ has no handler). See [docs/projects/f311x/plan.md](../../docs/projects/f311x/pla
 
 ## Conventions
 
-- **Package manager**: pnpm (mise pins the version). Wrangler-touching projects stay on pnpm.
+- **Package manager**: bun (mise pins the version); vitest, Playwright, and the Vite CLI still run
+  on node.
 - **Keep it small.** Add a binding or dependency only when something actually uses it.
 - **Every new surface ships with a test.** typecheck + build + vitest gate every PR via
   `.depot/workflows/ci-f311x.yml`; keep them green.
@@ -189,13 +190,13 @@ deploys in one step — there is no separate build command.
 
 ## Scripts
 
-| Script           | What it does                                                           |
-| ---------------- | ---------------------------------------------------------------------- |
-| `pnpm dev`       | Vite dev server on :3000                                               |
-| `pnpm build`     | Vite build (app bundle; the deploy build runs inside `alchemy deploy`) |
-| `pnpm preview`   | Vite preview                                                           |
-| `pnpm deploy`    | Alchemy v2 deploy                                                      |
-| `pnpm destroy`   | Alchemy v2 destroy                                                     |
-| `pnpm lint`      | Oxlint + Biome                                                         |
-| `pnpm typecheck` | `tsc --noEmit`                                                         |
-| `pnpm test`      | Vitest                                                                 |
+| Script              | What it does                                                           |
+| ------------------- | ---------------------------------------------------------------------- |
+| `bun run dev`       | Vite dev server on :3000                                               |
+| `bun run build`     | Vite build (app bundle; the deploy build runs inside `alchemy deploy`) |
+| `bun run preview`   | Vite preview                                                           |
+| `bun run deploy`    | Alchemy v2 deploy                                                      |
+| `bun run destroy`   | Alchemy v2 destroy                                                     |
+| `bun run lint`      | Oxlint + Biome                                                         |
+| `bun run typecheck` | `tsc --noEmit`                                                         |
+| `bun run test`      | Vitest                                                                 |

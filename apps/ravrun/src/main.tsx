@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client'
 import {initClientObservability} from './observability/client'
 import {routeTree} from './routeTree.gen'
 import './styles.css'
-import {ThemeProvider} from './theme/theme-provider'
+import {ThemeProvider} from '@davidjfelix/theme/react'
 
 // Start client-side error monitoring + analytics (browser-only entry). Each stays
 // dark until its VITE_PUBLIC_* var is set at build; both ride the same-origin

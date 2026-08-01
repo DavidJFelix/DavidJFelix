@@ -4,10 +4,9 @@
     <!-- Pre-paint color-scheme bootstrap: applies the persisted (or OS) mode
          to <html> before first paint so the page never flashes the wrong
          scheme. ravrun has no ScriptOnce (no SSR), so this inlines the same
-         contract literally; src/theme/theme-bootstrap.ts is the typed,
-         tested source of this logic (kept for its unit tests and as the
-         source PR 2 will extract from -- this script is not generated from
-         it, so keep the two in sync by hand). Must run before any other
+         contract literally; packages/theme/src/bootstrap.ts is the typed,
+         tested source of this logic (this script is not generated from it,
+         so keep the two in sync by hand when the package changes). Must run before any other
          head content that could paint. -->
     <script>
       ;(() => {

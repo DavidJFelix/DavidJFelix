@@ -1,12 +1,4 @@
-import {type ThemeMode, useTheme} from './theme-provider'
-
-// Cycle order: each press moves to the next mode, so all three states stay
-// reachable from a single button (system is never a dead end).
-const NEXT_MODE: Record<ThemeMode, ThemeMode> = {
-  light: 'dark',
-  dark: 'system',
-  system: 'light',
-}
+import {NEXT_THEME_MODE, useTheme} from '@davidjfelix/theme/react'
 
 // The icon reflects the raw mode (not the resolved scheme) and is swapped by
 // CSS from the data-theme-mode attribute the bootstrap script sets pre-paint,
@@ -68,7 +60,7 @@ export function ThemeToggle() {
   // deterministic), so the label falls back to the generic action. Screen
   // readers query the label at interaction time, post-hydration, where it
   // names the concrete next mode.
-  const label = mode === undefined ? 'Toggle color theme' : `Switch to ${NEXT_MODE[mode]} theme`
+  const label = mode === undefined ? 'Toggle color theme' : `Switch to ${NEXT_THEME_MODE[mode]} theme`
   return (
     <button
       type="button"
@@ -76,7 +68,7 @@ export function ThemeToggle() {
       title={label}
       className="ml-auto self-center rounded border border-gray-400 p-1.5 hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:border-gray-600 dark:hover:bg-gray-800"
       onClick={() => {
-        setMode(NEXT_MODE[mode ?? 'system'])
+        setMode(NEXT_THEME_MODE[mode ?? 'system'])
       }}
     >
       <SunIcon />

@@ -1,3 +1,5 @@
+import {createThemeBootstrapScript, type ThemeColorPair} from '@davidjfelix/theme/bootstrap'
+import {ThemeProvider} from '@davidjfelix/theme/react'
 import {TanStackDevtools} from '@tanstack/react-devtools'
 import {
   createRootRoute,
@@ -9,15 +11,11 @@ import {
   useRouterState,
 } from '@tanstack/react-router'
 import {TanStackRouterDevtoolsPanel} from '@tanstack/react-router-devtools'
-
 import {css} from 'styled-system/css'
 import {button} from 'styled-system/recipes'
-
 import {SiteFooter} from '@/components/SiteFooter.tsx'
 import {SiteHeader} from '@/components/SiteHeader.tsx'
 import {fetchCartQuantity} from '@/lib/shopify/cart.ts'
-import {createThemeBootstrapScript, type ThemeColorPair} from '@/theme/theme-bootstrap.ts'
-import {ThemeProvider} from '@/theme/theme-provider.tsx'
 
 import appCss from '../styles.css?url'
 

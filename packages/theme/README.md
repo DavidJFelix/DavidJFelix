@@ -1,0 +1,20 @@
+# @davidjfelix/theme
+
+The repo theming contract (see
+[docs/projects/theme-switcher-unification/plan.md](../../docs/projects/theme-switcher-unification/plan.md))
+as a package: tri-state light/dark/system color schemes with pre-paint bootstrap, live OS tracking,
+and cross-tab sync. Consumed by apps as a `file:` dependency; each app keeps its own lockfile and
+imports raw TypeScript source (no build step -- every consumer bundles with Vite).
+
+| Subpath       | Contents                                                            |
+| ------------- | ------------------------------------------------------------------- |
+| `.`           | `createThemeController` -- the single owner of theming state        |
+| `./schema`    | The zod storage schema, mode vocabulary, and toggle cycle order     |
+| `./bootstrap` | The pre-paint bootstrap function and its inline-script stringifier  |
+| `./react`     | `ThemeProvider` + `useTheme` (React 19 peer)                        |
+| `./toggle`    | `bindThemeToggle`, the vanilla DOM binding for framework-free pages |
+
+Markup, styling, and toggle chrome stay with each app; this package owns only the behavior. The
+SvelteKit and Nuxt apps use mode-watcher and @nuxtjs/color-mode configured to the same contract and
+do not consume this package. ravrun's pre-paint script is a hand-synced literal in its `index.html`
+(no SSR host to stringify into) -- when `src/bootstrap.ts` changes, update that copy to match.

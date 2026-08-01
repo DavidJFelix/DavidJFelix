@@ -1,0 +1,5 @@
+# Marks this package as its own pnpm root (independent lockfile, per the
+# repo's one-lockfile-per-project rule) and holds its pnpm config.
+allowBuilds:
+  # vitest -> vite -> esbuild: the postinstall compiles the platform binary.
+  esbuild: true

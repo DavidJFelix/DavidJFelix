@@ -98,6 +98,7 @@
     "assed", // as in half-assed (blog voice)
     "backlinks",
     "browsable",
+    "bunfig", // bun's per-project config file
     "burndown",
     "codegen",
     "codemod",
@@ -129,6 +130,7 @@
     "papercut",
     "papercuts",
     "pointable",
+    "postinstalls",
     "prerendered",
     "prerendering",
     "prerenders",

@@ -141,6 +141,15 @@ cache the steps that start cold — the pnpm store, and the blocking web-session
 
 **Status**: Active
 
+### [Bun Migration](./projects/bun-migration/plan.md)
+
+Replace pnpm with bun as the package manager and script runner across `apps/`. The feasibility spike
+is complete -- all 12 apps install, build, and test green under bun, lockfile migration is faithful,
+and the remaining work is a mechanical inventory (trust lists, bunfig cooldown, script rewrites, 27
+workflow files). Gated on amending the tooling standard.
+
+**Status**: Deferred (decision pending)
+
 ### [Renovate Rollout](./projects/renovate-rollout/plan.md)
 
 Extend Renovate repo-wide (npm + mise + Cargo + lockFileMaintenance), revisit gated auto-merge, and

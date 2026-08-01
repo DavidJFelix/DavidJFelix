@@ -17,6 +17,7 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - 'apps/ravrun/**'
+      - 'packages/theme/**'
       - '.depot/workflows/cd-preview-ravrun.yml'
       - '.depot/actions/preview-wrangler/**'
       - '.depot/actions/setup-playwright/**'

@@ -11,6 +11,7 @@ on:
     branches: [main]
     paths:
       - 'apps/djf.io/**'
+      - 'packages/theme/**'
       - '.depot/workflows/cd-deploy-djf-io.yml'
 env:
   MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}

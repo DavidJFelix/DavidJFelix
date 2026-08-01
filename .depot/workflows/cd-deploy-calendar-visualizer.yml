@@ -11,6 +11,7 @@ on:
     branches: [main]
     paths:
       - 'apps/calendar-visualizer/**'
+      - 'packages/theme/**'
       - '.depot/workflows/cd-deploy-calendar-visualizer.yml'
 defaults:
   run:

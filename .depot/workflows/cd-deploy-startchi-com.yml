@@ -11,6 +11,7 @@ on:
     branches: [main]
     paths:
       - 'apps/startchi.com/**'
+      - 'packages/theme/**'
       - '.depot/workflows/cd-deploy-startchi-com.yml'
 defaults:
   run:

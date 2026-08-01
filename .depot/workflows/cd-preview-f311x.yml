@@ -16,6 +16,7 @@ on:
     types: [opened, synchronize, reopened, closed]
     paths:
       - 'apps/f311x/**'
+      - 'packages/theme/**'
       - '.depot/workflows/cd-preview-f311x.yml'
       - '.depot/actions/setup-playwright/**'
       - 'bin/install-playwright-deps.ts'

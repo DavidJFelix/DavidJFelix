@@ -1,4 +1,5 @@
 ---
+import {createThemeBootstrapScript} from '@davidjfelix/theme/bootstrap'
 import {css} from '../../styled-system/css'
 import Analytics from '../components/Analytics.astro'
 import {Calendar} from '../components/calendar'
@@ -10,6 +11,10 @@ import '../index.css'
 // of local/CI/preview output entirely. Sentry is injected separately by the
 // @sentry/astro integration when PUBLIC_SENTRY_DSN is set.
 const posthogEnabled = Boolean(import.meta.env.PUBLIC_POSTHOG_KEY)
+
+// Stringified at build time into the pre-paint inline script -- the only code
+// that can run before first paint.
+const themeBootstrapScript = createThemeBootstrapScript({storageKey: 'theme'})
 ---
 
 <html lang="en">
@@ -17,36 +22,14 @@ const posthogEnabled = Boolean(import.meta.env.PUBLIC_POSTHOG_KEY)
     <!--
       Pre-paint theme bootstrap: applies the persisted (or OS) color scheme to
       <html> before first paint so the page never flashes the wrong scheme.
-      Literal and is:inline because Astro inline scripts cannot import build
-      output; this mirrors the typed function at
-      apps/f311x/src/theme/theme-bootstrap.ts (applyInitialTheme), stringified
-      there and hand-inlined here. Contract:
+      Generated at build time from @davidjfelix/theme's typed bootstrap
+      (packages/theme/src/bootstrap.ts). Contract:
       docs/projects/theme-switcher-unification/plan.md. Kept current after
       load by src/components/theme-toggle.astro. First script in <head> --
       this whole page is inlined as a single document rather than composed
       through a shared layout, so it belongs here rather than in a BaseLayout.
     -->
-    <script is:inline>
-      ;(() => {
-        try {
-          const stored = localStorage.getItem('theme')
-          const mode = stored === 'light' || stored === 'dark' ? stored : 'system'
-          const resolved =
-            mode === 'system'
-              ? matchMedia('(prefers-color-scheme: dark)').matches
-                ? 'dark'
-                : 'light'
-              : mode
-          const root = document.documentElement
-          root.classList.remove('light', 'dark')
-          root.classList.add(resolved)
-          root.style.colorScheme = resolved
-          root.dataset.themeMode = mode
-        } catch {
-          /* storage/media failures fall through to the CSS defaults */
-        }
-      })()
-    </script>
+    <script is:inline set:html={themeBootstrapScript} />
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width" />

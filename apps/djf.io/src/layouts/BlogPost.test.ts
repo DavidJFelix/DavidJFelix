@@ -49,7 +49,9 @@ test('BlogPost omits author span when not provided', async () => {
   const html = await container.renderToString(BlogPost, {
     props: {post: fixturePost()},
   })
-  expect(html).not.toContain('by ')
+  // The byline span renders as `<span>by ...`; plain 'by ' would also match
+  // prose inside the inlined theme bootstrap script.
+  expect(html).not.toContain('<span>by ')
 })
 
 test('BlogPost renders reading time when provided', async () => {

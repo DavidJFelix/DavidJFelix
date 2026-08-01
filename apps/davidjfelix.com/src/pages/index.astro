@@ -1,4 +1,5 @@
 ---
+import {createThemeBootstrapScript} from '@davidjfelix/theme/bootstrap'
 import Analytics from '../components/analytics.astro'
 import ThemeToggle from '../components/theme-toggle.astro'
 
@@ -9,36 +10,20 @@ const description = 'Personal site of David J. Felix.'
 // injected separately by the @sentry/astro integration when PUBLIC_SENTRY_DSN is
 // set. Both stay off locally/CI/preview.
 const posthogEnabled = Boolean(import.meta.env.PUBLIC_POSTHOG_KEY)
+
+// Stringified at build time into the pre-paint inline script -- the only code
+// that can run before first paint.
+const themeBootstrapScript = createThemeBootstrapScript({storageKey: 'theme'})
 ---
 
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     {/* Pre-paint scheme bootstrap on the repo theming contract
-        (docs/projects/theme-switcher-unification/plan.md); the typed source
-        of the same logic is apps/f311x/src/theme/theme-bootstrap.ts. Inlined
-        literally because is:inline scripts cannot import build output. */}
-    <script is:inline>
-      ;(() => {
-        try {
-          const stored = localStorage.getItem('theme')
-          const mode = stored === 'light' || stored === 'dark' ? stored : 'system'
-          const resolved =
-            mode === 'system'
-              ? matchMedia('(prefers-color-scheme: dark)').matches
-                ? 'dark'
-                : 'light'
-              : mode
-          const root = document.documentElement
-          root.classList.remove('light', 'dark')
-          root.classList.add(resolved)
-          root.style.colorScheme = resolved
-          root.dataset.themeMode = mode
-        } catch {
-          /* storage/media failures fall through to the CSS defaults */
-        }
-      })()
-    </script>
+        (docs/projects/theme-switcher-unification/plan.md), generated at
+        build time from @davidjfelix/theme's typed bootstrap
+        (packages/theme/src/bootstrap.ts). */}
+    <script is:inline set:html={themeBootstrapScript} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />

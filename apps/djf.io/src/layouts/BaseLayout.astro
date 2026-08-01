@@ -3,6 +3,7 @@ import '../index.css'
 import '@fontsource-variable/schibsted-grotesk'
 import '@fontsource-variable/inter'
 import '@fontsource-variable/jetbrains-mono'
+import {createThemeBootstrapScript} from '@davidjfelix/theme/bootstrap'
 // The fontsource file names carry the OpenType weight axis tag. cSpell:words wght
 import interLatinWoff2 from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url'
 import schibstedLatinWoff2 from '@fontsource-variable/schibsted-grotesk/files/schibsted-grotesk-latin-wght-normal.woff2?url'
@@ -57,6 +58,10 @@ const jsonLdPayloads = (Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [])
 // component guards on the key at runtime too; gating the render here keeps it
 // out of local/CI/preview output entirely.
 const posthogEnabled = Boolean(import.meta.env.PUBLIC_POSTHOG_KEY)
+
+// Stringified at build time into the pre-paint inline script -- the only code
+// that can run before first paint.
+const themeBootstrapScript = createThemeBootstrapScript({storageKey: 'theme'})
 
 // FontAwesome brand glyphs, rendered as static inline SVGs at build time so
 // no icon font or client JS ships. The X logo stands in for the word in the
@@ -125,32 +130,10 @@ const iconMenuOpen = css({display: 'none', '#nav-toggle[aria-expanded=true] &': 
     {/* Resolve the color theme before first paint so there is no flash: a
         persisted mode ('light'/'dark'/'system') wins over the OS preference,
         and defaults to 'system' when nothing is stored (or storage throws).
-        This mirrors the repo's shared theme contract -- the typed source of
-        the same logic lives at apps/f311x/src/theme/theme-bootstrap.ts (see
-        docs/projects/theme-switcher-unification/plan.md); this app has no
-        bundler step to stringify a typed function into an inline script, so
-        the logic is authored directly as the literal below. */}
-    <script is:inline>
-      ;(() => {
-        try {
-          const stored = localStorage.getItem('theme')
-          const mode = stored === 'light' || stored === 'dark' ? stored : 'system'
-          const resolved =
-            mode === 'system'
-              ? matchMedia('(prefers-color-scheme: dark)').matches
-                ? 'dark'
-                : 'light'
-              : mode
-          const root = document.documentElement
-          root.classList.remove('light', 'dark')
-          root.classList.add(resolved)
-          root.style.colorScheme = resolved
-          root.dataset.themeMode = mode
-        } catch {
-          /* storage/media failures fall through to the CSS defaults */
-        }
-      })()
-    </script>
+        The script is @davidjfelix/theme's typed bootstrap
+        (packages/theme/src/bootstrap.ts), stringified at build time; see
+        docs/projects/theme-switcher-unification/plan.md for the contract. */}
+    <script is:inline set:html={themeBootstrapScript} />
     {/* Tag the platform before first paint so the search hotkey hint renders as
         ⌘K (Mac) or Ctrl K immediately, instead of flashing after hydration. */}
     <script is:inline>

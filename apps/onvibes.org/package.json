@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@astrojs/cloudflare": "14.1.5",
+    "@davidjfelix/theme": "file:../../packages/theme",
     "@earendil-works/pi-ai": "0.80.6",
     "@flue/react": "1.0.0-beta.9",
     "@flue/runtime": "1.0.0-beta.9",

@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@astrojs/cloudflare": "14.1.5",
+    "@davidjfelix/theme": "file:../../packages/theme",
     "@sentry/astro": "^10.60.0",
     "astro": "^7.0.0",
     "posthog-js": "^1.393.0",

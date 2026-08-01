@@ -97,73 +97,10 @@
 </style>
 
 <script>
-  import * as z from 'zod/mini'
+  import {bindThemeToggle} from '@davidjfelix/theme/toggle'
 
-  // The repo theming contract's storage schema (see
-  // docs/projects/theme-switcher-unification/plan.md): raw mode strings,
-  // anything invalid parses to system. The pre-paint head script's literal
-  // check is this schema's compiled twin -- it cannot import anything.
-  const themeModeSchema = z.catch(z.enum(['light', 'dark', 'system']), 'system')
-  type ThemeMode = z.infer<typeof themeModeSchema>
-
-  // Cycle order: each press moves to the next mode, so all three states stay
-  // reachable from a single button (system is never a dead end).
-  const NEXT: Record<ThemeMode, ThemeMode> = {light: 'dark', dark: 'system', system: 'light'}
-
+  // Behavior (mode cycling, labels, live OS tracking, cross-tab sync) lives in
+  // the package; this component owns only the markup and styling above.
   const toggle = document.querySelector<HTMLButtonElement>('#theme-toggle')
-
-  function currentMode(): ThemeMode {
-    return themeModeSchema.parse(document.documentElement.dataset.themeMode)
-  }
-
-  function updateLabel(mode: ThemeMode) {
-    const label = `Switch to ${NEXT[mode]} theme`
-    toggle?.setAttribute('aria-label', label)
-    toggle?.setAttribute('title', label)
-  }
-
-  function apply(mode: ThemeMode) {
-    const resolved =
-      mode === 'system'
-        ? matchMedia('(prefers-color-scheme: dark)').matches
-          ? 'dark'
-          : 'light'
-        : mode
-    const root = document.documentElement
-    root.classList.remove('light', 'dark')
-    root.classList.add(resolved)
-    root.style.colorScheme = resolved
-    root.dataset.themeMode = mode
-    updateLabel(mode)
-  }
-
-  function persist(mode: ThemeMode) {
-    try {
-      localStorage.setItem('theme', mode)
-    } catch {
-      // Storage may be unavailable (private mode / denied) -- non-fatal.
-    }
-  }
-
-  updateLabel(currentMode())
-  toggle?.addEventListener('click', () => {
-    const next = NEXT[currentMode()]
-    persist(next)
-    apply(next)
-  })
-  // Track live OS changes while following the system, and other tabs' choices.
-  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-    if (currentMode() === 'system') apply('system')
-  })
-  window.addEventListener('storage', (event) => {
-    if (event.key !== null && event.key !== 'theme') return
-    let stored: string | null = null
-    try {
-      stored = localStorage.getItem('theme')
-    } catch {
-      // Unreadable storage keeps the current mode.
-      return
-    }
-    apply(themeModeSchema.parse(stored))
-  })
+  if (toggle) bindThemeToggle(toggle)
 </script>

@@ -9,10 +9,12 @@
 !*.md
 !*.mdx
 
-# Apps own their markdown through their per-app format gates (each app runs
-# prettier itself; djf.io excludes its semantic-line-break blog content via its
-# own .prettierignore, which a root-level run would not honor).
+# Apps and shared packages own their markdown through their per-project format
+# gates (each runs prettier itself; djf.io excludes its semantic-line-break
+# blog content via its own .prettierignore, which a root-level run would not
+# honor). ci-docs does not trigger on these trees; their own workflows do.
 apps/
+packages/
 
 # Out-of-scope trees: legacy dirs, isolated workspace trees, vendored skills
 # whose content hashes are pinned in skills-lock.json, and the .claude symlink

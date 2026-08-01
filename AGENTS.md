@@ -6,14 +6,16 @@ from this file.
 ## Repository overview
 
 Personal monorepo containing web applications, exercises, and configuration. No repo-root pnpm
-workspace -- apps have independent lockfiles and dependencies, and conflict-prone workspace trees
-live under `workspaces/`. Shared dev tooling is managed via mise (`.config/mise.toml`).
+workspace -- apps have independent lockfiles and dependencies, shared code ships from `packages/` as
+`file:` dependencies, and conflict-prone workspace trees live under `workspaces/`. Shared dev
+tooling is managed via mise (`.config/mise.toml`).
 
 ## Key paths
 
 | Path                 | Description                                                                                      |
 | -------------------- | ------------------------------------------------------------------------------------------------ |
 | `apps/`              | Application projects, one directory per app; [docs/projects.md](docs/projects.md) describes each |
+| `packages/`          | Shared packages apps consume as `file:` deps, one directory per package, each its own pnpm root  |
 | `docs/contributing/` | Style mini guides -- naming, testing, linting, config, scripting, tooling, CI, project docs      |
 | `docs/agents/`       | Agent workflow docs -- issue tracker, triage labels, domain docs                                 |
 | `docs/projects/`     | Active project plans and progress notes (ephemeral working notes)                                |

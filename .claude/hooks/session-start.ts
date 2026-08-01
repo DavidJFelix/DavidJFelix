@@ -49,28 +49,42 @@ process.env.MISE_TRUSTED_CONFIG_PATHS = repo
 await $`mise trust --yes ${join(repo, '.config', 'mise.toml')}`.nothrow().quiet()
 await $`mise install`.cwd(repo)
 
-// 3. Install dependencies for every app. Lockfiles are independent (this repo
-//    has no pnpm workspace), so each app installs on its own. CI=true makes
-//    pnpm non-interactive and CI-faithful: it installs frozen from the lockfile
+// 3. Install dependencies for every app and shared package. Lockfiles are
+//    independent (this repo has no pnpm workspace; packages/ ships to apps via
+//    file: deps), so each project installs on its own. CI=true makes pnpm
+//    non-interactive and CI-faithful: it installs frozen from the lockfile
 //    (so `latest` dev deps don't drift between runs) and auto-confirms a
-//    node_modules purge that would otherwise abort without a TTY. Keep going if
-//    one app fails -- a single broken install shouldn't block the session.
-const appsDir = join(repo, 'apps')
+//    node_modules purge that would otherwise abort without a TTY. Keep going
+//    if one install fails -- a single broken install shouldn't block the
+//    session. packages/ installs first so an app's file: copy hard-links a
+//    ready package.
 const installEnv = {...process.env, CI: 'true'}
-for (const entry of readdirSync(appsDir, {withFileTypes: true})) {
-  if (!entry.isDirectory()) continue
-  const appDir = join(appsDir, entry.name)
-  if (!existsSync(join(appDir, 'package.json'))) continue
-  console.log(`==> pnpm install: apps/${entry.name}`)
-  let result = await $`pnpm install --prefer-offline`.cwd(appDir).env(installEnv).nothrow().quiet()
-  if (result.exitCode !== 0) {
-    // Retry unfrozen to ride out lockfile drift or a transient store blip.
-    result = await $`pnpm install --no-frozen-lockfile`.cwd(appDir).env(installEnv).nothrow().quiet()
-  }
-  if (result.exitCode !== 0) {
-    console.error(`WARN: pnpm install failed in apps/${entry.name}`)
-    console.error(result.stdout.toString())
-    console.error(result.stderr.toString())
+for (const groupName of ['packages', 'apps']) {
+  const groupDir = join(repo, groupName)
+  if (!existsSync(groupDir)) continue
+  for (const entry of readdirSync(groupDir, {withFileTypes: true})) {
+    if (!entry.isDirectory()) continue
+    const projectDir = join(groupDir, entry.name)
+    if (!existsSync(join(projectDir, 'package.json'))) continue
+    console.log(`==> pnpm install: ${groupName}/${entry.name}`)
+    let result = await $`pnpm install --prefer-offline`
+      .cwd(projectDir)
+      .env(installEnv)
+      .nothrow()
+      .quiet()
+    if (result.exitCode !== 0) {
+      // Retry unfrozen to ride out lockfile drift or a transient store blip.
+      result = await $`pnpm install --no-frozen-lockfile`
+        .cwd(projectDir)
+        .env(installEnv)
+        .nothrow()
+        .quiet()
+    }
+    if (result.exitCode !== 0) {
+      console.error(`WARN: pnpm install failed in ${groupName}/${entry.name}`)
+      console.error(result.stdout.toString())
+      console.error(result.stderr.toString())
+    }
   }
 }
 

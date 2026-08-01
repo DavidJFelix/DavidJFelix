@@ -93,14 +93,15 @@ The ownership map above covers quality tooling; this covers the rest of what age
 
 - **Spell check** is a single repo-wide gate. cspell is a root tool (mise's npm backend:
   `npm:cspell` in `.config/mise.toml`), run via `mise run spell` over the repo's own sources
-  (`apps/`, `docs/`, `bin/`, root markdown, `.config/`, `.github/`). Noise is filtered by
-  `ignorePaths` in `.config/cspell.jsonc` (node_modules, build output, generated trees, lockfiles).
-  The `ci-spell.yml` workflow runs it on every push and PR — no paths filter, because it's
-  universal. Apps do **not** carry their own cspell dependency or `spell` script; the root gate
+  (`apps/`, `packages/`, `docs/`, `bin/`, root markdown, `.config/`, `.github/`). Noise is filtered
+  by `ignorePaths` in `.config/cspell.jsonc` (node_modules, build output, generated trees,
+  lockfiles). The `ci-spell.yml` workflow runs it on every push and PR — no paths filter, because
+  it's universal. Apps do **not** carry their own cspell dependency or `spell` script; the root gate
   covers them.
-- **Oxlint + Biome + oxfmt + typecheck + tests** are per-app, declared as mise tasks in each
-  `apps/<name>/mise.toml` and run by that app's path-filtered CI workflow. `mise run check` at the
-  repo root fans every app's full check out (`bin/run-app-tasks.ts`).
+- **Oxlint + Biome + oxfmt + typecheck + tests** are per-project, declared as mise tasks in each
+  `apps/<name>/mise.toml` or `packages/<name>/mise.toml` and run by that project's path-filtered CI
+  workflow. `mise run check` at the repo root fans every project's full check out
+  (`bin/run-app-tasks.ts`, packages first since apps' `file:` deps hard-link from them).
 - **Root config files** (`biome.jsonc`, `.oxlintrc.jsonc`, `.oxfmtrc.json`, etc.) are formatted by
   the root `mise run format` task (oxfmt, plus a Biome lint of Biome's own configs) and gated by
   `ci-repo.yml`.

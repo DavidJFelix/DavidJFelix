@@ -10,7 +10,7 @@ imports raw TypeScript source (no build step -- every consumer bundles with Vite
 | ------------- | ------------------------------------------------------------------- |
 | `.`           | `createThemeController` -- the single owner of theming state        |
 | `./schema`    | The zod storage schema, mode vocabulary, and toggle cycle order     |
-| `./bootstrap` | The pre-paint bootstrap function and its inline-script stringifier  |
+| `./bootstrap` | The pre-paint bootstrap function and its inline-script generator    |
 | `./react`     | `ThemeProvider` + `useTheme` (React 19 peer)                        |
 | `./toggle`    | `bindThemeToggle`, the vanilla DOM binding for framework-free pages |
 

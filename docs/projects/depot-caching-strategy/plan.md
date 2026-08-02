@@ -41,13 +41,12 @@ with no configuration required."
 
 ## Target architecture
 
-- **Root bun workspace**: a private root `package.json` with
-  `"workspaces": ["apps/*", "packages/*"]`. `workspaces/` stays excluded -- the conflict-prone trees
-  that motivated the no-root-workspace rule remain isolated roots. One root `bun.lock`; the thirteen
-  per-project lockfiles (twelve apps + `packages/theme`) are deleted. The
-  `file:../../packages/theme` links become workspace links, per-app `trustedDependencies`
-  consolidate at the root, and the session-start hook's thirteen sequential installs become one
-  `bun install`.
+- **One bun workspace** covering `apps/*` + `packages/*` -- at the repo root or nested under a new
+  tree like `workspaces/web-apps/` (the shape decision in "What it costs" below; the graph mechanics
+  are identical). One `bun.lock` at the workspace root; the thirteen per-project lockfiles (twelve
+  apps + `packages/theme`) are deleted. The `file:../../packages/theme` links become workspace
+  links, per-app `trustedDependencies` consolidate at the workspace root, and the session-start
+  hook's thirteen sequential installs become one `bun install`.
 - **Turborepo pinned via mise's npm backend** (`"npm:turbo"`), matching how cspell/oxfmt/warden are
   managed.
 - **`turbo.json`** defining the task graph: `typecheck`, `lint`, `format`, `build`, `test`,
@@ -73,10 +72,25 @@ with no configuration required."
 
 Decisions David must own before phase 1:
 
-1. **Reverses the "no repo-root workspace" rule** in AGENTS.md, including the just-established
-   convention that `packages/` ships as `file:` dependencies. The original motivation is preserved
-   (workspace trees under `workspaces/` stay out), but the rule as written flips, and AGENTS.md plus
-   the tooling/config style guides change with it.
+1. **Where the workspace root lives.** Two viable shapes; turbo does not require the workspace root
+   to be the git root, so this is a repo-layout decision, not a tooling constraint.
+   - _Repo root_: private root `package.json` with workspace globs scoped to `apps/*` +
+     `packages/*`. Reverses the letter of the "no repo-root workspace" rule (AGENTS.md and the style
+     guides change), though its motivation survives -- `workspaces/` trees keep their own roots and
+     are never glob-matched.
+   - _Nested root_: a new tree (e.g. `workspaces/web-apps/`) holding `apps/` + `packages/` with its
+     own `package.json`/`bun.lock`/`turbo.json`. The rule stands as written. The costs move
+     elsewhere: turbo cannot hash files outside its workspace root (`globalDependencies`/`inputs`
+     globs are confined to it -- an open turborepo feature request, not a toggle), so the shared
+     configs (`biome.jsonc`, `.oxlintrc.jsonc`, `.config/mise.toml`, ...) must move into the nested
+     root to stay cache-correct, dragging the repo-root `format`/`ci-repo.yml` surface with them;
+     plus a large mechanical re-point of every `apps/**` reference in workflows, hooks, docs, and
+     CONTEXT-MAP.
+
+   Either way `packages/` stops shipping as `file:` dependencies (workspace links replace them) and
+   AGENTS.md changes -- the difference is whether the no-root-workspace rule flips or the directory
+   tree moves. Decide in phase 0.
+
 2. **One lockfile.** Renovate PRs converge on a single `bun.lock`. Turborepo hashes each package
    against only its slice of the lockfile, so a dep bump still invalidates only the projects that
    depend on it -- but the renovate-rollout config needs a coordinated update, and this touches the
@@ -95,9 +109,11 @@ Decisions David must own before phase 1:
    (b) Confirm `turbo --affected` works on Depot CI checkouts (needs the base ref fetched; set
    `TURBO_SCM_BASE`/fetch depth accordingly). (c) Confirm turbo's bun.lock analysis handles this
    repo's lockfiles (all projects are on the text lockfile already). (d) Inventory per-app bun
-   settings (`bunfig.toml`, `trustedDependencies`) and draft the merged root config.
-1. **Workspace unification.** Root `package.json` with workspaces + merged `bunfig.toml`; convert
-   `file:` theme links to workspace links; delete the thirteen project lockfiles; single root
+   settings (`bunfig.toml`, `trustedDependencies`) and draft the merged root config. (e) Pick the
+   workspace-root shape (repo root vs. nested) -- cost 1 below has the trade-offs.
+1. **Workspace unification.** Workspace `package.json` + merged `bunfig.toml` at the chosen root (if
+   nested: move `apps/` + `packages/` + shared configs in, and re-point every path reference);
+   convert `file:` theme links to workspace links; delete the thirteen project lockfiles; single
    `bun install`; update `.claude/hooks/session-start.ts`; update renovate config; update AGENTS.md
    and style guides.
 2. **Turborepo locally.** `turbo.json`, mise task wrappers, verify warm-cache runs of

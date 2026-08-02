@@ -15,7 +15,8 @@ export function ThemeToggle() {
   // deterministic), so the label falls back to the generic action. Screen
   // readers query the label at interaction time, post-hydration, where it
   // names the concrete next mode.
-  const label = mode === undefined ? 'Toggle color theme' : `Switch to ${NEXT_THEME_MODE[mode]} theme`
+  const label =
+    mode === undefined ? 'Toggle color theme' : `Switch to ${NEXT_THEME_MODE[mode]} theme`
   return (
     <Button
       type="button"

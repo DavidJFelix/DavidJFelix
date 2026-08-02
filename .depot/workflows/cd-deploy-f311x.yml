@@ -60,7 +60,9 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.F311X_CLOUDFLARE_ACCOUNT_ID }}
           ALCHEMY_NO_TUI: '1'
           ALCHEMY_TELEMETRY_DISABLED: '1'
-        run: timeout -k 10s 180s bun x alchemy cloudflare bootstrap || true
+        # The binary directly (not `bun x`): its node shebang keeps alchemy on
+        # the node runtime, matching its @effect/platform-node adapter.
+        run: timeout -k 10s 180s node_modules/.bin/alchemy cloudflare bootstrap || true
       # Builds happen inside `alchemy deploy` (Cloudflare.Vite resource), so
       # there is no separate build step. The wrapper script documents and
       # contains the one tolerated failure mode (CLI hang-after-success).

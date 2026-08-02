@@ -17,9 +17,10 @@ const DEADLINE_MS = 10 * 60 * 1000
 // Test seam: lets the timeout/failure/success paths be exercised without
 // credentials (e.g. DEPLOY_PROD_TEST_CMD='sleep 999').
 const cmd = process.env.DEPLOY_PROD_TEST_CMD?.split(' ') ?? [
-  'bun',
-  'x',
-  'alchemy',
+  // Spawn the alchemy binary directly (not via bun x): the node shebang keeps
+  // alchemy on the node runtime, where its @effect/platform-node adapter
+  // resolves -- under the bun runtime it demands @effect/platform-bun instead.
+  'node_modules/.bin/alchemy',
   'deploy',
   '--stage',
   'prod',

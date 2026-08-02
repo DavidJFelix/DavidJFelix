@@ -115,12 +115,18 @@ final art.
 - [x] Consumed via `file:../../packages/theme` by f311x, ravrun, startchi.com, forzamonica.com,
       djf.io, onvibes.org, calendar-visualizer, and davidjfelix.com. Toggles, markup, and styling
       stay app-owned. Every pre-paint inline script is generated at build time from the package --
-      ScriptOnce (Start apps), `<script is:inline set:html={...}>` (Astro), a Vite
-      `transformIndexHtml` plugin (ravrun's SPA) -- so no hand-synced literal survives anywhere.
+      ScriptOnce (TanStack), `<script is:inline set:html={...}>` (Astro) -- so no hand-synced
+      literal survives anywhere.
 - [x] Svelte and Nuxt apps keep their ecosystem libraries, pinned to the contract by configuration
       (unchanged; they carry no zod).
 - [x] CI: `ci-theme.yml` gates the package; the eight consumers' ci, cd-preview, cd-deploy, and
       snapshot-bot workflows add `packages/theme/**` to their paths filters.
+- ravrun migrated from a TanStack Router SPA to TanStack Start in SPA mode (David's call, 2026-08-02
+  review): the prerendered shell owns the document, so the theme bootstrap ships through ScriptOnce
+  like the other TanStack apps -- no index.html, no injection plugin. The observability relay moved
+  from the custom worker into Start server routes (`src/routes/{bugs,diag}`, the f311x pattern)
+  because Start's build-time prerender fetches through `vite preview`, which the Cloudflare plugin
+  points at the deployed worker -- a static-relay worker 404s there.
 - `@pierre/theming` interop for revision.city: deliberately deferred -- its persistence adapter
   already isolates the dependency; revisit only if revision.city drops the Shiki theme catalog.
 

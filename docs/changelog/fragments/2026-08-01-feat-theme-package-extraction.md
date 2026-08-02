@@ -12,10 +12,12 @@ the package owns the unit tests with full coverage of the logic modules.
 The four TanStack apps (f311x, ravrun, startchi.com, forzamonica.com) and four Astro apps (djf.io,
 onvibes.org, calendar-visualizer, davidjfelix.com) delete their copies and consume the package;
 toggle markup and styling stay app-owned. Every pre-paint inline script is now generated at build
-time from the typed bootstrap -- ScriptOnce for the Start apps, `is:inline set:html` for Astro, a
-Vite `transformIndexHtml` plugin for ravrun's SPA -- so no hand-synced "compiled twin" survives
-anywhere. The SvelteKit and Nuxt apps keep mode-watcher and @nuxtjs/color-mode pinned to the
-contract by configuration. A new `ci-theme.yml` gates the package, every consumer's CI/CD workflow
-retriggers on `packages/theme/**`, the session-start hook installs `packages/` alongside `apps/`,
-and the spell gate covers the new tree. Verified by each app's typecheck, unit, and build gates plus
-the theme e2e suites.
+time from the typed bootstrap -- ScriptOnce for the TanStack apps, `is:inline set:html` for Astro --
+so no hand-synced "compiled twin" survives anywhere. To get ravrun onto ScriptOnce it migrated from
+a TanStack Router SPA to TanStack Start in SPA mode: the prerendered shell owns the document (no
+more index.html), and the observability relay moved from the custom worker into Start server routes
+on the f311x pattern. The SvelteKit and Nuxt apps keep mode-watcher and @nuxtjs/color-mode pinned to
+the contract by configuration. A new `ci-theme.yml` gates the package, every consumer's CI/CD
+workflow retriggers on `packages/theme/**`, the session-start hook installs `packages/` alongside
+`apps/`, and the spell gate covers the new tree. Verified by each app's typecheck, unit, and build
+gates plus the theme e2e suites.

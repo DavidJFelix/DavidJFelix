@@ -1,9 +1,12 @@
 #:schema node_modules/wrangler/config-schema.json
 name = "ravrun"
-# ravrun is a static SPA; this worker (src/worker.ts) exists only to host the
-# same-origin observability relay (PostHog proxy at /diag, Sentry tunnel at /bugs)
-# in front of the assets below. nodejs_compat is required by @sentry/cloudflare.
-main = "src/worker.ts"
+# Custom server entry (src/server.ts) wraps the TanStack Start handler with
+# Sentry (@sentry/cloudflare withSentry). @cloudflare/vite-plugin builds this
+# `main` as the deployed worker: the Start server in SPA mode, serving the
+# prerendered shell for client routes plus the same-origin observability relay
+# (PostHog proxy at /diag, Sentry tunnel at /bugs -- src/routes/{diag,bugs}).
+# nodejs_compat is required by @sentry/cloudflare.
+main = "src/server.ts"
 compatibility_date = "2026-04-29"
 compatibility_flags = ["nodejs_compat"]
 
@@ -22,8 +25,9 @@ routes = [
 ]
 
 [assets]
-# directory is wired by @cloudflare/vite-plugin to the Vite client build output.
+# directory is wired by @cloudflare/vite-plugin to the Vite client build output
+# (which includes the prerendered SPA shell as index.html).
 binding = "ASSETS"
-# Serve index.html for unmatched paths (SPA deep links / refreshes). The worker
-# intercepts /diag and /bugs before falling through to this binding.
+# Serve index.html for unmatched paths (SPA deep links / refreshes). /diag and
+# /bugs are worker routes (src/routes/{diag,bugs}) and never reach this binding.
 not_found_handling = "single-page-application"

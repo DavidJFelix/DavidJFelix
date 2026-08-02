@@ -3,7 +3,7 @@
 // The browser SDK normally POSTs envelopes straight to `*.ingest.sentry.io`,
 // which ad/tracker blockers drop -- so a chunk of real-user errors never arrive.
 // Setting the SDK's `tunnel` to a same-origin path makes it POST here instead;
-// the worker's /bugs route (src/worker.ts) forwards the envelope on to Sentry's
+// the on-demand /bugs endpoint (src/routes/bugs.ts) forwards it on to Sentry's
 // ingest API server-side, where no blocker can see it. Blockers match
 // Sentry's ingest *hosts*, not arbitrary first-party paths, so the relay slips
 // through.

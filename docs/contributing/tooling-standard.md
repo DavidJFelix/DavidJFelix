@@ -79,12 +79,15 @@ The ownership map above covers quality tooling; this covers the rest of what age
   the framework CLIs all run on the mise-pinned node, and `bun test` does not replace vitest. `npm`
   projects should be converted unless there's a good reason; `yarn` and `pnpm` are retired (the two
   legacy `workspaces/joy-of-react` trees still carry pnpm lockfiles and migrate when next touched).
-  Every app carries a `bunfig.toml` with `minimumReleaseAge = 86400` -- bun's release-age cooldown
-  is off by default and the file is not inherited from parent directories, so a new app must copy it
-  or it silently loses the supply-chain cooldown pnpm used to provide. Native build scripts are
-  allowlisted per app via `trustedDependencies` in package.json; note that declaring the field
-  replaces bun's default trust list, so it must name everything the app relies on (esbuild, workerd,
-  sharp, and friends), not just additions.
+  Every project (apps and `packages/`) carries a `bunfig.toml` with `minimumReleaseAge = 86400` --
+  bun's release-age cooldown is off by default and the file is not inherited from parent
+  directories, so a new project must copy it or it silently loses the supply-chain cooldown pnpm
+  used to provide. Native build scripts are allowlisted per project via `trustedDependencies` in
+  package.json; note that declaring the field replaces bun's default trust list, so it must name
+  everything the project relies on (esbuild, workerd, sharp, and friends), not just additions. Also
+  note bun installs a `file:` dependency's devDependencies (pnpm did not) -- consumers of
+  `packages/*` carry a nested copy of the package's dev tooling; bundlers resolve a single React, so
+  this is bloat to watch, not a break.
 - **Lockfiles**: one per project (`bun.lock`). If a project has both `pnpm-lock.yaml` and
   `bun.lock`, keep `bun.lock` and delete `pnpm-lock.yaml`.
 - **Python**: `uv`. `pip` is banned -- never invoke it directly. `poetry` is banned.

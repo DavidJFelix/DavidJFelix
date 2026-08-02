@@ -1,34 +1,10 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <!-- Pre-paint color-scheme bootstrap: applies the persisted (or OS) mode
-         to <html> before first paint so the page never flashes the wrong
-         scheme. ravrun has no ScriptOnce (no SSR), so this inlines the same
-         contract literally; packages/theme/src/bootstrap.ts is the typed,
-         tested source of this logic (this script is not generated from it,
-         so keep the two in sync by hand when the package changes). Must run before any other
-         head content that could paint. -->
-    <script>
-      ;(() => {
-        try {
-          var storedMode = window.localStorage.getItem('theme')
-          var mode = storedMode === 'light' || storedMode === 'dark' ? storedMode : 'system'
-          var resolvedScheme =
-            mode === 'system'
-              ? window.matchMedia('(prefers-color-scheme: dark)').matches
-                ? 'dark'
-                : 'light'
-              : mode
-          var root = document.documentElement
-          root.classList.remove('light', 'dark')
-          root.classList.add(resolvedScheme)
-          root.style.colorScheme = resolvedScheme
-          root.setAttribute('data-theme-mode', mode)
-        } catch {
-          // Ignore storage/media failures and let CSS defaults apply.
-        }
-      })()
-    </script>
+    <!-- The pre-paint color-scheme bootstrap is injected here, as the first
+         head script, by the themeBootstrap plugin in vite.config.ts --
+         generated from @davidjfelix/theme/bootstrap like every other
+         consumer, in dev and build alike. -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta

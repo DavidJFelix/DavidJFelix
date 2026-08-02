@@ -2,8 +2,9 @@
 // <html> before first paint so a themed page never flashes the wrong scheme.
 // Consumers ship it as the first inline script in the document -- TanStack
 // Start apps through ScriptOnce, Astro apps through an is:inline script with
-// set:html -- so it executes while the initial HTML is parsing and never
-// re-runs on hydration or SPA navigation.
+// set:html, ravrun's SPA through a Vite transformIndexHtml plugin -- so it
+// executes while the initial HTML is parsing and never re-runs on hydration
+// or SPA navigation.
 //
 // applyInitialTheme is authored as a real function so the type checker, linter,
 // and unit tests cover it, then stringified by createThemeBootstrapScript into

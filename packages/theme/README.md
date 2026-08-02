@@ -14,7 +14,8 @@ imports raw TypeScript source (no build step -- every consumer bundles with Vite
 | `./react`     | `ThemeProvider` + `useTheme` (React 19 peer)                        |
 | `./toggle`    | `bindThemeToggle`, the vanilla DOM binding for framework-free pages |
 
-Markup, styling, and toggle chrome stay with each app; this package owns only the behavior. The
-SvelteKit and Nuxt apps use mode-watcher and @nuxtjs/color-mode configured to the same contract and
-do not consume this package. ravrun's pre-paint script is a hand-synced literal in its `index.html`
-(no SSR host to stringify into) -- when `src/bootstrap.ts` changes, update that copy to match.
+Markup, styling, and toggle chrome stay with each app; this package owns only the behavior. Every
+consumer generates its pre-paint inline script from `./bootstrap` at build time -- ScriptOnce
+(TanStack Start), `is:inline set:html` (Astro), or a Vite `transformIndexHtml` plugin (ravrun's SPA)
+-- so there are no hand-synced copies anywhere. The SvelteKit and Nuxt apps use mode-watcher and
+@nuxtjs/color-mode configured to the same contract and do not consume this package.

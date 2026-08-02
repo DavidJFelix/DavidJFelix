@@ -114,9 +114,9 @@ final art.
       unit tests, with full coverage of the logic modules.
 - [x] Consumed via `file:../../packages/theme` by f311x, ravrun, startchi.com, forzamonica.com,
       djf.io, onvibes.org, calendar-visualizer, and davidjfelix.com. Toggles, markup, and styling
-      stay app-owned. The Astro apps' pre-paint scripts are now generated at build time from the
-      package (`<script is:inline set:html={...}>`), removing their hand-synced literals; ravrun's
-      `index.html` literal remains the one hand-synced twin (no SSR host to stringify into).
+      stay app-owned. Every pre-paint inline script is generated at build time from the package --
+      ScriptOnce (Start apps), `<script is:inline set:html={...}>` (Astro), a Vite
+      `transformIndexHtml` plugin (ravrun's SPA) -- so no hand-synced literal survives anywhere.
 - [x] Svelte and Nuxt apps keep their ecosystem libraries, pinned to the contract by configuration
       (unchanged; they carry no zod).
 - [x] CI: `ci-theme.yml` gates the package; the eight consumers' ci, cd-preview, cd-deploy, and

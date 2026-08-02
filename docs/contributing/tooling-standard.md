@@ -85,9 +85,11 @@ The ownership map above covers quality tooling; this covers the rest of what age
   used to provide. Native build scripts are allowlisted per project via `trustedDependencies` in
   package.json; note that declaring the field replaces bun's default trust list, so it must name
   everything the project relies on (esbuild, workerd, sharp, and friends), not just additions. Also
-  note bun installs a `file:` dependency's devDependencies (pnpm did not) -- consumers of
-  `packages/*` carry a nested copy of the package's dev tooling; bundlers resolve a single React, so
-  this is bloat to watch, not a break.
+  note bun materializes a `file:` dependency as per-file symlinks into its source directory (pnpm
+  pack-copied it), so the package's own imports resolve against `packages/<name>/node_modules` --
+  the package must be installed before a consumer typechecks, builds, or tests. The session hook,
+  the root aggregators, and every consumer's CI job install `packages/` first for this reason; a
+  bare `mise run build` in an app after a fresh clone needs `bun install` in the package too.
 - **Lockfiles**: one per project (`bun.lock`). If a project has both `pnpm-lock.yaml` and
   `bun.lock`, keep `bun.lock` and delete `pnpm-lock.yaml`.
 - **Python**: `uv`. `pip` is banned -- never invoke it directly. `poetry` is banned.

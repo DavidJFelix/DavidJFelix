@@ -39,6 +39,9 @@ jobs:
           persist-credentials: false
       - name: mise
         uses: ./.depot/actions/setup-mise
+      - name: bun install (packages/theme)
+        working-directory: packages/theme
+        run: bun install --frozen-lockfile
       - name: bun install
         run: bun install --frozen-lockfile
       # Alchemy's state lives in a versioned state-store Worker on the

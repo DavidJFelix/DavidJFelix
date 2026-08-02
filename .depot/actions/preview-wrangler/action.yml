@@ -39,6 +39,9 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: bun install (packages/theme)
+      shell: bash
+      run: cd "$GITHUB_WORKSPACE/packages/theme" && bun install --frozen-lockfile
     - name: bun install
       shell: bash
       run: bun install --frozen-lockfile

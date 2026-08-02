@@ -17,11 +17,13 @@ overrides moved into package.json (djf.io's rolldown pin, f311x's alchemy/effect
 MCP SDK dedupe pin, with rationale comments preserved in each app's `bunfig.toml`), and every
 project gained a `bunfig.toml` setting `minimumReleaseAge = 86400` -- bun's release-age cooldown is
 off by default and not inherited, so the per-project file is what keeps the supply-chain cooldown
-pnpm used to enforce. One behavioral difference worth knowing: bun installs a `file:` dependency's
-devDependencies where pnpm pack-installed without them, so consuming apps carry a nested copy of the
-theme package's dev tooling -- verified harmless (all four React consumers pass e2e against built
-apps; bundles carry a single React) but it is the first thing to check if a theme-consuming app
-misbehaves. All 27 Depot workflows and the three composite actions now run
+pnpm used to enforce. One behavioral difference worth knowing: bun materializes a `file:` dependency
+as per-file symlinks into its source directory where pnpm pack-copied it, so the theme package's own
+imports resolve against `packages/theme/node_modules` and the package must be installed before a
+consumer typechecks, builds, or tests -- the session hook, root aggregators, and every consumer's CI
+job now install `packages/theme` first (the first preview cycle caught exactly this). All four React
+consumers pass their full Playwright e2e suites against built apps with a single React in the
+bundle. All 27 Depot workflows and the three composite actions now run
 `bun install --frozen-lockfile` and `bun x`; the session-start hook, preview/deploy `bin/` scripts,
 and app smoke scripts spawn bun; the pnpm pin left `.config/mise.toml`; and the tooling standard,
 AGENTS.md, and app docs were swept. The two legacy `workspaces/joy-of-react` trees keep pnpm

@@ -31,8 +31,11 @@ jobs:
           persist-credentials: false
       - name: mise
         uses: ./.depot/actions/setup-mise
-      - name: pnpm install
-        run: pnpm install --frozen-lockfile
+      - name: bun install (packages/theme)
+        working-directory: packages/theme
+        run: bun install --frozen-lockfile
+      - name: bun install
+        run: bun install --frozen-lockfile
       - name: astro build
         env:
           PUBLIC_SENTRY_DSN: ${{ vars.SENTRY_DSN_DAVIDJFELIX_COM }}
@@ -40,7 +43,7 @@ jobs:
           SENTRY_ORG: ${{ vars.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT_DAVIDJFELIX_COM }}
           PUBLIC_POSTHOG_KEY: ${{ vars.POSTHOG_KEY_DAVIDJFELIX_COM }}
-        run: pnpm exec astro build
+        run: bun x astro build
       - name: wrangler deploy
         uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
         with:

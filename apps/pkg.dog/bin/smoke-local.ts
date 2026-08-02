@@ -28,7 +28,7 @@ if (!existsSync(WORKER)) {
   process.exit(1)
 }
 
-// Spawn the wrangler binary directly (not via `pnpm exec`): killing the pnpm
+// Spawn the wrangler binary directly (not via `bun x`): killing the bun
 // wrapper does not cascade to wrangler/workerd, which would then outlive
 // teardown and keep holding the port. Worker entry, --assets, and compatibility
 // settings come from wrangler.toml, so this matches the deploy exactly.

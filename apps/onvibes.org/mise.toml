@@ -1,32 +1,32 @@
 # Canonical check tasks for this app. CI and automation discover checks here;
-# tasks delegate to package.json scripts. Assumes `pnpm install` has run.
+# tasks delegate to package.json scripts. Assumes `bun install` has run.
 
 [tasks.typecheck]
 description = "Type-check with astro check"
-run = "pnpm run typecheck"
+run = "bun run typecheck"
 # astro check and astro build both regenerate .astro/ types; serialize them
 # when both are scheduled (e.g. via the check umbrella task)
 wait_for = ["build"]
 
 [tasks.lint]
 description = "Lint with Oxlint + Biome"
-run = "pnpm run lint"
+run = "bun run lint"
 
 [tasks.format]
 description = "Check formatting (oxfmt; Biome for astro/svelte; Prettier for md/mdx)"
-run = "pnpm run format"
+run = "bun run format"
 
 [tasks."format:fix"]
 description = "Apply formatting fixes"
-run = "pnpm run format:fix"
+run = "bun run format:fix"
 
 [tasks.test]
 description = "Unit tests with Vitest (passWithNoTests until the first test lands)"
-run = "pnpm run test"
+run = "bun run test"
 
 [tasks.build]
 description = "Build the site (Astro) and the deployable Flue worker"
-run = "pnpm run build"
+run = "bun run build"
 
 [tasks.smoke]
 description = "Smoke-test a local production boot (wrangler dev on the built Flue worker)"
@@ -36,7 +36,7 @@ run = "bun bin/smoke-local.ts"
 [tasks."test:e2e"]
 description = "E2E + visual-regression tests with Playwright (builds first)"
 depends = ["build"]
-run = "pnpm run test:e2e"
+run = "bun run test:e2e"
 
 [tasks.check]
 description = "Run all checks"

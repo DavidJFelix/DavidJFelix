@@ -41,9 +41,12 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: pnpm install
+    - name: bun install (packages/theme)
       shell: bash
-      run: pnpm install --frozen-lockfile
+      run: cd "$GITHUB_WORKSPACE/packages/theme" && bun install --frozen-lockfile
+    - name: bun install
+      shell: bash
+      run: bun install --frozen-lockfile
 
     - name: build
       shell: bash
@@ -93,7 +96,7 @@ runs:
     # mirrors entirely. Inlined from .depot/actions/setup-playwright (keep in
     # sync): nesting that action here breaks -- run steps inside a nested
     # composite do not inherit the job's default working-directory, so the
-    # version resolve and `pnpm exec` would run at the repo root and fail.
+    # version resolve and `bun x` would run at the repo root and fail.
     - name: resolve playwright version
       id: pw-version
       shell: bash
@@ -117,21 +120,21 @@ runs:
     - name: playwright install
       if: steps.pw-cache.outputs.cache-hit != 'true'
       shell: bash
-      run: pnpm exec playwright install chromium
+      run: bun x playwright install chromium
 
     - name: playwright install-deps
       shell: bash
       run: bun "$GITHUB_WORKSPACE/bin/install-playwright-deps.ts"
 
     # PREVIEW_URL set => playwright.config.ts skips the local boot and points at
-    # the deployed preview. `pnpm run` (not `mise run`) avoids the e2e task's
+    # the deployed preview. `bun run` (not `mise run`) avoids the e2e task's
     # local build dependency, which the preview path doesn't need.
     - name: screenshots
       id: e2e
       shell: bash
       env:
         PREVIEW_URL: ${{ steps.deploy.outputs.url }}
-      run: pnpm run test:e2e
+      run: bun run test:e2e
 
     - name: upload playwright report
       if: ${{ !cancelled() }}

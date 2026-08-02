@@ -15,8 +15,8 @@ Effect-native AI agent app on Cloudflare. Source of truth for scope and decision
 ## Getting started
 
 ```bash
-pnpm install
-pnpm dev
+bun install
+bun run dev
 ```
 
 App boots on `http://localhost:3000`.
@@ -25,15 +25,15 @@ App boots on `http://localhost:3000`.
 
 See [AGENTS.md](./AGENTS.md) for the full table.
 
-|                  |                                   |
-| ---------------- | --------------------------------- |
-| `pnpm dev`       | Vite dev server                   |
-| `pnpm build`     | Production build                  |
-| `pnpm deploy`    | Alchemy v2 deploy                 |
-| `pnpm ingest`    | Run `scripts/ingest.ts` under Bun |
-| `pnpm lint`      | Oxlint + Biome                    |
-| `pnpm typecheck` | `tsc --noEmit`                    |
-| `pnpm test`      | Vitest                            |
+|                     |                                   |
+| ------------------- | --------------------------------- |
+| `bun run dev`       | Vite dev server                   |
+| `bun run build`     | Production build                  |
+| `bun run deploy`    | Alchemy v2 deploy                 |
+| `bun run ingest`    | Run `scripts/ingest.ts` under Bun |
+| `bun run lint`      | Oxlint + Biome                    |
+| `bun run typecheck` | `tsc --noEmit`                    |
+| `bun run test`      | Vitest                            |
 
 ## Status
 

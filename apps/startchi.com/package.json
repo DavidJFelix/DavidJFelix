@@ -11,7 +11,7 @@
     "prepare": "panda codegen",
     "build": "vite build",
     "preview": "vite preview",
-    "deploy": "pnpm run build && wrangler deploy",
+    "deploy": "bun run build && wrangler deploy",
     "lint": "biome check . && oxlint",
     "lint:fix": "biome check --write . && oxlint --fix",
     "format": "oxfmt --check . && prettier --check --no-error-on-unmatched-pattern \"**/*.md\" \"**/*.mdx\"",
@@ -53,5 +53,10 @@
     "vite": "8.1.4",
     "vitest": "4.1.10",
     "wrangler": "4.110.0"
-  }
+  },
+  "trustedDependencies": [
+    "esbuild",
+    "sharp",
+    "workerd"
+  ]
 }

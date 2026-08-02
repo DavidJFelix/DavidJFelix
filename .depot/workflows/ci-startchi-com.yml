@@ -51,8 +51,11 @@ jobs:
           persist-credentials: false
       - name: mise
         uses: ./.depot/actions/setup-mise
-      - name: pnpm install
-        run: pnpm install --frozen-lockfile
+      - name: bun install (packages/theme)
+        working-directory: packages/theme
+        run: bun install --frozen-lockfile
+      - name: bun install
+        run: bun install --frozen-lockfile
       - name: typecheck
         run: mise run typecheck
   lint:
@@ -68,8 +71,11 @@ jobs:
           persist-credentials: false
       - name: mise
         uses: ./.depot/actions/setup-mise
-      - name: pnpm install
-        run: pnpm install --frozen-lockfile
+      - name: bun install (packages/theme)
+        working-directory: packages/theme
+        run: bun install --frozen-lockfile
+      - name: bun install
+        run: bun install --frozen-lockfile
       - name: lint
         run: mise run lint
   format:
@@ -85,8 +91,11 @@ jobs:
           persist-credentials: false
       - name: mise
         uses: ./.depot/actions/setup-mise
-      - name: pnpm install
-        run: pnpm install --frozen-lockfile
+      - name: bun install (packages/theme)
+        working-directory: packages/theme
+        run: bun install --frozen-lockfile
+      - name: bun install
+        run: bun install --frozen-lockfile
       - name: format
         run: mise run format
   build:
@@ -102,8 +111,11 @@ jobs:
           persist-credentials: false
       - name: mise
         uses: ./.depot/actions/setup-mise
-      - name: pnpm install
-        run: pnpm install --frozen-lockfile
+      - name: bun install (packages/theme)
+        working-directory: packages/theme
+        run: bun install --frozen-lockfile
+      - name: bun install
+        run: bun install --frozen-lockfile
       - name: build
         run: mise run build
   vitest:
@@ -119,8 +131,11 @@ jobs:
           persist-credentials: false
       - name: mise
         uses: ./.depot/actions/setup-mise
-      - name: pnpm install
-        run: pnpm install --frozen-lockfile
+      - name: bun install (packages/theme)
+        working-directory: packages/theme
+        run: bun install --frozen-lockfile
+      - name: bun install
+        run: bun install --frozen-lockfile
       - name: vitest
         run: mise run test
   smoke:
@@ -136,7 +151,10 @@ jobs:
           persist-credentials: false
       - name: mise
         uses: ./.depot/actions/setup-mise
-      - name: pnpm install
-        run: pnpm install --frozen-lockfile
+      - name: bun install (packages/theme)
+        working-directory: packages/theme
+        run: bun install --frozen-lockfile
+      - name: bun install
+        run: bun install --frozen-lockfile
       - name: smoke
         run: mise run smoke

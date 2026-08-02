@@ -25,7 +25,7 @@ if (!existsSync('dist/server/wrangler.json')) {
 // `astro preview` (which the Cloudflare adapter does not support and which would
 // 404 the on-demand /diag and /bugs routes). Point at the @astrojs/cloudflare
 // adapter's generated config (built into dist/server). Spawn the wrangler binary
-// directly (not through `pnpm run`): killing the pnpm wrapper does not cascade to
+// directly (not through `bun run`): killing the bun wrapper does not cascade to
 // the server, so it would outlive teardown and hold the port.
 const server = Bun.spawn(
   [

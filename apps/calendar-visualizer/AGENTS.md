@@ -19,7 +19,7 @@ The project displays a full year calendar (2025) with holiday highlighting.
 
 ## Development Guidelines
 
-- Use pnpm as the package manager
+- Use bun as the package manager and script runner
 - Follow Astro's island architecture patterns
 - Leverage Panda CSS utilities for styling
 - Maintain TypeScript type safety throughout

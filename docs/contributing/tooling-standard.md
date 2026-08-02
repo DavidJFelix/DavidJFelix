@@ -69,17 +69,29 @@ until a real Rust project exists.
 
 The ownership map above covers quality tooling; this covers the rest of what agents reach for.
 
-- **Runtime**: Node 26, pnpm, bun -- all managed via mise. `.config/mise.toml` declares tools and
+- **Runtime**: Node 26 and bun, both managed via mise. `.config/mise.toml` declares tools and
   version ranges; `.config/mise.lock` pins exact versions. Whenever you add a tool or bump a
   version, run `mise install` and commit the resulting `mise.lock` change in the same PR -- CI fails
   on a stale lockfile. (If `mise install` hits the GitHub releases API rate limit, set
   `GITHUB_TOKEN` -- a no-scope PAT works -- and retry. Do not skip the lockfile update.)
-- **JS/TS package manager**: `bun` is preferred when a project does not also need a Node toolchain.
-  `pnpm` is the accepted default for the Node ecosystem; `npm` projects should be converted unless
-  there's a good reason. `yarn` is banned. (Open question: whether Cloudflare Wrangler works
-  bun-only -- until confirmed, Wrangler projects stay on pnpm.)
-- **Lockfiles**: one per project. If a project has both `pnpm-lock.yaml` and `bun.lock`, keep
-  `pnpm-lock.yaml` and delete `bun.lock`.
+- **JS/TS package manager**: `bun` -- installer (`bun install`), script runner (`bun run`), and
+  local-bin runner (`bun x`). Node stays the toolchain runtime: vitest, Playwright, wrangler, and
+  the framework CLIs all run on the mise-pinned node, and `bun test` does not replace vitest. `npm`
+  projects should be converted unless there's a good reason; `yarn` and `pnpm` are retired (the two
+  legacy `workspaces/joy-of-react` trees still carry pnpm lockfiles and migrate when next touched).
+  Every project (apps and `packages/`) carries a `bunfig.toml` with `minimumReleaseAge = 86400` --
+  bun's release-age cooldown is off by default and the file is not inherited from parent
+  directories, so a new project must copy it or it silently loses the supply-chain cooldown pnpm
+  used to provide. Native build scripts are allowlisted per project via `trustedDependencies` in
+  package.json; note that declaring the field replaces bun's default trust list, so it must name
+  everything the project relies on (esbuild, workerd, sharp, and friends), not just additions. Also
+  note bun materializes a `file:` dependency as per-file symlinks into its source directory (pnpm
+  pack-copied it), so the package's own imports resolve against `packages/<name>/node_modules` --
+  the package must be installed before a consumer typechecks, builds, or tests. The session hook,
+  the root aggregators, and every consumer's CI job install `packages/` first for this reason; a
+  bare `mise run build` in an app after a fresh clone needs `bun install` in the package too.
+- **Lockfiles**: one per project (`bun.lock`). If a project has both `pnpm-lock.yaml` and
+  `bun.lock`, keep `bun.lock` and delete `pnpm-lock.yaml`.
 - **Python**: `uv`. `pip` is banned -- never invoke it directly. `poetry` is banned.
 - **Rust**: `cargo`. **Go**: `go mod`.
 - **Tasks & scripts**: prefer `mise` tasks. If a task is too complex for a mise task, write it as a

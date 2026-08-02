@@ -49,17 +49,20 @@ jobs:
           persist-credentials: false
       - name: mise
         uses: ./.depot/actions/setup-mise
-      - name: pnpm install
-        run: pnpm install --frozen-lockfile
+      - name: bun install (packages/theme)
+        working-directory: packages/theme
+        run: bun install --frozen-lockfile
+      - name: bun install
+        run: bun install --frozen-lockfile
       # Browsers and apt debs both restore from cache (the same keys the
       # preview run uses), so baselines regenerate in the exact environment
       # that verifies them.
       - name: setup playwright
         uses: ./.depot/actions/setup-playwright
       - name: build
-        run: pnpm run build
+        run: bun run build
       - name: playwright --update-snapshots
-        run: pnpm exec playwright test --update-snapshots
+        run: bun x playwright test --update-snapshots
       - name: git push
         working-directory: ${{ github.workspace }}
         env:

@@ -33,10 +33,13 @@ jobs:
           persist-credentials: false
       - name: mise
         uses: ./.depot/actions/setup-mise
-      - name: pnpm install
-        run: pnpm install --frozen-lockfile
+      - name: bun install (packages/theme)
+        working-directory: packages/theme
+        run: bun install --frozen-lockfile
+      - name: bun install
+        run: bun install --frozen-lockfile
       - name: panda codegen
-        run: pnpm exec panda codegen
+        run: bun x panda codegen
       # Detect the secret in a step-scoped env (ghalint 006 forbids secrets in
       # job env), so the sync below can skip when it is unset — keeping djf.io
       # deploys decoupled from the atproto credential.
@@ -78,7 +81,7 @@ jobs:
           SENTRY_ORG: ${{ vars.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT_DJF_IO }}
           PUBLIC_POSTHOG_KEY: ${{ vars.POSTHOG_KEY_DJF_IO }}
-        run: pnpm exec astro build
+        run: bun x astro build
       # Deploy the @astrojs/cloudflare adapter's build. The build emits the worker
       # + a resolved config at dist/server/wrangler.json (assets -> dist/client),
       # so deploy points at that, not the source wrangler.toml. The Sentry tunnel

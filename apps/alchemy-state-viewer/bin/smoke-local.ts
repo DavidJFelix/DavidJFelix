@@ -25,7 +25,7 @@ if (!existsSync('.svelte-kit/cloudflare/_worker.js')) {
   process.exit(1)
 }
 
-// Spawn the wrangler binary directly (not through `pnpm run`): killing the pnpm
+// Spawn the wrangler binary directly (not through `bun run`): killing the bun
 // wrapper does not cascade to the server, so it would outlive teardown and hold
 // the port. `--inspector-port 0` avoids clashing with anything else on 9229.
 // Blank the committed ALCHEMY_STATE_URL var so the gate exercises the

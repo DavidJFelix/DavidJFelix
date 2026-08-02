@@ -7,7 +7,7 @@
     "prepare": "panda codegen",
     "dev": "astro dev",
     "dev:worker": "flue dev --target cloudflare",
-    "build": "pnpm run build:astro && pnpm run build:worker",
+    "build": "bun run build:astro && bun run build:worker",
     "build:astro": "panda codegen && astro build",
     "build:worker": "flue build --target cloudflare && bun bin/patch-flue-wrangler.ts",
     "preview": "astro preview",
@@ -50,5 +50,14 @@
     "@vitest/coverage-v8": "4.1.10",
     "vitest": "4.1.10",
     "wrangler": "4.114.0"
+  },
+  "trustedDependencies": [
+    "@sentry/cli",
+    "esbuild",
+    "sharp",
+    "workerd"
+  ],
+  "overrides": {
+    "@modelcontextprotocol/sdk": "1.30.0"
   }
 }

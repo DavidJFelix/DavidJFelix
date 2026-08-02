@@ -39,8 +39,11 @@ jobs:
           persist-credentials: false
       - name: mise
         uses: ./.depot/actions/setup-mise
-      - name: pnpm install
-        run: pnpm install --frozen-lockfile
+      - name: bun install (packages/theme)
+        working-directory: packages/theme
+        run: bun install --frozen-lockfile
+      - name: bun install
+        run: bun install --frozen-lockfile
       # Alchemy's state lives in a versioned state-store Worker on the
       # account. The CLI refuses to create or upgrade it implicitly in CI, so
       # when an alchemy bump changes the store version the deploy fails with
@@ -57,7 +60,9 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.F311X_CLOUDFLARE_ACCOUNT_ID }}
           ALCHEMY_NO_TUI: '1'
           ALCHEMY_TELEMETRY_DISABLED: '1'
-        run: timeout -k 10s 180s pnpm exec alchemy cloudflare bootstrap || true
+        # The binary directly (not `bun x`): its node shebang keeps alchemy on
+        # the node runtime, matching its @effect/platform-node adapter.
+        run: timeout -k 10s 180s node_modules/.bin/alchemy cloudflare bootstrap || true
       # Builds happen inside `alchemy deploy` (Cloudflare.Vite resource), so
       # there is no separate build step. The wrapper script documents and
       # contains the one tolerated failure mode (CLI hang-after-success).

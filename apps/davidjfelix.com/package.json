@@ -34,5 +34,11 @@
     "@vitest/coverage-v8": "4.1.10",
     "vitest": "4.1.10",
     "wrangler": "4.114.0"
-  }
+  },
+  "trustedDependencies": [
+    "@sentry/cli",
+    "esbuild",
+    "sharp",
+    "workerd"
+  ]
 }

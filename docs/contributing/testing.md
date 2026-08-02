@@ -39,7 +39,7 @@ gate -- a `smoke` mise task, or a Playwright e2e suite that subsumes it (`apps/d
 - **Boot per stack** (reference scripts live in each app's `bin/smoke-local.ts`, bun): static Astro
   -> `astro preview`; Vite SPA -> `vite preview`; Cloudflare Worker / SSR -> `wrangler dev` on the
   built worker (workerd), because `*-preview` only serves static assets. Spawn the preview **binary
-  directly** (`node_modules/.bin/...`), not via `pnpm run` -- killing the pnpm wrapper doesn't
+  directly** (`node_modules/.bin/...`), not via `bun run` -- killing the runner wrapper doesn't
   cascade to the server, so it outlives teardown and holds the port.
 - **Knobs**: `SMOKE_*` env vars (URLs / routes / port) keep the same checks pointable at a local
   boot now and a per-PR preview deploy later.
@@ -57,5 +57,5 @@ gate -- a `smoke` mise task, or a Playwright e2e suite that subsumes it (`apps/d
   per-file `text` table renders empty -- cosmetic; `text-summary` and threshold enforcement work.)
 - **`mise run test` / `mise run check` at the repo root** fan the task out to every app
   (`bin/run-app-tasks.ts`), for a one-command "verify the whole monorepo" -- complementing the
-  per-app, path-filtered CI. They run each app with `CI=true` so pnpm's no-TTY deps-purge check
-  can't abort.
+  per-app, path-filtered CI. They run each app with `CI=true` so tools behave CI-faithfully (no
+  watch modes or TTY prompts).

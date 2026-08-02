@@ -1,25 +1,25 @@
 # Canonical check tasks for this package. CI and automation discover checks
-# here; tasks delegate to package.json scripts. Assumes `pnpm install` has run.
+# here; tasks delegate to package.json scripts. Assumes `bun install` has run.
 
 [tasks.typecheck]
 description = "Type-check with tsc"
-run = "pnpm run typecheck"
+run = "bun run typecheck"
 
 [tasks.lint]
 description = "Lint with Oxlint + Biome"
-run = "pnpm run lint"
+run = "bun run lint"
 
 [tasks.format]
 description = "Check formatting (oxfmt; Prettier for md)"
-run = "pnpm run format"
+run = "bun run format"
 
 [tasks."format:fix"]
 description = "Apply formatting fixes"
-run = "pnpm run format:fix"
+run = "bun run format:fix"
 
 [tasks.test]
 description = "Unit tests with Vitest"
-run = "pnpm run test"
+run = "bun run test"
 
 [tasks.check]
 description = "Run all checks"

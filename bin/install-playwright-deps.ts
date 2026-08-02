@@ -11,7 +11,7 @@
 // run's downloads become the next run's warm hit.
 //
 // Usage: bun bin/install-playwright-deps.ts
-// Run from the app directory (`pnpm exec` resolves the app's playwright).
+// Run from the app directory (`bun x` resolves the app's playwright).
 // PW_DEPS_CACHE_DIR overrides the default ~/.cache/playwright-apt; it must
 // match the path the workflow's cache step saves.
 
@@ -43,4 +43,4 @@ if (debs.length > 0) {
 await mkdir(join(cacheDir, 'partial'), {recursive: true})
 const aptConf = `Dir::Cache::Archives "${cacheDir}";\nAPT::Keep-Downloaded-Packages "true";\n`
 await $`echo ${aptConf} | sudo tee /etc/apt/apt.conf.d/99playwright-deps-cache`.quiet()
-await $`pnpm exec playwright install-deps chromium`
+await $`bun x playwright install-deps chromium`

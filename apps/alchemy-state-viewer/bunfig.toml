@@ -1,0 +1,11 @@
+# Bun install settings. minimumReleaseAge (seconds) is the supply-chain
+# cooldown: dependency resolution skips versions published within the last
+# 24 hours, matching the cooldown pnpm enforced by default. Bun does not
+# inherit bunfig.toml from parent directories, so every app carries its own
+# copy of this file.
+
+# trustedDependencies context: sharp arrives transitively but is never invoked
+# at runtime here, so its native build stays untrusted (blocked) on purpose.
+
+[install]
+minimumReleaseAge = 86400

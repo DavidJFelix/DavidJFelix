@@ -31,17 +31,20 @@ jobs:
           persist-credentials: false
       - name: mise
         uses: ./.depot/actions/setup-mise
-      - name: pnpm install
-        run: pnpm install --frozen-lockfile
-      # `pnpm install` already runs `panda codegen` via the prepare script, but
+      - name: bun install (packages/theme)
+        working-directory: packages/theme
+        run: bun install --frozen-lockfile
+      - name: bun install
+        run: bun install --frozen-lockfile
+      # `bun install` already runs `panda codegen` via the prepare script, but
       # keep it explicit so the build does not depend on install side effects.
       - name: panda codegen
-        run: pnpm exec panda codegen
+        run: bun x panda codegen
       - name: vite build
         env:
           VITE_PUBLIC_SENTRY_DSN: ${{ vars.SENTRY_DSN_FORZAMONICA_COM }}
           VITE_PUBLIC_POSTHOG_KEY: ${{ vars.POSTHOG_KEY_FORZAMONICA_COM }}
-        run: pnpm exec vite build
+        run: bun x vite build
       # The Cloudflare Vite plugin emits the resolved Worker config into dist/
       # and a redirect in .wrangler/deploy/, so a plain `wrangler deploy` picks
       # up the built output.

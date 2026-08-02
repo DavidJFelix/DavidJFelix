@@ -1,9 +1,10 @@
 [tools]
 node = "26"
-pnpm = "11"
-# bun runs the deploy/smoke scripts in apps/*/bin (repo rule: scripts are
-# bun, not bash). Declared here because CI's `mise install` runs at the repo
-# root and does not read app-level mise.toml [tools].
+# bun is the app package manager and script runner (and runs the deploy/smoke
+# scripts in apps/*/bin -- repo rule: scripts are bun, not bash). Declared here
+# because CI's `mise install` runs at the repo root and does not read app-level
+# mise.toml [tools]. Node stays the toolchain runtime for vitest, Playwright,
+# wrangler, and the framework CLIs.
 bun = "1"
 biome = "2"
 oxlint = "1"
@@ -75,7 +76,7 @@ dir = "{{config_root}}"
 
 # Monorepo aggregators: fan a task out to every app. Per-app CI still runs each
 # app's tasks on path-filtered triggers; these are the local "verify everything"
-# commands. They run each app with CI=true to dodge pnpm's no-TTY deps-purge abort.
+# commands. They run each app with CI=true so tools behave CI-faithfully.
 [tasks.test]
 description = "Run every project's unit tests (packages/ then apps/)"
 run = "bun bin/run-app-tasks.ts test"

@@ -28,7 +28,7 @@ export default defineConfig({
   webServer: PREVIEW_URL
     ? undefined
     : {
-        // Spawn the wrangler binary directly (not via `pnpm exec`) so Playwright's
+        // Spawn the wrangler binary directly (not via `bun x`) so Playwright's
         // teardown kills workerd instead of a wrapper that outlives it and holds
         // the port. `astro preview` can't serve the adapter's worker routes.
         command: `node_modules/.bin/wrangler dev -c dist/server/wrangler.json --ip 127.0.0.1 --port ${PORT}`,

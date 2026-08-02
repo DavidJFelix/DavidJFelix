@@ -30,12 +30,12 @@ jobs:
           persist-credentials: false
       - name: mise
         uses: ./.depot/actions/setup-mise
-      - name: pnpm install
-        run: pnpm install --frozen-lockfile
-      # `pnpm install` already runs `panda codegen` via the prepare script, but
+      - name: bun install
+        run: bun install --frozen-lockfile
+      # `bun install` already runs `panda codegen` via the prepare script, but
       # keep it explicit so the build does not depend on install side effects.
       - name: panda codegen
-        run: pnpm exec panda codegen
+        run: bun x panda codegen
       # Nuxt (Nitro cloudflare_module preset) emits .output/server/index.mjs and
       # .output/public, so `wrangler deploy` ships that output. The observability
       # config is baked here from the build env (nuxt.config.ts reads these), so
@@ -44,7 +44,7 @@ jobs:
         env:
           NUXT_PUBLIC_SENTRY_DSN: ${{ vars.SENTRY_DSN_PKG_DOG }}
           NUXT_PUBLIC_POSTHOG_KEY: ${{ vars.POSTHOG_KEY_PKG_DOG }}
-        run: pnpm exec nuxt build
+        run: bun x nuxt build
       - name: wrangler deploy
         uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
         with:

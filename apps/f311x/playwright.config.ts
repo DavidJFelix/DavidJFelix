@@ -34,7 +34,7 @@ export default defineConfig({
   webServer: PREVIEW_URL
     ? undefined
     : {
-        // Spawn the wrangler binary directly (not via `pnpm exec`) so
+        // Spawn the wrangler binary directly (not via `bun x`) so
         // Playwright's teardown kills workerd instead of a wrapper that
         // outlives it and holds the port -- the trap bin/smoke-local.ts notes.
         command: `node_modules/.bin/wrangler dev dist/server/server.js --port ${PORT} --ip 127.0.0.1 --assets dist/client --compatibility-date ${COMPAT_DATE} --compatibility-flags ${COMPAT_FLAGS}`,

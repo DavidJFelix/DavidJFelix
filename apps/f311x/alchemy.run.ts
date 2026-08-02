@@ -1,7 +1,7 @@
 // Alchemy v2 stack for f311x. Effect-native -- infrastructure and runtime
 // composed as Effects. See docs/projects/f311x/plan.md for the full layout.
 //
-// Run with `pnpm deploy` (which invokes `alchemy deploy`). This file is
+// Run with `bun run deploy` (which invokes `alchemy deploy`). This file is
 // loaded by the Alchemy CLI, not by `tsc`, so it lives outside the
 // project tsconfig include set.
 //

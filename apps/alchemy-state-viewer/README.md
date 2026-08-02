@@ -51,8 +51,8 @@ in alchemy itself.
 ## Development
 
 ```sh
-pnpm install
-pnpm run dev        # vite dev server on :3007
+bun install
+bun run dev        # vite dev server on :3007
 mise run check      # typecheck, lint, format, test, build
 mise run smoke      # boots the built worker in wrangler dev and probes it
 ```

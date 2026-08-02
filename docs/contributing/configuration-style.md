@@ -102,10 +102,10 @@ footguns.
 4. **TOML** -- comments, obvious types, readable for flat or sectioned config (`mise.toml`,
    `Cargo.toml`). Awkward for deep nesting; great for everything else.
 5. **JSON** -- ubiquitous and machine-friendly, but **no comments**. Acceptable only when the tool
-   truly speaks JSON alone -- `package.json` is the clear case (npm and pnpm reject comments). Don't
-   assume a `.json` extension means strict JSON, though: Oxlint (`.oxlintrc.jsonc`) and Renovate
-   (`renovate.json`) both accept JSONC, so annotate them freely rather than treating them as strict
-   JSON. Wanting to explain a field you cannot annotate is the signal you wanted JSONC.
+   truly speaks JSON alone -- `package.json` is the clear case (package managers reject comments).
+   Don't assume a `.json` extension means strict JSON, though: Oxlint (`.oxlintrc.jsonc`) and
+   Renovate (`renovate.json`) both accept JSONC, so annotate them freely rather than treating them
+   as strict JSON. Wanting to explain a field you cannot annotate is the signal you wanted JSONC.
 6. **YAML** -- last resort, only when a tool mandates it (GitHub Actions, some linters). YAML's
    significant whitespace, type-coercion surprises (the Norway problem: `no` -> `false`), and
    anchor/alias complexity make it the format most likely to bite. Never pick YAML when the tool

@@ -34,10 +34,11 @@ The fan-out today: all 10 per-app `ci-*.yml` workflows list the same shared root
 
 ## Task 2 — Caching (stop starting cold)
 
-- **Cache the pnpm store across CI.** mise tools are already cached (the `setup-mise` composite,
-  keyed on `mise.toml`/`mise.lock`), but every `pnpm install --frozen-lockfile` re-downloads from
-  cold — the biggest install-speed win. Add `actions/cache` on `pnpm store path`, keyed on
-  `**/pnpm-lock.yaml` (matching the repo's existing version-keyed cache convention).
+- **Cache the bun install cache across CI.** mise tools are already cached (the `setup-mise`
+  composite, keyed on `mise.toml`/`mise.lock`), but every `bun install --frozen-lockfile`
+  re-downloads from cold — the biggest install-speed win. Add `actions/cache` on
+  `~/.bun/install/cache`, keyed on `**/bun.lock` (matching the repo's existing version-keyed cache
+  convention).
 - **Fix the blocking web-session Playwright install.** `.claude/hooks/session-start.ts` _awaits_
   `playwright install --with-deps chromium` (~300 MB) on every cold web session, even though most
   sessions never run e2e — this is the "waiting FOREVER" pain. Options: make it non-blocking (kick

@@ -22,7 +22,7 @@ if (!existsSync('dist')) {
   process.exit(1)
 }
 
-// Spawn the preview binary directly (not through `pnpm run`): killing the pnpm
+// Spawn the preview binary directly (not through `bun run`): killing the bun
 // wrapper does not cascade to the server, so it would outlive teardown and hold
 // the port. Detached stdio keeps the server from holding this process's pipes
 // open, which would otherwise stall a `... | tail` pipeline after we exit.

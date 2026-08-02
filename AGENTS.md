@@ -5,7 +5,7 @@ from this file.
 
 ## Repository overview
 
-Personal monorepo containing web applications, exercises, and configuration. No repo-root pnpm
+Personal monorepo containing web applications, exercises, and configuration. No repo-root package
 workspace -- apps have independent lockfiles and dependencies, shared code ships from `packages/` as
 `file:` dependencies, and conflict-prone workspace trees live under `workspaces/`. Shared dev
 tooling is managed via mise (`.config/mise.toml`).
@@ -52,8 +52,9 @@ The non-negotiable rules, one line each. Follow the link before working in that 
 - **Scripts**: mise task first, then a bun script in `bin/`; bash only when trivial; `sed` and
   `perl` are banned everywhere, CI included --
   [scripting-style.md](docs/contributing/scripting-style.md)
-- **Packages**: pnpm (or bun where no Node toolchain is needed); `yarn` banned; `uv`, never `pip`;
-  one lockfile per project -- [tooling-standard.md](docs/contributing/tooling-standard.md)
+- **Packages**: bun (`bun install` / `bun run`; vitest and the node toolchain stay); `yarn` and
+  `pnpm` banned; `uv`, never `pip`; one lockfile per project --
+  [tooling-standard.md](docs/contributing/tooling-standard.md)
 - **Config**: prefer `.config/`; real-language config over JSONC over TOML over JSON over YAML --
   [configuration-style.md](docs/contributing/configuration-style.md)
 - **Lint findings**: fix them; never disable rules or exclude files to dodge one --

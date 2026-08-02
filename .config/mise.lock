@@ -77,6 +77,7 @@ url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/484416087"
 checksum = "sha256:12ecb833102c8bf8ab6ede7ecd5b6e6fc76e8af95b3ef356933a1f5330afc028"
 url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.5.5/biome-linux-x64"
 url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/484416085"
+provenance = "github-attestations"
 
 [tools.biome."platforms.linux-x64-baseline"]
 checksum = "sha256:12ecb833102c8bf8ab6ede7ecd5b6e6fc76e8af95b3ef356933a1f5330afc028"
@@ -435,6 +436,7 @@ url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/487422121"
 checksum = "sha256:bdb1db01bf0f757495405a59a09c5c287f315889dc98d3b14bc374b9fe43a0bf"
 url = "https://github.com/pnpm/pnpm/releases/download/v11.17.0/pnpm-linux-x64.tar.gz"
 url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/487422122"
+provenance = "github-attestations"
 
 [tools.pnpm."platforms.linux-x64-baseline"]
 checksum = "sha256:bdb1db01bf0f757495405a59a09c5c287f315889dc98d3b14bc374b9fe43a0bf"

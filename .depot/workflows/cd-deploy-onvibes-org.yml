@@ -11,6 +11,7 @@ on:
     branches: [main]
     paths:
       - 'apps/onvibes.org/**'
+      - 'packages/theme/**'
       - '.depot/workflows/cd-deploy-onvibes-org.yml'
 defaults:
   run:

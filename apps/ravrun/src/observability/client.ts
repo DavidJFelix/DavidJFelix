@@ -5,9 +5,8 @@ import {resolvePostHog, resolveSentry} from './config'
 // Starts client-side error monitoring (Sentry) and product analytics (PostHog),
 // each only when configured. Both ride a same-origin relay so ad/tracker blockers
 // can't drop them: Sentry envelopes tunnel through /bugs, PostHog traffic proxies
-// through /diag (both served by the worker, src/worker.ts). The SDKs are imported
-// dynamically so they load on demand. Invoked from src/main.tsx (the SPA entry,
-// browser-only).
+// through /diag (see src/routes/{bugs,diag}). The SDKs are imported dynamically
+// so they load on demand. Invoked from src/router.tsx, client-side only.
 //
 // Each integration is gated on its inlined VITE_PUBLIC_* literal so Vite
 // dead-code-eliminates the dynamic import -- and the SDK chunk -- in keyless

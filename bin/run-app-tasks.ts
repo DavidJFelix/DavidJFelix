@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
-// Runs one mise task across every app in apps/, in series, and prints a pass/
-// fail summary -- the engine behind the root `test` / `check` aggregators, so the
-// whole monorepo can be verified with a single command. Per-app CI still runs
-// each app's tasks on path-filtered triggers; this is the local "check
-// everything before I push" path.
+// Runs one mise task across every project in apps/ and packages/, in series,
+// and prints a pass/fail summary -- the engine behind the root `test` / `check`
+// aggregators, so the whole monorepo can be verified with a single command.
+// Per-project CI still runs each project's tasks on path-filtered triggers;
+// this is the local "check everything before I push" path.
 //
 // Sets CI=true for each sub-run so pnpm's verify-deps-before-run won't abort on a
 // drifted node_modules in a non-interactive shell
@@ -12,33 +12,37 @@
 import {existsSync, readdirSync} from 'node:fs'
 
 const task = process.argv[2] ?? 'test'
-const appsDir = 'apps'
+// packages/ first: apps' file: deps hard-link from there, so a broken package
+// surfaces under its own name before it fails every consumer.
+const groupDirs = ['packages', 'apps'].filter((dir) => existsSync(dir))
 
-const apps = readdirSync(appsDir, {withFileTypes: true})
-  .filter((entry) => entry.isDirectory() && existsSync(`${appsDir}/${entry.name}/mise.toml`))
-  .map((entry) => entry.name)
-  .sort()
+const projects = groupDirs.flatMap((groupDir) =>
+  readdirSync(groupDir, {withFileTypes: true})
+    .filter((entry) => entry.isDirectory() && existsSync(`${groupDir}/${entry.name}/mise.toml`))
+    .map((entry) => `${groupDir}/${entry.name}`)
+    .sort(),
+)
 
-const results: Array<{app: string; ok: boolean}> = []
-for (const app of apps) {
-  console.log(`\n=== ${app}: mise run ${task} ===`)
+const results: Array<{project: string; ok: boolean}> = []
+for (const project of projects) {
+  console.log(`\n=== ${project}: mise run ${task} ===`)
   const proc = Bun.spawn(['mise', 'run', task], {
-    cwd: `${appsDir}/${app}`,
+    cwd: project,
     env: {...process.env, CI: 'true'},
     stdout: 'inherit',
     stderr: 'inherit',
   })
-  results.push({app, ok: (await proc.exited) === 0})
+  results.push({project, ok: (await proc.exited) === 0})
 }
 
 console.log('\n=== summary ===')
-for (const result of results) console.log(`${result.ok ? 'ok  ' : 'FAIL'} ${result.app}`)
+for (const result of results) console.log(`${result.ok ? 'ok  ' : 'FAIL'} ${result.project}`)
 
 const failed = results.filter((result) => !result.ok)
 if (failed.length > 0) {
   console.error(
-    `\n${failed.length} app(s) failed: ${failed.map((result) => result.app).join(', ')}`,
+    `\n${failed.length} project(s) failed: ${failed.map((result) => result.project).join(', ')}`,
   )
   process.exit(1)
 }
-console.log(`\nall ${results.length} apps passed \`${task}\``)
+console.log(`\nall ${results.length} projects passed \`${task}\``)

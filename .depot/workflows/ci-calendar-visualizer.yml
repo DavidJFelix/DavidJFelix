@@ -11,6 +11,7 @@ on:
     branches: [main]
     paths:
       - 'apps/calendar-visualizer/**'
+      - 'packages/theme/**'
       - '.config/cspell.jsonc'
       - '.config/mise.toml'
       - '.config/mise.lock'
@@ -22,6 +23,7 @@ on:
   pull_request:
     paths:
       - 'apps/calendar-visualizer/**'
+      - 'packages/theme/**'
       - '.config/cspell.jsonc'
       - '.config/mise.toml'
       - '.config/mise.lock'

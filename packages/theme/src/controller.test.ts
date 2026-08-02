@@ -1,5 +1,5 @@
 import {expect, test, vi} from 'vitest'
-import {createThemeController} from './theme-controller'
+import {createThemeController} from './controller'
 
 // Deterministic matchMedia stand-in: tests flip `prefersDark` and dispatch the
 // change listeners the controller registered, mirroring a live OS switch.
@@ -80,6 +80,18 @@ test('reads a persisted explicit mode', () => {
 test('treats an invalid persisted value as system', () => {
   setup()
   localStorage.setItem('theme', 'blue')
+  const controller = createThemeController()
+  expect(controller.getState().mode).toBe('system')
+  controller.destroy()
+})
+
+test('denied storage access reads as system', () => {
+  setup()
+  vi.stubGlobal('localStorage', {
+    getItem: () => {
+      throw new Error('denied')
+    },
+  })
   const controller = createThemeController()
   expect(controller.getState().mode).toBe('system')
   controller.destroy()

@@ -5,8 +5,9 @@ type ThemeMode = 'light' | 'dark' | 'system'
 
 // Cycle order: each press moves to the next mode, so all three states stay
 // reachable from a single button (system is never a dead end). Mirrors
-// apps/f311x/src/theme/theme-toggle.tsx's semantics for the repo-wide
-// theme-switcher contract.
+// packages/theme's NEXT_THEME_MODE semantics for the repo-wide
+// theme-switcher contract (this app theme-switches via @nuxtjs/color-mode,
+// so it does not consume the package).
 const NEXT_MODE: Record<ThemeMode, ThemeMode> = {
   light: 'dark',
   dark: 'system',

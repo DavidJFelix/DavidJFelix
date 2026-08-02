@@ -1,6 +1,8 @@
 // Pre-paint scheme bootstrap: applies the persisted (or OS) color scheme to
 // <html> before first paint so a themed page never flashes the wrong scheme.
-// The root document ships it through ScriptOnce, so it executes while the
+// Consumers ship it as the first inline script in the document -- TanStack
+// apps through ScriptOnce (SPA-mode shells are prerendered at build), Astro
+// apps through an is:inline script with set:html -- so it executes while the
 // initial HTML is parsing and never re-runs on hydration or SPA navigation.
 //
 // applyInitialTheme is authored as a real function so the type checker, linter,
@@ -46,7 +48,7 @@ export function applyInitialTheme(options: {
     root.style.colorScheme = resolvedScheme
     // The raw mode rides along as a data attribute so tri-state UI (the toggle
     // icons) can be styled by CSS alone, before any framework hydrates.
-    root.setAttribute('data-theme-mode', mode)
+    root.dataset.themeMode = mode
 
     if (options.themeColors !== undefined) {
       let themeColorMeta = document.querySelector('meta[name="theme-color"]')

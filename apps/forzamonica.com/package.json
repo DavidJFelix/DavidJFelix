@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@ark-ui/react": "^5.37.2",
+    "@davidjfelix/theme": "file:../../packages/theme",
     "@fontsource-variable/karla": "~5.2.8",
     "@fontsource-variable/newsreader": "~5.2.10",
     "@sentry/cloudflare": "^10.60.0",

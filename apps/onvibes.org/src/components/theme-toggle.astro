@@ -88,82 +88,10 @@ const monitorVisibility = css({display: 'none', '[data-theme-mode=system] &': {d
 </button>
 
 <script>
-  import * as z from 'zod/mini'
+  import {bindThemeToggle} from '@davidjfelix/theme/toggle'
 
-  // The repo theming contract's storage schema (see
-  // docs/projects/theme-switcher-unification/plan.md): raw mode strings,
-  // anything invalid parses to system. The pre-paint head script's literal
-  // check is this schema's compiled twin -- it cannot import anything.
-  const themeModeSchema = z.catch(z.enum(['light', 'dark', 'system']), 'system')
-
-  // Plain DOM TS, not a framework component -- the toggle is the only
-  // interactive bit on an otherwise static page. Mirrors the contract in
-  // docs/projects/theme-switcher-unification/plan.md and the typed bootstrap
-  // this pairs with, apps/f311x/src/theme/theme-bootstrap.ts (that one runs
-  // pre-paint via a stringified function; this one runs after hydration and
-  // only reacts to user/OS/cross-tab changes).
-  type ThemeMode = z.infer<typeof themeModeSchema>
-
-  const STORAGE_KEY = 'theme'
-  const NEXT: Record<ThemeMode, ThemeMode> = {light: 'dark', dark: 'system', system: 'light'}
-
+  // Behavior (mode cycling, labels, live OS tracking, cross-tab sync) lives in
+  // the package; this component owns only the markup and styling above.
   const toggle = document.querySelector<HTMLButtonElement>('#theme-toggle')
-
-  function currentMode(): ThemeMode {
-    return themeModeSchema.parse(document.documentElement.dataset.themeMode)
-  }
-
-  function resolveScheme(mode: ThemeMode): 'light' | 'dark' {
-    if (mode !== 'system') return mode
-    return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-  }
-
-  function apply(mode: ThemeMode) {
-    const resolved = resolveScheme(mode)
-    const root = document.documentElement
-    root.classList.remove('light', 'dark')
-    root.classList.add(resolved)
-    root.style.colorScheme = resolved
-    root.dataset.themeMode = mode
-
-    if (toggle) {
-      const label = `Switch to ${NEXT[mode]} theme`
-      toggle.setAttribute('aria-label', label)
-      toggle.setAttribute('title', label)
-    }
-  }
-
-  toggle?.addEventListener('click', () => {
-    const next = NEXT[currentMode()]
-    try {
-      localStorage.setItem(STORAGE_KEY, next)
-    } catch {
-      // Storage unavailable (private mode, quota) -- still apply in-memory.
-    }
-    apply(next)
-  })
-
-  // Live OS tracking: re-resolve while in system mode so the page follows the
-  // OS without a reload.
-  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-    if (currentMode() === 'system') apply('system')
-  })
-
-  // Cross-tab sync: another tab changed (or cleared) the stored choice. A
-  // storage event fires with key === null when the whole store is cleared.
-  window.addEventListener('storage', (event) => {
-    if (event.key !== null && event.key !== STORAGE_KEY) return
-    let stored: string | null = null
-    try {
-      stored = localStorage.getItem(STORAGE_KEY)
-    } catch {
-      // Storage unavailable -- fall back to system.
-    }
-    apply(themeModeSchema.parse(stored))
-  })
-
-  // The inline head script already applied the resolved scheme pre-paint;
-  // this just brings the toggle's label in sync since it is authored with a
-  // generic value (the resolved mode is not known until that script runs).
-  apply(currentMode())
+  if (toggle) bindThemeToggle(toggle)
 </script>

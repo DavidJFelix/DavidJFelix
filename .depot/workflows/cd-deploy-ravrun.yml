@@ -11,6 +11,7 @@ on:
     branches: [main]
     paths:
       - 'apps/ravrun/**'
+      - 'packages/theme/**'
       - '.depot/workflows/cd-deploy-ravrun.yml'
 defaults:
   run:

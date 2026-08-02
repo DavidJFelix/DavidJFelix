@@ -11,6 +11,7 @@ on:
     branches: [main]
     paths:
       - 'apps/forzamonica.com/**'
+      - 'packages/theme/**'
       - '.depot/workflows/cd-deploy-forzamonica-com.yml'
 defaults:
   run:

@@ -8,14 +8,9 @@ import {
   useState,
   useSyncExternalStore,
 } from 'react'
-import type {ThemeColorPair} from './theme-bootstrap'
-import {
-  type ResolvedColorScheme,
-  THEME_MODES,
-  type ThemeMode,
-  type ThemeState,
-  themeController,
-} from './theme-controller'
+import type {ThemeColorPair} from './bootstrap'
+import type {ResolvedColorScheme, ThemeMode, ThemeState} from './controller'
+import {THEME_MODES, themeController} from './controller'
 
 interface ThemeProviderProps {
   children: ReactNode
@@ -38,9 +33,9 @@ interface ThemeContextValue {
 // from, so hydration output is stable regardless of the visitor's persistence.
 const SERVER_STATE: ThemeState = {mode: 'system', resolvedColorScheme: 'light'}
 
-// Consumers import the mode vocabulary from here so the provider is the one
+// Consumers import the mode vocabulary from here so this binding is the one
 // app-facing module; the controller stays an implementation detail.
-export type {ResolvedColorScheme, ThemeMode} from './theme-controller'
+export {NEXT_THEME_MODE, type ResolvedColorScheme, type ThemeMode} from './controller'
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined)
 

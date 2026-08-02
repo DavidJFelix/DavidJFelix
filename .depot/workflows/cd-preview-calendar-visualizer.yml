@@ -17,6 +17,7 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - 'apps/calendar-visualizer/**'
+      - 'packages/theme/**'
       - '.depot/workflows/cd-preview-calendar-visualizer.yml'
       - '.depot/actions/preview-wrangler/**'
       - '.depot/actions/setup-playwright/**'

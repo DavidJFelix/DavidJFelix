@@ -1,13 +1,5 @@
+import {NEXT_THEME_MODE, useTheme} from '@davidjfelix/theme/react'
 import {css} from 'styled-system/css'
-import {type ThemeMode, useTheme} from '@/theme/theme-provider'
-
-// Cycle order: each press moves to the next mode, so all three states stay
-// reachable from a single button (system is never a dead end).
-const NEXT_MODE: Record<ThemeMode, ThemeMode> = {
-  light: 'dark',
-  dark: 'system',
-  system: 'light',
-}
 
 const buttonClass = css({
   display: 'inline-flex',
@@ -86,7 +78,8 @@ export function ThemeToggle() {
   // deterministic), so the label falls back to the generic action. Screen
   // readers query the label at interaction time, post-hydration, where it
   // names the concrete next mode.
-  const label = mode === undefined ? 'Toggle color theme' : `Switch to ${NEXT_MODE[mode]} theme`
+  const label =
+    mode === undefined ? 'Toggle color theme' : `Switch to ${NEXT_THEME_MODE[mode]} theme`
   return (
     <button
       type="button"
@@ -94,7 +87,7 @@ export function ThemeToggle() {
       title={label}
       className={buttonClass}
       onClick={() => {
-        setMode(NEXT_MODE[mode ?? 'system'])
+        setMode(NEXT_THEME_MODE[mode ?? 'system'])
       }}
     >
       <SunIcon />

@@ -1,4 +1,5 @@
 ---
+import {createThemeBootstrapScript} from '@davidjfelix/theme/bootstrap'
 import {css} from 'styled-system/css'
 import Analytics from '../components/Analytics.astro'
 import '../index.css'
@@ -21,6 +22,10 @@ const {title, description, bodyClass} = Astro.props
 const posthogEnabled = Boolean(import.meta.env.PUBLIC_POSTHOG_KEY)
 
 const bodyBase = css({bg: 'bg.canvas', color: 'text'})
+
+// Stringified at build time into the pre-paint inline script -- the only code
+// that can run before first paint.
+const themeBootstrapScript = createThemeBootstrapScript({storageKey: 'theme'})
 ---
 
 <html lang="en">
@@ -28,34 +33,12 @@ const bodyBase = css({bg: 'bg.canvas', color: 'text'})
     <!--
       Pre-paint theme bootstrap: applies the persisted (or OS) color scheme to
       <html> before first paint so the page never flashes the wrong scheme.
-      Literal and is:inline because Astro inline scripts cannot import build
-      output; this mirrors the typed function at
-      apps/f311x/src/theme/theme-bootstrap.ts (applyInitialTheme), stringified
-      there and hand-inlined here. Contract:
+      Generated at build time from @davidjfelix/theme's typed bootstrap
+      (packages/theme/src/bootstrap.ts). Contract:
       docs/projects/theme-switcher-unification/plan.md. Kept current after
       load by src/components/theme-toggle.astro.
     -->
-    <script is:inline>
-      ;(() => {
-        try {
-          const stored = localStorage.getItem('theme')
-          const mode = stored === 'light' || stored === 'dark' ? stored : 'system'
-          const resolved =
-            mode === 'system'
-              ? matchMedia('(prefers-color-scheme: dark)').matches
-                ? 'dark'
-                : 'light'
-              : mode
-          const root = document.documentElement
-          root.classList.remove('light', 'dark')
-          root.classList.add(resolved)
-          root.style.colorScheme = resolved
-          root.dataset.themeMode = mode
-        } catch {
-          /* storage/media failures fall through to the CSS defaults */
-        }
-      })()
-    </script>
+    <script is:inline set:html={themeBootstrapScript} />
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />

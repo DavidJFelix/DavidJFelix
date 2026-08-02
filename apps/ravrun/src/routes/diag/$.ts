@@ -1,19 +1,9 @@
-import {withSentry} from '@sentry/cloudflare'
-import {INGEST_PREFIX, postHogUpstream} from './lib/posthog-proxy'
-import {forwardEnvelope, SENTRY_TUNNEL_ROUTE} from './lib/sentry-tunnel'
+import {createFileRoute} from '@tanstack/react-router'
+import {postHogUpstream} from '../../lib/posthog-proxy'
 
-// ravrun is a static SPA; this worker exists only to host the same-origin
-// observability relay in front of the built assets -- the PostHog reverse-proxy
-// at /diag and the Sentry tunnel at /bugs -- so ad/tracker blockers can't drop
-// analytics/errors. Every other request is served straight from the ASSETS
-// binding (the built SPA, with single-page-application fallback for client
-// routes). withSentry captures unhandled errors thrown in the relay; both it and
-// the tunnel's project pin read VITE_PUBLIC_SENTRY_DSN -- inlined at build, the
-// same value the client uses -- and no-op until it's set.
-
-interface Env {
-  ASSETS: {fetch: (request: Request) => Promise<Response>}
-}
+// Reverse-proxies /diag/* to PostHog at request time so analytics ride this
+// first-party origin instead of *.posthog.com (which content blockers drop).
+// Runs in the worker; the client SDK is pointed here in src/observability/client.
 
 // Cap how long we wait on PostHog so a stalled upstream can't pin the worker
 // until the platform deadline; past this we abort and return a clean 504.
@@ -62,20 +52,10 @@ async function proxyToPostHog(request: Request): Promise<Response> {
   })
 }
 
-const handler = {
-  async fetch(request: Request, env: Env): Promise<Response> {
-    const {pathname} = new URL(request.url)
-    if (pathname === SENTRY_TUNNEL_ROUTE) {
-      return forwardEnvelope(request, {allowedDsn: import.meta.env.VITE_PUBLIC_SENTRY_DSN})
-    }
-    if (pathname === INGEST_PREFIX || pathname.startsWith(`${INGEST_PREFIX}/`)) {
-      return proxyToPostHog(request)
-    }
-    return env.ASSETS.fetch(request)
+export const Route = createFileRoute('/diag/$')({
+  server: {
+    handlers: {
+      ANY: ({request}) => proxyToPostHog(request),
+    },
   },
-}
-
-export default withSentry(
-  () => ({dsn: import.meta.env.VITE_PUBLIC_SENTRY_DSN, tracesSampleRate: 1}),
-  handler,
-)
+})

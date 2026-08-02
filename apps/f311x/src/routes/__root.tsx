@@ -1,9 +1,8 @@
+import {createThemeBootstrapScript, type ThemeColorPair} from '@davidjfelix/theme/bootstrap'
+import {ThemeProvider} from '@davidjfelix/theme/react'
 import {TanStackDevtools} from '@tanstack/react-devtools'
 import {createRootRoute, HeadContent, ScriptOnce, Scripts} from '@tanstack/react-router'
 import {TanStackRouterDevtoolsPanel} from '@tanstack/react-router-devtools'
-
-import {createThemeBootstrapScript, type ThemeColorPair} from '@/theme/theme-bootstrap'
-import {ThemeProvider} from '@/theme/theme-provider'
 import appCss from '../styles.css?url'
 
 // Navbar tint (iOS Safari's <meta name="theme-color">) for each resolved color

@@ -11,6 +11,7 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - 'apps/forzamonica.com/**'
+      - 'packages/theme/**'
       - '.depot/workflows/cd-preview-forzamonica-com.yml'
       - '.depot/actions/preview-wrangler/**'
       - '.depot/actions/setup-playwright/**'

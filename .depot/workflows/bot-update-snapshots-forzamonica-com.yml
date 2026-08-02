@@ -19,6 +19,7 @@ on:
     # one from firing on PRs that do not touch the app.
     paths:
       - 'apps/forzamonica.com/**'
+      - 'packages/theme/**'
       - '.depot/workflows/bot-update-snapshots-forzamonica-com.yml'
 concurrency:
   group: bot-update-snapshots-forzamonica-com-${{ github.event.pull_request.number }}

@@ -20,6 +20,7 @@ on:
     types: [opened, synchronize, reopened, closed]
     paths:
       - 'apps/onvibes.org/**'
+      - 'packages/theme/**'
       - '.depot/workflows/cd-preview-onvibes-org.yml'
       - '.depot/actions/preview-worker/**'
       - '.depot/actions/preview-worker-teardown/**'

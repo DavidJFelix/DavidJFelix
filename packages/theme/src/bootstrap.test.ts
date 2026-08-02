@@ -1,5 +1,5 @@
 import {expect, test, vi} from 'vitest'
-import {applyInitialTheme, createThemeBootstrapScript} from './theme-bootstrap'
+import {applyInitialTheme, createThemeBootstrapScript} from './bootstrap'
 
 let prefersDark = false
 
@@ -34,7 +34,7 @@ function setup({osPrefersDark = false}: {osPrefersDark?: boolean} = {}) {
   const root = document.documentElement
   root.classList.remove('light', 'dark')
   root.style.colorScheme = ''
-  root.removeAttribute('data-theme-mode')
+  delete root.dataset.themeMode
   document.querySelector('meta[name="theme-color"]')?.remove()
 }
 
@@ -46,7 +46,7 @@ test('resolves system against a dark OS preference', () => {
   expect(root.classList.contains('dark')).toBe(true)
   expect(root.classList.contains('light')).toBe(false)
   expect(root.style.colorScheme).toBe('dark')
-  expect(root.getAttribute('data-theme-mode')).toBe('system')
+  expect(root.dataset.themeMode).toBe('system')
 })
 
 test('a persisted explicit mode beats the OS preference', () => {
@@ -57,14 +57,14 @@ test('a persisted explicit mode beats the OS preference', () => {
   const root = document.documentElement
   expect(root.classList.contains('light')).toBe(true)
   expect(root.style.colorScheme).toBe('light')
-  expect(root.getAttribute('data-theme-mode')).toBe('light')
+  expect(root.dataset.themeMode).toBe('light')
 })
 
 test('an invalid persisted value falls back to system', () => {
   setup()
   localStorage.setItem('theme', 'blue')
   applyInitialTheme({storageKey: 'theme'})
-  expect(document.documentElement.getAttribute('data-theme-mode')).toBe('system')
+  expect(document.documentElement.dataset.themeMode).toBe('system')
 })
 
 test('creates and fills the theme-color meta when colors are given', () => {

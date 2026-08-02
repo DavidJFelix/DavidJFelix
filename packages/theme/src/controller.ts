@@ -1,6 +1,6 @@
-// The single client-side owner of the app's color-scheme state: the selected
+// The single client-side owner of an app's color-scheme state: the selected
 // mode (light/dark/system), its resolution against the OS preference, and its
-// persistence. Framework bindings (theme-provider.tsx) subscribe here rather
+// persistence. Framework bindings (react.tsx, toggle.ts) subscribe here rather
 // than holding parallel state.
 //
 // createThemeController is safe to call during SSR: without localStorage or
@@ -8,19 +8,11 @@
 // client it tracks live OS preference changes (matchMedia change) and other
 // tabs' choices (the storage event), so every open tab agrees.
 
-import * as z from 'zod/mini'
+import {type ResolvedColorScheme, type ThemeMode, themeModeSchema} from './schema'
 
-// The storage schema for the repo theming contract: the `theme` key holds one
-// of these raw strings -- never JSON, because the pre-paint bootstrap must
-// read it without parsing -- and anything else (absent, cleared, garbage)
-// parses to system. zod/mini keeps the client bundle cost to the schema used.
-// The bootstrap's self-contained literal check in theme-bootstrap.ts is this
-// schema's compiled twin; keep the two in agreement.
-const themeModeEnum = z.enum(['light', 'dark', 'system'])
-export const themeModeSchema = z.catch(themeModeEnum, 'system')
-
-export type ThemeMode = z.infer<typeof themeModeEnum>
-export type ResolvedColorScheme = 'light' | 'dark'
+// Consumers import the mode vocabulary from here (or from ./react, which
+// re-exports it) so app code never has to reach into ./schema directly.
+export {NEXT_THEME_MODE, type ResolvedColorScheme, THEME_MODES, type ThemeMode} from './schema'
 
 export interface ThemeState {
   mode: ThemeMode
@@ -37,8 +29,6 @@ export interface ThemeController {
 export interface ThemeControllerOptions {
   storageKey?: string
 }
-
-export const THEME_MODES: ThemeMode[] = [...themeModeEnum.options]
 
 function readStoredMode(storageKey: string): ThemeMode {
   // The schema's catch absorbs invalid values; the try/catch is only for

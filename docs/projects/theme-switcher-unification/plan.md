@@ -2,9 +2,9 @@
 
 ## Status
 
-**Active** (2026-07-30) -- PR 1 (parity, #390) merged; a follow-up PR expresses the storage schema
-with zod 4. PR 2 (extract a standalone package or packages) follows once the contract has proven
-itself in situ.
+**Active** (2026-08-01) -- PR 1 (parity, #390) and the zod schema follow-up merged; PR 2 extracted
+the hand-rolled core into `packages/theme`, consumed by the TanStack and Astro apps as a `file:`
+dependency. Remaining: design review of the first-pass dark palettes.
 
 ## Goal
 
@@ -104,24 +104,39 @@ New dark palettes (forzamonica.com, startchi.com, monicandavid.com, pkg.dog, onv
 calendar-visualizer) are deliberately conservative first passes -- flagged for design review, not
 final art.
 
-### PR 2 -- extraction (next)
+### PR 2 -- extraction (done 2026-08-01)
 
-- Extract the TanStack/Astro hand-rolled core into a standalone package (bootstrap + controller +
-  React adapter; Astro consumes the bootstrap + a vanilla binding). Candidate shape: a `workspaces/`
-  package published or file-referenced per app.
-- Svelte and Nuxt apps keep their ecosystem libraries, pinned to the contract by configuration; the
-  package only replaces code we would otherwise hand-maintain in five places.
-- The package exports the storage schema as the single source of truth. Since 2026-07-30 the schema
-  is zod 4 (`zod/mini` for tree-shaken client bundles):
-  `z.catch(z.enum(['light', 'dark', 'system']), 'system')`, duplicated per app until the extraction
-  lifts it. The pre-paint inline scripts keep their literal check by constraint (they cannot import
-  anything) -- each carries a comment naming it the schema's compiled twin. mode-watcher and
-  @nuxtjs/color-mode validate internally with the same semantics, so the Svelte apps carry no zod.
-- Decide `@pierre/theming` interop for revision.city (persistence adapter already isolates it).
+- [x] `packages/theme` (`@davidjfelix/theme`): raw-TS subpath exports -- `.` controller, `./schema`
+      (the zod storage schema, mode vocabulary, and toggle cycle order as the single source of
+      truth), `./bootstrap` (typed pre-paint function + inline-script generator), `./react`
+      (provider), and `./toggle` (a vanilla DOM binding consolidating the four hand-written Astro
+      toggle scripts). react and zod are peers; the package has its own lockfile and carries the
+      unit tests, with full coverage of the logic modules.
+- [x] Consumed via `file:../../packages/theme` by f311x, ravrun, startchi.com, forzamonica.com,
+      djf.io, onvibes.org, calendar-visualizer, and davidjfelix.com. Toggles, markup, and styling
+      stay app-owned. Every pre-paint inline script is generated at build time from the package --
+      ScriptOnce (TanStack), `<script is:inline set:html={...}>` (Astro) -- so no hand-synced
+      literal survives anywhere.
+- [x] Svelte and Nuxt apps keep their ecosystem libraries, pinned to the contract by configuration
+      (unchanged; they carry no zod).
+- [x] CI: `ci-theme.yml` gates the package; the eight consumers' ci, cd-preview, cd-deploy, and
+      snapshot-bot workflows add `packages/theme/**` to their paths filters.
+- ravrun migrated from a TanStack Router SPA to TanStack Start in SPA mode (David's call, 2026-08-02
+  review): the prerendered shell owns the document, so the theme bootstrap ships through ScriptOnce
+  like the other TanStack apps -- no index.html, no injection plugin. The observability relay moved
+  from the custom worker into Start server routes (`src/routes/{bugs,diag}`, the f311x pattern)
+  because Start's build-time prerender fetches through `vite preview`, which the Cloudflare plugin
+  points at the deployed worker -- a static-relay worker 404s there.
+- `@pierre/theming` interop for revision.city: deliberately deferred -- its persistence adapter
+  already isolates the dependency; revisit only if revision.city drops the Shiki theme catalog.
 
 ## Open questions for David
 
 - Dark palette art direction for forzamonica.com (pastel pigment ramp on dark paper) and the
   small-site templates -- current values are conservative placeholders.
 - ~~Should davidjfelix.com stay dark-only?~~ Answered 2026-07-29: no -- it has a color mode now.
-- PR 2 packaging: `workspaces/` tree with per-app `file:` deps vs published npm package.
+- ~~PR 2 packaging: `workspaces/` tree with per-app `file:` deps vs published npm package.~~
+  Answered 2026-08-01: a new `packages/` top level (shared code apps consume -- the opposite intent
+  of `workspaces/` isolation), consumed via `file:` deps so every app keeps its own lockfile and
+  contract changes land atomically across the fleet; publish to npm only if an external consumer
+  ever appears.

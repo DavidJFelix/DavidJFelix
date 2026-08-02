@@ -1,5 +1,5 @@
-// Reverse-proxy routing for PostHog (US cloud). The worker (src/worker.ts) serves
-// these under /diag on this domain so a content blocker that drops
+// Reverse-proxy routing for PostHog (US cloud). The on-demand /diag endpoint
+// (src/routes/diag) serves these on this domain so a content blocker that drops
 // *.posthog.com can't drop our analytics. PostHog splits traffic across two
 // upstreams: the SDK bundle and remote config load from the assets host; events,
 // flags, and the rest are ingestion/API traffic.

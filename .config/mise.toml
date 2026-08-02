@@ -60,7 +60,7 @@ dir = "{{config_root}}"
 
 [tasks.spell]
 description = "Spell-check repo-owned sources (cspell)"
-run = "cspell --config .config/cspell.jsonc --no-progress --dot 'apps/**' 'docs/**' 'bin/**' '*.md' '.agents/agents/**' '.config/**' '.github/**'"
+run = "cspell --config .config/cspell.jsonc --no-progress --dot 'apps/**' 'packages/**' 'docs/**' 'bin/**' '*.md' '.agents/agents/**' '.config/**' '.github/**'"
 dir = "{{config_root}}"
 
 [tasks."test:bin"]
@@ -77,11 +77,11 @@ dir = "{{config_root}}"
 # app's tasks on path-filtered triggers; these are the local "verify everything"
 # commands. They run each app with CI=true to dodge pnpm's no-TTY deps-purge abort.
 [tasks.test]
-description = "Run every app's unit tests"
+description = "Run every project's unit tests (packages/ then apps/)"
 run = "bun bin/run-app-tasks.ts test"
 dir = "{{config_root}}"
 
 [tasks.check]
-description = "Run every app's full check (typecheck, lint, format, test, build)"
+description = "Run every project's full check (packages/ then apps/)"
 run = "bun bin/run-app-tasks.ts check"
 dir = "{{config_root}}"

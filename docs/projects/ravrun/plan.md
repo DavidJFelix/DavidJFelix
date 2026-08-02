@@ -41,7 +41,9 @@ toward a goal race.
 
 ## Stack
 
-Vite + React + Tailwind, Cloudflare (static assets).
+TanStack Start (SPA mode -- prerendered shell, client-rendered routes) + React + Tailwind,
+Cloudflare (the Start server worker serves the shell and the observability relay in front of the
+static assets).
 
 ## Roadmap
 

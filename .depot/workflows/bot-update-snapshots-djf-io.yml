@@ -24,6 +24,7 @@ on:
     # one from firing on PRs that do not touch the app.
     paths:
       - 'apps/djf.io/**'
+      - 'packages/theme/**'
       - '.depot/workflows/bot-update-snapshots-djf-io.yml'
 concurrency:
   group: bot-update-snapshots-djf-io-${{ github.event.pull_request.number }}

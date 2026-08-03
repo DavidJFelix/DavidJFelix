@@ -36,7 +36,12 @@
         ".astro/**",
         ".nuxt/**",
         ".tanstack/**",
-        ".vinxi/**"
+        ".vinxi/**",
+        // The Cloudflare vite plugin writes .wrangler/deploy/config.json during
+        // build, and `vite preview` refuses to start without it. Only deploy/ --
+        // .wrangler/state/ is miniflare runtime state from the prerender step,
+        // not a build artifact.
+        ".wrangler/deploy/**"
       ]
     },
     "test": {

@@ -87,6 +87,14 @@ on the whole workspace because unaffected work resolves as a cache hit instead o
      `wrangler deploy`, so a cache hit would have shipped a stale or empty bundle to production.
      Turbo had been warning "no output files found for task X#build" the whole time; that warning
      means a correctness bug, not noise.
+
+     It took two passes to get the list right. The first fix covered the obvious build directories
+     and left `.wrangler/deploy/config.json` out -- a file the Cloudflare vite plugin writes during
+     build and that `vite preview` refuses to start without. The tell was that ravrun failed while
+     revision.city passed _in the same run_: revision.city's build was a cache miss (real build, so
+     the file existed) and ravrun's was a cache hit (restored without it). Same bug, different
+     directory. `.wrangler/state/` is deliberately excluded -- that is miniflare runtime state from
+     the prerender step, not a build artifact.
 - `CD Preview f311x` failed once and then passed, and **the failure was not from this work**:
   alchemy's shared Cloudflare state store reported schema v10 while the repo's exact-pinned
   `alchemy@2.0.0-beta.61` expects v7, and the store's HTTP API 500'd during reconciliation, before

@@ -49,7 +49,7 @@ on the whole workspace because unaffected work resolves as a cache hit instead o
 ## Verified locally
 
 - Full `mise run check` green across all 13 projects (64 tasks).
-- Warm re-run: **64/64 cached, 209ms** (`FULL TURBO`) against ~1m35s cold.
+- Warm re-run: **64/64 cached, 286ms** (`FULL TURBO`) against ~2m11s cold.
 - Touching `packages/theme` invalidates exactly the theme plus its 8 consumers; the other apps stay
   cached. That is the relationship 27 workflow files used to assert by hand.
 - `bun install` at the workspace root still runs each app's `prepare` (panda codegen, svelte-kit

@@ -17,7 +17,7 @@ workspace links.
 Turborepo (pinned via mise) now owns orchestration: `mise run check` and CI run the same task graph,
 and what executes is decided by the dependency graph and the cache rather than by path lists. A
 `packages/theme` edit invalidates exactly the theme and its 8 consumers; a warm full check is 64/64
-cached in 209ms against ~1m35s cold. `smoke` and `test:e2e` are declared `cache: false` -- the gates
+cached in 286ms against ~2m cold. `smoke` and `test:e2e` are declared `cache: false` -- the gates
 that must actually run, never replay a hash hit.
 
 **45 workflow files became 15.** Thirteen per-project `ci-*.yml` collapsed into one

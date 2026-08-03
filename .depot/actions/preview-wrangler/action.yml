@@ -4,8 +4,9 @@ description: >-
   version via `wrangler versions upload --preview-alias pr-<N>` (deterministic
   preview URL, no production routes touched, nothing to tear down), smokes the
   preview URL, runs the app's Playwright screenshot suite against it, and upserts
-  a sticky PR comment. The caller runs checkout + setup-mise first; this action
-  installs deps and does the rest in the app directory.
+  a sticky PR comment. The caller runs checkout + setup-web-apps first (one
+  bun install at the workspace root covers every app and package); this action
+  does the rest in the app directory.
 
 inputs:
   worker-name:
@@ -39,13 +40,6 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: bun install (packages/theme)
-      shell: bash
-      run: cd "$GITHUB_WORKSPACE/packages/theme" && bun install --frozen-lockfile
-    - name: bun install
-      shell: bash
-      run: bun install --frozen-lockfile
-
     - name: build
       shell: bash
       run: mise run build
@@ -141,7 +135,7 @@ runs:
         # glob matches the single app dir that produced a report in this fresh
         # checkout (only the app under test runs e2e).
         name: playwright-report-${{ inputs.worker-name }}
-        path: apps/*/playwright-report/
+        path: workspaces/web-apps/apps/*/playwright-report/
         retention-days: 14
 
     # Per-stage outcomes let the comment keep linking the deployed app when only

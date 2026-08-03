@@ -24,6 +24,7 @@ on:
       - '.depot/workflows/cd-preview-onvibes-org.yml'
       - '.depot/actions/preview-worker/**'
       - '.depot/actions/preview-worker-teardown/**'
+      - '.depot/actions/setup-web-apps/**'
       - '.depot/actions/setup-playwright/**'
       - 'bin/**'
 # One preview per PR; a new push cancels an in-flight preview. A close event
@@ -50,8 +51,8 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: mise
-        uses: ./.depot/actions/setup-mise
+      - name: setup web-apps
+        uses: ./.depot/actions/setup-web-apps
       - name: preview
         uses: ./.depot/actions/preview-worker
         with:

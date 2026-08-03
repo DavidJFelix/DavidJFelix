@@ -6,18 +6,45 @@
 
 # Root package.json "overrides" context (bun applies overrides from the
 # workspace root only, so the per-app pins live there):
-# - rolldown is pinned to 1.1.4 for djf.io -- 1.1.5 drops vite-ignored
-#   external dynamic imports (the pagefind loader in Search.astro).
-# - the @distilled.cloud pins track alchemy 2.0.0-beta.54 for f311x (the
-#   release-age cooldown rejects day-of releases); @effect/platform-node-shared
-#   is capped at beta.94 because effect beta.97 removed Schedule.either, which
-#   alchemy 2.0.0-beta.61 still calls in its state store and Cloudflare
-#   resources. Lift the cap when alchemy catches up to the new API.
+# - rolldown is pinned to 1.2.1 to converge every consumer on one version
+#   (alchemy pins 1.1.5 exactly, nuxt 4.5.1 wants ^1.2.0). It was held at
+#   1.1.4 from 2026-07 to 2026-08-03 for djf.io's pagefind loader, but that
+#   hold-back was misdiagnosed: the loader broke again ON 1.1.4, so no
+#   rolldown version was ever the trigger. Search.astro no longer routes the
+#   pagefind import through Vite's preload helper, so the bundler can't break
+#   it and this pin is free to move on its own merits. Verify any change with
+#   djf.io's e2e run under CI=1 -- playwright's reuseExistingServer is on
+#   without it and will silently test a stale build against the old server.
+# - the @distilled.cloud pins track alchemy 2.0.0-beta.67 for f311x (the
+#   release-age cooldown rejects day-of releases), so they move with every
+#   alchemy bump -- alchemy depends on them by exact version, and a stale pin
+#   silently holds the old ones under the new alchemy.
+# - effect and @effect/platform-node-shared are pinned to the same version as
+#   f311x's direct effect/@effect/platform-node so exactly ONE physical effect
+#   lands in the tree; mixed copies are the prime suspect for the SchemaAST
+#   TypeError chased on 2026-06-11. effect is the workspace's only unpinned
+#   route to a second copy: @standard-community/standard-{json,openapi}
+#   (onvibes.org, via @flue/runtime) take it as an optional peer, and without
+#   the pin bun resolves them to whatever effect the lockfile last saw.
+#   This is a floor, not a cap -- the beta.94 cap was for effect beta.97
+#   removing Schedule.either, which alchemy beta.62 migrated onto the new
+#   Schedule API, and beta.67 now requires effect >= 4.0.0-beta.100.
 # - @modelcontextprotocol/sdk is pinned so @earendil-works/pi-ai dedupes to ONE
 #   physical copy in onvibes.org. pi-ai's API-transport registry is module
 #   state, and @flue/runtime and the `agents` SDK declare peer ranges that can
 #   otherwise split it (#339 did) -- src/app.test.ts asserts the invariant.
 #   Drop once the two peers agree without help.
+
+# Direct dependencies that exist only to pin resolution, not because the app
+# imports something new:
+# - pkg.dog declares h3 ^1.15.11 even though nuxt already brings it. f311x's
+#   @tanstack/start-server-core depends on "h3-v2": "npm:h3@2.0.1-rc.20", and
+#   bun hoists that alias under its REAL name, so a bare `h3` in this shared
+#   workspace could resolve to v2. Nuxt's generated .nuxt/tsconfig.json mapped
+#   h3 there while nitro 2.13.4 bundled v1, so pkg.dog's server routes
+#   typechecked against v2 (no toWebRequest) and ran against v1. The direct
+#   dep makes types and runtime agree. Drop it when nothing pulls an aliased
+#   h3 v2, or when nitro itself moves to v2 and the routes move with it.
 
 [install]
 minimumReleaseAge = 86400

@@ -14,9 +14,11 @@ ones under the new alchemy rather than failing loudly.
 `{name: 'f311x.com', aliases: ['www.f311x.com']}`. `aliases` is the behavior-preserving translation:
 both hostnames keep serving the Worker, where `redirects` would have 301'd `www` instead.
 `workersDev` still defaults to enabled, so the prod smoke test's `*.workers.dev` target and the
-per-PR preview URLs are unaffected. This breakage typechecks only under a config that includes
-`alchemy.run.ts`, which the app tsconfig excludes -- it was caught by pointing tsc at the file
-directly, and the exclusion remains a gap for the next bump.
+per-PR preview URLs are unaffected. The breakage reached CI green because `alchemy.run.ts` sat in
+the app tsconfig's `exclude`, so `bun run typecheck` never saw the deploy-critical file -- only a
+real deploy would have caught it. That exclusion is now gone: the file typechecks with the same
+compiler options it already passed under, matching how `github.ts`, the other CLI-loaded stack file,
+has always been treated. Reintroducing the old array form now fails `bun run typecheck`.
 
 A new `effect` override pins the whole workspace to one physical copy. Bumping f311x's effect alone
 left a second one behind: `@standard-community/standard-{json,openapi}` (onvibes.org, via

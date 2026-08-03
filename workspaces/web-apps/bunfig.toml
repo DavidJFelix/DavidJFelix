@@ -6,8 +6,13 @@
 
 # Root package.json "overrides" context (bun applies overrides from the
 # workspace root only, so the per-app pins live there):
-# - rolldown is pinned to 1.1.4 for djf.io -- 1.1.5 drops vite-ignored
-#   external dynamic imports (the pagefind loader in Search.astro).
+# - rolldown is pinned to 1.2.1 to converge every consumer on one version
+#   (alchemy pins 1.1.5 exactly, nuxt 4.5.1 wants ^1.2.0). This was a
+#   hold-back at 1.1.4 until 2026-08-03: 1.1.5 dropped vite-ignored external
+#   dynamic imports from chunk metadata, so Astro inlined djf.io's pagefind
+#   loader and leaked __VITE_PRELOAD__ into every page. Fixed by 1.2.1 --
+#   src/components/Search.e2e.test.ts is the gate, and the built HTML keeps
+#   the search script external with no __VITE_PRELOAD__ anywhere in dist/.
 # - the @distilled.cloud pins track alchemy 2.0.0-beta.67 for f311x (the
 #   release-age cooldown rejects day-of releases), so they move with every
 #   alchemy bump -- alchemy depends on them by exact version, and a stale pin

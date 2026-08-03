@@ -134,11 +134,27 @@ const results = css({
     // Pagefind's bundle is emitted only by `astro build`, so it never exists
     // under `astro dev`; load it on first use and cache the result (null if it
     // is missing, which is the dev case).
+    //
+    // The import goes through `new Function` to keep it out of the bundler
+    // entirely. A plain `import(/* @vite-ignore */ url)` is still wrapped in
+    // Vite's preload helper, which leaves a `__VITE_PRELOAD__` placeholder that
+    // Vite only substitutes in emitted chunks. Astro decides whether to inline
+    // a script chunk with `shouldInlineScriptChunk`, and its guard against
+    // exactly this reads `output.dynamicImports` -- which never lists a
+    // vite-ignored import. So this chunk looked import-free, came in under the
+    // 4096-byte inline limit, got folded into every page's HTML, and shipped
+    // the raw placeholder: a ReferenceError that killed search site-wide (twice
+    // -- 2026-07 blamed on rolldown 1.1.5, again on 1.1.4 by 2026-08).
+    // Hiding the import from static analysis makes the chunk genuinely
+    // import-free, so inlining it is correct and search survives either way.
+    // The site sends no CSP; this needs `unsafe-eval` if one is ever added.
+    const importModule = new Function('specifier', 'return import(specifier)') as (
+      specifier: string,
+    ) => Promise<Pagefind>
     let pagefind: Promise<Pagefind | null> | undefined
     const loadPagefind = () => {
       if (!pagefind) {
-        const url = '/pagefind/pagefind.js'
-        pagefind = import(/* @vite-ignore */ url).then(
+        pagefind = importModule('/pagefind/pagefind.js').then(
           (module: Pagefind) => module,
           () => null,
         )

@@ -136,12 +136,14 @@ Repo plumbing. Real work, but lower priority than moving the apps forward.
 
 ### [Depot Caching Strategy](./projects/depot-caching-strategy/plan.md)
 
-Replace hand-maintained CI path filters with graph-computed work selection now that shared code is
-real (`packages/theme` sits in 27 workflow filters by hand): root bun workspace, Turborepo task
-graph, Depot Cache as the remote cache. Collapses the thirteen per-project CI workflows into one
-turbo-driven workflow. Supersedes the path-filter half of CI Pipeline Efficiency when adopted.
+Replaced hand-maintained CI path filters with graph-computed work selection. Executed 2026-08-02:
+`apps/` + `packages/` moved into one bun workspace at `workspaces/web-apps/`, Turborepo owns the
+task graph and caching, and 45 workflow files became 15 (one CI workflow plus affected-driven
+preview/deploy matrices). Supersedes the path-filter half of CI Pipeline Efficiency. Remaining:
+verify Depot Cache credentials, `--affected` on Depot checkouts, and the first preview/deploy
+cycles.
 
-**Status**: Active · gate: David's sign-off on reversing the no-root-workspace rule
+**Status**: Active (post-merge verification)
 
 ### [CI Pipeline Efficiency](./projects/ci-pipeline-efficiency/plan.md)
 

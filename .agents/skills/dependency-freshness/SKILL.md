@@ -82,9 +82,9 @@ Each PR body MUST include:
 
 ## Verification
 
-- [x] `pnpm lint` (apps/djf.io) — passed
-- [x] `pnpm test:unit` (apps/djf.io) — passed
-- [ ] `pnpm build` (apps/djf.io) — **failed** (see below)
+- [x] `mise run check` (workspaces/web-apps) — passed
+- [x] `bun run test` (djf.io) — passed
+- [ ] `bun run build` (djf.io) — **failed** (see below)
 
 <failure logs in `<details>`>
 
@@ -111,7 +111,7 @@ Open a separate follow-up issue (assigned to `@DavidJFelix`, following the human
 ## Discovery details
 
 - Treat all `package.json` files outside `node_modules`, `dist`, `build`, `.next`, `.astro` as in-scope.
-- Currently in scope: `apps/djf.io`, `apps/calendar-visualizer`, `apps/davidjfelix.com`, `apps/ravrun`, `Joy-of-React/project-wordle`, `Joy-of-React/project-toast`.
+- Currently in scope: the `workspaces/web-apps` bun workspace (one `bun.lock` covering every app and package), `Joy-of-React/project-wordle`, `Joy-of-React/project-toast`.
 - `Joy-of-React/*` projects are learning exercises — they are in scope for freshness but a failing verification there should be a low-priority issue, not a blocker.
 
 ## Lockfile hygiene

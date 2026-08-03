@@ -29,7 +29,8 @@
 
 Build-time checks (typecheck, lint, unit, build) can't catch an app that builds green but is broken
 at runtime (f311x shipped that way on 2026-06-11). Every **deployed** app gets a canonical runtime
-gate -- a `smoke` mise task, or a Playwright e2e suite that subsumes it (`apps/djf.io`):
+gate -- a `smoke` script (run through turbo, never cached), or a Playwright e2e suite that subsumes
+it (`djf.io`):
 
 - **Contract**: `mise run smoke` (declares `depends = ["build"]`) boots the app's _production build_
   locally and asserts the critical path serves -- each key route returns 200 as a complete document
@@ -45,7 +46,7 @@ gate -- a `smoke` mise task, or a Playwright e2e suite that subsumes it (`apps/d
   boot now and a per-PR preview deploy later.
 - **CI**: a `smoke` job per deployed app, mirroring the `vitest` job.
 - **e2e** (Playwright, `*.e2e.test.ts`) is the heavier browser-based layer for hydration /
-  interaction / visual regression; optional per app, and a superset of smoke (see `apps/djf.io`).
+  interaction / visual regression; optional per app, and a superset of smoke (see `djf.io`).
 
 ## Coverage and the monorepo aggregator
 
@@ -56,6 +57,6 @@ gate -- a `smoke` mise task, or a Playwright e2e suite that subsumes it (`apps/d
   calendar-visualizer and forzamonica.com follow the same recipe. (Under Astro's `getViteConfig` the
   per-file `text` table renders empty -- cosmetic; `text-summary` and threshold enforcement work.)
 - **`mise run test` / `mise run check` at the repo root** fan the task out to every app
-  (`bin/run-app-tasks.ts`), for a one-command "verify the whole monorepo" -- complementing the
-  per-app, path-filtered CI. They run each app with `CI=true` so tools behave CI-faithfully (no
-  watch modes or TTY prompts).
+  (`bin/turbo-run.ts`), for a one-command "verify the whole monorepo" -- complementing the per-app,
+  path-filtered CI. They run each app with `CI=true` so tools behave CI-faithfully (no watch modes
+  or TTY prompts).

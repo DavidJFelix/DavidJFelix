@@ -1,147 +1,102 @@
 # depot-caching-strategy
 
 Replace hand-maintained CI path filters with graph-computed work selection and content-addressed
-caching: a root bun workspace, Turborepo as the task graph, and Depot Cache as the remote cache.
-Driven by two forces David named: shared code is now real (`packages/theme` landed 2026-08-01), and
-the path-filter surface (45 workflow files, ~4,100 lines) is fragile -- a forgotten path is a silent
-false green.
+caching: one bun workspace at `workspaces/web-apps/`, Turborepo as the task graph, and Depot Cache
+as the remote cache. Executed 2026-08-02; what remains is post-merge verification on Depot.
 
-## Why now
+## Why
 
-The CI model assumes every project is independent: each `ci-<app>.yml` triggers on `apps/<app>/**`
-plus a hand-copied list of shared configs. The theme extraction shows what shared code does to that
-model: `packages/theme/**` had to be hand-added to 27 workflow files, every consumer's CI grew its
-own `bun install (packages/theme)` step, and the package got its own `ci-theme.yml` -- and none of
-that is checked by anything. The next package repeats all of it, and a consumer filter that misses a
-new path fails silent-green, exactly the rot
-[github-actions-style.md](../../contributing/github-actions-style.md) warns about ("a workflow that
-does not trigger is worse than no workflow at all").
+The old CI model assumed every project was independent: each `ci-<app>.yml` triggered on
+`apps/<app>/**` plus a hand-copied list of shared configs. The `packages/theme` extraction showed
+what shared code does to that model -- `packages/theme/**` had to be hand-added to 27 workflow
+files, every consumer workflow grew its own `bun install (packages/theme)` step, and the package
+needed its own `ci-theme.yml`. Nothing checked any of it, and the next package would repeat all of
+it. A consumer whose filter missed a path fails silent-green, exactly the rot
+[github-actions-style.md](../../contributing/github-actions-style.md) warns about.
 
 Graph-based selection inverts the maintenance burden: affected work is computed from the dependency
-graph bun and Turborepo already know, instead of asserted by hand in YAML. Caching is what makes the
-coarse trigger safe -- workflows can fire on every change because unaffected work resolves as a
-cache hit instead of a re-run.
+graph bun and Turborepo already know. Caching is what makes coarse triggers safe -- workflows fire
+on the whole workspace because unaffected work resolves as a cache hit instead of a re-run.
 
-## Why this stack
+## What shipped
 
-- **Turborepo over Bazel/Buck2**: the repo is a JS/TS monorepo of small apps; Bazel's hermetic rules
-  for Astro/Vite/Wrangler would be a standing maintenance project with no payoff at this scale.
-- **Turborepo over Nx**: Depot Cache speaks Turborepo's remote-cache API natively; Nx remote caching
-  is its own product with its own account surface.
-- **Turborepo works with bun**: current turbo supports bun workspaces and the text lockfile the repo
-  already uses (`bun.lock`), including lockfile-aware hashing. `turbo prune` still has known rough
-  edges with bun, but prune (Docker slimming) is out of scope here.
-- **Depot Cache over anything self-hosted**: CI already runs on Depot. Depot Cache is included on
-  every plan, pre-configured on Depot runners, and works locally with three env vars
-  (`TURBO_API=https://cache.depot.dev`, `TURBO_TOKEN`, `TURBO_TEAM`).
+- **Nested workspace root.** `apps/` and `packages/` moved to `workspaces/web-apps/`, joined by
+  `biome.jsonc` and `.oxlintrc.jsonc` (turbo cannot hash files above its workspace root, so the
+  configs that shape task results had to come along). The repo-root "no workspace here" rule stands
+  as written. Repo-root config turbo still cannot see (`.config/mise.toml`, `.config/mise.lock`,
+  `.oxfmtrc.json`, `.prettierrc.json`) feeds the cache key through `bin/turbo-run.ts`, which hashes
+  those files into `REPO_CONFIG_HASH` -- declared in `turbo.json`'s `globalEnv`.
+- **One bun workspace.** Root `package.json` with `workspaces: ["apps/*", "packages/*"]`, one
+  `bun.lock` replacing thirteen, one `bunfig.toml` replacing thirteen, and `overrides` +
+  `trustedDependencies` hoisted (verified no cross-app conflicts first). The
+  `file:../../packages/theme` links became workspace links.
+- **Turborepo** pinned via mise's npm backend. Tasks: `typecheck`, `lint`, `format`, `build`,
+  `test`, plus `smoke` and `test:e2e` with `cache: false` -- the gates that must actually execute.
+  `mise run check` / `mise run test` now wrap turbo; `bin/run-app-tasks.ts` (sequential fan-out) is
+  deleted.
+- **CI collapsed** from 13 per-project workflows to one `ci-web-apps.yml` (three jobs: the cached
+  bulk with `--continue`, the uncached smoke gate, and djf.io's e2e). CD collapsed from 20 per-app
+  preview/deploy workflows to `cd-preview-web-apps.yml` + `cd-deploy-web-apps.yml`, both driven by a
+  plan job running `turbo ls --affected`. **45 workflow files became 15.**
+- **A registry, not YAML, per app.** `bin/plan-affected-apps.ts` holds what turbo cannot infer
+  (worker name, smoke routes, wrangler config, Sentry/PostHog variable suffix) with tests --
+  including one asserting the registry covers every app in the workspace, so a new app cannot
+  silently miss deploys.
+- **Normalized two inconsistencies** the collapse exposed: `smoke` became a package.json script in
+  all 11 apps that had it (it was mise-only, so turbo could not see it), and djf.io's `test` script
+  became the vitest run its 11 siblings already used.
 
-Verified against Depot docs (2026-08-02): Depot CI supports the `workflow_call` trigger; Depot Cache
-lists Turborepo as a first-class integration; the Depot CI overview states "Depot Cache is built in
-with no configuration required."
+## Verified locally
 
-## Target architecture
+- Full `mise run check` green across all 13 projects (64 tasks).
+- Warm re-run: **64/64 cached, 209ms** (`FULL TURBO`) against ~1m35s cold.
+- Touching `packages/theme` invalidates exactly the theme plus its 8 consumers; the other apps stay
+  cached. That is the relationship 27 workflow files used to assert by hand.
+- `bun install` at the workspace root still runs each app's `prepare` (panda codegen, svelte-kit
+  sync) -- confirmed by deleting a generated `styled-system/` and reinstalling.
+- actionlint, ghalint, and pinact clean on all 15 workflows; zizmor clean offline (its
+  impostor-commit audit needs GitHub API access the sandbox lacks).
+- `bun test bin/` green, including the affected-planner tests.
 
-- **One bun workspace** covering `apps/*` + `packages/*` -- at the repo root or nested under a new
-  tree like `workspaces/web-apps/` (the shape decision in "What it costs" below; the graph mechanics
-  are identical). One `bun.lock` at the workspace root; the thirteen per-project lockfiles (twelve
-  apps + `packages/theme`) are deleted. The `file:../../packages/theme` links become workspace
-  links, per-app `trustedDependencies` consolidate at the workspace root, and the session-start
-  hook's thirteen sequential installs become one `bun install`.
-- **Turborepo pinned via mise's npm backend** (`"npm:turbo"`), matching how cspell/oxfmt/warden are
-  managed.
-- **`turbo.json`** defining the task graph: `typecheck`, `lint`, `format`, `build`, `test`,
-  `test:e2e`. The per-project scripts already exist with consistent names (`packages/theme` shipped
-  turbo-ready). Shared configs (`biome.jsonc`, `.oxlintrc.jsonc`, `.config/mise.toml`, ...) are
-  declared once as global dependencies instead of copied into every path filter. Workspace
-  dependencies do the rest: a `packages/theme` change hashes into every consumer automatically --
-  the relationship maintained by hand in 27 files today. `test:e2e` runs with caching disabled --
-  the smoke gate on deployed apps ([testing.md](../../contributing/testing.md)) must actually run,
-  not replay a hash hit.
-- **mise stays the entry point** per the scripting rule: root `mise run check` wraps
-  `turbo run ...`; `bin/run-app-tasks.ts` (the current sequential fan-out) is deleted once turbo
-  owns orchestration. App-level task names keep working for humans working inside one app.
-- **CI collapses** from thirteen per-project `ci-*.yml` (twelve apps + theme) to one turbo-driven
-  `ci.yml` with no per-project path lists. Repo-wide gates (`ci-spell.yml`, `ci-warden.yml`,
-  `ci-actions-lint.yml`, `ci-repo.yml`) stay separate workflows.
-- **CD previews/deploys** move to an affected-driven matrix: a small planning job runs
-  `turbo ls --affected --output json` and feeds the app list to a matrix reusing the existing
-  `preview-worker`/`preview-wrangler` composite actions. Per-app `cd-*` workflows keep their path
-  filters until this phase lands -- deploys are the place to be conservative.
+## Open -- verify after merge
 
-## What it costs
+1. **Does Depot inject Depot Cache credentials for turbo?** The docs say Depot Cache is "built in
+   with no configuration required" on Depot CI, but that is unverified here. If the first runs show
+   no remote cache hits, set `TURBO_API` / `TURBO_TOKEN` / `TURBO_TEAM` (step-scoped -- ghalint 006
+   forbids secrets in job env). CI is correct either way; without it, just slower.
+2. **Does `turbo --affected` resolve on Depot checkouts?** Both plan jobs use `fetch-depth: 0` and
+   pass explicit `TURBO_SCM_BASE`/`TURBO_SCM_HEAD`; `isUsableScmBase` drops git's all-zero sentinel
+   so a first push falls back to turbo's default rather than failing.
+3. **Does Depot's expression engine support `vars[format(...)]` indexing?** The deploy matrix
+   resolves each app's Sentry DSN and PostHog key that way. Standard GitHub Actions syntax, but if
+   Depot does not support it the failure is quiet -- apps would deploy without observability config.
+   Check the first deploy's build log.
+4. **First Renovate PR against the single lockfile** (also open on bun-migration).
+5. **Watch the first preview and deploy cycles** end to end before trusting the matrices.
+6. **One unexplained `onvibes.org#lint` failure**, seen once during a full check and not reproduced
+   in four subsequent runs (three targeted, one full cold). Both linters pass standalone and the
+   app's generated trees are all gitignored, so the obvious lint-reads-a-concurrent-build race does
+   not fit. Turbo runs `lint` and `build` concurrently within a package where the old CI gave them
+   separate runners, so a filesystem race is still the best hypothesis. If it recurs, the fix is a
+   `dependsOn` edge from `lint` to `build` for that app -- do not add it speculatively.
 
-Decisions David must own before phase 1:
+## Deliberately not done
 
-1. **Where the workspace root lives.** Two viable shapes; turbo does not require the workspace root
-   to be the git root, so this is a repo-layout decision, not a tooling constraint.
-   - _Repo root_: private root `package.json` with workspace globs scoped to `apps/*` +
-     `packages/*`. Reverses the letter of the "no repo-root workspace" rule (AGENTS.md and the style
-     guides change), though its motivation survives -- `workspaces/` trees keep their own roots and
-     are never glob-matched.
-   - _Nested root_: a new tree (e.g. `workspaces/web-apps/`) holding `apps/` + `packages/` with its
-     own `package.json`/`bun.lock`/`turbo.json`. The rule stands as written. The costs move
-     elsewhere: turbo cannot hash files outside its workspace root (`globalDependencies`/`inputs`
-     globs are confined to it -- an open turborepo feature request, not a toggle), so the shared
-     configs (`biome.jsonc`, `.oxlintrc.jsonc`, `.config/mise.toml`, ...) must move into the nested
-     root to stay cache-correct, dragging the repo-root `format`/`ci-repo.yml` surface with them;
-     plus a large mechanical re-point of every `apps/**` reference in workflows, hooks, docs, and
-     CONTEXT-MAP.
-
-   Either way `packages/` stops shipping as `file:` dependencies (workspace links replace them) and
-   AGENTS.md changes -- the difference is whether the no-root-workspace rule flips or the directory
-   tree moves. Decide in phase 0.
-
-2. **One lockfile.** Renovate PRs converge on a single `bun.lock`. Turborepo hashes each package
-   against only its slice of the lockfile, so a dep bump still invalidates only the projects that
-   depend on it -- but the renovate-rollout config needs a coordinated update, and this touches the
-   bun-migration project's open "watch the first Renovate PR" item.
-3. **One CI status check** replaces per-project checks on PRs. Acceptable for a single-maintainer
-   repo; the turbo run log still itemizes per-project results.
-4. **Correctness moves from trigger-time to cache-time.** Today's failure mode is "workflow did not
-   trigger"; the new one is "stale cache hit" from an under-declared input. Mitigations: turbo's
-   default input set is every file in the package (allowlists are the exception, not the rule),
-   shared configs are global dependencies, and deploy/e2e tasks never cache.
-
-## Phases
-
-0. **Spikes, then sign-off.** (a) Confirm Depot CI injects Depot Cache credentials for turbo under
-   `.depot/workflows` -- "built in" is documented for the runners, verify it reaches turbo's env.
-   (b) Confirm `turbo --affected` works on Depot CI checkouts (needs the base ref fetched; set
-   `TURBO_SCM_BASE`/fetch depth accordingly). (c) Confirm turbo's bun.lock analysis handles this
-   repo's lockfiles (all projects are on the text lockfile already). (d) Inventory per-app bun
-   settings (`bunfig.toml`, `trustedDependencies`) and draft the merged root config. (e) Pick the
-   workspace-root shape (repo root vs. nested) -- cost 1 below has the trade-offs.
-1. **Workspace unification.** Workspace `package.json` + merged `bunfig.toml` at the chosen root (if
-   nested: move `apps/` + `packages/` + shared configs in, and re-point every path reference);
-   convert `file:` theme links to workspace links; delete the thirteen project lockfiles; single
-   `bun install`; update `.claude/hooks/session-start.ts`; update renovate config; update AGENTS.md
-   and style guides.
-2. **Turborepo locally.** `turbo.json`, mise task wrappers, verify warm-cache runs of
-   `mise run check` locally. No CI changes yet.
-3. **CI collapse.** Replace the thirteen `ci-*.yml` with one turbo-driven workflow; verify remote
-   cache hits on Depot; delete the per-project files, their filter lists, and the hand-added
-   `packages/theme` install steps.
-4. **Affected-driven CD.** Planning job + matrix for previews, then deploys.
-5. **Prove the growth path.** The next extracted package (theme-switcher-unification names more
-   candidates) should require zero workflow edits -- that is the acceptance test for the whole
-   project.
+- **CI e2e scope unchanged.** Only djf.io runs Playwright in CI, as before; the other 10 suites run
+  against deployed previews. Widening that is a scope change, not a migration detail.
+- **f311x and onvibes.org keep their own workflows.** f311x deploys through alchemy rather than
+  wrangler; onvibes.org's preview is a real worker with a teardown. Genuinely different shapes, not
+  one extra step -- they opt out via `preview: 'none'` / `deploy: 'none'`.
+- **Historical project docs keep their old paths.** Progress notes and other plans record what was
+  true when written, same convention the cspell and oxlintrc renames followed. Durable docs
+  (AGENTS.md, CONTEXT-MAP.md, CONTRIBUTING.md, the style guides, renovate config) were re-pointed.
 
 ## Relationship to other projects
 
-- **ci-pipeline-efficiency**: supersedes Task 1 (path-filter surgery) -- trimming filter lists is
-  moot once the filters are deleted. Two Task 2 items stand on their own and should proceed
-  regardless: the session-start Playwright install fix, and install caching (which after phase 1
-  becomes a single root-keyed cache step). Fold or close that project when this one is adopted.
-- **bun-migration**: phase 1 builds directly on it and touches its open Renovate-verification item;
-  sequence phase 1 after that project closes.
-- **theme-switcher-unification**: its extraction produced `packages/theme`, the first real consumer
-  of this plan; later extractions are phase 5's acceptance test.
-
-## Open questions
-
-- Does Depot CI's built-in cache cover `actions/cache` interception too, or only the native Depot
-  Cache protocols? Affects whether the mise tool cache step changes.
-- Turbo task shape for the two apps with Playwright snapshot bots (djf.io, forzamonica.com) -- the
-  `bot-update-snapshots-*` workflows write back to branches and must stay outside the cached graph.
-- Whether `format` stays per-project in turbo or becomes one repo-wide task (Prettier/oxfmt scopes
-  differ from the per-project linters).
+- **ci-pipeline-efficiency**: Task 1 (path-filter surgery) is superseded -- the filters are gone.
+  The session-start Playwright fix stands on its own; install caching is now one workspace-rooted
+  concern. Close or fold that project once this one is verified.
+- **bun-migration**: this builds directly on it and shares its open "watch the first Renovate PR"
+  item.
+- **theme-switcher-unification**: produced `packages/theme`, the first consumer of this graph. Its
+  next extraction is the real acceptance test -- it should need zero workflow edits.

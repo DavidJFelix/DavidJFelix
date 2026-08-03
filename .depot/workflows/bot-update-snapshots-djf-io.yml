@@ -23,8 +23,8 @@ on:
     # the paths filter (evaluated against the PR's changed files) keeps this
     # one from firing on PRs that do not touch the app.
     paths:
-      - 'apps/djf.io/**'
-      - 'packages/theme/**'
+      - 'workspaces/web-apps/apps/djf.io/**'
+      - 'workspaces/web-apps/packages/theme/**'
       - '.depot/workflows/bot-update-snapshots-djf-io.yml'
 concurrency:
   group: bot-update-snapshots-djf-io-${{ github.event.pull_request.number }}
@@ -45,7 +45,7 @@ jobs:
       pull-requests: write
     defaults:
       run:
-        working-directory: apps/djf.io
+        working-directory: workspaces/web-apps/apps/djf.io
     steps:
       - name: checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -54,10 +54,10 @@ jobs:
           persist-credentials: false
       - name: mise
         uses: ./.depot/actions/setup-mise
-      - name: bun install (packages/theme)
-        working-directory: packages/theme
-        run: bun install --frozen-lockfile
+      # One bun install at the workspace root covers the app and the theme
+      # package it depends on -- they share a single bun.lock.
       - name: bun install
+        working-directory: workspaces/web-apps
         run: bun install --frozen-lockfile
       # Browsers and apt debs both restore from cache (the same keys the CI
       # playwright job uses), so baselines regenerate in the exact environment
@@ -75,7 +75,7 @@ jobs:
           # Baselines are PNGs *inside* the *-snapshots/ dirs, so the pathspec
           # needs the trailing /** to reach them. Stage first, then check the
           # index, so a brand-new (untracked) snapshot is committed too.
-          git add 'apps/djf.io/**/*-snapshots/**'
+          git add 'workspaces/web-apps/apps/djf.io/**/*-snapshots/**'
           if git diff --cached --quiet; then
             echo 'No snapshot changes to commit.'
             exit 0

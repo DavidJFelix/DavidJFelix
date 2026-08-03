@@ -1,0 +1,40 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "globalDependencies": ["biome.jsonc", ".oxlintrc.jsonc", "bunfig.toml"],
+  "globalEnv": ["REPO_CONFIG_HASH"],
+  "tasks": {
+    // Load-bearing, despite doing nothing: a task's hash only folds in a
+    // dependency package's files when a dependency EDGE reaches it. Without
+    // this chain, editing packages/theme re-runs the theme's own tasks and
+    // every consumer restores a stale cache hit -- verified, not assumed.
+    // packages/theme ships TypeScript source through its exports, so nothing
+    // needs it *built*; this expresses the ordering and hashing alone.
+    "topological": {
+      "dependsOn": ["^topological"]
+    },
+    "typecheck": {
+      "dependsOn": ["topological"]
+    },
+    "lint": {
+      "dependsOn": ["topological"]
+    },
+    "format": {},
+    "build": {
+      "dependsOn": ["topological", "^build"],
+      "outputs": ["dist/**", ".svelte-kit/**"]
+    },
+    "test": {
+      "dependsOn": ["topological"]
+    },
+    // Gates that must actually execute, never replay a hash hit: the smoke
+    // boot and the e2e suites are what prove a deployable app still works.
+    "smoke": {
+      "cache": false,
+      "dependsOn": ["build"]
+    },
+    "test:e2e": {
+      "cache": false,
+      "dependsOn": ["build"]
+    }
+  }
+}

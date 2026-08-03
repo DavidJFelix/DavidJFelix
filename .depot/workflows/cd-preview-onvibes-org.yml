@@ -19,8 +19,8 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, closed]
     paths:
-      - 'apps/onvibes.org/**'
-      - 'packages/theme/**'
+      - 'workspaces/web-apps/apps/onvibes.org/**'
+      - 'workspaces/web-apps/packages/theme/**'
       - '.depot/workflows/cd-preview-onvibes-org.yml'
       - '.depot/actions/preview-worker/**'
       - '.depot/actions/preview-worker-teardown/**'
@@ -33,7 +33,7 @@ concurrency:
   cancel-in-progress: true
 defaults:
   run:
-    working-directory: apps/onvibes.org
+    working-directory: workspaces/web-apps/apps/onvibes.org
 env:
   MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
 jobs:

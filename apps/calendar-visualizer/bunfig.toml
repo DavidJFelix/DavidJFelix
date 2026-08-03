@@ -1,8 +1,0 @@
-# Bun install settings. minimumReleaseAge (seconds) is the supply-chain
-# cooldown: dependency resolution skips versions published within the last
-# 24 hours, matching the cooldown pnpm enforced by default. Bun does not
-# inherit bunfig.toml from parent directories, so every app carries its own
-# copy of this file.
-
-[install]
-minimumReleaseAge = 86400

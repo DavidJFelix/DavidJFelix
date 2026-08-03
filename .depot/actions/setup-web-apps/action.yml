@@ -1,0 +1,18 @@
+name: Setup web-apps workspace
+description: >-
+  Install the mise toolchain (node, bun, turbo, linters) and the web-apps
+  workspace dependencies. One `bun install` at the workspace root covers every
+  app and package -- they share a single bun.lock. Every run step here sets an
+  explicit working-directory: run steps in a composite action do not inherit
+  the caller job's default, so relying on it would install at the repo root.
+
+runs:
+  using: composite
+  steps:
+    - name: mise
+      uses: ./.depot/actions/setup-mise
+
+    - name: bun install
+      shell: bash
+      working-directory: workspaces/web-apps
+      run: bun install --frozen-lockfile

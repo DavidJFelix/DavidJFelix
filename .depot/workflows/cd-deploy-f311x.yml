@@ -10,8 +10,8 @@ on:
   push:
     branches: [main]
     paths:
-      - 'apps/f311x/**'
-      - 'packages/theme/**'
+      - 'workspaces/web-apps/apps/f311x/**'
+      - 'workspaces/web-apps/packages/theme/**'
       - '.depot/workflows/cd-deploy-f311x.yml'
   workflow_dispatch:
     inputs:
@@ -22,7 +22,7 @@ on:
         default: false
 defaults:
   run:
-    working-directory: apps/f311x
+    working-directory: workspaces/web-apps/apps/f311x
 jobs:
   deploy:
     name: alchemy deploy
@@ -39,10 +39,10 @@ jobs:
           persist-credentials: false
       - name: mise
         uses: ./.depot/actions/setup-mise
-      - name: bun install (packages/theme)
-        working-directory: packages/theme
-        run: bun install --frozen-lockfile
+      # One bun install at the workspace root covers this app and the theme
+      # package it depends on -- they share a single bun.lock.
       - name: bun install
+        working-directory: workspaces/web-apps
         run: bun install --frozen-lockfile
       # Alchemy's state lives in a versioned state-store Worker on the
       # account. The CLI refuses to create or upgrade it implicitly in CI, so

@@ -21,27 +21,40 @@ pinact = "4.1.0"
 # package.json. Config lives in /warden.toml.
 "npm:@sentry/warden" = { version = "0.41.0", trust_policy_excludes = ["@sentry/warden"] }
 depot = { version = "latest", exe = "depot" }
+# Turborepo: task graph + caching for the web-apps workspace. Root tasks wrap
+# it via bin/turbo-run.ts so repo-root config changes hash into every task.
+"npm:turbo" = "2"
 "npm:@earendil-works/pi-coding-agent" = { version = "latest", allow_builds = ["@google/genai", "protobufjs"] }
 # worktrunk (`wt`): git-worktree manager backing the one-workspace-per-agent
 # flow. Landing rule: push + PR from the workspace; `wt merge` is not the flow.
 worktrunk = "latest"
 
 # Repo-root checks, scoped to the config files the root owns. Legacy project
-# dirs and isolated workspace trees are intentionally out of scope, and apps/*
-# shadow these tasks with their own.
+# dirs and isolated workspace trees are intentionally out of scope; the
+# web-apps workspace shadows these tasks per project, orchestrated by turbo.
+# biome.jsonc and .oxlintrc.jsonc live at the web-apps workspace root (turbo
+# hashes them there) but the repo-root task still formats and lints them.
+# Biome refuses to lint its own config as a *nested* root config, so this runs
+# from the workspace directory where that config is the project root.
+[tasks."format:workspace-config"]
+description = "Lint the web-apps workspace Biome config"
+run = "biome lint biome.jsonc"
+dir = "{{config_root}}/workspaces/web-apps"
+
 [tasks.format]
 description = "Check formatting of repo-root config files (oxfmt; Biome lints its own configs)"
+depends = ["format:workspace-config"]
 # --ignore-path: the root .prettierignore ignores everything but md/mdx (it
 # scopes Prettier), which would blank oxfmt's explicit file list too
 run = [
-  "oxfmt --check --ignore-path=.gitignore biome.jsonc .oxfmtrc.json .oxlintrc.jsonc .prettierrc.json .config/cspell.jsonc .github/renovate.json .vscode/settings.json .vscode/extensions.json",
-  "biome lint biome.jsonc .vscode/settings.json .vscode/extensions.json",
+  "oxfmt --check --ignore-path=.gitignore workspaces/web-apps/biome.jsonc .oxfmtrc.json workspaces/web-apps/.oxlintrc.jsonc .prettierrc.json .config/cspell.jsonc .github/renovate.json .vscode/settings.json .vscode/extensions.json",
+  "biome lint .vscode/settings.json .vscode/extensions.json",
 ]
 dir = "{{config_root}}"
 
 [tasks."format:fix"]
 description = "Apply formatting fixes to repo-root config files"
-run = "oxfmt --ignore-path=.gitignore biome.jsonc .oxfmtrc.json .oxlintrc.jsonc .prettierrc.json .config/cspell.jsonc .github/renovate.json .vscode/settings.json .vscode/extensions.json"
+run = "oxfmt --ignore-path=.gitignore workspaces/web-apps/biome.jsonc .oxfmtrc.json workspaces/web-apps/.oxlintrc.jsonc .prettierrc.json .config/cspell.jsonc .github/renovate.json .vscode/settings.json .vscode/extensions.json"
 dir = "{{config_root}}"
 
 [tasks."format:md"]
@@ -61,7 +74,7 @@ dir = "{{config_root}}"
 
 [tasks.spell]
 description = "Spell-check repo-owned sources (cspell)"
-run = "cspell --config .config/cspell.jsonc --no-progress --dot 'apps/**' 'packages/**' 'docs/**' 'bin/**' '*.md' '.agents/agents/**' '.config/**' '.github/**'"
+run = "cspell --config .config/cspell.jsonc --no-progress --dot 'workspaces/web-apps/**' 'docs/**' 'bin/**' '*.md' '.agents/agents/**' '.config/**' '.github/**'"
 dir = "{{config_root}}"
 
 [tasks."test:bin"]
@@ -74,15 +87,16 @@ description = "Verify agent persona frontmatter and the .claude/agents symlink m
 run = "bun bin/check-agents.ts"
 dir = "{{config_root}}"
 
-# Monorepo aggregators: fan a task out to every app. Per-app CI still runs each
-# app's tasks on path-filtered triggers; these are the local "verify everything"
-# commands. They run each app with CI=true so tools behave CI-faithfully.
+# Workspace aggregators: turbo runs the web-apps task graph (all apps and
+# packages) with caching; bin/turbo-run.ts feeds repo-root config into the
+# cache key. These are the local "verify everything" commands and the same
+# entry point CI uses.
 [tasks.test]
-description = "Run every project's unit tests (packages/ then apps/)"
-run = "bun bin/run-app-tasks.ts test"
+description = "Run every web-apps project's unit tests (turbo)"
+run = "bun bin/turbo-run.ts test"
 dir = "{{config_root}}"
 
 [tasks.check]
-description = "Run every project's full check (packages/ then apps/)"
-run = "bun bin/run-app-tasks.ts check"
+description = "Run every web-apps project's full check (turbo: typecheck, lint, format, build, test)"
+run = "bun bin/turbo-run.ts typecheck lint format build test"
 dir = "{{config_root}}"

@@ -10,8 +10,8 @@ on:
   push:
     branches: [main]
     paths:
-      - 'biome.jsonc'
-      - '.oxlintrc.jsonc'
+      - 'workspaces/web-apps/biome.jsonc'
+      - 'workspaces/web-apps/.oxlintrc.jsonc'
       - '.oxfmtrc.json'
       - '.prettierrc.json'
       - '.config/cspell.jsonc'
@@ -26,8 +26,8 @@ on:
       - '.depot/workflows/ci-repo.yml'
   pull_request:
     paths:
-      - 'biome.jsonc'
-      - '.oxlintrc.jsonc'
+      - 'workspaces/web-apps/biome.jsonc'
+      - 'workspaces/web-apps/.oxlintrc.jsonc'
       - '.oxfmtrc.json'
       - '.prettierrc.json'
       - '.config/cspell.jsonc'

@@ -13,7 +13,7 @@ worth, the user owns direction -- your memo feeds them.
 
 ## Sweep order
 
-1. **This monorepo.** The answer may already be in `apps/` or a shared pattern. Reuse
+1. **This monorepo.** The answer may already be in `workspaces/web-apps/` or a shared pattern. Reuse
    beats everything downstream of this list.
 2. **The platform.** Stdlib, Bun/Node built-ins, Cloudflare primitives -- capability
    that costs zero dependencies.

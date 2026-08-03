@@ -1,0 +1,94 @@
+name: CD Preview web-apps
+# Per-PR preview deploys, fanned out over the apps a change actually affects.
+# The plan job asks turbo which workspace packages the PR touched -- including
+# everything downstream of a shared package like packages/theme -- and the
+# matrix deploys exactly those. Adding an app means adding a registry entry in
+# bin/plan-affected-apps.ts, not another workflow file.
+#
+# Each preview uploads a non-active version with a pr-<N> alias, smokes it, runs
+# the app's Playwright suite against it, and posts the URL. No teardown --
+# `wrangler versions upload` never serves production. Forks have no secrets and
+# will fail the deploy step -- acceptable for a personal monorepo; do NOT switch
+# to pull_request_target.
+#
+# f311x (alchemy) and onvibes.org (real worker + teardown) have their own
+# preview workflows: their lifecycles genuinely differ.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'workspaces/web-apps/**'
+      - '.config/mise.toml'
+      - '.config/mise.lock'
+      - 'bin/**'
+      - '.depot/workflows/cd-preview-web-apps.yml'
+      - '.depot/actions/setup-web-apps/**'
+      - '.depot/actions/setup-mise/**'
+      - '.depot/actions/preview-wrangler/**'
+      - '.depot/actions/setup-playwright/**'
+concurrency:
+  group: preview-web-apps-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+env:
+  MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
+  TURBO_TELEMETRY_DISABLED: '1'
+jobs:
+  plan:
+    name: plan affected apps
+    runs-on: depot-ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      apps: ${{ steps.plan.outputs.apps }}
+    steps:
+      # Full history: turbo diffs the PR head against its merge base, which
+      # a shallow clone would not contain.
+      - name: checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: plan-affected-apps
+        id: plan
+        env:
+          TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha }}
+          TURBO_SCM_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: bun bin/plan-affected-apps.ts preview
+
+  preview:
+    name: preview ${{ matrix.app.dir }}
+    needs: plan
+    if: needs.plan.outputs.apps != '[]'
+    strategy:
+      # One app's preview failing should not hide the others' results.
+      fail-fast: false
+      matrix:
+        app: ${{ fromJSON(needs.plan.outputs.apps) }}
+    runs-on: depot-ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+    defaults:
+      run:
+        working-directory: workspaces/web-apps/apps/${{ matrix.app.dir }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: setup web-apps
+        uses: ./.depot/actions/setup-web-apps
+      - name: preview
+        uses: ./.depot/actions/preview-wrangler
+        with:
+          worker-name: ${{ matrix.app.worker }}
+          pr-number: ${{ github.event.pull_request.number }}
+          smoke-routes: ${{ matrix.app.smokeRoutes }}
+          wrangler-config: ${{ matrix.app.wranglerConfig }}
+          cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}

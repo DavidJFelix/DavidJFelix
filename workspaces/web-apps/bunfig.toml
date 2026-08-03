@@ -1,0 +1,23 @@
+# Bun install settings for the web-apps workspace. minimumReleaseAge (seconds)
+# is the supply-chain cooldown: dependency resolution skips versions published
+# within the last 24 hours, matching the cooldown pnpm enforced by default.
+# One copy at the workspace root now covers every app and package -- installs
+# run here, not per project.
+
+# Root package.json "overrides" context (bun applies overrides from the
+# workspace root only, so the per-app pins live there):
+# - rolldown is pinned to 1.1.4 for djf.io -- 1.1.5 drops vite-ignored
+#   external dynamic imports (the pagefind loader in Search.astro).
+# - the @distilled.cloud pins track alchemy 2.0.0-beta.54 for f311x (the
+#   release-age cooldown rejects day-of releases); @effect/platform-node-shared
+#   is capped at beta.94 because effect beta.97 removed Schedule.either, which
+#   alchemy 2.0.0-beta.61 still calls in its state store and Cloudflare
+#   resources. Lift the cap when alchemy catches up to the new API.
+# - @modelcontextprotocol/sdk is pinned so @earendil-works/pi-ai dedupes to ONE
+#   physical copy in onvibes.org. pi-ai's API-transport registry is module
+#   state, and @flue/runtime and the `agents` SDK declare peer ranges that can
+#   otherwise split it (#339 did) -- src/app.test.ts asserts the invariant.
+#   Drop once the two peers agree without help.
+
+[install]
+minimumReleaseAge = 86400

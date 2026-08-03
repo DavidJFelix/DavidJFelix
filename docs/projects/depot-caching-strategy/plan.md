@@ -76,8 +76,11 @@ on the whole workspace because unaffected work resolves as a cache hit instead o
   production servers on one runner (91c6a6b).
 - The one red check, `CD Preview f311x`, is **not from this work**: alchemy's shared Cloudflare
   state store reports schema v10 while the repo's exact-pinned `alchemy@2.0.0-beta.61` expects v7,
-  and the store's HTTP API 500s during reconciliation. David is reworking that state store on a
-  separate branch.
+  and the store's HTTP API 500s during reconciliation. David is upgrading that store to v10 on a
+  separate branch; the matching change here is likely bumping f311x's exact-pinned `alchemy` to a
+  release that speaks v10 (`beta.67` was available), which is coupled to the
+  `@effect/platform-node-shared` cap in the workspace root `overrides` -- that cap exists because
+  effect `beta.97` removed `Schedule.either`, which alchemy `beta.61` still calls.
 
 ## Open -- still unverified
 

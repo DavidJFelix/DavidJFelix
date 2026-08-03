@@ -74,13 +74,19 @@ on the whole workspace because unaffected work resolves as a cache hit instead o
 - Two failures this migration caused, both found by CI and fixed: the preview composite actions were
   never re-pointed off `packages/theme` (75f4a7b), and the smoke gate could not run eleven
   production servers on one runner (91c6a6b).
-- The one red check, `CD Preview f311x`, is **not from this work**: alchemy's shared Cloudflare
-  state store reports schema v10 while the repo's exact-pinned `alchemy@2.0.0-beta.61` expects v7,
-  and the store's HTTP API 500s during reconciliation. David is upgrading that store to v10 on a
-  separate branch; the matching change here is likely bumping f311x's exact-pinned `alchemy` to a
-  release that speaks v10 (`beta.67` was available), which is coupled to the
-  `@effect/platform-node-shared` cap in the workspace root `overrides` -- that cap exists because
-  effect `beta.97` removed `Schedule.either`, which alchemy `beta.61` still calls.
+- `CD Preview f311x` failed once and then passed, and **the failure was not from this work**:
+  alchemy's shared Cloudflare state store reported schema v10 while the repo's exact-pinned
+  `alchemy@2.0.0-beta.61` expects v7, and the store's HTTP API 500'd during reconciliation, before
+  the f311x build or the `pr-406` stage was touched.
+
+  **Why it recovered is unknown.** No code changed between the failing and passing runs: `main` did
+  not move, and this branch never touches the alchemy pin. So the state store's deployed state
+  changed out of band -- plausibly the failed run's own "upgrading..." step partially applied and
+  the next run found something it could reconcile. Treat the f311x preview as possibly flaky until
+  the v7/v10 drift is deliberately resolved; the likely resolution here is bumping the exact pin to
+  an alchemy that speaks v10, which is coupled to the `@effect/platform-node-shared` cap in the
+  workspace root `overrides` (that cap exists because effect `beta.97` removed `Schedule.either`,
+  which alchemy `beta.61` still calls).
 
 ## Open -- still unverified
 

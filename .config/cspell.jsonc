@@ -12,6 +12,7 @@
     "software-terms",
     "dns",
     "ics",
+    "lezer",
     "licenses",
     "people-names",
     "pierre",
@@ -21,6 +22,11 @@
   // file. Entries and the reasons for them live in the .txt files themselves.
   "dictionaryDefinitions": [
     {"name": "dns", "path": "dictionaries/dns.txt", "description": "DNS response codes"},
+    {
+      "name": "lezer",
+      "path": "dictionaries/lezer.txt",
+      "description": "Lezer parser vocabulary (entity-diff engine)",
+    },
     {
       "name": "licenses",
       "path": "dictionaries/licenses.txt",

@@ -30,7 +30,17 @@ workflows and opt out of the matrices; CI e2e stays scoped to djf.io exactly as 
 
 Two inconsistencies the collapse exposed got normalized: `smoke` became a package.json script in the
 11 apps that had it (it was mise-only, so turbo could not see it), and djf.io's `test` script became
-the plain vitest run its siblings already used. Deferred to post-merge verification: whether Depot
-injects Depot Cache credentials for turbo automatically, whether `--affected` resolves on Depot
-checkouts, and whether Depot's expression engine supports the `vars[format(...)]` indexing the
-deploy matrix uses for per-app observability config.
+the plain vitest run its siblings already used. Smoke also runs serially -- eleven real production
+servers on one runner starved each other, which the per-app workflows hid by giving each its own
+machine -- and every app got a unique preview port.
+
+Confirmed on Depot: `turbo ls --affected` resolves and expands the matrix to exactly the registered
+apps, and Depot Cache works with turbo out of the box (`Remote caching enabled`, no token plumbing).
+That remote cache is also what exposed the sharpest bug here: `turbo.json`'s `outputs` has to name
+**every** directory an app builds into, because a cache hit restores exactly what is declared and
+nothing else. Apps building to `.output`, `dist-flue`, or `.wrangler/deploy` initially cached no
+artifacts and "succeeded" with an empty build tree -- invisible locally, where the files are already
+on disk. Turbo says so ("no output files found for task X#build"); treat that warning as a
+correctness bug. Still unverified: whether Depot's expression engine supports the
+`vars[format(...)]` indexing the deploy matrix uses for per-app observability config, which only
+exercises on a push to main and fails quietly.

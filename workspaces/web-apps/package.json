@@ -5,13 +5,14 @@
   "workspaces": ["apps/*", "packages/*"],
   "overrides": {
     "rolldown": "1.1.4",
-    "@distilled.cloud/aws": "0.28.2",
-    "@distilled.cloud/axiom": "0.28.2",
-    "@distilled.cloud/cloudflare": "0.28.2",
-    "@distilled.cloud/core": "0.28.2",
-    "@distilled.cloud/neon": "0.28.2",
-    "@distilled.cloud/planetscale": "0.28.2",
-    "@effect/platform-node-shared": "4.0.0-beta.94",
+    "@distilled.cloud/aws": "0.30.3",
+    "@distilled.cloud/axiom": "0.30.3",
+    "@distilled.cloud/cloudflare": "0.30.3",
+    "@distilled.cloud/core": "0.30.3",
+    "@distilled.cloud/neon": "0.30.3",
+    "@distilled.cloud/planetscale": "0.30.3",
+    "@effect/platform-node-shared": "4.0.0-beta.102",
+    "effect": "4.0.0-beta.102",
     "@modelcontextprotocol/sdk": "1.30.0"
   },
   "trustedDependencies": [

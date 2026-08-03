@@ -8,11 +8,20 @@
 # workspace root only, so the per-app pins live there):
 # - rolldown is pinned to 1.1.4 for djf.io -- 1.1.5 drops vite-ignored
 #   external dynamic imports (the pagefind loader in Search.astro).
-# - the @distilled.cloud pins track alchemy 2.0.0-beta.54 for f311x (the
-#   release-age cooldown rejects day-of releases); @effect/platform-node-shared
-#   is capped at beta.94 because effect beta.97 removed Schedule.either, which
-#   alchemy 2.0.0-beta.61 still calls in its state store and Cloudflare
-#   resources. Lift the cap when alchemy catches up to the new API.
+# - the @distilled.cloud pins track alchemy 2.0.0-beta.67 for f311x (the
+#   release-age cooldown rejects day-of releases), so they move with every
+#   alchemy bump -- alchemy depends on them by exact version, and a stale pin
+#   silently holds the old ones under the new alchemy.
+# - effect and @effect/platform-node-shared are pinned to the same version as
+#   f311x's direct effect/@effect/platform-node so exactly ONE physical effect
+#   lands in the tree; mixed copies are the prime suspect for the SchemaAST
+#   TypeError chased on 2026-06-11. effect is the workspace's only unpinned
+#   route to a second copy: @standard-community/standard-{json,openapi}
+#   (onvibes.org, via @flue/runtime) take it as an optional peer, and without
+#   the pin bun resolves them to whatever effect the lockfile last saw.
+#   This is a floor, not a cap -- the beta.94 cap was for effect beta.97
+#   removing Schedule.either, which alchemy beta.62 migrated onto the new
+#   Schedule API, and beta.67 now requires effect >= 4.0.0-beta.100.
 # - @modelcontextprotocol/sdk is pinned so @earendil-works/pi-ai dedupes to ONE
 #   physical copy in onvibes.org. pi-ai's API-transport registry is module
 #   state, and @flue/runtime and the `agents` SDK declare peer ranges that can

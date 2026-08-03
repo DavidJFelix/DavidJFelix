@@ -26,12 +26,14 @@ export const Website = Cloudflare.Website.Vite(
         date: '2026-05-01',
         flags: ['nodejs_compat'],
       },
-      // Custom domains are the Worker's only ingress: Alchemy attaches them
-      // on deploy and Cloudflare materializes the DNS records. The f311x.com
-      // zone must already exist in this account. Prod-only: binding them
-      // unconditionally let a local `alchemy deploy` (stage dev_${USER})
-      // steal the public domains onto the dev worker (2026-06-12).
-      ...(stage === 'prod' ? {domain: ['f311x.com', 'www.f311x.com']} : {}),
+      // Alchemy attaches the custom domains on deploy and Cloudflare
+      // materializes the DNS records. The f311x.com zone must already exist in
+      // this account. Prod-only: binding them unconditionally let a local
+      // `alchemy deploy` (stage dev_${USER}) steal the public domains onto the
+      // dev worker (2026-06-12). `www` is an alias, not a redirect: both
+      // hostnames serve the Worker, matching the flat array this replaced
+      // (alchemy beta.66 reshaped `domain` into canonical name + aliases).
+      ...(stage === 'prod' ? {domain: {name: 'f311x.com', aliases: ['www.f311x.com']}} : {}),
     }
   }),
 )

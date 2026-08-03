@@ -61,7 +61,7 @@ jobs:
 
   # Never cached (turbo.json sets cache: false): the smoke boot is the gate
   # that proves a deployable app still serves. The build it depends on does
-  # restore from cache.
+  # restore from cache. Runs serially -- see the mise task for why.
   smoke:
     name: turbo smoke (local production boot)
     runs-on: depot-ubuntu-latest
@@ -76,7 +76,7 @@ jobs:
       - name: setup web-apps
         uses: ./.depot/actions/setup-web-apps
       - name: turbo run
-        run: bun bin/turbo-run.ts smoke --continue
+        run: mise run smoke
 
   # Scoped to djf.io deliberately: it is the only app whose Playwright suite
   # ran in CI before this workflow existed. Every other app's e2e suite runs

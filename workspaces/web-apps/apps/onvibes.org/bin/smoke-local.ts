@@ -14,7 +14,7 @@
 
 import {existsSync} from 'node:fs'
 
-const PORT = Number(process.env.SMOKE_PORT ?? 4321)
+const PORT = Number(process.env.SMOKE_PORT ?? 4386)
 const BASE_URL = `http://127.0.0.1:${PORT}`
 const ROUTES = (process.env.SMOKE_ROUTES ?? '/,/chat').split(',')
 const WORKER_CONFIG = 'dist-flue/onvibes_org/wrangler.json'

@@ -100,3 +100,12 @@ dir = "{{config_root}}"
 description = "Run every web-apps project's full check (turbo: typecheck, lint, format, build, test)"
 run = "bun bin/turbo-run.ts typecheck lint format build test"
 dir = "{{config_root}}"
+
+# Serial on purpose. Every smoke boots a real production server (workerd, node,
+# nuxt); eleven at once starve each other past their 60s readiness timeout, and
+# the per-app workflows this replaced hid that by giving each app its own
+# runner. Ports are unique per app regardless -- see each bin/smoke-local.ts.
+[tasks.smoke]
+description = "Boot every deployable app's production build and smoke it (serial)"
+run = "bun bin/turbo-run.ts smoke --concurrency=1 --continue"
+dir = "{{config_root}}"

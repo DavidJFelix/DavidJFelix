@@ -17,7 +17,7 @@
 
 import {existsSync} from 'node:fs'
 
-const PORT = Number(process.env.SMOKE_PORT ?? 4318)
+const PORT = Number(process.env.SMOKE_PORT ?? 4387)
 const BASE_URL = `http://127.0.0.1:${PORT}`
 const ROUTES = (process.env.SMOKE_ROUTES ?? '/').split(',')
 const WORKER = '.output/server/index.mjs'

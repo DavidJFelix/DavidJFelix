@@ -45,6 +45,12 @@ on the whole workspace because unaffected work resolves as a cache hit instead o
 - **Normalized two inconsistencies** the collapse exposed: `smoke` became a package.json script in
   all 11 apps that had it (it was mise-only, so turbo could not see it), and djf.io's `test` script
   became the vitest run its 11 siblings already used.
+- **Smoke runs serially** (`mise run smoke` -> `--concurrency=1`). Collapsing per-app jobs onto one
+  runner put eleven real production servers (workerd, node, nuxt) on the same machine: three pairs
+  of apps also shared a default port, and even after making every port unique they starved each
+  other past the 60s readiness timeout. The per-app workflows hid both by giving each app its own
+  runner. Serial is the faithful equivalent -- and cheap, since the builds it depends on are cached
+  (~25s warm).
 
 ## Verified locally
 

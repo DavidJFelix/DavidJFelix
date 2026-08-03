@@ -13,7 +13,7 @@ import {existsSync} from 'node:fs'
 import wrangler from '../wrangler.toml'
 import {runSmoke} from './smoke-checks'
 
-const PORT = Number(process.env.SMOKE_PORT ?? 4311)
+const PORT = Number(process.env.SMOKE_PORT ?? 4383)
 const BASE_URL = `http://127.0.0.1:${PORT}`
 const WORKER = 'dist/server/server.js'
 const ASSETS = 'dist/client'

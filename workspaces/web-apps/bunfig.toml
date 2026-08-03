@@ -33,5 +33,16 @@
 #   otherwise split it (#339 did) -- src/app.test.ts asserts the invariant.
 #   Drop once the two peers agree without help.
 
+# Direct dependencies that exist only to pin resolution, not because the app
+# imports something new:
+# - pkg.dog declares h3 ^1.15.11 even though nuxt already brings it. f311x's
+#   @tanstack/start-server-core depends on "h3-v2": "npm:h3@2.0.1-rc.20", and
+#   bun hoists that alias under its REAL name, so a bare `h3` in this shared
+#   workspace could resolve to v2. Nuxt's generated .nuxt/tsconfig.json mapped
+#   h3 there while nitro 2.13.4 bundled v1, so pkg.dog's server routes
+#   typechecked against v2 (no toWebRequest) and ran against v1. The direct
+#   dep makes types and runtime agree. Drop it when nothing pulls an aliased
+#   h3 v2, or when nitro itself moves to v2 and the routes move with it.
+
 [install]
 minimumReleaseAge = 86400

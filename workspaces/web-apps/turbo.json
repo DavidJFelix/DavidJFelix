@@ -19,9 +19,25 @@
       "dependsOn": ["topological"]
     },
     "format": {},
+    // Every directory any app builds into. This list has to be COMPLETE: on a
+    // cache hit turbo restores exactly what is declared here and nothing else,
+    // so an app whose artifacts live outside it "succeeds" with an empty build
+    // tree -- which fails the smoke gate at best and deploys nothing at worst.
+    // Turbo warns ("no output files found for task X#build") when a package
+    // produces nothing matching; treat that warning as a bug, not noise.
     "build": {
       "dependsOn": ["topological", "^build"],
-      "outputs": ["dist/**", ".svelte-kit/**"]
+      "outputs": [
+        "dist/**",
+        "dist-ssr/**",
+        "dist-flue/**",
+        ".output/**",
+        ".svelte-kit/**",
+        ".astro/**",
+        ".nuxt/**",
+        ".tanstack/**",
+        ".vinxi/**"
+      ]
     },
     "test": {
       "dependsOn": ["topological"]

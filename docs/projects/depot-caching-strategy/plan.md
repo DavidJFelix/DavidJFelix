@@ -71,9 +71,22 @@ on the whole workspace because unaffected work resolves as a cache hit instead o
   onvibes.org's own preview workflow passes too.
 - **The collapsed `ci-web-apps` jobs all pass**: the turbo bulk, the serial smoke gate, and djf.io's
   e2e. So does every repo-wide gate (spell, docs, actions-lint, repo).
-- Two failures this migration caused, both found by CI and fixed: the preview composite actions were
-  never re-pointed off `packages/theme` (75f4a7b), and the smoke gate could not run eleven
-  production servers on one runner (91c6a6b).
+- **Depot Cache works with turbo out of the box.** The job log prints `Remote caching enabled` with
+  no `TURBO_API`/`TURBO_TOKEN`/`TURBO_TEAM` plumbing, and a fresh runner replays builds it never
+  ran. That is what surfaced the `outputs` bug below -- locally the artifacts were always already on
+  disk, so only a remote hit on a clean machine could expose it.
+- Three failures this migration caused, all found by CI and fixed:
+  1. the preview composite actions were never re-pointed off `packages/theme` (75f4a7b);
+  2. the smoke gate could not run eleven production servers on one runner -- shared default ports
+     plus contention (91c6a6b);
+  3. **`turbo.json`'s `outputs` was incomplete**, listing only `dist/**` and `.svelte-kit/**`. Apps
+     that build elsewhere (`.output` for nuxt/nitro, `dist-flue` for flue, `.tanstack`, `.vinxi`)
+     cached no artifacts at all, so a cache hit restored logs and an empty build tree. Local runs
+     never caught it because the artifacts were already on disk; only a fresh runner exposes it.
+     This was the most dangerous of the three -- the deploy matrix runs `turbo build` before
+     `wrangler deploy`, so a cache hit would have shipped a stale or empty bundle to production.
+     Turbo had been warning "no output files found for task X#build" the whole time; that warning
+     means a correctness bug, not noise.
 - `CD Preview f311x` failed once and then passed, and **the failure was not from this work**:
   alchemy's shared Cloudflare state store reported schema v10 while the repo's exact-pinned
   `alchemy@2.0.0-beta.61` expects v7, and the store's HTTP API 500'd during reconciliation, before
@@ -90,16 +103,12 @@ on the whole workspace because unaffected work resolves as a cache hit instead o
 
 ## Open -- still unverified
 
-1. **Does Depot inject Depot Cache credentials for turbo?** Unconfirmed -- the Depot job logs are
-   not reachable from an agent session, so the turbo job's remote hit rate has not been read. If
-   runs show no remote cache hits, set `TURBO_API` / `TURBO_TOKEN` / `TURBO_TEAM` (step-scoped --
-   ghalint 006 forbids secrets in job env). CI is correct either way; without it, just slower.
-2. **Does Depot's expression engine support `vars[format(...)]` indexing?** The deploy matrix
+1. **Does Depot's expression engine support `vars[format(...)]` indexing?** The deploy matrix
    resolves each app's Sentry DSN and PostHog key that way. It only exercises on a push to main, so
    this PR cannot confirm it, and the failure mode is quiet -- apps would deploy without
    observability config rather than failing. Check the first deploy's build log.
-3. **First Renovate PR against the single lockfile** (also open on bun-migration).
-4. **One unexplained `onvibes.org#lint` failure**, seen once locally and not reproduced in four
+2. **First Renovate PR against the single lockfile** (also open on bun-migration).
+3. **One unexplained `onvibes.org#lint` failure**, seen once locally and not reproduced in four
    subsequent runs, nor in CI. Turbo runs `lint` and `build` concurrently within a package where the
    old CI gave them separate runners, so a filesystem race is the best hypothesis. If it recurs, the
    fix is a `dependsOn` edge from `lint` to `build` -- do not add it speculatively.

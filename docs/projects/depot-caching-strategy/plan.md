@@ -64,27 +64,36 @@ on the whole workspace because unaffected work resolves as a cache hit instead o
   impostor-commit audit needs GitHub API access the sandbox lacks).
 - `bun test bin/` green, including the affected-planner tests.
 
-## Open -- verify after merge
+## Verified on Depot (PR #406)
 
-1. **Does Depot inject Depot Cache credentials for turbo?** The docs say Depot Cache is "built in
-   with no configuration required" on Depot CI, but that is unverified here. If the first runs show
-   no remote cache hits, set `TURBO_API` / `TURBO_TOKEN` / `TURBO_TEAM` (step-scoped -- ghalint 006
-   forbids secrets in job env). CI is correct either way; without it, just slower.
-2. **Does `turbo --affected` resolve on Depot checkouts?** Both plan jobs use `fetch-depth: 0` and
-   pass explicit `TURBO_SCM_BASE`/`TURBO_SCM_HEAD`; `isUsableScmBase` drops git's all-zero sentinel
-   so a first push falls back to turbo's default rather than failing.
-3. **Does Depot's expression engine support `vars[format(...)]` indexing?** The deploy matrix
-   resolves each app's Sentry DSN and PostHog key that way. Standard GitHub Actions syntax, but if
-   Depot does not support it the failure is quiet -- apps would deploy without observability config.
-   Check the first deploy's build log.
-4. **First Renovate PR against the single lockfile** (also open on bun-migration).
-5. **Watch the first preview and deploy cycles** end to end before trusting the matrices.
-6. **One unexplained `onvibes.org#lint` failure**, seen once during a full check and not reproduced
-   in four subsequent runs (three targeted, one full cold). Both linters pass standalone and the
-   app's generated trees are all gitignored, so the obvious lint-reads-a-concurrent-build race does
-   not fit. Turbo runs `lint` and `build` concurrently within a package where the old CI gave them
-   separate runners, so a filesystem race is still the best hypothesis. If it recurs, the fix is a
-   `dependsOn` edge from `lint` to `build` for that app -- do not add it speculatively.
+- **`turbo ls --affected` resolves on Depot checkouts** and the dynamic matrix expands to exactly
+  the registered apps -- 9 previews, each posting a live URL with green smoke and screenshots.
+  onvibes.org's own preview workflow passes too.
+- **The collapsed `ci-web-apps` jobs all pass**: the turbo bulk, the serial smoke gate, and djf.io's
+  e2e. So does every repo-wide gate (spell, docs, actions-lint, repo).
+- Two failures this migration caused, both found by CI and fixed: the preview composite actions were
+  never re-pointed off `packages/theme` (75f4a7b), and the smoke gate could not run eleven
+  production servers on one runner (91c6a6b).
+- The one red check, `CD Preview f311x`, is **not from this work**: alchemy's shared Cloudflare
+  state store reports schema v10 while the repo's exact-pinned `alchemy@2.0.0-beta.61` expects v7,
+  and the store's HTTP API 500s during reconciliation. David is reworking that state store on a
+  separate branch.
+
+## Open -- still unverified
+
+1. **Does Depot inject Depot Cache credentials for turbo?** Unconfirmed -- the Depot job logs are
+   not reachable from an agent session, so the turbo job's remote hit rate has not been read. If
+   runs show no remote cache hits, set `TURBO_API` / `TURBO_TOKEN` / `TURBO_TEAM` (step-scoped --
+   ghalint 006 forbids secrets in job env). CI is correct either way; without it, just slower.
+2. **Does Depot's expression engine support `vars[format(...)]` indexing?** The deploy matrix
+   resolves each app's Sentry DSN and PostHog key that way. It only exercises on a push to main, so
+   this PR cannot confirm it, and the failure mode is quiet -- apps would deploy without
+   observability config rather than failing. Check the first deploy's build log.
+3. **First Renovate PR against the single lockfile** (also open on bun-migration).
+4. **One unexplained `onvibes.org#lint` failure**, seen once locally and not reproduced in four
+   subsequent runs, nor in CI. Turbo runs `lint` and `build` concurrently within a package where the
+   old CI gave them separate runners, so a filesystem race is the best hypothesis. If it recurs, the
+   fix is a `dependsOn` edge from `lint` to `build` -- do not add it speculatively.
 
 ## Deliberately not done
 

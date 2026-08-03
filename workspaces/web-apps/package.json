@@ -11,7 +11,7 @@
     "@distilled.cloud/core": "0.28.2",
     "@distilled.cloud/neon": "0.28.2",
     "@distilled.cloud/planetscale": "0.28.2",
-    "@effect/platform-node-shared": "4.0.0-beta.94",
+    "@effect/platform-node-shared": "4.0.0-beta.102",
     "@modelcontextprotocol/sdk": "1.30.0"
   },
   "trustedDependencies": [

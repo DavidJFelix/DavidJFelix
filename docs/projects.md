@@ -134,11 +134,22 @@ hand-rolled core into a standalone package.
 
 Repo plumbing. Real work, but lower priority than moving the apps forward.
 
+### [Depot Caching Strategy](./projects/depot-caching-strategy/plan.md)
+
+Replaced hand-maintained CI path filters with graph-computed work selection. Executed 2026-08-02:
+`apps/` + `packages/` moved into one bun workspace at `workspaces/web-apps/`, Turborepo owns the
+task graph and caching, and 45 workflow files became 15 (one CI workflow plus affected-driven
+preview/deploy matrices). Supersedes the path-filter half of CI Pipeline Efficiency. Remaining:
+verify Depot Cache credentials, `--affected` on Depot checkouts, and the first preview/deploy
+cycles.
+
+**Status**: Active (post-merge verification)
+
 ### [CI Pipeline Efficiency](./projects/ci-pipeline-efficiency/plan.md)
 
 Make CI trigger only the workflows a change can affect (better path filtering, not concurrency), and
 cache the steps that start cold — the bun install cache, and the blocking web-session Playwright
-install.
+install. The path-filtering half is superseded by Depot Caching Strategy if that plan is adopted.
 
 **Status**: Active
 

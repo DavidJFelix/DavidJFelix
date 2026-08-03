@@ -1,0 +1,61 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "globalDependencies": ["biome.jsonc", ".oxlintrc.jsonc", "bunfig.toml"],
+  "globalEnv": ["REPO_CONFIG_HASH"],
+  "tasks": {
+    // Load-bearing, despite doing nothing: a task's hash only folds in a
+    // dependency package's files when a dependency EDGE reaches it. Without
+    // this chain, editing packages/theme re-runs the theme's own tasks and
+    // every consumer restores a stale cache hit -- verified, not assumed.
+    // packages/theme ships TypeScript source through its exports, so nothing
+    // needs it *built*; this expresses the ordering and hashing alone.
+    "topological": {
+      "dependsOn": ["^topological"]
+    },
+    "typecheck": {
+      "dependsOn": ["topological"]
+    },
+    "lint": {
+      "dependsOn": ["topological"]
+    },
+    "format": {},
+    // Every directory any app builds into. This list has to be COMPLETE: on a
+    // cache hit turbo restores exactly what is declared here and nothing else,
+    // so an app whose artifacts live outside it "succeeds" with an empty build
+    // tree -- which fails the smoke gate at best and deploys nothing at worst.
+    // Turbo warns ("no output files found for task X#build") when a package
+    // produces nothing matching; treat that warning as a bug, not noise.
+    "build": {
+      "dependsOn": ["topological", "^build"],
+      "outputs": [
+        "dist/**",
+        "dist-ssr/**",
+        "dist-flue/**",
+        ".output/**",
+        ".svelte-kit/**",
+        ".astro/**",
+        ".nuxt/**",
+        ".tanstack/**",
+        ".vinxi/**",
+        // The Cloudflare vite plugin writes .wrangler/deploy/config.json during
+        // build, and `vite preview` refuses to start without it. Only deploy/ --
+        // .wrangler/state/ is miniflare runtime state from the prerender step,
+        // not a build artifact.
+        ".wrangler/deploy/**"
+      ]
+    },
+    "test": {
+      "dependsOn": ["topological"]
+    },
+    // Gates that must actually execute, never replay a hash hit: the smoke
+    // boot and the e2e suites are what prove a deployable app still works.
+    "smoke": {
+      "cache": false,
+      "dependsOn": ["build"]
+    },
+    "test:e2e": {
+      "cache": false,
+      "dependsOn": ["build"]
+    }
+  }
+}

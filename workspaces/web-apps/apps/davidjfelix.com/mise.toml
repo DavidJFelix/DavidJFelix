@@ -1,0 +1,43 @@
+# Canonical check tasks for this app. CI and automation discover checks here;
+# tasks delegate to package.json scripts. Assumes `bun install` has run.
+
+[tasks.typecheck]
+description = "Type-check with astro check"
+run = "bun run typecheck"
+# astro check and astro build both regenerate .astro/ types; serialize them
+# when both are scheduled (e.g. via the check umbrella task)
+wait_for = ["build"]
+
+[tasks.lint]
+description = "Lint with Oxlint + Biome"
+run = "bun run lint"
+
+[tasks.format]
+description = "Check formatting (oxfmt; Biome for astro/svelte; Prettier for md/mdx)"
+run = "bun run format"
+
+[tasks."format:fix"]
+description = "Apply formatting fixes"
+run = "bun run format:fix"
+
+[tasks.test]
+description = "Unit tests with Vitest (passWithNoTests until the first test lands)"
+run = "bun run test"
+
+[tasks.build]
+description = "Build with Astro"
+run = "bun run build"
+
+[tasks.smoke]
+description = "Smoke-test a local production boot (astro preview)"
+depends = ["build"]
+run = "bun run smoke"
+
+[tasks."test:e2e"]
+description = "E2E + visual-regression tests with Playwright (builds first)"
+depends = ["build"]
+run = "bun run test:e2e"
+
+[tasks.check]
+description = "Run all checks"
+depends = ["typecheck", "lint", "format", "test", "build"]

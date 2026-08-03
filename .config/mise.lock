@@ -409,6 +409,10 @@ backend = "npm:cspell"
 version = "0.59.0"
 backend = "npm:oxfmt"
 
+[[tools."npm:turbo"]]
+version = "2.10.8"
+backend = "npm:turbo"
+
 [[tools.oxlint]]
 version = "1.76.0"
 backend = "npm:oxlint"

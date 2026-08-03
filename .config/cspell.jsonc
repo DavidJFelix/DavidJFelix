@@ -78,6 +78,7 @@
     "coverage",
     "playwright-report",
     "test-results",
+    ".turbo",
   ],
   "ignoreRegExpList": [
     // Bluesky DID identifiers (did:plc:...) -- prefix-anchored so the pattern

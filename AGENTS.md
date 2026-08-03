@@ -6,25 +6,25 @@ from this file.
 ## Repository overview
 
 Personal monorepo containing web applications, exercises, and configuration. No repo-root package
-workspace -- apps have independent lockfiles and dependencies, shared code ships from `packages/` as
-`file:` dependencies, and conflict-prone workspace trees live under `workspaces/`. Shared dev
-tooling is managed via mise (`.config/mise.toml`).
+workspace -- the web apps and the packages they share live in one bun workspace at
+`workspaces/web-apps/`, driven by Turborepo, and other conflict-prone workspace trees keep their own
+roots alongside it under `workspaces/`. Shared dev tooling is managed via mise
+(`.config/mise.toml`).
 
 ## Key paths
 
-| Path                 | Description                                                                                      |
-| -------------------- | ------------------------------------------------------------------------------------------------ |
-| `apps/`              | Application projects, one directory per app; [docs/projects.md](docs/projects.md) describes each |
-| `packages/`          | Shared packages apps consume as `file:` deps, one directory per package, each its own pnpm root  |
-| `docs/contributing/` | Style mini guides -- naming, testing, linting, config, scripting, tooling, CI, project docs      |
-| `docs/agents/`       | Agent workflow docs -- issue tracker, triage labels, domain docs                                 |
-| `docs/projects/`     | Active project plans and progress notes (ephemeral working notes)                                |
-| `docs/changelog/`    | Monthly change history (the durable record); PRs add fragments in `fragments/`                   |
-| `workspaces/`        | Isolated workspace trees whose package-manager roots should not collide with the parent repo     |
-| `.agents/agents/`    | Agent personas -- the author-side team and the review bench (solid copies)                       |
-| `.agents/skills/`    | Claude Code skills (solid copies)                                                                |
-| `.config/`           | Shared tooling config (mise, cspell)                                                             |
-| `bin/`               | Repo-root bun scripts, fronted by mise tasks                                                     |
+| Path                   | Description                                                                                                                                                                             |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `workspaces/web-apps/` | The bun workspace: `apps/` (one directory per app, see [docs/projects.md](docs/projects.md)), `packages/` (shared code apps import as workspace deps), one `bun.lock`, and `turbo.json` |
+| `docs/contributing/`   | Style mini guides -- naming, testing, linting, config, scripting, tooling, CI, project docs                                                                                             |
+| `docs/agents/`         | Agent workflow docs -- issue tracker, triage labels, domain docs                                                                                                                        |
+| `docs/projects/`       | Active project plans and progress notes (ephemeral working notes)                                                                                                                       |
+| `docs/changelog/`      | Monthly change history (the durable record); PRs add fragments in `fragments/`                                                                                                          |
+| `workspaces/`          | Workspace trees with their own package-manager roots, kept from colliding with each other                                                                                               |
+| `.agents/agents/`      | Agent personas -- the author-side team and the review bench (solid copies)                                                                                                              |
+| `.agents/skills/`      | Claude Code skills (solid copies)                                                                                                                                                       |
+| `.config/`             | Shared tooling config (mise, cspell)                                                                                                                                                    |
+| `bin/`                 | Repo-root bun scripts, fronted by mise tasks                                                                                                                                            |
 
 `.agents/` is the tool-agnostic source of truth for skills and personas; `.claude/skills/` and
 `.claude/agents/` hold tracked symlinks into it, because Claude Code only discovers `.claude/`. When
@@ -123,4 +123,4 @@ Folders may define their own `AGENTS.md` when they need additional context or in
 what this top-level file provides. They are optional -- add one only when a folder has guidance
 worth documenting.
 
-- [apps/calendar-visualizer/AGENTS.md](apps/calendar-visualizer/AGENTS.md)
+- [workspaces/web-apps/apps/calendar-visualizer/AGENTS.md](workspaces/web-apps/apps/calendar-visualizer/AGENTS.md)

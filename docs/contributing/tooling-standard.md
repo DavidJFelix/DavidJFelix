@@ -4,8 +4,9 @@ The canonical map of which tool owns which concern, per ecosystem. The rule: **o
 concern, like-projects share one config.** Per-project overrides only when there's a real,
 documented reason.
 
-This document is the reference; the live config lives in `.config/`, root `biome.jsonc` /
-`.oxlintrc.jsonc` / `.prettierrc.json`, and each app's `apps/<name>/` configs.
+This document is the reference; the live config lives in `.config/`, `.oxfmtrc.json` /
+`.prettierrc.json` at the repo root, `biome.jsonc` / `.oxlintrc.jsonc` at the web-apps workspace
+root, and each project's own configs under `workspaces/web-apps/`.
 
 For _where_ those config files live and _what format_ they take, see
 [configuration-style.md](configuration-style.md); for which language to write a script in, see
@@ -25,11 +26,11 @@ Applies to every JS/TS app (Astro, React, Vue, Svelte, TanStack Start, Nuxt, pla
 
 | Concern                                                                 | Tool                         | Config                                                                |
 | ----------------------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------------- |
-| Lint, primary (JS/TS/JSX/TSX + astro/vue/svelte script blocks)          | Oxlint                       | root `.oxlintrc.jsonc`                                                |
-| Lint, residual (CSS lint + the JS rules oxlint lacks; pruned rule list) | Biome                        | root `biome.jsonc`, app `biome.json` extends it                       |
+| Lint, primary (JS/TS/JSX/TSX + astro/vue/svelte script blocks)          | Oxlint                       | workspace `.oxlintrc.jsonc`                                           |
+| Lint, residual (CSS lint + the JS rules oxlint lacks; pruned rule list) | Biome                        | workspace `biome.jsonc`, app `biome.json` extends it                  |
 | Format (JS/TS/JSX/TSX, JSON/JSONC, CSS, Vue)                            | oxfmt                        | root `.oxfmtrc.json`                                                  |
-| Format (`.astro` frontmatter, `.svelte` script blocks)                  | Biome                        | root `biome.jsonc` (`formatter.includes`)                             |
-| Import organizing                                                       | Biome assist                 | root `biome.jsonc`                                                    |
+| Format (`.astro` frontmatter, `.svelte` script blocks)                  | Biome                        | workspace `biome.jsonc` (`formatter.includes`)                        |
+| Import organizing                                                       | Biome assist                 | workspace `biome.jsonc`                                               |
 | Type checking                                                           | tsc (`typescript` 7, native) | per-app `tsconfig.json`                                               |
 | Markdown / MDX formatting                                               | Prettier (md/mdx only)       | root `.prettierrc.json` (`proseWrap: always`), root `.prettierignore` |
 
@@ -79,25 +80,26 @@ The ownership map above covers quality tooling; this covers the rest of what age
   the framework CLIs all run on the mise-pinned node, and `bun test` does not replace vitest. `npm`
   projects should be converted unless there's a good reason; `yarn` and `pnpm` are retired (the two
   legacy `workspaces/joy-of-react` trees still carry pnpm lockfiles and migrate when next touched).
-  Every project (apps and `packages/`) carries a `bunfig.toml` with `minimumReleaseAge = 86400` --
-  bun's release-age cooldown is off by default and the file is not inherited from parent
-  directories, so a new project must copy it or it silently loses the supply-chain cooldown pnpm
-  used to provide. Native build scripts are allowlisted per project via `trustedDependencies` in
-  package.json; note that declaring the field replaces bun's default trust list, so it must name
-  everything the project relies on (esbuild, workerd, sharp, and friends), not just additions. Also
-  note bun materializes a `file:` dependency as per-file symlinks into its source directory (pnpm
-  pack-copied it), so the package's own imports resolve against `packages/<name>/node_modules` --
-  the package must be installed before a consumer typechecks, builds, or tests. The session hook,
-  the root aggregators, and every consumer's CI job install `packages/` first for this reason; a
-  bare `mise run build` in an app after a fresh clone needs `bun install` in the package too.
-- **Lockfiles**: one per project (`bun.lock`). If a project has both `pnpm-lock.yaml` and
-  `bun.lock`, keep `bun.lock` and delete `pnpm-lock.yaml`.
+  The web apps and their shared packages form one bun workspace rooted at `workspaces/web-apps/`, so
+  a single `bun install` there covers every project and shared code resolves through workspace links
+  -- no per-project install ordering, and no `file:` dependency to install first. The workspace root
+  owns the settings that used to be copied per project: one `bunfig.toml` with
+  `minimumReleaseAge = 86400` (bun's release-age cooldown is off by default and the file is not
+  inherited from parent directories), and one `trustedDependencies` allowlist for native build
+  scripts -- note that declaring the field replaces bun's default trust list, so it must name
+  everything any project relies on (esbuild, workerd, sharp, and friends), not just additions.
+  Dependency `overrides` also apply workspace-wide and live in the root package.json.
+- **Lockfiles**: one per package-manager root. That is one `bun.lock` for the whole
+  `workspaces/web-apps/` workspace, plus one for each isolated tree under `workspaces/`. If a root
+  has both `pnpm-lock.yaml` and `bun.lock`, keep `bun.lock` and delete `pnpm-lock.yaml`.
 - **Python**: `uv`. `pip` is banned -- never invoke it directly. `poetry` is banned.
 - **Rust**: `cargo`. **Go**: `go mod`.
-- **Tasks & scripts**: prefer `mise` tasks. If a task is too complex for a mise task, write it as a
-  `bun` script in a `bin/` directory -- the full language-choice order and the `sed`/`perl` ban
-  (which includes CI) live in [scripting-style.md](scripting-style.md). Remove `justfile`s when
-  found. Do not introduce new task tooling (moon, Taskfile, etc.) without an explicit ask.
+- **Tasks & scripts**: prefer `mise` tasks; Turborepo (`npm:turbo`, pinned in mise) fans them out
+  across the web-apps workspace and owns the caching. If a task is too complex for a mise task,
+  write it as a `bun` script in a `bin/` directory -- the full language-choice order and the
+  `sed`/`perl` ban (which includes CI) live in [scripting-style.md](scripting-style.md). Remove
+  `justfile`s when found. Do not introduce new task tooling (moon, Taskfile, etc.) without an
+  explicit ask.
 - **Deployment**: Cloudflare. (Vercel has been dropped -- remove references when encountered.)
   Pulumi / SST / Alchemy may come in later; not needed yet.
 
@@ -105,18 +107,20 @@ The ownership map above covers quality tooling; this covers the rest of what age
 
 - **Spell check** is a single repo-wide gate. cspell is a root tool (mise's npm backend:
   `npm:cspell` in `.config/mise.toml`), run via `mise run spell` over the repo's own sources
-  (`apps/`, `packages/`, `docs/`, `bin/`, root markdown, `.config/`, `.github/`). Noise is filtered
-  by `ignorePaths` in `.config/cspell.jsonc` (node_modules, build output, generated trees,
+  (`workspaces/web-apps/`, `docs/`, `bin/`, root markdown, `.config/`, `.github/`). Noise is
+  filtered by `ignorePaths` in `.config/cspell.jsonc` (node_modules, build output, generated trees,
   lockfiles). The `ci-spell.yml` workflow runs it on every push and PR — no paths filter, because
   it's universal. Apps do **not** carry their own cspell dependency or `spell` script; the root gate
   covers them.
-- **Oxlint + Biome + oxfmt + typecheck + tests** are per-project, declared as mise tasks in each
-  `apps/<name>/mise.toml` or `packages/<name>/mise.toml` and run by that project's path-filtered CI
-  workflow. `mise run check` at the repo root fans every project's full check out
-  (`bin/run-app-tasks.ts`, packages first since apps' `file:` deps hard-link from them).
-- **Root config files** (`biome.jsonc`, `.oxlintrc.jsonc`, `.oxfmtrc.json`, etc.) are formatted by
-  the root `mise run format` task (oxfmt, plus a Biome lint of Biome's own configs) and gated by
-  `ci-repo.yml`.
+- **Oxlint + Biome + oxfmt + typecheck + tests** are per-project scripts in each project's
+  package.json, mirrored as mise tasks in its `mise.toml` for working inside one app. Turborepo
+  orchestrates them across the workspace: `mise run check` at the repo root runs the whole graph
+  through `bin/turbo-run.ts`, and one `ci-web-apps.yml` workflow does the same in CI. What actually
+  executes is decided by the dependency graph and the cache, not by path filters -- a change to a
+  shared package re-runs its consumers because they depend on it.
+- **Root config files** (`.oxfmtrc.json`, `.prettierrc.json`, the workspace's `biome.jsonc` and
+  `.oxlintrc.jsonc`, etc.) are formatted by the root `mise run format` task (oxfmt, plus a Biome
+  lint of Biome's own configs) and gated by `ci-repo.yml`.
 - **Repo-owned Markdown** (`docs/`, root `*.md`, `.github/`) is format-gated by the root
   `mise run format:md` task (a bare `prettier --check .`, scope set by `.prettierignore`) and
   `ci-docs.yml`. Apps are excluded — their per-app format gates own their markdown, and djf.io's
@@ -125,6 +129,7 @@ The ownership map above covers quality tooling; this covers the rest of what age
 
 ## Known caveats / open decisions
 
-- **Legacy directories and workspace trees are out of scope.** `Exercism/` and `workspaces/` are
-  excluded from the spell gate and have no root-owned lint/format CI. Workspace trees own their own
-  tooling blast radius and can opt into checks later.
+- **Legacy directories and the isolated workspace trees are out of scope.** `Exercism/` and the
+  non-`web-apps` trees under `workspaces/` are excluded from the spell gate and have no root-owned
+  lint/format CI. They own their own tooling blast radius and can opt into checks later.
+  `workspaces/web-apps/` is the exception: it is fully in scope, gated by `ci-web-apps.yml`.

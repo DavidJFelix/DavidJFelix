@@ -11,3 +11,6 @@ node_modules/
 # Pi local packages/sessions; keep the project settings tracked.
 .pi/*
 !.pi/settings.json
+
+# Turborepo run logs and daemon state; never inputs, never committed.
+.turbo/

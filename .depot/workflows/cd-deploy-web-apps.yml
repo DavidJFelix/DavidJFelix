@@ -1,0 +1,119 @@
+name: CD Deploy web-apps
+# Production deploys, fanned out over the apps a push to main actually
+# affects. The plan job asks turbo which workspace packages changed -- a
+# packages/theme edit marks every app that depends on it -- and the matrix
+# deploys exactly those. Adding an app means adding a registry entry in
+# bin/plan-affected-apps.ts, not another workflow file.
+#
+# f311x deploys through alchemy rather than wrangler and keeps its own
+# workflow.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'workspaces/web-apps/**'
+      - '.config/mise.toml'
+      - '.config/mise.lock'
+      - 'bin/**'
+      - '.depot/workflows/cd-deploy-web-apps.yml'
+      - '.depot/actions/setup-web-apps/**'
+      - '.depot/actions/setup-mise/**'
+env:
+  MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
+  TURBO_TELEMETRY_DISABLED: '1'
+jobs:
+  plan:
+    name: plan affected apps
+    runs-on: depot-ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      apps: ${{ steps.plan.outputs.apps }}
+    steps:
+      # Full history: turbo diffs this push against the commit it landed on,
+      # which a shallow clone would not contain.
+      - name: checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: plan-affected-apps
+        id: plan
+        env:
+          TURBO_SCM_BASE: ${{ github.event.before }}
+          TURBO_SCM_HEAD: ${{ github.sha }}
+        run: bun bin/plan-affected-apps.ts deploy
+
+  deploy:
+    name: deploy ${{ matrix.app.dir }}
+    needs: plan
+    if: needs.plan.outputs.apps != '[]'
+    strategy:
+      # One app failing to deploy must not cancel the others mid-flight.
+      fail-fast: false
+      matrix:
+        app: ${{ fromJSON(needs.plan.outputs.apps) }}
+    runs-on: depot-ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      deployments: write
+    defaults:
+      run:
+        working-directory: workspaces/web-apps/apps/${{ matrix.app.dir }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # The workspace install also runs each app's `prepare` (panda codegen,
+      # svelte-kit sync), which is what the per-app workflows ran as their own
+      # codegen step before the build.
+      - name: setup web-apps
+        uses: ./.depot/actions/setup-web-apps
+
+      # djf.io only: publish the standard.site ATProto records before the
+      # build resolves their TID URIs. Detected in a step-scoped env (ghalint
+      # 006 forbids secrets in job env) so deploys stay decoupled from the
+      # credential when it is unset.
+      - name: check standard.site secret
+        id: atproto
+        if: matrix.app.dir == 'djf.io'
+        env:
+          ATPROTO_APP_PASSWORD: ${{ secrets.ATPROTO_APP_PASSWORD }}
+        run: |
+          if [ -n "$ATPROTO_APP_PASSWORD" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: sync standard.site records
+        if: matrix.app.dir == 'djf.io' && steps.atproto.outputs.present == 'true'
+        env:
+          ATPROTO_APP_PASSWORD: ${{ secrets.ATPROTO_APP_PASSWORD }}
+        run: mise run sync-standard-site
+
+      # Observability config is per-app: the matrix resolves each app's
+      # variables by name rather than pinning one app's vars per workflow. An
+      # app with a variable unset builds without it, which is how the apps that
+      # have not been onboarded to Sentry/PostHog deploy today.
+      - name: turbo build
+        working-directory: ${{ github.workspace }}
+        env:
+          STANDARD_SITE_RESOLVE: ${{ steps.atproto.outputs.present }}
+          PUBLIC_SENTRY_DSN: ${{ vars[format('SENTRY_DSN_{0}', matrix.app.envSuffix)] }}
+          PUBLIC_POSTHOG_KEY: ${{ vars[format('POSTHOG_KEY_{0}', matrix.app.envSuffix)] }}
+          SENTRY_PROJECT: ${{ vars[format('SENTRY_PROJECT_{0}', matrix.app.envSuffix)] }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: bun bin/turbo-run.ts build --filter=./apps/${{ matrix.app.dir }}
+
+      - name: wrangler deploy
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: >-
+            deploy ${{ matrix.app.wranglerConfig && format('-c {0}', matrix.app.wranglerConfig) || '' }}
+          workingDirectory: workspaces/web-apps/apps/${{ matrix.app.dir }}

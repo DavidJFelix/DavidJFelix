@@ -1,16 +1,17 @@
 #!/usr/bin/env bun
 import {$} from 'bun'
-import {appendFileSync, existsSync, readdirSync} from 'node:fs'
+import {appendFileSync, existsSync} from 'node:fs'
 import {homedir} from 'node:os'
 import {join, resolve} from 'node:path'
 
 // SessionStart hook for Claude Code on the web.
 //
-// A fresh web container ships with neither the mise toolchain nor any app's
-// node_modules, so it cannot run a single mise task or boot an app. This hook
-// bootstraps both: it installs the mise-pinned toolchain (node, bun, and the
-// linters) and every app's dependencies, so checks (typecheck / lint /
-// format / test / build) and smoke boots work the same way they do in CI.
+// A fresh web container ships with neither the mise toolchain nor the
+// workspace's node_modules, so it cannot run a single mise task or boot an
+// app. This hook bootstraps both: it installs the mise-pinned toolchain (node,
+// bun, turbo, and the linters) and the web-apps workspace dependencies, so
+// checks (typecheck / lint / format / test / build) and smoke boots work the
+// same way they do in CI.
 //
 // Local sessions only need shell activation persisted for later tool calls.
 // Remote web sessions also need the toolchain and app dependencies installed.
@@ -49,44 +50,34 @@ process.env.MISE_TRUSTED_CONFIG_PATHS = repo
 await $`mise trust --yes ${join(repo, '.config', 'mise.toml')}`.nothrow().quiet()
 await $`mise install`.cwd(repo)
 
-// 3. Install dependencies for every app and shared package. Lockfiles are
-//    independent (this repo has no root workspace; packages/ ships to apps via
-//    file: deps), so each project installs on its own. Frozen first so
-//    `latest` dev deps don't drift between runs and the session sees the same
-//    tree CI does; retry unfrozen to ride out lockfile drift or a transient
-//    registry blip. Keep going if one install fails -- a single broken install
-//    shouldn't block the session. packages/ installs first so an app's file:
-//    copy picks up a ready package.
+// 3. Install the web-apps workspace: one bun install covers every app and
+//    package (they share the workspace root's single bun.lock). Frozen first
+//    so `latest` dev deps don't drift between runs and the session sees the
+//    same tree CI does; retry unfrozen to ride out lockfile drift or a
+//    transient registry blip. Keep going on failure -- a broken install
+//    shouldn't block the session.
 const installEnv = {...process.env, CI: 'true'}
-for (const groupName of ['packages', 'apps']) {
-  const groupDir = join(repo, groupName)
-  if (!existsSync(groupDir)) continue
-  for (const entry of readdirSync(groupDir, {withFileTypes: true})) {
-    if (!entry.isDirectory()) continue
-    const projectDir = join(groupDir, entry.name)
-    if (!existsSync(join(projectDir, 'package.json'))) continue
-    console.log(`==> bun install: ${groupName}/${entry.name}`)
-    let result = await $`bun install --frozen-lockfile`
-      .cwd(projectDir)
-      .env(installEnv)
-      .nothrow()
-      .quiet()
-    if (result.exitCode !== 0) {
-      result = await $`bun install`.cwd(projectDir).env(installEnv).nothrow().quiet()
-    }
-    if (result.exitCode !== 0) {
-      console.error(`WARN: bun install failed in ${groupName}/${entry.name}`)
-      console.error(result.stdout.toString())
-      console.error(result.stderr.toString())
-    }
-  }
+const workspace = join(repo, 'workspaces', 'web-apps')
+console.log('==> bun install: workspaces/web-apps')
+let install = await $`bun install --frozen-lockfile`
+  .cwd(workspace)
+  .env(installEnv)
+  .nothrow()
+  .quiet()
+if (install.exitCode !== 0) {
+  install = await $`bun install`.cwd(workspace).env(installEnv).nothrow().quiet()
+}
+if (install.exitCode !== 0) {
+  console.error('WARN: bun install failed in workspaces/web-apps')
+  console.error(install.stdout.toString())
+  console.error(install.stderr.toString())
 }
 
 // 4. Install the Playwright chromium browser that djf.io's e2e suite and
 //    f311x's visual-regression tests need. The binary is shared across apps via
 //    ~/.cache/ms-playwright, so one install covers the repo. Best-effort: a
 //    failure here shouldn't abort the session.
-const playwrightApp = join(repo, 'apps', 'djf.io')
+const playwrightApp = join(workspace, 'apps', 'djf.io')
 if (existsSync(join(playwrightApp, 'node_modules', '@playwright', 'test'))) {
   console.log('==> playwright install: chromium')
   await $`bun x playwright install --with-deps chromium`

@@ -1,0 +1,48 @@
+# Canonical check tasks for this app. CI and automation discover checks here;
+# tasks delegate to package.json scripts. Assumes `bun install` has run.
+
+[tasks.typecheck]
+description = "Type-check with astro check"
+run = "bun run typecheck"
+# astro check and astro build both regenerate .astro/ types; serialize them
+# when both are scheduled (e.g. via the check umbrella task)
+wait_for = ["build"]
+
+[tasks.lint]
+description = "Lint with Oxlint + Biome"
+run = "bun run lint"
+
+[tasks.format]
+description = "Check formatting (oxfmt; Biome for astro/svelte; Prettier for md/mdx)"
+run = "bun run format"
+
+[tasks."format:fix"]
+description = "Apply formatting fixes"
+run = "bun run format:fix"
+
+[tasks.test]
+description = "Unit tests with Vitest"
+run = "bun run test"
+
+[tasks."test:e2e"]
+description = "E2E tests with Playwright (builds first)"
+run = "bun run test:e2e"
+depends = ["build"]
+
+[tasks.build]
+description = "Build with Panda codegen + Astro"
+run = "bun run build"
+
+[tasks."lint:prose"]
+description = "Fail on em-dashes or curly quotes in blog content"
+run = "bun bin/check-prose.ts"
+
+[tasks.check]
+description = "Run all checks"
+depends = ["typecheck", "lint", "format", "lint:prose", "test", "build"]
+
+# Not part of `check` -- needs ATPROTO_APP_PASSWORD and writes to bsky.social.
+# Wired into the djf.io deploy workflow in Phase 3; runnable locally meanwhile.
+[tasks."sync-standard-site"]
+description = "Sync standard.site ATProto records (needs ATPROTO_APP_PASSWORD)"
+run = "bun bin/sync-standard-site.ts"

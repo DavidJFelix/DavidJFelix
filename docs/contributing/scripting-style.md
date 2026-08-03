@@ -35,10 +35,10 @@ This matches the repo rule that scripts are bun, not bash (declared in `.config/
 - **Shebang `#!/usr/bin/env bun`.** ESM only -- `import`, top-level `await`. Never `require` (see
   [configuration-style.md](configuration-style.md#4-javascript--typescript-config-typescript--esm)).
 - **Live in a `bin/` directory** -- `bin/` at the repo root for repo-wide scripts,
-  `apps/<name>/bin/` for app-scoped ones. Reference examples: `bin/run-app-tasks.ts`,
-  `bin/smoke-url.ts`.
+  `workspaces/web-apps/apps/<name>/bin/` for app-scoped ones. Reference examples:
+  `bin/turbo-run.ts`, `bin/plan-affected-apps.ts`, `bin/smoke-url.ts`.
 - **Entry point is a `mise` task** that calls the script, so nobody has to remember the path
-  (`run = "bun bin/run-app-tasks.ts test"`).
+  (`run = "bun bin/turbo-run.ts test"`).
 - **Use Bun's built-ins** instead of shelling out: `Bun.spawn`, `Bun.file`, `fetch`, `Bun.sleep`,
   and the `$` shell tag (`import {$} from 'bun'`) for shell-like pipelines. The `$` tag is the
   answer to "but I need to pipe commands" -- you get shell ergonomics with real escaping, types, and
@@ -129,7 +129,8 @@ testable, and identical locally and in CI. Name the step after the tool it runs,
 
 ## Where scripts live and how they run
 
-- Repo-wide scripts: `bin/*.ts` at the repo root. App-scoped scripts: `apps/<name>/bin/*.ts`.
+- Repo-wide scripts: `bin/*.ts` at the repo root. App-scoped scripts:
+  `workspaces/web-apps/apps/<name>/bin/*.ts`.
 - The entry point is a `mise` task that calls the script -- don't make humans remember script paths.
 - **Do not introduce new task runners** (just, make, Taskfile, moon). `mise` owns task
   orchestration; remove `justfile`s when found (per [tooling-standard.md](tooling-standard.md)).

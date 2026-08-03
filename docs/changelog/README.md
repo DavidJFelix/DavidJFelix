@@ -47,7 +47,7 @@ Use the app or area name: `djf.io`, `calendar-visualizer`, `ravrun`, `tooling`, 
 
 ## Per-app changelogs
 
-Published packages may maintain their own `CHANGELOG.md` at `apps/<name>/CHANGELOG.md` for
+Published packages may maintain their own `CHANGELOG.md` beside their package.json for
 release-specific history. This directory captures repo-wide changes across all apps and
 infrastructure.
 

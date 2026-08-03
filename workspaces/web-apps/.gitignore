@@ -1,0 +1,7 @@
+# Ignores for the web-apps workspace. Biome reads the ignore file sitting
+# beside its config (vcs.useIgnoreFile), so these patterns live here rather
+# than only at the repo root -- git applies both.
+node_modules/
+
+# Turborepo run logs and local cache.
+.turbo/

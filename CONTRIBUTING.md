@@ -107,6 +107,7 @@ project that carries a `package.json`, set `"license": "(MIT OR Apache-2.0)"`; f
 set `license = "MIT OR Apache-2.0"`; in both cases copy the root [LICENSE.MIT.md](LICENSE.MIT.md)
 and [LICENSE.Apache-2.0.md](LICENSE.Apache-2.0.md) into the package directory so it stands alone.
 Third-party, vendored, or course-derived code keeps its original license -- record the attribution
-in a `NOTICE.md` beside it (see [apps/revision.city/NOTICE.md](apps/revision.city/NOTICE.md)) and
-list the exception in [LICENSE.md](LICENSE.md). Contributions are accepted under the dual license
-per its Contributions section.
+in a `NOTICE.md` beside it (see
+[workspaces/web-apps/apps/revision.city/NOTICE.md](workspaces/web-apps/apps/revision.city/NOTICE.md))
+and list the exception in [LICENSE.md](LICENSE.md). Contributions are accepted under the dual
+license per its Contributions section.

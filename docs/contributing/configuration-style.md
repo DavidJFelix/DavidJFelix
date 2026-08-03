@@ -6,8 +6,9 @@ instinct: a config file should be as local, as discoverable-without-clutter, and
 the tool allows.
 
 This guide is the reference; the live config lives in `.config/`, root `biome.jsonc` /
-`.oxlintrc.jsonc` / `.oxfmtrc.json` / `.prettierrc.json`, and each app's `apps/<name>/` configs. For
-which tool owns which concern, see [tooling-standard.md](tooling-standard.md).
+`.oxfmtrc.json` / `.prettierrc.json`, the web-apps workspace's `biome.jsonc` / `.oxlintrc.jsonc`,
+and each app's own configs. For which tool owns which concern, see
+[tooling-standard.md](tooling-standard.md).
 
 ## 1. Prefer `.config/`; research before defaulting to the repo root
 
@@ -73,13 +74,13 @@ global. The test: if this config changed, what is the blast radius? If it's one 
 that app.
 
 - **Project-focused config stays in the project.** An app's Biome / Vite / Playwright / Panda config
-  lives in `apps/<name>/`, not at the root. A per-app `biome.json` `extends` the root `biome.jsonc`
-  for shared rules and overrides only what is app-specific.
+  lives in the app's own directory, not at a shared root. A per-app `biome.json` `extends` the
+  workspace `biome.jsonc` for shared rules and overrides only what is app-specific.
 - **Repo-wide config lives at the root scope** (`.config/` or root): the mise toolchain, the root
   Biome / Prettier / Oxlint baseline, the cspell gate.
 - **`.config/` nests too** -- it is not a root-only directory.
-  `apps/calendar-visualizer/.config/cspell.jsonc` is a per-app cspell config in that app's own
-  `.config/`: the same Tier-1 placement, scoped one level down.
+  `workspaces/web-apps/apps/calendar-visualizer/.config/cspell.jsonc` is a per-app cspell config in
+  that app's own `.config/`: the same Tier-1 placement, scoped one level down.
 
 If you find a root config that only one app reads, push it down into that app.
 

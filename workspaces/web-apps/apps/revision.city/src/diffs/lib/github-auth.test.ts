@@ -1,6 +1,7 @@
 import {expect, test, vi} from 'vitest'
 
 import {
+  handleGitHubAuthConfigRequest,
   handleGitHubLoginRequest,
   handleGitHubLogoutRequest,
   handleGitHubManageAccessRequest,
@@ -357,4 +358,33 @@ test('manage-access starts the sign-in when there is no session to manage', asyn
 test('withSetCookieHeaders appends every cookie to the response', () => {
   const response = withSetCookieHeaders(new Response('ok'), ['a=1; Path=/', 'b=2; Path=/'])
   expect(getSetCookies(response)).toEqual(['a=1; Path=/', 'b=2; Path=/'])
+})
+
+test('config reports the callback URL this origin will ask GitHub for', () => {
+  const response = handleGitHubAuthConfigRequest(
+    new Request('https://pr-409-revision-city.nullserve.workers.dev/api/auth/github/config'),
+    {credentials: CREDENTIALS},
+  )
+
+  expect(response.status).toBe(200)
+  return expect(response.json()).resolves.toEqual({
+    configured: true,
+    callbackURL: 'https://pr-409-revision-city.nullserve.workers.dev/api/auth/github/callback',
+  })
+})
+
+test('config reports missing credentials without inventing a failure', async () => {
+  const response = handleGitHubAuthConfigRequest(new Request(`${ORIGIN}/api/auth/github/config`), {
+    credentials: undefined,
+  })
+
+  await expect(response.json()).resolves.toMatchObject({configured: false})
+})
+
+test('config never returns a credential value', async () => {
+  const response = handleGitHubAuthConfigRequest(new Request(`${ORIGIN}/api/auth/github/config`), {
+    credentials: CREDENTIALS,
+  })
+
+  expect(await response.text()).not.toContain(CREDENTIALS.clientSecret)
 })

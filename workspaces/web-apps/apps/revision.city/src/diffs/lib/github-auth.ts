@@ -229,6 +229,28 @@ export async function handleGitHubSessionRequest(
   return withSetCookieHeaders(response, auth.setCookieHeaders)
 }
 
+// Reports what this deployment needs registered for sign-in to work, so setting
+// up a new origin -- a per-PR preview especially -- is a copy-paste rather than
+// a guess. Every deploy derives its OAuth callback from the host it is served
+// on, and GitHub rejects a redirect_uri it does not already know, so a preview
+// stays signed out until its own callback URL is added to the GitHub App.
+//
+// Safe to expose: `configured` is a presence check, never a value, and the
+// callback URL is built from the requested host, which the caller already knows.
+export function handleGitHubAuthConfigRequest(
+  request: Request,
+  options: GitHubAuthOptions = {},
+): Response {
+  const credentials = options.credentials ?? readGitHubAppCredentials()
+  return Response.json(
+    {
+      configured: !isNullish(credentials),
+      callbackURL: new URL(CALLBACK_PATH, new URL(request.url)).href,
+    },
+    {headers: {'Cache-Control': 'no-store'}},
+  )
+}
+
 // Reads the session cookie and returns a session with a currently-valid access
 // token, refreshing through GitHub when the app issues expiring tokens. Callers
 // must forward setCookieHeaders so refreshed (or dead) sessions reach the

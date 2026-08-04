@@ -20,6 +20,7 @@ import { Route as ApiDiffsEntityDiffRouteImport } from './routes/api/diffs/entit
 import { Route as ApiDiffsGithubDiffFileRouteImport } from './routes/api/diffs/github-diff-file'
 import { Route as ApiDiffsPullRequestsRouteImport } from './routes/api/diffs/pull-requests'
 import { Route as ApiAuthGithubCallbackRouteImport } from './routes/api/auth/github/callback'
+import { Route as ApiAuthGithubConfigRouteImport } from './routes/api/auth/github/config'
 import { Route as ApiAuthGithubInstallationsRouteImport } from './routes/api/auth/github/installations'
 import { Route as ApiAuthGithubLoginRouteImport } from './routes/api/auth/github/login'
 import { Route as ApiAuthGithubLogoutRouteImport } from './routes/api/auth/github/logout'
@@ -80,6 +81,11 @@ const ApiAuthGithubCallbackRoute = ApiAuthGithubCallbackRouteImport.update({
   path: '/api/auth/github/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAuthGithubConfigRoute = ApiAuthGithubConfigRouteImport.update({
+  id: '/api/auth/github/config',
+  path: '/api/auth/github/config',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthGithubInstallationsRoute =
   ApiAuthGithubInstallationsRouteImport.update({
     id: '/api/auth/github/installations',
@@ -114,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/api/diffs/github-diff-file': typeof ApiDiffsGithubDiffFileRoute
   '/api/diffs/pull-requests': typeof ApiDiffsPullRequestsRoute
   '/api/auth/github/callback': typeof ApiAuthGithubCallbackRoute
+  '/api/auth/github/config': typeof ApiAuthGithubConfigRoute
   '/api/auth/github/installations': typeof ApiAuthGithubInstallationsRoute
   '/api/auth/github/login': typeof ApiAuthGithubLoginRoute
   '/api/auth/github/logout': typeof ApiAuthGithubLogoutRoute
@@ -130,6 +137,7 @@ export interface FileRoutesByTo {
   '/api/diffs/github-diff-file': typeof ApiDiffsGithubDiffFileRoute
   '/api/diffs/pull-requests': typeof ApiDiffsPullRequestsRoute
   '/api/auth/github/callback': typeof ApiAuthGithubCallbackRoute
+  '/api/auth/github/config': typeof ApiAuthGithubConfigRoute
   '/api/auth/github/installations': typeof ApiAuthGithubInstallationsRoute
   '/api/auth/github/login': typeof ApiAuthGithubLoginRoute
   '/api/auth/github/logout': typeof ApiAuthGithubLogoutRoute
@@ -148,6 +156,7 @@ export interface FileRoutesById {
   '/api/diffs/github-diff-file': typeof ApiDiffsGithubDiffFileRoute
   '/api/diffs/pull-requests': typeof ApiDiffsPullRequestsRoute
   '/api/auth/github/callback': typeof ApiAuthGithubCallbackRoute
+  '/api/auth/github/config': typeof ApiAuthGithubConfigRoute
   '/api/auth/github/installations': typeof ApiAuthGithubInstallationsRoute
   '/api/auth/github/login': typeof ApiAuthGithubLoginRoute
   '/api/auth/github/logout': typeof ApiAuthGithubLogoutRoute
@@ -167,6 +176,7 @@ export interface FileRouteTypes {
     | '/api/diffs/github-diff-file'
     | '/api/diffs/pull-requests'
     | '/api/auth/github/callback'
+    | '/api/auth/github/config'
     | '/api/auth/github/installations'
     | '/api/auth/github/login'
     | '/api/auth/github/logout'
@@ -183,6 +193,7 @@ export interface FileRouteTypes {
     | '/api/diffs/github-diff-file'
     | '/api/diffs/pull-requests'
     | '/api/auth/github/callback'
+    | '/api/auth/github/config'
     | '/api/auth/github/installations'
     | '/api/auth/github/login'
     | '/api/auth/github/logout'
@@ -200,6 +211,7 @@ export interface FileRouteTypes {
     | '/api/diffs/github-diff-file'
     | '/api/diffs/pull-requests'
     | '/api/auth/github/callback'
+    | '/api/auth/github/config'
     | '/api/auth/github/installations'
     | '/api/auth/github/login'
     | '/api/auth/github/logout'
@@ -216,6 +228,7 @@ export interface RootRouteChildren {
   ApiDiffsGithubDiffFileRoute: typeof ApiDiffsGithubDiffFileRoute
   ApiDiffsPullRequestsRoute: typeof ApiDiffsPullRequestsRoute
   ApiAuthGithubCallbackRoute: typeof ApiAuthGithubCallbackRoute
+  ApiAuthGithubConfigRoute: typeof ApiAuthGithubConfigRoute
   ApiAuthGithubInstallationsRoute: typeof ApiAuthGithubInstallationsRoute
   ApiAuthGithubLoginRoute: typeof ApiAuthGithubLoginRoute
   ApiAuthGithubLogoutRoute: typeof ApiAuthGithubLogoutRoute
@@ -301,6 +314,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthGithubCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/auth/github/config': {
+      id: '/api/auth/github/config'
+      path: '/api/auth/github/config'
+      fullPath: '/api/auth/github/config'
+      preLoaderRoute: typeof ApiAuthGithubConfigRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/github/installations': {
       id: '/api/auth/github/installations'
       path: '/api/auth/github/installations'
@@ -356,6 +376,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiDiffsGithubDiffFileRoute: ApiDiffsGithubDiffFileRoute,
   ApiDiffsPullRequestsRoute: ApiDiffsPullRequestsRoute,
   ApiAuthGithubCallbackRoute: ApiAuthGithubCallbackRoute,
+  ApiAuthGithubConfigRoute: ApiAuthGithubConfigRoute,
   ApiAuthGithubInstallationsRoute: ApiAuthGithubInstallationsRoute,
   ApiAuthGithubLoginRoute: ApiAuthGithubLoginRoute,
   ApiAuthGithubLogoutRoute: ApiAuthGithubLogoutRoute,

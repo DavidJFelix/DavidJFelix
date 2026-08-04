@@ -1,5 +1,11 @@
 import {resolveGitHubManageAccessURL} from './github-repo-access'
 import {isNullish} from './nullish'
+import {
+  type PreviewAuthConfig,
+  parsePreviewOrigin,
+  readPreviewAuthConfig,
+  shouldBorrowSignIn,
+} from './preview-auth'
 
 const GITHUB_AUTHORIZE_URL = 'https://github.com/login/oauth/authorize'
 const GITHUB_TOKEN_URL = 'https://github.com/login/oauth/access_token'
@@ -19,6 +25,7 @@ const DEFAULT_COOKIE_MAX_AGE_SECONDS = 180 * 24 * 60 * 60
 const EXPIRY_MARGIN_MS = 60 * 1000
 const DEFAULT_RETURN_PATH = '/diffs'
 const CALLBACK_PATH = '/api/auth/github/callback'
+const LOGIN_PATH = '/api/auth/github/login'
 // The session is read under /api and set from redirects landing on /diffs, so
 // the cookie is site-wide rather than scoped to either subtree.
 const COOKIE_PATH = '/'
@@ -36,6 +43,7 @@ export interface GitHubAppCredentials {
 export interface GitHubAuthOptions {
   credentials?: GitHubAppCredentials
   fetch?: AuthFetch
+  previewConfig?: PreviewAuthConfig
 }
 
 export interface GitHubAuthSession {
@@ -66,6 +74,39 @@ export function handleGitHubLoginRequest(
   const requestURL = new URL(request.url)
   const returnPath = sanitizeReturnPath(requestURL.searchParams.get('returnTo'))
   const state = crypto.randomUUID()
+  const secure = isSecureRequest(requestURL)
+  const previewConfig = options.previewConfig ?? readPreviewAuthConfig()
+
+  // A per-PR preview cannot be an OAuth redirect target -- GitHub rejects a
+  // redirect_uri it does not know, and per-PR hostnames cannot be registered
+  // ahead of time. So the preview binds its own state to this browser, then
+  // hands the dance to a stable origin of this same worker, which brings the
+  // authorization code back here to be exchanged.
+  if (shouldBorrowSignIn(requestURL, previewConfig)) {
+    const brokerLogin = new URL(LOGIN_PATH, previewConfig.brokerURL)
+    brokerLogin.searchParams.set('previewOrigin', `https://${requestURL.hostname}`)
+    brokerLogin.searchParams.set('previewState', state)
+    return createRedirectResponse(brokerLogin.href, [
+      serializeCookie({
+        name: STATE_COOKIE_NAME,
+        // The exchange has to present the same redirect_uri the authorize used,
+        // and that was the stable origin's, not this one's.
+        value: encodeCookiePayload({
+          state,
+          returnPath,
+          exchangeRedirectURI: new URL(CALLBACK_PATH, previewConfig.brokerURL).href,
+        }),
+        maxAgeSeconds: STATE_COOKIE_MAX_AGE_SECONDS,
+        secure,
+      }),
+    ])
+  }
+
+  // Standing in for a preview: carry where to send the code, and the state that
+  // preview bound to its own browser, through to the callback.
+  const previewOrigin = parsePreviewOrigin(requestURL.searchParams.get('previewOrigin'))
+  const previewState = requestURL.searchParams.get('previewState')
+
   const authorizeURL = new URL(GITHUB_AUTHORIZE_URL)
   authorizeURL.searchParams.set('client_id', credentials.clientId)
   authorizeURL.searchParams.set('redirect_uri', new URL(CALLBACK_PATH, requestURL).href)
@@ -74,9 +115,15 @@ export function handleGitHubLoginRequest(
   return createRedirectResponse(authorizeURL.href, [
     serializeCookie({
       name: STATE_COOKIE_NAME,
-      value: encodeCookiePayload({state, returnPath}),
+      value: encodeCookiePayload({
+        state,
+        returnPath,
+        ...(isNullish(previewOrigin) || isNullish(previewState)
+          ? {}
+          : {previewOrigin, previewState}),
+      }),
       maxAgeSeconds: STATE_COOKIE_MAX_AGE_SECONDS,
-      secure: isSecureRequest(requestURL),
+      secure,
     }),
   ])
 }
@@ -124,13 +171,28 @@ export async function handleGitHubOAuthCallbackRequest(
     ])
   }
 
+  // Standing in for a preview: hand the code back to it rather than exchanging
+  // here. Only the code travels, and it is inert without the client secret --
+  // which the preview has, being a version of this same worker. The session is
+  // therefore minted on the preview's own origin and never crosses one.
+  const previewOrigin = parsePreviewOrigin(stateCookie.previewOrigin ?? null)
+  const previewState = stateCookie.previewState
+  if (!isNullish(previewOrigin) && !isNullish(previewState)) {
+    const previewCallback = new URL(CALLBACK_PATH, previewOrigin)
+    previewCallback.searchParams.set('code', code)
+    previewCallback.searchParams.set('state', previewState)
+    return createRedirectResponse(previewCallback.href, [clearStateCookie])
+  }
+
   const fetcher = options.fetch ?? fetch
   const grant = await requestGitHubTokenGrant(
     {
       client_id: credentials.clientId,
       client_secret: credentials.clientSecret,
       code,
-      redirect_uri: new URL(CALLBACK_PATH, requestURL).href,
+      // A borrowed sign-in authorized against the stable origin's callback, and
+      // GitHub requires the exchange to present that same value.
+      redirect_uri: stateCookie.exchangeRedirectURI ?? new URL(CALLBACK_PATH, requestURL).href,
     },
     fetcher,
   )
@@ -420,7 +482,18 @@ function readSessionCookie(request: Request): GitHubAuthSession | undefined {
   }
 }
 
-function readStateCookie(request: Request): {state: string; returnPath: string} | undefined {
+// Carries the borrowed-sign-in fields through as well: the callback needs to
+// know whether it is standing in for a preview, and a preview needs the
+// redirect_uri its authorize actually used.
+interface GitHubOAuthStateCookie {
+  state: string
+  returnPath: string
+  previewOrigin?: string
+  previewState?: string
+  exchangeRedirectURI?: string
+}
+
+function readStateCookie(request: Request): GitHubOAuthStateCookie | undefined {
   const payload = readCookiePayload(request, STATE_COOKIE_NAME)
   if (isNullish(payload) || typeof payload.state !== 'string' || payload.state === '') {
     return undefined
@@ -428,6 +501,9 @@ function readStateCookie(request: Request): {state: string; returnPath: string} 
   return {
     state: payload.state,
     returnPath: sanitizeReturnPath(readOptionalString(payload.returnPath) ?? null),
+    previewOrigin: readOptionalString(payload.previewOrigin),
+    previewState: readOptionalString(payload.previewState),
+    exchangeRedirectURI: readOptionalString(payload.exchangeRedirectURI),
   }
 }
 

@@ -388,3 +388,122 @@ test('config never returns a credential value', async () => {
 
   expect(await response.text()).not.toContain(CREDENTIALS.clientSecret)
 })
+
+const PREVIEW = 'https://pr-409-revision-city.nullserve.workers.dev'
+const PREVIEW_CONFIG = {brokerURL: ORIGIN}
+
+test('a preview hands sign-in to the stable origin instead of GitHub', () => {
+  const response = handleGitHubLoginRequest(
+    new Request(`${PREVIEW}/api/auth/github/login?returnTo=/diffs/o/r/pull/1`),
+    {credentials: CREDENTIALS, previewConfig: PREVIEW_CONFIG},
+  )
+
+  const location = new URL(response.headers.get('location') ?? '')
+  expect(location.origin).toBe(ORIGIN)
+  expect(location.pathname).toBe('/api/auth/github/login')
+  expect(location.searchParams.get('previewOrigin')).toBe(PREVIEW)
+  // Its own state is bound to this browser before leaving.
+  expect(location.searchParams.get('previewState')).not.toBe(null)
+  expect(getSetCookies(response)[0]).toContain('diffs-github-oauth-state')
+})
+
+test('production never hands sign-in off, even with an origin configured', () => {
+  const response = handleGitHubLoginRequest(new Request(`${ORIGIN}/api/auth/github/login`), {
+    credentials: CREDENTIALS,
+    previewConfig: PREVIEW_CONFIG,
+  })
+
+  expect(new URL(response.headers.get('location') ?? '').origin).toBe('https://github.com')
+})
+
+test('the stable origin authorizes against its own callback while standing in', () => {
+  const login = new URL(`${ORIGIN}/api/auth/github/login`)
+  login.searchParams.set('previewOrigin', PREVIEW)
+  login.searchParams.set('previewState', 'preview-state-value')
+
+  const response = handleGitHubLoginRequest(new Request(login), {credentials: CREDENTIALS})
+
+  const authorize = new URL(response.headers.get('location') ?? '')
+  expect(authorize.origin).toBe('https://github.com')
+  expect(authorize.searchParams.get('redirect_uri')).toBe(`${ORIGIN}/api/auth/github/callback`)
+})
+
+test.each([
+  ['another site entirely', 'https://evil.example.com'],
+  ['a look-alike host', 'https://pr-409-revision-city.nullserve.workers.dev.evil.com'],
+])('the stable origin will not stand in for %s', async (_case, previewOrigin) => {
+  const login = new URL(`${ORIGIN}/api/auth/github/login`)
+  login.searchParams.set('previewOrigin', previewOrigin)
+  login.searchParams.set('previewState', 'preview-state-value')
+  const loginResponse = handleGitHubLoginRequest(new Request(login), {credentials: CREDENTIALS})
+  const stateCookie = cookiePair(getSetCookies(loginResponse)[0] ?? '')
+  const state = new URL(loginResponse.headers.get('location') ?? '').searchParams.get('state')
+
+  const fetchImpl = stubGitHubFetch()
+  const response = await handleGitHubOAuthCallbackRequest(
+    new Request(`${ORIGIN}/api/auth/github/callback?code=abc&state=${state}`, {
+      headers: {cookie: stateCookie},
+    }),
+    {credentials: CREDENTIALS, fetch: fetchImpl},
+  )
+
+  // The rejected origin was never recorded, so this is an ordinary sign-in here
+  // rather than a redirect carrying a live code to an unknown host.
+  expect(response.headers.get('location')).not.toContain('evil')
+  expect(fetchImpl).toHaveBeenCalled()
+})
+
+test('the stable origin hands the code back to the preview without exchanging it', async () => {
+  const login = new URL(`${ORIGIN}/api/auth/github/login`)
+  login.searchParams.set('previewOrigin', PREVIEW)
+  login.searchParams.set('previewState', 'preview-state-value')
+  const loginResponse = handleGitHubLoginRequest(new Request(login), {credentials: CREDENTIALS})
+  const stateCookie = cookiePair(getSetCookies(loginResponse)[0] ?? '')
+  const state = new URL(loginResponse.headers.get('location') ?? '').searchParams.get('state')
+
+  const fetchImpl = stubGitHubFetch()
+  const response = await handleGitHubOAuthCallbackRequest(
+    new Request(`${ORIGIN}/api/auth/github/callback?code=the-code&state=${state}`, {
+      headers: {cookie: stateCookie},
+    }),
+    {credentials: CREDENTIALS, fetch: fetchImpl},
+  )
+
+  const location = new URL(response.headers.get('location') ?? '')
+  expect(location.origin).toBe(PREVIEW)
+  expect(location.searchParams.get('code')).toBe('the-code')
+  expect(location.searchParams.get('state')).toBe('preview-state-value')
+  // No token was minted here: the session belongs to the preview's origin.
+  expect(fetchImpl).not.toHaveBeenCalled()
+  expect(getSetCookies(response).some((header) => header.startsWith('diffs-github-auth='))).toBe(
+    false,
+  )
+})
+
+test('the preview exchanges the code against the redirect_uri that authorized it', async () => {
+  const loginResponse = handleGitHubLoginRequest(
+    new Request(`${PREVIEW}/api/auth/github/login?returnTo=/diffs/o/r/pull/1`),
+    {credentials: CREDENTIALS, previewConfig: PREVIEW_CONFIG},
+  )
+  const stateCookie = cookiePair(getSetCookies(loginResponse)[0] ?? '')
+  const state = new URL(loginResponse.headers.get('location') ?? '').searchParams.get(
+    'previewState',
+  )
+
+  const fetchImpl = stubGitHubFetch()
+  const response = await handleGitHubOAuthCallbackRequest(
+    new Request(`${PREVIEW}/api/auth/github/callback?code=the-code&state=${state}`, {
+      headers: {cookie: stateCookie},
+    }),
+    {credentials: CREDENTIALS, fetch: fetchImpl, previewConfig: PREVIEW_CONFIG},
+  )
+
+  // GitHub requires the exchange to present the same redirect_uri the authorize
+  // used, which was the stable origin's callback, not the preview's.
+  const [, init] = fetchImpl.mock.calls[0] ?? []
+  expect(String(init?.body)).toContain(encodeURIComponent(`${ORIGIN}/api/auth/github/callback`))
+  expect(response.headers.get('location')).toBe('/diffs/o/r/pull/1')
+  expect(getSetCookies(response).some((header) => header.startsWith('diffs-github-auth='))).toBe(
+    true,
+  )
+})

@@ -17,16 +17,17 @@ diffs as first-class objects.
 > to a multiple-choice pick, so this plan deliberately does not propose or pin a direction. Until
 > David writes it up, the MVP shape is the open, blocking question — nothing downstream is scoped.
 
-## Current state (2026-08-03)
+## Current state (2026-08-04)
 
 - Live at revision.city (TanStack Start on Cloudflare; custom domain + www wired).
 - Landing page with header/hero/feature cards; the Diffs card links to `/diffs`.
 - The diffs half is functional: a GitHub diff viewer ported from Pierre's diffshub lives under
   `/diffs` (`src/diffs/` feature tree + `src/routes/diffs/`), rewritten to Panda CSS and TanStack
   Start server routes; see [2026-07-23-progress.md](2026-07-23-progress.md).
-- An entity-diff engine lands in `src/symbols/lib/` (2026-08-03): it names the functions, classes
-  and config keys that changed between two revisions, across the fifteen first-party Lezer grammars
-  that carry symbols. Pure logic only — no route and no UI consume it yet.
+- Symbol tracking is live in the viewer (2026-08-04): a Symbols tab beside Files and Comments names
+  the functions, classes and config keys a diff changed, across the fifteen first-party Lezer
+  grammars that carry symbols. Parsed in the worker and streamed down; works signed out on public
+  repos.
 - Reviews remain unscoped pending the MVP-shape doc (the Phase 2 gate below).
 
 ## Stack
@@ -66,8 +67,8 @@ is wiring and reach.
       entity. Fetches nothing until the tab is opened. (done 2026-08-04)
 - [x] Works signed out on public repos, matching how the viewer already loads patches. A session
       adds private repos and a higher rate limit. (done 2026-08-04)
-- [x] Results stream from the worker as newline-delimited JSON, one line per file, batched twenty
-      at a time to stay inside a request's subrequest budget. (done 2026-08-04)
+- [x] Results stream from the worker as newline-delimited JSON, one line per file, batched twenty at
+      a time to stay inside a request's subrequest budget. (done 2026-08-04)
 - [ ] Cache entity diffs across page loads, keyed by blob SHA pair. Results are currently held only
       for the life of the page; the answer is immutable per revision pair, so KV or the Cache API
       would make a revisited PR free.

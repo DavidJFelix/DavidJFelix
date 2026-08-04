@@ -3,7 +3,7 @@ import {memo} from 'react'
 
 import {css, cx} from 'styled-system/css'
 import {isNullish} from '@/diffs/lib/nullish'
-import {CHANGE_STYLES, KIND_LABELS} from '@/symbols/lib/change-presentation'
+import {CHANGE_ORDER, CHANGE_STYLES, KIND_LABELS} from '@/symbols/lib/change-presentation'
 import type {EntityChange} from '@/symbols/lib/entity'
 import type {EntityDiffEntry} from './use-entity-diffs'
 
@@ -93,6 +93,7 @@ function SymbolSections({
         }),
       )}
     >
+      <ChangeSummary sections={sections} />
       {sections.map((entry) => (
         <FileSection
           key={entry.itemId}
@@ -116,6 +117,36 @@ function SymbolSections({
         </p>
       )}
     </div>
+  )
+}
+
+// Totals across the whole diff, in the same colors and words the rows use, so
+// it reads as a legend as much as a count.
+function ChangeSummary({sections}: {sections: readonly EntityDiffEntry[]}) {
+  const changes = sections.flatMap((entry) => entry.diff?.changes ?? [])
+  const buckets = CHANGE_ORDER.map((type) => ({
+    type,
+    count: changes.filter((change) => change.type === type).length,
+  })).filter((bucket) => bucket.count > 0)
+
+  return (
+    <p
+      className={css({
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '2',
+        px: '3',
+        pt: '2',
+        fontSize: 'xs',
+        lineHeight: '[1rem]',
+      })}
+    >
+      {buckets.map(({type, count}) => (
+        <span key={type} style={{color: CHANGE_STYLES[type].color}}>
+          {count} {CHANGE_STYLES[type].label}
+        </span>
+      ))}
+    </p>
   )
 }
 
@@ -248,6 +279,9 @@ function SymbolRow({change, itemId, onSelectSymbol}: SymbolRowProps) {
           <span className={css({srOnly: true})}>{style.label} </span>
           {change.qualifiedName}
         </span>
+        {/* Spelled out rather than left to the sigil: one letter in a colored
+            column is fine for scanning, but it cannot be the only place the
+            change type is stated. */}
         <span
           className={css({
             color: 'diffs.muted.foreground',
@@ -255,7 +289,7 @@ function SymbolRow({change, itemId, onSelectSymbol}: SymbolRowProps) {
             lineHeight: '[1rem]',
           })}
         >
-          {KIND_LABELS[change.kind]}
+          <span style={{color: style.color}}>{style.label}</span> {KIND_LABELS[change.kind]}
           {!isNullish(change.previousQualifiedName) && ` · was ${change.previousQualifiedName}`}
         </span>
       </span>

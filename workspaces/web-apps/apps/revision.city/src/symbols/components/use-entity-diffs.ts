@@ -1,12 +1,11 @@
-import {useCallback, useEffect, useRef, useState} from 'react'
+import {useEffect, useRef, useState} from 'react'
 
 import type {EntityDiff} from '@/symbols/lib/entity'
-import {type EntityDiffRequest, fetchEntityDiff} from '@/symbols/lib/entity-diff-client'
-
-// Each file costs up to two GitHub blob fetches, so requests are spread rather
-// than fired at once -- a 60-file PR would otherwise open 60 connections and
-// burn through the rate limit in one burst.
-const MAX_CONCURRENT_REQUESTS = 4
+import {
+  type EntityDiffRequest,
+  MAX_FILES_PER_REQUEST,
+  streamEntityDiffs,
+} from '@/symbols/lib/entity-diff-client'
 
 export type EntityDiffStatus = 'pending' | 'loading' | 'ready' | 'error'
 
@@ -19,8 +18,8 @@ export interface EntityDiffEntry {
 }
 
 export interface UseEntityDiffsParams {
-  // Gates every request: nothing is fetched until the symbols tab is opened, so
-  // viewing a diff without opening the tab costs nothing.
+  // Gates the whole thing: nothing is requested until the symbols tab is opened,
+  // so viewing a diff without opening the tab costs nothing.
   enabled: boolean
   requests: readonly EntityDiffRequest[]
   sourcePath: string
@@ -48,16 +47,6 @@ export function useEntityDiffs({
     cacheRef.current = new Map()
   }
 
-  const readCached = useCallback(
-    (request: EntityDiffRequest): EntityDiffEntry =>
-      cacheRef.current.get(cacheKey(request)) ?? {
-        itemId: request.itemId,
-        name: request.name,
-        status: 'pending',
-      },
-    [],
-  )
-
   useEffect(() => {
     if (!enabled || requests.length === 0) {
       return undefined
@@ -65,63 +54,96 @@ export function useEntityDiffs({
 
     const controller = new AbortController()
     let cancelled = false
+    const cache = cacheRef.current
 
     const publish = () => {
       if (!cancelled) {
-        setEntries(requests.map(readCached))
+        setEntries(
+          requests.map(
+            (request) =>
+              cache.get(cacheKey(request)) ?? {
+                itemId: request.itemId,
+                name: request.name,
+                status: 'pending',
+              },
+          ),
+        )
       }
     }
-    publish()
 
-    const queue = requests.filter((request) => readCached(request).status === 'pending')
-    const runWorker = async () => {
-      while (queue.length > 0 && !cancelled) {
-        const request = queue.shift()
-        if (request === undefined) {
+    const run = async () => {
+      const outstanding = requests.filter(
+        (request) => (cache.get(cacheKey(request))?.status ?? 'pending') === 'pending',
+      )
+      publish()
+
+      // Batched rather than sent whole: one worker request has a bounded
+      // subrequest budget, and each file costs up to two GitHub reads.
+      for (let index = 0; index < outstanding.length; index += MAX_FILES_PER_REQUEST) {
+        if (cancelled) {
           return
         }
-        const key = cacheKey(request)
-        cacheRef.current.set(key, {
-          itemId: request.itemId,
-          name: request.name,
-          status: 'loading',
-        })
+        const batch = outstanding.slice(index, index + MAX_FILES_PER_REQUEST)
+        for (const request of batch) {
+          cache.set(cacheKey(request), {
+            itemId: request.itemId,
+            name: request.name,
+            status: 'loading',
+          })
+        }
         publish()
 
         try {
-          const diff = await fetchEntityDiff({request, sourcePath, signal: controller.signal})
-          cacheRef.current.set(key, {
-            itemId: request.itemId,
-            name: request.name,
-            status: 'ready',
-            diff,
+          await streamEntityDiffs({
+            files: batch,
+            signal: controller.signal,
+            sourcePath,
+            onResult: (result) => {
+              const request = batch.find((candidate) => candidate.itemId === result.itemId)
+              if (request === undefined) {
+                return
+              }
+              cache.set(cacheKey(request), {
+                itemId: result.itemId,
+                name: result.name,
+                status: result.diff === undefined ? 'error' : 'ready',
+                diff: result.diff,
+                error: result.error,
+              })
+              publish()
+            },
           })
         } catch (error) {
           if (controller.signal.aborted) {
-            // Unmounted or re-run: drop the in-flight marker so a later pass retries.
-            cacheRef.current.delete(key)
+            // Unmounted or re-run: drop in-flight markers so a later pass retries.
+            for (const request of batch) {
+              cache.delete(cacheKey(request))
+            }
             return
           }
-          cacheRef.current.set(key, {
-            itemId: request.itemId,
-            name: request.name,
-            status: 'error',
-            error: error instanceof Error ? error.message : 'Symbol lookup failed.',
-          })
+          const message = error instanceof Error ? error.message : 'Symbol lookup failed.'
+          for (const request of batch) {
+            if (cache.get(cacheKey(request))?.status === 'loading') {
+              cache.set(cacheKey(request), {
+                itemId: request.itemId,
+                name: request.name,
+                status: 'error',
+                error: message,
+              })
+            }
+          }
+          publish()
         }
-        publish()
       }
     }
 
-    void Promise.all(
-      Array.from({length: Math.min(MAX_CONCURRENT_REQUESTS, queue.length)}, runWorker),
-    )
+    void run()
 
     return () => {
       cancelled = true
       controller.abort()
     }
-  }, [enabled, readCached, requests, sourcePath])
+  }, [enabled, requests, sourcePath])
 
   return {
     entries,

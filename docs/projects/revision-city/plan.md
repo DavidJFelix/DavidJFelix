@@ -66,6 +66,8 @@ is wiring and reach.
       entity. Fetches nothing until the tab is opened. (done 2026-08-04)
 - [x] Works signed out on public repos, matching how the viewer already loads patches. A session
       adds private repos and a higher rate limit. (done 2026-08-04)
+- [x] Results stream from the worker as newline-delimited JSON, one line per file, batched twenty
+      at a time to stay inside a request's subrequest budget. (done 2026-08-04)
 - [ ] Cache entity diffs across page loads, keyed by blob SHA pair. Results are currently held only
       for the life of the page; the answer is immutable per revision pair, so KV or the Cache API
       would make a revisited PR free.

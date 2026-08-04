@@ -26,15 +26,21 @@ async function flushAsync(): Promise<void> {
 }
 
 function stubFetch() {
-  return vi.fn<FetchLike>(async (input) => {
-    const url = new URL(typeof input === 'string' ? input : String(input), 'https://revision.city')
-    const name = url.searchParams.get('name') ?? ''
-    return Response.json({
-      path: name,
-      language: 'typescript',
-      changes: [{type: 'modified', kind: 'function', name: 'greet', qualifiedName: 'greet'}],
-      summary: {added: 0, deleted: 0, modified: 1, moved: 0, renamed: 0},
-    })
+  return vi.fn<FetchLike>(async (_input, init) => {
+    const body: {files: {itemId: string; name: string}[]} = JSON.parse(String(init?.body))
+    const lines = body.files.map((file) =>
+      JSON.stringify({
+        itemId: file.itemId,
+        name: file.name,
+        diff: {
+          path: file.name,
+          language: 'typescript',
+          changes: [{type: 'modified', kind: 'function', name: 'greet', qualifiedName: 'greet'}],
+          summary: {added: 0, deleted: 0, modified: 1, moved: 0, renamed: 0},
+        },
+      }),
+    )
+    return new Response(lines.map((line) => line + '\n').join(''))
   })
 }
 
@@ -84,13 +90,14 @@ test('fetches nothing until the symbols tab asks for it', async () => {
   vi.unstubAllGlobals()
 })
 
-test('reads every file once the tab is open', async () => {
+test('reads every file over a single request once the tab is open', async () => {
   const fetcher = stubFetch()
   vi.stubGlobal('fetch', fetcher)
 
   const harness = await mountHook(true)
 
-  expect(fetcher).toHaveBeenCalledTimes(2)
+  // One streamed request covers the batch, rather than one request per file.
+  expect(fetcher).toHaveBeenCalledTimes(1)
   expect(harness.state().entries.map((entry) => entry.status)).toEqual(['ready', 'ready'])
   expect(harness.state().loadedCount).toBe(2)
   await harness.unmount()
@@ -110,19 +117,42 @@ test('reports the change list for each file it read', async () => {
 })
 
 test('marks a file that could not be read without failing the rest', async () => {
-  const fetcher = vi.fn<FetchLike>(async (input) => {
-    const url = new URL(typeof input === 'string' ? input : String(input), 'https://revision.city')
-    if (url.searchParams.get('name') === 'src/a.ts') {
-      return Response.json({error: 'GitHub rate limit exceeded.'}, {status: 502})
-    }
-    return Response.json({path: 'src/b.ts', changes: []})
-  })
+  const fetcher = vi.fn<FetchLike>(
+    async () =>
+      new Response(
+        `${JSON.stringify({itemId: 'item-1', name: 'src/a.ts', error: 'GitHub rate limit exceeded.'})}\n${JSON.stringify(
+          {
+            itemId: 'item-2',
+            name: 'src/b.ts',
+            diff: {
+              path: 'src/b.ts',
+              language: 'typescript',
+              changes: [],
+              summary: {added: 0, deleted: 0, modified: 0, moved: 0, renamed: 0},
+            },
+          },
+        )}\n`,
+      ),
+  )
   vi.stubGlobal('fetch', fetcher)
 
   const harness = await mountHook(true)
 
   expect(harness.state().entries.map((entry) => entry.status)).toEqual(['error', 'ready'])
   expect(harness.state().entries[0]?.error).toContain('rate limit')
+  await harness.unmount()
+  vi.unstubAllGlobals()
+})
+
+test('marks the whole batch when the request itself fails', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn<FetchLike>(async () => new Response('', {status: 502})),
+  )
+
+  const harness = await mountHook(true)
+
+  expect(harness.state().entries.map((entry) => entry.status)).toEqual(['error', 'error'])
   await harness.unmount()
   vi.unstubAllGlobals()
 })

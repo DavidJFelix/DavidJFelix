@@ -50,6 +50,14 @@ const ENTITY_DIFF = {
   summary: {added: 0, deleted: 0, modified: 1, moved: 0, renamed: 1},
 }
 
+// The route answers a batch as newline-delimited JSON, one line per file.
+function createNdjson(request: {postData(): string | null}): string {
+  const body: {files: {itemId: string; name: string}[]} = JSON.parse(request.postData() ?? '{}')
+  return body.files
+    .map((file) => `${JSON.stringify({itemId: file.itemId, name: file.name, diff: ENTITY_DIFF})}\n`)
+    .join('')
+}
+
 async function stubDiffRoutes(page: Page): Promise<void> {
   await page.route('**/api/auth/github/session', (route) =>
     route.fulfill({json: {authenticated: true, login: 'e2e-user'}}),
@@ -57,7 +65,9 @@ async function stubDiffRoutes(page: Page): Promise<void> {
   await page.route('**/api/diffs/diff?**', (route) =>
     route.fulfill({body: PATCH, contentType: 'text/plain'}),
   )
-  await page.route('**/api/diffs/entity-diff?**', (route) => route.fulfill({json: ENTITY_DIFF}))
+  await page.route('**/api/diffs/entity-diff', (route) =>
+    route.fulfill({body: createNdjson(route.request()), contentType: 'application/x-ndjson'}),
+  )
 }
 
 test('the symbols tab names the entities a diff changed', async ({page}) => {
@@ -118,7 +128,7 @@ test('a signed-out visitor still gets symbols for a public diff', async ({page})
 
 test('a diff that cannot be read says why instead of showing nothing', async ({page}) => {
   await stubDiffRoutes(page)
-  await page.route('**/api/diffs/entity-diff?**', (route) =>
+  await page.route('**/api/diffs/entity-diff', (route) =>
     route.fulfill({
       status: 502,
       json: {error: 'GitHub rate limit exceeded. Sign in with GitHub to raise the limit.'},

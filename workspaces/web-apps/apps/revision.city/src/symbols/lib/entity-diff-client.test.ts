@@ -1,114 +1,134 @@
 import {expect, test, vi} from 'vitest'
 
-import {fetchEntityDiff} from './entity-diff-client'
+import {type EntityDiffStreamResult, streamEntityDiffs} from './entity-diff-client'
 
 // fetch by call signature only: lib.dom types `typeof fetch` with a required
 // static `preconnect`, which a plain stub cannot (and need not) satisfy.
 type FetchLike = (...args: Parameters<typeof fetch>) => ReturnType<typeof fetch>
 
-const REQUEST = {itemId: 'item-1', name: 'src/widget.ts', type: 'change'}
+const FILES = [
+  {itemId: 'item-1', name: 'src/a.ts', type: 'change'},
+  {itemId: 'item-2', name: 'src/b.ts', type: 'change'},
+]
 
-function stubFetch(body: unknown, status = 200) {
-  return vi.fn<FetchLike>(async () => Response.json(body, {status}))
+function createDiff(path: string) {
+  return {
+    path,
+    language: 'typescript',
+    changes: [{type: 'modified', kind: 'function', name: 'greet', qualifiedName: 'greet'}],
+    summary: {added: 0, deleted: 0, modified: 1, moved: 0, renamed: 0},
+  }
 }
 
-function readUrl(fetcher: ReturnType<typeof stubFetch>): URL {
-  const [input] = fetcher.mock.calls[0] ?? []
-  return new URL(typeof input === 'string' ? input : String(input), 'https://revision.city')
+// Serves the body in caller-chosen chunks so line splitting is exercised.
+function stubStream(chunks: readonly string[], status = 200) {
+  return vi.fn<FetchLike>(
+    async () =>
+      new Response(
+        new ReadableStream({
+          start(controller) {
+            const encoder = new TextEncoder()
+            for (const chunk of chunks) {
+              controller.enqueue(encoder.encode(chunk))
+            }
+            controller.close()
+          },
+        }),
+        {status},
+      ),
+  )
 }
 
-test('asks the route for the named file in the named diff', async () => {
-  const fetcher = stubFetch({path: 'src/widget.ts', language: 'typescript', changes: []})
-
-  await fetchEntityDiff({fetcher, request: REQUEST, sourcePath: 'o/r/pull/1'})
-
-  const url = readUrl(fetcher)
-  expect(url.pathname).toBe('/api/diffs/entity-diff')
-  expect(Object.fromEntries(url.searchParams)).toEqual({
-    path: 'o/r/pull/1',
-    name: 'src/widget.ts',
-    type: 'change',
-  })
-})
-
-test('passes the previous name so a rename compares the right blobs', async () => {
-  const fetcher = stubFetch({path: 'src/widget.ts', changes: []})
-
-  await fetchEntityDiff({
+async function collect(fetcher: ReturnType<typeof stubStream>): Promise<EntityDiffStreamResult[]> {
+  const results: EntityDiffStreamResult[] = []
+  await streamEntityDiffs({
     fetcher,
-    request: {...REQUEST, type: 'rename-changed', prevName: 'src/old.ts'},
+    files: FILES,
+    onResult: (result) => results.push(result),
     sourcePath: 'o/r/pull/1',
   })
+  return results
+}
 
-  expect(readUrl(fetcher).searchParams.get('prevName')).toBe('src/old.ts')
+test('posts the batch of files to the route', async () => {
+  const fetcher = stubStream([])
+
+  await collect(fetcher)
+
+  const [, init] = fetcher.mock.calls[0] ?? []
+  expect(init?.method).toBe('POST')
+  expect(JSON.parse(String(init?.body))).toEqual({path: 'o/r/pull/1', files: FILES})
 })
 
-test('returns the reported changes and summary', async () => {
-  const change = {
-    type: 'modified',
-    kind: 'function',
-    name: 'greet',
-    qualifiedName: 'greet',
-    newRange: {startLine: 4, endLine: 6},
-  }
-  const fetcher = stubFetch({
-    path: 'src/widget.ts',
-    language: 'typescript',
-    changes: [change],
-    summary: {added: 0, deleted: 0, modified: 1, moved: 0, renamed: 0},
-  })
+test('reports each file as its line arrives', async () => {
+  const fetcher = stubStream([
+    `${JSON.stringify({itemId: 'item-1', name: 'src/a.ts', diff: createDiff('src/a.ts')})}\n`,
+    `${JSON.stringify({itemId: 'item-2', name: 'src/b.ts', diff: createDiff('src/b.ts')})}\n`,
+  ])
 
-  const diff = await fetchEntityDiff({fetcher, request: REQUEST, sourcePath: 'o/r/pull/1'})
+  const results = await collect(fetcher)
 
-  expect(diff.changes).toEqual([change])
-  expect(diff.summary.modified).toBe(1)
+  expect(results.map((result) => result.itemId)).toEqual(['item-1', 'item-2'])
+  expect(results[0]?.diff?.changes).toMatchObject([{qualifiedName: 'greet'}])
 })
 
-test('rebuilds a missing summary from the changes', async () => {
-  const fetcher = stubFetch({
-    path: 'src/widget.ts',
-    changes: [
-      {type: 'added', kind: 'function', name: 'a', qualifiedName: 'a'},
-      {type: 'deleted', kind: 'function', name: 'b', qualifiedName: 'b'},
-    ],
-  })
+test('reassembles a result split across chunks', async () => {
+  const line = JSON.stringify({itemId: 'item-1', name: 'src/a.ts', diff: createDiff('src/a.ts')})
+  const fetcher = stubStream([line.slice(0, 20), line.slice(20), '\n'])
 
-  const diff = await fetchEntityDiff({fetcher, request: REQUEST, sourcePath: 'o/r/pull/1'})
+  const results = await collect(fetcher)
 
-  expect(diff.summary).toEqual({added: 1, deleted: 1, modified: 0, moved: 0, renamed: 0})
+  expect(results).toHaveLength(1)
+  expect(results[0]?.diff?.path).toBe('src/a.ts')
 })
 
-test('drops malformed entries rather than rendering them', async () => {
-  const fetcher = stubFetch({
-    path: 'src/widget.ts',
-    changes: [{type: 'added', kind: 'function', name: 'a', qualifiedName: 'a'}, {nonsense: true}],
-  })
+test('accepts a final result with no trailing newline', async () => {
+  const fetcher = stubStream([
+    JSON.stringify({itemId: 'item-1', name: 'src/a.ts', diff: createDiff('src/a.ts')}),
+  ])
 
-  const diff = await fetchEntityDiff({fetcher, request: REQUEST, sourcePath: 'o/r/pull/1'})
+  expect(await collect(fetcher)).toHaveLength(1)
+})
 
-  expect(diff.changes).toHaveLength(1)
+test('carries a per-file failure without ending the stream', async () => {
+  const fetcher = stubStream([
+    `${JSON.stringify({itemId: 'item-1', name: 'src/a.ts', error: 'GitHub rate limit exceeded.'})}\n`,
+    `${JSON.stringify({itemId: 'item-2', name: 'src/b.ts', diff: createDiff('src/b.ts')})}\n`,
+  ])
+
+  const results = await collect(fetcher)
+
+  expect(results[0]?.error).toContain('rate limit')
+  expect(results[1]?.diff).toBeDefined()
+})
+
+test('drops a malformed line rather than the whole stream', async () => {
+  const fetcher = stubStream([
+    'not json at all\n',
+    `${JSON.stringify({itemId: 'item-2', name: 'src/b.ts', diff: createDiff('src/b.ts')})}\n`,
+  ])
+
+  const results = await collect(fetcher)
+
+  expect(results).toHaveLength(1)
+  expect(results[0]?.itemId).toBe('item-2')
 })
 
 test('surfaces the error the route reported', async () => {
-  const fetcher = stubFetch({error: 'Symbol tracking requires signing in with GitHub.'}, 401)
+  const fetcher = vi.fn<FetchLike>(
+    async () =>
+      new Response(JSON.stringify({error: 'At most 20 files per request.'}), {status: 400}),
+  )
 
   await expect(
-    fetchEntityDiff({fetcher, request: REQUEST, sourcePath: 'o/r/pull/1'}),
-  ).rejects.toThrow('Symbol tracking requires signing in with GitHub.')
+    streamEntityDiffs({fetcher, files: FILES, onResult: () => {}, sourcePath: 'o/r/pull/1'}),
+  ).rejects.toThrow('At most 20 files per request.')
 })
 
 test('falls back to the status when the body carries no message', async () => {
   const fetcher = vi.fn<FetchLike>(async () => new Response('', {status: 502}))
 
   await expect(
-    fetchEntityDiff({fetcher, request: REQUEST, sourcePath: 'o/r/pull/1'}),
+    streamEntityDiffs({fetcher, files: FILES, onResult: () => {}, sourcePath: 'o/r/pull/1'}),
   ).rejects.toThrow('Symbol lookup failed (502).')
-})
-
-test('rejects a response that is not an entity diff', async () => {
-  const fetcher = stubFetch({unexpected: true})
-
-  await expect(
-    fetchEntityDiff({fetcher, request: REQUEST, sourcePath: 'o/r/pull/1'}),
-  ).rejects.toThrow('invalid response')
 })

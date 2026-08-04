@@ -17,6 +17,8 @@ import type {
   DiffsSavedCommentEvent,
 } from '@/diffs/lib/types'
 import {upsertSavedCommentSidebarEntry} from '@/diffs/lib/upsert-saved-comment-sidebar-entry'
+import type {SymbolSelection} from '@/symbols/components/symbol-changes-list'
+import type {EntityDiffRequest} from '@/symbols/lib/entity-diff-client'
 import {DiffsHeader} from './diffs-header'
 import {DiffsSidebar} from './diffs-sidebar'
 import {DiffsStatusPanel} from './diffs-status-panel'
@@ -198,6 +200,47 @@ function ReviewUIInner({domain, initialUrl, path}: ReviewUIProps) {
   const handleCloseFileTreeOverlay = useCallback(() => {
     setFileTreeOverlayOpen(false)
   }, [])
+  // Only diff items carry two revisions to compare; a plain file item in the
+  // viewer has nothing to diff against.
+  const entityDiffRequests = useMemo<readonly EntityDiffRequest[]>(
+    () =>
+      initialItems.flatMap((item) =>
+        item.type === 'diff'
+          ? [
+              {
+                itemId: item.id,
+                name: item.fileDiff.name,
+                prevName: item.fileDiff.prevName,
+                type: item.fileDiff.type,
+              },
+            ]
+          : [],
+      ),
+    [initialItems],
+  )
+  const handleSelectSymbol = useCallback((selection: SymbolSelection) => {
+    setFileTreeOverlayOpen(false)
+    const viewer = viewerRef.current
+    if (isNullish(viewer)) {
+      return
+    }
+    // A collapsed file cannot be scrolled into, so open it first -- the same
+    // dance the file tree does when selecting a collapsed item.
+    const item = viewer.getItem(selection.itemId)
+    if (!isNullish(item) && item.collapsed === true) {
+      item.collapsed = false
+      item.version = typeof item.version === 'number' ? item.version + 1 : 1
+      viewer.updateItem(item)
+    }
+    viewer.scrollTo({
+      type: 'line',
+      id: selection.itemId,
+      lineNumber: selection.lineNumber,
+      side: selection.side,
+      align: 'center',
+      behavior: 'smooth-auto',
+    })
+  }, [])
   const handleSelectComment = useCallback((comment: DiffsSavedCommentEntry) => {
     setFileTreeOverlayOpen(false)
     viewerRef.current?.setSelectedLines({
@@ -256,12 +299,16 @@ function ReviewUIInner({domain, initialUrl, path}: ReviewUIProps) {
             className={css({gridArea: {base: 'viewer', md: 'tree'}})}
             commentSections={commentSections}
             diffStats={diffStats}
+            entityDiffRequests={entityDiffRequests}
             mobileOverlayOpen={fileTreeOverlayOpen}
             onMobileClose={handleCloseFileTreeOverlay}
             onSelectComment={handleSelectComment}
+            onSelectSymbol={handleSelectSymbol}
             scrollRef={scrollRef}
             source={treeSource}
+            sourcePath={path}
             streaming={loadState === 'streaming'}
+            symbolsAvailable={isNullish(domain) && githubSession.status === 'authenticated'}
             themeCycle={themeCycle}
             viewerRef={viewerRef}
             onSelectItem={handleSelectTreeItem}

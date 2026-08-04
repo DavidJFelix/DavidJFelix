@@ -16,6 +16,7 @@ import { Route as DiagSplatRouteImport } from './routes/diag/$'
 import { Route as DiffsIndexRouteImport } from './routes/diffs/index'
 import { Route as DiffsSplatRouteImport } from './routes/diffs/$'
 import { Route as ApiDiffsDiffRouteImport } from './routes/api/diffs/diff'
+import { Route as ApiDiffsEntityDiffRouteImport } from './routes/api/diffs/entity-diff'
 import { Route as ApiDiffsGithubDiffFileRouteImport } from './routes/api/diffs/github-diff-file'
 import { Route as ApiDiffsPullRequestsRouteImport } from './routes/api/diffs/pull-requests'
 import { Route as ApiAuthGithubCallbackRouteImport } from './routes/api/auth/github/callback'
@@ -57,6 +58,11 @@ const DiffsSplatRoute = DiffsSplatRouteImport.update({
 const ApiDiffsDiffRoute = ApiDiffsDiffRouteImport.update({
   id: '/api/diffs/diff',
   path: '/api/diffs/diff',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDiffsEntityDiffRoute = ApiDiffsEntityDiffRouteImport.update({
+  id: '/api/diffs/entity-diff',
+  path: '/api/diffs/entity-diff',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiDiffsGithubDiffFileRoute = ApiDiffsGithubDiffFileRouteImport.update({
@@ -104,6 +110,7 @@ export interface FileRoutesByFullPath {
   '/diffs/$': typeof DiffsSplatRoute
   '/diffs/': typeof DiffsIndexRoute
   '/api/diffs/diff': typeof ApiDiffsDiffRoute
+  '/api/diffs/entity-diff': typeof ApiDiffsEntityDiffRoute
   '/api/diffs/github-diff-file': typeof ApiDiffsGithubDiffFileRoute
   '/api/diffs/pull-requests': typeof ApiDiffsPullRequestsRoute
   '/api/auth/github/callback': typeof ApiAuthGithubCallbackRoute
@@ -119,6 +126,7 @@ export interface FileRoutesByTo {
   '/diffs/$': typeof DiffsSplatRoute
   '/diffs': typeof DiffsIndexRoute
   '/api/diffs/diff': typeof ApiDiffsDiffRoute
+  '/api/diffs/entity-diff': typeof ApiDiffsEntityDiffRoute
   '/api/diffs/github-diff-file': typeof ApiDiffsGithubDiffFileRoute
   '/api/diffs/pull-requests': typeof ApiDiffsPullRequestsRoute
   '/api/auth/github/callback': typeof ApiAuthGithubCallbackRoute
@@ -136,6 +144,7 @@ export interface FileRoutesById {
   '/diffs/$': typeof DiffsSplatRoute
   '/diffs/': typeof DiffsIndexRoute
   '/api/diffs/diff': typeof ApiDiffsDiffRoute
+  '/api/diffs/entity-diff': typeof ApiDiffsEntityDiffRoute
   '/api/diffs/github-diff-file': typeof ApiDiffsGithubDiffFileRoute
   '/api/diffs/pull-requests': typeof ApiDiffsPullRequestsRoute
   '/api/auth/github/callback': typeof ApiAuthGithubCallbackRoute
@@ -154,6 +163,7 @@ export interface FileRouteTypes {
     | '/diffs/$'
     | '/diffs/'
     | '/api/diffs/diff'
+    | '/api/diffs/entity-diff'
     | '/api/diffs/github-diff-file'
     | '/api/diffs/pull-requests'
     | '/api/auth/github/callback'
@@ -169,6 +179,7 @@ export interface FileRouteTypes {
     | '/diffs/$'
     | '/diffs'
     | '/api/diffs/diff'
+    | '/api/diffs/entity-diff'
     | '/api/diffs/github-diff-file'
     | '/api/diffs/pull-requests'
     | '/api/auth/github/callback'
@@ -185,6 +196,7 @@ export interface FileRouteTypes {
     | '/diffs/$'
     | '/diffs/'
     | '/api/diffs/diff'
+    | '/api/diffs/entity-diff'
     | '/api/diffs/github-diff-file'
     | '/api/diffs/pull-requests'
     | '/api/auth/github/callback'
@@ -200,6 +212,7 @@ export interface RootRouteChildren {
   BugsRoute: typeof BugsRoute
   DiagSplatRoute: typeof DiagSplatRoute
   ApiDiffsDiffRoute: typeof ApiDiffsDiffRoute
+  ApiDiffsEntityDiffRoute: typeof ApiDiffsEntityDiffRoute
   ApiDiffsGithubDiffFileRoute: typeof ApiDiffsGithubDiffFileRoute
   ApiDiffsPullRequestsRoute: typeof ApiDiffsPullRequestsRoute
   ApiAuthGithubCallbackRoute: typeof ApiAuthGithubCallbackRoute
@@ -258,6 +271,13 @@ declare module '@tanstack/react-router' {
       path: '/api/diffs/diff'
       fullPath: '/api/diffs/diff'
       preLoaderRoute: typeof ApiDiffsDiffRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/diffs/entity-diff': {
+      id: '/api/diffs/entity-diff'
+      path: '/api/diffs/entity-diff'
+      fullPath: '/api/diffs/entity-diff'
+      preLoaderRoute: typeof ApiDiffsEntityDiffRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/diffs/github-diff-file': {
@@ -332,6 +352,7 @@ const rootRouteChildren: RootRouteChildren = {
   BugsRoute: BugsRoute,
   DiagSplatRoute: DiagSplatRoute,
   ApiDiffsDiffRoute: ApiDiffsDiffRoute,
+  ApiDiffsEntityDiffRoute: ApiDiffsEntityDiffRoute,
   ApiDiffsGithubDiffFileRoute: ApiDiffsGithubDiffFileRoute,
   ApiDiffsPullRequestsRoute: ApiDiffsPullRequestsRoute,
   ApiAuthGithubCallbackRoute: ApiAuthGithubCallbackRoute,

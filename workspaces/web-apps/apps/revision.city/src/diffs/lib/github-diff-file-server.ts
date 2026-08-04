@@ -41,6 +41,10 @@ interface GitHubDiffFileServerOptions {
   fetch?: GitHubServerFetch
   token?: string
   tokenSource?: 'request'
+  // Fetch the real contents of added and deleted files instead of the empty
+  // placeholder. The viewer never needs them -- the patch already carries every
+  // line -- but a consumer that parses the file does.
+  hydrateSingleSided?: boolean
 }
 
 interface CacheEntry<T> {
@@ -63,16 +67,34 @@ export async function loadGitHubDiffFiles(
   const fetcher = options.fetch ?? fetch
   const useSharedCache = options.tokenSource !== 'request'
   switch (request.type) {
-    case 'new':
-      return {
-        oldFile: null,
-        newFile: createEmptyFallbackFile(request.name, 'new'),
+    case 'new': {
+      if (options.hydrateSingleSided !== true) {
+        return {oldFile: null, newFile: createEmptyFallbackFile(request.name, 'new')}
       }
-    case 'deleted':
-      return {
-        oldFile: createEmptyFallbackFile(request.name, 'deleted'),
-        newFile: null,
+      const refs = await resolveGitHubDiffRefsForRequest({source, fetcher, options, useSharedCache})
+      const newFile = await loadGitHubFileForRequest({
+        repoRef: refs.newRef,
+        path: request.name,
+        fetcher,
+        options,
+        useSharedCache,
+      })
+      return {oldFile: null, newFile}
+    }
+    case 'deleted': {
+      if (options.hydrateSingleSided !== true) {
+        return {oldFile: createEmptyFallbackFile(request.name, 'deleted'), newFile: null}
       }
+      const refs = await resolveGitHubDiffRefsForRequest({source, fetcher, options, useSharedCache})
+      const oldFile = await loadGitHubFileForRequest({
+        repoRef: requireOldRef(request.name, refs),
+        path: request.name,
+        fetcher,
+        options,
+        useSharedCache,
+      })
+      return {oldFile, newFile: null}
+    }
     case 'change':
     case 'rename-changed': {
       const refs = await resolveGitHubDiffRefsForRequest({source, fetcher, options, useSharedCache})

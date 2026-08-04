@@ -60,9 +60,15 @@ is wiring and reach.
 
 - [x] Entity-diff engine over Lezer: extraction tables per grammar, sem's three-phase matcher, all
       fifteen first-party CodeMirror grammars that carry symbols. (done 2026-08-03)
-- [ ] Server route that expands a diff entry into an entity diff, cached by blob SHA pair — the
-      caching is the reason this belongs on the server rather than in the viewer's worker pool.
-- [ ] "Changed symbols" panel in the viewer, grouped by bucket, clicking through to the hunk.
+- [x] `/api/diffs/entity-diff` route that expands one diff entry into an entity diff, parsed in the
+      worker so no grammar reaches the browser. (done 2026-08-04)
+- [x] Symbols tab in the viewer's sidebar: changes grouped by file, clicking a row scrolls to the
+      entity. Fetches nothing until the tab is opened. (done 2026-08-04)
+- [ ] Cache entity diffs across page loads, keyed by blob SHA pair. Results are currently held only
+      for the life of the page; the answer is immutable per revision pair, so KV or the Cache API
+      would make a revisited PR free.
+- [ ] Summary counts on the tab itself (a badge like Comments has), which needs a cheap way to know
+      the totals without doing the per-file work first.
 - [ ] Call sites for a changed symbol: GitHub code search for candidates, confirmed by parsing the
       candidate files, so hits are real call expressions rather than text matches.
 

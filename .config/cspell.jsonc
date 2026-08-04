@@ -106,6 +106,7 @@
     "browsable",
     "bunfig", // bun's per-project config file
     "burndown",
+    "ciphertext",
     "codegen",
     "codemod",
     "commenters",
@@ -257,6 +258,7 @@
     "davidjfelix",
     "forzamonica",
     "monicandavid",
+    "nullserve", // the workers.dev subdomain preview URLs are published under
     "onvibes",
     "pkgdog",
     "ravrun",

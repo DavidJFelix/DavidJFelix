@@ -177,7 +177,9 @@ function parsePayload(text: string): PreviewHandoffPayload | undefined {
   return {session: readSession(session), challenge, expiresAt}
 }
 
-function readSession(value: Record<string, unknown>): GitHubAuthSession {
+// Exported so the preview side can normalize the session the broker returns
+// with the same rules the broker used to seal it.
+export function readSession(value: Record<string, unknown>): GitHubAuthSession {
   return {
     accessToken: String(value.accessToken),
     login: typeof value.login === 'string' ? value.login : '',

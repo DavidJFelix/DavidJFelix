@@ -439,7 +439,10 @@ function readOptionalNumber(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined
 }
 
-function readCookiePayload(request: Request, name: string): Record<string, unknown> | undefined {
+export function readCookiePayload(
+  request: Request,
+  name: string,
+): Record<string, unknown> | undefined {
   const value = parseCookies(request.headers.get('cookie')).get(name)
   if (isNullish(value)) {
     return undefined
@@ -469,7 +472,9 @@ function parseCookies(header: string | null): Map<string, string> {
   return cookies
 }
 
-function serializeSessionCookie(session: GitHubAuthSession, secure: boolean): string {
+// Exported for the preview sign-in broker, which sets the same session cookie
+// from a handoff rather than from a fresh OAuth exchange.
+export function serializeSessionCookie(session: GitHubAuthSession, secure: boolean): string {
   const now = Date.now()
   const expiry = session.refreshTokenExpiresAt ?? session.accessTokenExpiresAt
   const maxAgeSeconds = isNullish(expiry)
@@ -497,7 +502,12 @@ interface SerializeCookieParams {
 // HttpOnly keeps the token out of reach of page scripts; SameSite=Lax still
 // sends the cookie on the top-level redirect back from github.com. `Secure` is
 // dropped only for plain-HTTP local dev.
-function serializeCookie({name, value, maxAgeSeconds, secure}: SerializeCookieParams): string {
+export function serializeCookie({
+  name,
+  value,
+  maxAgeSeconds,
+  secure,
+}: SerializeCookieParams): string {
   const attributes = [
     `${name}=${value}`,
     `Max-Age=${maxAgeSeconds}`,
@@ -511,13 +521,13 @@ function serializeCookie({name, value, maxAgeSeconds, secure}: SerializeCookiePa
   return attributes.join('; ')
 }
 
-function encodeCookiePayload(payload: Record<string, unknown>): string {
+export function encodeCookiePayload(payload: Record<string, unknown>): string {
   return encodeURIComponent(JSON.stringify(payload))
 }
 
 // Only same-site absolute paths are allowed as post-auth destinations, so the
 // flow cannot be used as an open redirect.
-function sanitizeReturnPath(value: string | null): string {
+export function sanitizeReturnPath(value: string | null): string {
   if (
     isNullish(value) ||
     !value.startsWith('/') ||
@@ -530,11 +540,14 @@ function sanitizeReturnPath(value: string | null): string {
   return value
 }
 
-function isSecureRequest(url: URL): boolean {
+export function isSecureRequest(url: URL): boolean {
   return url.protocol === 'https:'
 }
 
-function createRedirectResponse(location: string, setCookieHeaders: readonly string[]): Response {
+export function createRedirectResponse(
+  location: string,
+  setCookieHeaders: readonly string[],
+): Response {
   const response = new Response(null, {
     status: 302,
     headers: {Location: location, 'Cache-Control': 'no-store'},

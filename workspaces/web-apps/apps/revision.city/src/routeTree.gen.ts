@@ -24,6 +24,10 @@ import { Route as ApiAuthGithubConfigRouteImport } from './routes/api/auth/githu
 import { Route as ApiAuthGithubInstallationsRouteImport } from './routes/api/auth/github/installations'
 import { Route as ApiAuthGithubLoginRouteImport } from './routes/api/auth/github/login'
 import { Route as ApiAuthGithubLogoutRouteImport } from './routes/api/auth/github/logout'
+import { Route as ApiAuthGithubPreviewAuthorizeRouteImport } from './routes/api/auth/github/preview-authorize'
+import { Route as ApiAuthGithubPreviewCallbackRouteImport } from './routes/api/auth/github/preview-callback'
+import { Route as ApiAuthGithubPreviewRedeemRouteImport } from './routes/api/auth/github/preview-redeem'
+import { Route as ApiAuthGithubPreviewStartRouteImport } from './routes/api/auth/github/preview-start'
 import { Route as ApiAuthGithubSessionRouteImport } from './routes/api/auth/github/session'
 
 const IndexRoute = IndexRouteImport.update({
@@ -102,6 +106,30 @@ const ApiAuthGithubLogoutRoute = ApiAuthGithubLogoutRouteImport.update({
   path: '/api/auth/github/logout',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAuthGithubPreviewAuthorizeRoute =
+  ApiAuthGithubPreviewAuthorizeRouteImport.update({
+    id: '/api/auth/github/preview-authorize',
+    path: '/api/auth/github/preview-authorize',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiAuthGithubPreviewCallbackRoute =
+  ApiAuthGithubPreviewCallbackRouteImport.update({
+    id: '/api/auth/github/preview-callback',
+    path: '/api/auth/github/preview-callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiAuthGithubPreviewRedeemRoute =
+  ApiAuthGithubPreviewRedeemRouteImport.update({
+    id: '/api/auth/github/preview-redeem',
+    path: '/api/auth/github/preview-redeem',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiAuthGithubPreviewStartRoute =
+  ApiAuthGithubPreviewStartRouteImport.update({
+    id: '/api/auth/github/preview-start',
+    path: '/api/auth/github/preview-start',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiAuthGithubSessionRoute = ApiAuthGithubSessionRouteImport.update({
   id: '/api/auth/github/session',
   path: '/api/auth/github/session',
@@ -124,6 +152,10 @@ export interface FileRoutesByFullPath {
   '/api/auth/github/installations': typeof ApiAuthGithubInstallationsRoute
   '/api/auth/github/login': typeof ApiAuthGithubLoginRoute
   '/api/auth/github/logout': typeof ApiAuthGithubLogoutRoute
+  '/api/auth/github/preview-authorize': typeof ApiAuthGithubPreviewAuthorizeRoute
+  '/api/auth/github/preview-callback': typeof ApiAuthGithubPreviewCallbackRoute
+  '/api/auth/github/preview-redeem': typeof ApiAuthGithubPreviewRedeemRoute
+  '/api/auth/github/preview-start': typeof ApiAuthGithubPreviewStartRoute
   '/api/auth/github/session': typeof ApiAuthGithubSessionRoute
 }
 export interface FileRoutesByTo {
@@ -141,6 +173,10 @@ export interface FileRoutesByTo {
   '/api/auth/github/installations': typeof ApiAuthGithubInstallationsRoute
   '/api/auth/github/login': typeof ApiAuthGithubLoginRoute
   '/api/auth/github/logout': typeof ApiAuthGithubLogoutRoute
+  '/api/auth/github/preview-authorize': typeof ApiAuthGithubPreviewAuthorizeRoute
+  '/api/auth/github/preview-callback': typeof ApiAuthGithubPreviewCallbackRoute
+  '/api/auth/github/preview-redeem': typeof ApiAuthGithubPreviewRedeemRoute
+  '/api/auth/github/preview-start': typeof ApiAuthGithubPreviewStartRoute
   '/api/auth/github/session': typeof ApiAuthGithubSessionRoute
 }
 export interface FileRoutesById {
@@ -160,6 +196,10 @@ export interface FileRoutesById {
   '/api/auth/github/installations': typeof ApiAuthGithubInstallationsRoute
   '/api/auth/github/login': typeof ApiAuthGithubLoginRoute
   '/api/auth/github/logout': typeof ApiAuthGithubLogoutRoute
+  '/api/auth/github/preview-authorize': typeof ApiAuthGithubPreviewAuthorizeRoute
+  '/api/auth/github/preview-callback': typeof ApiAuthGithubPreviewCallbackRoute
+  '/api/auth/github/preview-redeem': typeof ApiAuthGithubPreviewRedeemRoute
+  '/api/auth/github/preview-start': typeof ApiAuthGithubPreviewStartRoute
   '/api/auth/github/session': typeof ApiAuthGithubSessionRoute
 }
 export interface FileRouteTypes {
@@ -180,6 +220,10 @@ export interface FileRouteTypes {
     | '/api/auth/github/installations'
     | '/api/auth/github/login'
     | '/api/auth/github/logout'
+    | '/api/auth/github/preview-authorize'
+    | '/api/auth/github/preview-callback'
+    | '/api/auth/github/preview-redeem'
+    | '/api/auth/github/preview-start'
     | '/api/auth/github/session'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -197,6 +241,10 @@ export interface FileRouteTypes {
     | '/api/auth/github/installations'
     | '/api/auth/github/login'
     | '/api/auth/github/logout'
+    | '/api/auth/github/preview-authorize'
+    | '/api/auth/github/preview-callback'
+    | '/api/auth/github/preview-redeem'
+    | '/api/auth/github/preview-start'
     | '/api/auth/github/session'
   id:
     | '__root__'
@@ -215,6 +263,10 @@ export interface FileRouteTypes {
     | '/api/auth/github/installations'
     | '/api/auth/github/login'
     | '/api/auth/github/logout'
+    | '/api/auth/github/preview-authorize'
+    | '/api/auth/github/preview-callback'
+    | '/api/auth/github/preview-redeem'
+    | '/api/auth/github/preview-start'
     | '/api/auth/github/session'
   fileRoutesById: FileRoutesById
 }
@@ -232,6 +284,10 @@ export interface RootRouteChildren {
   ApiAuthGithubInstallationsRoute: typeof ApiAuthGithubInstallationsRoute
   ApiAuthGithubLoginRoute: typeof ApiAuthGithubLoginRoute
   ApiAuthGithubLogoutRoute: typeof ApiAuthGithubLogoutRoute
+  ApiAuthGithubPreviewAuthorizeRoute: typeof ApiAuthGithubPreviewAuthorizeRoute
+  ApiAuthGithubPreviewCallbackRoute: typeof ApiAuthGithubPreviewCallbackRoute
+  ApiAuthGithubPreviewRedeemRoute: typeof ApiAuthGithubPreviewRedeemRoute
+  ApiAuthGithubPreviewStartRoute: typeof ApiAuthGithubPreviewStartRoute
   ApiAuthGithubSessionRoute: typeof ApiAuthGithubSessionRoute
 }
 
@@ -342,6 +398,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthGithubLogoutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/auth/github/preview-authorize': {
+      id: '/api/auth/github/preview-authorize'
+      path: '/api/auth/github/preview-authorize'
+      fullPath: '/api/auth/github/preview-authorize'
+      preLoaderRoute: typeof ApiAuthGithubPreviewAuthorizeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/github/preview-callback': {
+      id: '/api/auth/github/preview-callback'
+      path: '/api/auth/github/preview-callback'
+      fullPath: '/api/auth/github/preview-callback'
+      preLoaderRoute: typeof ApiAuthGithubPreviewCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/github/preview-redeem': {
+      id: '/api/auth/github/preview-redeem'
+      path: '/api/auth/github/preview-redeem'
+      fullPath: '/api/auth/github/preview-redeem'
+      preLoaderRoute: typeof ApiAuthGithubPreviewRedeemRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/github/preview-start': {
+      id: '/api/auth/github/preview-start'
+      path: '/api/auth/github/preview-start'
+      fullPath: '/api/auth/github/preview-start'
+      preLoaderRoute: typeof ApiAuthGithubPreviewStartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/github/session': {
       id: '/api/auth/github/session'
       path: '/api/auth/github/session'
@@ -380,6 +464,10 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthGithubInstallationsRoute: ApiAuthGithubInstallationsRoute,
   ApiAuthGithubLoginRoute: ApiAuthGithubLoginRoute,
   ApiAuthGithubLogoutRoute: ApiAuthGithubLogoutRoute,
+  ApiAuthGithubPreviewAuthorizeRoute: ApiAuthGithubPreviewAuthorizeRoute,
+  ApiAuthGithubPreviewCallbackRoute: ApiAuthGithubPreviewCallbackRoute,
+  ApiAuthGithubPreviewRedeemRoute: ApiAuthGithubPreviewRedeemRoute,
+  ApiAuthGithubPreviewStartRoute: ApiAuthGithubPreviewStartRoute,
   ApiAuthGithubSessionRoute: ApiAuthGithubSessionRoute,
 }
 export const routeTree = rootRouteImport

@@ -374,7 +374,7 @@ export const DiffsSidebar = memo(function DiffsSidebar({
               entries={entityDiffs.entries}
               onSelectItem={onSelectItem}
               onSelectSymbol={onSelectSymbol}
-              signedIn={symbolsAvailable}
+              supported={symbolsAvailable}
             />
           </section>
         </div>

@@ -44,13 +44,13 @@ interface ListHarness {
 interface RenderListParams {
   entries?: readonly EntityDiffEntry[]
   onSelectSymbol?: (selection: SymbolSelection) => void
-  signedIn?: boolean
+  supported?: boolean
 }
 
 function renderList({
   entries = [createEntry([MODIFIED_METHOD])],
   onSelectSymbol,
-  signedIn = true,
+  supported = true,
 }: RenderListParams = {}): ListHarness {
   const container = document.createElement('div')
   // appendChild, not append: @cloudflare/workers-types and the DOM lib disagree
@@ -60,7 +60,7 @@ function renderList({
   act(() => {
     root = createRoot(container)
     root.render(
-      <SymbolChangesList entries={entries} onSelectSymbol={onSelectSymbol} signedIn={signedIn} />,
+      <SymbolChangesList entries={entries} onSelectSymbol={onSelectSymbol} supported={supported} />,
     )
   })
   return {
@@ -148,10 +148,27 @@ test('shows what a renamed symbol used to be called', () => {
   harness.unmount()
 })
 
-test('asks for sign-in rather than showing an empty panel', () => {
-  const harness = renderList({entries: [], signedIn: false})
+test('explains itself on a diff source it cannot read', () => {
+  const harness = renderList({entries: [], supported: false})
 
-  expect(harness.container.textContent).toContain('Sign in to track symbols')
+  expect(harness.container.textContent).toContain('Symbols are GitHub-only')
+  harness.unmount()
+})
+
+test('passes along why a diff could not be read', () => {
+  const harness = renderList({
+    entries: [
+      {
+        itemId: 'item-1',
+        name: 'src/widget.ts',
+        status: 'error',
+        error: 'GitHub rate limit exceeded. Sign in with GitHub to raise the limit.',
+      },
+    ],
+  })
+
+  expect(harness.container.textContent).toContain('Could not read this diff')
+  expect(harness.container.textContent).toContain('Sign in with GitHub to raise the limit')
   harness.unmount()
 })
 

@@ -33,15 +33,14 @@ test('answers a pure rename without contacting GitHub', async () => {
   })
 })
 
-test('requires a signed-in session before reading file contents', async () => {
+test('reads a public diff without a signed-in session', async () => {
+  // No session cookie: the request must reach GitHub anonymously rather than be
+  // turned away, since the viewer already shows public diffs signed out.
   const response = await handleEntityDiffRequest(
     createRequest({path: 'o/r/pull/1', name: 'src/a.ts', type: 'change'}),
   )
 
-  expect(response.status).toBe(401)
-  await expect(response.json()).resolves.toMatchObject({
-    error: expect.stringContaining('signing in with GitHub'),
-  })
+  expect(response.status).not.toBe(401)
 })
 
 test('keeps entity diffs out of shared caches', async () => {

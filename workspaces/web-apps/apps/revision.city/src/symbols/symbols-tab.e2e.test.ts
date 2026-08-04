@@ -104,16 +104,29 @@ test('choosing a symbol moves the viewer to it', async ({page}) => {
   await expect(page.getByText('export class Widget').first()).toBeVisible()
 })
 
-test('an unauthenticated visitor is told why the tab is empty', async ({page}) => {
+test('a signed-out visitor still gets symbols for a public diff', async ({page}) => {
+  await stubDiffRoutes(page)
   await page.route('**/api/auth/github/session', (route) =>
     route.fulfill({json: {authenticated: false}}),
-  )
-  await page.route('**/api/diffs/diff?**', (route) =>
-    route.fulfill({body: PATCH, contentType: 'text/plain'}),
   )
   await page.goto(DIFF_PATH)
 
   await page.getByRole('button', {name: 'Symbols'}).click()
 
-  await expect(page.getByText('Sign in to track symbols')).toBeVisible()
+  await expect(page.getByRole('region', {name: 'Symbols'}).getByText('Widget.render')).toBeVisible()
+})
+
+test('a diff that cannot be read says why instead of showing nothing', async ({page}) => {
+  await stubDiffRoutes(page)
+  await page.route('**/api/diffs/entity-diff?**', (route) =>
+    route.fulfill({
+      status: 502,
+      json: {error: 'GitHub rate limit exceeded. Sign in with GitHub to raise the limit.'},
+    }),
+  )
+  await page.goto(DIFF_PATH)
+
+  await page.getByRole('button', {name: 'Symbols'}).click()
+
+  await expect(page.getByText('Sign in with GitHub to raise the limit')).toBeVisible()
 })

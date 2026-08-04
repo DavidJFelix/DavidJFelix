@@ -64,6 +64,8 @@ is wiring and reach.
       worker so no grammar reaches the browser. (done 2026-08-04)
 - [x] Symbols tab in the viewer's sidebar: changes grouped by file, clicking a row scrolls to the
       entity. Fetches nothing until the tab is opened. (done 2026-08-04)
+- [x] Works signed out on public repos, matching how the viewer already loads patches. A session
+      adds private repos and a higher rate limit. (done 2026-08-04)
 - [ ] Cache entity diffs across page loads, keyed by blob SHA pair. Results are currently held only
       for the life of the page; the answer is immutable per revision pair, so KV or the Cache API
       would make a revisited PR free.

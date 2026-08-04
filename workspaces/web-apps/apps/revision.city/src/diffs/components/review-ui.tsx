@@ -308,7 +308,7 @@ function ReviewUIInner({domain, initialUrl, path}: ReviewUIProps) {
             source={treeSource}
             sourcePath={path}
             streaming={loadState === 'streaming'}
-            symbolsAvailable={isNullish(domain) && githubSession.status === 'authenticated'}
+            symbolsAvailable={isNullish(domain)}
             themeCycle={themeCycle}
             viewerRef={viewerRef}
             onSelectItem={handleSelectTreeItem}

@@ -42,22 +42,19 @@ export async function handleEntityDiffRequest(request: Request): Promise<Respons
     return createJSONResponse(createEmptyEntityDiff(name))
   }
 
+  // Signing in is not required: a public repo reads fine unauthenticated, the
+  // same way the viewer already loads its patch. A session is what adds private
+  // repos and a rate limit worth having.
   const auth = await resolveGitHubAuth(request)
   const token = auth.session?.accessToken
-  if (isNullish(token)) {
-    return withSetCookieHeaders(
-      createJSONResponse(
-        {error: 'Symbol tracking requires signing in with GitHub.'},
-        {status: 401},
-      ),
-      auth.setCookieHeaders,
-    )
-  }
+  const credentials = isNullish(token)
+    ? ({tokenSource: 'anonymous'} as const)
+    : ({token, tokenSource: 'request'} as const)
 
   try {
     const {oldFile, newFile} = await loadGitHubDiffFiles(
       {name, path, prevName, type},
-      {token, tokenSource: 'request', hydrateSingleSided: true},
+      {...credentials, hydrateSingleSided: true},
     )
     return withSetCookieHeaders(
       createJSONResponse(

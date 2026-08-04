@@ -17,20 +17,22 @@ interface SymbolChangesListProps {
   entries: readonly EntityDiffEntry[]
   onSelectItem?(itemId: string): void
   onSelectSymbol?(selection: SymbolSelection): void
-  signedIn: boolean
+  // False for diff sources this cannot read at all -- the alternate-domain
+  // hosts, which are not GitHub.
+  supported: boolean
 }
 
 export const SymbolChangesList = memo(function SymbolChangesList({
   entries,
   onSelectItem,
   onSelectSymbol,
-  signedIn,
+  supported,
 }: SymbolChangesListProps) {
-  if (!signedIn) {
+  if (!supported) {
     return (
-      <EmptyState title="Sign in to track symbols">
-        Symbol tracking reads both revisions of each file from GitHub, so it needs a signed-in
-        session.
+      <EmptyState title="Symbols are GitHub-only">
+        Reading a diff by symbol needs both revisions of each file, which this viewer can only fetch
+        from GitHub.
       </EmptyState>
     )
   }
@@ -39,15 +41,17 @@ export const SymbolChangesList = memo(function SymbolChangesList({
   const pendingCount = entries.filter(
     (entry) => entry.status === 'pending' || entry.status === 'loading',
   ).length
-  const failedCount = entries.filter((entry) => entry.status === 'error').length
+  const failure = entries.find((entry) => entry.status === 'error')?.error
 
   if (sections.length === 0 && pendingCount === 0) {
-    return (
+    // GitHub's own message is the useful one here: it says whether the repo was
+    // unreachable or the anonymous rate limit ran out, and signing in fixes both.
+    return failure === undefined ? (
       <EmptyState title="No symbol changes">
-        {failedCount > 0
-          ? 'The files in this diff could not be read for symbols.'
-          : 'Nothing in this diff changed a function, class, or key that can be named.'}
+        Nothing in this diff changed a function, class, or key that can be named.
       </EmptyState>
+    ) : (
+      <EmptyState title="Could not read this diff">{failure}</EmptyState>
     )
   }
 

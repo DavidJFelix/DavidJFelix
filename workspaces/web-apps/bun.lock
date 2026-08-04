@@ -283,7 +283,7 @@
         "zod": "^4.4.3",
       },
       "devDependencies": {
-        "@nuxtjs/color-mode": "^4.0.1",
+        "@nuxtjs/color-mode": "4.0.1",
         "@pandacss/dev": "1.11.4",
         "@playwright/test": "1.61.1",
         "@vitest/coverage-v8": "4.1.10",

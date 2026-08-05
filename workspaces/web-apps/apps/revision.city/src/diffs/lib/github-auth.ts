@@ -1,10 +1,12 @@
 import {resolveGitHubManageAccessURL} from './github-repo-access'
 import {isNullish} from './nullish'
 import {
+  decodeProxyState,
+  encodeProxyState,
   type PreviewAuthConfig,
-  parsePreviewOrigin,
+  parseProxyCallbackURL,
   readPreviewAuthConfig,
-  shouldBorrowSignIn,
+  shouldProxySignIn,
 } from './preview-auth'
 
 const GITHUB_AUTHORIZE_URL = 'https://github.com/login/oauth/authorize'
@@ -79,22 +81,21 @@ export function handleGitHubLoginRequest(
 
   // A per-PR preview cannot be an OAuth redirect target -- GitHub rejects a
   // redirect_uri it does not know, and per-PR hostnames cannot be registered
-  // ahead of time. So the preview binds its own state to this browser, then
-  // hands the dance to a stable origin of this same worker, which brings the
-  // authorization code back here to be exchanged.
-  if (shouldBorrowSignIn(requestURL, previewConfig)) {
-    const brokerLogin = new URL(LOGIN_PATH, previewConfig.brokerURL)
-    brokerLogin.searchParams.set('previewOrigin', `https://${requestURL.hostname}`)
-    brokerLogin.searchParams.set('previewState', state)
-    return createRedirectResponse(brokerLogin.href, [
+  // ahead of time. So the preview binds a CSRF value to this browser and asks
+  // the dev worker to run the dance and send the code back to its callback.
+  if (shouldProxySignIn(requestURL, previewConfig)) {
+    const proxyLogin = new URL(LOGIN_PATH, previewConfig.proxyURL)
+    proxyLogin.searchParams.set('proxyAuthTo', `https://${requestURL.hostname}${CALLBACK_PATH}`)
+    proxyLogin.searchParams.set('state', state)
+    return createRedirectResponse(proxyLogin.href, [
       serializeCookie({
         name: STATE_COOKIE_NAME,
-        // The exchange has to present the same redirect_uri the authorize used,
-        // and that was the stable origin's, not this one's.
+        // The exchange must present the same redirect_uri the authorize used,
+        // and that was the dev worker's callback, not this preview's.
         value: encodeCookiePayload({
           state,
           returnPath,
-          exchangeRedirectURI: new URL(CALLBACK_PATH, previewConfig.brokerURL).href,
+          exchangeRedirectURI: new URL(CALLBACK_PATH, previewConfig.proxyURL).href,
         }),
         maxAgeSeconds: STATE_COOKIE_MAX_AGE_SECONDS,
         secure,
@@ -102,30 +103,36 @@ export function handleGitHubLoginRequest(
     ])
   }
 
-  // Standing in for a preview: carry where to send the code, and the state that
-  // preview bound to its own browser, through to the callback.
-  const previewOrigin = parsePreviewOrigin(requestURL.searchParams.get('previewOrigin'))
-  const previewState = requestURL.searchParams.get('previewState')
+  // Running the dance for a preview: everything needed to finish rides in the
+  // `state` GitHub echoes back, so nothing is stored here. The requested
+  // callback is validated now and again on the way back.
+  const proxyAuthTo = parseProxyCallbackURL(requestURL.searchParams.get('proxyAuthTo'))
+  const proxyCSRF = requestURL.searchParams.get('state')
+  const isProxying = !isNullish(proxyAuthTo) && !isNullish(proxyCSRF) && proxyCSRF !== ''
 
   const authorizeURL = new URL(GITHUB_AUTHORIZE_URL)
   authorizeURL.searchParams.set('client_id', credentials.clientId)
   authorizeURL.searchParams.set('redirect_uri', new URL(CALLBACK_PATH, requestURL).href)
-  authorizeURL.searchParams.set('state', state)
+  authorizeURL.searchParams.set(
+    'state',
+    isProxying ? encodeProxyState({csrf: proxyCSRF, proxyAuthTo}) : state,
+  )
 
-  return createRedirectResponse(authorizeURL.href, [
-    serializeCookie({
-      name: STATE_COOKIE_NAME,
-      value: encodeCookiePayload({
-        state,
-        returnPath,
-        ...(isNullish(previewOrigin) || isNullish(previewState)
-          ? {}
-          : {previewOrigin, previewState}),
-      }),
-      maxAgeSeconds: STATE_COOKIE_MAX_AGE_SECONDS,
-      secure,
-    }),
-  ])
+  // A proxied sign-in leaves no cookie here: the preview holds the only state
+  // that matters, and this worker is just a registered redirect target.
+  return createRedirectResponse(
+    authorizeURL.href,
+    isProxying
+      ? []
+      : [
+          serializeCookie({
+            name: STATE_COOKIE_NAME,
+            value: encodeCookiePayload({state, returnPath}),
+            maxAgeSeconds: STATE_COOKIE_MAX_AGE_SECONDS,
+            secure,
+          }),
+        ],
+  )
 }
 
 // Completes the web flow: verifies the state cookie, exchanges the code for a
@@ -154,6 +161,26 @@ export async function handleGitHubOAuthCallbackRequest(
 
   const code = requestURL.searchParams.get('code')
   const state = requestURL.searchParams.get('state')
+
+  // Running the dance for a preview: hand the code to the callback it asked for
+  // and stop. Checked before the state cookie because there is deliberately no
+  // cookie here -- `state` carried everything across the round trip. The target
+  // is re-validated rather than trusted: it came back through GitHub, and the
+  // allowlist is what keeps a code from being aimed anywhere else.
+  const proxyState = decodeProxyState(state)
+  if (!isNullish(code) && !isNullish(proxyState)) {
+    const proxyAuthTo = parseProxyCallbackURL(proxyState.proxyAuthTo)
+    if (isNullish(proxyAuthTo)) {
+      return createAuthTextResponse('Invalid sign-in target. Start the sign-in again.', 400, [
+        clearStateCookie,
+      ])
+    }
+    const target = new URL(proxyAuthTo)
+    target.searchParams.set('code', code)
+    target.searchParams.set('state', proxyState.csrf)
+    return createRedirectResponse(target.href, [clearStateCookie])
+  }
+
   const stateIsVerified =
     !isNullish(code) && !isNullish(state) && !isNullish(stateCookie) && state === stateCookie.state
   if (!stateIsVerified) {
@@ -169,19 +196,6 @@ export async function handleGitHubOAuthCallbackRequest(
     return createAuthTextResponse('Invalid OAuth state. Start the sign-in again.', 400, [
       clearStateCookie,
     ])
-  }
-
-  // Standing in for a preview: hand the code back to it rather than exchanging
-  // here. Only the code travels, and it is inert without the client secret --
-  // which the preview has, being a version of this same worker. The session is
-  // therefore minted on the preview's own origin and never crosses one.
-  const previewOrigin = parsePreviewOrigin(stateCookie.previewOrigin ?? null)
-  const previewState = stateCookie.previewState
-  if (!isNullish(previewOrigin) && !isNullish(previewState)) {
-    const previewCallback = new URL(CALLBACK_PATH, previewOrigin)
-    previewCallback.searchParams.set('code', code)
-    previewCallback.searchParams.set('state', previewState)
-    return createRedirectResponse(previewCallback.href, [clearStateCookie])
   }
 
   const fetcher = options.fetch ?? fetch
@@ -488,8 +502,6 @@ function readSessionCookie(request: Request): GitHubAuthSession | undefined {
 interface GitHubOAuthStateCookie {
   state: string
   returnPath: string
-  previewOrigin?: string
-  previewState?: string
   exchangeRedirectURI?: string
 }
 
@@ -501,8 +513,6 @@ function readStateCookie(request: Request): GitHubOAuthStateCookie | undefined {
   return {
     state: payload.state,
     returnPath: sanitizeReturnPath(readOptionalString(payload.returnPath) ?? null),
-    previewOrigin: readOptionalString(payload.previewOrigin),
-    previewState: readOptionalString(payload.previewState),
     exchangeRedirectURI: readOptionalString(payload.exchangeRedirectURI),
   }
 }

@@ -196,6 +196,8 @@
     "consolas",
     "dall", // DALL-E
     "devbox",
+    "diffsitter", // tree-sitter-based semantic diff tool -- prior art for revision.city symbols
+    "difftastic", // syntax-aware structural diff tool -- prior art for revision.city symbols
     "earendil", // the @earendil-works npm scope (pi coding agent)
     "exercism",
     "forgejo",

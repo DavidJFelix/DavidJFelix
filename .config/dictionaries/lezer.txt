@@ -1,0 +1,13 @@
+# Vocabulary from the Lezer parser system (the incremental parser behind
+# CodeMirror), used by the revision.city entity-diff engine in src/symbols/.
+# Covers the parser's own name plus markup terms its grammars expose as node
+# types. Used in code, tests, changelog entries, and project docs.
+lezer
+# Heading style underlined with = or -, the counterpart to ATX headings; a node
+# type in @lezer/markdown (SetextHeading1/2).
+setext
+# Sørensen-Dice, the token-overlap coefficient used for fuzzy rename detection
+Sørensen
+# A bag of tokens that may repeat, as opposed to a set; the shape the similarity
+# score compares.
+multisets

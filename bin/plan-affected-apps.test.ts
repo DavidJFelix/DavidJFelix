@@ -14,6 +14,8 @@ const target = (overrides: Partial<WebAppTarget> = {}): WebAppTarget => ({
   wranglerConfig: '',
   preview: 'wrangler',
   deploy: 'wrangler',
+  envSuffix: 'EXAMPLE_COM',
+  devEnv: '',
   ...overrides,
 })
 
@@ -21,7 +23,28 @@ test('selects only the apps turbo reported as affected', () => {
   const targets = [target({dir: 'djf.io'}), target({dir: 'ravrun'})]
 
   expect(planAffected({affectedPaths: ['apps/ravrun'], kind: 'preview', targets})).toEqual([
-    targets[1] as WebAppTarget,
+    {...(targets[1] as WebAppTarget), cloudflareEnv: ''},
+  ])
+})
+
+test('previews an app with a dev environment as its dev worker only', () => {
+  // revision.city previews must be versions of the dev worker: they share its
+  // GitHub App for the proxied sign-in, and must never touch production's.
+  const targets = [target({devEnv: 'dev'})]
+
+  expect(planAffected({affectedPaths: ['apps/example.com'], kind: 'preview', targets})).toEqual([
+    {...(targets[0] as WebAppTarget), worker: 'example-com-dev', cloudflareEnv: 'dev'},
+  ])
+})
+
+test('deploys an app with a dev environment as both workers', () => {
+  // The dev worker's stable URL is the OAuth proxy for previews, so it has to
+  // keep tracking main alongside the production deploy.
+  const targets = [target({devEnv: 'dev'})]
+
+  expect(planAffected({affectedPaths: ['apps/example.com'], kind: 'deploy', targets})).toEqual([
+    {...(targets[0] as WebAppTarget), cloudflareEnv: ''},
+    {...(targets[0] as WebAppTarget), worker: 'example-com-dev', cloudflareEnv: 'dev'},
   ])
 })
 
@@ -32,7 +55,7 @@ test('skips apps that opt out of the shared matrix for that kind', () => {
 
   expect(planAffected({affectedPaths: ['apps/onvibes.org'], kind: 'preview', targets})).toEqual([])
   expect(planAffected({affectedPaths: ['apps/onvibes.org'], kind: 'deploy', targets})).toEqual(
-    targets,
+    targets.map((entry) => ({...entry, cloudflareEnv: ''})),
   )
 })
 

@@ -12,6 +12,7 @@
     "software-terms",
     "dns",
     "ics",
+    "lezer",
     "licenses",
     "people-names",
     "pierre",
@@ -21,6 +22,11 @@
   // file. Entries and the reasons for them live in the .txt files themselves.
   "dictionaryDefinitions": [
     {"name": "dns", "path": "dictionaries/dns.txt", "description": "DNS response codes"},
+    {
+      "name": "lezer",
+      "path": "dictionaries/lezer.txt",
+      "description": "Lezer parser vocabulary (entity-diff engine)",
+    },
     {
       "name": "licenses",
       "path": "dictionaries/licenses.txt",
@@ -100,6 +106,7 @@
     "browsable",
     "bunfig", // bun's per-project config file
     "burndown",
+    "ciphertext",
     "codegen",
     "codemod",
     "commenters",
@@ -251,6 +258,7 @@
     "davidjfelix",
     "forzamonica",
     "monicandavid",
+    "nullserve", // the workers.dev subdomain preview URLs are published under
     "onvibes",
     "pkgdog",
     "ravrun",

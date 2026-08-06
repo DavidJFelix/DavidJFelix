@@ -27,6 +27,15 @@ inputs:
       wrangler.toml.
     required: false
     default: ""
+  cloudflare-env:
+    description: >-
+      Optional wrangler environment the build resolves (CLOUDFLARE_ENV). Set for
+      apps whose previews are versions of a non-production worker -- e.g.
+      revision.city previews ride its dev worker so they share the dev GitHub
+      App. Empty: the top-level config. Build-time only; the upload reads the
+      already-resolved config the build emitted.
+    required: false
+    default: ""
   cloudflare-api-token:
     description: Cloudflare API token (Workers Scripts edit — same scope deploy uses).
     required: true
@@ -40,9 +49,18 @@ inputs:
 runs:
   using: composite
   steps:
+    # CLOUDFLARE_ENV is exported only when an environment is requested: an
+    # empty string is a named environment to wrangler's config resolution, not
+    # an absent one.
     - name: build
       shell: bash
-      run: mise run build
+      env:
+        PREVIEW_CLOUDFLARE_ENV: ${{ inputs.cloudflare-env }}
+      run: |
+        if [ -n "$PREVIEW_CLOUDFLARE_ENV" ]; then
+          export CLOUDFLARE_ENV="$PREVIEW_CLOUDFLARE_ENV"
+        fi
+        mise run build
 
     # Builds the app's `dist`/worker, uploads a preview version, and resolves the
     # deterministic pr-<N> alias URL into `url` for the steps below.

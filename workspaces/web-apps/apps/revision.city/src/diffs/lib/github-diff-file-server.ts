@@ -40,7 +40,16 @@ export interface GitHubDiffFileRequest {
 interface GitHubDiffFileServerOptions {
   fetch?: GitHubServerFetch
   token?: string
-  tokenSource?: 'request'
+  // 'request' carries the caller's own token, so results stay out of the shared
+  // cache. 'anonymous' fetches public content with no credential at all and
+  // never falls back to a server token -- without that, configuring one would
+  // silently widen what an unauthenticated visitor can reach, and land private
+  // content in a cache shared by every visitor.
+  tokenSource?: 'request' | 'anonymous'
+  // Fetch the real contents of added and deleted files instead of the empty
+  // placeholder. The viewer never needs them -- the patch already carries every
+  // line -- but a consumer that parses the file does.
+  hydrateSingleSided?: boolean
 }
 
 interface CacheEntry<T> {
@@ -63,16 +72,34 @@ export async function loadGitHubDiffFiles(
   const fetcher = options.fetch ?? fetch
   const useSharedCache = options.tokenSource !== 'request'
   switch (request.type) {
-    case 'new':
-      return {
-        oldFile: null,
-        newFile: createEmptyFallbackFile(request.name, 'new'),
+    case 'new': {
+      if (options.hydrateSingleSided !== true) {
+        return {oldFile: null, newFile: createEmptyFallbackFile(request.name, 'new')}
       }
-    case 'deleted':
-      return {
-        oldFile: createEmptyFallbackFile(request.name, 'deleted'),
-        newFile: null,
+      const refs = await resolveGitHubDiffRefsForRequest({source, fetcher, options, useSharedCache})
+      const newFile = await loadGitHubFileForRequest({
+        repoRef: refs.newRef,
+        path: request.name,
+        fetcher,
+        options,
+        useSharedCache,
+      })
+      return {oldFile: null, newFile}
+    }
+    case 'deleted': {
+      if (options.hydrateSingleSided !== true) {
+        return {oldFile: createEmptyFallbackFile(request.name, 'deleted'), newFile: null}
       }
+      const refs = await resolveGitHubDiffRefsForRequest({source, fetcher, options, useSharedCache})
+      const oldFile = await loadGitHubFileForRequest({
+        repoRef: requireOldRef(request.name, refs),
+        path: request.name,
+        fetcher,
+        options,
+        useSharedCache,
+      })
+      return {oldFile, newFile: null}
+    }
     case 'change':
     case 'rename-changed': {
       const refs = await resolveGitHubDiffRefsForRequest({source, fetcher, options, useSharedCache})
@@ -491,7 +518,7 @@ async function fetchGitHubFileContents({
 
   const url = `${GITHUB_RAW_ROOT}/${encodeURLSegment(repoRef.owner)}/${encodeURLSegment(repoRef.repo)}/${encodeURLSegment(repoRef.ref)}/${encodePath(path)}`
   const response = await fetcher(url, {
-    headers: createGitHubRawHeaders(options.token ?? getGitHubToken()),
+    headers: createGitHubRawHeaders(resolveServerToken(options)),
   })
   await assertGitHubResponseOK(
     response,
@@ -506,7 +533,7 @@ async function fetchGitHubJSON(
   options: GitHubDiffFileServerOptions,
 ): Promise<unknown> {
   const response = await fetcher(url, {
-    headers: createGitHubJSONHeaders(options.token ?? getGitHubToken()),
+    headers: createGitHubJSONHeaders(resolveServerToken(options)),
   })
   await assertGitHubResponseOK(response, `GitHub API ${url}`)
   return response.json()
@@ -659,6 +686,15 @@ function readUnknownPath(data: unknown, path: readonly string[]): unknown {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
+}
+
+// An anonymous request must stay anonymous: falling back to a server token
+// here would hand unauthenticated visitors that token full reach.
+function resolveServerToken(options: GitHubDiffFileServerOptions): string | undefined {
+  if (options.tokenSource === 'anonymous') {
+    return undefined
+  }
+  return options.token ?? getGitHubToken()
 }
 
 function getGitHubToken(): string | undefined {

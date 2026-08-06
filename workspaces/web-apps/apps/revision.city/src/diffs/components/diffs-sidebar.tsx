@@ -1,5 +1,12 @@
 import type {CodeViewHandle} from '@pierre/diffs/react'
-import {IconComment, IconFileTree, IconFilter, IconSearch, IconXSquircle} from '@pierre/icons'
+import {
+  IconBraces,
+  IconComment,
+  IconFileTree,
+  IconFilter,
+  IconSearch,
+  IconXSquircle,
+} from '@pierre/icons'
 import type {FileTree, GitStatus} from '@pierre/trees'
 import {useFileTreeSearch} from '@pierre/trees/react'
 import {
@@ -38,6 +45,9 @@ import type {
   DiffsSavedCommentItem,
   DiffsStats as DiffsStatsData,
 } from '@/diffs/lib/types'
+import {SymbolChangesList, type SymbolSelection} from '@/symbols/components/symbol-changes-list'
+import {useEntityDiffs} from '@/symbols/components/use-entity-diffs'
+import type {EntityDiffRequest} from '@/symbols/lib/entity-diff-client'
 import {CHROME_ICON_BUTTON_CLASS} from './chrome-button-styles'
 import {DiffsCommentsList} from './diffs-comments-list'
 import {DiffsFileTree} from './diffs-file-tree'
@@ -46,7 +56,7 @@ import {useChromeThemeProps} from './use-chrome-theme-props'
 import type {ThemeCycleControls} from './use-theme-cycle'
 import {WorkerPoolStatus} from './worker-pool-status'
 
-type SidebarTab = 'files' | 'comments'
+type SidebarTab = 'files' | 'comments' | 'symbols'
 type SidebarStatusPanel = 'diffStats' | 'systemMonitor'
 
 const MOBILE_MEDIA_QUERY = '(max-width: 767px)'
@@ -62,13 +72,17 @@ interface DiffsSidebarProps {
   className?: string
   commentSections: readonly DiffsSavedCommentItem[]
   diffStats: DiffsStatsData | null
+  entityDiffRequests: readonly EntityDiffRequest[]
   mobileOverlayOpen?: boolean
   onMobileClose(): void
   onSelectComment(comment: DiffsSavedCommentEntry): void
   onSelectItem(itemId: string): void
+  onSelectSymbol(selection: SymbolSelection): void
   scrollRef: RefObject<HTMLDivElement | null>
   source: DiffsFileTreeSource
+  sourcePath: string
   streaming: boolean
+  symbolsAvailable: boolean
   themeCycle: ThemeCycleControls
   viewerRef: RefObject<CodeViewHandle<CommentMetadata> | null>
 }
@@ -77,17 +91,30 @@ export const DiffsSidebar = memo(function DiffsSidebar({
   className,
   commentSections,
   diffStats,
+  entityDiffRequests,
   mobileOverlayOpen = false,
   onMobileClose,
   onSelectComment,
   onSelectItem,
+  onSelectSymbol,
   scrollRef,
   source,
+  sourcePath,
   streaming,
+  symbolsAvailable,
   themeCycle,
   viewerRef,
 }: DiffsSidebarProps) {
   const [activeTab, setActiveTab] = useState<SidebarTab>('files')
+  // Opening the tab is what starts the work: an unopened symbols tab costs no
+  // GitHub requests. Once opened it stays enabled so results survive tab
+  // switches, and streamed files are picked up as they arrive.
+  const [symbolsRequested, setSymbolsRequested] = useState(false)
+  const entityDiffs = useEntityDiffs({
+    enabled: symbolsRequested && symbolsAvailable && !streaming,
+    requests: entityDiffRequests,
+    sourcePath,
+  })
   let totalCommentCount = 0
   for (const section of commentSections) {
     totalCommentCount += section.comments.length
@@ -231,7 +258,12 @@ export const DiffsSidebar = memo(function DiffsSidebar({
             })}
             variant="ghost"
             value={activeTab}
-            onValueChange={(value) => setActiveTab(value as SidebarTab)}
+            onValueChange={(value) => {
+              if (value === 'symbols') {
+                setSymbolsRequested(true)
+              }
+              setActiveTab(isSidebarTab(value) ? value : 'files')
+            }}
           >
             <ButtonGroupItem value="files" size="icon-only" className={css({boxShadow: '[none]'})}>
               <IconFileTree className={ICON_SIZE_CLASS} />
@@ -275,6 +307,14 @@ export const DiffsSidebar = memo(function DiffsSidebar({
                   {totalCommentCount}
                 </span>
               )}
+            </ButtonGroupItem>
+            <ButtonGroupItem
+              value="symbols"
+              size="icon-only"
+              className={css({boxShadow: '[none]'})}
+            >
+              <IconBraces className={ICON_SIZE_CLASS} />
+              <span className={css({srOnly: true})}>Symbols</span>
             </ButtonGroupItem>
           </ButtonGroup>
           {activeTab === 'files' && !isNullish(fileTreeModel) && (
@@ -325,6 +365,18 @@ export const DiffsSidebar = memo(function DiffsSidebar({
               onSelectItem={onSelectItem}
             />
           </section>
+          <section
+            aria-label="Symbols"
+            hidden={activeTab !== 'symbols'}
+            className={css({h: 'full', minH: '0'})}
+          >
+            <SymbolChangesList
+              entries={entityDiffs.entries}
+              onSelectItem={onSelectItem}
+              onSelectSymbol={onSelectSymbol}
+              supported={symbolsAvailable}
+            />
+          </section>
         </div>
         <DiffsStats
           expanded={activeStatusPanel === 'diffStats'}
@@ -342,6 +394,10 @@ export const DiffsSidebar = memo(function DiffsSidebar({
     </>
   )
 })
+
+function isSidebarTab(value: string): value is SidebarTab {
+  return value === 'files' || value === 'comments' || value === 'symbols'
+}
 
 interface SidebarWrapperProps {
   children: ReactNode

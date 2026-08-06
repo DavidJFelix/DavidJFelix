@@ -34,7 +34,18 @@ export type WebAppTarget = {
   // POSTHOG_KEY_<suffix>, SENTRY_PROJECT_<suffix>), which the deploy matrix
   // resolves by name instead of hardcoding one app's vars per workflow.
   readonly envSuffix: string
+  // Wrangler environment of the app's dev worker, '' for production-only apps.
+  // When set, previews build under CLOUDFLARE_ENV=<devEnv> and upload as
+  // versions of the dev worker (`<worker>-<devEnv>`) instead of the production
+  // one -- revision.city previews must share the dev worker's GitHub App, not
+  // production's -- and the dev worker deploys from main alongside production
+  // so its stable URL keeps tracking this codebase.
+  readonly devEnv: string
 }
+
+// What the matrix jobs actually consume: a target plus the CLOUDFLARE_ENV its
+// build resolves, with `worker` already naming the worker that build targets.
+export type WebAppMatrixEntry = WebAppTarget & {readonly cloudflareEnv: string}
 
 // A base ref of all zeros is git's "no previous commit" sentinel, which push
 // events carry for a new branch. Turbo cannot diff against it, so callers
@@ -54,6 +65,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     preview: 'none',
     deploy: 'wrangler',
     envSuffix: 'ALCHEMY_STATE_VIEWER',
+    devEnv: '',
   },
   {
     dir: 'calendar-visualizer',
@@ -63,6 +75,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     preview: 'wrangler',
     deploy: 'wrangler',
     envSuffix: 'CALENDAR_VISUALIZER',
+    devEnv: '',
   },
   {
     dir: 'davidjfelix.com',
@@ -72,6 +85,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     preview: 'wrangler',
     deploy: 'wrangler',
     envSuffix: 'DAVIDJFELIX_COM',
+    devEnv: '',
   },
   {
     dir: 'djf.io',
@@ -81,6 +95,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     preview: 'wrangler',
     deploy: 'wrangler',
     envSuffix: 'DJF_IO',
+    devEnv: '',
   },
   {
     dir: 'f311x',
@@ -90,6 +105,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     preview: 'none',
     deploy: 'none',
     envSuffix: 'F311X',
+    devEnv: '',
   },
   {
     dir: 'forzamonica.com',
@@ -99,6 +115,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     preview: 'wrangler',
     deploy: 'wrangler',
     envSuffix: 'FORZAMONICA_COM',
+    devEnv: '',
   },
   {
     dir: 'monicandavid.com',
@@ -108,6 +125,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     preview: 'wrangler',
     deploy: 'wrangler',
     envSuffix: 'MONICANDAVID_COM',
+    devEnv: '',
   },
   {
     dir: 'onvibes.org',
@@ -117,6 +135,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     preview: 'none',
     deploy: 'wrangler',
     envSuffix: 'ONVIBES_ORG',
+    devEnv: '',
   },
   {
     dir: 'pkg.dog',
@@ -126,6 +145,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     preview: 'wrangler',
     deploy: 'wrangler',
     envSuffix: 'PKG_DOG',
+    devEnv: '',
   },
   {
     dir: 'ravrun',
@@ -135,6 +155,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     preview: 'wrangler',
     deploy: 'wrangler',
     envSuffix: 'RAVRUN',
+    devEnv: '',
   },
   {
     dir: 'revision.city',
@@ -144,6 +165,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     preview: 'wrangler',
     deploy: 'wrangler',
     envSuffix: 'REVISION_CITY',
+    devEnv: 'dev',
   },
   {
     dir: 'startchi.com',
@@ -153,6 +175,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     preview: 'wrangler',
     deploy: 'wrangler',
     envSuffix: 'STARTCHI_COM',
+    devEnv: '',
   },
 ]
 
@@ -167,9 +190,22 @@ export const planAffected = ({
   affectedPaths,
   kind,
   targets = WEB_APP_TARGETS,
-}: PlanAffectedParams): WebAppTarget[] => {
+}: PlanAffectedParams): WebAppMatrixEntry[] => {
   const affected = new Set(affectedPaths)
-  return targets.filter((target) => target[kind] !== 'none' && affected.has(`apps/${target.dir}`))
+  return targets
+    .filter((target) => target[kind] !== 'none' && affected.has(`apps/${target.dir}`))
+    .flatMap((target) => {
+      if (target.devEnv === '') return [{...target, cloudflareEnv: ''}]
+      const dev = {
+        ...target,
+        worker: `${target.worker}-${target.devEnv}`,
+        cloudflareEnv: target.devEnv,
+      }
+      // A preview is a version of the dev worker only -- it must share the dev
+      // GitHub App, never production's. A deploy ships both workers so the dev
+      // worker's stable URL keeps tracking main.
+      return kind === 'preview' ? [dev] : [{...target, cloudflareEnv: ''}, dev]
+    })
 }
 
 type TurboPackageList = {

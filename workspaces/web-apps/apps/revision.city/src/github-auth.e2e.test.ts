@@ -1,6 +1,8 @@
 import type {APIRequestContext, PlaywrightWorkerArgs} from '@playwright/test'
 import {expect, test} from '@playwright/test'
 
+import {isPreviewHost} from './diffs/lib/preview-auth'
+
 // GitHub's app-install flow lands the browser on the OAuth callback with
 // ?setup_action=... and no state bound to this browser (that flow starts on
 // github.com, not at /login). These prove the callback treats that landing as
@@ -71,6 +73,17 @@ test('post-install callback starts a state-bound sign-in for a signed-out visito
 
   expect(response.status()).toBe(302)
   const location = response.headers().location
-  expect(location).toMatch(/^https:\/\/github\.com\/login\/oauth\/authorize\?/u)
+  // A per-PR preview cannot be an OAuth redirect target (GitHub registers no
+  // wildcard callbacks), so its sign-in delegates to the dev worker, naming
+  // this host's own callback as the code's destination. Everywhere else goes
+  // straight to GitHub's authorize page.
+  if (isPreviewHost(new URL(baseURL ?? 'http://localhost').hostname)) {
+    expect(location).toContain('/api/auth/github/login?')
+    expect(location).toContain(
+      `proxyAuthTo=${encodeURIComponent(new URL('/api/auth/github/callback', baseURL).href)}`,
+    )
+  } else {
+    expect(location).toMatch(/^https:\/\/github\.com\/login\/oauth\/authorize\?/u)
+  }
   expect(location).toContain('state=')
 })

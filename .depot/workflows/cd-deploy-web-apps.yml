@@ -48,7 +48,10 @@ jobs:
         run: bun bin/plan-affected-apps.ts deploy
 
   deploy:
-    name: deploy ${{ matrix.app.dir }}
+    # Named by worker, not dir: an app with a dev environment fans out into two
+    # entries (production and its dev worker), and both are named revision.city
+    # by dir.
+    name: deploy ${{ matrix.app.worker }}
     needs: plan
     if: needs.plan.outputs.apps != '[]'
     strategy:
@@ -98,16 +101,23 @@ jobs:
       # variables by name rather than pinning one app's vars per workflow. An
       # app with a variable unset builds without it, which is how the apps that
       # have not been onboarded to Sentry/PostHog deploy today.
+      # CLOUDFLARE_ENV selects which wrangler environment the build resolves
+      # into its emitted config -- 'dev' builds the app's dev worker. Unset
+      # rather than empty when the entry has none: an empty string is a named
+      # environment to wrangler's config resolution, not an absent one.
       - name: turbo build
         working-directory: ${{ github.workspace }}
         env:
+          CLOUDFLARE_ENV: ${{ matrix.app.cloudflareEnv }}
           STANDARD_SITE_RESOLVE: ${{ steps.atproto.outputs.present }}
           PUBLIC_SENTRY_DSN: ${{ vars[format('SENTRY_DSN_{0}', matrix.app.envSuffix)] }}
           PUBLIC_POSTHOG_KEY: ${{ vars[format('POSTHOG_KEY_{0}', matrix.app.envSuffix)] }}
           SENTRY_PROJECT: ${{ vars[format('SENTRY_PROJECT_{0}', matrix.app.envSuffix)] }}
           SENTRY_ORG: ${{ vars.SENTRY_ORG }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-        run: bun bin/turbo-run.ts build --filter=./apps/${{ matrix.app.dir }}
+        run: |
+          if [ -z "$CLOUDFLARE_ENV" ]; then unset CLOUDFLARE_ENV; fi
+          bun bin/turbo-run.ts build --filter=./apps/${{ matrix.app.dir }}
 
       - name: wrangler deploy
         uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0

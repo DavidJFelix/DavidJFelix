@@ -30,3 +30,35 @@ routes = [
 
 [observability]
 enabled = true
+
+# The dev worker: a second deployment of this same app on a stable workers.dev
+# host, used as the OAuth redirect target for per-PR previews. Previews cannot
+# be registered as callback URLs (GitHub allows no wildcards), so they proxy
+# sign-in through this one, which does have a registered callback on its own
+# GitHub App. Selected at build time (CLOUDFLARE_ENV=dev): the Cloudflare vite
+# plugin resolves the environment into dist/server/wrangler.json, which is what
+# the redirected wrangler CLI deploys -- `-e dev` at deploy time is too late.
+# Carries its own GITHUB_APP_CLIENT_ID / GITHUB_APP_CLIENT_SECRET (the dev
+# GitHub App's), set with `wrangler secret put <KEY> --name revision-city-dev`.
+[env.dev]
+# Explicit rather than wrangler's derived `<name>-<env>`: previews upload as
+# versions of this worker, and the sign-in proxy addresses it by name.
+name = "revision-city-dev"
+# `routes` is inheritable. Without this empty list, deploying the environment
+# would reassign the production custom domains above to the dev worker.
+routes = []
+# The stable workers.dev host is the point -- it is the registered OAuth
+# callback origin -- and the pr-<N> preview aliases hang off preview_urls.
+workers_dev = true
+preview_urls = true
+
+[env.dev.vars]
+# Where a per-PR preview (an uploaded version of this same worker) proxies
+# sign-in. Previews share this worker's GitHub App secrets, so only the
+# authorization code ever crosses origins. Production has no value here and
+# never proxies. The stable host itself is not a preview hostname, so it runs
+# the ordinary flow despite carrying the variable.
+PREVIEW_AUTH_PROXY_URL = "https://revision-city-dev.nullserve.workers.dev"
+
+[env.dev.observability]
+enabled = true

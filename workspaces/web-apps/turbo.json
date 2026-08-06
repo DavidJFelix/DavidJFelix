@@ -27,6 +27,12 @@
     // produces nothing matching; treat that warning as a bug, not noise.
     "build": {
       "dependsOn": ["topological", "^build"],
+      // CLOUDFLARE_ENV selects which wrangler environment the Cloudflare vite
+      // plugin resolves into the emitted deploy config. Declared for both of
+      // strict mode's effects: the variable reaches the task at all, and two
+      // builds of one app under different environments never share a cache
+      // entry -- a hit here would deploy production's config as the dev worker.
+      "env": ["CLOUDFLARE_ENV"],
       "outputs": [
         "dist/**",
         "dist-ssr/**",

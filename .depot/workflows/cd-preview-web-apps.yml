@@ -89,6 +89,7 @@ jobs:
           pr-number: ${{ github.event.pull_request.number }}
           smoke-routes: ${{ matrix.app.smokeRoutes }}
           wrangler-config: ${{ matrix.app.wranglerConfig }}
+          cloudflare-env: ${{ matrix.app.cloudflareEnv }}
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           github-token: ${{ secrets.GITHUB_TOKEN }}

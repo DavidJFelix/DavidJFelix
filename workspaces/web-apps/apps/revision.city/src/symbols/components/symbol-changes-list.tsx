@@ -5,6 +5,7 @@ import {css, cx} from 'styled-system/css'
 import {isNullish} from '@/diffs/lib/nullish'
 import {CHANGE_ORDER, CHANGE_STYLES, KIND_LABELS} from '@/symbols/lib/change-presentation'
 import type {EntityChange} from '@/symbols/lib/entity'
+import {SequenceEditRows} from './sequence-edit-rows'
 import type {EntityDiffEntry} from './use-entity-diffs'
 
 export interface SymbolSelection {
@@ -221,79 +222,95 @@ function SymbolRow({change, itemId, onSelectSymbol}: SymbolRowProps) {
     change.type === 'deleted' ? change.oldRange?.startLine : change.newRange?.startLine
 
   return (
-    <button
-      type="button"
-      disabled={isNullish(onSelectSymbol) || lineNumber === undefined}
-      title={`${style.label} ${KIND_LABELS[change.kind]} ${change.qualifiedName}`}
+    // The border and background live on the wrapper so element-edit rows can be
+    // buttons of their own -- a button cannot nest inside a button.
+    <div
       className={css({
-        display: 'flex',
-        w: 'full',
-        cursor: 'pointer',
-        alignItems: 'baseline',
-        gap: '2',
         borderBottomWidth: '1px',
         borderColor: 'var(--diffs-card-border, rgb(0 0 0 / 0.1))',
         bg: 'var(--diffs-card-bg, var(--card))',
-        px: '3',
-        py: '2',
-        textAlign: 'left',
-        fontSize: 'sm',
-        lineHeight: '[1.25rem]',
-        outline: 'none',
         _last: {borderBottomWidth: '0'},
-        _hover: {bg: 'var(--diffs-card-hover-bg, rgb(0 0 0 / 0.04))'},
-        _disabled: {cursor: 'default', _hover: {bg: 'var(--diffs-card-bg, var(--card))'}},
-        _focusVisible: {boxShadow: '[inset 0 0 0 2px var(--ring)]'},
         _dark: {borderColor: 'var(--diffs-card-border, rgb(255 255 255 / 0.15))'},
       })}
-      onClick={() => {
-        if (lineNumber !== undefined) {
-          onSelectSymbol?.({itemId, lineNumber, side})
-        }
-      }}
     >
-      <span
-        aria-hidden="true"
+      <button
+        type="button"
+        disabled={isNullish(onSelectSymbol) || lineNumber === undefined}
+        title={`${style.label} ${KIND_LABELS[change.kind]} ${change.qualifiedName}`}
         className={css({
-          w: '3',
-          flexShrink: '0',
-          textAlign: 'center',
-          fontFamily: 'diffs.mono',
-          fontSize: 'xs',
-          lineHeight: '[1rem]',
-          fontWeight: 'semibold',
+          display: 'flex',
+          w: 'full',
+          cursor: 'pointer',
+          alignItems: 'baseline',
+          gap: '2',
+          px: '3',
+          py: '2',
+          textAlign: 'left',
+          fontSize: 'sm',
+          lineHeight: '[1.25rem]',
+          outline: 'none',
+          _hover: {bg: 'var(--diffs-card-hover-bg, rgb(0 0 0 / 0.04))'},
+          _disabled: {cursor: 'default', _hover: {bg: 'transparent'}},
+          _focusVisible: {boxShadow: '[inset 0 0 0 2px var(--ring)]'},
         })}
-        style={{color: style.color}}
+        onClick={() => {
+          if (lineNumber !== undefined) {
+            onSelectSymbol?.({itemId, lineNumber, side})
+          }
+        }}
       >
-        {style.sigil}
-      </span>
-      <span className={css({display: 'flex', minW: '0', flexDirection: 'column', gap: '0.5'})}>
         <span
+          aria-hidden="true"
           className={css({
+            w: '3',
+            flexShrink: '0',
+            textAlign: 'center',
             fontFamily: 'diffs.mono',
             fontSize: 'xs',
             lineHeight: '[1rem]',
-            wordBreak: 'break-all',
+            fontWeight: 'semibold',
           })}
+          style={{color: style.color}}
         >
-          <span className={css({srOnly: true})}>{style.label} </span>
-          {change.qualifiedName}
+          {style.sigil}
         </span>
-        {/* Spelled out rather than left to the sigil: one letter in a colored
-            column is fine for scanning, but it cannot be the only place the
-            change type is stated. */}
-        <span
-          className={css({
-            color: 'diffs.muted.foreground',
-            fontSize: 'xs',
-            lineHeight: '[1rem]',
-          })}
-        >
-          <span style={{color: style.color}}>{style.label}</span> {KIND_LABELS[change.kind]}
-          {!isNullish(change.previousQualifiedName) && ` · was ${change.previousQualifiedName}`}
+        <span className={css({display: 'flex', minW: '0', flexDirection: 'column', gap: '0.5'})}>
+          <span
+            className={css({
+              fontFamily: 'diffs.mono',
+              fontSize: 'xs',
+              lineHeight: '[1rem]',
+              wordBreak: 'break-all',
+            })}
+          >
+            <span className={css({srOnly: true})}>{style.label} </span>
+            {change.qualifiedName}
+          </span>
+          {/* Spelled out rather than left to the sigil: one letter in a colored
+              column is fine for scanning, but it cannot be the only place the
+              change type is stated. */}
+          <span
+            className={css({
+              color: 'diffs.muted.foreground',
+              fontSize: 'xs',
+              lineHeight: '[1rem]',
+            })}
+          >
+            <span style={{color: style.color}}>{style.label}</span> {KIND_LABELS[change.kind]}
+            {!isNullish(change.previousQualifiedName) && ` · was ${change.previousQualifiedName}`}
+            {!isNullish(change.detail) &&
+              ` · ${change.detail.lengthBefore} → ${change.detail.lengthAfter} elements`}
+          </span>
         </span>
-      </span>
-    </button>
+      </button>
+      {!isNullish(change.detail) && change.detail.edits.length > 0 && (
+        <SequenceEditRows
+          edits={change.detail.edits}
+          itemId={itemId}
+          onSelectSymbol={onSelectSymbol}
+        />
+      )}
+    </div>
   )
 }
 

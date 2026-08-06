@@ -60,6 +60,51 @@ test('reports only the entity that changed, not the ones enclosing it', async ()
   expect(diff.changes).toMatchObject([{type: 'modified', qualifiedName: 'Widget.render'}])
 })
 
+// The cspell.jsonc shape that once cascaded: objects in an array all carry the
+// same keys, so their entities collide on qualified name and an insertion used
+// to shift every later sibling's ordinal into a bogus modified row.
+test('reports an array insertion as one edit per array, not a cascade', async () => {
+  const oldSource = `{
+  "dictionaries": ["dns", "ics", "licenses"],
+  "dictionaryDefinitions": [
+    {"name": "dns", "path": "dns.txt"},
+    {"name": "licenses", "path": "licenses.txt"},
+    {"name": "pierre", "path": "pierre.txt"}
+  ],
+  "words": ["burndown", "codegen", "frontmatter"]
+}`
+  const newSource = `{
+  "dictionaries": ["dns", "ics", "lezer", "licenses"],
+  "dictionaryDefinitions": [
+    {"name": "dns", "path": "dns.txt"},
+    {"name": "lezer", "path": "lezer.txt"},
+    {"name": "licenses", "path": "licenses.txt"},
+    {"name": "pierre", "path": "pierre.txt"}
+  ],
+  "words": ["burndown", "ciphertext", "codegen", "frontmatter"]
+}`
+
+  const diff = await diffEntities({path: '.config/cspell.json', oldSource, newSource})
+
+  expect(diff.changes.map((change) => `${change.type}:${change.qualifiedName}`)).toEqual([
+    'modified:dictionaries',
+    'modified:dictionaryDefinitions',
+    'modified:words',
+  ])
+  const definitions = diff.changes.find(
+    (change) => change.qualifiedName === 'dictionaryDefinitions',
+  )
+  expect(definitions?.detail).toMatchObject({
+    lengthBefore: 3,
+    lengthAfter: 4,
+    edits: [{type: 'inserted', index: 1, preview: '{"name": "lezer", "path": "lezer.txt"}'}],
+  })
+  const words = diff.changes.find((change) => change.qualifiedName === 'words')
+  expect(words?.detail?.edits).toMatchObject([
+    {type: 'inserted', index: 1, preview: '"ciphertext"'},
+  ])
+})
+
 test('reports an unknown extension as an unsupported language', async () => {
   const diff = await diffEntities({path: 'notes.bin', oldSource: 'a', newSource: 'b'})
 

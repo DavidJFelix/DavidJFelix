@@ -16,6 +16,7 @@ function parserFor(id: string): Promise<Parser> {
 
 const tsxParser = await parserFor('tsx')
 const markdownParser = await parserFor('markdown')
+const jsonParser = await parserFor('json')
 
 interface ExtractionCase {
   readonly language: string
@@ -272,4 +273,24 @@ test('parses a file with syntax errors instead of throwing', () => {
   const entities = extractEntities({source, parser: tsxParser})
 
   expect(entities.map((entity) => entity.name)).toContain('broken')
+})
+
+test('fingerprints the elements of an array-valued property', () => {
+  const source = '{"words": ["alpha", "beta"], "limit": 3}'
+
+  const entities = extractEntities({source, parser: jsonParser})
+
+  const words = entities.find((entity) => entity.qualifiedName === 'words')
+  expect(words?.elements?.map((element) => element.preview)).toEqual(['"alpha"', '"beta"'])
+  expect(words?.elements?.map((element) => element.hasEntities)).toEqual([false, false])
+  expect(entities.find((entity) => entity.qualifiedName === 'limit')?.elements).toBeUndefined()
+})
+
+test('marks array elements that contain entities of their own', () => {
+  const source = '{"defs": [{"name": "dns"}, "plain"]}'
+
+  const entities = extractEntities({source, parser: jsonParser})
+
+  const defs = entities.find((entity) => entity.qualifiedName === 'defs')
+  expect(defs?.elements?.map((element) => element.hasEntities)).toEqual([true, false])
 })

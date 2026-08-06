@@ -179,6 +179,62 @@ test('says so when a diff changed no nameable symbol', () => {
   harness.unmount()
 })
 
+const MODIFIED_ARRAY: EntityChange = {
+  type: 'modified',
+  kind: 'property',
+  name: 'words',
+  qualifiedName: 'words',
+  oldRange: {startLine: 8, endLine: 20},
+  newRange: {startLine: 8, endLine: 21},
+  detail: {
+    lengthBefore: 3,
+    lengthAfter: 4,
+    edits: [
+      {type: 'inserted', index: 1, preview: '"ciphertext"', range: {startLine: 10, endLine: 10}},
+    ],
+  },
+}
+
+test('summarizes how a sequence-valued key changed', () => {
+  const harness = renderList({entries: [createEntry([MODIFIED_ARRAY])]})
+
+  expect(harness.container.textContent).toContain('3 → 4 elements')
+  expect(harness.container.textContent).toContain('"ciphertext"')
+  expect(harness.container.textContent).toContain('at 1')
+  harness.unmount()
+})
+
+test('scrolls to the element an edit inserted', () => {
+  const onSelectSymbol = vi.fn<(selection: SymbolSelection) => void>()
+  const harness = renderList({entries: [createEntry([MODIFIED_ARRAY])], onSelectSymbol})
+
+  act(() => {
+    findRow(harness.container, '"ciphertext"')?.click()
+  })
+
+  expect(onSelectSymbol).toHaveBeenCalledWith({itemId: 'item-1', lineNumber: 10, side: 'additions'})
+  harness.unmount()
+})
+
+test('caps the element edits it shows behind a count', () => {
+  const edits = Array.from({length: 12}, (_, index) => ({
+    type: 'inserted' as const,
+    index,
+    preview: `"word${index}"`,
+    range: {startLine: index + 1, endLine: index + 1},
+  }))
+  const harness = renderList({
+    entries: [
+      createEntry([{...MODIFIED_ARRAY, detail: {lengthBefore: 0, lengthAfter: 12, edits}}]),
+    ],
+  })
+
+  expect(harness.container.textContent).toContain('"word7"')
+  expect(harness.container.textContent).not.toContain('"word8"')
+  expect(harness.container.textContent).toContain('and 4 more')
+  harness.unmount()
+})
+
 test('reports progress while files are still being read', () => {
   const harness = renderList({
     entries: [

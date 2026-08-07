@@ -241,6 +241,7 @@
     "proptest",
     "pulumi",
     "pyproject",
+    "rasterizes",
     "rspack",
     "schibsted",
     "shiki",
@@ -250,6 +251,7 @@
     "swarmfarm",
     "taskfile",
     "unconfig",
+    "unhead", // the head manager behind Nuxt's useHead
     "vinxi",
     "vndly",
     "workerd",

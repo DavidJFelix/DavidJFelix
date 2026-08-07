@@ -1,4 +1,5 @@
 ---
+import {ogTags} from '@davidjfelix/og'
 import {createThemeBootstrapScript} from '@davidjfelix/theme/bootstrap'
 import {css} from '../../styled-system/css'
 import Analytics from '../components/Analytics.astro'
@@ -35,6 +36,7 @@ const themeBootstrapScript = createThemeBootstrapScript({storageKey: 'theme'})
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
     <title>Calendar Visualizer</title>
+    {ogTags({title: 'Calendar Visualizer', type: 'website'}).map((tag) => <meta {...tag} />)}
     {posthogEnabled && <Analytics />}
   </head>
   <!--

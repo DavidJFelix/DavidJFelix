@@ -1,6 +1,9 @@
 <script lang="ts">
+import {ogTags} from '@davidjfelix/og'
 import {css} from 'styled-system/css'
 import type {PageServerData} from './$types'
+
+const socialTags = ogTags({title: 'alchemy state', type: 'website'})
 
 const {data}: {data: PageServerData} = $props()
 
@@ -55,6 +58,9 @@ const setupCode = css({
 
 <svelte:head>
   <title>alchemy state</title>
+  {#each socialTags as tag (tag)}
+    <meta {...tag} />
+  {/each}
 </svelte:head>
 
 {#if !data.configured}

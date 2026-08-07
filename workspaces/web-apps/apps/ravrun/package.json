@@ -39,6 +39,7 @@
     "wrangler": "4.110.0"
   },
   "dependencies": {
+    "@davidjfelix/og": "workspace:*",
     "@davidjfelix/theme": "workspace:*",
     "@sentry/cloudflare": "^10.60.0",
     "@sentry/react": "^10.60.0",

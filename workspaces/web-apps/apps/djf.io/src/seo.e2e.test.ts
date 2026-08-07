@@ -83,6 +83,14 @@ test('every sitemap page has Open Graph and Twitter card meta with a served og i
     const response = await request.get(imagePath)
     expect(response.ok(), `${imagePath} served`).toBe(true)
     expect(response.headers()['content-type'], `${imagePath} content type`).toContain('image/png')
+    // Every PNG starts with a fixed-layout header: an 8-byte signature, then
+    // the image's big-endian width at byte 16 and height at byte 20 -- enough
+    // to assert the size the og:image:width/height meta advertises without an
+    // image library.
+    const body = await response.body()
+    expect(body.subarray(1, 4).toString(), `${imagePath} signature`).toBe('PNG')
+    expect(body.readUInt32BE(16), `${imagePath} width`).toBe(1200)
+    expect(body.readUInt32BE(20), `${imagePath} height`).toBe(630)
   }
 })
 

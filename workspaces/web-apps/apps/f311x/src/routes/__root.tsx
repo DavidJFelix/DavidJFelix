@@ -1,3 +1,4 @@
+import {ogTags} from '@davidjfelix/og'
 import {createThemeBootstrapScript, type ThemeColorPair} from '@davidjfelix/theme/bootstrap'
 import {ThemeProvider} from '@davidjfelix/theme/react'
 import {TanStackDevtools} from '@tanstack/react-devtools'
@@ -21,6 +22,7 @@ export const Route = createRootRoute({
       {charSet: 'utf-8'},
       {name: 'viewport', content: 'width=device-width, initial-scale=1'},
       {title: 'f311x'},
+      ...ogTags({title: 'f311x', type: 'website', siteName: 'f311x'}),
     ],
     links: [{rel: 'stylesheet', href: appCss}],
   }),

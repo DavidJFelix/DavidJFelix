@@ -1,3 +1,4 @@
+import {ogTags} from '@davidjfelix/og'
 import {IconArrowRightShort} from '@pierre/icons'
 import {createFileRoute, Link} from '@tanstack/react-router'
 
@@ -14,7 +15,10 @@ import diffsCss from '@/diffs/diffs.css?url'
 // repos as context lines that have not landed yet.
 export const Route = createFileRoute('/')({
   head: () => ({
-    meta: [{name: 'description', content: 'Version control, centered on review.'}],
+    meta: [
+      {name: 'description', content: 'Version control, centered on review.'},
+      ...ogTags({description: 'Version control, centered on review.'}),
+    ],
     links: [{rel: 'stylesheet', href: diffsCss}],
   }),
   component: Home,

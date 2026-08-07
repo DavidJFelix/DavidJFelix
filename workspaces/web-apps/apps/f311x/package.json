@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.40.2",
+    "@davidjfelix/og": "workspace:*",
     "@davidjfelix/theme": "workspace:*",
     "@fontsource-variable/geist": "^5.2.9",
     "@sentry/cloudflare": "^10.60.0",

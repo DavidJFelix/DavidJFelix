@@ -1,10 +1,13 @@
+import {ogTags} from '@davidjfelix/og'
 import {createFileRoute, Link} from '@tanstack/react-router'
 
 import {css, cx} from 'styled-system/css'
 import {button} from 'styled-system/recipes'
 
+const title = 'About — forzamonica art'
+
 export const Route = createFileRoute('/about')({
-  head: () => ({meta: [{title: 'About — forzamonica art'}]}),
+  head: () => ({meta: [{title}, ...ogTags({title})]}),
   component: AboutPage,
 })
 

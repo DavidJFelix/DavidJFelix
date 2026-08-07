@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import {ogTags} from '@davidjfelix/og'
 import {css} from 'styled-system/css'
 
 const title = 'pkg.dog'
@@ -21,7 +22,10 @@ const features = [
 
 useHead({
   title,
-  meta: [{name: 'description', content: description}],
+  meta: [
+    {name: 'description', content: description},
+    ...ogTags({title, description, type: 'website', siteName: title}),
+  ],
 })
 </script>
 

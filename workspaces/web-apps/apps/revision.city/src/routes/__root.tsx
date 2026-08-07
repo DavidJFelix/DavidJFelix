@@ -1,3 +1,4 @@
+import {ogTags} from '@davidjfelix/og'
 import {TanStackDevtools} from '@tanstack/react-devtools'
 import {createRootRoute, HeadContent, ScriptOnce, Scripts} from '@tanstack/react-router'
 import {TanStackRouterDevtoolsPanel} from '@tanstack/react-router-devtools'
@@ -14,6 +15,12 @@ export const Route = createRootRoute({
       {name: 'viewport', content: 'width=device-width, initial-scale=1'},
       {title: 'revision.city'},
       {name: 'description', content: 'revision.city'},
+      ...ogTags({
+        title: 'revision.city',
+        description: 'revision.city',
+        type: 'website',
+        siteName: 'revision.city',
+      }),
     ],
     links: [
       // Declared on the root route so every page inherits it; child routes

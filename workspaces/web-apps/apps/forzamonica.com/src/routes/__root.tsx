@@ -1,3 +1,4 @@
+import {ogTags} from '@davidjfelix/og'
 import {createThemeBootstrapScript, type ThemeColorPair} from '@davidjfelix/theme/bootstrap'
 import {ThemeProvider} from '@davidjfelix/theme/react'
 import {TanStackDevtools} from '@tanstack/react-devtools'
@@ -39,6 +40,12 @@ export const Route = createRootRoute({
         name: 'description',
         content: 'Original watercolors and archival prints by Monica Felix.',
       },
+      ...ogTags({
+        title: 'forzamonica art',
+        description: 'Original watercolors and archival prints by Monica Felix.',
+        type: 'website',
+        siteName: 'forzamonica art',
+      }),
     ],
     // Fonts are self-hosted (see src/styles.css), so appCss is the only
     // stylesheet and no visitor request leaves the site's origin for type.

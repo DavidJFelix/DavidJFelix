@@ -1,9 +1,12 @@
+import {ogTags} from '@davidjfelix/og'
 import {createFileRoute} from '@tanstack/react-router'
 
 import {PolicyArticle} from '@/components/PolicyArticle.tsx'
 
+const title = 'Shipping policy — forzamonica art'
+
 export const Route = createFileRoute('/policies/shipping')({
-  head: () => ({meta: [{title: 'Shipping policy — forzamonica art'}]}),
+  head: () => ({meta: [{title}, ...ogTags({title})]}),
   component: ShippingPolicyPage,
 })
 

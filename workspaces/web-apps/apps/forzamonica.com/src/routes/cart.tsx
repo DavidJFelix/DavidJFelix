@@ -1,3 +1,4 @@
+import {ogTags} from '@davidjfelix/og'
 import {createFileRoute, Link, useRouter} from '@tanstack/react-router'
 import {useCallback, useEffect, useId, useRef, useState} from 'react'
 
@@ -22,9 +23,11 @@ const FLAT_SHIPPING = 6
 type CommitFlusher = () => Promise<void>
 type RegisterFlush = (key: string, flush: CommitFlusher | null) => void
 
+const title = 'Cart — forzamonica art'
+
 export const Route = createFileRoute('/cart')({
   loader: () => fetchCart(),
-  head: () => ({meta: [{title: 'Cart — forzamonica art'}]}),
+  head: () => ({meta: [{title}, ...ogTags({title})]}),
   component: CartPage,
 })
 

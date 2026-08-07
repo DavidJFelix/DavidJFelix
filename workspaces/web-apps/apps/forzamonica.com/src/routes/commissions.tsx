@@ -1,3 +1,4 @@
+import {ogTags} from '@davidjfelix/og'
 import {createFileRoute} from '@tanstack/react-router'
 import {useId, useState} from 'react'
 
@@ -7,8 +8,10 @@ import {card, field} from 'styled-system/recipes'
 import {Button} from '@/components/Button.tsx'
 import {SelectField} from '@/components/SelectField.tsx'
 
+const title = 'Commissions — forzamonica art'
+
 export const Route = createFileRoute('/commissions')({
-  head: () => ({meta: [{title: 'Commissions — forzamonica art'}]}),
+  head: () => ({meta: [{title}, ...ogTags({title})]}),
   component: CommissionsPage,
 })
 

@@ -1,0 +1,31 @@
+{
+  "name": "@davidjfelix/og",
+  "private": true,
+  "license": "(MIT OR Apache-2.0)",
+  "type": "module",
+  "exports": {
+    ".": "./src/tags.ts",
+    "./image": "./src/image.ts"
+  },
+  "scripts": {
+    "lint": "biome check . && oxlint",
+    "lint:fix": "biome check --write . && oxlint --fix",
+    "format": "oxfmt --check . && prettier --check --no-error-on-unmatched-pattern \"**/*.md\"",
+    "format:fix": "oxfmt . && prettier --write --no-error-on-unmatched-pattern \"**/*.md\"",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@fontsource/inter": "^5.2.8",
+    "satori": "^0.26.0",
+    "sharp": "^0.35.1"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "@types/react": "19.2.17",
+    "@vitest/coverage-v8": "4.1.10",
+    "typescript": "7.0.2",
+    "vitest": "4.1.10"
+  }
+}

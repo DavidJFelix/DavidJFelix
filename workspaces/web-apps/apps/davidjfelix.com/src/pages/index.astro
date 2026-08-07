@@ -1,4 +1,5 @@
 ---
+import {ogTags} from '@davidjfelix/og'
 import {createThemeBootstrapScript} from '@davidjfelix/theme/bootstrap'
 import Analytics from '../components/analytics.astro'
 import ThemeToggle from '../components/theme-toggle.astro'
@@ -29,6 +30,10 @@ const themeBootstrapScript = createThemeBootstrapScript({storageKey: 'theme'})
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
     <title>{title}</title>
+    {/* OpenGraph/Twitter pairs shared through @davidjfelix/og. */}
+    {ogTags({title, description, type: 'website', siteName: 'davidjfelix.com'}).map((tag) => (
+      <meta {...tag} />
+    ))}
     {posthogEnabled && <Analytics />}
     <style>
       :root {

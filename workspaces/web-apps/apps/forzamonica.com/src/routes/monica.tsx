@@ -1,3 +1,4 @@
+import {ogTags} from '@davidjfelix/og'
 import {createFileRoute, Link} from '@tanstack/react-router'
 
 import {css, cx} from 'styled-system/css'
@@ -6,6 +7,8 @@ import {chip} from 'styled-system/recipes'
 import {ProductCard} from '@/components/ProductCard.tsx'
 import {PRODUCT_KINDS, type ProductKind, productKind} from '@/lib/product-kind.ts'
 import {fetchProducts} from '@/lib/shopify/catalog.ts'
+
+const shopTitle = 'Shop — forzamonica art'
 
 type GallerySearch = {kind?: ProductKind}
 
@@ -17,7 +20,7 @@ export const Route = createFileRoute('/monica')({
     return kind ? {kind} : {}
   },
   loader: () => fetchProducts(),
-  head: () => ({meta: [{title: 'Shop — forzamonica art'}]}),
+  head: () => ({meta: [{title: shopTitle}, ...ogTags({title: shopTitle})]}),
   component: GalleryPage,
 })
 

@@ -34,6 +34,11 @@
 #   state, and @flue/runtime and the `agents` SDK declare peer ranges that can
 #   otherwise split it (#339 did) -- src/app.test.ts asserts the invariant.
 #   Drop once the two peers agree without help.
+# - hono is pinned to onvibes.org's direct version so the app and
+#   @flue/runtime share ONE physical copy. With two copies (flue resolved
+#   4.12.29 beside the app's 4.12.34), `app.route('/api', flue())` fails
+#   astro check: the two Hono type identities are incompatible (4.12.34's
+#   HonoRequest added [GET_MATCH_RESULT]). Move the pin with the app's hono.
 
 # Direct dependencies that exist only to pin resolution, not because the app
 # imports something new:

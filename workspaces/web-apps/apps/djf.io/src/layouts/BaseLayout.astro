@@ -3,6 +3,8 @@ import '../index.css'
 import '@fontsource-variable/schibsted-grotesk'
 import '@fontsource-variable/inter'
 import '@fontsource-variable/jetbrains-mono'
+import type {OgArticle} from '@davidjfelix/og'
+import {ogImageSize, ogTags} from '@davidjfelix/og'
 import {createThemeBootstrapScript} from '@davidjfelix/theme/bootstrap'
 // The fontsource file names carry the OpenType weight axis tag. cSpell:words wght
 import interLatinWoff2 from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url'
@@ -22,7 +24,7 @@ interface Props {
   ogImage?: string
   ogImageAlt?: string
   // Rendered as article:* OpenGraph meta; only articles pass it.
-  article?: {publishedTime: string; author: string; tags?: Array<string>}
+  article?: OgArticle
   // Head extras are rendered directly here rather than forwarded through a
   // `<slot name="head" />`: Astro 7 does not render a named slot placed inside
   // `<head>` (the slot is received but emits nothing), which silently dropped
@@ -47,6 +49,21 @@ const {
 const pathname = Astro.url.pathname.endsWith('/') ? Astro.url.pathname : `${Astro.url.pathname}/`
 const canonicalUrl = Astro.site ? new URL(pathname, Astro.site) : undefined
 const ogImageUrl = Astro.site ? new URL(ogImage, Astro.site) : undefined
+
+// The og:*/twitter:* block, shared with the other apps via @davidjfelix/og.
+// Absolute-URL tags (og:url, og:image) drop out when Astro.site is unset,
+// matching the conditional rendering this layout always did.
+const socialTags = ogTags({
+  title,
+  description,
+  type: ogType,
+  siteName: 'djf.io',
+  locale: 'en_US',
+  url: canonicalUrl,
+  image: ogImageUrl ? {url: ogImageUrl, alt: ogImageAlt, ...ogImageSize} : undefined,
+  article,
+  twitter: {card: 'summary_large_image', site: '@davidjfelix', creator: '@davidjfelix'},
+})
 
 // JSON.stringify leaves "<" unescaped, so a value containing "</script>"
 // would close the inline tag early; < is the standard JSON-safe escape.
@@ -151,26 +168,7 @@ const iconMenuOpen = css({display: 'none', '#nav-toggle[aria-expanded=true] &': 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title} | djf.io</title>
     {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
-    <meta property="og:type" content={ogType} />
-    <meta property="og:site_name" content="djf.io" />
-    <meta property="og:locale" content="en_US" />
-    {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
-    {ogImageUrl && <meta property="og:image" content={ogImageUrl} />}
-    {ogImageUrl && <meta property="og:image:width" content="1200" />}
-    {ogImageUrl && <meta property="og:image:height" content="630" />}
-    {ogImageUrl && <meta property="og:image:alt" content={ogImageAlt} />}
-    {article && <meta property="article:published_time" content={article.publishedTime} />}
-    {article && <meta property="article:author" content={article.author} />}
-    {article?.tags?.map((tag) => <meta property="article:tag" content={tag} />)}
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@davidjfelix" />
-    <meta name="twitter:creator" content="@davidjfelix" />
-    <meta name="twitter:title" content={title} />
-    <meta name="twitter:description" content={description} />
-    {ogImageUrl && <meta name="twitter:image" content={ogImageUrl} />}
-    {ogImageUrl && <meta name="twitter:image:alt" content={ogImageAlt} />}
+    {socialTags.map((tag) => <meta {...tag} />)}
     <link
       rel="alternate"
       type="application/rss+xml"

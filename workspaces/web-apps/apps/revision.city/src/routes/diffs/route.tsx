@@ -1,3 +1,4 @@
+import {ogTags} from '@davidjfelix/og'
 import {createFileRoute, Outlet} from '@tanstack/react-router'
 
 import {PreloadHighlighter} from '@/diffs/components/preload-highlighter'
@@ -13,6 +14,7 @@ export const Route = createFileRoute('/diffs')({
     meta: [
       {title: `${SITE_NAME} · revision.city`},
       {name: 'description', content: SITE_DESCRIPTION},
+      ...ogTags({title: `${SITE_NAME} · revision.city`, description: SITE_DESCRIPTION}),
       // The diffs surface is a full-viewport app; lock the scale and extend
       // into the safe areas like the source app did.
       {

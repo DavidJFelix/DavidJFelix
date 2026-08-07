@@ -1,3 +1,4 @@
+import {ogTags} from '@davidjfelix/og'
 import {createThemeBootstrapScript, type ThemeColorPair} from '@davidjfelix/theme/bootstrap'
 import {ThemeProvider} from '@davidjfelix/theme/react'
 import {TanStackDevtools} from '@tanstack/react-devtools'
@@ -22,6 +23,13 @@ export const Route = createRootRoute({
       {name: 'viewport', content: 'width=device-width, initial-scale=1'},
       {title: 'startchi.com'},
       {name: 'description', content: 'startchi.com'},
+      // Site-wide OpenGraph defaults, shared through @davidjfelix/og.
+      ...ogTags({
+        title: 'startchi.com',
+        description: 'startchi.com',
+        type: 'website',
+        siteName: 'startchi.com',
+      }),
     ],
     links: [{rel: 'stylesheet', href: appCss}],
   }),

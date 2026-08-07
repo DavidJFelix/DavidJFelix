@@ -1,3 +1,4 @@
+import {ogTags} from '@davidjfelix/og'
 import {createFileRoute, Link, useNavigate} from '@tanstack/react-router'
 import {useState} from 'react'
 
@@ -14,9 +15,10 @@ import {fetchProduct} from '@/lib/shopify/catalog.ts'
 
 export const Route = createFileRoute('/products/$handle')({
   loader: ({params}) => fetchProduct({data: params.handle}),
-  head: ({loaderData}) => ({
-    meta: [{title: loaderData ? `${loaderData.title} — forzamonica art` : 'forzamonica art'}],
-  }),
+  head: ({loaderData}) => {
+    const title = loaderData ? `${loaderData.title} — forzamonica art` : 'forzamonica art'
+    return {meta: [{title}, ...ogTags({title})]}
+  },
   component: ProductPage,
 })
 

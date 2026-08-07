@@ -36,6 +36,7 @@
   },
   "dependencies": {
     "@ark-ui/svelte": "^5.22.1",
+    "@davidjfelix/og": "workspace:*",
     "mode-watcher": "^1.1.0"
   }
 }

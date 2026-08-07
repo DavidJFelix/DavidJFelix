@@ -1,3 +1,4 @@
+import {ogTags} from '@davidjfelix/og'
 import {createThemeBootstrapScript} from '@davidjfelix/theme/bootstrap'
 import {ThemeProvider} from '@davidjfelix/theme/react'
 import {
@@ -37,6 +38,14 @@ export const Route = createRootRoute({
           'Tell ravrun your race and current fitness; get a phased, paced training plan you can share as a link and export to your calendar.',
       },
       {title: 'ravrun — training plan generator'},
+      // Site-wide OpenGraph defaults, shared through @davidjfelix/og.
+      ...ogTags({
+        title: 'ravrun — training plan generator',
+        description:
+          'Tell ravrun your race and current fitness; get a phased, paced training plan you can share as a link and export to your calendar.',
+        type: 'website',
+        siteName: 'ravrun',
+      }),
     ],
     links: [{rel: 'stylesheet', href: appCss}],
   }),

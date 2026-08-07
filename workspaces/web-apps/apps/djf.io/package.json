@@ -33,6 +33,7 @@
     "@fontsource-variable/inter": "^5.2.8",
     "@fontsource-variable/jetbrains-mono": "^5.2.8",
     "@fontsource-variable/schibsted-grotesk": "^5.2.8",
+    "@fontsource/inter": "^5.2.8",
     "@fortawesome/free-brands-svg-icons": "^7.3.0",
     "@radix-ui/colors": "^3.0.0",
     "@sentry/astro": "^10.59.0",
@@ -42,6 +43,8 @@
     "mdast-util-gfm": "^3.1.0",
     "mdast-util-to-markdown": "^2.1.2",
     "posthog-js": "^1.391.2",
+    "satori": "^0.26.0",
+    "sharp": "^0.35.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {

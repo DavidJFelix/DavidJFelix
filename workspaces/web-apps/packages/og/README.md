@@ -51,3 +51,9 @@ useHead({title, meta: ogTags({title, description})})
 out the card (Inter, resolved from the installed @fontsource package), sharp rasterizes it. It is
 node-only and belongs in build-time code paths -- a prerendered endpoint or a static build step --
 never in browser or worker bundles.
+
+`satori`, `sharp`, and `@fontsource/inter` are peer dependencies: an app that renders cards declares
+all three itself (djf.io does). Vite externalizes them from the app's server build, so at prerender
+time the emitted chunk imports them from the app's own tree -- under bun's isolated linker only a
+direct dependency of the app resolves there, which is what broke the first CI build that relied on
+this package carrying them.

@@ -30,3 +30,13 @@ three -- one per changed array, each carrying sizes and insertion indexes. Eleme
 fingerprints rather than entities, so the per-file entity budget and the wire format are untouched
 (`detail` is an additive optional field). Design notes and the validation trail live in
 `docs/projects/revision-city/2026-08-06-progress.md`.
+
+Dogfooding this PR's own Symbols tab surfaced a second leak: `top-level` scoping was enforced
+against the entity frame stack, and an arrow passed to `test()` never becomes a frame, so the consts
+inside it read as module constants -- six spurious added rows on one test file. A new
+`anonymousScopeProp` marks closure node types (JS/TS arrows and function expressions, Go function
+literals, Rust closures, PHP closures) so the walker counts them as executable scope even when no
+entity encloses them. And because a test file's real semantic change is the test, vitest-style calls
+with a literal title -- `test`, `it`, `describe`, `bench`, including `.only`/`.skip` and curried
+`.each` forms -- are now `test` entities: that file reports the two added tests by name instead of
+their plumbing.

@@ -1,7 +1,7 @@
 import type {Parser, SyntaxNode} from '@lezer/common'
 
 import type {CodeEntity, EntityKind, EntitySpan, EntitySpec, SequenceElement} from './entity'
-import {entityProp} from './entity'
+import {anonymousScopeProp, entityProp} from './entity'
 import {computeSignature} from './entity-signature'
 
 // Fingerprinting is linear but not free; a generated array past this size gets
@@ -13,7 +13,7 @@ const PREVIEW_LENGTH = 48
 
 // Entities whose bodies hold executable code. Anything declared inside one is a
 // local, not part of the file's public shape.
-const EXECUTABLE_KINDS = new Set<EntityKind>(['constructor', 'function', 'method'])
+const EXECUTABLE_KINDS = new Set<EntityKind>(['constructor', 'function', 'method', 'test'])
 
 // A deep name search must not wander into an entity's body, where it would find
 // local variables instead of the declarator it was aiming for.
@@ -121,9 +121,16 @@ function collectEntityNodes({source, parser}: ExtractEntitiesParams): readonly F
   const found: FoundEntity[] = []
   const open: EntityFrame[] = []
   const nameCounts = new Map<string, number>()
+  // Anonymous callables (an arrow passed to `test`, a Go func literal) open an
+  // executable scope without contributing an entity frame, so they get their
+  // own depth counter.
+  let anonymousScopes = 0
 
   tree.iterate({
     enter(ref) {
+      if (ref.type.prop(anonymousScopeProp) === true) {
+        anonymousScopes += 1
+      }
       const spec = ref.type.prop(entityProp)
       if (spec === undefined) {
         return true
@@ -133,7 +140,9 @@ function collectEntityNodes({source, parser}: ExtractEntitiesParams): readonly F
       if (spec.accept !== undefined && !spec.accept({node, source})) {
         return true
       }
-      if (spec.scope === 'top-level' && open.some((frame) => EXECUTABLE_KINDS.has(frame.kind))) {
+      const insideExecutable =
+        anonymousScopes > 0 || open.some((frame) => EXECUTABLE_KINDS.has(frame.kind))
+      if (spec.scope === 'top-level' && insideExecutable) {
         return true
       }
 
@@ -153,6 +162,9 @@ function collectEntityNodes({source, parser}: ExtractEntitiesParams): readonly F
       return true
     },
     leave(ref) {
+      if (ref.type.prop(anonymousScopeProp) === true) {
+        anonymousScopes -= 1
+      }
       const top = open.at(-1)
       if (top !== undefined && top.from === ref.from && top.to === ref.to) {
         open.pop()

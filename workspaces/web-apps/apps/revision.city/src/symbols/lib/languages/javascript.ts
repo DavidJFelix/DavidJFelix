@@ -2,10 +2,15 @@ import type {Parser, SyntaxNode} from '@lezer/common'
 import {parser} from '@lezer/javascript'
 
 import type {EntityKind, EntitySpec, ResolveEntityNameParams} from '../entity'
-import {entityProp} from '../entity'
+import {anonymousScopeProp, entityProp} from '../entity'
 
 // Initializers that make a binding a function rather than a value.
 const FUNCTION_INITIALIZERS = new Set(['ArrowFunction', 'FunctionExpression', 'ClassExpression'])
+
+// The identifiers vitest- and jest-style frameworks hang test calls off. A call
+// on one of these with a literal title becomes a `test` entity, so a diff can
+// say which test changed rather than listing the code inside its callback.
+const TEST_CALLEES = new Set(['bench', 'describe', 'it', 'suite', 'test'])
 
 const SPECS: Record<string, EntitySpec> = {
   FunctionDeclaration: {kind: 'function', name: ['VariableDefinition'], container: true},
@@ -32,6 +37,36 @@ const SPECS: Record<string, EntitySpec> = {
     container: true,
     resolveKind: resolveBindingKind,
   },
+  // Only calls that resolve a test title become entities; every other call
+  // fails name resolution and is skipped. Deliberately not `top-level` scoped:
+  // a test nested in a `describe` callback must still be reported.
+  CallExpression: {kind: 'test', resolveName: resolveTestTitle, container: true},
+}
+
+function resolveTestTitle({node, source}: ResolveEntityNameParams): string | undefined {
+  const callee = resolveCalleeBase(node.firstChild)
+  if (callee === null || !TEST_CALLEES.has(source.slice(callee.from, callee.to))) {
+    return undefined
+  }
+  const title = node.getChild('ArgList')?.getChild('String')
+  return title === null || title === undefined
+    ? undefined
+    : source.slice(title.from + 1, title.to - 1)
+}
+
+// Unwraps member and curried forms -- `it.only(...)`, `test.each(rows)(...)` --
+// to the identifier the framework hangs off.
+function resolveCalleeBase(callee: SyntaxNode | null): SyntaxNode | null {
+  if (callee === null) {
+    return null
+  }
+  if (callee.type.name === 'VariableName') {
+    return callee
+  }
+  if (callee.type.name === 'MemberExpression' || callee.type.name === 'CallExpression') {
+    return resolveCalleeBase(callee.firstChild)
+  }
+  return null
 }
 
 // A class member named `constructor` is reported as one so the diff can say so.
@@ -59,7 +94,13 @@ function hasFunctionInitializer(node: SyntaxNode): boolean {
 // dialect rejects JSX-ambiguous syntax and vice versa, so each gets its own
 // parser instance with the entity table attached.
 function createParser(dialect: string): Parser {
-  return parser.configure({dialect, props: [entityProp.add(SPECS)]})
+  return parser.configure({
+    dialect,
+    props: [
+      entityProp.add(SPECS),
+      anonymousScopeProp.add({ArrowFunction: true, FunctionExpression: true}),
+    ],
+  })
 }
 
 export const javascriptParser = createParser('')

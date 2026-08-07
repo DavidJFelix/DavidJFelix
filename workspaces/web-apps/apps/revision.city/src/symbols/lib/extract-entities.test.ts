@@ -267,6 +267,42 @@ test('ignores locals declared inside a function body', () => {
   expect(entities.map((entity) => entity.name)).toEqual(['outer'])
 })
 
+test('ignores locals declared inside an anonymous callback', () => {
+  const source = "register('event', () => {\n  const hidden = 1\n  use(hidden)\n})\n"
+
+  const entities = extractEntities({source, parser: tsxParser})
+
+  expect(entities).toEqual([])
+})
+
+test('names a test call by its title instead of listing its locals', () => {
+  const source = [
+    "test('adds numbers', () => {",
+    '  const sum = 1 + 1',
+    '  expect(sum).toBe(2)',
+    '})',
+    "it.only('focused case', () => {})",
+    "test.each(rows)('runs $value', () => {})",
+    '',
+  ].join('\n')
+
+  const entities = extractEntities({source, parser: tsxParser})
+
+  expect(entities.map((entity) => `${entity.kind} ${entity.qualifiedName}`)).toEqual([
+    'test adds numbers',
+    'test focused case',
+    'test runs $value',
+  ])
+})
+
+test('qualifies a test by its enclosing describe block', () => {
+  const source = "describe('math', () => {\n  test('adds', () => {})\n})\n"
+
+  const entities = extractEntities({source, parser: tsxParser})
+
+  expect(entities.map((entity) => entity.qualifiedName)).toEqual(['math', 'math.adds'])
+})
+
 test('parses a file with syntax errors instead of throwing', () => {
   const source = 'export function broken( {\n  return\n'
 

@@ -106,6 +106,7 @@
     "browsable",
     "bunfig", // bun's per-project config file
     "burndown",
+    "callees",
     "ciphertext",
     "codegen",
     "codemod",
@@ -115,6 +116,8 @@
     "crawlable",
     "cutover",
     "deprioritized",
+    "dogfood",
+    "dogfooding",
     "doomer",
     "effectful",
     "falsey", // the repo's preferred spelling; the conventional variant is in flagWords

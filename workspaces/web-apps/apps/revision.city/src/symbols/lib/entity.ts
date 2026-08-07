@@ -21,6 +21,7 @@ export type EntityKind =
   | 'property'
   | 'rule'
   | 'struct'
+  | 'test'
   | 'trait'
   | 'type'
   | 'variable'
@@ -166,3 +167,9 @@ export interface EntitySpec {
 // table keyed by name, mixed-language trees (JS in HTML, CSS in a template)
 // resolve correctly with no extra bookkeeping in the walker.
 export const entityProp = new NodeProp<EntitySpec>({perNode: false})
+
+// Marks node types that open an executable scope without being entities
+// themselves -- anonymous callbacks, closures, function literals. A declaration
+// inside one is a local even though no entity frame encloses it, so `top-level`
+// scoping must count these too.
+export const anonymousScopeProp = new NodeProp<boolean>({perNode: false})

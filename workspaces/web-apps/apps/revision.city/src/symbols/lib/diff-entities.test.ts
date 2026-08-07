@@ -105,6 +105,15 @@ test('reports an array insertion as one edit per array, not a cascade', async ()
   ])
 })
 
+test('reports an added test once, not once per local inside its callback', async () => {
+  const oldSource = "test('first', () => {\n  const value = 1\n  expect(value).toBe(1)\n})\n"
+  const newSource = `${oldSource}test('second', () => {\n  const other = 2\n  expect(other).toBe(2)\n})\n`
+
+  const diff = await diffEntities({path: 'src/example.test.ts', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([{type: 'added', kind: 'test', qualifiedName: 'second'}])
+})
+
 test('reports an unknown extension as an unsupported language', async () => {
   const diff = await diffEntities({path: 'notes.bin', oldSource: 'a', newSource: 'b'})
 

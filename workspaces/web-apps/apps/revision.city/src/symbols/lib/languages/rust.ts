@@ -1,7 +1,7 @@
 import {parser} from '@lezer/rust'
 
 import type {EntitySpec, ResolveEntityNameParams} from '../entity'
-import {entityProp} from '../entity'
+import {anonymousScopeProp, entityProp} from '../entity'
 
 const SPECS: Record<string, EntitySpec> = {
   StructItem: {kind: 'struct', name: ['TypeIdentifier'], container: true},
@@ -25,4 +25,6 @@ function resolveImplName({node, source}: ResolveEntityNameParams): string | unde
   return target === undefined ? undefined : source.slice(target.from, target.to)
 }
 
-export const rustParser = parser.configure({props: [entityProp.add(SPECS)]})
+export const rustParser = parser.configure({
+  props: [entityProp.add(SPECS), anonymousScopeProp.add({ClosureExpression: true})],
+})

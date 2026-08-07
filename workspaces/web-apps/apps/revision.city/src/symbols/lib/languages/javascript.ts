@@ -2,7 +2,7 @@ import type {Parser, SyntaxNode} from '@lezer/common'
 import {parser} from '@lezer/javascript'
 
 import type {EntityKind, EntitySpec, ResolveEntityNameParams} from '../entity'
-import {entityProp} from '../entity'
+import {anonymousScopeProp, entityProp} from '../entity'
 
 // Initializers that make a binding a function rather than a value.
 const FUNCTION_INITIALIZERS = new Set(['ArrowFunction', 'FunctionExpression', 'ClassExpression'])
@@ -32,6 +32,69 @@ const SPECS: Record<string, EntitySpec> = {
     container: true,
     resolveKind: resolveBindingKind,
   },
+  // A call in statement position at module scope is itself the semantic unit:
+  // a registered test, a mounted route, an executed side effect. No framework
+  // vocabulary -- `test('adds', ...)` and `app.use(...)` are the same fact, a
+  // function called at the top level of the module.
+  CallExpression: {
+    kind: 'call',
+    scope: 'top-level',
+    accept: isStatementCall,
+    resolveName: resolveCallLabel,
+  },
+}
+
+// Statement position only: an initializer or argument is part of the entity
+// that contains it, not a module-level action of its own. Top-level `await`
+// still counts -- the statement is the call.
+function isStatementCall({node}: ResolveEntityNameParams): boolean {
+  const parent = node.parent
+  if (parent === null) {
+    return false
+  }
+  if (parent.type.name === 'ExpressionStatement') {
+    return true
+  }
+  return (
+    parent.type.name === 'AwaitExpression' && parent.parent?.type.name === 'ExpressionStatement'
+  )
+}
+
+// Callee identifier path plus the first literal argument when there is one:
+// `test('adds numbers')`, `vi.mock('@pierre/icons')`, `startServer`. The
+// literal is what keeps twenty sibling `test(...)` calls tellable apart.
+function resolveCallLabel({node, source}: ResolveEntityNameParams): string | undefined {
+  const path = calleePath(node.firstChild, source)
+  if (path === undefined) {
+    return undefined
+  }
+  const title = node.getChild('ArgList')?.getChild('String')
+  return title === null || title === undefined
+    ? path
+    : `${path}(${source.slice(title.from, title.to)})`
+}
+
+// Flattens member and curried forms -- `it.only(...)`, `test.each(rows)(...)`
+// -- to a dotted identifier path, dropping intermediate arguments.
+function calleePath(callee: SyntaxNode | null, source: string): string | undefined {
+  if (callee === null) {
+    return undefined
+  }
+  if (callee.type.name === 'VariableName') {
+    return source.slice(callee.from, callee.to)
+  }
+  if (callee.type.name === 'CallExpression') {
+    return calleePath(callee.firstChild, source)
+  }
+  if (callee.type.name === 'MemberExpression') {
+    const base = calleePath(callee.firstChild, source)
+    const property = callee.getChild('PropertyName')
+    if (base === undefined || property === null) {
+      return undefined
+    }
+    return `${base}.${source.slice(property.from, property.to)}`
+  }
+  return undefined
 }
 
 // A class member named `constructor` is reported as one so the diff can say so.
@@ -59,7 +122,13 @@ function hasFunctionInitializer(node: SyntaxNode): boolean {
 // dialect rejects JSX-ambiguous syntax and vice versa, so each gets its own
 // parser instance with the entity table attached.
 function createParser(dialect: string): Parser {
-  return parser.configure({dialect, props: [entityProp.add(SPECS)]})
+  return parser.configure({
+    dialect,
+    props: [
+      entityProp.add(SPECS),
+      anonymousScopeProp.add({ArrowFunction: true, FunctionExpression: true}),
+    ],
+  })
 }
 
 export const javascriptParser = createParser('')

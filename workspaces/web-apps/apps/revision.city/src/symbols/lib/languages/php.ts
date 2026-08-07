@@ -1,7 +1,7 @@
 import {parser} from '@lezer/php'
 
 import type {EntityKind, EntitySpec, ResolveEntityNameParams} from '../entity'
-import {entityProp} from '../entity'
+import {anonymousScopeProp, entityProp} from '../entity'
 
 const SPECS: Record<string, EntitySpec> = {
   FunctionDefinition: {kind: 'function', name: ['Name'], container: true},
@@ -26,4 +26,9 @@ function resolveMethodKind({node, source}: ResolveEntityNameParams): EntityKind 
     : 'method'
 }
 
-export const phpParser = parser.configure({props: [entityProp.add(SPECS)]})
+export const phpParser = parser.configure({
+  props: [
+    entityProp.add(SPECS),
+    anonymousScopeProp.add({ArrowFunction: true, FunctionExpression: true}),
+  ],
+})

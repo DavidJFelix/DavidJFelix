@@ -2,7 +2,7 @@ import type {SyntaxNode} from '@lezer/common'
 import {parser} from '@lezer/go'
 
 import type {EntityKind, EntitySpec, ResolveEntityNameParams} from '../entity'
-import {entityProp} from '../entity'
+import {anonymousScopeProp, entityProp} from '../entity'
 
 // The declaration keyword wraps one or more specs (`var ( a = 1; b = 2 )`), so
 // the specs are the entities -- registering the wrapper would collapse a group
@@ -27,4 +27,6 @@ function resolveTypeKind({node}: ResolveEntityNameParams): EntityKind {
   return 'type'
 }
 
-export const goParser = parser.configure({props: [entityProp.add(SPECS)]})
+export const goParser = parser.configure({
+  props: [entityProp.add(SPECS), anonymousScopeProp.add({FunctionLiteral: true})],
+})

@@ -5,6 +5,7 @@ import {NodeProp} from '@lezer/common'
 // single language: each grammar maps its own node types onto this set so the
 // viewer renders one consistent legend regardless of file type.
 export type EntityKind =
+  | 'call'
   | 'class'
   | 'constant'
   | 'constructor'
@@ -34,6 +35,45 @@ export interface EntityRange {
   readonly endLine: number
 }
 
+// Character offsets into one revision's source. Ranges are for display and
+// navigation; spans are for containment tests, where line granularity would
+// let two nodes sharing a line swallow each other.
+export interface EntitySpan {
+  readonly from: number
+  readonly to: number
+}
+
+// One element of a sequence-valued entity (a JSON array property). Elements are
+// fingerprints rather than entities, so a 200-word array costs nothing against
+// the per-file entity budget and adds no rows of its own.
+export interface SequenceElement {
+  readonly hash: string
+  readonly preview: string
+  readonly range: EntityRange
+  readonly span: EntitySpan
+  // True when the element contains entities of its own (an object in an array).
+  // An in-place edit to such an element is reported by those entities' rows, so
+  // the sequence diff stays quiet about the pair rather than double-reporting.
+  readonly hasEntities: boolean
+}
+
+export interface SequenceEdit {
+  readonly type: 'inserted' | 'deleted'
+  // Position in the revision the element exists in: the new array for inserted,
+  // the old array for deleted.
+  readonly index: number
+  readonly preview: string
+  readonly range: EntityRange
+}
+
+// Element-level summary of how an array-valued entity changed: `words: 167 ->
+// 169, "ciphertext" inserted at index 9` instead of a bare `modified`.
+export interface SequenceDetail {
+  readonly lengthBefore: number
+  readonly lengthAfter: number
+  readonly edits: readonly SequenceEdit[]
+}
+
 export interface CodeEntity {
   readonly kind: EntityKind
   readonly name: string
@@ -53,6 +93,10 @@ export interface CodeEntity {
   // against the method alone.
   readonly ownContentHash: string
   readonly tokens: readonly string[]
+  readonly span: EntitySpan
+  // Present when the entity's value is an ordered sequence (a JSON array
+  // property), holding one fingerprint per element for the sequence diff.
+  readonly elements?: readonly SequenceElement[]
 }
 
 export interface EntityChange {
@@ -65,6 +109,9 @@ export interface EntityChange {
   readonly newRange?: EntityRange
   // Only present on fuzzy renames -- the token overlap that justified the match.
   readonly similarity?: number
+  // Only present on modified sequence-valued entities whose elements moved:
+  // which indexes gained or lost an element.
+  readonly detail?: SequenceDetail
 }
 
 export interface EntityDiffSummary {
@@ -106,6 +153,10 @@ export interface EntitySpec {
   // Escape hatch for grammars whose name is not a node -- a CSS selector list,
   // a markdown heading's text.
   readonly resolveName?: (params: ResolveEntityNameParams) => string | undefined
+  // The value nodes forming an ordered sequence this entity owns (a JSON array
+  // property's elements), or undefined when it owns none. Elements become
+  // fingerprints on the entity, giving the matcher an element-level diff.
+  readonly resolveSequence?: (params: ResolveEntityNameParams) => readonly SyntaxNode[] | undefined
   // Skip the node unless this returns true. Lets one node type serve two roles
   // (a `const` binding is only a function when its initializer is one).
   readonly accept?: (params: ResolveEntityNameParams) => boolean
@@ -116,3 +167,9 @@ export interface EntitySpec {
 // table keyed by name, mixed-language trees (JS in HTML, CSS in a template)
 // resolve correctly with no extra bookkeeping in the walker.
 export const entityProp = new NodeProp<EntitySpec>({perNode: false})
+
+// Marks node types that open an executable scope without being entities
+// themselves -- anonymous callbacks, closures, function literals. A declaration
+// inside one is a local even though no entity frame encloses it, so `top-level`
+// scoping must count these too.
+export const anonymousScopeProp = new NodeProp<boolean>({perNode: false})

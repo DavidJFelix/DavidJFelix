@@ -16,6 +16,7 @@ function parserFor(id: string): Promise<Parser> {
 
 const tsxParser = await parserFor('tsx')
 const markdownParser = await parserFor('markdown')
+const jsonParser = await parserFor('json')
 
 interface ExtractionCase {
   readonly language: string
@@ -266,10 +267,79 @@ test('ignores locals declared inside a function body', () => {
   expect(entities.map((entity) => entity.name)).toEqual(['outer'])
 })
 
+test('reports a module-level call once, without the locals in its callback', () => {
+  const source = "register('event', () => {\n  const hidden = 1\n  use(hidden)\n})\n"
+
+  const entities = extractEntities({source, parser: tsxParser})
+
+  expect(entities.map((entity) => `${entity.kind} ${entity.qualifiedName}`)).toEqual([
+    "call register('event')",
+  ])
+})
+
+test('labels calls by callee path and first literal argument', () => {
+  const source = [
+    "test('adds numbers', () => {",
+    '  const sum = 1 + 1',
+    '  expect(sum).toBe(2)',
+    '})',
+    "it.only('focused case', () => {})",
+    "test.each(rows)('runs $value', () => {})",
+    'startServer()',
+    '',
+  ].join('\n')
+
+  const entities = extractEntities({source, parser: tsxParser})
+
+  expect(entities.map((entity) => `${entity.kind} ${entity.qualifiedName}`)).toEqual([
+    "call test('adds numbers')",
+    "call it.only('focused case')",
+    "call test.each('runs $value')",
+    'call startServer',
+  ])
+})
+
+test('treats nested and non-statement calls as part of their enclosing entity', () => {
+  const source = [
+    "describe('math', () => {",
+    "  test('adds', () => {})",
+    '})',
+    'const client = createClient()',
+    '',
+  ].join('\n')
+
+  const entities = extractEntities({source, parser: tsxParser})
+
+  expect(entities.map((entity) => `${entity.kind} ${entity.qualifiedName}`)).toEqual([
+    "call describe('math')",
+    'constant client',
+  ])
+})
+
 test('parses a file with syntax errors instead of throwing', () => {
   const source = 'export function broken( {\n  return\n'
 
   const entities = extractEntities({source, parser: tsxParser})
 
   expect(entities.map((entity) => entity.name)).toContain('broken')
+})
+
+test('fingerprints the elements of an array-valued property', () => {
+  const source = '{"words": ["alpha", "beta"], "limit": 3}'
+
+  const entities = extractEntities({source, parser: jsonParser})
+
+  const words = entities.find((entity) => entity.qualifiedName === 'words')
+  expect(words?.elements?.map((element) => element.preview)).toEqual(['"alpha"', '"beta"'])
+  expect(words?.elements?.map((element) => element.hasEntities)).toEqual([false, false])
+  expect(entities.find((entity) => entity.qualifiedName === 'limit')?.elements).toBeUndefined()
+})
+
+test('marks array elements that contain entities of their own', () => {
+  const source = '{"defs": [{"name": "dns"}, "plain"]}'
+
+  const entities = extractEntities({source, parser: jsonParser})
+
+  const defs = entities.find((entity) => entity.qualifiedName === 'defs')
+  expect(defs?.elements?.map((element) => element.hasEntities)).toEqual([true, false])
 })

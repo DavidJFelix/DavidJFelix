@@ -106,6 +106,7 @@
     "browsable",
     "bunfig", // bun's per-project config file
     "burndown",
+    "callees",
     "ciphertext",
     "codegen",
     "codemod",
@@ -115,6 +116,8 @@
     "crawlable",
     "cutover",
     "deprioritized",
+    "dogfood",
+    "dogfooding",
     "doomer",
     "effectful",
     "falsey", // the repo's preferred spelling; the conventional variant is in flagWords
@@ -196,6 +199,8 @@
     "consolas",
     "dall", // DALL-E
     "devbox",
+    "diffsitter", // tree-sitter-based semantic diff tool -- prior art for revision.city symbols
+    "difftastic", // syntax-aware structural diff tool -- prior art for revision.city symbols
     "earendil", // the @earendil-works npm scope (pi coding agent)
     "exercism",
     "forgejo",

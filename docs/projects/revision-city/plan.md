@@ -69,6 +69,14 @@ is wiring and reach.
       adds private repos and a higher rate limit. (done 2026-08-04)
 - [x] Results stream from the worker as newline-delimited JSON, one line per file, batched twenty at
       a time to stay inside a request's subrequest budget. (done 2026-08-04)
+- [x] Report each change once, at the highest node that describes it. Three parts, designed,
+      prototype-validated, and implemented in [2026-08-06-progress.md](2026-08-06-progress.md):
+      occurrence alignment in the matcher (kills the `#n` positional-identity cascade on array
+      insertions), element-level sequence detail on array-valued properties
+      (`words: 167 -> 169,     "ciphertext" inserted at 9`), and rollup of entity rows inside
+      inserted/deleted elements. Cuts PR #409's cspell.jsonc report from 21 rows to 3. (done
+      2026-08-06; follow-ups -- YAML sequences, coalesced `changed` edits, indexed display names --
+      listed in the progress note)
 - [ ] Cache entity diffs across page loads, keyed by blob SHA pair. Results are currently held only
       for the life of the page; the answer is immutable per revision pair, so KV or the Cache API
       would make a revisited PR free.

@@ -17,7 +17,7 @@ djf.io's layout and endpoint became thin callers with byte-identical output (its
 seo e2e suite are the proof). The image routes gained their own cases: the renderer is proven
 deterministic, param-sensitive, and safe for markup characters in frontmatter; a contract test pins
 the endpoint to the default card plus one route per blog post carrying that post's own frontmatter,
-rendered as real 1200x630 PNGs; and the e2e now reads each served card's IHDR to assert the
+rendered as real 1200x630 PNGs; and the e2e now reads each served card's PNG header to assert the
 dimensions the og:image:width/height meta advertises. The five TanStack apps carry site defaults on
 their root routes, with forzamonica.com's eight titled routes and revision.city's two overriding
 their own og/twitter pairs; the other Astro apps, the SvelteKit apps, and pkg.dog render the pairs

@@ -40,8 +40,6 @@ export const Route = createRootRoute({
         name: 'description',
         content: 'Original watercolors and archival prints by Monica Felix.',
       },
-      // Site-wide OpenGraph defaults; child routes override title/description
-      // pairs through head merging (leaf-most wins, dedupe by name/property).
       ...ogTags({
         title: 'forzamonica art',
         description: 'Original watercolors and archival prints by Monica Felix.',

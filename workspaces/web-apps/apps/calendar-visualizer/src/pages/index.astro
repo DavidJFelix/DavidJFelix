@@ -36,7 +36,6 @@ const themeBootstrapScript = createThemeBootstrapScript({storageKey: 'theme'})
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
     <title>Calendar Visualizer</title>
-    {/* OpenGraph/Twitter pairs shared through @davidjfelix/og. */}
     {ogTags({title: 'Calendar Visualizer', type: 'website'}).map((tag) => <meta {...tag} />)}
     {posthogEnabled && <Analytics />}
   </head>

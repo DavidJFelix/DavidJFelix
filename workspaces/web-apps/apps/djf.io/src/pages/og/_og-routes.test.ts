@@ -9,9 +9,9 @@ import {GET, getStaticPaths} from './[...slug].png.ts'
 const paths = await getStaticPaths()
 const posts = await getCollection('blog')
 
-// Minimal IHDR read instead of a raster dependency: a PNG opens with an
-// 8-byte signature, then the IHDR chunk carries big-endian width and height
-// at byte offsets 16 and 20.
+// Every PNG starts with a fixed-layout header: an 8-byte signature, then the
+// image's big-endian width at byte 16 and height at byte 20. Reading those
+// directly keeps image libraries out of the app.
 const pngSize = (png: Uint8Array): {width: number; height: number} => {
   expect(Array.from(png.subarray(1, 4))).toEqual([...'PNG'].map((c) => c.charCodeAt(0)))
   const view = new DataView(png.buffer, png.byteOffset, png.byteLength)

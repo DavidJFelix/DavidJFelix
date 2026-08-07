@@ -15,8 +15,6 @@ export const Route = createRootRoute({
       {name: 'viewport', content: 'width=device-width, initial-scale=1'},
       {title: 'revision.city'},
       {name: 'description', content: 'revision.city'},
-      // Site-wide OpenGraph defaults; child routes override title/description
-      // pairs through head merging (leaf-most wins, dedupe by name/property).
       ...ogTags({
         title: 'revision.city',
         description: 'revision.city',

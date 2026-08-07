@@ -30,7 +30,6 @@ const themeBootstrapScript = createThemeBootstrapScript({storageKey: 'theme'})
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
     <title>{title}</title>
-    {/* OpenGraph/Twitter pairs shared through @davidjfelix/og. */}
     {ogTags({title, description, type: 'website', siteName: 'davidjfelix.com'}).map((tag) => (
       <meta {...tag} />
     ))}

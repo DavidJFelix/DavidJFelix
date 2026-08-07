@@ -6,7 +6,6 @@ import ThemeToggle from '$lib/components/theme-toggle.svelte'
 const brand = 'Monica & David'
 const description = 'A little blog about our life together. Posts coming soon.'
 
-// OpenGraph/Twitter pairs shared through @davidjfelix/og.
 const socialTags = ogTags({title: brand, description, type: 'website', siteName: brand})
 </script>
 

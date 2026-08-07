@@ -24,7 +24,6 @@ useHead({
   title,
   meta: [
     {name: 'description', content: description},
-    // OpenGraph/Twitter pairs shared through @davidjfelix/og.
     ...ogTags({title, description, type: 'website', siteName: title}),
   ],
 })

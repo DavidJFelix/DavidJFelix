@@ -38,7 +38,6 @@ export const Route = createRootRoute({
           'Tell ravrun your race and current fitness; get a phased, paced training plan you can share as a link and export to your calendar.',
       },
       {title: 'ravrun — training plan generator'},
-      // Site-wide OpenGraph defaults, shared through @davidjfelix/og.
       ...ogTags({
         title: 'ravrun — training plan generator',
         description:

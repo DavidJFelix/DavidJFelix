@@ -4,8 +4,3 @@
 # word it bans, so exempt this file's own mention: cSpell:ignore fouc
 FOUC
 !fouc
-# IHDR is the PNG header chunk (the spec's name for it -- width and height
-# live there); og image tests read it to assert card dimensions. As with
-# FOUC, only the all-caps chunk name is valid: cSpell:ignore ihdr
-IHDR
-!ihdr

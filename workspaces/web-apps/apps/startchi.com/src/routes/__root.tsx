@@ -23,7 +23,6 @@ export const Route = createRootRoute({
       {name: 'viewport', content: 'width=device-width, initial-scale=1'},
       {title: 'startchi.com'},
       {name: 'description', content: 'startchi.com'},
-      // Site-wide OpenGraph defaults, shared through @davidjfelix/og.
       ...ogTags({
         title: 'startchi.com',
         description: 'startchi.com',

@@ -3,7 +3,6 @@ import {ogTags} from '@davidjfelix/og'
 import {css} from 'styled-system/css'
 import type {PageServerData} from './$types'
 
-// OpenGraph/Twitter pairs shared through @davidjfelix/og.
 const socialTags = ogTags({title: 'alchemy state', type: 'website'})
 
 const {data}: {data: PageServerData} = $props()

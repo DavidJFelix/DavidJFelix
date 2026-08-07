@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 import {$} from 'bun'
-import {appendFileSync, existsSync} from 'node:fs'
+import {appendFileSync, existsSync, rmSync} from 'node:fs'
 import {homedir} from 'node:os'
 import {join, resolve} from 'node:path'
 
@@ -50,7 +50,25 @@ process.env.MISE_TRUSTED_CONFIG_PATHS = repo
 await $`mise trust --yes ${join(repo, '.config', 'mise.toml')}`.nothrow().quiet()
 await $`mise install`.cwd(repo)
 
-// 3. Install the web-apps workspace: one bun install covers every app and
+// 3. Purge pre-workspace residue. Containers created before the move to
+//    workspaces/web-apps/ (#406) ran this hook's old per-project install
+//    loop, which left untracked node_modules and codegen output under
+//    repo-root apps/ and packages/; updating the working copy removed the
+//    tracked files but not that residue, so every later session tripped the
+//    stop hook's untracked-files check on it. The current layout tracks
+//    nothing at these paths, so an entirely-untracked directory here can only
+//    be residue. Drop this step once no container created before 2026-08-04
+//    remains.
+for (const legacy of ['apps', 'packages']) {
+  const legacyDir = join(repo, legacy)
+  if (!existsSync(legacyDir)) continue
+  const tracked = await $`git ls-files -- ${legacy}`.cwd(repo).quiet()
+  if (tracked.stdout.toString().trim() !== '') continue
+  console.log(`==> removing pre-workspace residue: ${legacy}/`)
+  rmSync(legacyDir, {recursive: true, force: true})
+}
+
+// 4. Install the web-apps workspace: one bun install covers every app and
 //    package (they share the workspace root's single bun.lock). Frozen first
 //    so `latest` dev deps don't drift between runs and the session sees the
 //    same tree CI does; retry unfrozen to ride out lockfile drift or a
@@ -73,7 +91,7 @@ if (install.exitCode !== 0) {
   console.error(install.stderr.toString())
 }
 
-// 4. Install the Playwright chromium browser that djf.io's e2e suite and
+// 5. Install the Playwright chromium browser that djf.io's e2e suite and
 //    f311x's visual-regression tests need. The binary is shared across apps via
 //    ~/.cache/ms-playwright, so one install covers the repo. Best-effort: a
 //    failure here shouldn't abort the session.

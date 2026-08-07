@@ -30,6 +30,7 @@ export const CHANGE_ORDER: readonly EntityChangeType[] = [
 // Short kind labels, so a row reads "fn parseUrl" rather than spelling out each
 // grammar's own vocabulary.
 export const KIND_LABELS: Record<EntityKind, string> = {
+  call: 'call',
   class: 'class',
   constant: 'const',
   constructor: 'ctor',
@@ -46,7 +47,6 @@ export const KIND_LABELS: Record<EntityKind, string> = {
   property: 'key',
   rule: 'rule',
   struct: 'struct',
-  test: 'test',
   trait: 'trait',
   type: 'type',
   variable: 'var',

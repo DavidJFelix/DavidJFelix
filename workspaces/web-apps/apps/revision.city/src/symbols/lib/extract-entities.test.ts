@@ -267,15 +267,17 @@ test('ignores locals declared inside a function body', () => {
   expect(entities.map((entity) => entity.name)).toEqual(['outer'])
 })
 
-test('ignores locals declared inside an anonymous callback', () => {
+test('reports a module-level call once, without the locals in its callback', () => {
   const source = "register('event', () => {\n  const hidden = 1\n  use(hidden)\n})\n"
 
   const entities = extractEntities({source, parser: tsxParser})
 
-  expect(entities).toEqual([])
+  expect(entities.map((entity) => `${entity.kind} ${entity.qualifiedName}`)).toEqual([
+    "call register('event')",
+  ])
 })
 
-test('names a test call by its title instead of listing its locals', () => {
+test('labels calls by callee path and first literal argument', () => {
   const source = [
     "test('adds numbers', () => {",
     '  const sum = 1 + 1',
@@ -283,24 +285,35 @@ test('names a test call by its title instead of listing its locals', () => {
     '})',
     "it.only('focused case', () => {})",
     "test.each(rows)('runs $value', () => {})",
+    'startServer()',
     '',
   ].join('\n')
 
   const entities = extractEntities({source, parser: tsxParser})
 
   expect(entities.map((entity) => `${entity.kind} ${entity.qualifiedName}`)).toEqual([
-    'test adds numbers',
-    'test focused case',
-    'test runs $value',
+    "call test('adds numbers')",
+    "call it.only('focused case')",
+    "call test.each('runs $value')",
+    'call startServer',
   ])
 })
 
-test('qualifies a test by its enclosing describe block', () => {
-  const source = "describe('math', () => {\n  test('adds', () => {})\n})\n"
+test('treats nested and non-statement calls as part of their enclosing entity', () => {
+  const source = [
+    "describe('math', () => {",
+    "  test('adds', () => {})",
+    '})',
+    'const client = createClient()',
+    '',
+  ].join('\n')
 
   const entities = extractEntities({source, parser: tsxParser})
 
-  expect(entities.map((entity) => entity.qualifiedName)).toEqual(['math', 'math.adds'])
+  expect(entities.map((entity) => `${entity.kind} ${entity.qualifiedName}`)).toEqual([
+    "call describe('math')",
+    'constant client',
+  ])
 })
 
 test('parses a file with syntax errors instead of throwing', () => {

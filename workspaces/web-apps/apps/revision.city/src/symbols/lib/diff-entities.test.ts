@@ -111,7 +111,9 @@ test('reports an added test once, not once per local inside its callback', async
 
   const diff = await diffEntities({path: 'src/example.test.ts', oldSource, newSource})
 
-  expect(diff.changes).toMatchObject([{type: 'added', kind: 'test', qualifiedName: 'second'}])
+  expect(diff.changes).toMatchObject([
+    {type: 'added', kind: 'call', qualifiedName: "test('second')"},
+  ])
 })
 
 test('reports an unknown extension as an unsupported language', async () => {

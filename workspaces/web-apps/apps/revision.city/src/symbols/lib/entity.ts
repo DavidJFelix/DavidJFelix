@@ -5,6 +5,7 @@ import {NodeProp} from '@lezer/common'
 // single language: each grammar maps its own node types onto this set so the
 // viewer renders one consistent legend regardless of file type.
 export type EntityKind =
+  | 'call'
   | 'class'
   | 'constant'
   | 'constructor'
@@ -21,7 +22,6 @@ export type EntityKind =
   | 'property'
   | 'rule'
   | 'struct'
-  | 'test'
   | 'trait'
   | 'type'
   | 'variable'

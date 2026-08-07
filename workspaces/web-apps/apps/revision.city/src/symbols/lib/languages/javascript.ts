@@ -7,11 +7,6 @@ import {anonymousScopeProp, entityProp} from '../entity'
 // Initializers that make a binding a function rather than a value.
 const FUNCTION_INITIALIZERS = new Set(['ArrowFunction', 'FunctionExpression', 'ClassExpression'])
 
-// The identifiers vitest- and jest-style frameworks hang test calls off. A call
-// on one of these with a literal title becomes a `test` entity, so a diff can
-// say which test changed rather than listing the code inside its callback.
-const TEST_CALLEES = new Set(['bench', 'describe', 'it', 'suite', 'test'])
-
 const SPECS: Record<string, EntitySpec> = {
   FunctionDeclaration: {kind: 'function', name: ['VariableDefinition'], container: true},
   ClassDeclaration: {kind: 'class', name: ['VariableDefinition'], container: true},
@@ -37,36 +32,69 @@ const SPECS: Record<string, EntitySpec> = {
     container: true,
     resolveKind: resolveBindingKind,
   },
-  // Only calls that resolve a test title become entities; every other call
-  // fails name resolution and is skipped. Deliberately not `top-level` scoped:
-  // a test nested in a `describe` callback must still be reported.
-  CallExpression: {kind: 'test', resolveName: resolveTestTitle, container: true},
+  // A call in statement position at module scope is itself the semantic unit:
+  // a registered test, a mounted route, an executed side effect. No framework
+  // vocabulary -- `test('adds', ...)` and `app.use(...)` are the same fact, a
+  // function called at the top level of the module.
+  CallExpression: {
+    kind: 'call',
+    scope: 'top-level',
+    accept: isStatementCall,
+    resolveName: resolveCallLabel,
+  },
 }
 
-function resolveTestTitle({node, source}: ResolveEntityNameParams): string | undefined {
-  const callee = resolveCalleeBase(node.firstChild)
-  if (callee === null || !TEST_CALLEES.has(source.slice(callee.from, callee.to))) {
+// Statement position only: an initializer or argument is part of the entity
+// that contains it, not a module-level action of its own. Top-level `await`
+// still counts -- the statement is the call.
+function isStatementCall({node}: ResolveEntityNameParams): boolean {
+  const parent = node.parent
+  if (parent === null) {
+    return false
+  }
+  if (parent.type.name === 'ExpressionStatement') {
+    return true
+  }
+  return (
+    parent.type.name === 'AwaitExpression' && parent.parent?.type.name === 'ExpressionStatement'
+  )
+}
+
+// Callee identifier path plus the first literal argument when there is one:
+// `test('adds numbers')`, `vi.mock('@pierre/icons')`, `startServer`. The
+// literal is what keeps twenty sibling `test(...)` calls tellable apart.
+function resolveCallLabel({node, source}: ResolveEntityNameParams): string | undefined {
+  const path = calleePath(node.firstChild, source)
+  if (path === undefined) {
     return undefined
   }
   const title = node.getChild('ArgList')?.getChild('String')
   return title === null || title === undefined
-    ? undefined
-    : source.slice(title.from + 1, title.to - 1)
+    ? path
+    : `${path}(${source.slice(title.from, title.to)})`
 }
 
-// Unwraps member and curried forms -- `it.only(...)`, `test.each(rows)(...)` --
-// to the identifier the framework hangs off.
-function resolveCalleeBase(callee: SyntaxNode | null): SyntaxNode | null {
+// Flattens member and curried forms -- `it.only(...)`, `test.each(rows)(...)`
+// -- to a dotted identifier path, dropping intermediate arguments.
+function calleePath(callee: SyntaxNode | null, source: string): string | undefined {
   if (callee === null) {
-    return null
+    return undefined
   }
   if (callee.type.name === 'VariableName') {
-    return callee
+    return source.slice(callee.from, callee.to)
   }
-  if (callee.type.name === 'MemberExpression' || callee.type.name === 'CallExpression') {
-    return resolveCalleeBase(callee.firstChild)
+  if (callee.type.name === 'CallExpression') {
+    return calleePath(callee.firstChild, source)
   }
-  return null
+  if (callee.type.name === 'MemberExpression') {
+    const base = calleePath(callee.firstChild, source)
+    const property = callee.getChild('PropertyName')
+    if (base === undefined || property === null) {
+      return undefined
+    }
+    return `${base}.${source.slice(property.from, property.to)}`
+  }
+  return undefined
 }
 
 // A class member named `constructor` is reported as one so the diff can say so.

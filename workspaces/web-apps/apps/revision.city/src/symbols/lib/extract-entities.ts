@@ -13,7 +13,7 @@ const PREVIEW_LENGTH = 48
 
 // Entities whose bodies hold executable code. Anything declared inside one is a
 // local, not part of the file's public shape.
-const EXECUTABLE_KINDS = new Set<EntityKind>(['constructor', 'function', 'method', 'test'])
+const EXECUTABLE_KINDS = new Set<EntityKind>(['constructor', 'function', 'method'])
 
 // A deep name search must not wander into an entity's body, where it would find
 // local variables instead of the declarator it was aiming for.

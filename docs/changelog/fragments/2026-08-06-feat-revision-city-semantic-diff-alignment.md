@@ -36,7 +36,9 @@ against the entity frame stack, and an arrow passed to `test()` never becomes a 
 inside it read as module constants -- six spurious added rows on one test file. A new
 `anonymousScopeProp` marks closure node types (JS/TS arrows and function expressions, Go function
 literals, Rust closures, PHP closures) so the walker counts them as executable scope even when no
-entity encloses them. And because a test file's real semantic change is the test, vitest-style calls
-with a literal title -- `test`, `it`, `describe`, `bench`, including `.only`/`.skip` and curried
-`.each` forms -- are now `test` entities: that file reports the two added tests by name instead of
-their plumbing.
+entity encloses them. And the missing entity underneath was never "a test" -- no framework
+vocabulary belongs in the engine -- but the generic fact that a function was called in statement
+position at module scope. Such calls are now `call` entities labeled by callee path plus first
+literal argument (`test('adds numbers')`, `vi.mock('@pierre/icons')`, `app.use`), which covers
+vitest, jest, bun, mocha, and every other registration-style API with one rule: a test file reports
+its added tests by title instead of their plumbing.

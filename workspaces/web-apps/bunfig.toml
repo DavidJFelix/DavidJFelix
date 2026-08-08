@@ -40,6 +40,16 @@
 #   astro check: the two Hono type identities are incompatible (4.12.34's
 #   HonoRequest added [GET_MATCH_RESULT]). Move the pin with the app's hono.
 
+# Root package.json "workspaces.catalog" context: the @tanstack entries exist
+# so no app declares the `latest` dist-tag -- frozen installs re-resolve
+# dist-tags, so an upstream release alone invalidated the lockfile (2026-08-06
+# and 2026-08-08 both). react-router and router-plugin must stay the exact
+# versions react-start pins internally (react-start's dependency list is the
+# source of truth); bump the catalog as one aligned set. This replaced the
+# four @tanstack overrides from 2026-08-06 -- with exact aligned versions
+# there is no float left to split the tree into two routers. react-devtools
+# and devtools-vite version independently and can move on their own.
+
 # Direct dependencies that exist only to pin resolution, not because the app
 # imports something new:
 # - pkg.dog declares h3 ^1.15.11 even though nuxt already brings it. f311x's

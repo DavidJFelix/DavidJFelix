@@ -14,7 +14,7 @@
     }
   },
   "overrides": {
-    "rolldown": "1.2.1",
+    "rolldown": "1.2.3",
     "@distilled.cloud/aws": "0.30.3",
     "@distilled.cloud/axiom": "0.30.3",
     "@distilled.cloud/cloudflare": "0.30.3",

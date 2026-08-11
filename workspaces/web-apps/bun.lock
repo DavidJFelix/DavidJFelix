@@ -191,8 +191,8 @@
         "@ark-ui/react": "^5.37.2",
         "@davidjfelix/og": "workspace:*",
         "@davidjfelix/theme": "workspace:*",
-        "@fontsource-variable/karla": "~5.2.8",
-        "@fontsource-variable/newsreader": "~5.2.10",
+        "@fontsource-variable/karla": "~5.3.0",
+        "@fontsource-variable/newsreader": "~5.3.0",
         "@sentry/cloudflare": "^10.60.0",
         "@sentry/react": "^10.60.0",
         "@tanstack/react-devtools": "catalog:",
@@ -976,9 +976,9 @@
 
     "@fontsource-variable/jetbrains-mono": ["@fontsource-variable/jetbrains-mono@5.3.0", "", {}, "sha512-F32xpS2NsGYoQi2ADSkKTgpJj7ozajsGgDJ8woTnqjmIB+dxDIqImjl4pXZVEExu8UFZ2ndhmX18EBS/hdz3Lw=="],
 
-    "@fontsource-variable/karla": ["@fontsource-variable/karla@5.2.8", "", {}, "sha512-JuJZVY/r5InCfkKb3jp5XCwuypIvc62barKaxzSAYnxzHo9YnCfZDWDjL+gbSYrUI+lVxhEyS+7QkOuVBvWcOA=="],
+    "@fontsource-variable/karla": ["@fontsource-variable/karla@5.3.0", "", {}, "sha512-CypH/IGhvpU0I4sue6YG+ZDyx5heglFJAiU2NClTkKOh+jsqjZ7AAgWKGG59+X1dGCN/9L4BLLacCXD7TBBETA=="],
 
-    "@fontsource-variable/newsreader": ["@fontsource-variable/newsreader@5.2.10", "", {}, "sha512-MdI2iRwrqWpMOU/2aV2BgfZ4dJNlj/XlYaY8Zb7t87mWqHskYW0XiUANkt1cyOCiEfW2VQ0bQ5vZgGPp6B2B4w=="],
+    "@fontsource-variable/newsreader": ["@fontsource-variable/newsreader@5.3.0", "", {}, "sha512-rrzYi43qMpbzwuFtf9OkWH8sxAPVPcQQQEwXpPtwaKYeJ8yVg5aLs5kawmo1f2Q1t1M38TLmEKCkGVDsYwgdFw=="],
 
     "@fontsource-variable/schibsted-grotesk": ["@fontsource-variable/schibsted-grotesk@5.3.0", "", {}, "sha512-ndS6H/KICWANchlHF3q4UdZD+xrZ3Ji0rUobIuXlgvDUzDfqZDsVuXPXZb636nJZMHE9zZ9Fmwgqazm8hMB50Q=="],
 

@@ -36,7 +36,7 @@
     "@types/node": "25.9.5",
     "@vitest/coverage-v8": "4.1.10",
     "svelte": "5.56.8",
-    "svelte-check": "4.7.4",
+    "svelte-check": "4.7.5",
     "typescript": "6.0.3",
     "vite": "8.1.4",
     "vitest": "4.1.10",

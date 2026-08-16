@@ -55,6 +55,27 @@
       "description": "the @flue packages (sdk, react, runtime, cli) release as a matched set at a single version, so group every update type into a single PR that moves them together",
       "matchPackageNames": ["@flue/**"],
       "groupName": "flue packages"
+    },
+    {
+      "description": "the @tanstack/ai packages (core plus framework bindings and adapters) release as a matched set, so group every update type into a single PR that moves them together",
+      "matchPackageNames": ["@tanstack/ai", "@tanstack/ai-*"],
+      "groupName": "tanstack ai packages"
+    },
+    {
+      "description": "group vite with its plugins so plugin bumps land against the matching vite version; @cloudflare/vite-plugin is deliberately excluded because it moves with wrangler in its own rule",
+      "matchPackageNames": [
+        "vite",
+        "@vitejs/**",
+        "@tailwindcss/vite",
+        "@sveltejs/vite-plugin-*",
+        "@tanstack/devtools-vite"
+      ],
+      "groupName": "vite and plugins"
+    },
+    {
+      "description": "effect and the @effect scope packages version against a shared core and release in lockstep, so group every update type into a single PR that moves them together",
+      "matchPackageNames": ["effect", "@effect/**"],
+      "groupName": "effect packages"
     }
   ]
 }

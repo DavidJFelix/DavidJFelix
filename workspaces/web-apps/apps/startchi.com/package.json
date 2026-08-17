@@ -39,7 +39,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "1.44.0",
+    "@cloudflare/vite-plugin": "1.52.1",
     "@cloudflare/workers-types": "5.20260711.1",
     "@pandacss/dev": "1.11.4",
     "@playwright/test": "1.61.1",
@@ -54,6 +54,6 @@
     "typescript": "7.0.2",
     "vite": "8.1.4",
     "vitest": "4.1.10",
-    "wrangler": "4.110.0"
+    "wrangler": "4.123.0"
   }
 }

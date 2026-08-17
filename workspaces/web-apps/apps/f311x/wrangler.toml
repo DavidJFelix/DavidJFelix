@@ -11,3 +11,15 @@ compatibility_flags = ["nodejs_compat"]
 
 # Deploy and bindings are otherwise managed by Alchemy v2 (see alchemy.run.ts).
 # This file is also a fallback for `wrangler types` / `wrangler dev`.
+
+# Mirrors the `observability` prop in alchemy.run.ts, which is the copy the
+# deploy actually applies -- keep the two in sync. Logs and traces ship to
+# Grafana Cloud through the account-level destinations configured in the
+# dashboard.
+[observability.logs]
+enabled = true
+destinations = ["2026-aug-16-grafana-cloud-logs"]
+
+[observability.traces]
+enabled = true
+destinations = ["2026-aug-16-grafana-cloud-traces"]

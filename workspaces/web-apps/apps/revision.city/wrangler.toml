@@ -28,8 +28,15 @@ routes = [
   { pattern = "www.revision.city", custom_domain = true },
 ]
 
-[observability]
+# Logs and traces ship to Grafana Cloud through the account-level
+# observability destinations configured in the dashboard.
+[observability.logs]
 enabled = true
+destinations = ["2026-aug-16-grafana-cloud-logs"]
+
+[observability.traces]
+enabled = true
+destinations = ["2026-aug-16-grafana-cloud-traces"]
 
 # The dev worker: a second deployment of this same app on a stable workers.dev
 # host, used as the OAuth redirect target for per-PR previews. Previews cannot
@@ -60,5 +67,13 @@ preview_urls = true
 # the ordinary flow despite carrying the variable.
 PREVIEW_AUTH_PROXY_URL = "https://revision-city-dev.nullserve.workers.dev"
 
-[env.dev.observability]
+# Same Grafana Cloud export as production. `observability` is inheritable,
+# but an environment that defines any of it replaces the top-level tables
+# wholesale -- so the config is repeated in full rather than partially.
+[env.dev.observability.logs]
 enabled = true
+destinations = ["2026-aug-16-grafana-cloud-logs"]
+
+[env.dev.observability.traces]
+enabled = true
+destinations = ["2026-aug-16-grafana-cloud-traces"]

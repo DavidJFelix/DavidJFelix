@@ -29,6 +29,16 @@ directory = "./dist/client"
 binding = "ASSETS"
 run_worker_first = ["/api/*"]
 
+# Logs and traces ship to Grafana Cloud through the account-level
+# observability destinations configured in the dashboard.
+[observability.logs]
+enabled = true
+destinations = ["2026-aug-16-grafana-cloud-logs"]
+
+[observability.traces]
+enabled = true
+destinations = ["2026-aug-16-grafana-cloud-traces"]
+
 # Durable Objects backing the Flue agent runtime. `flue build` generates these
 # classes (one per agent, plus the registry) and exports them from the Worker.
 # SQLite storage must be enabled via a migration. Astro reads a separate,

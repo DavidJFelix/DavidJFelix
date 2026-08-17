@@ -28,6 +28,24 @@ export const Website = Cloudflare.Website.Vite(
         date: '2026-05-01',
         flags: ['nodejs_compat'],
       },
+      // Logs and traces ship to Grafana Cloud through the account-level
+      // observability destinations configured in the dashboard. Alchemy owns
+      // this deploy, so wrangler.toml's observability tables never reach
+      // production -- this prop is the applied copy; keep the two in sync.
+      // Passing it replaces Alchemy's default (logs + invocation logs only),
+      // so invocationLogs is restated explicitly.
+      observability: {
+        enabled: true,
+        logs: {
+          enabled: true,
+          invocationLogs: true,
+          destinations: ['2026-aug-16-grafana-cloud-logs'],
+        },
+        traces: {
+          enabled: true,
+          destinations: ['2026-aug-16-grafana-cloud-traces'],
+        },
+      },
       // Alchemy attaches the custom domains on deploy and Cloudflare
       // materializes the DNS records. The f311x.com zone must already exist in
       // this account. Prod-only: binding them unconditionally let a local

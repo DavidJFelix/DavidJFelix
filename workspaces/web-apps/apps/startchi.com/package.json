@@ -41,7 +41,7 @@
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.44.0",
     "@cloudflare/workers-types": "5.20260711.1",
-    "@pandacss/dev": "1.11.4",
+    "@pandacss/dev": "1.12.0",
     "@playwright/test": "1.61.1",
     "@tanstack/devtools-vite": "catalog:",
     "@types/bun": "1.3.14",

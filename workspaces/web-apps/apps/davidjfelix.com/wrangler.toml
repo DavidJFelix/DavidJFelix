@@ -20,3 +20,13 @@ routes = [
 [assets]
 directory = "./dist"
 binding = "ASSETS"
+
+# Logs and traces ship to Grafana Cloud through the account-level
+# observability destinations configured in the dashboard.
+[observability.logs]
+enabled = true
+destinations = ["2026-aug-16-grafana-cloud-logs"]
+
+[observability.traces]
+enabled = true
+destinations = ["2026-aug-16-grafana-cloud-traces"]

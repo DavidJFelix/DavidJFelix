@@ -15,8 +15,15 @@ routes = [
   { pattern = "www.monicandavid.com", custom_domain = true },
 ]
 
-[observability]
+# Logs and traces ship to Grafana Cloud through the account-level
+# observability destinations configured in the dashboard.
+[observability.logs]
 enabled = true
+destinations = ["2026-aug-16-grafana-cloud-logs"]
+
+[observability.traces]
+enabled = true
+destinations = ["2026-aug-16-grafana-cloud-traces"]
 
 [assets]
 directory = ".svelte-kit/cloudflare"

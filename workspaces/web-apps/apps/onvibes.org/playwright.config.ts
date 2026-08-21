@@ -27,10 +27,13 @@ export default defineConfig({
   // Nothing to boot when pointed at a deployed preview. The local boot uses the
   // Flue worker config -- the artifact CD deploys (Astro hosted inside it, /api
   // agent DOs included) -- so e2e exercises the same worker production runs.
+  // --local-upstream pins the origin wrangler dev pretends to serve (otherwise
+  // the configured onvibes.org route wins and runtime-built absolute URLs like
+  // the agent streamUrl would point at production).
   webServer: PREVIEW_URL
     ? undefined
     : {
-        command: `node_modules/.bin/wrangler dev -c dist-flue/onvibes_org/wrangler.json --ip 127.0.0.1 --port ${PORT}`,
+        command: `node_modules/.bin/wrangler dev -c dist-flue/onvibes_org/wrangler.json --ip 127.0.0.1 --port ${PORT} --local-upstream 127.0.0.1:${PORT} --upstream-protocol http`,
         url: BASE_URL,
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,

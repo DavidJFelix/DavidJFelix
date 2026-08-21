@@ -1,5 +1,5 @@
 /// <reference types="bun" />
-// `flue build --target cloudflare` merges wrangler.toml into its deployable
+// The Flue worker's `vite build` merges wrangler.toml into its deployable
 // config (dist-flue/onvibes_org/wrangler.json) but drops the [assets] block:
 // the Cloudflare Vite plugin only carries assets it built itself, and Astro's
 // dist/client is produced outside that pipeline. Without the ASSETS binding the
@@ -15,9 +15,7 @@ const ASSETS_DIR = 'dist/client'
 
 const file = Bun.file(CONFIG_PATH)
 if (!(await file.exists())) {
-  console.error(
-    `::error::${CONFIG_PATH} is missing -- run \`flue build --target cloudflare\` first`,
-  )
+  console.error(`::error::${CONFIG_PATH} is missing -- run \`vite build\` first`)
   process.exit(1)
 }
 // Fail here with a clear message rather than emitting a working-looking config

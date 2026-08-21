@@ -22,12 +22,13 @@
       "groupName": "npm patch/minor"
     },
     {
-      "description": "svelte-check and vue-tsc embed the TypeScript JS compiler API, which typescript 7 (native) no longer ships; hold these apps at 6.x until the framework checkers support TS 7 (expected ~7.1)",
+      "description": "svelte-check, vue-tsc, and astro check embed the TypeScript JS compiler API, which typescript 7 (native) no longer ships; hold these at 6.x until the framework checkers support TS 7 (expected ~7.1). The Astro apps themselves are NOT held -- they run typescript 7, and the web-apps workspace root carries the 6.x that astro check resolves instead (see the bunfig.toml devDependencies note)",
       "matchPackageNames": ["typescript"],
       "matchFileNames": [
         "workspaces/web-apps/apps/alchemy-state-viewer/**",
         "workspaces/web-apps/apps/monicandavid.com/**",
-        "workspaces/web-apps/apps/pkg.dog/**"
+        "workspaces/web-apps/apps/pkg.dog/**",
+        "workspaces/web-apps/package.json"
       ],
       "allowedVersions": "<7"
     },

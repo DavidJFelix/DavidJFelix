@@ -254,6 +254,7 @@
     "unhead", // the head manager behind Nuxt's useHead
     "vinxi",
     "vndly",
+    "withastro", // Astro's GitHub org
     "workerd",
     "worktrunk",
     "xtask",

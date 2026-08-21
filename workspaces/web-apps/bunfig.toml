@@ -40,6 +40,21 @@
 #   astro check: the two Hono type identities are incompatible (4.12.34's
 #   HonoRequest added [GET_MATCH_RESULT]). Move the pin with the app's hono.
 
+# Root package.json "devDependencies" context: @astrojs/check + typescript
+# 6.0.3 live at the workspace ROOT, and the Astro apps deliberately do not
+# declare @astrojs/check themselves. astro check is built on the TypeScript JS
+# compiler API, which typescript 7 (native) does not ship, and @astrojs/check
+# resolves its typescript peer beside its own instance
+# (createRequire(import.meta.url)) -- so wherever it is declared decides which
+# compiler checks the .astro files. Declared in an app it would peer with the
+# app's typescript 7 and crash at startup; declared only at the root it peers
+# with the root's 6.0.3, and `astro check` in each app finds it by walking up
+# (astro's getPackage resolves from the app dir with normal node resolution).
+# The apps keep typescript 7 for everything else. Renovate holds the root
+# typescript below 7; both move to the app manifests again when the Astro
+# language server runs on the native compiler
+# (https://github.com/withastro/roadmap/discussions/1321, expected ~7.1).
+
 # Root package.json "workspaces.catalog" context: the @tanstack entries exist
 # so no app declares the `latest` dist-tag -- frozen installs re-resolve
 # dist-tags, so an upstream release alone invalidated the lockfile (2026-08-06

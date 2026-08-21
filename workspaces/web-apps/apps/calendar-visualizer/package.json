@@ -37,7 +37,6 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@astrojs/check": "0.9.10",
     "@pandacss/dev": "1.12.0",
     "@playwright/test": "1.61.1",
     "@sentry/cloudflare": "10.65.0",

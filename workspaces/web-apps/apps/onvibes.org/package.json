@@ -41,7 +41,6 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@astrojs/check": "0.9.10",
     "@astrojs/react": "6.0.2",
     "@cloudflare/vite-plugin": "1.53.1",
     "@flue/vite": "2.0.3",
@@ -51,7 +50,7 @@
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
     "@vitest/coverage-v8": "4.1.10",
-    "typescript": "6.0.3",
+    "typescript": "7.0.2",
     "vite": "8.2.2",
     "vitest": "4.1.10",
     "wrangler": "4.125.0"

@@ -19,7 +19,7 @@ pinact = "4.1.1"
 # ci-warden.yml workflow uses the getsentry/warden action, which bundles its
 # own copy). Pinned like cspell via mise's npm backend; there is no root
 # package.json. Config lives in /warden.toml.
-"npm:@sentry/warden" = { version = "0.43.0", trust_policy_excludes = ["@sentry/warden"] }
+"npm:@sentry/warden" = { version = "0.46.2", trust_policy_excludes = ["@sentry/warden"] }
 depot = { version = "latest", exe = "depot" }
 # Turborepo: task graph + caching for the web-apps workspace. Root tasks wrap
 # it via bin/turbo-run.ts so repo-root config changes hash into every task.

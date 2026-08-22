@@ -29,7 +29,7 @@
   },
   "devDependencies": {
     "@pandacss/dev": "1.12.0",
-    "@playwright/test": "1.61.1",
+    "@playwright/test": "1.62.1",
     "@sveltejs/adapter-cloudflare": "7.2.9",
     "@sveltejs/kit": "2.69.2",
     "@sveltejs/vite-plugin-svelte": "7.2.0",

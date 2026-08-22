@@ -20,7 +20,7 @@
     "test:e2e:update": "playwright test --update-snapshots"
   },
   "dependencies": {
-    "@astrojs/cloudflare": "14.1.7",
+    "@astrojs/cloudflare": "14.2.2",
     "@davidjfelix/og": "workspace:*",
     "@davidjfelix/theme": "workspace:*",
     "@sentry/astro": "^10.60.0",

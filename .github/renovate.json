@@ -47,9 +47,9 @@
       "groupName": "mise patch/minor"
     },
     {
-      "description": "wrangler and @cloudflare/vite-plugin ship as a matched pair (the plugin pins the miniflare/workerd runtime to a specific wrangler release), so group every update type into a single PR that moves both packages across all apps together",
-      "matchPackageNames": ["wrangler", "@cloudflare/vite-plugin"],
-      "groupName": "cloudflare wrangler and vite plugin"
+      "description": "wrangler, @cloudflare/vite-plugin, and @cloudflare/workers-types all track the workers runtime (the plugin pins miniflare/workerd to a specific wrangler release; workers-types is generated from that runtime), so group every update type into a single PR that moves the cloudflare toolchain across all apps together",
+      "matchPackageNames": ["wrangler", "@cloudflare/**"],
+      "groupName": "cloudflare workers packages"
     },
     {
       "description": "the @flue packages (sdk, react, runtime, cli) release as a matched set at a single version, so group every update type into a single PR that moves them together",
@@ -62,20 +62,136 @@
       "groupName": "tanstack ai packages"
     },
     {
-      "description": "group vite with its plugins so plugin bumps land against the matching vite version; @cloudflare/vite-plugin is deliberately excluded because it moves with wrangler in its own rule",
-      "matchPackageNames": [
-        "vite",
-        "@vitejs/**",
-        "@tailwindcss/vite",
-        "@sveltejs/vite-plugin-*",
-        "@tanstack/devtools-vite"
-      ],
+      "description": "the tanstack router, start, and devtools packages release from shared monorepos and pin each other tightly (react-start pins router and router-plugin; devtools-vite ships alongside the devtools bindings), so group every update type into a single PR; the @tanstack/ai packages keep their own rule",
+      "matchPackageNames": ["@tanstack/**", "!@tanstack/ai", "!@tanstack/ai-*"],
+      "groupName": "tanstack router and devtools"
+    },
+    {
+      "description": "group vite with the plugins whose majors track vite releases; @cloudflare/vite-plugin moves with wrangler, @tailwindcss/vite with tailwindcss, and @tanstack/devtools-vite with the tanstack devtools in their own rules",
+      "matchPackageNames": ["vite", "@vitejs/**", "@sveltejs/vite-plugin-*"],
       "groupName": "vite and plugins"
+    },
+    {
+      "description": "tailwindcss and the @tailwindcss scope packages (vite plugin, typography) release from one monorepo at a single version, so group every update type into a single PR that moves them together",
+      "matchPackageNames": ["tailwindcss", "@tailwindcss/**"],
+      "groupName": "tailwind css packages"
     },
     {
       "description": "effect and the @effect scope packages version against a shared core and release in lockstep, so group every update type into a single PR that moves them together",
       "matchPackageNames": ["effect", "@effect/**"],
       "groupName": "effect packages"
+    },
+    {
+      "description": "astro, the @astrojs integrations and adapters, and @astrojs/check version against astro core releases (spread across several repos in the astro org), so group every update type into a single PR that moves the framework together",
+      "matchPackageNames": ["astro", "@astrojs/**"],
+      "groupName": "astro packages"
+    },
+    {
+      "description": "svelte, svelte-check, and the @sveltejs kit and adapter packages track svelte releases, so group every update type into a single PR; @sveltejs/vite-plugin-* stays in the vite group because its majors track vite",
+      "matchPackageNames": ["svelte", "svelte-check", "@sveltejs/**", "!@sveltejs/vite-plugin-*"],
+      "groupName": "svelte packages"
+    },
+    {
+      "description": "vue, vue-tsc, nuxt, and the @nuxtjs modules move as one framework stack (nuxt pins its vue version and vue-tsc majors track the vue language tooling), so group every update type into a single PR",
+      "matchPackageNames": ["vue", "vue-tsc", "nuxt", "@nuxtjs/**"],
+      "groupName": "vue and nuxt packages"
+    },
+    {
+      "description": "react and react-dom release in lockstep and their @types packages track the same major, so group major updates into a single PR; patch/minor stays in the weekly npm batch because the @types packages churn independently",
+      "matchUpdateTypes": ["major"],
+      "matchPackageNames": ["react", "react-dom", "@types/react", "@types/react-dom"],
+      "groupName": "react major"
+    },
+    {
+      "description": "the @sentry javascript sdks (astro, browser, cloudflare, react) release in lockstep, and @sentry/warden (mise npm backend) is the same org's review tooling, so group every update type into a single org PR across both managers",
+      "matchPackageNames": ["@sentry/**", "npm:@sentry/warden"],
+      "groupName": "sentry packages"
+    },
+    {
+      "description": "the @ark-ui packages (react, svelte, vue bindings) release as a matched set at a single version, so group every update type into a single PR that moves them together",
+      "matchPackageNames": ["@ark-ui/**"],
+      "groupName": "ark ui packages"
+    },
+    {
+      "description": "the radix-ui umbrella package and the @radix-ui scope (primitives, colors) release together from the radix org, so group every update type into a single PR",
+      "matchPackageNames": ["radix-ui", "@radix-ui/**"],
+      "groupName": "radix ui packages"
+    },
+    {
+      "description": "the @fontsource and @fontsource-variable font packages publish from one monorepo and update as data-only bumps, so group every update type into a single PR",
+      "matchPackageNames": ["@fontsource/**", "@fontsource-variable/**"],
+      "groupName": "fontsource fonts"
+    },
+    {
+      "description": "the @lezer parser packages (lr, highlight, and the per-language grammars) version against a shared core, so group every update type into a single PR",
+      "matchPackageNames": ["@lezer/**"],
+      "groupName": "lezer packages"
+    },
+    {
+      "description": "the @pierre packages (diffs, icons, theme, theming, trees) come from one org and are consumed as a set, so group every update type into a single PR",
+      "matchPackageNames": ["@pierre/**"],
+      "groupName": "pierre packages"
+    },
+    {
+      "description": "the unified markdown ecosystem (remark and rehype plugins, mdast/hast utilities, react-markdown, and their types) shares versioned interfaces across many small packages, so group every update type into a single PR",
+      "matchPackageNames": [
+        "unified",
+        "remark",
+        "rehype",
+        "react-markdown",
+        "remark-*",
+        "rehype-*",
+        "micromark*",
+        "mdast-util-*",
+        "hast-util-*",
+        "unist-util-*",
+        "@types/hast",
+        "@types/mdast",
+        "@types/unist"
+      ],
+      "groupName": "unified markdown packages"
+    },
+    {
+      "description": "the @testing-library packages peer-depend on each other (react wraps dom), so group every update type into a single PR",
+      "matchPackageNames": ["@testing-library/**"],
+      "groupName": "testing library packages"
+    },
+    {
+      "description": "alchemy and the @distilled.cloud provider packages (pinned via workspace overrides) must stay compatible with each other, so group every update type into a single PR",
+      "matchPackageNames": ["alchemy", "@distilled.cloud/**"],
+      "groupName": "alchemy packages"
+    },
+    {
+      "description": "the @earendil-works pi packages (pi-ai in apps, pi-coding-agent in mise) come from one org and share the pi runtime, so group every update type across both managers",
+      "matchPackageNames": ["@earendil-works/**", "npm:@earendil-works/pi-coding-agent"],
+      "groupName": "earendil pi packages"
+    },
+    {
+      "description": "oxlint (mise), oxfmt (mise npm backend), and the oxlint-tailwindcss plugin all track the oxc project's release train, so group every update type across both managers",
+      "matchPackageNames": ["oxlint", "oxfmt", "npm:oxfmt", "oxlint-tailwindcss"],
+      "groupName": "oxc packages"
+    },
+    {
+      "description": "biome is managed by mise for the toolchain and pinned as @biomejs/biome in the legacy exercise workspaces, so group every update type across both managers to keep the versions aligned",
+      "matchPackageNames": ["biome", "@biomejs/biome"],
+      "groupName": "biome packages"
+    },
+    {
+      "description": "cspell is managed by mise for the repo-wide spell task and pinned with @cspell dictionaries in the exercise workspaces, so group every update type across both managers to keep the versions aligned",
+      "matchPackageNames": ["cspell", "npm:cspell", "@cspell/**"],
+      "groupName": "cspell packages"
+    },
+    {
+      "description": "the node runtime (mise) and @types/node track the same major, so group major updates across both managers; patch/minor stays in the per-manager weekly batches",
+      "matchUpdateTypes": ["major"],
+      "matchPackageNames": ["node", "@types/node"],
+      "groupName": "node major"
+    },
+    {
+      "description": "the bun runtime (mise), the packageManager pin, and @types/bun track the same major, so group major updates across both managers",
+      "matchUpdateTypes": ["major"],
+      "matchPackageNames": ["bun", "@types/bun"],
+      "groupName": "bun major"
     }
   ]
 }

@@ -196,15 +196,17 @@ function CartPage() {
 function GiftNoteField({note, registerFlush}: {note: string; registerFlush: RegisterFlush}) {
   const router = useRouter()
   const [draft, setDraft] = useState(note)
+  const [syncedNote, setSyncedNote] = useState(note)
   const [error, setError] = useState<string | null>(null)
   const fieldClasses = field()
   const describedById = useId()
   const inFlight = useRef<Promise<boolean> | null>(null)
 
   // Re-sync the draft whenever the loader refreshes server truth.
-  useEffect(() => {
+  if (note !== syncedNote) {
+    setSyncedNote(note)
     setDraft(note)
-  }, [note])
+  }
 
   // Resolves false on failure instead of rejecting so blur can fire-and-forget
   // while checkout's flush still learns whether the note actually saved.
@@ -233,7 +235,9 @@ function GiftNoteField({note, registerFlush}: {note: string; registerFlush: Regi
   }
 
   const commitRef = useRef(commit)
-  commitRef.current = commit
+  useEffect(() => {
+    commitRef.current = commit
+  })
 
   useEffect(() => {
     registerFlush('gift-note', async () => {
@@ -276,9 +280,11 @@ function CartLineRow({line, registerFlush}: {line: CartLine; registerFlush: Regi
   // Local draft of the quantity so typing is responsive; only the settled
   // value is committed to Shopify (see scheduleQuantityCommit).
   const [quantity, setQuantity] = useState(line.quantity)
+  const [syncedQuantity, setSyncedQuantity] = useState(line.quantity)
   const commitTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pendingCommit = useRef<(() => Promise<boolean>) | null>(null)
   const inFlight = useRef<Promise<boolean> | null>(null)
+  const lastSyncedQuantity = useRef(line.quantity)
 
   function cancelScheduledCommit() {
     if (commitTimer.current) {
@@ -288,10 +294,22 @@ function CartLineRow({line, registerFlush}: {line: CartLine; registerFlush: Regi
     pendingCommit.current = null
   }
 
-  // Re-sync the draft (and drop any stale scheduled commit) whenever the
-  // loader refreshes server truth.
-  useEffect(() => {
+  // Re-sync the draft whenever the loader refreshes server truth.
+  if (line.quantity !== syncedQuantity) {
+    setSyncedQuantity(line.quantity)
     setQuantity(line.quantity)
+  }
+
+  // Drop any stale scheduled commit whenever the loader refreshes server truth.
+  useEffect(() => {
+    if (lastSyncedQuantity.current !== line.quantity) {
+      lastSyncedQuantity.current = line.quantity
+      cancelScheduledCommit()
+    }
+  })
+
+  // Drop any scheduled commit on unmount.
+  useEffect(() => {
     return () => {
       if (commitTimer.current) {
         clearTimeout(commitTimer.current)
@@ -299,7 +317,7 @@ function CartLineRow({line, registerFlush}: {line: CartLine; registerFlush: Regi
       }
       pendingCommit.current = null
     }
-  }, [line.quantity])
+  }, [])
 
   // Invalidate in finally so the loader re-runs on every outcome: success,
   // user error, and the stale-cart case where the server dropped the cookie
@@ -359,12 +377,14 @@ function CartLineRow({line, registerFlush}: {line: CartLine; registerFlush: Regi
   }
 
   const flushRef = useRef<() => Promise<void>>(async () => {})
-  flushRef.current = async () => {
-    const settled = pendingCommit.current ? await pendingCommit.current() : await inFlight.current
-    if (settled === false) {
-      throw new Error('cart update failed')
+  useEffect(() => {
+    flushRef.current = async () => {
+      const settled = pendingCommit.current ? await pendingCommit.current() : await inFlight.current
+      if (settled === false) {
+        throw new Error('cart update failed')
+      }
     }
-  }
+  })
 
   useEffect(() => {
     registerFlush(line.id, () => flushRef.current())

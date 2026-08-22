@@ -41,6 +41,7 @@ export function DiffUrlForm({
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [url, setURL] = useState(initialUrl)
+  const [prevInitialUrl, setPrevInitialUrl] = useState(initialUrl)
   const [validationError, setValidationError] = useState<string | null>(null)
   // Tracks the input's viewport position when an error is shown so the portal
   // can be fixed-positioned outside any contain-paint boundary.
@@ -49,14 +50,15 @@ export function DiffUrlForm({
     left: number
   } | null>(null)
   // Preserves the last message so the popover still has content while fading out.
-  const lastErrorText = useRef<string | null>(null)
+  const [lastErrorText, setLastErrorText] = useState<string | null>(null)
   // Prevents the onBlur restore from firing when blur is caused by Enter.
   const isSubmittingRef = useRef(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
+  if (initialUrl !== prevInitialUrl) {
+    setPrevInitialUrl(initialUrl)
     setURL(initialUrl)
-  }, [initialUrl])
+  }
 
   useEffect(() => {
     onUrlChange?.(url)
@@ -89,7 +91,7 @@ export function DiffUrlForm({
     if (isNullish(viewerHref)) {
       const rect = inputRef.current?.getBoundingClientRect()
       if (!isNullish(rect)) setErrorAnchor({top: rect.bottom, left: rect.left})
-      lastErrorText.current = 'Please enter a valid URL'
+      setLastErrorText('Please enter a valid URL')
       setValidationError('Please enter a valid URL')
       return
     }
@@ -236,7 +238,7 @@ export function DiffUrlForm({
                 rounded: '[2px]',
               })}
             />
-            {lastErrorText.current}
+            {lastErrorText}
           </div>,
           document.body,
         )}

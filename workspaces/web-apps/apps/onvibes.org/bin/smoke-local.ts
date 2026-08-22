@@ -13,6 +13,7 @@
 // and contains neither /api nor the Durable Objects.
 
 import {existsSync} from 'node:fs'
+import {createFlueClient} from '@flue/sdk'
 
 const PORT = Number(process.env.SMOKE_PORT ?? 4386)
 const BASE_URL = `http://127.0.0.1:${PORT}`
@@ -39,6 +40,14 @@ const server = Bun.spawn(
     '127.0.0.1',
     '--port',
     String(PORT),
+    // wrangler dev acts as if the Worker runs on its configured route
+    // (onvibes.org), so runtime-built absolute URLs -- the agent admission's
+    // streamUrl -- would point at production and the SDK's read() would leave
+    // this boot. Pin the assumed origin to the local server instead.
+    '--local-upstream',
+    `127.0.0.1:${PORT}`,
+    '--upstream-protocol',
+    'http',
   ],
   {env: {...process.env, CI: 'true'}, stdout: 'ignore', stderr: 'ignore'},
 )
@@ -57,21 +66,24 @@ async function check(route: string): Promise<string | null> {
 }
 
 // Exercise the backend end to end: send one message through the Flue agent API
-// (the same call the /chat island makes) and require the faux echo in the
-// synchronous result. `?wait=result` makes the POST block until the agent turn
-// settles instead of returning a 202 admission.
+// (the same conversation URL the /chat island uses) and require the faux echo
+// in the settled reply. Flue 2 dropped the synchronous `?wait=result` POST:
+// send() returns a 202 admission and read() follows the conversation stream to
+// the settled reply text.
 async function checkAgent(): Promise<string | null> {
   const message = 'smoke ping'
-  const res = await fetch(new URL('/api/agents/assistant/smoke-test?wait=result', BASE_URL), {
-    method: 'POST',
-    headers: {'content-type': 'application/json'},
-    body: JSON.stringify({message}),
-    signal: AbortSignal.timeout(30_000),
+  const conversation = createFlueClient({
+    url: new URL('/api/agents/assistant/smoke-test', BASE_URL).href,
   })
-  if (!res.ok) return `agent POST -> HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`
-  const body = await res.text()
-  if (!body.includes(`You said: ${message}`)) {
-    return `agent result does not contain the echo -- got: ${body.slice(0, 200)}`
+  try {
+    const signal = AbortSignal.timeout(30_000)
+    const admission = await conversation.send({message: {kind: 'user', body: message}, signal})
+    const reply = await conversation.read(admission, {signal})
+    if (!reply.text.includes(`You said: ${message}`)) {
+      return `agent reply does not contain the echo -- got: ${reply.text.slice(0, 200)}`
+    }
+  } catch (error) {
+    return `agent send/read failed -- ${error instanceof Error ? error.message : String(error)}`
   }
   return null
 }
@@ -92,12 +104,7 @@ async function waitForReady(): Promise<boolean> {
 
 let exitCode = 0
 try {
-  if (!(await waitForReady())) {
-    console.error(
-      `::error::preview did not become ready on ${BASE_URL} within ${READY_TIMEOUT_MS}ms`,
-    )
-    exitCode = 1
-  } else {
+  if (await waitForReady()) {
     for (const route of ROUTES) {
       const problem = await check(route)
       if (problem === null) {
@@ -114,6 +121,11 @@ try {
       console.error(`::error::smoke test failed — ${agentProblem}`)
       exitCode = 1
     }
+  } else {
+    console.error(
+      `::error::preview did not become ready on ${BASE_URL} within ${READY_TIMEOUT_MS}ms`,
+    )
+    exitCode = 1
   }
 } finally {
   server.kill()

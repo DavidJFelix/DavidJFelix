@@ -11,6 +11,9 @@ one copy -- the app.test.ts guard). The React island now uses the conversation-s
 `useFlueAgent({url})` (`FlueProvider` is gone), and the smoke gate speaks the new protocol through
 `@flue/sdk`'s `send()`/`read()` since the synchronous `?wait=result` POST was removed. Local
 `wrangler dev` boots pin `--local-upstream` so the runtime-built `streamUrl` stays on the local
-origin instead of the configured onvibes.org route, and the wrangler migrations retire the beta-era
-`FlueRegistry`/`FlueAssistantAgent` classes (Flue 2's schema reset rejects beta Durable Object
-databases) before recreating the agent class fresh.
+origin instead of the configured onvibes.org route. The beta-era `FlueRegistry` class the runtime no
+longer generates stays exported as an inert stand-in from `src/cloudflare.ts`, keeping the migration
+history at v1: a `deleted_classes` migration cannot deploy to a fresh per-PR preview Worker, whose
+full-history replay rejects deleting a class no prior version exported. Flue 2's schema reset
+strands beta-era conversation databases either way, which is fine for throwaway per-tab echoes --
+new conversation ids start on fresh storage.

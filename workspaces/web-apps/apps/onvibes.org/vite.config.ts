@@ -7,7 +7,7 @@ import {defineConfig} from 'vite'
 // (astro.config.mjs) and runs first, so src/app.ts can import the prebuilt
 // Astro worker it hosts. flue() must precede cloudflare() -- it scans the
 // 'use agent' modules and hands the generated Worker entry plus per-agent
-// Durable Object bindings to the Cloudflare plugin via the config customizer.
+// Durable Object bindings to the Cloudflare plugin through its config hook.
 // outDir keeps the worker artifact out of Astro's dist/ (client + server).
 export default defineConfig({
   plugins: [flue(), cloudflare({config: flueWorkerConfig()})],

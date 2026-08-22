@@ -39,28 +39,23 @@ enabled = true
 destinations = ["2026-aug-16-grafana-cloud-traces"]
 
 # Durable Objects backing the Flue agent runtime. The Flue Vite plugin
-# generates the classes (one per 'use agent' export) and exports them from the
-# Worker; the migration history below stays user-authored and append-only.
-# SQLite storage must be enabled via a migration. Astro reads a separate,
-# DO-free config (wrangler-astro.jsonc) so its own build doesn't try to validate
-# these classes it never exports.
+# generates FlueAssistantAgent (one class per 'use agent' export) and exports
+# it from the Worker; the migration history below stays user-authored and
+# append-only. SQLite storage must be enabled via a migration. Astro reads a
+# separate, DO-free config (wrangler-astro.jsonc) so its own build doesn't try
+# to validate these classes it never exports.
+#
+# FlueRegistry is a beta-era Flue class the v2 runtime no longer generates. It
+# stays in the history (and exported, as an inert stand-in from
+# src/cloudflare.ts) because a deleted_classes migration cannot deploy to a
+# fresh per-PR preview Worker -- the full-history replay rejects deleting a
+# class no prior version exported (Cloudflare error 10074). Flue 2's schema
+# reset strands beta-era FlueAssistantAgent conversation databases either way;
+# that's fine here, conversations are throwaway per-tab echoes and new ids
+# start on fresh storage.
 #
 # NOTE: array-of-tables must come after all top-level keys in TOML, or the keys
 # below a `[[...]]` header get absorbed into it.
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["FlueAssistantAgent", "FlueRegistry"]
-
-# Flue 2 migration. The deployment-wide FlueRegistry class is gone from the
-# runtime, and Flue 2 stores a new persisted schema the 1.0 betas cannot
-# upgrade to in place -- the runtime rejects beta-era Durable Object databases
-# outright. Conversations here are throwaway per-tab echoes, so drain rather
-# than carry: retire both beta classes, then recreate the agent class fresh so
-# every conversation id starts on empty v2 storage.
-[[migrations]]
-tag = "v2"
-deleted_classes = ["FlueAssistantAgent", "FlueRegistry"]
-
-[[migrations]]
-tag = "v3"
-new_sqlite_classes = ["FlueAssistantAgent"]

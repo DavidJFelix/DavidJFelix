@@ -1,4 +1,4 @@
-import {act} from 'react'
+import {act, useEffect} from 'react'
 import {createRoot, type Root} from 'react-dom/client'
 import {expect, type Mock, test, vi} from 'vitest'
 
@@ -27,7 +27,10 @@ interface HookHarness {
 async function mountHook(): Promise<HookHarness> {
   let latest: PullRequestGroupsState = {status: 'idle', groups: []}
   function Probe() {
-    latest = usePullRequestGroups(true)
+    const state = usePullRequestGroups(true)
+    useEffect(() => {
+      latest = state
+    })
     return null
   }
   const container = document.createElement('div')

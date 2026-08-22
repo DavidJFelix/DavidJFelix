@@ -1,5 +1,5 @@
 // cSpell:ignore unstub -- vi.unstubAllGlobals
-import {act} from 'react'
+import {act, useEffect} from 'react'
 import {createRoot, type Root} from 'react-dom/client'
 import {expect, test, vi} from 'vitest'
 
@@ -52,7 +52,10 @@ interface HookHarness {
 async function mountHook(enabled: boolean): Promise<HookHarness> {
   let latest: EntityDiffsState = {entries: [], loadedCount: 0, totalCount: 0}
   function Probe() {
-    latest = useEntityDiffs({enabled, requests: REQUESTS, sourcePath: 'o/r/pull/1'})
+    const state = useEntityDiffs({enabled, requests: REQUESTS, sourcePath: 'o/r/pull/1'})
+    useEffect(() => {
+      latest = state
+    })
     return null
   }
   const container = document.createElement('div')

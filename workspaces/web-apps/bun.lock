@@ -262,7 +262,7 @@
         "@sentry/astro": "^10.60.0",
         "agents": "^0.20.0",
         "astro": "^7.0.0",
-        "hono": "4.12.34",
+        "hono": "4.13.3",
         "posthog-js": "^1.393.0",
         "react": "^19.2.7",
         "react-dom": "^19.2.7",
@@ -504,7 +504,7 @@
     "@effect/platform-node-shared": "4.0.0-beta.105",
     "@modelcontextprotocol/sdk": "1.30.0",
     "effect": "4.0.0-beta.102",
-    "hono": "4.12.34",
+    "hono": "4.13.3",
     "rolldown": "1.2.5",
   },
   "catalog": {
@@ -2892,7 +2892,7 @@
 
     "hex-rgb": ["hex-rgb@4.3.0", "", {}, "sha512-Ox1pJVrDCyGHMG9CFg1tmrRUMRPRsAWYc/PinY0XzJU4K7y7vjNoLKIQ7BR5UJMCxNN8EM1MNDmHWA/B3aZUuw=="],
 
-    "hono": ["hono@4.12.34", "", {}, "sha512-GqXJqY/xJkJmuloTrnV1ZEXG3fqte+VjkUqoRNZXcrUidiUOP4fMSIHHY4tsqZBK++kVyWmt/AAfSUuy57/eSA=="],
+    "hono": ["hono@4.13.3", "", {}, "sha512-r8AO2mYHoLxSHkgafNeC/BXyb2vWRxD3jem4Ts+ptav8oTG5FIRifAjuJEmZI4bSvvc2ns0GxmIYiZnHqN3mMw=="],
 
     "hookable": ["hookable@6.1.1", "", {}, "sha512-U9LYDy1CwhMCnprUfeAZWZGByVbhd54hwepegYTK7Pi5NvqEj63ifz5z+xukznehT7i6NIZRu89Ay1AZmRsLEQ=="],
 

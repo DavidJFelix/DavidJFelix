@@ -24,7 +24,7 @@
     "@effect/platform-node-shared": "4.0.0-beta.105",
     "effect": "4.0.0-beta.102",
     "@modelcontextprotocol/sdk": "1.30.0",
-    "hono": "4.12.34"
+    "hono": "4.13.3"
   },
   "trustedDependencies": [
     "@sentry/cli",

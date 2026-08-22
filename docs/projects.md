@@ -170,6 +170,15 @@ retire the bespoke freshness skill + cron once coverage is proven.
 
 **Status**: Active
 
+### [Merge Queue](./projects/merge-queue/plan.md)
+
+Make multi-PR `bun.lock` conflicts resolve themselves: a Depot workflow that merges main into a PR
+and deterministically regenerates the lockfile (recipe verified 2026-08-22), Renovate automerge to
+zip batch Mondays, then a GitHub App on Cloudflare Workers (Durable Object queue) for explicit
+ordering. Native GitHub merge queues are org-only, so this repo builds its own.
+
+**Status**: Active (planned)
+
 ### [Review Consolidation](./projects/review-consolidation/plan.md)
 
 Consolidate the repo's code-review surfaces around **Warden** as the canonical automated PR gate,

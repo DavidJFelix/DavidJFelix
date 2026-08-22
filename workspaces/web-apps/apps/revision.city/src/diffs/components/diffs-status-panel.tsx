@@ -188,10 +188,16 @@ function RemedyButton({remedy}: {remedy: GitHubAccessRemedy | null}) {
 // retry on the way in rather than making the reader ask twice.
 function useReloadOnReturn({enabled, onRetry}: {enabled: boolean; onRetry(): void}): void {
   const [hasLeft, setHasLeft] = useState(false)
+  const [wasEnabled, setWasEnabled] = useState(enabled)
+  if (wasEnabled !== enabled) {
+    setWasEnabled(enabled)
+    if (!enabled) {
+      setHasLeft(false)
+    }
+  }
 
   useEffect(() => {
     if (!enabled) {
-      setHasLeft(false)
       return
     }
 

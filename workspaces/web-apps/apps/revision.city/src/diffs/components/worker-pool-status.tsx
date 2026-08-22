@@ -100,14 +100,13 @@ export const WorkerPoolStatus = memo(function WorkerPoolStatus({
   viewerRef,
 }: WorkerPoolStatusProps) {
   const pool = useWorkerPool()
-  const [stats, setStats] = useState<WorkerStats | undefined>(undefined)
+  const [subscribedStats, setSubscribedStats] = useState<WorkerStats | undefined>(undefined)
   useEffect(() => {
     if (isNullish(pool)) {
-      setStats(undefined)
       return undefined
     } else {
       return pool.subscribeToStatChanges((newStats) => {
-        setStats((prevStats): WorkerStats | undefined => {
+        setSubscribedStats((prevStats): WorkerStats | undefined => {
           if (areWorkerStatsEqual(prevStats, newStats)) {
             return prevStats
           }
@@ -116,6 +115,7 @@ export const WorkerPoolStatus = memo(function WorkerPoolStatus({
       })
     }
   }, [pool])
+  const stats = isNullish(pool) ? undefined : subscribedStats
   return (
     !isNullish(stats) && (
       <StatsDisplay

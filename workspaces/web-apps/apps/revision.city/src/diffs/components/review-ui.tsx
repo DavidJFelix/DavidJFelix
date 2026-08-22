@@ -2,7 +2,15 @@ import {type DiffIndicators} from '@pierre/diffs'
 import {type CodeViewHandle, useWorkerPool} from '@pierre/diffs/react'
 import {type ColorMode} from '@pierre/theming'
 import {useThemeController} from '@pierre/theming/react'
-import {type ReactNode, useCallback, useEffect, useMemo, useRef, useState} from 'react'
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react'
 
 import {css} from 'styled-system/css'
 import {docsThemeCatalog, themeController} from '@/diffs/components/theme-controller'
@@ -72,10 +80,11 @@ function ReviewUIInner({domain, initialUrl, path}: ReviewUIProps) {
   // the SSR markup, then flips to the user's selection. This also keeps the
   // long-lived WorkerPool and the CodeView from mounting against the default
   // palette before the persisted values apply.
-  const [themesHydrated, setThemesHydrated] = useState(false)
-  useEffect(() => {
-    setThemesHydrated(true)
-  }, [])
+  const themesHydrated = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  )
 
   const colorMode: ColorMode = themesHydrated ? themeState.mode : 'system'
   const appResolvedTheme = themesHydrated ? themeState.resolvedColorScheme : undefined

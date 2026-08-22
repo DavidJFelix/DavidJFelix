@@ -55,9 +55,11 @@ export function useThemeCycle({
   const lightThemeNameRef = useRef(lightThemeName)
   const darkThemeNameRef = useRef(darkThemeName)
   const resolvedModeRef = useRef(resolvedThemeMode)
-  lightThemeNameRef.current = lightThemeName
-  darkThemeNameRef.current = darkThemeName
-  resolvedModeRef.current = resolvedThemeMode
+  useEffect(() => {
+    lightThemeNameRef.current = lightThemeName
+    darkThemeNameRef.current = darkThemeName
+    resolvedModeRef.current = resolvedThemeMode
+  })
 
   const bumpDuration = useCallback(() => {
     setStepSeconds((prev) => {

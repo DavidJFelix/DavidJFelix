@@ -176,11 +176,13 @@ export const DiffsSidebar = memo(function DiffsSidebar({
     })
   }, [])
 
-  useEffect(() => {
+  const [previousMobileOverlayOpen, setPreviousMobileOverlayOpen] = useState(mobileOverlayOpen)
+  if (mobileOverlayOpen !== previousMobileOverlayOpen) {
+    setPreviousMobileOverlayOpen(mobileOverlayOpen)
     if (mobileOverlayOpen && window.matchMedia(MOBILE_MEDIA_QUERY).matches) {
       setActiveStatusPanel(null)
     }
-  }, [mobileOverlayOpen])
+  }
 
   useEffect(() => {
     if (!mobileOverlayOpen || !window.matchMedia(MOBILE_MEDIA_QUERY).matches) {

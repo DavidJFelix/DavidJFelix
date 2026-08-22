@@ -7,7 +7,7 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useState,
+  useSyncExternalStore,
 } from 'react'
 import {isNullish} from '@/diffs/lib/nullish'
 import {themeController} from './theme-controller'
@@ -55,6 +55,18 @@ function setThemeColorMeta(color: string) {
 }
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined)
+
+// Hydration gate without effect-driven state: the snapshot only differs
+// between server (false) and client (true), so React re-renders once right
+// after hydration, exactly like the setState-on-mount pattern it replaces.
+const subscribeToNothing = () => () => {}
+function useHydrated(): boolean {
+  return useSyncExternalStore(
+    subscribeToNothing,
+    () => true,
+    () => false,
+  )
+}
 
 // Applies the already-resolved color scheme to <html>: the class/data-attribute
 // contract, the native color-scheme, and the iOS navbar tint. The resolved
@@ -115,10 +127,7 @@ export function ThemeProvider({
   // useTheme() matches the SSR markup first, then flips. The DOM application
   // below still uses the real resolved scheme (the pre-paint bootstrap script
   // already painted it), so this gate is invisible.
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const mounted = useHydrated()
 
   const colorMode = mounted ? state.mode : undefined
   const resolvedColorScheme = mounted ? state.resolvedColorScheme : undefined

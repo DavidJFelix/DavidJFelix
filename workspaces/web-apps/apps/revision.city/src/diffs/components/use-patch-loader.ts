@@ -107,7 +107,9 @@ export function usePatchLoader({
   // inside a long-lived effect/closure) can read the live value without us
   // having to re-bind it on every change.
   const collapseModeRef = useRef(collapseMode)
-  collapseModeRef.current = collapseMode
+  useEffect(() => {
+    collapseModeRef.current = collapseMode
+  })
 
   // Pre-mutates fresh items so they arrive in the viewer matching the current
   // collapse mode, then records their ids for later bulk updates. Diff items

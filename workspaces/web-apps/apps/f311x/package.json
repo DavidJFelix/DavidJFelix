@@ -39,7 +39,7 @@
     "@tanstack/react-router-devtools": "catalog:",
     "@tanstack/react-start": "catalog:",
     "@tanstack/router-plugin": "catalog:",
-    "alchemy": "2.0.0-beta.67",
+    "alchemy": "2.0.0-beta.72",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "effect": "4.0.0-beta.102",

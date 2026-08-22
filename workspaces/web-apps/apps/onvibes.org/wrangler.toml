@@ -1,11 +1,10 @@
 #:schema node_modules/wrangler/config-schema.json
 name = "onvibes-org"
-# Flue owns the deployed Worker and hosts Astro inside it (src/app.ts); `flue
-# build` overrides `main` with its generated entry, and the @astrojs/cloudflare
-# adapter reads wrangler-astro.jsonc instead of this file. The value is a
-# required-but-unused placeholder (a wrangler config with [[migrations]] must
-# declare a main).
-main = "@astrojs/cloudflare/entrypoints/server"
+# Flue owns the deployed Worker and hosts Astro inside it (src/app.ts); the
+# @astrojs/cloudflare adapter reads wrangler-astro.jsonc instead of this file.
+# No `main` here on purpose: Flue's Vite plugin fills it with the generated
+# Worker entry only when the config leaves it unset -- an authored value would
+# win and get bundled as the Worker.
 compatibility_date = "2026-06-01"
 compatibility_flags = ["nodejs_compat"]
 
@@ -39,11 +38,21 @@ destinations = ["2026-aug-16-grafana-cloud-logs"]
 enabled = true
 destinations = ["2026-aug-16-grafana-cloud-traces"]
 
-# Durable Objects backing the Flue agent runtime. `flue build` generates these
-# classes (one per agent, plus the registry) and exports them from the Worker.
-# SQLite storage must be enabled via a migration. Astro reads a separate,
-# DO-free config (wrangler-astro.jsonc) so its own build doesn't try to validate
-# these classes it never exports.
+# Durable Objects backing the Flue agent runtime. The Flue Vite plugin
+# generates FlueAssistantAgent (one class per 'use agent' export) and exports
+# it from the Worker; the migration history below stays user-authored and
+# append-only. SQLite storage must be enabled via a migration. Astro reads a
+# separate, DO-free config (wrangler-astro.jsonc) so its own build doesn't try
+# to validate these classes it never exports.
+#
+# FlueRegistry is a beta-era Flue class the v2 runtime no longer generates. It
+# stays in the history (and exported, as an inert stand-in from
+# src/cloudflare.ts) because a deleted_classes migration cannot deploy to a
+# fresh per-PR preview Worker -- the full-history replay rejects deleting a
+# class no prior version exported (Cloudflare error 10074). Flue 2's schema
+# reset strands beta-era FlueAssistantAgent conversation databases either way;
+# that's fine here, conversations are throwaway per-tab echoes and new ids
+# start on fresh storage.
 #
 # NOTE: array-of-tables must come after all top-level keys in TOML, or the keys
 # below a `[[...]]` header get absorbed into it.

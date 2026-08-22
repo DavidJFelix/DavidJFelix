@@ -1,6 +1,5 @@
 import {realpathSync} from 'node:fs'
 import {dirname, join} from 'node:path'
-import {fileURLToPath} from 'node:url'
 import {expect, test} from 'vitest'
 
 const PiAi = '@earendil-works/pi-ai'
@@ -40,7 +39,7 @@ function resolvePackageDir({fromDir, pkg}: ResolvePackageDirParams): string {
 // via @modelcontextprotocol/sdk); the override in package.json holds it
 // together and this asserts the override still works.
 test('app.ts and @flue/runtime resolve the same @earendil-works/pi-ai instance', () => {
-  const appDir = dirname(fileURLToPath(import.meta.url))
+  const appDir = import.meta.dirname
   const flueDir = resolvePackageDir({fromDir: appDir, pkg: '@flue/runtime'})
 
   const appPiAi = resolvePackageDir({fromDir: appDir, pkg: PiAi})

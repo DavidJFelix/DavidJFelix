@@ -62,7 +62,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "5.20260814.1",
     "@effect/platform-node": "4.0.0-beta.105",
-    "@playwright/test": "1.61.1",
+    "@playwright/test": "1.62.1",
     "@tailwindcss/typography": "0.5.20",
     "@tanstack/devtools-vite": "catalog:",
     "@testing-library/dom": "10.4.1",

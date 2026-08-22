@@ -2,7 +2,9 @@
 
 Conventions for the repo's workflows. They are written in GitHub Actions syntax but run on
 [Depot CI](https://depot.dev) from `.depot/workflows/` (on `depot-ubuntu-latest` runners), so the
-path and runner-label examples below reflect that.
+path and runner-label examples below reflect that. To read a run's results -- logs, failure
+diagnostics, artifacts -- see [depot-ci.md](../agents/depot-ci.md); GitHub only gets bare check
+runs.
 
 ## Workflow categories
 

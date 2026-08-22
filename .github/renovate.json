@@ -104,8 +104,8 @@
       "groupName": "react major"
     },
     {
-      "description": "the @sentry javascript sdks (astro, browser, cloudflare, react) release in lockstep, and @sentry/warden (mise npm backend) is the same org's review tooling, so group every update type into a single org PR across both managers",
-      "matchPackageNames": ["@sentry/**", "npm:@sentry/warden"],
+      "description": "the @sentry javascript sdks (astro, browser, cloudflare, react) release in lockstep, and warden -- the same org's review tooling -- is pinned twice (npm:@sentry/warden via the mise npm backend and the getsentry/warden action in the Depot workflows), so group every update type into a single org PR across all three managers",
+      "matchPackageNames": ["@sentry/**", "npm:@sentry/warden", "getsentry/warden"],
       "groupName": "sentry packages"
     },
     {

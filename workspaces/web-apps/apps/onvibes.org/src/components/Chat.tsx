@@ -1,18 +1,17 @@
-import {type FlueConversationPart, FlueProvider, useFlueAgent} from '@flue/react'
-import {createFlueClient} from '@flue/sdk'
+import {type FlueConversationPart, useFlueAgent} from '@flue/react'
 import {type FormEvent, useState} from 'react'
 import './chat.css'
 
-// The Flue agent HTTP API is served at /api by the Flue Worker that hosts this
-// Astro app (see src/app.ts). Same origin, so a relative baseUrl is all we need.
-const client = createFlueClient({baseUrl: '/api'})
-
-function Conversation() {
+export default function Chat() {
   const [input, setInput] = useState('')
   // A stable per-tab instance id keeps one conversation alive across sends.
   const [instanceId] = useState(() => crypto.randomUUID())
   const [actionError, setActionError] = useState<string>()
-  const agent = useFlueAgent({name: 'assistant', id: instanceId})
+  // The conversation URL is the agent's mount in src/app.ts plus the instance
+  // id -- Flue 2's client is conversation-scoped, so the hook takes the full
+  // URL instead of an agent name. Same origin, so a relative URL is all we
+  // need.
+  const agent = useFlueAgent({url: `/api/agents/assistant/${instanceId}`})
   // One in-flight send per agent session -- Flue rejects concurrent
   // submissions on the same instance, so gate the form while one is active.
   const busy = agent.status === 'submitted' || agent.status === 'streaming'
@@ -97,11 +96,15 @@ function MessagePart({part}: {part: FlueConversationPart}) {
       <a href={part.url}>{part.filename ?? 'Attachment'}</a>
     )
   }
-  return (
-    <pre>
-      {part.toolName}: {part.state}
-    </pre>
-  )
+  if (part.type === 'dynamic-tool')
+    return (
+      <pre>
+        {part.toolName}: {part.state}
+      </pre>
+    )
+  // Remaining parts are named `data-*` writer payloads (useDataWriter). This
+  // agent declares no writers, so there is nothing to render for them.
+  return null
 }
 
 // Allow only http(s) attachment URLs; everything else (javascript:, data:, ...)
@@ -112,12 +115,4 @@ function isSafeUrl(url: string): boolean {
   } catch {
     return false
   }
-}
-
-export default function Chat() {
-  return (
-    <FlueProvider client={client}>
-      <Conversation />
-    </FlueProvider>
-  )
 }

@@ -38,7 +38,8 @@ const adapter = process.env.VITEST
       prerenderEnvironment: 'node',
       // Read a DO-free config so `astro build`'s miniflare validation doesn't
       // choke on the Flue agent Durable Objects (declared in wrangler.toml,
-      // which `flue build` consumes). See wrangler-astro.jsonc.
+      // which the Flue worker's `vite build` consumes). See
+      // wrangler-astro.jsonc.
       configPath: './wrangler-astro.jsonc',
     })
 
@@ -50,10 +51,11 @@ export default defineConfig({
     server: {
       // In production Flue owns the Worker and serves the agent API at /api
       // (src/app.ts). `astro dev` has no such routes, so bridge them to the
-      // `flue dev` server (default port 3583; ws for streaming). Host is left
-      // unchanged so URLs the API builds from the request (e.g. streamUrl)
-      // point back at this origin and stay behind the proxy.
-      proxy: {'/api': {target: 'http://127.0.0.1:3583', ws: true}},
+      // Flue worker's `vite dev` server (Vite's default port 5173; ws for
+      // streaming). Host is left unchanged so URLs the API builds from the
+      // request (e.g. streamUrl) point back at this origin and stay behind
+      // the proxy.
+      proxy: {'/api': {target: 'http://127.0.0.1:5173', ws: true}},
     },
   },
   // The site has no sessions. Without this the Cloudflare adapter defaults to a

@@ -6,10 +6,10 @@
   "scripts": {
     "prepare": "panda codegen",
     "dev": "astro dev",
-    "dev:worker": "flue dev --target cloudflare",
+    "dev:worker": "vite dev",
     "build": "bun run build:astro && bun run build:worker",
     "build:astro": "panda codegen && astro build",
-    "build:worker": "flue build --target cloudflare && bun bin/patch-flue-wrangler.ts",
+    "build:worker": "vite build && bun bin/patch-flue-wrangler.ts",
     "preview": "astro preview",
     "smoke": "bun bin/smoke-local.ts",
     "astro": "astro",
@@ -27,10 +27,10 @@
     "@astrojs/cloudflare": "14.1.7",
     "@davidjfelix/og": "workspace:*",
     "@davidjfelix/theme": "workspace:*",
-    "@earendil-works/pi-ai": "0.80.6",
-    "@flue/react": "1.0.0-beta.9",
-    "@flue/runtime": "1.0.0-beta.9",
-    "@flue/sdk": "1.0.0-beta.9",
+    "@earendil-works/pi-ai": "0.83.0",
+    "@flue/react": "2.0.3",
+    "@flue/runtime": "2.0.3",
+    "@flue/sdk": "2.0.3",
     "@sentry/astro": "^10.60.0",
     "agents": "^0.20.0",
     "astro": "^7.0.0",
@@ -43,7 +43,8 @@
   "devDependencies": {
     "@astrojs/check": "0.9.10",
     "@astrojs/react": "6.0.2",
-    "@flue/cli": "1.0.0-beta.9",
+    "@cloudflare/vite-plugin": "1.53.1",
+    "@flue/vite": "2.0.3",
     "@pandacss/dev": "1.12.0",
     "@playwright/test": "1.61.1",
     "@sentry/cloudflare": "10.65.0",
@@ -51,7 +52,8 @@
     "@types/react-dom": "19.2.4",
     "@vitest/coverage-v8": "4.1.10",
     "typescript": "6.0.3",
+    "vite": "8.2.2",
     "vitest": "4.1.10",
-    "wrangler": "4.123.0"
+    "wrangler": "4.125.0"
   }
 }

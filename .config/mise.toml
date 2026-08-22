@@ -5,7 +5,7 @@ node = "26"
 # because CI's `mise install` runs at the repo root and does not read app-level
 # mise.toml [tools]. Node stays the toolchain runtime for vitest, Playwright,
 # wrangler, and the framework CLIs.
-bun = "1"
+bun = "1.4.0"
 biome = "2"
 oxlint = "1"
 "npm:oxfmt" = "0.64.0"

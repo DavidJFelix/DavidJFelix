@@ -15,12 +15,6 @@
   },
   "overrides": {
     "rolldown": "1.2.5",
-    "@distilled.cloud/aws": "1.0.0-rc.4",
-    "@distilled.cloud/axiom": "1.0.0-rc.4",
-    "@distilled.cloud/cloudflare": "1.0.0-rc.4",
-    "@distilled.cloud/core": "1.0.0-rc.4",
-    "@distilled.cloud/neon": "1.0.0-rc.4",
-    "@distilled.cloud/planetscale": "1.0.0-rc.4",
     "@effect/platform-node-shared": "4.0.0-rc.110",
     "effect": "4.0.0-rc.110",
     "@modelcontextprotocol/sdk": "1.30.0",

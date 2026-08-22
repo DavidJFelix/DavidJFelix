@@ -5,7 +5,6 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useState,
   useSyncExternalStore,
 } from 'react'
 import type {ThemeColorPair} from './bootstrap'
@@ -39,6 +38,18 @@ export {NEXT_THEME_MODE, type ResolvedColorScheme, type ThemeMode} from './contr
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined)
 
+// Hydration gate without effect-driven state: the snapshot only differs
+// between server (false) and client (true), so React re-renders once right
+// after hydration, exactly like the setState-on-mount pattern it replaces.
+const subscribeToNothing = () => () => {}
+function useHydrated(): boolean {
+  return useSyncExternalStore(
+    subscribeToNothing,
+    () => true,
+    () => false,
+  )
+}
+
 // Points the document's theme-color meta at `color` (the iOS Safari navbar
 // tint), creating the meta if the bootstrap script has not already. The meta is
 // intentionally not authored in JSX: React 19 hoists head tags and would leave
@@ -66,10 +77,7 @@ export function ThemeProvider({children, themeColors}: ThemeProviderProps) {
     () => SERVER_STATE,
   )
 
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const mounted = useHydrated()
 
   useEffect(() => {
     const root = document.documentElement

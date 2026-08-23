@@ -30,11 +30,11 @@
   },
   "devDependencies": {
     "@types/react": "19.2.18",
-    "@vitest/coverage-v8": "4.1.10",
+    "@vitest/coverage-v8": "4.1.11",
     "jsdom": "30.0.1",
     "react": "19.2.8",
     "typescript": "7.0.2",
-    "vitest": "4.1.10",
+    "vitest": "4.1.11",
     "zod": "4.4.3"
   }
 }

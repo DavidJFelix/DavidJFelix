@@ -130,7 +130,12 @@ export const DiffsSidebar = memo(function DiffsSidebar({
   // wrapper, so the chrome variables set on it don't cascade. Re-apply the
   // resolved chrome on the menu surface itself, mirroring the header dropdowns.
   const dropdownThemeStyle = useMemo(() => getDropdownThemeStyle(sidebarStyle), [sidebarStyle])
-  const [activeStatusPanel, setActiveStatusPanel] = useState<SidebarStatusPanel | null>('diffStats')
+  const [selectedActiveStatusPanel, setSelectedActiveStatusPanel] =
+    useState<SidebarStatusPanel | null>('diffStats')
+  let activeStatusPanel = selectedActiveStatusPanel
+  if (mobileOverlayOpen && window.matchMedia(MOBILE_MEDIA_QUERY).matches) {
+    activeStatusPanel = null
+  }
   const [fileTreeModel, setFileTreeModel] = useState<FileTree | null>(null)
   // Inclusion filter: the statuses the tree should show. Empty means "no
   // filter" — every file is shown — so the menu opens with nothing checked and
@@ -145,7 +150,7 @@ export const DiffsSidebar = memo(function DiffsSidebar({
     setFileTreeModel(model)
   }, [])
   const toggleStatusPanel = useCallback((panel: SidebarStatusPanel) => {
-    setActiveStatusPanel((current) => (current === panel ? null : panel))
+    setSelectedActiveStatusPanel((current) => (current === panel ? null : panel))
   }, [])
 
   const clearStatusFilter = useCallback(() => {
@@ -175,12 +180,6 @@ export const DiffsSidebar = memo(function DiffsSidebar({
       return new Set([status])
     })
   }, [])
-
-  useEffect(() => {
-    if (mobileOverlayOpen && window.matchMedia(MOBILE_MEDIA_QUERY).matches) {
-      setActiveStatusPanel(null)
-    }
-  }, [mobileOverlayOpen])
 
   useEffect(() => {
     if (!mobileOverlayOpen || !window.matchMedia(MOBILE_MEDIA_QUERY).matches) {

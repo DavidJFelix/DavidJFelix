@@ -103,18 +103,16 @@ export const WorkerPoolStatus = memo(function WorkerPoolStatus({
   const [stats, setStats] = useState<WorkerStats | undefined>()
   useEffect(() => {
     if (isNullish(pool)) {
-      setStats(undefined)
       return
     }
-      return pool.subscribeToStatChanges((newStats) => {
-        setStats((prevStats): WorkerStats | undefined => {
-          if (areWorkerStatsEqual(prevStats, newStats)) {
-            return prevStats
-          }
-          return newStats
-        })
+    return pool.subscribeToStatChanges((newStats) => {
+      setStats((prevStats): WorkerStats | undefined => {
+        if (areWorkerStatsEqual(prevStats, newStats)) {
+          return prevStats
+        }
+        return newStats
       })
-    
+    })
   }, [pool])
   return (
     !isNullish(stats) && (

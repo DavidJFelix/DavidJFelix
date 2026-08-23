@@ -5,6 +5,7 @@ import {css} from 'styled-system/css'
 import {ReviewUI} from '@/diffs/components/review-ui'
 import {isNullish} from '@/diffs/lib/nullish'
 import {resolveDiffsViewerRoute} from '@/diffs/lib/resolve-diffs-viewer-route'
+import { DiffUrlProvider } from '@/diffs/components/diff-url-context'
 
 // Viewer route that mirrors the upstream path below /diffs. GitHub is the
 // public default, while hidden alternate domains can opt in through the
@@ -48,7 +49,9 @@ function DiffsViewByPathPage() {
         gap: '2',
       })}
     >
-      <ReviewUI domain={route.domain} initialUrl={route.url} path={route.upstreamPath} />
+      <DiffUrlProvider url={route.url}>
+        <ReviewUI domain={route.domain} path={route.upstreamPath} />
+      </DiffUrlProvider>
     </div>
   )
 }

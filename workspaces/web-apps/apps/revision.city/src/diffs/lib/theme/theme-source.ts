@@ -45,7 +45,10 @@ export function hasThemeNameSelection(
 }
 
 export type ThemeValue = string | ThemeLike
-export interface ThemePair<T = ThemeValue> {light: T; dark: T}
+export interface ThemePair<T = ThemeValue> {
+  light: T
+  dark: T
+}
 export type ThemeInput = ThemeValue | ThemePair
 
 export interface FixedSourceOptions {

@@ -14,9 +14,9 @@ import {
   IconEyeSlash,
   IconFileTreeFill,
   IconGearFill,
+  type IconProps,
   IconShare,
   IconSymbolDiffstat,
-  type IconProps,
 } from '@pierre/icons'
 import {type ColorMode} from '@pierre/theming'
 import {Link} from '@tanstack/react-router'
@@ -50,6 +50,7 @@ import {getDropdownThemeStyle} from '@/diffs/lib/theme/dropdown-chrome-style'
 import {CHROME_ICON_BUTTON_CLASS} from './chrome-button-styles'
 import {DiffUrlForm} from './diff-url-form'
 import {useChromeThemeProps} from './use-chrome-theme-props'
+import { useDiffUrlContext } from './diff-url-context'
 
 type LightThemeName = string
 type DarkThemeName = string
@@ -89,7 +90,6 @@ interface HeaderProps {
   diffStyle: 'split' | 'unified'
   fileTreeAvailable: boolean
   fileTreeOverlayOpen: boolean
-  initialUrl: string
   lightThemeName: LightThemeName
   lineNumbers: boolean
   overflow: 'wrap' | 'scroll'
@@ -115,7 +115,6 @@ export const DiffsHeader = memo(function DiffsHeader({
   diffStyle,
   fileTreeAvailable,
   fileTreeOverlayOpen,
-  initialUrl,
   lightThemeName,
   lineNumbers,
   overflow,
@@ -131,10 +130,11 @@ export const DiffsHeader = memo(function DiffsHeader({
   setShowBackgrounds,
   showBackgrounds,
 }: HeaderProps) {
-  const [currentUrl, setCurrentUrl] = useState(initialUrl)
+  const {url: diffUrl} = useDiffUrlContext()
+  const [currentUrl, setCurrentUrl] = useState(diffUrl)
   // Only show the external-link button when the input still reflects the
   // committed URL — otherwise we'd be pointing at a draft the user is editing.
-  const showExternalLink = currentUrl === initialUrl
+  const showExternalLink = currentUrl === diffUrl
   // Mirror the sidebar's themed chrome so the header bar lives on the same
   // Shiki surface (background, text, icons, borders) instead of the global
   // light/dark palette. Falls back to the diffs-sidebar-bg CSS variable
@@ -202,8 +202,10 @@ export const DiffsHeader = memo(function DiffsHeader({
         </span>
       </Link>
       <DiffUrlForm
+        // BACKLOG(davidjfelix): this is to ensure the form resets state when the url changes. we should use a real form instead
+        key={diffUrl}
+        initialUrl={diffUrl}
         className={css({order: {base: '9999', md: '0'}, mr: {md: 'auto'}})}
-        initialUrl={initialUrl}
         onUrlChange={setCurrentUrl}
         placeholder="https://github.com/org/repo/123"
         inputClassName={css({w: {base: 'full', md: 'auto'}})}
@@ -240,7 +242,7 @@ export const DiffsHeader = memo(function DiffsHeader({
                 title="Open source in new tab"
                 className={cx(CHROME_ICON_BUTTON_CLASS, css({display: {base: 'none', md: 'flex'}}))}
               >
-                <a href={initialUrl} target="_blank" rel="noreferrer noopener">
+                <a href={diffUrl} target="_blank" rel="noreferrer noopener">
                   <IconShare className={ICON_SIZE_CLASS} />
                 </a>
               </Button>
@@ -391,7 +393,7 @@ export const DiffsHeader = memo(function DiffsHeader({
 interface ColorModeIconProps extends IconProps {
   colorMode: ColorMode
 }
-function ColorModeIcon({ colorMode, ...props}: ColorModeIconProps) {
+function ColorModeIcon({colorMode, ...props}: ColorModeIconProps) {
   if (colorMode === 'light') return <IconColorLight {...props} />
   if (colorMode === 'dark') return <IconColorDark {...props} />
   return <IconColorAuto {...props} />

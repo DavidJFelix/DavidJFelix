@@ -7,7 +7,7 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useState,
+  useSyncExternalStore,
 } from 'react'
 import {isNullish} from '@/diffs/lib/nullish'
 import {themeController} from './theme-controller'
@@ -115,10 +115,11 @@ export function ThemeProvider({
   // useTheme() matches the SSR markup first, then flips. The DOM application
   // below still uses the real resolved scheme (the pre-paint bootstrap script
   // already painted it), so this gate is invisible.
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const mounted = useSyncExternalStore(
+    () => () => {}, // Subscribe - there's nothing to subscribe to
+    () => true, // Client snapshot: we are hydrated
+    () => false, // Server snapshot: we are not hydrated
+  )
 
   const colorMode = mounted ? state.mode : undefined
   const resolvedColorScheme = mounted ? state.resolvedColorScheme : undefined

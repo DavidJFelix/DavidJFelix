@@ -312,10 +312,10 @@ export function usePatchLoader({
           prepareItemsForViewer(pendingItems)
           if (hasPublishedInitialItems) {
             const viewer = viewerRef.current
-            if (!isNullish(viewer)) {
-              viewer.addItems(pendingItems)
-            } else {
+            if (isNullish(viewer)) {
               setInitialItems((prev) => [...prev, ...pendingItems])
+            } else {
+              viewer.addItems(pendingItems)
             }
           } else {
             hasPublishedInitialItems = true

@@ -1,4 +1,4 @@
-import {act} from 'react'
+import {act, useEffect} from 'react'
 import {createRoot, type Root} from 'react-dom/client'
 import {expect, type Mock, test, vi} from 'vitest'
 
@@ -22,11 +22,16 @@ interface HookHarness {
   unmount: () => Promise<void>
 }
 
-// Mounts the hook inside a probe component that renders its state as JSON, so
-// tests read the committed output without a testing-library dependency.
+// Mounts the hook inside a probe component so tests can read its latest
+// state without a testing-library dependency.
 async function mountHook(): Promise<HookHarness> {
+  let latest: PullRequestGroupsState = {status: 'idle', groups: []}
   function Probe() {
-    return <output>{JSON.stringify(usePullRequestGroups(true))}</output>
+    const state = usePullRequestGroups(true)
+    useEffect(() => {
+      latest = state
+    })
+    return null
   }
   const container = document.createElement('div')
   // appendChild, not append: this app's tsconfig pulls in @cloudflare/workers-types
@@ -40,10 +45,7 @@ async function mountHook(): Promise<HookHarness> {
     await flushMicrotasks()
   })
   return {
-    state: () =>
-      JSON.parse(
-        container.querySelector('output')?.textContent ?? 'null',
-      ) as PullRequestGroupsState,
+    state: () => latest,
     unmount: async () => {
       await act(() => {
         root?.unmount()

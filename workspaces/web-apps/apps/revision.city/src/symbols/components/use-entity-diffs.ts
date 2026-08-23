@@ -47,6 +47,9 @@ export function useEntityDiffs({
       previousSourceRef.current = sourcePath
       cacheRef.current = new Map()
     }
+  })
+
+  useEffect(() => {
     if (!enabled || requests.length === 0) {
       return undefined
     }

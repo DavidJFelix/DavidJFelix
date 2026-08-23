@@ -1,5 +1,5 @@
 // cSpell:ignore unstub -- vi.unstubAllGlobals
-import {act} from 'react'
+import {act, useEffect} from 'react'
 import {createRoot, type Root} from 'react-dom/client'
 import {expect, test, vi} from 'vitest'
 
@@ -49,12 +49,14 @@ interface HookHarness {
   unmount: () => Promise<void>
 }
 
-// The probe renders its state as JSON so tests read the committed output
-// without a testing-library dependency.
 async function mountHook(enabled: boolean): Promise<HookHarness> {
+  let latest: EntityDiffsState = {entries: [], loadedCount: 0, totalCount: 0}
   function Probe() {
     const state = useEntityDiffs({enabled, requests: REQUESTS, sourcePath: 'o/r/pull/1'})
-    return <output>{JSON.stringify(state)}</output>
+    useEffect(() => {
+      latest = state
+    })
+    return null
   }
   const container = document.createElement('div')
   // appendChild, not append: this app's tsconfig pulls in @cloudflare/workers-types
@@ -68,8 +70,7 @@ async function mountHook(enabled: boolean): Promise<HookHarness> {
     await flushAsync()
   })
   return {
-    state: () =>
-      JSON.parse(container.querySelector('output')?.textContent ?? 'null') as EntityDiffsState,
+    state: () => latest,
     unmount: async () => {
       await act(async () => {
         root?.unmount()

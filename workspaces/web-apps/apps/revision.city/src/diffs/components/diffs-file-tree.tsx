@@ -51,8 +51,12 @@ export const DiffsFileTree = memo(function DiffsFileTree({
   onSelectItem,
   source,
 }: DiffsFileTreeProps) {
+  const sourceRef = useRef(source)
   const previousSourceRef = useRef(source)
   const [initialVisibleRowCount] = useState(getInitialBatchSize)
+  useEffect(() => {
+    sourceRef.current = source
+  })
   // `source.paths` aliases the streaming accumulator's live array, so it keeps
   // growing on later publishes. The FileTree model consumes its path list
   // exactly once via useFileTree's useState initializer; capture a bounded
@@ -65,7 +69,7 @@ export const DiffsFileTree = memo(function DiffsFileTree({
       return
     }
     const [path] = selectedPaths
-    const itemId = source.pathToItemId.get(path)
+    const itemId = sourceRef.current.pathToItemId.get(path)
     if (!isNullish(itemId)) {
       onSelectItem(itemId)
     }

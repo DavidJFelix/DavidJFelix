@@ -1,5 +1,5 @@
 import {type ColorMode} from '@pierre/theming'
-import {useCallback, useEffect, useEffectEvent, useMemo, useState} from 'react'
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 
 import {docsThemeCatalog} from '@/diffs/components/theme-catalog'
 import type {DarkThemeName, LightThemeName} from '@/diffs/lib/theme-names'
@@ -31,8 +31,6 @@ interface UseThemeCycleArgs {
   setColorMode: (mode: ColorMode) => void
 }
 
-type Step = {mode: 'light'; theme: LightThemeName} | {mode: 'dark'; theme: DarkThemeName}
-
 // Drives a sweep through every available Shiki theme — all the light
 // themes, then all the dark themes, then back around — so users can
 // preview the full catalog without manually picking each one. The
@@ -51,6 +49,18 @@ export function useThemeCycle({
   const [stepSeconds, setStepSeconds] = useState<ThemeCycleDurationSeconds>(3)
   const [cycling, setCycling] = useState(false)
 
+  // Capture the latest theme state in refs so the cycle effect doesn't
+  // restart its interval (and re-anchor the rotation order) every time
+  // the cycle advances. Each tick reads the same captured sequence.
+  const lightThemeNameRef = useRef(lightThemeName)
+  const darkThemeNameRef = useRef(darkThemeName)
+  const resolvedModeRef = useRef(resolvedThemeMode)
+  useEffect(() => {
+    lightThemeNameRef.current = lightThemeName
+    darkThemeNameRef.current = darkThemeName
+    resolvedModeRef.current = resolvedThemeMode
+  })
+
   const bumpDuration = useCallback(() => {
     setStepSeconds((prev) => {
       const idx = THEME_CYCLE_DURATIONS_SECONDS.indexOf(prev)
@@ -62,20 +72,18 @@ export function useThemeCycle({
     setCycling((c) => !c)
   }, [])
 
-  // Anchors the rotation order on whichever theme is active when cycling
-  // kicks off. An effect event reads the latest theme state at call time, so
-  // the cycle effect doesn't restart its interval (and re-anchor the order)
-  // every time the cycle advances.
-  const buildCycleOrder = useEffectEvent((): Step[] => {
-    const startMode = resolvedThemeMode ?? 'light'
+  useEffect(() => {
+    if (!cycling) return undefined
+    const startMode = resolvedModeRef.current ?? 'light'
     // Snapshot the catalog once per cycle start; each tick reads the same
     // captured sequence.
     const lightThemes = docsThemeCatalog.getThemeNames({
       colorScheme: 'light',
     })
     const darkThemes = docsThemeCatalog.getThemeNames({colorScheme: 'dark'})
-    const lightStartIdx = Math.max(0, lightThemes.indexOf(lightThemeName))
-    const darkStartIdx = Math.max(0, darkThemes.indexOf(darkThemeName))
+    const lightStartIdx = Math.max(0, lightThemes.indexOf(lightThemeNameRef.current))
+    const darkStartIdx = Math.max(0, darkThemes.indexOf(darkThemeNameRef.current))
+    type Step = {mode: 'light'; theme: LightThemeName} | {mode: 'dark'; theme: DarkThemeName}
     const lightSequence: Step[] = lightThemes.map((theme) => ({
       mode: 'light',
       theme,
@@ -84,22 +92,18 @@ export function useThemeCycle({
       mode: 'dark',
       theme,
     }))
-    return startMode === 'dark'
-      ? [
-          ...darkSequence.slice(darkStartIdx),
-          ...lightSequence,
-          ...darkSequence.slice(0, darkStartIdx),
-        ]
-      : [
-          ...lightSequence.slice(lightStartIdx),
-          ...darkSequence,
-          ...lightSequence.slice(0, lightStartIdx),
-        ]
-  })
-
-  useEffect(() => {
-    if (!cycling) return undefined
-    const order = buildCycleOrder()
+    const order: Step[] =
+      startMode === 'dark'
+        ? [
+            ...darkSequence.slice(darkStartIdx),
+            ...lightSequence,
+            ...darkSequence.slice(0, darkStartIdx),
+          ]
+        : [
+            ...lightSequence.slice(lightStartIdx),
+            ...darkSequence,
+            ...lightSequence.slice(0, lightStartIdx),
+          ]
     // Tick 0 is the already-active theme — start advancing from the next
     // entry so the first interval fires onto something new.
     let idx = 1

@@ -34,9 +34,9 @@
     "@nuxtjs/color-mode": "4.0.1",
     "@pandacss/dev": "1.12.0",
     "@playwright/test": "1.62.1",
-    "@vitest/coverage-v8": "4.1.10",
+    "@vitest/coverage-v8": "4.1.11",
     "typescript": "6.0.3",
-    "vitest": "4.1.10",
+    "vitest": "4.1.11",
     "vue-tsc": "3.3.10",
     "wrangler": "4.124.0"
   }

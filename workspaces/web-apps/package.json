@@ -15,8 +15,8 @@
   },
   "overrides": {
     "rolldown": "1.2.5",
-    "@effect/platform-node-shared": "4.0.0-rc.110",
-    "effect": "4.0.0-rc.110",
+    "@effect/platform-node-shared": "4.0.0-rc.111",
+    "effect": "4.0.0-rc.111",
     "@modelcontextprotocol/sdk": "1.30.0",
     "hono": "4.13.3"
   },

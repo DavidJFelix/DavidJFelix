@@ -310,17 +310,17 @@ export function usePatchLoader({
           lastPublishTime = performance.now()
           const pendingItems = takePendingDiffsItems(accumulator)
           prepareItemsForViewer(pendingItems)
-          if (!hasPublishedInitialItems) {
-            hasPublishedInitialItems = true
-            publishTreeSource()
-            setInitialItems(pendingItems)
-          } else {
+          if (hasPublishedInitialItems) {
             const viewer = viewerRef.current
             if (!isNullish(viewer)) {
               viewer.addItems(pendingItems)
             } else {
               setInitialItems((prev) => [...prev, ...pendingItems])
             }
+          } else {
+            hasPublishedInitialItems = true
+            publishTreeSource()
+            setInitialItems(pendingItems)
           }
           await yieldToBrowser()
           if (isCurrentRequest()) {

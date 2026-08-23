@@ -218,7 +218,7 @@ export function DiffUrlForm({
                 lineHeight: '[1rem]',
                 transition: '[opacity 150ms cubic-bezier(0.4, 0, 0.2, 1)]',
               }),
-              validationError !== null ? css({opacity: '1'}) : css({opacity: '0'}),
+              validationError === null ? css({opacity: '0'}) : css({opacity: '1'}),
             )}
             onTransitionEnd={() => {
               if (validationError === null) setErrorAnchor(null)

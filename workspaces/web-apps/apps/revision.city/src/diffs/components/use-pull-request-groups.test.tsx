@@ -31,9 +31,6 @@ async function mountHook(): Promise<HookHarness> {
     return null
   }
   const container = document.createElement('div')
-  // appendChild, not append: this app's tsconfig pulls in @cloudflare/workers-types
-  // alongside the DOM lib, and their `append` overloads collide badly enough that
-  // the tidier call does not typecheck. site-mark.test.tsx does the same.
   document.body.appendChild(container)
   let root: Root | undefined
   await act(async () => {

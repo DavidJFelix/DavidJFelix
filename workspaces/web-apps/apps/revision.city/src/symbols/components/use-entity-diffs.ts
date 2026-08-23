@@ -49,7 +49,7 @@ export function useEntityDiffs({
 
   useEffect(() => {
     if (!enabled || requests.length === 0) {
-      return undefined
+      return
     }
 
     const controller = new AbortController()

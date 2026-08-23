@@ -30,7 +30,7 @@ export const diffsChromeMapping: ChromeMapping = (chrome, theme) => {
   // bg-only theme). Mirror the previous behavior: paint just the background when
   // we have one, otherwise contribute nothing.
   if (isNullish(chrome)) {
-    return !isNullish(bg) ? ({backgroundColor: bg} as CSSProperties) : undefined
+    return isNullish(bg) ? undefined : ({backgroundColor: bg} as CSSProperties)
   }
 
   const fg = chrome.fg

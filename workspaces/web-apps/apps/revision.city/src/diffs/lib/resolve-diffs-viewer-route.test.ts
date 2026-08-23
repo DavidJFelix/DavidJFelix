@@ -4,7 +4,7 @@ import {expect, test} from 'vitest'
 import {resolveDiffsViewerRoute} from './resolve-diffs-viewer-route'
 
 test('resolveDiffsViewerRoute: empty path redirects to the diffs home', () => {
-  expect(resolveDiffsViewerRoute([], undefined)).toEqual({
+  expect(resolveDiffsViewerRoute([])).toEqual({
     kind: 'redirect',
     target: '/diffs',
   })
@@ -108,7 +108,7 @@ test.each([
     expectedTarget: '/diffs/owner/repo/commit/abc1234',
   },
 ])('resolveDiffsViewerRoute: $name', ({pathSegments, expectedTarget}) => {
-  expect(resolveDiffsViewerRoute(pathSegments, undefined)).toEqual({
+  expect(resolveDiffsViewerRoute(pathSegments)).toEqual({
     kind: 'redirect',
     target: expectedTarget,
   })

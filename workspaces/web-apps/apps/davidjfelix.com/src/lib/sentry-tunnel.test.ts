@@ -19,7 +19,7 @@ const post = (body: string): Request =>
 // fetch by call signature only: lib.dom types `typeof fetch` with a required
 // static `preconnect`, which a plain stub cannot (and need not) satisfy.
 type FetchLike = (...args: Parameters<typeof fetch>) => ReturnType<typeof fetch>
-const stubFetch = () => vi.fn<FetchLike>(async () => new Response('{"id":"evt"}', {status: 200}))
+const stubFetch = () => vi.fn<FetchLike>(async () => await Promise.resolve(new Response('{"id":"evt"}', {status: 200})))
 
 test('rejects non-POST methods with 405 and an Allow header, without forwarding', async () => {
   const fetchImpl = stubFetch()

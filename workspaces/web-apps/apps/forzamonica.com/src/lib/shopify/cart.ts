@@ -16,7 +16,7 @@ import {
 const CART_COOKIE = 'forzamonica-cart-id'
 const CART_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30
 
-type CartMutationPayload = {
+interface CartMutationPayload {
   cart: Cart | null
   userErrors: Array<{field: string[] | null; message: string}>
 }

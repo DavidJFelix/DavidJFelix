@@ -44,7 +44,7 @@ export async function resolvePdsEndpoint(did: string): Promise<string> {
   return endpoint
 }
 
-type RepoRecord = {uri: string; value: Record<string, unknown>}
+interface RepoRecord {uri: string; value: Record<string, unknown>}
 
 // Paginated, unauthenticated read of one collection from the repo's PDS.
 async function listAllRecords(pdsBase: string, collection: string): Promise<Array<RepoRecord>> {

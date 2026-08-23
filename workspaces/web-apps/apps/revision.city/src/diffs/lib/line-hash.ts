@@ -101,7 +101,7 @@ function createSelectedLineRange(
     start: startPoint.lineNumber,
     side: startPoint.side,
     end: endPoint.lineNumber,
-    ...(startPoint.side !== endPoint.side ? {endSide: endPoint.side} : {}),
+    ...(startPoint.side === endPoint.side ? {} : {endSide: endPoint.side}),
   }
 }
 

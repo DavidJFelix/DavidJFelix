@@ -32,8 +32,6 @@ function applyInitialTheme() {
     if (themeColorMeta === null) {
       themeColorMeta = document.createElement('meta')
       themeColorMeta.setAttribute('name', 'theme-color')
-      // appendChild, not append: @cloudflare/workers-types merges its
-      // HTMLRewriter Element into the global, and its append() signature wins.
       document.head.appendChild(themeColorMeta)
     }
     themeColorMeta.setAttribute('content', resolvedTheme === 'dark' ? '#0a0a0a' : '#ffffff')

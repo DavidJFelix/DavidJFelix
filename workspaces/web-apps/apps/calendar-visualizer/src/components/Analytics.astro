@@ -10,6 +10,8 @@
 <script>
   const key = import.meta.env.PUBLIC_POSTHOG_KEY
   if (key) {
+    // BACKLOG(davidjfelix) Look into how to do this in a better way.
+    // oxlint-disable-next-line unicorn/prefer-top-level-await -- I didn't write this the slop machine did and I'm overriding the warning
     void (async () => {
       const {default: posthog} = await import('posthog-js')
       // Same-origin reverse proxy: events and the lazily-loaded SDK assets

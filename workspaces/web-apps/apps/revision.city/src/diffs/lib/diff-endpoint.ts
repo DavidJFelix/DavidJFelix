@@ -466,7 +466,7 @@ async function createPatchStreamResponse(
 
     const fallbackRequest = fallbackRequests.shift()
     if (!isNullish(fallbackRequest)) {
-      await response.body?.cancel().catch(() => undefined)
+      await response.body?.cancel().catch(() => {})
       activeRequest = fallbackRequest
       continue
     }

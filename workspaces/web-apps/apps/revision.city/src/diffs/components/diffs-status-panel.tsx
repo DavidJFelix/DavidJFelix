@@ -72,7 +72,17 @@ export function DiffsStatusPanel({errorMessage, onRetry, remedy, state}: DiffsSt
           textAlign: 'center',
         })}
       >
-        {!isError ? (
+        {isError ? (
+          <IconCiWarningFill
+            className={css({
+              color: 'diffs.muted.foreground',
+              mx: 'auto',
+              mb: '3',
+              w: '5',
+              h: '5',
+            })}
+          />
+        ) : (
           <IconRefresh
             aria-hidden="true"
             className={css({
@@ -83,16 +93,6 @@ export function DiffsStatusPanel({errorMessage, onRetry, remedy, state}: DiffsSt
               h: '5',
               transform: 'scaleX(-1)',
               animation: '[spin 1s linear infinite reverse]',
-            })}
-          />
-        ) : (
-          <IconCiWarningFill
-            className={css({
-              color: 'diffs.muted.foreground',
-              mx: 'auto',
-              mb: '3',
-              w: '5',
-              h: '5',
             })}
           />
         )}

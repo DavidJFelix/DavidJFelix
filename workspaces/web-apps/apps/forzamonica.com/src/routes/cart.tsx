@@ -416,11 +416,11 @@ function CartLineRow({line, registerFlush}: {line: CartLine; registerFlush: Regi
         </Link>
         <div className={css({display: 'flex', gap: '2', alignItems: 'center', flexWrap: 'wrap'})}>
           {kind ? <Badge tone={kindTone(kind)}>{kind}</Badge> : null}
-          {line.merchandise.title !== 'Default Title' ? (
+          {line.merchandise.title === 'Default Title' ? null : (
             <span className={css({fontSize: '[12px]', color: 'ink.muted'})}>
               {line.merchandise.title}
             </span>
-          ) : null}
+          )}
         </div>
         {error ? <p className={css({fontSize: '[13px]', color: 'error'})}>{error}</p> : null}
         <button

@@ -26,7 +26,7 @@ const HTML_TYPE = 'text/html'
 // after the `;` (charset, level) is irrelevant to preference.
 const QUALITY_PARAM = /;\s*q\s*=\s*([0-9.]+)/i
 
-type MediaRange = {type: string; quality: number}
+interface MediaRange {type: string; quality: number}
 
 function mediaRanges(accept: string): Array<MediaRange> {
   return accept.split(',').map((part) => {
@@ -79,7 +79,7 @@ const byTag = (tagName: string) => (element: Element) => element.tagName === tag
 // is also an estimate, so a heuristic beats bundling a real tokenizer.
 const CHARS_PER_TOKEN = 4
 
-export type MarkdownPage = {markdown: string; tokens: number}
+export interface MarkdownPage {markdown: string; tokens: number}
 
 // Convert an HTML page to its markdown representation: YAML frontmatter from
 // <title> and <meta name="description">, then the <main> content -- header,

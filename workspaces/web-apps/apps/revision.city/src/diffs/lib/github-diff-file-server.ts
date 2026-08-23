@@ -451,7 +451,7 @@ async function readCompareHeadSha({
   }
 
   if (isNullish(totalCommits) || commits.length >= totalCommits) {
-    return readStringPath(commits[commits.length - 1], ['sha'])
+    return readStringPath(commits.at(-1), ['sha'])
   }
 
   const lastPageData = await fetchGitHubJSON(

@@ -105,6 +105,6 @@ test('an interval ending mid-month stops at the end date', () => {
   })
   const march = months[1]
   const days = daySlots(march)
-  expect(days[days.length - 1].date.getDate()).toBe(10)
+  expect(days.at(-1)?.date.getDate()).toBe(10)
   expect(days.map((slot) => slot.date.getDate())).toEqual(Array.from({length: 10}, (_, i) => i + 1))
 })

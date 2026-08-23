@@ -40,7 +40,7 @@ function stubFetch() {
         },
       }),
     )
-    return new Response(lines.map((line) => line + '\n').join(''))
+    return new Response(lines.map((line) => `${line  }\n`).join(''))
   })
 }
 
@@ -56,9 +56,6 @@ async function mountHook(enabled: boolean): Promise<HookHarness> {
     return null
   }
   const container = document.createElement('div')
-  // appendChild, not append: this app's tsconfig pulls in @cloudflare/workers-types
-  // alongside the DOM lib, and their `append` overloads collide badly enough that
-  // the tidier call does not typecheck.
   document.body.appendChild(container)
   let root: Root | undefined
   await act(async () => {

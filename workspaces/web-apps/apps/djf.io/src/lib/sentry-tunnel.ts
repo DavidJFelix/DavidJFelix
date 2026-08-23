@@ -24,9 +24,9 @@ export const SENTRY_TUNNEL_ROUTE = '/bugs'
 // are ever forwarded to.
 const SENTRY_INGEST_HOST = /^[a-z0-9-]+\.ingest\.(?:[a-z0-9-]+\.)?sentry\.io$/i
 
-type DsnIdentity = {host: string; projectId: string}
+interface DsnIdentity {host: string; projectId: string}
 
-export type TunnelOptions = {
+export interface TunnelOptions {
   // The site's own public Sentry DSN. When set, envelopes are relayed only if
   // their DSN points at this exact project; omitted (e.g. local dev) leaves just
   // the ingest-host guard, which is still safe against open-proxy abuse.

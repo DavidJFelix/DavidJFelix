@@ -22,11 +22,11 @@ export const SENTRY_TUNNEL_ROUTE = '/bugs'
 // A Sentry SaaS ingest host: `o<org>.ingest.sentry.io` or a regional
 // `o<org>.ingest.<region>.sentry.io`. Anchored end to end so only these hosts
 // are ever forwarded to.
-const SENTRY_INGEST_HOST = /^[a-z0-9-]+\.ingest\.(?:[a-z0-9-]+\.)?sentry\.io$/i
+const SENTRY_INGEST_HOST = /^[a-z0-9-]+\.ingest\.(?:[a-z0-9-]+\.)?sentry\.io$/iu
 
-type DsnIdentity = {host: string; projectId: string}
+interface DsnIdentity {host: string; projectId: string}
 
-export type TunnelOptions = {
+export interface TunnelOptions {
   // The site's own public Sentry DSN. When set, envelopes are relayed only if
   // their DSN points at this exact project; omitted (e.g. local dev) leaves just
   // the ingest-host guard, which is still safe against open-proxy abuse.
@@ -58,8 +58,8 @@ function dsnIdentity(dsn: string): DsnIdentity | undefined {
   }
   if (url.protocol !== 'https:') return undefined
   if (!SENTRY_INGEST_HOST.test(url.hostname)) return undefined
-  const projectId = url.pathname.replace(/^\/+/, '')
-  if (!/^\d+$/.test(projectId)) return undefined
+  const projectId = url.pathname.replace(/^\/+/u, '')
+  if (!/^\d+$/u.test(projectId)) return undefined
   return {host: url.hostname, projectId}
 }
 

@@ -2,7 +2,7 @@ import {NumberInput} from '@ark-ui/react/number-input'
 
 import {quantityField} from 'styled-system/recipes'
 
-type QuantityFieldProps = {
+interface QuantityFieldProps {
   label?: string
   value: number
   min?: number

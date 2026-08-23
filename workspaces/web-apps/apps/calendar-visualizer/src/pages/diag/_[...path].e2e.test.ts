@@ -10,14 +10,26 @@ const previewOnly =
 
 test('/diag serves the PostHog Web SDK through the assets host', async ({request}) => {
   test.skip(!process.env.PREVIEW_URL, previewOnly)
+  // when
   const response = await request.get('/diag/static/array.js')
-  expect(response.ok()).toBe(true)
-  expect(response.headers()['content-type'] ?? '').toContain('javascript')
+  const status = response.ok()
+  const contentTypeHeader = response.headers()['content-type']
+
+  // then
+  expect(status).toBe(true)
+  expect(contentTypeHeader).toBeDefined()
+  expect(contentTypeHeader).toContain('javascript')
 })
 
 test('/diag forwards API requests to the ingestion host', async ({request}) => {
   test.skip(!process.env.PREVIEW_URL, previewOnly)
+  // when
   const response = await request.get('/diag/flags/?v=2')
-  expect(response.ok()).toBe(true)
-  expect(response.headers()['content-type'] ?? '').toContain('json')
+  const status = response.ok()
+  const contentTypeHeader = response.headers()['content-type']
+
+  // then
+  expect(status).toBe(true)
+  expect(contentTypeHeader).toBeDefined()
+  expect(contentTypeHeader).toContain('javascript')
 })

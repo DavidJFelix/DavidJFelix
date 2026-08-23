@@ -61,7 +61,7 @@ function handleRowClick(event: MouseEvent<HTMLButtonElement>, run: () => void): 
   if (event.button !== 0) {
     return
   }
-  const selection = typeof window !== 'undefined' ? window.getSelection() : null
+  const selection = typeof window === 'undefined' ? null : window.getSelection()
   if (!isNullish(selection) && selection.toString().length > 0) {
     const row = event.currentTarget
     const anchorInRow = !isNullish(selection.anchorNode) && row.contains(selection.anchorNode)
@@ -141,7 +141,21 @@ export const DiffsCommentsList = memo(function DiffsCommentsList({
     >
       {commentSections.map((section) => (
         <section key={section.itemId}>
-          {!isNullish(onSelectItem) ? (
+          {isNullish(onSelectItem) ? (
+            <div
+              className={css({
+                color: 'diffs.muted.foreground',
+                p: '3',
+                pb: '2',
+                fontSize: 'sm',
+                lineHeight: '[1.25rem]',
+                fontWeight: 'medium',
+                wordBreak: 'break-all',
+              })}
+            >
+              {section.path}
+            </div>
+          ) : (
             <button
               type="button"
               className={css({
@@ -164,20 +178,6 @@ export const DiffsCommentsList = memo(function DiffsCommentsList({
             >
               <span className={css({userSelect: 'text'})}>{section.path}</span>
             </button>
-          ) : (
-            <div
-              className={css({
-                color: 'diffs.muted.foreground',
-                p: '3',
-                pb: '2',
-                fontSize: 'sm',
-                lineHeight: '[1.25rem]',
-                fontWeight: 'medium',
-                wordBreak: 'break-all',
-              })}
-            >
-              {section.path}
-            </div>
           )}
           <div
             className={css({

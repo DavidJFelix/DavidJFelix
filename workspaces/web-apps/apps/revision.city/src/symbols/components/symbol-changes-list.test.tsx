@@ -53,8 +53,6 @@ function renderList({
   supported = true,
 }: RenderListParams = {}): ListHarness {
   const container = document.createElement('div')
-  // appendChild, not append: @cloudflare/workers-types and the DOM lib disagree
-  // on `append`'s overloads badly enough that the tidier call does not typecheck.
   document.body.appendChild(container)
   let root: Root | undefined
   act(() => {

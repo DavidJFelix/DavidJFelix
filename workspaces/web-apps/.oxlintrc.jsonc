@@ -20,6 +20,7 @@
     "style": "off",
   },
   "rules": {
+    "import/no-unassigned-import": ["error", {"allow": ["**/*.css"]}],
     "react/exhaustive-deps": "warn",
     "react/rules-of-hooks": "error",
     "max-params": ["error", {"max": 3}],

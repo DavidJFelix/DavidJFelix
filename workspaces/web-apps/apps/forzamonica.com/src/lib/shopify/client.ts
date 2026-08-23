@@ -5,7 +5,7 @@
 
 const DEFAULT_API_URL = 'https://mock.shop/api'
 
-type StorefrontEnv = {
+interface StorefrontEnv {
   SHOPIFY_STOREFRONT_API_URL?: string
   SHOPIFY_STOREFRONT_PUBLIC_TOKEN?: string
 }

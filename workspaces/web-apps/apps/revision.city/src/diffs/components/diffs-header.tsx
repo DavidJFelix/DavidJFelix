@@ -16,6 +16,7 @@ import {
   IconGearFill,
   IconShare,
   IconSymbolDiffstat,
+  type IconProps,
 } from '@pierre/icons'
 import {type ColorMode} from '@pierre/theming'
 import {Link} from '@tanstack/react-router'
@@ -387,10 +388,13 @@ export const DiffsHeader = memo(function DiffsHeader({
   )
 })
 
-function colorModeIcon(colorMode: ColorMode) {
-  if (colorMode === 'light') return IconColorLight
-  if (colorMode === 'dark') return IconColorDark
-  return IconColorAuto
+interface ColorModeIconProps extends IconProps {
+  colorMode: ColorMode
+}
+function ColorModeIcon({ colorMode, ...props}: ColorModeIconProps) {
+  if (colorMode === 'light') return <IconColorLight {...props} />
+  if (colorMode === 'dark') return <IconColorDark {...props} />
+  return <IconColorAuto {...props} />
 }
 
 interface ThemeDropdownProps {
@@ -419,7 +423,6 @@ function ThemeDropdown({
   setLightThemeName,
   themeDropdownStyle,
 }: ThemeDropdownProps) {
-  const TriggerIcon = colorModeIcon(colorMode)
   const [view, setView] = useState<'main' | 'light' | 'dark'>('main')
   // Only offer a reset when at least one slot drifts from the default
   // theme pair, so the link stays out of the way until it's useful.
@@ -445,7 +448,7 @@ function ThemeDropdown({
           title="Theme settings"
           className={CHROME_ICON_BUTTON_CLASS}
         >
-          <TriggerIcon className={ICON_SIZE_CLASS} />
+          <ColorModeIcon colorMode={colorMode} className={ICON_SIZE_CLASS} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent

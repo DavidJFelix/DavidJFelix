@@ -66,7 +66,7 @@ const socialTags = ogTags({
 // JSON.stringify leaves "<" unescaped, so a value containing "</script>"
 // would close the inline tag early; < is the standard JSON-safe escape.
 const jsonLdPayloads = (Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : []).map((item) =>
-  JSON.stringify(item).replace(/</gu, '\\u003c'),
+  JSON.stringify(item).replaceAll('<', '\\u003c'),
 )
 
 // Only ship analytics on builds that carry the key (production deploy). The
@@ -300,7 +300,7 @@ const iconMenuOpen = css({display: 'none', '#nav-toggle[aria-expanded=true] &': 
         {/* The panel ships open so the links stay reachable without JavaScript;
             with it, collapse before first paint and let the toggle take over. */}
         <script is:inline>
-          const navMenu = document.getElementById('nav-menu')
+          const navMenu = document.querySelector('#nav-menu')
           if (navMenu) navMenu.hidden = true
         </script>
       </nav>

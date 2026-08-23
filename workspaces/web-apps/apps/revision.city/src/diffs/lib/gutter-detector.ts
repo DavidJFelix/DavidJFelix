@@ -1,5 +1,5 @@
 import {isNullish} from './nullish'
-export type ScrollbarGutterSize = {
+export interface ScrollbarGutterSize {
   vertical: number
   horizontal: number
 }

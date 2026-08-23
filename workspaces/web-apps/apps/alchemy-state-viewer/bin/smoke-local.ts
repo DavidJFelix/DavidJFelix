@@ -68,11 +68,13 @@ async function waitForReady(): Promise<boolean> {
   const deadline = Date.now() + READY_TIMEOUT_MS
   while (Date.now() < deadline) {
     try {
+      // oxlint-disable-next-line no-await-in-loop -- this is genuinely an await loop
       const res = await fetch(BASE_URL, {signal: AbortSignal.timeout(2_000)})
       if (res.ok) return true
     } catch {
       // not up yet -- keep polling
     }
+    // oxlint-disable-next-line no-await-in-loop -- this is genuinely an await loop
     await Bun.sleep(500)
   }
   return false

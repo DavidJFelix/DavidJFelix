@@ -30,7 +30,7 @@ import {
 
 const BLOG_DIR = fileURLToPath(new URL('../src/content/blog', import.meta.url))
 
-type Frontmatter = {
+interface Frontmatter {
   title: string
   description: string
   date: string | Date

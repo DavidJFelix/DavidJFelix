@@ -184,7 +184,7 @@ export const DiffsSidebar = memo(function DiffsSidebar({
 
   useEffect(() => {
     if (!mobileOverlayOpen || !window.matchMedia(MOBILE_MEDIA_QUERY).matches) {
-      return undefined
+      return
     }
 
     const {body, documentElement} = document

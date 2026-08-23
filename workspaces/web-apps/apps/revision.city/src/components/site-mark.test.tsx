@@ -10,9 +10,6 @@ import {SiteMark} from './site-mark'
 
 function renderMark(): SVGSVGElement {
   const container = document.createElement('div')
-  // appendChild, not append: this app's tsconfig pulls in @cloudflare/workers-types
-  // alongside the DOM lib, and their `append` overloads collide badly enough that
-  // the tidier call does not typecheck. react-overrides.test.tsx does the same.
   document.body.appendChild(container)
   const root = createRoot(container)
   act(() => {

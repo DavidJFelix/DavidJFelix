@@ -11,7 +11,7 @@ export type GitHubAccessRemedy =
 // Reads a remedy off an error response body. The URL is re-checked against
 // github.com rather than trusted, so a malformed or tampered payload cannot
 // turn the panel's primary button into an arbitrary link.
-export function parseGitHubAccessRemedy(value: unknown): GitHubAccessRemedy | undefined {
+export function parseGitHubAccessRemedy(value?: unknown): GitHubAccessRemedy | undefined {
   if (!isRecord(value)) {
     return undefined
   }

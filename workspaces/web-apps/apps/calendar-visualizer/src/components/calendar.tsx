@@ -24,100 +24,118 @@ export function CalendarDisplay({months}: CalendarDisplayProps) {
   )
 }
 
+const monthGridCellVariants = cva({
+  base: {
+    border: '[1px solid transparent]',
+    color: 'text',
+  },
+  variants: {
+    cellType: {
+      weekDayHeaders: {
+        fontWeight: 'semibold',
+        color: 'text',
+      },
+      day: {},
+      spacer: {},
+    },
+    dayType: {
+      normal: {},
+      holiday: {
+        backgroundColor: 'holiday.bg',
+        borderColor: 'holiday.border',
+        color: 'holiday.text',
+      },
+      weekend: {
+        backgroundColor: 'weekend.bg',
+        borderColor: 'border',
+        color: 'weekend.text',
+      },
+      planning: {
+        backgroundColor: 'planning.bg',
+        borderColor: 'planning.border',
+        color: 'planning.text',
+      },
+      execution: {
+        backgroundColor: 'execution.bg',
+        borderColor: 'execution.border',
+        color: 'execution.text',
+      },
+      hipsSprint: {
+        backgroundColor: 'hipsSprint.bg',
+        borderColor: 'hipsSprint.border',
+        color: 'hipsSprint.text',
+      },
+    },
+  },
+  compoundVariants: [
+    {
+      cellType: 'day',
+      dayType: 'normal',
+      css: {
+        backgroundColor: 'day',
+        borderColor: 'border',
+      },
+    },
+  ],
+  defaultVariants: {
+    cellType: 'spacer',
+    dayType: 'normal',
+  },
+})
+
+type MonthGridCellVariant = NonNullable<Parameters<typeof monthGridCellVariants>[0]>
+
+function getMonthGridCellVariant(day: DayDisplayState): MonthGridCellVariant {
+  if (day.type === 'day') {
+    let dayType: MonthGridCellVariant['dayType'] = 'normal'
+    if (day.dayFeatures.some((feature) => feature.type === 'holiday')) {
+      dayType = 'holiday'
+      return {cellType: day.type, dayType}
+    }
+    if (day.dayFeatures.some((feature) => feature.type === 'weekend')) {
+      dayType = 'weekend'
+      return {cellType: day.type, dayType}
+    }
+    if (day.dayFeatures.some((feature) => feature.type === 'planning')) {
+      dayType = 'planning'
+      return {cellType: day.type, dayType}
+    }
+    if (day.dayFeatures.some((feature) => feature.type === 'execution')) {
+      dayType = 'execution'
+      return {cellType: day.type, dayType}
+    }
+    return {cellType: day.type, dayType}
+  }
+  return {cellType: day.type, dayType: 'normal'}
+}
+
+const monthGridCellBase = stack({
+  padding: '1',
+  alignItems: 'center',
+  justifyContent: 'center',
+})
+
+interface MonthNameHeaderProps {
+  monthName: string
+}
+function MonthNameHeader({monthName}: MonthNameHeaderProps) {
+  return (
+    <h2
+      className={css({
+        fontSize: 'xl',
+        fontWeight: 'bold',
+        fontFamily: '[Roboto, sans-serif]',
+        color: 'heading',
+      })}
+    >
+      {monthName}
+    </h2>
+  )
+}
+
 function Month({monthName, slottedDays}: MonthState) {
   const id = useId()
   const weekDayHeaders = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
-
-  const gridCellBase = stack({
-    padding: '1',
-    alignItems: 'center',
-    justifyContent: 'center',
-  })
-
-  const gridCellVariants = cva({
-    base: {
-      border: '[1px solid transparent]',
-      color: 'text',
-    },
-    variants: {
-      cellType: {
-        weekDayHeaders: {
-          fontWeight: 'semibold',
-          color: 'text',
-        },
-        day: {},
-        spacer: {},
-      },
-      dayType: {
-        normal: {},
-        holiday: {
-          backgroundColor: 'holiday.bg',
-          borderColor: 'holiday.border',
-          color: 'holiday.text',
-        },
-        weekend: {
-          backgroundColor: 'weekend.bg',
-          borderColor: 'border',
-          color: 'weekend.text',
-        },
-        planning: {
-          backgroundColor: 'planning.bg',
-          borderColor: 'planning.border',
-          color: 'planning.text',
-        },
-        execution: {
-          backgroundColor: 'execution.bg',
-          borderColor: 'execution.border',
-          color: 'execution.text',
-        },
-        hipsSprint: {
-          backgroundColor: 'hipsSprint.bg',
-          borderColor: 'hipsSprint.border',
-          color: 'hipsSprint.text',
-        },
-      },
-    },
-    compoundVariants: [
-      {
-        cellType: 'day',
-        dayType: 'normal',
-        css: {
-          backgroundColor: 'day',
-          borderColor: 'border',
-        },
-      },
-    ],
-    defaultVariants: {
-      cellType: 'spacer',
-      dayType: 'normal',
-    },
-  })
-
-  type DayVariant = NonNullable<Parameters<typeof gridCellVariants>[0]>
-
-  function getDayVariant(day: DayDisplayState): DayVariant {
-    if (day.type === 'day') {
-      let dayType: DayVariant['dayType'] = 'normal'
-      if (day.dayFeatures.some((feature) => feature.type === 'holiday')) {
-        dayType = 'holiday'
-        return {cellType: day.type, dayType}
-      }
-      if (day.dayFeatures.some((feature) => feature.type === 'weekend')) {
-        dayType = 'weekend'
-        return {cellType: day.type, dayType}
-      }
-      if (day.dayFeatures.some((feature) => feature.type === 'planning')) {
-        dayType = 'planning'
-        return {cellType: day.type, dayType}
-      }
-      if (day.dayFeatures.some((feature) => feature.type === 'execution')) {
-        dayType = 'execution'
-        return {cellType: day.type, dayType}
-      }
-      return {cellType: day.type, dayType}
-    }
-    return {cellType: day.type, dayType: 'normal'}
-  }
 
   return (
     <div
@@ -130,16 +148,7 @@ function Month({monthName, slottedDays}: MonthState) {
         backgroundColor: 'canvas',
       })}
     >
-      <h2
-        className={css({
-          fontSize: 'xl',
-          fontWeight: 'bold',
-          fontFamily: '[Roboto, sans-serif]',
-          color: 'heading',
-        })}
-      >
-        {monthName}
-      </h2>
+      <MonthNameHeader monthName={monthName} />
       <div
         className={grid({
           gridTemplateColumns: 'repeat(7, 1fr)',
@@ -152,7 +161,7 @@ function Month({monthName, slottedDays}: MonthState) {
         {weekDayHeaders.map((dayHeader) => (
           <div
             key={dayHeader}
-            className={cx(gridCellVariants({cellType: 'weekDayHeaders'}), gridCellBase)}
+            className={cx(monthGridCellVariants({cellType: 'weekDayHeaders'}), monthGridCellBase)}
           >
             {dayHeader}
           </div>
@@ -160,7 +169,7 @@ function Month({monthName, slottedDays}: MonthState) {
         {slottedDays.map((day) => (
           <div
             key={getDayKey({id, dayIndex: day.index})}
-            className={cx(gridCellVariants(getDayVariant(day)), gridCellBase)}
+            className={cx(monthGridCellVariants(getMonthGridCellVariant(day)), monthGridCellBase)}
           >
             {day.type === 'day' ? day.date.getDate() : ''}
           </div>

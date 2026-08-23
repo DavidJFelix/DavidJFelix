@@ -60,7 +60,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "5.20260819.1",
+    "@cloudflare/workers-types": "5.20260820.1",
     "@effect/platform-node": "4.0.0-rc.111",
     "@playwright/test": "1.62.1",
     "@tailwindcss/typography": "0.5.20",

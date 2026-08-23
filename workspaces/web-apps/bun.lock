@@ -179,7 +179,7 @@
         "@vitejs/plugin-react": "6.0.5",
         "@vitest/coverage-v8": "4.1.10",
         "jsdom": "30.0.1",
-        "oxlint-tailwindcss": "1.9.0",
+        "oxlint-tailwindcss": "1.10.0",
         "typescript": "7.0.2",
         "vite": "8.2.1",
         "vitest": "4.1.10",
@@ -335,7 +335,7 @@
         "@vitejs/plugin-react": "6.0.5",
         "@vitest/coverage-v8": "4.1.10",
         "jsdom": "30.0.1",
-        "oxlint-tailwindcss": "1.9.0",
+        "oxlint-tailwindcss": "1.10.0",
         "tailwindcss": "4.3.3",
         "typescript": "7.0.2",
         "vite": "8.2.1",
@@ -3434,7 +3434,7 @@
 
     "oxc-walker": ["oxc-walker@1.1.1", "", { "peerDependencies": { "@oxc-project/types": ">=0.98.0", "oxc-parser": ">=0.98.0", "rolldown": ">=1.0.0" }, "optionalPeers": ["@oxc-project/types", "oxc-parser", "rolldown"] }, "sha512-Hwd7dq28zu/Er99+bpWp16CGwFrhyalJh0W3JOB7XpPvgWo3MqMi2ksWGKuzzA9zt50mJ2pIUwR5lpAdZ9ACNQ=="],
 
-    "oxlint-tailwindcss": ["oxlint-tailwindcss@1.9.0", "", { "dependencies": { "@tailwindcss/node": "^4.3.3", "tailwindcss": "^4.3.3" } }, "sha512-6Zp5AiKPWpkt/HOtvHP3VtmWO2vrl5PAY3DPNker771RUwp5TEHZKRrQ3yCQnSEbCRWrqaVbkBf1pWiIVpms+w=="],
+    "oxlint-tailwindcss": ["oxlint-tailwindcss@1.10.0", "", { "dependencies": { "@tailwindcss/node": "^4.3.3", "tailwindcss": "^4.3.3" } }, "sha512-6N1wI7zk1d978xhg+YS6Difg2eOKdK5QRYORLq3q3U8CLUoiZ75FyyVN1eAb2RWHIeKXjRCFkGVegsQmV6HXTg=="],
 
     "p-limit": ["p-limit@7.3.1", "", { "dependencies": { "yocto-queue": "^1.2.1" } }, "sha512-0trZaiG7Y7kN/Egy9a8j47t9osC0Tch4PaIWd9yGF6bvmlk7muExRvGNYb8sXBwEKMoNKsbNN9P8EefuQekE4Q=="],
 

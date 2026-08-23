@@ -15,6 +15,16 @@
     "description": "Workflows live in .depot/workflows/ (Depot CI), which the manager's default patterns do not cover; the action.yaml pattern re-adds composite-action coverage in case patterns replace rather than extend the defaults.",
     "managerFilePatterns": ["/^\\.depot/workflows/[^/]+\\.ya?ml$/", "/(^|/)action\\.ya?ml$/"]
   },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "biome config $schema URLs embed the biome version, and biome reports a mismatch against the running binary on every invocation; version the URL segment as an @biomejs/biome dependency so the biome packages group moves every config's schema together with the binaries",
+      "managerFilePatterns": ["/(^|/)biome\\.jsonc?$/"],
+      "matchStrings": ["https://biomejs\\.dev/schemas/(?<currentValue>[^/\"]+)/schema\\.json"],
+      "depNameTemplate": "@biomejs/biome",
+      "datasourceTemplate": "npm"
+    }
+  ],
   "packageRules": [
     {
       "matchUpdateTypes": ["patch", "minor"],
@@ -173,7 +183,7 @@
       "groupName": "oxc packages"
     },
     {
-      "description": "biome is managed by mise for the toolchain and pinned as @biomejs/biome in the legacy exercise workspaces, so group every update type across both managers to keep the versions aligned",
+      "description": "biome is managed by mise for the toolchain, pinned as @biomejs/biome in the legacy exercise workspaces, and embedded in every biome config's $schema URL (versioned by the custom manager above), so group every update type across all three so the binaries and schemas move together",
       "matchPackageNames": ["biome", "@biomejs/biome"],
       "groupName": "biome packages"
     },

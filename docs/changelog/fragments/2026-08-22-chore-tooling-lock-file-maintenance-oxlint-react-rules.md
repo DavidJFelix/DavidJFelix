@@ -6,9 +6,12 @@ ships four new error-level react correctness rules: `set-state-in-effect`, `refs
 `static-components`. Those rules flagged real render-phase side effects across three packages, all
 fixed in code rather than by loosening the linter. The setState-on-mount hydration gates in the
 shared theme package, revision.city's theme provider, and its review UI became
-`useSyncExternalStore` gates; latest-value ref mirrors in the patch loader, theme cycle, and file
-tree moved into dependency-less effects; prop-driven state resets in the diffs sidebar, status
-panel, diff url form, and forzamonica.com's cart adopted the render-time adjustment pattern; the
-worker pool status derives its stats during render; the theme dropdown builds its trigger icon as an
-element instead of a render-created component type; and the hook test probes capture state in
-effects instead of reassigning outer bindings during render.
+`useSyncExternalStore` gates; the latest-value ref mirrors in the patch loader, theme cycle, and
+file tree were deleted outright, their readers becoming stable callbacks or `useEffectEvent` events
+that see live values; prop-driven state resets in the diffs sidebar, diff url form, and worker pool
+status adopted the render-time adjustment pattern, while the status panel's reload-on-return flag
+moved into its visibility listener's closure; forzamonica.com's cart keys the gift note field by
+server truth and derives the quantity display from a draft that remembers which server quantity it
+was based on; the theme dropdown builds its trigger icon as an element instead of a render-created
+component type; and the hook test probes render their state as JSON so tests read committed output
+instead of reassigning outer bindings during render.

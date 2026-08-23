@@ -1,5 +1,5 @@
 import {IconBrandGithub, IconCiWarningFill, IconRefresh} from '@pierre/icons'
-import {useEffect, useState} from 'react'
+import {useEffect, useEffectEvent} from 'react'
 
 import {css, cx} from 'styled-system/css'
 import {Button} from '@/diffs/components/button'
@@ -187,35 +187,33 @@ function RemedyButton({remedy}: {remedy: GitHubAccessRemedy | null}) {
 // only reason to return to a blocked diff is to see whether it works now, so
 // retry on the way in rather than making the reader ask twice.
 function useReloadOnReturn({enabled, onRetry}: {enabled: boolean; onRetry(): void}): void {
-  const [hasLeft, setHasLeft] = useState(false)
-  const [wasEnabled, setWasEnabled] = useState(enabled)
-  if (wasEnabled !== enabled) {
-    setWasEnabled(enabled)
-    if (!enabled) {
-      setHasLeft(false)
-    }
-  }
-
+  const retry = useEffectEvent(() => {
+    onRetry()
+  })
+  // Whether the reader has left the tab is listener bookkeeping, not render
+  // state: it lives in the effect closure and resets by construction whenever
+  // the listener is torn down.
   useEffect(() => {
     if (!enabled) {
-      return
+      return undefined
     }
 
+    let hasLeft = false
     const trackVisibility = () => {
       if (document.visibilityState === 'hidden') {
-        setHasLeft(true)
+        hasLeft = true
         return
       }
       if (hasLeft) {
-        setHasLeft(false)
-        onRetry()
+        hasLeft = false
+        retry()
       }
     }
     document.addEventListener('visibilitychange', trackVisibility)
     return () => {
       document.removeEventListener('visibilitychange', trackVisibility)
     }
-  }, [enabled, hasLeft, onRetry])
+  }, [enabled])
 }
 
 function navigateToLogin(): void {

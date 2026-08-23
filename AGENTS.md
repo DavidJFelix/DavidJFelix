@@ -17,7 +17,7 @@ roots alongside it under `workspaces/`. Shared dev tooling is managed via mise
 | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `workspaces/web-apps/` | The bun workspace: `apps/` (one directory per app, see [docs/projects.md](docs/projects.md)), `packages/` (shared code apps import as workspace deps), one `bun.lock`, and `turbo.json` |
 | `docs/contributing/`   | Style mini guides -- naming, testing, linting, config, scripting, tooling, CI, project docs                                                                                             |
-| `docs/agents/`         | Agent workflow docs -- issue tracker, triage labels, domain docs                                                                                                                        |
+| `docs/agents/`         | Agent workflow docs -- issue tracker, triage labels, domain docs, Depot CI triage                                                                                                       |
 | `docs/projects/`       | Active project plans and progress notes (ephemeral working notes)                                                                                                                       |
 | `docs/changelog/`      | Monthly change history (the durable record); PRs add fragments in `fragments/`                                                                                                          |
 | `workspaces/`          | Workspace trees with their own package-manager roots, kept from colliding with each other                                                                                               |
@@ -73,6 +73,8 @@ The non-negotiable rules, one line each. Follow the link before working in that 
 - [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md) -- hybrid tracker: markdown project
   docs plus terse GitHub issues for human-only tasks
 - [docs/agents/triage-labels.md](docs/agents/triage-labels.md) -- canonical GitHub issue labels
+- [docs/agents/depot-ci.md](docs/agents/depot-ci.md) -- reading Depot CI failures: GitHub check runs
+  carry no output, so use the depot CLI (`run list`, `diagnose`, `logs`, `artifacts`)
 - [docs/agents/domain.md](docs/agents/domain.md) -- how to consume `CONTEXT.md` glossaries and ADRs
 - [CONTEXT-MAP.md](CONTEXT-MAP.md) -- per-app domain contexts and ADR locations
 - [docs/projects.md](docs/projects.md) -- active project index (also the app portfolio map)

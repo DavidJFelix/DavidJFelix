@@ -57,7 +57,7 @@
     "pagefind": "1.5.2",
     "typescript": "7.0.2",
     "vitest": "4.1.11",
-    "wrangler": "4.124.0"
+    "wrangler": "4.125.0"
   },
   "engines": {
     "node": ">=24"

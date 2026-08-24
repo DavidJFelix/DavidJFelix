@@ -13,7 +13,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.5.9",
     "@cspell/dict-typescript": "3.2.3",
-    "cspell": "10.0.1",
+    "cspell": "10.1.0",
     "oxlint": "1.79.0",
     "parcel": "2.16.4",
     "rimraf": "6.1.3"

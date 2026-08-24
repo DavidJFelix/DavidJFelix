@@ -2,13 +2,13 @@ import {IconBrandGithub, IconCiWarningFill, IconRefresh} from '@pierre/icons'
 import {useEffect, useState} from 'react'
 
 import {css, cx} from 'styled-system/css'
-import {Button} from '@/diffs/components/button'
-import {getCurrentReturnPath, getGitHubLoginURL} from '@/diffs/components/use-github-session'
+import {Button} from '@/diffs/components/ui/button'
+import {getCurrentReturnPath, getGitHubLoginURL} from '@/diffs/components/hooks/use-github-session'
 import type {GitHubAccessRemedy} from '@/diffs/lib/github-access-remedy'
 import {isNullish} from '@/diffs/lib/nullish'
 import {diffsChromeMapping} from '@/diffs/lib/theme/diffs-chrome-mapping'
 import type {ViewerLoadState} from '@/diffs/lib/types'
-import {useChromeThemeProps} from './use-chrome-theme-props'
+import {useChromeThemeProps} from './hooks/use-chrome-theme-props'
 
 interface DiffsStatusPanelProps {
   errorMessage: string | null
@@ -190,11 +190,6 @@ function useReloadOnReturn({enabled, onRetry}: {enabled: boolean; onRetry(): voi
   const [hasLeft, setHasLeft] = useState(false)
 
   useEffect(() => {
-    if (!enabled) {
-      setHasLeft(false)
-      return
-    }
-
     const trackVisibility = () => {
       if (document.visibilityState === 'hidden') {
         setHasLeft(true)
@@ -202,7 +197,9 @@ function useReloadOnReturn({enabled, onRetry}: {enabled: boolean; onRetry(): voi
       }
       if (hasLeft) {
         setHasLeft(false)
-        onRetry()
+        if (enabled) {
+          onRetry()
+        }
       }
     }
     document.addEventListener('visibilitychange', trackVisibility)

@@ -2,7 +2,7 @@ import {FileTree, type FileTreeProps} from '@pierre/trees/react'
 import type {CSSProperties} from 'react'
 import {useMemo} from 'react'
 import type {ThemeInput} from '@/diffs/lib/theme/theme-source'
-import {useTreeThemeProps} from './use-tree-theme-props'
+import {useTreeThemeProps} from './hooks/use-tree-theme-props'
 
 interface ThemedFileTreeProps extends FileTreeProps {
   // Per-component override (omitted => follow the provider).

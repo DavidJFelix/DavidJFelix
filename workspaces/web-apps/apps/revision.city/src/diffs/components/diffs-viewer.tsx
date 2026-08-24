@@ -34,7 +34,7 @@ import type {
 import {DraftAnnotation} from './draft-annotation'
 import {ExampleAnnotation} from './example-annotation'
 import {ThemedCodeView} from './themed-code-view'
-import {useChromeThemeProps} from './use-chrome-theme-props'
+import {useChromeThemeProps} from './hooks/use-chrome-theme-props'
 
 function getNextItemVersion(item: CodeViewItem<CommentMetadata>): number {
   return typeof item.version === 'number' ? item.version + 1 : 1

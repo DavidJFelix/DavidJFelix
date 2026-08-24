@@ -3,11 +3,11 @@ import {IconArrowRight} from '@pierre/icons'
 import {useEffect, useRef, useState} from 'react'
 
 import {css, cx} from 'styled-system/css'
-import {Button} from '@/diffs/components/button'
+import {Button} from '@/diffs/components/ui/button'
 import {type AvatarName, annotationCardBase, getRandomPersona} from '@/diffs/lib/annotation'
 import {isNullish} from '@/diffs/lib/nullish'
 import type {DraftCommentMetadata} from '@/diffs/lib/types'
-import {CommentAuthorAvatar} from './comment-author-avatar'
+import {CommentAuthorAvatar} from './ui/comment-author-avatar'
 
 interface DraftAnnotationProps {
   annotation: DiffLineAnnotation<DraftCommentMetadata>

@@ -1,7 +1,7 @@
 import {FileDiff, type FileDiffProps} from '@pierre/diffs/react'
 import {useMemo} from 'react'
 import type {DiffThemeInput} from '@/diffs/lib/theme/diff-theme-props'
-import {useDiffThemeProps} from './use-diff-theme-props'
+import {useDiffThemeProps} from './hooks/use-diff-theme-props'
 import {useWorkerDiffTheme} from './use-worker-diff-theme'
 
 interface ThemedFileDiffProps<LAnnotation = undefined> extends FileDiffProps<LAnnotation> {

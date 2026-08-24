@@ -16,7 +16,7 @@ import {isNullish} from '@/diffs/lib/nullish'
 import type {CommentMetadata} from '@/diffs/lib/types'
 import {StatItem} from './stat-item'
 import {StatusRow} from './status-row'
-import type {ThemeCycleControls} from './use-theme-cycle'
+import type {ThemeCycleControls} from './hooks/use-theme-cycle'
 
 // Mirrors Tailwind's `transition` utility (color/background-color/border-color/opacity).
 const TRANSITION_COLORS =

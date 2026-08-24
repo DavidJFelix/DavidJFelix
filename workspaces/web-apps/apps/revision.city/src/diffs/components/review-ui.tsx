@@ -31,10 +31,10 @@ import {DiffsHeader} from './diffs-header'
 import {DiffsSidebar} from './diffs-sidebar'
 import {DiffsStatusPanel} from './diffs-status-panel'
 import {DiffsViewer} from './diffs-viewer'
-import {ThemeSourceProvider} from './theme-source-provider'
-import {useGitHubSession} from './use-github-session'
-import {usePatchLoader} from './use-patch-loader'
-import {useThemeCycle} from './use-theme-cycle'
+import {ThemeSourceProvider} from './contexts/theme-source-provider'
+import {useGitHubSession} from './hooks/use-github-session'
+import {usePatchLoader} from './hooks/use-patch-loader'
+import {useThemeCycle} from './hooks/use-theme-cycle'
 
 interface ReviewUIProps {
   domain?: string

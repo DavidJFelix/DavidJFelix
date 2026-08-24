@@ -6,7 +6,7 @@ import {memo} from 'react'
 import {css, cx} from 'styled-system/css'
 
 import {SiteMark} from '@/components/site-mark'
-import {Button} from '@/diffs/components/button'
+import {Button} from '@/diffs/components/ui/button'
 import {DiffUrlForm} from '@/diffs/components/diff-url-form'
 import {GitHubAuthControl} from '@/diffs/components/github-auth-control'
 import {PullRequestList} from '@/diffs/components/pull-request-list'

@@ -8,7 +8,7 @@ import {
   ThemeSourceContext,
   useThemeResolver,
   useThemeSource,
-} from './use-theme-source'
+} from '../hooks/use-theme-source'
 
 interface ControllerProviderProps {
   controller: ThemeController

@@ -4,8 +4,8 @@ import {memo} from 'react'
 
 import {css} from 'styled-system/css'
 
-import {useGitHubSession} from '@/diffs/components/use-github-session'
-import {usePullRequestGroups} from '@/diffs/components/use-pull-request-groups'
+import {useGitHubSession} from '@/diffs/components/hooks/use-github-session'
+import {usePullRequestGroups} from '@/diffs/components/hooks/use-pull-request-groups'
 import type {
   PullRequestGroup,
   PullRequestGroupKind,

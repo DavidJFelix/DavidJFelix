@@ -5,7 +5,7 @@ import {act, createRef} from 'react'
 import {createRoot, type Root} from 'react-dom/client'
 import {expect, test} from 'vitest'
 import type {ChromeMapping} from '@/diffs/lib/theme/chrome-theme-props'
-import {ThemeSourceProvider} from './theme-source-provider'
+import {ThemeSourceProvider} from './contexts/theme-source-provider'
 import {ThemedCodeView} from './themed-code-view'
 import {ThemedSurface} from './themed-surface'
 

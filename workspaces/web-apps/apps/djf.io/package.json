@@ -42,7 +42,7 @@
     "mdast-util-gfm": "^3.1.0",
     "mdast-util-to-markdown": "^2.1.2",
     "posthog-js": "^1.391.2",
-    "satori": "^0.32.0",
+    "satori": "^0.33.0",
     "sharp": "^0.35.1",
     "zod": "^4.4.3"
   },

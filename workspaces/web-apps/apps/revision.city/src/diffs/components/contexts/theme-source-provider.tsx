@@ -1,14 +1,14 @@
 import {createThemeResolver, type ThemeController, type ThemeResolver} from '@pierre/theming'
 import {type ReactNode, useMemo} from 'react'
-import {isNullish} from '@/diffs/lib/nullish'
-import {controllerSource, fixedSource, type ThemeInput} from '@/diffs/lib/theme/theme-source'
 import {
-  ThemeControllerContext,
   ThemeResolverContext,
   ThemeSourceContext,
   useThemeResolver,
   useThemeSource,
-} from '../hooks/use-theme-source'
+} from '@/diffs/components/hooks/use-theme-source'
+import {isNullish} from '@/diffs/lib/nullish'
+import {controllerSource, fixedSource, type ThemeInput} from '@/diffs/lib/theme/theme-source'
+import {ThemeControllerContext} from './theme-controller-context'
 
 interface ControllerProviderProps {
   controller: ThemeController

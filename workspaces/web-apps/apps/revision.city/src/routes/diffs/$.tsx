@@ -1,11 +1,10 @@
 import {createFileRoute, redirect} from '@tanstack/react-router'
 
 import {css} from 'styled-system/css'
-
+import {DiffUrlProvider} from '@/diffs/components/contexts/diff-url-context'
 import {ReviewUI} from '@/diffs/components/review-ui'
 import {isNullish} from '@/diffs/lib/nullish'
 import {resolveDiffsViewerRoute} from '@/diffs/lib/resolve-diffs-viewer-route'
-import { DiffUrlProvider } from '@/diffs/components/contexts/diff-url-context'
 
 // Viewer route that mirrors the upstream path below /diffs. GitHub is the
 // public default, while hidden alternate domains can opt in through the

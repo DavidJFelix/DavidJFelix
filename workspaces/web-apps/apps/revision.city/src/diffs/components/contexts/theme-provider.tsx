@@ -10,7 +10,7 @@ import {
   useSyncExternalStore,
 } from 'react'
 import {isNullish} from '@/diffs/lib/nullish'
-import {themeController} from '../theme-controller'
+import {themeController} from '@/diffs/state/theme-controller'
 
 interface ThemeProviderProps {
   attribute?: 'class' | `data-${string}` | Array<'class' | `data-${string}`>

@@ -2,8 +2,8 @@ import {IconBrandGithub, IconCiWarningFill, IconRefresh} from '@pierre/icons'
 import {useEffect, useState} from 'react'
 
 import {css, cx} from 'styled-system/css'
-import {Button} from '@/diffs/components/ui/button'
 import {getCurrentReturnPath, getGitHubLoginURL} from '@/diffs/components/hooks/use-github-session'
+import {Button} from '@/diffs/components/ui/button'
 import type {GitHubAccessRemedy} from '@/diffs/lib/github-access-remedy'
 import {isNullish} from '@/diffs/lib/nullish'
 import {diffsChromeMapping} from '@/diffs/lib/theme/diffs-chrome-mapping'
@@ -15,7 +15,7 @@ interface DiffsStatusPanelProps {
   // The one step that unblocks this failure, when the server could work one
   // out. Rendered as the panel's primary action.
   remedy: GitHubAccessRemedy | null
-  onRetry(): void
+  onRetry: () => void
   state: ViewerLoadState
 }
 
@@ -186,7 +186,7 @@ function RemedyButton({remedy}: {remedy: GitHubAccessRemedy | null}) {
 // to tell this page when it is done. Coming back to the tab is the signal: the
 // only reason to return to a blocked diff is to see whether it works now, so
 // retry on the way in rather than making the reader ask twice.
-function useReloadOnReturn({enabled, onRetry}: {enabled: boolean; onRetry(): void}): void {
+function useReloadOnReturn({enabled, onRetry}: {enabled: boolean; onRetry: () => void}): void {
   const [hasLeft, setHasLeft] = useState(false)
 
   useEffect(() => {

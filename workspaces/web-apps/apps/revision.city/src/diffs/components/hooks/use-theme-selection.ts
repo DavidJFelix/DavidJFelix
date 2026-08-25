@@ -4,7 +4,7 @@ import {useThemeController} from '@pierre/theming/react'
 import {useContext, useMemo} from 'react'
 import {docsThemeCatalog} from '@/diffs/components/theme-catalog'
 import {isNullish} from '@/diffs/lib/nullish'
-import {ThemeControllerContext} from './use-theme-source'
+import {ThemeControllerContext} from '@/diffs/components/contexts/theme-controller-context'
 
 export interface ThemeSelectionResult {
   // Current selection.

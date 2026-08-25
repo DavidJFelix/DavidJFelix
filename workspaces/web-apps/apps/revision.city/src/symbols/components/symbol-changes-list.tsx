@@ -16,8 +16,8 @@ export interface SymbolSelection {
 
 interface SymbolChangesListProps {
   entries: readonly EntityDiffEntry[]
-  onSelectItem?(itemId: string): void
-  onSelectSymbol?(selection: SymbolSelection): void
+  onSelectItem?: (itemId: string) => void
+  onSelectSymbol?: (selection: SymbolSelection) => void
   // False for diff sources this cannot read at all -- the alternate-domain
   // hosts, which are not GitHub.
   supported: boolean
@@ -67,8 +67,8 @@ export const SymbolChangesList = memo(function SymbolChangesList({
 })
 
 interface SymbolSectionsProps {
-  onSelectItem?(itemId: string): void
-  onSelectSymbol?(selection: SymbolSelection): void
+  onSelectItem?: (itemId: string) => void
+  onSelectSymbol?: (selection: SymbolSelection) => void
   pendingCount: number
   sections: readonly EntityDiffEntry[]
 }
@@ -153,8 +153,8 @@ function ChangeSummary({sections}: {sections: readonly EntityDiffEntry[]}) {
 
 interface FileSectionProps {
   entry: EntityDiffEntry
-  onSelectItem?(itemId: string): void
-  onSelectSymbol?(selection: SymbolSelection): void
+  onSelectItem?: (itemId: string) => void
+  onSelectSymbol?: (selection: SymbolSelection) => void
 }
 
 function FileSection({entry, onSelectItem, onSelectSymbol}: FileSectionProps) {
@@ -210,7 +210,7 @@ function FileSection({entry, onSelectItem, onSelectSymbol}: FileSectionProps) {
 interface SymbolRowProps {
   change: EntityChange
   itemId: string
-  onSelectSymbol?(selection: SymbolSelection): void
+  onSelectSymbol?: (selection: SymbolSelection) => void
 }
 
 function SymbolRow({change, itemId, onSelectSymbol}: SymbolRowProps) {

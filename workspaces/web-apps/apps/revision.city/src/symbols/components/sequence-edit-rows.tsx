@@ -11,7 +11,7 @@ const MAX_VISIBLE_EDITS = 8
 interface SequenceEditRowsProps {
   edits: readonly SequenceEdit[]
   itemId: string
-  onSelectSymbol?(selection: SymbolSelection): void
+  onSelectSymbol?: (selection: SymbolSelection) => void
 }
 
 export function SequenceEditRows({edits, itemId, onSelectSymbol}: SequenceEditRowsProps) {
@@ -49,7 +49,7 @@ export function SequenceEditRows({edits, itemId, onSelectSymbol}: SequenceEditRo
 interface SequenceEditRowProps {
   edit: SequenceEdit
   itemId: string
-  onSelectSymbol?(selection: SymbolSelection): void
+  onSelectSymbol?: (selection: SymbolSelection) => void
 }
 
 // One element-level edit under its owning key: `+ "lezer" at 9`. Same anatomy

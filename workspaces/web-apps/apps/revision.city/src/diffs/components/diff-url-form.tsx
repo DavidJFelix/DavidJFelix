@@ -1,7 +1,7 @@
 import {useStableCallback} from '@pierre/diffs/react'
 import {IconX} from '@pierre/icons'
 import {useRouter} from '@tanstack/react-router'
-import {type SubmitEvent, type ReactNode, useEffect, useRef, useState, useTransition} from 'react'
+import {type ReactNode, type SubmitEvent, useEffect, useRef, useState, useTransition} from 'react'
 import {createPortal} from 'react-dom'
 import {css, cx} from 'styled-system/css'
 import {Button} from '@/diffs/components/ui/button'

@@ -12,8 +12,8 @@ import {CommentAuthorAvatar} from './ui/comment-author-avatar'
 interface DraftAnnotationProps {
   annotation: DiffLineAnnotation<DraftCommentMetadata>
   itemId: string
-  onCancel(itemId: string, key: string): void
-  onSave(params: {itemId: string; key: string; message: string; author: AvatarName}): void
+  onCancel: (itemId: string, key: string) => void
+  onSave: (params: {itemId: string; key: string; message: string; author: AvatarName}) => void
 }
 
 export function DraftAnnotation({annotation, itemId, onCancel, onSave}: DraftAnnotationProps) {
@@ -60,7 +60,7 @@ export function DraftAnnotation({annotation, itemId, onCancel, onSave}: DraftAnn
         <textarea
           ref={textareaRef}
           value={message}
-          onChange={({currentTarget}) => setMessage(currentTarget.value)}
+          onChange={({currentTarget}) =>{  setMessage(currentTarget.value); }}
           onKeyDown={(event) => {
             if (event.key === 'Escape') {
               event.preventDefault()

@@ -10,7 +10,7 @@ import {StatusRow} from './status-row'
 
 interface DiffsStatsProps {
   expanded: boolean
-  onToggle(): void
+  onToggle: () => void
   stats: DiffsStatsData | null
   streaming: boolean
 }
@@ -29,7 +29,7 @@ export const DiffsStats = memo(function DiffsStats({
       }
     }
     window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
+    return () =>{  window.removeEventListener('keydown', onKeyDown); }
   }, [onToggle])
 
   if (isNullish(stats)) {

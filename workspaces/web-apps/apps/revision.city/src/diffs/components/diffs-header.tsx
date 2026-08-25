@@ -33,6 +33,9 @@ import {
 
 import {css, cx} from 'styled-system/css'
 import {SiteMark} from '@/components/site-mark'
+import {GitHubAuthControl} from '@/diffs/components/github-auth-control'
+import {Switch} from '@/diffs/components/switch'
+import {docsThemeCatalog} from '@/diffs/components/theme-catalog'
 import {Button} from '@/diffs/components/ui/button'
 import {ButtonGroup, ButtonGroupItem} from '@/diffs/components/ui/button-group'
 import {
@@ -41,16 +44,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/diffs/components/ui/dropdown-menu'
-import {GitHubAuthControl} from '@/diffs/components/github-auth-control'
-import {Switch} from '@/diffs/components/switch'
-import {docsThemeCatalog} from '@/diffs/components/theme-catalog'
 import {isNullish} from '@/diffs/lib/nullish'
 import {diffsChromeMapping} from '@/diffs/lib/theme/diffs-chrome-mapping'
 import {getDropdownThemeStyle} from '@/diffs/lib/theme/dropdown-chrome-style'
 import {CHROME_ICON_BUTTON_CLASS} from './chrome-button-styles'
+import {useDiffUrlContext} from './contexts/diff-url-context'
 import {DiffUrlForm} from './diff-url-form'
 import {useChromeThemeProps} from './hooks/use-chrome-theme-props'
-import { useDiffUrlContext } from './contexts/diff-url-context'
 
 type LightThemeName = string
 type DarkThemeName = string
@@ -93,13 +93,13 @@ interface HeaderProps {
   lightThemeName: LightThemeName
   lineNumbers: boolean
   overflow: 'wrap' | 'scroll'
-  onToggleCollapseMode(): void
-  onToggleFileTreeOverlay(): void
-  setColorMode(mode: ColorMode): void
-  setDarkThemeName(name: DarkThemeName): void
+  onToggleCollapseMode: () => void
+  onToggleFileTreeOverlay: () => void
+  setColorMode: (mode: ColorMode) => void
+  setDarkThemeName: (name: DarkThemeName) => void
   setDiffIndicators: Dispatch<SetStateAction<DiffIndicators>>
   setDiffStyle: Dispatch<SetStateAction<'split' | 'unified'>>
-  setLightThemeName(name: LightThemeName): void
+  setLightThemeName: (name: LightThemeName) => void
   setLineNumbers: Dispatch<SetStateAction<boolean>>
   setOverflow: Dispatch<SetStateAction<'wrap' | 'scroll'>>
   setShowBackgrounds: Dispatch<SetStateAction<boolean>>
@@ -263,7 +263,7 @@ export const DiffsHeader = memo(function DiffsHeader({
               size="icon-md"
               title={diffStyle === 'split' ? 'Switch to unified view' : 'Switch to split view'}
               className={cx(CHROME_ICON_BUTTON_CLASS, css({display: {base: 'none', md: 'flex'}}))}
-              onClick={() => setDiffStyle(diffStyle === 'split' ? 'unified' : 'split')}
+              onClick={() =>{  setDiffStyle(diffStyle === 'split' ? 'unified' : 'split'); }}
             >
               {diffStyle === 'split' ? (
                 <IconDiffSplit className={ICON_SIZE_CLASS} />
@@ -316,7 +316,7 @@ export const DiffsHeader = memo(function DiffsHeader({
                 <div className={css({bg: 'diffs.border/70', my: '2', h: '[1px]'})} />
                 <DropdownMenuItem
                   className={css({cursor: 'default', p: '0'})}
-                  onSelect={(e) => e.preventDefault()}
+                  onSelect={(e) =>{  e.preventDefault(); }}
                 >
                   <label htmlFor="diffs-setting-backgrounds" className={SETTING_ROW_CLASS}>
                     <span className={css({minW: '0', flex: '1'})}>Backgrounds</span>
@@ -329,7 +329,7 @@ export const DiffsHeader = memo(function DiffsHeader({
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className={css({cursor: 'default', p: '0'})}
-                  onSelect={(e) => e.preventDefault()}
+                  onSelect={(e) =>{  e.preventDefault(); }}
                 >
                   <label htmlFor="diffs-setting-line-numbers" className={SETTING_ROW_CLASS}>
                     <span className={css({minW: '0', flex: '1'})}>Line numbers</span>
@@ -342,26 +342,26 @@ export const DiffsHeader = memo(function DiffsHeader({
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className={css({cursor: 'default', p: '0'})}
-                  onSelect={(e) => e.preventDefault()}
+                  onSelect={(e) =>{  e.preventDefault(); }}
                 >
                   <label htmlFor="diffs-setting-word-wrap" className={SETTING_ROW_CLASS}>
                     <span className={css({minW: '0', flex: '1'})}>Word wrap</span>
                     <Switch
                       id="diffs-setting-word-wrap"
                       checked={overflow === 'wrap'}
-                      onCheckedChange={(checked) => setOverflow(checked ? 'wrap' : 'scroll')}
+                      onCheckedChange={(checked) =>{  setOverflow(checked ? 'wrap' : 'scroll'); }}
                     />
                   </label>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className={cx(css({w: 'full', px: '2'}), MENU_ITEM_FOCUS_TRANSPARENT_CLASS)}
-                  onSelect={(e) => e.preventDefault()}
+                  onSelect={(e) =>{  e.preventDefault(); }}
                 >
                   <span>Indicator style</span>
                   <ButtonGroup
                     className={css({ml: 'auto'})}
                     value={diffIndicators}
-                    onValueChange={(value) => setDiffIndicators(value as DiffIndicators)}
+                    onValueChange={(value) =>{  setDiffIndicators(value as DiffIndicators); }}
                   >
                     <ButtonGroupItem value="bars" className={css({w: '7', h: '7', p: '0'})}>
                       <IconCodeStyleBars className={css({w: '3', h: '3'})} />
@@ -403,9 +403,9 @@ interface ThemeDropdownProps {
   colorMode: ColorMode
   darkThemeName: DarkThemeName
   lightThemeName: LightThemeName
-  setColorMode(mode: ColorMode): void
-  setDarkThemeName(name: DarkThemeName): void
-  setLightThemeName(name: LightThemeName): void
+  setColorMode: (mode: ColorMode) => void
+  setDarkThemeName: (name: DarkThemeName) => void
+  setLightThemeName: (name: LightThemeName) => void
   themeDropdownStyle?: CSSProperties
 }
 
@@ -462,7 +462,7 @@ function ThemeDropdown({
           <>
             <DropdownMenuItem
               className={cx(css({cursor: 'default', p: '0'}), MENU_ITEM_FOCUS_TRANSPARENT_CLASS)}
-              onSelect={(event) => event.preventDefault()}
+              onSelect={(event) =>{  event.preventDefault(); }}
             >
               <ButtonGroup
                 className={css({w: 'full'})}
@@ -561,7 +561,7 @@ function ThemeDropdown({
             view={view}
             currentLight={lightThemeName}
             currentDark={darkThemeName}
-            onBack={() => setView('main')}
+            onBack={() =>{  setView('main'); }}
             onPickLight={(theme) => {
               setLightThemeName(theme)
               setColorMode('light')
@@ -583,9 +583,9 @@ interface ThemeListProps {
   view: 'light' | 'dark'
   currentLight: LightThemeName
   currentDark: DarkThemeName
-  onBack(): void
-  onPickLight(theme: LightThemeName): void
-  onPickDark(theme: DarkThemeName): void
+  onBack: () => void
+  onPickLight: (theme: LightThemeName) => void
+  onPickDark: (theme: DarkThemeName) => void
 }
 
 // Inline list of theme names shown after the user enters the light or dark

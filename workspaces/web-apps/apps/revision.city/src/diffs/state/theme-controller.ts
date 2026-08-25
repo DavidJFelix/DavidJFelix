@@ -1,7 +1,7 @@
 import {createThemeController, type ThemePersistence} from '@pierre/theming'
 import * as z from 'zod/mini'
 import {isNullish} from '@/diffs/lib/nullish'
-import {docsThemeCatalog} from './theme-catalog'
+import {docsThemeCatalog} from '../components/theme-catalog'
 
 // The repo theming contract's storage schema (zod 4, see
 // docs/projects/theme-switcher-unification/plan.md): the mode key holds a raw
@@ -10,7 +10,7 @@ import {docsThemeCatalog} from './theme-catalog'
 // lib/theme-bootstrap.ts is this schema's compiled twin; keep them agreeing.
 const themeModeSchema = z.catch(z.enum(['light', 'dark', 'system']), 'system')
 
-export {docsThemeCatalog} from './theme-catalog'
+export {docsThemeCatalog} from '../components/theme-catalog'
 
 // The single owner of the diffs app's theming state. Color mode (light/
 // dark/system), the light/dark theme-name picks, and their persistence all

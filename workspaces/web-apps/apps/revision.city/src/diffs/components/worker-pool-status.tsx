@@ -14,9 +14,9 @@ import {type MouseEvent, memo, type RefObject, useEffect, useState} from 'react'
 import {css, cx} from 'styled-system/css'
 import {isNullish} from '@/diffs/lib/nullish'
 import type {CommentMetadata} from '@/diffs/lib/types'
+import type {ThemeCycleControls} from './hooks/use-theme-cycle'
 import {StatItem} from './stat-item'
 import {StatusRow} from './status-row'
-import type {ThemeCycleControls} from './hooks/use-theme-cycle'
 
 // Mirrors Tailwind's `transition` utility (color/background-color/border-color/opacity).
 const TRANSITION_COLORS =
@@ -88,7 +88,7 @@ class AutoScrollTester<LAnnotation> {
 
 interface WorkerPoolStatusProps {
   expanded: boolean
-  onToggle(): void
+  onToggle: () => void
   themeCycle: ThemeCycleControls
   viewerRef: RefObject<CodeViewHandle<CommentMetadata> | null>
 }
@@ -129,7 +129,7 @@ export const WorkerPoolStatus = memo(function WorkerPoolStatus({
 
 interface StatsDisplayProps {
   expanded: boolean
-  onToggle(): void
+  onToggle: () => void
   stats: WorkerStats
   themeCycle: ThemeCycleControls
   viewerRef: RefObject<CodeViewHandle<CommentMetadata> | null>
@@ -180,7 +180,7 @@ function StatsDisplay({expanded, onToggle, stats, themeCycle, viewerRef}: StatsD
       }
     }
     window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
+    return () =>{  window.removeEventListener('keydown', onKeyDown); }
   }, [onToggle])
 
   const {Icon: StatusIcon, className: statusIconClass} = getStatusIcon(stats)

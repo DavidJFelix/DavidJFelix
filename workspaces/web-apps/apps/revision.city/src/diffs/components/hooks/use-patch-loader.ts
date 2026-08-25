@@ -52,13 +52,13 @@ const GENERIC_PATCH_LOAD_ERROR_MESSAGE = 'We couldn’t load that diff. Check th
 interface UsePatchLoaderOptions {
   collapseMode: 'expanded' | 'collapsed'
   domain?: string
-  onLoadStart(): void
+  onLoadStart: () => void
   path: string
   viewerRef: RefObject<CodeViewHandle<CommentMetadata> | null>
 }
 
 interface UsePatchLoaderResult {
-  applyCollapseModeToLoaded(mode: 'expanded' | 'collapsed'): void
+  applyCollapseModeToLoaded: (mode: 'expanded' | 'collapsed') => void
   commentFileByItemId: DiffsCommentFileByItemId | null
   commentSections: DiffsSavedCommentItem[]
   diffStats: DiffsStats | null
@@ -66,9 +66,9 @@ interface UsePatchLoaderResult {
   errorRemedy: GitHubAccessRemedy | null
   initialItems: CodeViewItem<CommentMetadata>[]
   loadState: ViewerLoadState
-  onLineLinkChange(selection: CodeViewLineSelection | null): void
-  onViewerReady(): void
-  retryLoad(): void
+  onLineLinkChange: (selection: CodeViewLineSelection | null) => void
+  onViewerReady: () => void
+  retryLoad: () => void
   setCommentSections: Dispatch<SetStateAction<DiffsSavedCommentItem[]>>
   treeSource: DiffsFileTreeSource | null
   viewerKey: number

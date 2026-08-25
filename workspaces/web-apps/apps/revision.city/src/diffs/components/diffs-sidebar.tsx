@@ -74,10 +74,10 @@ interface DiffsSidebarProps {
   diffStats: DiffsStatsData | null
   entityDiffRequests: readonly EntityDiffRequest[]
   mobileOverlayOpen?: boolean
-  onMobileClose(): void
-  onSelectComment(comment: DiffsSavedCommentEntry): void
-  onSelectItem(itemId: string): void
-  onSelectSymbol(selection: SymbolSelection): void
+  onMobileClose: () => void
+  onSelectComment: (comment: DiffsSavedCommentEntry) => void
+  onSelectItem: (itemId: string) => void
+  onSelectSymbol: (selection: SymbolSelection) => void
   scrollRef: RefObject<HTMLDivElement | null>
   source: DiffsFileTreeSource
   sourcePath: string
@@ -379,13 +379,13 @@ export const DiffsSidebar = memo(function DiffsSidebar({
         </div>
         <DiffsStats
           expanded={activeStatusPanel === 'diffStats'}
-          onToggle={() => toggleStatusPanel('diffStats')}
+          onToggle={() =>{  toggleStatusPanel('diffStats'); }}
           stats={diffStats}
           streaming={streaming}
         />
         <WorkerPoolStatus
           expanded={activeStatusPanel === 'systemMonitor'}
-          onToggle={() => toggleStatusPanel('systemMonitor')}
+          onToggle={() =>{  toggleStatusPanel('systemMonitor'); }}
           viewerRef={viewerRef}
           themeCycle={themeCycle}
         />
@@ -496,9 +496,9 @@ const DIFF_STATUS_ITEMS: {
 interface FileTreeFilterButtonProps {
   availableStatuses: ReadonlySet<GitStatus>
   dropdownThemeStyle?: CSSProperties
-  onClear(): void
-  onIsolate(status: GitStatus): void
-  onToggle(status: GitStatus): void
+  onClear: () => void
+  onIsolate: (status: GitStatus) => void
+  onToggle: (status: GitStatus) => void
   selectedStatuses: ReadonlySet<GitStatus>
 }
 
@@ -577,7 +577,7 @@ function FileTreeFilterButton({
             onPointerDown={(e) => {
               altKeyRef.current = e.altKey
             }}
-            onSelect={(e) => e.preventDefault()}
+            onSelect={(e) =>{  e.preventDefault(); }}
             onCheckedChange={() => {
               if (altKeyRef.current) {
                 onIsolate(status)
@@ -638,7 +638,7 @@ function FileTreeSearchToggle({model}: {model: FileTree}) {
       // Avoid focus moving to this button before click: the tree search input
       // closes on blur, so without preventDefault the blur runs first, then
       // click sees isOpen false and calls open() again.
-      onPointerDown={(event) => event.preventDefault()}
+      onPointerDown={(event) =>{  event.preventDefault(); }}
       onClick={() => {
         if (search.isOpen) {
           search.close()

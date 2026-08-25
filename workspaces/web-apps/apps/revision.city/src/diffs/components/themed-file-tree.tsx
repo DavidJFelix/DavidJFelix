@@ -1,5 +1,4 @@
 import {FileTree, type FileTreeProps} from '@pierre/trees/react'
-import type {CSSProperties} from 'react'
 import {useMemo} from 'react'
 import type {ThemeInput} from '@/diffs/lib/theme/theme-source'
 import {useTreeThemeProps} from './hooks/use-tree-theme-props'
@@ -22,7 +21,7 @@ export function ThemedFileTree({
     reconcileForegroundFromChrome,
   })
   const mergedStyle = useMemo(
-    () => ({...themeProps.style, ...style}) as CSSProperties,
+    () => ({...themeProps.style, ...style}),
     [themeProps.style, style],
   )
   return <FileTree {...props} style={mergedStyle} />

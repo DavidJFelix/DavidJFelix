@@ -41,8 +41,8 @@ interface DiffsFileTreeProps {
   // Callback invoked with the underlying tree model once it's mounted, and
   // again with `null` on unmount. Lets parents drive imperative APIs like
   // search open/close without owning the model creation.
-  onModelReady(model: FileTreeModel | null): void
-  onSelectItem(itemId: string): void
+  onModelReady: (model: FileTreeModel | null) => void
+  onSelectItem: (itemId: string) => void
   source: DiffsFileTreeSource
 }
 
@@ -125,7 +125,7 @@ export const DiffsFileTree = memo(function DiffsFileTree({
 
   useEffect(() => {
     onModelReady(model)
-    return () => onModelReady(null)
+    return () =>{  onModelReady(null); }
   }, [model, onModelReady])
 
   return (

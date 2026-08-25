@@ -436,7 +436,7 @@ async function createPatchStreamResponse(
   viewer: DiffViewerAuth,
 ): Promise<Response> {
   const upstreamController = new AbortController()
-  const abortUpstream = () => upstreamController.abort()
+  const abortUpstream = () =>{  upstreamController.abort(); }
   requestSignal.addEventListener('abort', abortUpstream, {once: true})
 
   let activeRequest: PatchFetchTarget = patchRequest

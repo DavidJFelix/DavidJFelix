@@ -13,7 +13,6 @@ import {
 } from 'react'
 
 import {css} from 'styled-system/css'
-import {docsThemeCatalog, themeController} from '@/diffs/components/theme-controller'
 import {createGitHubDiffFileLoader} from '@/diffs/lib/github-diff-file-loader'
 import {isNullish} from '@/diffs/lib/nullish'
 import {removeSavedCommentSidebarEntry} from '@/diffs/lib/remove-saved-comment-sidebar-entry'
@@ -25,13 +24,14 @@ import type {
   DiffsSavedCommentEvent,
 } from '@/diffs/lib/types'
 import {upsertSavedCommentSidebarEntry} from '@/diffs/lib/upsert-saved-comment-sidebar-entry'
+import {docsThemeCatalog, themeController} from '@/diffs/state/theme-controller'
 import type {SymbolSelection} from '@/symbols/components/symbol-changes-list'
 import type {EntityDiffRequest} from '@/symbols/lib/entity-diff-client'
+import {ThemeSourceProvider} from './contexts/theme-source-provider'
 import {DiffsHeader} from './diffs-header'
 import {DiffsSidebar} from './diffs-sidebar'
 import {DiffsStatusPanel} from './diffs-status-panel'
 import {DiffsViewer} from './diffs-viewer'
-import {ThemeSourceProvider} from './contexts/theme-source-provider'
 import {useGitHubSession} from './hooks/use-github-session'
 import {usePatchLoader} from './hooks/use-patch-loader'
 import {useThemeCycle} from './hooks/use-theme-cycle'
@@ -162,7 +162,7 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
 
     updateMobileState(mediaQuery.matches)
     mediaQuery.addEventListener('change', handleChange)
-    return () => mediaQuery.removeEventListener('change', handleChange)
+    return () =>{  mediaQuery.removeEventListener('change', handleChange); }
   }, [])
   const handleSelectTreeItem = useCallback((itemId: string) => {
     setFileTreeOverlayOpen(false)

@@ -9,7 +9,7 @@ function createFakeStorage(): Storage {
     get length() {
       return store.size
     },
-    clear: () => store.clear(),
+    clear: () =>{  store.clear(); },
     getItem: (key: string) => store.get(key) ?? null,
     key: (index: number) => [...store.keys()][index] ?? null,
     removeItem: (key: string) => {

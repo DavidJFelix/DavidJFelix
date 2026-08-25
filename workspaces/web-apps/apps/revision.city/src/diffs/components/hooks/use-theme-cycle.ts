@@ -14,8 +14,8 @@ export type ThemeCycleDurationSeconds = (typeof THEME_CYCLE_DURATIONS_SECONDS)[n
 export interface ThemeCycleControls {
   cycling: boolean
   stepSeconds: ThemeCycleDurationSeconds
-  bumpDuration(): void
-  toggleCycle(): void
+  bumpDuration: () => void
+  toggleCycle: () => void
 }
 
 interface UseThemeCycleArgs {
@@ -118,7 +118,7 @@ export function useThemeCycle({
     }
     tick()
     const intervalId = window.setInterval(tick, stepSeconds * 1000)
-    return () => window.clearInterval(intervalId)
+    return () =>{  window.clearInterval(intervalId); }
   }, [cycling, stepSeconds, setLightThemeName, setDarkThemeName, setColorMode])
 
   return useMemo(

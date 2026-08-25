@@ -11,8 +11,8 @@ import {CommentAuthorAvatar} from './ui/comment-author-avatar'
 interface ExampleAnnotationProps {
   annotation: DiffLineAnnotation<SavedCommentMetadata>
   itemId: string
-  onDelete(itemId: string, key: string): void
-  onToggleSelection(selection: CodeViewLineSelection): void
+  onDelete: (itemId: string, key: string) => void
+  onToggleSelection: (selection: CodeViewLineSelection) => void
 }
 
 // The card is a plain container with a real <button> as its click surface;
@@ -54,7 +54,7 @@ export const ExampleAnnotation = memo(function ExampleAnnotation({
           color: '[inherit]',
           cursor: 'pointer',
         })}
-        onClick={() => onToggleSelection(selection)}
+        onClick={() =>{  onToggleSelection(selection); }}
       >
         <CommentAuthorAvatar seed={annotation.metadata.author} />
         <span className={css({display: 'flex', flexDirection: 'column'})}>

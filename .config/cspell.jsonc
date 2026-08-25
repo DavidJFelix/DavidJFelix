@@ -41,7 +41,7 @@
     {
       "name": "npm-local",
       "path": "dictionaries/npm.txt",
-      "description": "NPM package names and ecosystem words"
+      "description": "NPM package names and ecosystem words",
     },
     {
       "name": "people-names",

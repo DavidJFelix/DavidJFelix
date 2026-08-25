@@ -20,7 +20,10 @@
     "style": "off",
   },
   "rules": {
-    "import/no-unassigned-import": ["error", {"allow": ["**/*.css", "@testing-library/jest-dom/vitest"]}],
+    "import/no-unassigned-import": [
+      "error",
+      {"allow": ["**/*.css", "@testing-library/jest-dom/vitest"]},
+    ],
     "react/exhaustive-deps": "warn",
     "react/rules-of-hooks": "error",
     "max-params": ["error", {"max": 3}],
@@ -90,7 +93,7 @@
     "vitest/no-duplicate-hooks": "error",
   },
   "options": {
-    "typeAware": true
+    "typeAware": true,
   },
   "overrides": [
     {

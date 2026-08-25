@@ -31,5 +31,5 @@ test('/diag forwards API requests to the ingestion host', async ({request}) => {
   // then
   expect(status).toBe(true)
   expect(contentTypeHeader).toBeDefined()
-  expect(contentTypeHeader).toContain('javascript')
+  expect(contentTypeHeader).toContain('json')
 })

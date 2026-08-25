@@ -60,7 +60,7 @@ async function waitForReady(): Promise<boolean> {
 
 let exitCode = 0
 try {
-  if ((await waitForReady())) {
+  if (await waitForReady()) {
     for (const route of ROUTES) {
       const problem = await check(route)
       if (problem === null) {

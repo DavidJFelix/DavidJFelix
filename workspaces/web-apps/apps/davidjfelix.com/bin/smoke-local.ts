@@ -72,7 +72,7 @@ async function waitForReady(): Promise<boolean> {
 
 let exitCode = 0
 try {
-  if ((await waitForReady())) {
+  if (await waitForReady()) {
     for (const route of ROUTES) {
       // oxlint-disable-next-line no-await-in-loop -- this is genuinely an await loop
       const problem = await check(route)

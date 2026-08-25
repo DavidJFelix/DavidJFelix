@@ -54,7 +54,9 @@ export const ExampleAnnotation = memo(function ExampleAnnotation({
           color: '[inherit]',
           cursor: 'pointer',
         })}
-        onClick={() =>{  onToggleSelection(selection); }}
+        onClick={() => {
+          onToggleSelection(selection)
+        }}
       >
         <CommentAuthorAvatar seed={annotation.metadata.author} />
         <span className={css({display: 'flex', flexDirection: 'column'})}>

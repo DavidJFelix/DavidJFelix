@@ -379,13 +379,17 @@ export const DiffsSidebar = memo(function DiffsSidebar({
         </div>
         <DiffsStats
           expanded={activeStatusPanel === 'diffStats'}
-          onToggle={() =>{  toggleStatusPanel('diffStats'); }}
+          onToggle={() => {
+            toggleStatusPanel('diffStats')
+          }}
           stats={diffStats}
           streaming={streaming}
         />
         <WorkerPoolStatus
           expanded={activeStatusPanel === 'systemMonitor'}
-          onToggle={() =>{  toggleStatusPanel('systemMonitor'); }}
+          onToggle={() => {
+            toggleStatusPanel('systemMonitor')
+          }}
           viewerRef={viewerRef}
           themeCycle={themeCycle}
         />
@@ -577,7 +581,9 @@ function FileTreeFilterButton({
             onPointerDown={(e) => {
               altKeyRef.current = e.altKey
             }}
-            onSelect={(e) =>{  e.preventDefault(); }}
+            onSelect={(e) => {
+              e.preventDefault()
+            }}
             onCheckedChange={() => {
               if (altKeyRef.current) {
                 onIsolate(status)
@@ -638,7 +644,9 @@ function FileTreeSearchToggle({model}: {model: FileTree}) {
       // Avoid focus moving to this button before click: the tree search input
       // closes on blur, so without preventDefault the blur runs first, then
       // click sees isOpen false and calls open() again.
-      onPointerDown={(event) =>{  event.preventDefault(); }}
+      onPointerDown={(event) => {
+        event.preventDefault()
+      }}
       onClick={() => {
         if (search.isOpen) {
           search.close()

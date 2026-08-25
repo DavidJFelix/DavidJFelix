@@ -627,6 +627,8 @@ function getSourceCacheKey(source: GitHubDiffSource): string {
       return `commit:${source.repo.owner}/${source.repo.repo}@${source.sha}`
     case 'compare':
       return `compare:${source.repo.owner}/${source.repo.repo}@${source.range}`
+    default:
+      throw new Error('Invalid Source Kind')
   }
 }
 

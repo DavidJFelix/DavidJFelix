@@ -55,9 +55,11 @@ export function useThemeCycle({
   const lightThemeNameRef = useRef(lightThemeName)
   const darkThemeNameRef = useRef(darkThemeName)
   const resolvedModeRef = useRef(resolvedThemeMode)
-  lightThemeNameRef.current = lightThemeName
-  darkThemeNameRef.current = darkThemeName
-  resolvedModeRef.current = resolvedThemeMode
+  useEffect(() => {
+    lightThemeNameRef.current = lightThemeName
+    darkThemeNameRef.current = darkThemeName
+    resolvedModeRef.current = resolvedThemeMode
+  }, [lightThemeName, darkThemeName, resolvedThemeMode])
 
   const bumpDuration = useCallback(() => {
     setStepSeconds((prev) => {
@@ -118,7 +120,9 @@ export function useThemeCycle({
     }
     tick()
     const intervalId = window.setInterval(tick, stepSeconds * 1000)
-    return () =>{  window.clearInterval(intervalId); }
+    return () => {
+      window.clearInterval(intervalId)
+    }
   }, [cycling, stepSeconds, setLightThemeName, setDarkThemeName, setColorMode])
 
   return useMemo(

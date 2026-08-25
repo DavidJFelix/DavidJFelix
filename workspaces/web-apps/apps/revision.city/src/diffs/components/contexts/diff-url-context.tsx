@@ -1,4 +1,4 @@
-import {createContext, type ReactNode, useContext } from 'react'
+import {createContext, type ReactNode, useContext} from 'react'
 
 export interface DiffUrlContextValue {
   url: string

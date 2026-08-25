@@ -17,6 +17,6 @@ export default withSentry(
   {
     fetch(request) {
       return handler.fetch(request)
-    }
-  }
+    },
+  },
 )

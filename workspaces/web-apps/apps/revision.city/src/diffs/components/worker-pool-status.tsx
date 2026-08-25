@@ -180,7 +180,9 @@ function StatsDisplay({expanded, onToggle, stats, themeCycle, viewerRef}: StatsD
       }
     }
     window.addEventListener('keydown', onKeyDown)
-    return () =>{  window.removeEventListener('keydown', onKeyDown); }
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+    }
   }, [onToggle])
 
   const {Icon: StatusIcon, className: statusIconClass} = getStatusIcon(stats)

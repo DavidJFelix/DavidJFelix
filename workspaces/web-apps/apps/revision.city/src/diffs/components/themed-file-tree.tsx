@@ -20,9 +20,6 @@ export function ThemedFileTree({
   const themeProps = useTreeThemeProps(theme, {
     reconcileForegroundFromChrome,
   })
-  const mergedStyle = useMemo(
-    () => ({...themeProps.style, ...style}),
-    [themeProps.style, style],
-  )
+  const mergedStyle = useMemo(() => ({...themeProps.style, ...style}), [themeProps.style, style])
   return <FileTree {...props} style={mergedStyle} />
 }

@@ -138,10 +138,7 @@ test('chromeThemeProps + diffsChromeMapping: matches the pre-theming chrome byte
 })
 
 test('chromeThemeProps + diffsChromeMapping: matches the pre-theming chrome byte-for-byte (pierre-dark-soft)', () => {
-  const {style} = chromeThemeProps(
-    {theme: darkSoftTheme, colorScheme: 'dark'},
-    diffsChromeMapping,
-  )
+  const {style} = chromeThemeProps({theme: darkSoftTheme, colorScheme: 'dark'}, diffsChromeMapping)
   expect(style).toEqual(DARK_SOFT_CHROME)
 })
 

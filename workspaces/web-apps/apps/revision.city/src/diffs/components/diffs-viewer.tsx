@@ -404,7 +404,9 @@ export const DiffsViewer = memo(function DiffsViewer({
       <CollapseDiffButton
         disabled={item.fileDiff.splitLineCount === 0 && item.fileDiff.unifiedLineCount === 0}
         collapsed={item.collapsed}
-        onToggle={() =>{  handleToggleItemCollapsed(item.id); }}
+        onToggle={() => {
+          handleToggleItemCollapsed(item.id)
+        }}
       />
     )
   })

@@ -29,7 +29,9 @@ export const DiffsStats = memo(function DiffsStats({
       }
     }
     window.addEventListener('keydown', onKeyDown)
-    return () =>{  window.removeEventListener('keydown', onKeyDown); }
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+    }
   }, [onToggle])
 
   if (isNullish(stats)) {

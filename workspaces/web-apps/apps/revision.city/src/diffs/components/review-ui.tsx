@@ -162,7 +162,9 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
 
     updateMobileState(mediaQuery.matches)
     mediaQuery.addEventListener('change', handleChange)
-    return () =>{  mediaQuery.removeEventListener('change', handleChange); }
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange)
+    }
   }, [])
   const handleSelectTreeItem = useCallback((itemId: string) => {
     setFileTreeOverlayOpen(false)

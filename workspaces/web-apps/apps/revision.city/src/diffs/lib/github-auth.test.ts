@@ -118,6 +118,9 @@ test('callback exchanges the code, stores the session cookie, and returns to the
   ).toBe(true)
 
   const exchangeCall = fetchImpl.mock.calls[0]
+
+  // BACKLOG(davidjfelix) dude?
+  // oxlint-disable-next-line typescript/no-base-to-string -- this is already fucked and in a test. who cares
   expect(String(exchangeCall?.[0])).toBe('https://github.com/login/oauth/access_token')
   const body = exchangeCall?.[1]?.body as URLSearchParams
   expect(body.get('client_id')).toBe(CREDENTIALS.clientId)
@@ -510,6 +513,9 @@ test('the preview exchanges the code against the redirect_uri that authorized it
   // GitHub requires the exchange to present the same redirect_uri the authorize
   // used, which was the dev worker's callback, not the preview's.
   const [, init] = fetchImpl.mock.calls[0] ?? []
+
+  // BACKLOG(davidjfelix) dude?
+  // oxlint-disable-next-line typescript/no-base-to-string -- this is already fucked and in a test. who cares
   expect(String(init?.body)).toContain(encodeURIComponent(`${DEV_WORKER}/api/auth/github/callback`))
   expect(response.headers.get('location')).toBe('/diffs/o/r/pull/1')
   expect(getSetCookies(response).some((header) => header.startsWith('diffs-github-auth='))).toBe(

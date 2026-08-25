@@ -126,7 +126,9 @@ function ButtonGroupProvider({children}: {children: React.ReactNode}) {
 
         // Children.toArray assigns every element a stable key, so use it
         // instead of the array index.
-        const key = React.isValidElement(child) ? (child.key ?? String(position)) : String(child)
+        const key = React.isValidElement(child)
+          ? (child.key ?? String(position))
+          : JSON.stringify(child)
         return (
           <ButtonGroupPositionContext.Provider key={key} value={position}>
             {child}

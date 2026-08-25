@@ -1,5 +1,7 @@
+import '@testing-library/jest-dom/vitest'
 import type {CodeViewHandle} from '@pierre/diffs/react'
 import type {ThemeLike} from '@pierre/theming'
+import {render} from '@testing-library/react'
 import type {CSSProperties} from 'react'
 import {act, createRef} from 'react'
 import {createRoot, type Root} from 'react-dom/client'
@@ -102,25 +104,16 @@ test('React themed component overrides: ThemedCodeView preserves caller themeTyp
 })
 
 test('React themed component overrides: per-component theme pairs use the provider color scheme', async () => {
-  const container = document.createElement('div')
-  document.body.appendChild(container)
-  let root: Root | undefined
-  await act(async () => {
-    root = createRoot(container)
-    root.render(
-      <ThemeSourceProvider theme={darkTheme}>
-        <ThemedSurface mapping={themeNameMapping} theme={{light: lightTheme, dark: darkTheme}} />
-      </ThemeSourceProvider>,
-    )
-    await flushReact()
-  })
+  // given
+  const {container} = render(
+    <ThemeSourceProvider theme={darkTheme}>
+      <ThemedSurface mapping={themeNameMapping} theme={{light: lightTheme, dark: darkTheme}} />
+    </ThemeSourceProvider>,
+  )
 
-  const surface = container.firstElementChild as HTMLElement
-  expect(surface.style.getPropertyValue('--test-theme-name')).toBe('dark-theme')
+  // when
+  const surface = container.firstElementChild
 
-  await act(async () => {
-    root?.unmount()
-    await flushReact()
-  })
-  container.remove()
+  // then
+  expect(surface).toHaveStyle({'--test-theme-name': 'dark-theme'})
 })

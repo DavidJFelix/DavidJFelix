@@ -2,9 +2,9 @@ import type {ColorMode, ThemeController, ThemeControllerState} from '@pierre/the
 import {createThemeResolver} from '@pierre/theming'
 import {useThemeController} from '@pierre/theming/react'
 import {useContext, useMemo} from 'react'
+import {ThemeControllerContext} from '@/diffs/components/contexts/theme-controller-context'
 import {docsThemeCatalog} from '@/diffs/components/theme-catalog'
 import {isNullish} from '@/diffs/lib/nullish'
-import {ThemeControllerContext} from '@/diffs/components/contexts/theme-controller-context'
 
 export interface ThemeSelectionResult {
   // Current selection.
@@ -75,9 +75,15 @@ export function useThemeSelection(): ThemeSelectionResult {
       lightThemeName: state.lightThemeName,
       darkThemeNames: docsThemeCatalog.getThemeNames({colorScheme: 'dark'}),
       lightThemeNames: docsThemeCatalog.getThemeNames({colorScheme: 'light'}),
-      setColorMode: (mode: ColorMode) => controller.setColorMode(mode),
-      setDarkThemeName: (name: string) => controller.setThemeNameForScheme('dark', name),
-      setLightThemeName: (name: string) => controller.setThemeNameForScheme('light', name),
+      setColorMode: (mode: ColorMode) => {
+        controller.setColorMode(mode)
+      },
+      setDarkThemeName: (name: string) => {
+        controller.setThemeNameForScheme('dark', name)
+      },
+      setLightThemeName: (name: string) => {
+        controller.setThemeNameForScheme('light', name)
+      },
     }
   }, [controller, state.mode, state.darkThemeName, state.lightThemeName])
 }

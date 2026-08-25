@@ -174,7 +174,11 @@ export const DiffsCommentsList = memo(function DiffsCommentsList({
                 outline: 'none',
                 _focusVisible: {boxShadow: '[0 0 0 2px var(--ring)]'},
               })}
-              onClick={(event) =>{  handleRowClick(event, () => onSelectItem(section.itemId)); }}
+              onClick={(event) => {
+                handleRowClick(event, () => {
+                  onSelectItem(section.itemId)
+                })
+              }}
             >
               <span className={css({userSelect: 'text'})}>{section.path}</span>
             </button>
@@ -227,7 +231,9 @@ export const DiffsCommentsList = memo(function DiffsCommentsList({
                     borderColor: 'var(--diffs-card-border, rgb(255 255 255 / 0.15))',
                   },
                 })}
-                onClick={(event) =>{  handleRowClick(event, () => onSelectComment?.(comment)); }}
+                onClick={(event) => {
+                  handleRowClick(event, () => onSelectComment?.(comment))
+                }}
               >
                 <CommentAuthorAvatar seed={comment.author} className={css({w: '5', h: '5'})} />
                 <div

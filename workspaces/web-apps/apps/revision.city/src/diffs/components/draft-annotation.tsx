@@ -60,7 +60,9 @@ export function DraftAnnotation({annotation, itemId, onCancel, onSave}: DraftAnn
         <textarea
           ref={textareaRef}
           value={message}
-          onChange={({currentTarget}) =>{  setMessage(currentTarget.value); }}
+          onChange={({currentTarget}) => {
+            setMessage(currentTarget.value)
+          }}
           onKeyDown={(event) => {
             if (event.key === 'Escape') {
               event.preventDefault()

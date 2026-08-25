@@ -263,7 +263,9 @@ export const DiffsHeader = memo(function DiffsHeader({
               size="icon-md"
               title={diffStyle === 'split' ? 'Switch to unified view' : 'Switch to split view'}
               className={cx(CHROME_ICON_BUTTON_CLASS, css({display: {base: 'none', md: 'flex'}}))}
-              onClick={() =>{  setDiffStyle(diffStyle === 'split' ? 'unified' : 'split'); }}
+              onClick={() => {
+                setDiffStyle(diffStyle === 'split' ? 'unified' : 'split')
+              }}
             >
               {diffStyle === 'split' ? (
                 <IconDiffSplit className={ICON_SIZE_CLASS} />
@@ -316,7 +318,9 @@ export const DiffsHeader = memo(function DiffsHeader({
                 <div className={css({bg: 'diffs.border/70', my: '2', h: '[1px]'})} />
                 <DropdownMenuItem
                   className={css({cursor: 'default', p: '0'})}
-                  onSelect={(e) =>{  e.preventDefault(); }}
+                  onSelect={(e) => {
+                    e.preventDefault()
+                  }}
                 >
                   <label htmlFor="diffs-setting-backgrounds" className={SETTING_ROW_CLASS}>
                     <span className={css({minW: '0', flex: '1'})}>Backgrounds</span>
@@ -329,7 +333,9 @@ export const DiffsHeader = memo(function DiffsHeader({
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className={css({cursor: 'default', p: '0'})}
-                  onSelect={(e) =>{  e.preventDefault(); }}
+                  onSelect={(e) => {
+                    e.preventDefault()
+                  }}
                 >
                   <label htmlFor="diffs-setting-line-numbers" className={SETTING_ROW_CLASS}>
                     <span className={css({minW: '0', flex: '1'})}>Line numbers</span>
@@ -342,26 +348,34 @@ export const DiffsHeader = memo(function DiffsHeader({
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className={css({cursor: 'default', p: '0'})}
-                  onSelect={(e) =>{  e.preventDefault(); }}
+                  onSelect={(e) => {
+                    e.preventDefault()
+                  }}
                 >
                   <label htmlFor="diffs-setting-word-wrap" className={SETTING_ROW_CLASS}>
                     <span className={css({minW: '0', flex: '1'})}>Word wrap</span>
                     <Switch
                       id="diffs-setting-word-wrap"
                       checked={overflow === 'wrap'}
-                      onCheckedChange={(checked) =>{  setOverflow(checked ? 'wrap' : 'scroll'); }}
+                      onCheckedChange={(checked) => {
+                        setOverflow(checked ? 'wrap' : 'scroll')
+                      }}
                     />
                   </label>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className={cx(css({w: 'full', px: '2'}), MENU_ITEM_FOCUS_TRANSPARENT_CLASS)}
-                  onSelect={(e) =>{  e.preventDefault(); }}
+                  onSelect={(e) => {
+                    e.preventDefault()
+                  }}
                 >
                   <span>Indicator style</span>
                   <ButtonGroup
                     className={css({ml: 'auto'})}
                     value={diffIndicators}
-                    onValueChange={(value) =>{  setDiffIndicators(value as DiffIndicators); }}
+                    onValueChange={(value) => {
+                      setDiffIndicators(value as DiffIndicators)
+                    }}
                   >
                     <ButtonGroupItem value="bars" className={css({w: '7', h: '7', p: '0'})}>
                       <IconCodeStyleBars className={css({w: '3', h: '3'})} />
@@ -462,7 +476,9 @@ function ThemeDropdown({
           <>
             <DropdownMenuItem
               className={cx(css({cursor: 'default', p: '0'}), MENU_ITEM_FOCUS_TRANSPARENT_CLASS)}
-              onSelect={(event) =>{  event.preventDefault(); }}
+              onSelect={(event) => {
+                event.preventDefault()
+              }}
             >
               <ButtonGroup
                 className={css({w: 'full'})}
@@ -561,7 +577,9 @@ function ThemeDropdown({
             view={view}
             currentLight={lightThemeName}
             currentDark={darkThemeName}
-            onBack={() =>{  setView('main'); }}
+            onBack={() => {
+              setView('main')
+            }}
             onPickLight={(theme) => {
               setLightThemeName(theme)
               setColorMode('light')

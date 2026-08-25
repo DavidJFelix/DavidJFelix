@@ -22,7 +22,7 @@ test('creates the contact with the bearer key and a source tag', async () => {
     Authorization: `Bearer ${API_KEY}`,
     'Content-Type': 'application/json',
   })
-  // BACKLOG(david) bruhj
+  // BACKLOG(david) bro
   // oxlint-disable-next-line typescript/no-base-to-string -- already f'd
   expect(JSON.parse(String(init?.body))).toEqual({
     email: 'monica@example.com',

@@ -22,7 +22,7 @@
   "rules": {
     "import/no-unassigned-import": [
       "error",
-      {"allow": ["**/*.css", "@testing-library/jest-dom/vitest"]},
+      {"allow": ["**/*.css", "@testing-library/jest-dom/vitest", "@fontsource-variable/**/*"]},
     ],
     "react/exhaustive-deps": "warn",
     "react/rules-of-hooks": "error",

@@ -42,6 +42,7 @@
     "@sentry/cloudflare": "10.70.0",
     "@types/bun": "1.4.0",
     "@vitest/coverage-v8": "4.1.11",
+    "oxlint-tsgolint": "^7.0.2001",
     "typescript": "7.0.2",
     "vitest": "4.1.11",
     "wrangler": "4.125.0"

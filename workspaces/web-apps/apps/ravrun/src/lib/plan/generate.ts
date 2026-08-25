@@ -109,7 +109,7 @@ function longRunMilesByWeek(args: {
   let previousFullLong = start
   let taperWeekNumber = 0
   return phases.map((phase, weekIndex) => {
-    if (phase === 'race') return
+    if (phase === 'race') return undefined
     if (phase === 'taper') {
       const factors = PLAN_RULES.taperLongRunFactors
       const factor = factors[Math.min(taperWeekNumber, factors.length - 1)] ?? 1

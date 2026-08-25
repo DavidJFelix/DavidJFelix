@@ -20,10 +20,10 @@ export interface ThemeState {
 }
 
 export interface ThemeController {
-  getState(): ThemeState
-  setMode(mode: ThemeMode): void
-  subscribe(listener: () => void): () => void
-  destroy(): void
+  getState: () => ThemeState
+  setMode: (mode: ThemeMode) => void
+  subscribe: (listener: () => void) => () => void
+  destroy: () => void
 }
 
 export interface ThemeControllerOptions {

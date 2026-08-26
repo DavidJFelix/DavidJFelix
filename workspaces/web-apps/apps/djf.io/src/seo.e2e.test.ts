@@ -19,7 +19,7 @@ test('robots.txt is served, points at the sitemap, and declares content signals'
   expect(response.ok()).toBe(true)
   const body = await response.text()
   expect(body).toContain('Sitemap: https://djf.io/sitemap-index.xml')
-  expect(body).toContain('Content-Signal: search=yes, ai-input=yes, ai-train=no')
+  expect(body).toContain('Content-Signal: search=yes, ai-input=yes, ai-train=no, use=reference')
 })
 
 test('sitemap lists the home page and every blog post', async ({request}) => {

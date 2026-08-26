@@ -12,7 +12,7 @@
       "styled-system/*": ["./styled-system/*"]
     },
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
-    "types": ["vite/client", "@cloudflare/workers-types"],
+    "types": ["vite/client"],
 
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,

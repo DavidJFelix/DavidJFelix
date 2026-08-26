@@ -66,12 +66,7 @@ async function waitForReady(): Promise<boolean> {
 
 let exitCode = 0
 try {
-  if (!(await waitForReady())) {
-    console.error(
-      `::error::preview did not become ready on ${BASE_URL} within ${READY_TIMEOUT_MS}ms`,
-    )
-    exitCode = 1
-  } else {
+  if (await waitForReady()) {
     for (const route of ROUTES) {
       const problem = await check(route)
       if (problem === null) {
@@ -81,6 +76,11 @@ try {
         exitCode = 1
       }
     }
+  } else {
+    console.error(
+      `::error::preview did not become ready on ${BASE_URL} within ${READY_TIMEOUT_MS}ms`,
+    )
+    exitCode = 1
   }
 } finally {
   server.kill()

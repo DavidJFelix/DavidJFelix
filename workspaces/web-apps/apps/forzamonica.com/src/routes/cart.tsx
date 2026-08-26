@@ -203,6 +203,7 @@ function GiftNoteField({note, registerFlush}: {note: string; registerFlush: Regi
 
   // Re-sync the draft whenever the loader refreshes server truth.
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect
     setDraft(note)
   }, [note])
 
@@ -232,12 +233,9 @@ function GiftNoteField({note, registerFlush}: {note: string; registerFlush: Regi
     return run
   }
 
-  const commitRef = useRef(commit)
-  commitRef.current = commit
-
   useEffect(() => {
     registerFlush('gift-note', async () => {
-      if (!(await commitRef.current())) {
+      if (!(await commit())) {
         throw new Error('gift note not saved')
       }
     })
@@ -291,6 +289,8 @@ function CartLineRow({line, registerFlush}: {line: CartLine; registerFlush: Regi
   // Re-sync the draft (and drop any stale scheduled commit) whenever the
   // loader refreshes server truth.
   useEffect(() => {
+    // BRO THIS WHOLE FILE IS ass
+    // oxlint-disable-next-line react/set-state-in-effect
     setQuantity(line.quantity)
     return () => {
       if (commitTimer.current) {
@@ -358,8 +358,7 @@ function CartLineRow({line, registerFlush}: {line: CartLine; registerFlush: Regi
     }, 500)
   }
 
-  const flushRef = useRef<() => Promise<void>>(async () => {})
-  flushRef.current = async () => {
+  const flush = async () => {
     const settled = pendingCommit.current ? await pendingCommit.current() : await inFlight.current
     if (settled === false) {
       throw new Error('cart update failed')
@@ -367,7 +366,7 @@ function CartLineRow({line, registerFlush}: {line: CartLine; registerFlush: Regi
   }
 
   useEffect(() => {
-    registerFlush(line.id, () => flushRef.current())
+    registerFlush(line.id, () => flush())
     return () => registerFlush(line.id, null)
   }, [line.id, registerFlush])
 
@@ -416,11 +415,11 @@ function CartLineRow({line, registerFlush}: {line: CartLine; registerFlush: Regi
         </Link>
         <div className={css({display: 'flex', gap: '2', alignItems: 'center', flexWrap: 'wrap'})}>
           {kind ? <Badge tone={kindTone(kind)}>{kind}</Badge> : null}
-          {line.merchandise.title !== 'Default Title' ? (
+          {line.merchandise.title === 'Default Title' ? null : (
             <span className={css({fontSize: '[12px]', color: 'ink.muted'})}>
               {line.merchandise.title}
             </span>
-          ) : null}
+          )}
         </div>
         {error ? <p className={css({fontSize: '[13px]', color: 'error'})}>{error}</p> : null}
         <button

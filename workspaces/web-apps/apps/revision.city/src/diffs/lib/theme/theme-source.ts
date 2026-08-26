@@ -45,7 +45,10 @@ export function hasThemeNameSelection(
 }
 
 export type ThemeValue = string | ThemeLike
-export type ThemePair<T = ThemeValue> = {light: T; dark: T}
+export interface ThemePair<T = ThemeValue> {
+  light: T
+  dark: T
+}
 export type ThemeInput = ThemeValue | ThemePair
 
 export interface FixedSourceOptions {
@@ -185,10 +188,7 @@ export function fixedSource(
     }
   } else if (!isNullish(slot.name)) {
     const cached = resolver.getResolvedTheme(slot.name)
-    if (!isNullish(cached)) {
-      resolved = cached
-      reportedScheme = schemeOf(cached)
-    } else {
+    if (isNullish(cached)) {
       // Load on demand; notify when it settles so subscribers re-read.
       void resolver
         .resolveTheme(slot.name)
@@ -207,6 +207,9 @@ export function fixedSource(
         .catch(() => {
           // Resolution failures leave the previous value in place.
         })
+    } else {
+      resolved = cached
+      reportedScheme = schemeOf(cached)
     }
   }
 
@@ -221,7 +224,7 @@ export function fixedSource(
       return {theme: resolved, colorScheme: reportedScheme}
     },
     getThemeNameSelection() {
-      return !isNullish(selection) ? {...selection, colorScheme: reportedScheme} : undefined
+      return isNullish(selection) ? undefined : {...selection, colorScheme: reportedScheme}
     },
   }
 }

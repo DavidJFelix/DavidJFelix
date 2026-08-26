@@ -62,17 +62,17 @@ export interface MonthState {
   slottedDays: DayDisplayState[]
 }
 
-export function getCalendarDisplayState(interval: Interval): MonthState[] {
-  const holidays = new Holidays('US', {types: ['bank', 'public', 'school']})
-
-  const days = eachDayOfInterval(interval)
-
+// BACKLOG(davidjfelix): I think maybe this doesn't handle multi-day holidays correctly?
+// also the map is in a weird format where the key is yyyy-MM-dd ew
+export function getDaysHolidayFeatureMapForYears(
+  years: Set<number>,
+): Map<string, HolidayFeature[]> {
   // Match holidays by calendar date, not by instant: date-holidays computes
   // holiday ranges in the country's timezone, so probing with local-midnight
   // Date objects (isHoliday) shifts holidays onto the wrong day for any
   // machine east of the US (including UTC CI runners).
+  const holidays = new Holidays('US', {types: ['bank', 'public', 'school']})
   const holidaysByDay = new Map<string, HolidayFeature[]>()
-  const years = new Set(days.map((day) => day.getFullYear()))
   for (const year of years) {
     for (const holiday of holidays.getHolidays(year)) {
       const key = holiday.date.slice(0, 10)
@@ -81,9 +81,19 @@ export function getCalendarDisplayState(interval: Interval): MonthState[] {
       holidaysByDay.set(key, features)
     }
   }
+  return holidaysByDay
+}
 
-  const daysMap: Record<string, DayFeature[]> = Object.fromEntries(
-    days.map((day) => {
+export interface GetDaysInIntervalFeatureMapParams {
+  daysInInterval: Date[]
+  holidaysByDay: Map<string, HolidayFeature[]>
+}
+export function getDaysInIntervalFeatureMap({
+  daysInInterval,
+  holidaysByDay,
+}: GetDaysInIntervalFeatureMapParams): Record<string, DayFeature[]> {
+  return Object.fromEntries(
+    daysInInterval.map((day) => {
       const isWeekend = day.getDay() === 0 || day.getDay() === 6
 
       return [
@@ -95,8 +105,15 @@ export function getCalendarDisplayState(interval: Interval): MonthState[] {
       ]
     }),
   )
+}
 
-  const months = eachMonthOfInterval(interval).map((month, monthIndex, months) => {
+export function getCalendarDisplayState(interval: Interval): MonthState[] {
+  const daysInInterval = eachDayOfInterval(interval)
+  const years = new Set(daysInInterval.map((day) => day.getFullYear()))
+  const holidaysByDay = getDaysHolidayFeatureMapForYears(years)
+  const daysMap = getDaysInIntervalFeatureMap({daysInInterval, holidaysByDay})
+
+  const monthStates = eachMonthOfInterval(interval).map((month, monthIndex, months) => {
     const slottedDays: DayDisplayState[] = []
     let start: Date
     let end: Date
@@ -135,5 +152,5 @@ export function getCalendarDisplayState(interval: Interval): MonthState[] {
     }
   })
 
-  return months
+  return monthStates
 }

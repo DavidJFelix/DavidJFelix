@@ -10,7 +10,9 @@ import {fetchProducts} from '@/lib/shopify/catalog.ts'
 
 const shopTitle = 'Shop — forzamonica art'
 
-type GallerySearch = {kind?: ProductKind}
+interface GallerySearch {
+  kind?: ProductKind
+}
 
 // The storefront's gallery home. Lives at /monica while the root path serves
 // the pre-launch landing.

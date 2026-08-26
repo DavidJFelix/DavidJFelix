@@ -14,8 +14,8 @@ export type ThemeCycleDurationSeconds = (typeof THEME_CYCLE_DURATIONS_SECONDS)[n
 export interface ThemeCycleControls {
   cycling: boolean
   stepSeconds: ThemeCycleDurationSeconds
-  bumpDuration(): void
-  toggleCycle(): void
+  bumpDuration: () => void
+  toggleCycle: () => void
 }
 
 interface UseThemeCycleArgs {
@@ -55,9 +55,11 @@ export function useThemeCycle({
   const lightThemeNameRef = useRef(lightThemeName)
   const darkThemeNameRef = useRef(darkThemeName)
   const resolvedModeRef = useRef(resolvedThemeMode)
-  lightThemeNameRef.current = lightThemeName
-  darkThemeNameRef.current = darkThemeName
-  resolvedModeRef.current = resolvedThemeMode
+  useEffect(() => {
+    lightThemeNameRef.current = lightThemeName
+    darkThemeNameRef.current = darkThemeName
+    resolvedModeRef.current = resolvedThemeMode
+  }, [lightThemeName, darkThemeName, resolvedThemeMode])
 
   const bumpDuration = useCallback(() => {
     setStepSeconds((prev) => {
@@ -71,7 +73,7 @@ export function useThemeCycle({
   }, [])
 
   useEffect(() => {
-    if (!cycling) return undefined
+    if (!cycling) return
     const startMode = resolvedModeRef.current ?? 'light'
     // Snapshot the catalog once per cycle start; each tick reads the same
     // captured sequence.
@@ -118,7 +120,9 @@ export function useThemeCycle({
     }
     tick()
     const intervalId = window.setInterval(tick, stepSeconds * 1000)
-    return () => window.clearInterval(intervalId)
+    return () => {
+      window.clearInterval(intervalId)
+    }
   }, [cycling, stepSeconds, setLightThemeName, setDarkThemeName, setColorMode])
 
   return useMemo(

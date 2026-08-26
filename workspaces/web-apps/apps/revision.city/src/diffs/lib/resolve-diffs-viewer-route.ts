@@ -23,7 +23,7 @@ export type DiffsViewerRoute =
 // url stay upstream-relative for fetching.
 export function resolveDiffsViewerRoute(
   pathSegments: readonly string[],
-  requestedDomainInput: string | undefined,
+  requestedDomainInput?: string,
 ): DiffsViewerRoute {
   if (pathSegments.length === 0) {
     return {kind: 'redirect', target: DIFFS_BASE_PATH}

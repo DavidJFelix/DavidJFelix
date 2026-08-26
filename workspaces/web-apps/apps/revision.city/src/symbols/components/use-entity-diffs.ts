@@ -42,14 +42,14 @@ export function useEntityDiffs({
   const cacheRef = useRef(new Map<string, EntityDiffEntry>())
   const previousSourceRef = useRef(sourcePath)
 
-  if (previousSourceRef.current !== sourcePath) {
-    previousSourceRef.current = sourcePath
-    cacheRef.current = new Map()
-  }
-
   useEffect(() => {
+    if (previousSourceRef.current !== sourcePath) {
+      previousSourceRef.current = sourcePath
+      cacheRef.current = new Map()
+    }
+
     if (!enabled || requests.length === 0) {
-      return undefined
+      return
     }
 
     const controller = new AbortController()

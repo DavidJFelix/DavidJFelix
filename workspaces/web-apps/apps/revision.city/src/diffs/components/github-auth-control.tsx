@@ -2,15 +2,14 @@ import {IconBrandGithub} from '@pierre/icons'
 import {memo} from 'react'
 
 import {css, cx} from 'styled-system/css'
-
-import {Button} from '@/diffs/components/button'
 import {
   GITHUB_MANAGE_ACCESS_ENDPOINT,
   getCurrentReturnPath,
   getGitHubLoginURL,
   getGitHubLogoutURL,
   useGitHubSession,
-} from '@/diffs/components/use-github-session'
+} from '@/diffs/components/hooks/use-github-session'
+import {Button} from '@/diffs/components/ui/button'
 
 interface GitHubAuthControlProps {
   className?: string

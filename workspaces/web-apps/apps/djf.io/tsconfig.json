@@ -1,7 +1,6 @@
 {
   "extends": "astro/tsconfigs/strict",
   "compilerOptions": {
-    "baseUrl": ".",
     "jsx": "preserve",
     "jsxImportSource": "react",
     "paths": {
@@ -9,5 +8,5 @@
       "styled-system/*": ["./styled-system/*"]
     }
   },
-  "include": ["src", "styled-system"]
+  "include": ["src"]
 }

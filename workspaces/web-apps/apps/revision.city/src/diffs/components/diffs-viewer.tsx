@@ -33,8 +33,8 @@ import type {
 } from '@/diffs/lib/types'
 import {DraftAnnotation} from './draft-annotation'
 import {ExampleAnnotation} from './example-annotation'
+import {useChromeThemeProps} from './hooks/use-chrome-theme-props'
 import {ThemedCodeView} from './themed-code-view'
-import {useChromeThemeProps} from './use-chrome-theme-props'
 
 function getNextItemVersion(item: CodeViewItem<CommentMetadata>): number {
   return typeof item.version === 'number' ? item.version + 1 : 1
@@ -66,8 +66,8 @@ interface ActiveDraftComment {
 interface DiffsViewerProps {
   className?: string
   diffStyle: 'split' | 'unified'
-  onCommentDeleted(comment: DiffsDeletedCommentEvent): void
-  onCommentSaved(comment: DiffsSavedCommentEvent): void
+  onCommentDeleted: (comment: DiffsDeletedCommentEvent) => void
+  onCommentSaved: (comment: DiffsSavedCommentEvent) => void
   overflow: 'wrap' | 'scroll'
   showBackgrounds: boolean
   diffIndicators: DiffIndicators
@@ -77,8 +77,8 @@ interface DiffsViewerProps {
   viewerRef: RefObject<CodeViewHandle<CommentMetadata> | null>
   initialItems: CodeViewItem<CommentMetadata>[]
   loadDiffFiles?: FileDiffContentsLoader
-  onLineLinkChange(selection: CodeViewLineSelection | null): void
-  onViewerReady(): void
+  onLineLinkChange: (selection: CodeViewLineSelection | null) => void
+  onViewerReady: () => void
 }
 
 export const DiffsViewer = memo(function DiffsViewer({
@@ -404,7 +404,9 @@ export const DiffsViewer = memo(function DiffsViewer({
       <CollapseDiffButton
         disabled={item.fileDiff.splitLineCount === 0 && item.fileDiff.unifiedLineCount === 0}
         collapsed={item.collapsed}
-        onToggle={() => handleToggleItemCollapsed(item.id)}
+        onToggle={() => {
+          handleToggleItemCollapsed(item.id)
+        }}
       />
     )
   })
@@ -497,7 +499,7 @@ export const DiffsViewer = memo(function DiffsViewer({
 interface CollapseDiffButtonProps {
   disabled?: boolean
   collapsed?: boolean
-  onToggle(): void
+  onToggle: () => void
 }
 
 function CollapseDiffButton({

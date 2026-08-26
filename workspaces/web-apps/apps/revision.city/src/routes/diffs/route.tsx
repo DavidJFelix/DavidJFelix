@@ -1,10 +1,9 @@
 import {ogTags} from '@davidjfelix/og'
 import {createFileRoute, Outlet} from '@tanstack/react-router'
-
+import {ThemeProvider} from '@/diffs/components/contexts/theme-provider'
 import {PreloadHighlighter} from '@/diffs/components/preload-highlighter'
 import {ScrollbarGutterVariables} from '@/diffs/components/scrollbar-gutter-variables'
-import {ThemeProvider} from '@/diffs/components/theme-provider'
-import {Toaster} from '@/diffs/components/toaster'
+import {Toaster} from '@/diffs/components/ui/toaster'
 import {WorkerPoolContext} from '@/diffs/components/worker-pool-context'
 import diffsCss from '@/diffs/diffs.css?url'
 import {SITE_DESCRIPTION, SITE_NAME} from '@/diffs/lib/site'

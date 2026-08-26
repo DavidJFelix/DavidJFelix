@@ -15,11 +15,15 @@
   "categories": {
     "correctness": "error",
     "suspicious": "warn",
-    "pedantic": "warn",
+    "pedantic": "off",
     "perf": "warn",
     "style": "off",
   },
   "rules": {
+    "import/no-unassigned-import": [
+      "error",
+      {"allow": ["**/*.css", "@testing-library/jest-dom/vitest", "@fontsource-variable/**/*"]},
+    ],
     "react/exhaustive-deps": "warn",
     "react/rules-of-hooks": "error",
     "max-params": ["error", {"max": 3}],
@@ -82,9 +86,14 @@
     // Off here means one report per finding, not one fewer check.
     "unicorn/no-negated-condition": "off",
     "unicorn/prefer-array-index-of": "warn",
+    // This append doesn't have the same type in workerd as it does in libdom so this breaks things
+    "unicorn/prefer-dom-node-append": "off",
     "unicorn/prefer-node-protocol": "warn",
     "unicorn/prefer-number-properties": "warn",
     "vitest/no-duplicate-hooks": "error",
+  },
+  "options": {
+    "typeAware": true,
   },
   "overrides": [
     {

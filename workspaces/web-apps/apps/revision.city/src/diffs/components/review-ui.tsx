@@ -2,10 +2,17 @@ import {type DiffIndicators} from '@pierre/diffs'
 import {type CodeViewHandle, useWorkerPool} from '@pierre/diffs/react'
 import {type ColorMode} from '@pierre/theming'
 import {useThemeController} from '@pierre/theming/react'
-import {type ReactNode, useCallback, useEffect, useMemo, useRef, useState} from 'react'
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react'
 
 import {css} from 'styled-system/css'
-import {docsThemeCatalog, themeController} from '@/diffs/components/theme-controller'
 import {createGitHubDiffFileLoader} from '@/diffs/lib/github-diff-file-loader'
 import {isNullish} from '@/diffs/lib/nullish'
 import {removeSavedCommentSidebarEntry} from '@/diffs/lib/remove-saved-comment-sidebar-entry'
@@ -17,34 +24,34 @@ import type {
   DiffsSavedCommentEvent,
 } from '@/diffs/lib/types'
 import {upsertSavedCommentSidebarEntry} from '@/diffs/lib/upsert-saved-comment-sidebar-entry'
+import {docsThemeCatalog, themeController} from '@/diffs/state/theme-controller'
 import type {SymbolSelection} from '@/symbols/components/symbol-changes-list'
 import type {EntityDiffRequest} from '@/symbols/lib/entity-diff-client'
+import {ThemeSourceProvider} from './contexts/theme-source-provider'
 import {DiffsHeader} from './diffs-header'
 import {DiffsSidebar} from './diffs-sidebar'
 import {DiffsStatusPanel} from './diffs-status-panel'
 import {DiffsViewer} from './diffs-viewer'
-import {ThemeSourceProvider} from './theme-source-provider'
-import {useGitHubSession} from './use-github-session'
-import {usePatchLoader} from './use-patch-loader'
-import {useThemeCycle} from './use-theme-cycle'
+import {useGitHubSession} from './hooks/use-github-session'
+import {usePatchLoader} from './hooks/use-patch-loader'
+import {useThemeCycle} from './hooks/use-theme-cycle'
 
 interface ReviewUIProps {
   domain?: string
-  initialUrl: string
   path: string
 }
 
-export function ReviewUI({domain, initialUrl, path}: ReviewUIProps) {
+export function ReviewUI({domain, path}: ReviewUIProps) {
   // Provide the diffs-scoped theme context, then render the body BELOW it so
   // the diffs hook + selection hook can read the controller context.
   return (
     <ThemeSourceProvider controller={themeController}>
-      <ReviewUIInner domain={domain} initialUrl={initialUrl} path={path} />
+      <ReviewUIInner domain={domain} path={path} />
     </ThemeSourceProvider>
   )
 }
 
-function ReviewUIInner({domain, initialUrl, path}: ReviewUIProps) {
+function ReviewUIInner({domain, path}: ReviewUIProps) {
   const isWorkerPoolReadyOrDisable = useIsWorkerPoolReadyOrDisabled()
   const [diffStyle, setDiffStyle] = useState<'split' | 'unified'>('split')
   const [collapseMode, setCollapseMode] = useState<'expanded' | 'collapsed'>('expanded')
@@ -72,10 +79,11 @@ function ReviewUIInner({domain, initialUrl, path}: ReviewUIProps) {
   // the SSR markup, then flips to the user's selection. This also keeps the
   // long-lived WorkerPool and the CodeView from mounting against the default
   // palette before the persisted values apply.
-  const [themesHydrated, setThemesHydrated] = useState(false)
-  useEffect(() => {
-    setThemesHydrated(true)
-  }, [])
+  const themesHydrated = useSyncExternalStore(
+    () => () => {}, // Subscribe - there's nothing to subscribe to
+    () => true, // Client snapshot: we are hydrated
+    () => false, // Server snapshot: we are not hydrated
+  )
 
   const colorMode: ColorMode = themesHydrated ? themeState.mode : 'system'
   const appResolvedTheme = themesHydrated ? themeState.resolvedColorScheme : undefined
@@ -154,7 +162,9 @@ function ReviewUIInner({domain, initialUrl, path}: ReviewUIProps) {
 
     updateMobileState(mediaQuery.matches)
     mediaQuery.addEventListener('change', handleChange)
-    return () => mediaQuery.removeEventListener('change', handleChange)
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange)
+    }
   }, [])
   const handleSelectTreeItem = useCallback((itemId: string) => {
     setFileTreeOverlayOpen(false)
@@ -275,7 +285,6 @@ function ReviewUIInner({domain, initialUrl, path}: ReviewUIProps) {
         darkThemeName={darkThemeName}
         diffIndicators={diffIndicators}
         diffStyle={diffStyle}
-        initialUrl={initialUrl}
         lightThemeName={lightThemeName}
         lineNumbers={lineNumbers}
         overflow={overflow}

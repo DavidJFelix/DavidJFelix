@@ -41,7 +41,9 @@ function activeNavItem(pathname: string, kind: ProductKind | undefined): NavItem
   return null
 }
 
-type SiteHeaderProps = {cartQuantity: number}
+interface SiteHeaderProps {
+  cartQuantity: number
+}
 
 export function SiteHeader({cartQuantity}: SiteHeaderProps) {
   const location = useRouterState({select: (state) => state.location})

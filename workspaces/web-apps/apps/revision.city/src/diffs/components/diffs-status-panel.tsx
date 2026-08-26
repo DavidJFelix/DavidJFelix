@@ -2,20 +2,20 @@ import {IconBrandGithub, IconCiWarningFill, IconRefresh} from '@pierre/icons'
 import {useEffect, useState} from 'react'
 
 import {css, cx} from 'styled-system/css'
-import {Button} from '@/diffs/components/button'
-import {getCurrentReturnPath, getGitHubLoginURL} from '@/diffs/components/use-github-session'
+import {getCurrentReturnPath, getGitHubLoginURL} from '@/diffs/components/hooks/use-github-session'
+import {Button} from '@/diffs/components/ui/button'
 import type {GitHubAccessRemedy} from '@/diffs/lib/github-access-remedy'
 import {isNullish} from '@/diffs/lib/nullish'
 import {diffsChromeMapping} from '@/diffs/lib/theme/diffs-chrome-mapping'
 import type {ViewerLoadState} from '@/diffs/lib/types'
-import {useChromeThemeProps} from './use-chrome-theme-props'
+import {useChromeThemeProps} from './hooks/use-chrome-theme-props'
 
 interface DiffsStatusPanelProps {
   errorMessage: string | null
   // The one step that unblocks this failure, when the server could work one
   // out. Rendered as the panel's primary action.
   remedy: GitHubAccessRemedy | null
-  onRetry(): void
+  onRetry: () => void
   state: ViewerLoadState
 }
 
@@ -72,7 +72,17 @@ export function DiffsStatusPanel({errorMessage, onRetry, remedy, state}: DiffsSt
           textAlign: 'center',
         })}
       >
-        {!isError ? (
+        {isError ? (
+          <IconCiWarningFill
+            className={css({
+              color: 'diffs.muted.foreground',
+              mx: 'auto',
+              mb: '3',
+              w: '5',
+              h: '5',
+            })}
+          />
+        ) : (
           <IconRefresh
             aria-hidden="true"
             className={css({
@@ -83,16 +93,6 @@ export function DiffsStatusPanel({errorMessage, onRetry, remedy, state}: DiffsSt
               h: '5',
               transform: 'scaleX(-1)',
               animation: '[spin 1s linear infinite reverse]',
-            })}
-          />
-        ) : (
-          <IconCiWarningFill
-            className={css({
-              color: 'diffs.muted.foreground',
-              mx: 'auto',
-              mb: '3',
-              w: '5',
-              h: '5',
             })}
           />
         )}
@@ -186,15 +186,10 @@ function RemedyButton({remedy}: {remedy: GitHubAccessRemedy | null}) {
 // to tell this page when it is done. Coming back to the tab is the signal: the
 // only reason to return to a blocked diff is to see whether it works now, so
 // retry on the way in rather than making the reader ask twice.
-function useReloadOnReturn({enabled, onRetry}: {enabled: boolean; onRetry(): void}): void {
+function useReloadOnReturn({enabled, onRetry}: {enabled: boolean; onRetry: () => void}): void {
   const [hasLeft, setHasLeft] = useState(false)
 
   useEffect(() => {
-    if (!enabled) {
-      setHasLeft(false)
-      return
-    }
-
     const trackVisibility = () => {
       if (document.visibilityState === 'hidden') {
         setHasLeft(true)
@@ -202,7 +197,9 @@ function useReloadOnReturn({enabled, onRetry}: {enabled: boolean; onRetry(): voi
       }
       if (hasLeft) {
         setHasLeft(false)
-        onRetry()
+        if (enabled) {
+          onRetry()
+        }
       }
     }
     document.addEventListener('visibilitychange', trackVisibility)

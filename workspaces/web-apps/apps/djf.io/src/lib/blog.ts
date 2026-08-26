@@ -4,8 +4,12 @@
 // typed rather than tied to astro:content's CollectionEntry, so they're trivial
 // to unit test with plain fixtures and reusable across every page.
 
-type DatedPost = {data: {date: Date}}
-type TaggedPost = {data: {tags?: Array<string>}}
+interface DatedPost {
+  data: {date: Date}
+}
+interface TaggedPost {
+  data: {tags?: Array<string>}
+}
 
 // Newest first. Returns a new array; does not mutate the input.
 export function sortPostsByDateDesc<T extends DatedPost>(posts: ReadonlyArray<T>): Array<T> {

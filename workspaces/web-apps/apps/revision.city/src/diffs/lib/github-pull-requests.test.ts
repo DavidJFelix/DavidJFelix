@@ -182,6 +182,8 @@ test('watched repositories already covered by ownership or membership are not se
   await listPullRequests(fetchImpl)
 
   const searchQueries = fetchImpl.mock.calls
+    // BACKLOG(davidjfelix) dude?
+    // oxlint-disable-next-line typescript/no-base-to-string -- this is already fucked and in a test. who cares
     .map((call) => new URL(String(call[0])))
     .filter((url) => url.pathname === '/search/issues')
     .map((url) => url.searchParams.get('q'))

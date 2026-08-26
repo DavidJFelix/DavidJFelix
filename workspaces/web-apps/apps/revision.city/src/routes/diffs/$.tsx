@@ -1,7 +1,7 @@
 import {createFileRoute, redirect} from '@tanstack/react-router'
 
 import {css} from 'styled-system/css'
-
+import {DiffUrlProvider} from '@/diffs/components/contexts/diff-url-context'
 import {ReviewUI} from '@/diffs/components/review-ui'
 import {isNullish} from '@/diffs/lib/nullish'
 import {resolveDiffsViewerRoute} from '@/diffs/lib/resolve-diffs-viewer-route'
@@ -48,7 +48,9 @@ function DiffsViewByPathPage() {
         gap: '2',
       })}
     >
-      <ReviewUI domain={route.domain} initialUrl={route.url} path={route.upstreamPath} />
+      <DiffUrlProvider url={route.url}>
+        <ReviewUI domain={route.domain} path={route.upstreamPath} />
+      </DiffUrlProvider>
     </div>
   )
 }

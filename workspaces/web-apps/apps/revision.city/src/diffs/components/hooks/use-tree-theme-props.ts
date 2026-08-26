@@ -23,7 +23,7 @@ export function useTreeThemeProps(
   // for a single value the scheme is ignored, and for a name the resolved
   // object's own type wins once loaded.
   const override = useMemo(() => {
-    if (isNullish(theme)) return undefined
+    if (isNullish(theme)) return
     return fixedSource(theme, {resolver, colorScheme})
   }, [theme, resolver, colorScheme])
   const {activeTheme} = useThemeSource(override)

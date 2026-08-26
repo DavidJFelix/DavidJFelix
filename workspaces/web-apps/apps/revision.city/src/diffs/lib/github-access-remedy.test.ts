@@ -28,7 +28,7 @@ test('drops a grant-access remedy pointing anywhere else', () => {
 })
 
 test('drops malformed payloads', () => {
-  expect(parseGitHubAccessRemedy(undefined)).toBeUndefined()
+  expect(parseGitHubAccessRemedy()).toBeUndefined()
   expect(parseGitHubAccessRemedy('sign-in')).toBeUndefined()
   expect(parseGitHubAccessRemedy({kind: 'grant-repo-access'})).toBeUndefined()
   expect(parseGitHubAccessRemedy({kind: 'reboot'})).toBeUndefined()

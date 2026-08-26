@@ -3,17 +3,17 @@ import {IconArrowRight} from '@pierre/icons'
 import {useEffect, useRef, useState} from 'react'
 
 import {css, cx} from 'styled-system/css'
-import {Button} from '@/diffs/components/button'
+import {Button} from '@/diffs/components/ui/button'
 import {type AvatarName, annotationCardBase, getRandomPersona} from '@/diffs/lib/annotation'
 import {isNullish} from '@/diffs/lib/nullish'
 import type {DraftCommentMetadata} from '@/diffs/lib/types'
-import {CommentAuthorAvatar} from './comment-author-avatar'
+import {CommentAuthorAvatar} from './ui/comment-author-avatar'
 
 interface DraftAnnotationProps {
   annotation: DiffLineAnnotation<DraftCommentMetadata>
   itemId: string
-  onCancel(itemId: string, key: string): void
-  onSave(params: {itemId: string; key: string; message: string; author: AvatarName}): void
+  onCancel: (itemId: string, key: string) => void
+  onSave: (params: {itemId: string; key: string; message: string; author: AvatarName}) => void
 }
 
 export function DraftAnnotation({annotation, itemId, onCancel, onSave}: DraftAnnotationProps) {
@@ -60,7 +60,9 @@ export function DraftAnnotation({annotation, itemId, onCancel, onSave}: DraftAnn
         <textarea
           ref={textareaRef}
           value={message}
-          onChange={({currentTarget}) => setMessage(currentTarget.value)}
+          onChange={({currentTarget}) => {
+            setMessage(currentTarget.value)
+          }}
           onKeyDown={(event) => {
             if (event.key === 'Escape') {
               event.preventDefault()

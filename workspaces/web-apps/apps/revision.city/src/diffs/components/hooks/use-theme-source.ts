@@ -1,14 +1,9 @@
-import type {ThemeController, ThemeResolver} from '@pierre/theming'
+import type {ThemeResolver} from '@pierre/theming'
 import {createContext, useContext, useRef, useSyncExternalStore} from 'react'
 import {isNullish} from '@/diffs/lib/nullish'
 import type {ActiveThemeSnapshot, ThemeSource} from '@/diffs/lib/theme/theme-source'
 
 export const ThemeSourceContext = createContext<ThemeSource | undefined>(undefined)
-
-// Carries the controller behind the provider source so the names-now diffs hook
-// and the selection hook can read selection + setters. Undefined under an
-// override-only provider (a fixedSource has no controller).
-export const ThemeControllerContext = createContext<ThemeController | undefined>(undefined)
 
 export const ThemeResolverContext = createContext<ThemeResolver | undefined>(undefined)
 
@@ -34,14 +29,14 @@ export function useThemeSource(override?: ThemeSource): {
   // source may allocate a new object on every getSnapshot call.
   const cacheRef = useRef<ActiveThemeSnapshot>(EMPTY_SNAPSHOT)
   const getSnapshot = () => {
-    const next = !isNullish(source) ? source.getSnapshot() : EMPTY_SNAPSHOT
+    const next = isNullish(source) ? EMPTY_SNAPSHOT : source.getSnapshot()
     if (!snapshotsEqual(cacheRef.current, next)) {
       cacheRef.current = next
     }
     return cacheRef.current
   }
   const activeTheme = useSyncExternalStore(
-    (listener) => (!isNullish(source) ? source.subscribe(listener) : () => {}),
+    (listener) => (isNullish(source) ? () => {} : source.subscribe(listener)),
     getSnapshot,
     () => EMPTY_SNAPSHOT,
   )

@@ -5,7 +5,6 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useState,
   useSyncExternalStore,
 } from 'react'
 import type {ThemeColorPair} from './bootstrap'
@@ -66,10 +65,11 @@ export function ThemeProvider({children, themeColors}: ThemeProviderProps) {
     () => SERVER_STATE,
   )
 
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const mounted = useSyncExternalStore(
+    () => () => {}, // Subscribe - there's nothing to subscribe to
+    () => true, // Client snapshot: we are hydrated
+    () => false, // Server snapshot: we are not hydrated
+  )
 
   useEffect(() => {
     const root = document.documentElement

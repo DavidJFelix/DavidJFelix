@@ -2,17 +2,17 @@
 // consumes. Hand-written types for now; codegen can replace them if the
 // surface grows.
 
-export type Money = {
+export interface Money {
   amount: string
   currencyCode: string
 }
 
-export type ProductImage = {
+export interface ProductImage {
   url: string
   altText: string | null
 }
 
-export type ProductSummary = {
+export interface ProductSummary {
   id: string
   title: string
   handle: string
@@ -22,14 +22,14 @@ export type ProductSummary = {
   priceRange: {minVariantPrice: Money}
 }
 
-export type ProductVariant = {
+export interface ProductVariant {
   id: string
   title: string
   availableForSale: boolean
   price: Money
 }
 
-export type ProductDetail = {
+export interface ProductDetail {
   id: string
   title: string
   handle: string
@@ -40,7 +40,7 @@ export type ProductDetail = {
   variants: {edges: Array<{node: ProductVariant}>}
 }
 
-export type CartLine = {
+export interface CartLine {
   id: string
   quantity: number
   cost: {totalAmount: Money}
@@ -57,7 +57,7 @@ export type CartLine = {
   }
 }
 
-export type Cart = {
+export interface Cart {
   id: string
   checkoutUrl: string
   totalQuantity: number

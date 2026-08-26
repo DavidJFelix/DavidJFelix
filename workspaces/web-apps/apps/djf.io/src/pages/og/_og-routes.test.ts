@@ -13,7 +13,7 @@ const posts = await getCollection('blog')
 // image's big-endian width at byte 16 and height at byte 20. Reading those
 // directly keeps image libraries out of the app.
 const pngSize = (png: Uint8Array): {width: number; height: number} => {
-  expect(Array.from(png.subarray(1, 4))).toEqual([...'PNG'].map((c) => c.charCodeAt(0)))
+  expect(Array.from(png.subarray(1, 4))).toEqual(Array.from('PNG').map((c) => c.charCodeAt(0)))
   const view = new DataView(png.buffer, png.byteOffset, png.byteLength)
   return {width: view.getUint32(16), height: view.getUint32(20)}
 }

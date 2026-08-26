@@ -2,7 +2,7 @@ import type {CSSProperties, ElementType, ReactNode} from 'react'
 import type {ChromeMapping} from '@/diffs/lib/theme/chrome-theme-props'
 import {diffsChromeMapping} from '@/diffs/lib/theme/diffs-chrome-mapping'
 import type {ThemeInput} from '@/diffs/lib/theme/theme-source'
-import {useChromeThemeProps} from './use-chrome-theme-props'
+import {useChromeThemeProps} from './hooks/use-chrome-theme-props'
 
 interface ThemedSurfaceProps {
   as?: ElementType

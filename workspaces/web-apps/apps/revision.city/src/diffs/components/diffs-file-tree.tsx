@@ -5,7 +5,7 @@ import type {
   FileTreeOptions,
 } from '@pierre/trees'
 import {useFileTree} from '@pierre/trees/react'
-import {type CSSProperties, memo, useEffect, useRef, useState} from 'react'
+import {type CSSProperties, memo, useEffect, useMemo, useRef, useState} from 'react'
 import {css} from 'styled-system/css'
 import {
   BASE_FILE_TREE_OPTIONS,
@@ -41,8 +41,8 @@ interface DiffsFileTreeProps {
   // Callback invoked with the underlying tree model once it's mounted, and
   // again with `null` on unmount. Lets parents drive imperative APIs like
   // search open/close without owning the model creation.
-  onModelReady(model: FileTreeModel | null): void
-  onSelectItem(itemId: string): void
+  onModelReady: (model: FileTreeModel | null) => void
+  onSelectItem: (itemId: string) => void
   source: DiffsFileTreeSource
 }
 
@@ -54,15 +54,16 @@ export const DiffsFileTree = memo(function DiffsFileTree({
   const sourceRef = useRef(source)
   const previousSourceRef = useRef(source)
   const [initialVisibleRowCount] = useState(getInitialBatchSize)
-  sourceRef.current = source
+  useEffect(() => {
+    sourceRef.current = source
+  }, [source])
   // `source.paths` aliases the streaming accumulator's live array, so it keeps
   // growing on later publishes. The FileTree model consumes its path list
   // exactly once via useFileTree's useState initializer; capture a bounded
   // snapshot here so the first model build uses only what `pathCount`
   // describes and so subsequent streaming re-renders don't re-slice the
   // ever-growing live array.
-  const initialPathsRef = useRef<readonly string[] | null>(null)
-  initialPathsRef.current ??= source.paths.slice(0, source.pathCount)
+  const initialPaths = useMemo(() => source.paths.slice(0, source.pathCount), [])
   const onSelectionChange = useStableCallback((selectedPaths: readonly FileTreePublicId[]) => {
     if (selectedPaths.length !== 1 || isNullish(onSelectItem)) {
       return
@@ -77,7 +78,7 @@ export const DiffsFileTree = memo(function DiffsFileTree({
   const {model} = useFileTree({
     ...BASE_FILE_TREE_OPTIONS,
     gitStatus: source.gitStatus,
-    paths: initialPathsRef.current,
+    paths: initialPaths,
     sort: PRESERVE_INPUT_ORDER_SORT,
     onSelectionChange,
     itemHeight: CODE_VIEW_FILE_TREE_ITEM_HEIGHT,
@@ -125,7 +126,9 @@ export const DiffsFileTree = memo(function DiffsFileTree({
 
   useEffect(() => {
     onModelReady(model)
-    return () => onModelReady(null)
+    return () => {
+      onModelReady(null)
+    }
   }, [model, onModelReady])
 
   return (

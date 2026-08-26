@@ -66,9 +66,17 @@ export function publicationUri(): string {
 // assigns the TID). It is intentionally non-destructive -- deleting legacy or
 // orphaned records is a manual step -- so a deploy can never wipe a record.
 
-export type ExistingRecord = {rkey: string; path?: string; site?: string}
+export interface ExistingRecord {
+  rkey: string
+  path?: string
+  site?: string
+}
 
-export type DesiredDocument = {slug: string; path: string; record: Record<string, unknown>}
+export interface DesiredDocument {
+  slug: string
+  path: string
+  record: Record<string, unknown>
+}
 
 export type DocumentAction =
   | {kind: 'create'; slug: string; record: Record<string, unknown>}

@@ -14,9 +14,9 @@ import {type MouseEvent, memo, type RefObject, useEffect, useState} from 'react'
 import {css, cx} from 'styled-system/css'
 import {isNullish} from '@/diffs/lib/nullish'
 import type {CommentMetadata} from '@/diffs/lib/types'
+import type {ThemeCycleControls} from './hooks/use-theme-cycle'
 import {StatItem} from './stat-item'
 import {StatusRow} from './status-row'
-import type {ThemeCycleControls} from './use-theme-cycle'
 
 // Mirrors Tailwind's `transition` utility (color/background-color/border-color/opacity).
 const TRANSITION_COLORS =
@@ -88,7 +88,7 @@ class AutoScrollTester<LAnnotation> {
 
 interface WorkerPoolStatusProps {
   expanded: boolean
-  onToggle(): void
+  onToggle: () => void
   themeCycle: ThemeCycleControls
   viewerRef: RefObject<CodeViewHandle<CommentMetadata> | null>
 }
@@ -100,21 +100,19 @@ export const WorkerPoolStatus = memo(function WorkerPoolStatus({
   viewerRef,
 }: WorkerPoolStatusProps) {
   const pool = useWorkerPool()
-  const [stats, setStats] = useState<WorkerStats | undefined>(undefined)
+  const [stats, setStats] = useState<WorkerStats | undefined>()
   useEffect(() => {
     if (isNullish(pool)) {
-      setStats(undefined)
-      return undefined
-    } else {
-      return pool.subscribeToStatChanges((newStats) => {
-        setStats((prevStats): WorkerStats | undefined => {
-          if (areWorkerStatsEqual(prevStats, newStats)) {
-            return prevStats
-          }
-          return newStats
-        })
-      })
+      return
     }
+    return pool.subscribeToStatChanges((newStats) => {
+      setStats((prevStats): WorkerStats | undefined => {
+        if (areWorkerStatsEqual(prevStats, newStats)) {
+          return prevStats
+        }
+        return newStats
+      })
+    })
   }, [pool])
   return (
     !isNullish(stats) && (
@@ -131,7 +129,7 @@ export const WorkerPoolStatus = memo(function WorkerPoolStatus({
 
 interface StatsDisplayProps {
   expanded: boolean
-  onToggle(): void
+  onToggle: () => void
   stats: WorkerStats
   themeCycle: ThemeCycleControls
   viewerRef: RefObject<CodeViewHandle<CommentMetadata> | null>
@@ -182,7 +180,9 @@ function StatsDisplay({expanded, onToggle, stats, themeCycle, viewerRef}: StatsD
       }
     }
     window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+    }
   }, [onToggle])
 
   const {Icon: StatusIcon, className: statusIconClass} = getStatusIcon(stats)

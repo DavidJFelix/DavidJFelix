@@ -45,8 +45,8 @@ async function check(route: string): Promise<string | null> {
   const page = await fetch(new URL(route, BASE_URL), {signal: AbortSignal.timeout(15_000)})
   if (!page.ok) return `${route} -> HTTP ${page.status}`
   const html = await page.text()
-  if (!/<\/html>/i.test(html)) return `${route} -> response is not a complete HTML document`
-  const asset = html.match(/(?:src|href)="(\/[^"]+\.(?:js|css))"/)?.[1]
+  if (!/<\/html>/iu.test(html)) return `${route} -> response is not a complete HTML document`
+  const asset = html.match(/(?:src|href)="(\/[^"]+\.(?:js|css))"/u)?.[1]
   if (asset) {
     const res = await fetch(new URL(asset, BASE_URL), {signal: AbortSignal.timeout(15_000)})
     if (!res.ok) return `${route} asset ${asset} -> HTTP ${res.status}`
@@ -58,11 +58,13 @@ async function waitForReady(): Promise<boolean> {
   const deadline = Date.now() + READY_TIMEOUT_MS
   while (Date.now() < deadline) {
     try {
+      // oxlint-disable-next-line no-await-in-loop -- this is genuinely an await loop
       const res = await fetch(BASE_URL, {signal: AbortSignal.timeout(2_000)})
       if (res.ok) return true
     } catch {
       // not up yet -- keep polling
     }
+    // oxlint-disable-next-line no-await-in-loop -- this is genuinely an await loop
     await Bun.sleep(500)
   }
   return false
@@ -70,13 +72,9 @@ async function waitForReady(): Promise<boolean> {
 
 let exitCode = 0
 try {
-  if (!(await waitForReady())) {
-    console.error(
-      `::error::preview did not become ready on ${BASE_URL} within ${READY_TIMEOUT_MS}ms`,
-    )
-    exitCode = 1
-  } else {
+  if (await waitForReady()) {
     for (const route of ROUTES) {
+      // oxlint-disable-next-line no-await-in-loop -- this is genuinely an await loop
       const problem = await check(route)
       if (problem === null) {
         console.log(`OK: ${route} serves a working bundle`)
@@ -85,6 +83,11 @@ try {
         exitCode = 1
       }
     }
+  } else {
+    console.error(
+      `::error::preview did not become ready on ${BASE_URL} within ${READY_TIMEOUT_MS}ms`,
+    )
+    exitCode = 1
   }
 } finally {
   server.kill()

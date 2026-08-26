@@ -25,7 +25,7 @@ export const Route = createFileRoute('/products/$handle')({
 function ProductPage() {
   const product = Route.useLoaderData()
   const navigate = useNavigate()
-  const [variantId, setVariantId] = useState<string | undefined>(undefined)
+  const [variantId, setVariantId] = useState<string | undefined>()
   const [quantity, setQuantity] = useState(1)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)

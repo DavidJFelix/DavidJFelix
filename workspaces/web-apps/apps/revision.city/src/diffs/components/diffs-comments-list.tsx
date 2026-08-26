@@ -10,12 +10,12 @@ import type {
   DiffsSavedCommentEntry,
   DiffsSavedCommentItem,
 } from '@/diffs/lib/types'
-import {CommentAuthorAvatar} from './comment-author-avatar'
+import {CommentAuthorAvatar} from './ui/comment-author-avatar'
 
 interface DiffsCommentsListProps {
   commentSections: readonly DiffsSavedCommentItem[]
-  onSelectComment?(comment: DiffsSavedCommentEntry): void
-  onSelectItem?(itemId: string): void
+  onSelectComment?: (comment: DiffsSavedCommentEntry) => void
+  onSelectItem?: (itemId: string) => void
 }
 
 function getCommentLineLabel(
@@ -61,7 +61,7 @@ function handleRowClick(event: MouseEvent<HTMLButtonElement>, run: () => void): 
   if (event.button !== 0) {
     return
   }
-  const selection = typeof window !== 'undefined' ? window.getSelection() : null
+  const selection = typeof window === 'undefined' ? null : window.getSelection()
   if (!isNullish(selection) && selection.toString().length > 0) {
     const row = event.currentTarget
     const anchorInRow = !isNullish(selection.anchorNode) && row.contains(selection.anchorNode)
@@ -141,7 +141,21 @@ export const DiffsCommentsList = memo(function DiffsCommentsList({
     >
       {commentSections.map((section) => (
         <section key={section.itemId}>
-          {!isNullish(onSelectItem) ? (
+          {isNullish(onSelectItem) ? (
+            <div
+              className={css({
+                color: 'diffs.muted.foreground',
+                p: '3',
+                pb: '2',
+                fontSize: 'sm',
+                lineHeight: '[1.25rem]',
+                fontWeight: 'medium',
+                wordBreak: 'break-all',
+              })}
+            >
+              {section.path}
+            </div>
+          ) : (
             <button
               type="button"
               className={css({
@@ -160,24 +174,14 @@ export const DiffsCommentsList = memo(function DiffsCommentsList({
                 outline: 'none',
                 _focusVisible: {boxShadow: '[0 0 0 2px var(--ring)]'},
               })}
-              onClick={(event) => handleRowClick(event, () => onSelectItem(section.itemId))}
+              onClick={(event) => {
+                handleRowClick(event, () => {
+                  onSelectItem(section.itemId)
+                })
+              }}
             >
               <span className={css({userSelect: 'text'})}>{section.path}</span>
             </button>
-          ) : (
-            <div
-              className={css({
-                color: 'diffs.muted.foreground',
-                p: '3',
-                pb: '2',
-                fontSize: 'sm',
-                lineHeight: '[1.25rem]',
-                fontWeight: 'medium',
-                wordBreak: 'break-all',
-              })}
-            >
-              {section.path}
-            </div>
           )}
           <div
             className={css({
@@ -227,7 +231,9 @@ export const DiffsCommentsList = memo(function DiffsCommentsList({
                     borderColor: 'var(--diffs-card-border, rgb(255 255 255 / 0.15))',
                   },
                 })}
-                onClick={(event) => handleRowClick(event, () => onSelectComment?.(comment))}
+                onClick={(event) => {
+                  handleRowClick(event, () => onSelectComment?.(comment))
+                }}
               >
                 <CommentAuthorAvatar seed={comment.author} className={css({w: '5', h: '5'})} />
                 <div

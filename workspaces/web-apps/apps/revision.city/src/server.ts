@@ -14,5 +14,9 @@ export default withSentry(
     dsn: import.meta.env.VITE_PUBLIC_SENTRY_DSN,
     tracesSampleRate: 1,
   }),
-  handler,
+  {
+    fetch(request) {
+      return handler.fetch(request)
+    },
+  },
 )

@@ -148,7 +148,7 @@ function HomeComponent() {
   const findings = assessFeasibility(request, {today: config.today})
 
   const updateSearch = (patch: Partial<PlanSearch>) => {
-    navigate({search: (previous) => ({...previous, ...patch}), replace: true})
+    void navigate({search: (previous) => ({...previous, ...patch}), replace: true})
   }
 
   return (

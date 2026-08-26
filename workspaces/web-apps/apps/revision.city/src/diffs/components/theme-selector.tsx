@@ -1,6 +1,6 @@
 import type {ReactNode} from 'react'
 
-import {type ThemeSelectionResult, useThemeSelection} from './use-theme-selection'
+import {type ThemeSelectionResult, useThemeSelection} from './hooks/use-theme-selection'
 
 interface ThemeSelectorProps {
   // Render-prop: receives the current selection + setters and renders the UI.

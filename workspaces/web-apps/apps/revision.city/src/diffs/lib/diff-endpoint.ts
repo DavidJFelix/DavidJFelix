@@ -436,7 +436,9 @@ async function createPatchStreamResponse(
   viewer: DiffViewerAuth,
 ): Promise<Response> {
   const upstreamController = new AbortController()
-  const abortUpstream = () => upstreamController.abort()
+  const abortUpstream = () => {
+    upstreamController.abort()
+  }
   requestSignal.addEventListener('abort', abortUpstream, {once: true})
 
   let activeRequest: PatchFetchTarget = patchRequest
@@ -466,7 +468,7 @@ async function createPatchStreamResponse(
 
     const fallbackRequest = fallbackRequests.shift()
     if (!isNullish(fallbackRequest)) {
-      await response.body?.cancel().catch(() => undefined)
+      await response.body?.cancel().catch(() => {})
       activeRequest = fallbackRequest
       continue
     }

@@ -4,7 +4,7 @@
 
 const CONTACTS_CREATE_URL = 'https://app.loops.so/api/v1/contacts/create'
 
-export type CreateLoopsContactParams = {
+export interface CreateLoopsContactParams {
   email: string
   apiKey: string | undefined
 }

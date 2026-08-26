@@ -12,7 +12,7 @@
   "bracketSpacing": false,
   "singleAttributePerLine": false,
   "sortPackageJson": false,
-  "ignorePatterns": ["**/coverage/**", "**/routeTree.gen.ts"],
+  "ignorePatterns": ["**/coverage/**", "**/routeTree.gen.ts", "**/worker-configuration.d.ts"],
   "overrides": [
     { "files": ["**/*.css"], "options": { "singleQuote": false } },
     { "files": ["**/*.json"], "options": { "bracketSpacing": true } }

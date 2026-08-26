@@ -1,25 +1,26 @@
 {
   "root": false,
-  "$schema": "https://biomejs.dev/schemas/2.5.5/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.5.10/schema.json",
   "extends": ["../../biome.jsonc"],
   "files": {
     "includes": [
       "**",
+      "!worker-configuration.d.ts",
       "!src/routeTree.gen.ts",
       "!styled-system",
       "!.wrangler",
       "!dist",
-      "!node_modules"
-    ]
+      "!node_modules",
+    ],
   },
   "linter": {
     "rules": {
       "style": {
-        "useFragmentSyntax": "error"
+        "useFragmentSyntax": "error",
       },
       "correctness": {
-        "useHookAtTopLevel": "error"
-      }
-    }
-  }
+        "useHookAtTopLevel": "error",
+      },
+    },
+  },
 }

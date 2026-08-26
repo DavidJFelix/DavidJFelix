@@ -6,6 +6,7 @@
     "typescript",
     "node",
     "npm",
+    "npm-local",
     "html",
     "css",
     "bash",
@@ -38,6 +39,11 @@
       "description": "iCalendar (RFC 5545) property names",
     },
     {
+      "name": "npm-local",
+      "path": "dictionaries/npm.txt",
+      "description": "NPM package names and ecosystem words",
+    },
+    {
       "name": "people-names",
       "path": "dictionaries/people-names.txt",
       "description": "People named in docs and code",
@@ -50,8 +56,7 @@
     {
       "name": "web-platform",
       "path": "dictionaries/web-platform.txt",
-      "description": "Web-platform acronyms (case sensitive)",
-      "caseSensitive": true,
+      "description": "Web-platform acronyms",
     },
   ],
   // Spellings this repo rejects outright; cspell reports the replacement. The
@@ -85,6 +90,7 @@
     "playwright-report",
     "test-results",
     ".turbo",
+    "worker-configuration.d.ts",
   ],
   "ignoreRegExpList": [
     // Bluesky DID identifiers (did:plc:...) -- prefix-anchored so the pattern

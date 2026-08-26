@@ -52,13 +52,13 @@ const GENERIC_PATCH_LOAD_ERROR_MESSAGE = 'We couldn’t load that diff. Check th
 interface UsePatchLoaderOptions {
   collapseMode: 'expanded' | 'collapsed'
   domain?: string
-  onLoadStart(): void
+  onLoadStart: () => void
   path: string
   viewerRef: RefObject<CodeViewHandle<CommentMetadata> | null>
 }
 
 interface UsePatchLoaderResult {
-  applyCollapseModeToLoaded(mode: 'expanded' | 'collapsed'): void
+  applyCollapseModeToLoaded: (mode: 'expanded' | 'collapsed') => void
   commentFileByItemId: DiffsCommentFileByItemId | null
   commentSections: DiffsSavedCommentItem[]
   diffStats: DiffsStats | null
@@ -66,9 +66,9 @@ interface UsePatchLoaderResult {
   errorRemedy: GitHubAccessRemedy | null
   initialItems: CodeViewItem<CommentMetadata>[]
   loadState: ViewerLoadState
-  onLineLinkChange(selection: CodeViewLineSelection | null): void
-  onViewerReady(): void
-  retryLoad(): void
+  onLineLinkChange: (selection: CodeViewLineSelection | null) => void
+  onViewerReady: () => void
+  retryLoad: () => void
   setCommentSections: Dispatch<SetStateAction<DiffsSavedCommentItem[]>>
   treeSource: DiffsFileTreeSource | null
   viewerKey: number
@@ -107,7 +107,9 @@ export function usePatchLoader({
   // inside a long-lived effect/closure) can read the live value without us
   // having to re-bind it on every change.
   const collapseModeRef = useRef(collapseMode)
-  collapseModeRef.current = collapseMode
+  useEffect(() => {
+    collapseModeRef.current = collapseMode
+  }, [collapseMode])
 
   // Pre-mutates fresh items so they arrive in the viewer matching the current
   // collapse mode, then records their ids for later bulk updates. Diff items
@@ -310,17 +312,17 @@ export function usePatchLoader({
           lastPublishTime = performance.now()
           const pendingItems = takePendingDiffsItems(accumulator)
           prepareItemsForViewer(pendingItems)
-          if (!hasPublishedInitialItems) {
+          if (hasPublishedInitialItems) {
+            const viewer = viewerRef.current
+            if (isNullish(viewer)) {
+              setInitialItems((prev) => [...prev, ...pendingItems])
+            } else {
+              viewer.addItems(pendingItems)
+            }
+          } else {
             hasPublishedInitialItems = true
             publishTreeSource()
             setInitialItems(pendingItems)
-          } else {
-            const viewer = viewerRef.current
-            if (!isNullish(viewer)) {
-              viewer.addItems(pendingItems)
-            } else {
-              setInitialItems((prev) => [...prev, ...pendingItems])
-            }
           }
           await yieldToBrowser()
           if (isCurrentRequest()) {

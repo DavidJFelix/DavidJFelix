@@ -20,7 +20,7 @@ function isMobileBrowser(): boolean {
 
   return (
     navigator.maxTouchPoints > 0 &&
-    globalThis.matchMedia?.('(max-width: 767px), (pointer: coarse)').matches === true
+    globalThis.matchMedia?.('(max-width: 767px), (pointer: coarse)').matches
   )
 }
 

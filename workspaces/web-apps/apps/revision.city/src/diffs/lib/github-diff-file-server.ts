@@ -451,7 +451,7 @@ async function readCompareHeadSha({
   }
 
   if (isNullish(totalCommits) || commits.length >= totalCommits) {
-    return readStringPath(commits[commits.length - 1], ['sha'])
+    return readStringPath(commits.at(-1), ['sha'])
   }
 
   const lastPageData = await fetchGitHubJSON(
@@ -627,6 +627,8 @@ function getSourceCacheKey(source: GitHubDiffSource): string {
       return `commit:${source.repo.owner}/${source.repo.repo}@${source.sha}`
     case 'compare':
       return `compare:${source.repo.owner}/${source.repo.repo}@${source.range}`
+    default:
+      throw new Error('Invalid Source Kind')
   }
 }
 

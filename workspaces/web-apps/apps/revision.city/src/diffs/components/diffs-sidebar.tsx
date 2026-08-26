@@ -22,8 +22,8 @@ import {
 } from 'react'
 
 import {css, cx} from 'styled-system/css'
-import {Button} from '@/diffs/components/button'
-import {ButtonGroup, ButtonGroupItem} from '@/diffs/components/button-group'
+import {Button} from '@/diffs/components/ui/button'
+import {ButtonGroup, ButtonGroupItem} from '@/diffs/components/ui/button-group'
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -32,7 +32,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/diffs/components/dropdown-menu'
+} from '@/diffs/components/ui/dropdown-menu'
 import {filterDiffsFileTreeSource} from '@/diffs/lib/filter-diffs-file-tree-source'
 import {getDiffsFileTreeAvailableStatuses} from '@/diffs/lib/get-diffs-file-tree-available-statuses'
 import {isNullish} from '@/diffs/lib/nullish'
@@ -52,8 +52,8 @@ import {CHROME_ICON_BUTTON_CLASS} from './chrome-button-styles'
 import {DiffsCommentsList} from './diffs-comments-list'
 import {DiffsFileTree} from './diffs-file-tree'
 import {DiffsStats} from './diffs-stats'
-import {useChromeThemeProps} from './use-chrome-theme-props'
-import type {ThemeCycleControls} from './use-theme-cycle'
+import {useChromeThemeProps} from './hooks/use-chrome-theme-props'
+import type {ThemeCycleControls} from './hooks/use-theme-cycle'
 import {WorkerPoolStatus} from './worker-pool-status'
 
 type SidebarTab = 'files' | 'comments' | 'symbols'
@@ -74,10 +74,10 @@ interface DiffsSidebarProps {
   diffStats: DiffsStatsData | null
   entityDiffRequests: readonly EntityDiffRequest[]
   mobileOverlayOpen?: boolean
-  onMobileClose(): void
-  onSelectComment(comment: DiffsSavedCommentEntry): void
-  onSelectItem(itemId: string): void
-  onSelectSymbol(selection: SymbolSelection): void
+  onMobileClose: () => void
+  onSelectComment: (comment: DiffsSavedCommentEntry) => void
+  onSelectItem: (itemId: string) => void
+  onSelectSymbol: (selection: SymbolSelection) => void
   scrollRef: RefObject<HTMLDivElement | null>
   source: DiffsFileTreeSource
   sourcePath: string
@@ -130,7 +130,12 @@ export const DiffsSidebar = memo(function DiffsSidebar({
   // wrapper, so the chrome variables set on it don't cascade. Re-apply the
   // resolved chrome on the menu surface itself, mirroring the header dropdowns.
   const dropdownThemeStyle = useMemo(() => getDropdownThemeStyle(sidebarStyle), [sidebarStyle])
-  const [activeStatusPanel, setActiveStatusPanel] = useState<SidebarStatusPanel | null>('diffStats')
+  const [selectedActiveStatusPanel, setSelectedActiveStatusPanel] =
+    useState<SidebarStatusPanel | null>('diffStats')
+  let activeStatusPanel = selectedActiveStatusPanel
+  if (mobileOverlayOpen && window.matchMedia(MOBILE_MEDIA_QUERY).matches) {
+    activeStatusPanel = null
+  }
   const [fileTreeModel, setFileTreeModel] = useState<FileTree | null>(null)
   // Inclusion filter: the statuses the tree should show. Empty means "no
   // filter" — every file is shown — so the menu opens with nothing checked and
@@ -145,7 +150,7 @@ export const DiffsSidebar = memo(function DiffsSidebar({
     setFileTreeModel(model)
   }, [])
   const toggleStatusPanel = useCallback((panel: SidebarStatusPanel) => {
-    setActiveStatusPanel((current) => (current === panel ? null : panel))
+    setSelectedActiveStatusPanel((current) => (current === panel ? null : panel))
   }, [])
 
   const clearStatusFilter = useCallback(() => {
@@ -177,14 +182,8 @@ export const DiffsSidebar = memo(function DiffsSidebar({
   }, [])
 
   useEffect(() => {
-    if (mobileOverlayOpen && window.matchMedia(MOBILE_MEDIA_QUERY).matches) {
-      setActiveStatusPanel(null)
-    }
-  }, [mobileOverlayOpen])
-
-  useEffect(() => {
     if (!mobileOverlayOpen || !window.matchMedia(MOBILE_MEDIA_QUERY).matches) {
-      return undefined
+      return
     }
 
     const {body, documentElement} = document
@@ -380,13 +379,17 @@ export const DiffsSidebar = memo(function DiffsSidebar({
         </div>
         <DiffsStats
           expanded={activeStatusPanel === 'diffStats'}
-          onToggle={() => toggleStatusPanel('diffStats')}
+          onToggle={() => {
+            toggleStatusPanel('diffStats')
+          }}
           stats={diffStats}
           streaming={streaming}
         />
         <WorkerPoolStatus
           expanded={activeStatusPanel === 'systemMonitor'}
-          onToggle={() => toggleStatusPanel('systemMonitor')}
+          onToggle={() => {
+            toggleStatusPanel('systemMonitor')
+          }}
           viewerRef={viewerRef}
           themeCycle={themeCycle}
         />
@@ -497,9 +500,9 @@ const DIFF_STATUS_ITEMS: {
 interface FileTreeFilterButtonProps {
   availableStatuses: ReadonlySet<GitStatus>
   dropdownThemeStyle?: CSSProperties
-  onClear(): void
-  onIsolate(status: GitStatus): void
-  onToggle(status: GitStatus): void
+  onClear: () => void
+  onIsolate: (status: GitStatus) => void
+  onToggle: (status: GitStatus) => void
   selectedStatuses: ReadonlySet<GitStatus>
 }
 
@@ -578,7 +581,9 @@ function FileTreeFilterButton({
             onPointerDown={(e) => {
               altKeyRef.current = e.altKey
             }}
-            onSelect={(e) => e.preventDefault()}
+            onSelect={(e) => {
+              e.preventDefault()
+            }}
             onCheckedChange={() => {
               if (altKeyRef.current) {
                 onIsolate(status)
@@ -639,7 +644,9 @@ function FileTreeSearchToggle({model}: {model: FileTree}) {
       // Avoid focus moving to this button before click: the tree search input
       // closes on blur, so without preventDefault the blur runs first, then
       // click sees isOpen false and calls open() again.
-      onPointerDown={(event) => event.preventDefault()}
+      onPointerDown={(event) => {
+        event.preventDefault()
+      }}
       onClick={() => {
         if (search.isOpen) {
           search.close()

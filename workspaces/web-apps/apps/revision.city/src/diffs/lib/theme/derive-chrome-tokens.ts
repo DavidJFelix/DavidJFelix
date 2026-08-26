@@ -123,11 +123,11 @@ export function deriveChromeTokens(theme: ThemeLike): ChromeTokens | undefined {
     fg,
     mutedFg: muted,
     ring: fg,
-    scrollbarThumb: !isNullish(editorBg)
-      ? colorUtils.isDarkSurface(editorBg, editorFg)
+    scrollbarThumb: isNullish(editorBg)
+      ? undefined
+      : colorUtils.isDarkSurface(editorBg, editorFg)
         ? `color-mix(in lab, ${editorBg} 80%, white)`
-        : `color-mix(in lab, ${editorBg} 85%, black)`
-      : undefined,
+        : `color-mix(in lab, ${editorBg} 85%, black)`,
     scrollbarTrack: editorBg ?? undefined,
     separator,
     surface: `color-mix(in srgb, ${fg} 7%, ${cardBase})`,

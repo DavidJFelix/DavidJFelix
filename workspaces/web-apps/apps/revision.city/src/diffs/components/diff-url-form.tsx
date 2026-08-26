@@ -1,10 +1,10 @@
 import {useStableCallback} from '@pierre/diffs/react'
 import {IconX} from '@pierre/icons'
 import {useRouter} from '@tanstack/react-router'
-import {type FormEvent, type ReactNode, useEffect, useRef, useState, useTransition} from 'react'
+import {type ReactNode, type SubmitEvent, useEffect, useRef, useState, useTransition} from 'react'
 import {createPortal} from 'react-dom'
 import {css, cx} from 'styled-system/css'
-import {Button} from '@/diffs/components/button'
+import {Button} from '@/diffs/components/ui/button'
 import {getPatchViewerHref} from '@/diffs/lib/get-patch-viewer-href'
 import {isNullish} from '@/diffs/lib/nullish'
 
@@ -48,15 +48,9 @@ export function DiffUrlForm({
     top: number
     left: number
   } | null>(null)
-  // Preserves the last message so the popover still has content while fading out.
-  const lastErrorText = useRef<string | null>(null)
   // Prevents the onBlur restore from firing when blur is caused by Enter.
   const isSubmittingRef = useRef(false)
   const inputRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    setURL(initialUrl)
-  }, [initialUrl])
 
   useEffect(() => {
     onUrlChange?.(url)
@@ -81,7 +75,7 @@ export function DiffUrlForm({
     }
   }, [errorAnchor])
 
-  const handleSubmit = useStableCallback((event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = useStableCallback((event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault()
     isSubmittingRef.current = false
     const normalizedURL = url.trim()
@@ -89,7 +83,6 @@ export function DiffUrlForm({
     if (isNullish(viewerHref)) {
       const rect = inputRef.current?.getBoundingClientRect()
       if (!isNullish(rect)) setErrorAnchor({top: rect.bottom, left: rect.left})
-      lastErrorText.current = 'Please enter a valid URL'
       setValidationError('Please enter a valid URL')
       return
     }
@@ -218,7 +211,7 @@ export function DiffUrlForm({
                 lineHeight: '[1rem]',
                 transition: '[opacity 150ms cubic-bezier(0.4, 0, 0.2, 1)]',
               }),
-              validationError !== null ? css({opacity: '1'}) : css({opacity: '0'}),
+              validationError === null ? css({opacity: '0'}) : css({opacity: '1'}),
             )}
             onTransitionEnd={() => {
               if (validationError === null) setErrorAnchor(null)
@@ -236,7 +229,7 @@ export function DiffUrlForm({
                 rounded: '[2px]',
               })}
             />
-            {lastErrorText.current}
+            Please enter a valid URL
           </div>,
           document.body,
         )}

@@ -1,5 +1,5 @@
 import {type FlueConversationPart, useFlueAgent} from '@flue/react'
-import {type FormEvent, useState} from 'react'
+import {type SubmitEvent, useState} from 'react'
 import './chat.css'
 
 export default function Chat() {
@@ -16,7 +16,7 @@ export default function Chat() {
   // submissions on the same instance, so gate the form while one is active.
   const busy = agent.status === 'submitted' || agent.status === 'streaming'
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     const message = input.trim()
     if (!message || busy) return

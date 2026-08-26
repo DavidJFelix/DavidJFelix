@@ -12,10 +12,25 @@ const sitemapPaths = async (request: APIRequestContext): Promise<string[]> => {
   return locsFrom(await sitemap.text())
 }
 
-test('robots.txt is served and points at the sitemap', async ({request}) => {
+test('robots.txt is served, points at the sitemap, and declares content signals', async ({
+  request,
+}) => {
   const response = await request.get('/robots.txt')
   expect(response.ok()).toBe(true)
-  expect(await response.text()).toContain('Sitemap: https://djf.io/sitemap-index.xml')
+  const body = await response.text()
+  expect(body).toContain('Sitemap: https://djf.io/sitemap-index.xml')
+  expect(body).toContain('Content-Signal: search=yes, ai-input=yes, ai-train=no, use=reference')
+})
+
+test('sitemap aliases serve the sitemap index content', async ({request}) => {
+  const index = await request.get('/sitemap-index.xml')
+  const indexBody = await index.text()
+  for (const alias of ['/sitemap.xml', '/sitemap_index.xml']) {
+    const response = await request.get(alias)
+    expect(response.ok(), `${alias} served`).toBe(true)
+    expect(response.headers()['content-type'], `${alias} content type`).toContain('xml')
+    expect(await response.text(), `${alias} body`).toBe(indexBody)
+  }
 })
 
 test('sitemap lists the home page and every blog post', async ({request}) => {

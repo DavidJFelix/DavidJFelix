@@ -1,3 +1,4 @@
+import {copyFile} from 'node:fs/promises'
 import {fileURLToPath} from 'node:url'
 // oxlint's import/default can't follow these adapters' default exports through
 // their conditional exports; the default import is the documented entry and
@@ -39,6 +40,21 @@ function pagefindIntegration() {
         } finally {
           // release the pagefind backing service even when indexing fails
           await pagefind.close()
+        }
+      },
+    },
+  }
+}
+
+// Copies the sitemap index to common alias locations crawlers probe, for
+// coverage. Must sit after sitemap() so the index exists when this runs.
+function sitemapAliasIntegration() {
+  return {
+    name: 'sitemap-alias',
+    hooks: {
+      'astro:build:done': async ({dir}) => {
+        for (const alias of ['sitemap.xml', 'sitemap_index.xml']) {
+          await copyFile(new URL('sitemap-index.xml', dir), new URL(alias, dir))
         }
       },
     },
@@ -106,6 +122,7 @@ export default defineConfig({
     }),
     mdx(),
     sitemap(),
+    sitemapAliasIntegration(),
     pagefindIntegration(),
   ],
 })

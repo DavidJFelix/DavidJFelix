@@ -264,7 +264,6 @@
     "workerd",
     "worktrunk",
     "xtask",
-    "yoast", // the WordPress SEO plugin; source of the /sitemap_index.xml convention
     "zizmor",
     "zstd",
     // This repo's own sites, handles, and blog coinages.

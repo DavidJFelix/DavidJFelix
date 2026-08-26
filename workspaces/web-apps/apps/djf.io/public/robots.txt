@@ -1,21 +1,3 @@
-# Content signals declare this site's preferences for automated content use
-# (https://contentsignals.org/). The signals and their meanings:
-#
-# search: building a search index and providing search results (e.g. returning
-# hyperlinks and short excerpts from this website's contents). Search does not
-# include providing AI-generated search summaries.
-# ai-input: inputting content into one or more AI models (e.g. retrieval
-# augmented generation, grounding, or other real-time taking of content for
-# generative AI search answers).
-# ai-train: training or fine-tuning AI models.
-# use: how collected content may be reused -- immediate (interact, but store
-# and reuse nothing), reference (index, excerpt, and link back), or full
-# (summarize and reproduce).
-#
-# ANY RESTRICTIONS EXPRESSED VIA CONTENT SIGNALS ARE EXPRESS RESERVATIONS OF
-# RIGHTS UNDER ARTICLE 4 OF THE EUROPEAN UNION DIRECTIVE 2019/790 ON COPYRIGHT
-# AND RELATED RIGHTS IN THE DIGITAL SINGLE MARKET.
-
 User-agent: *
 Content-Signal: search=yes, ai-input=yes, ai-train=no, use=reference
 Allow: /

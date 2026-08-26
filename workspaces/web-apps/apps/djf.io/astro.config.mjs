@@ -46,12 +46,8 @@ function pagefindIntegration() {
   }
 }
 
-// Serves the sitemap index at /sitemap.xml and /sitemap_index.xml too -- the
-// conventional paths crawlers and validators probe before reading robots.txt
-// (the underscore name is the WordPress/Yoast convention). @astrojs/sitemap
-// only emits sitemap-index.xml and has no option for other names, so copy the
-// built file. Must sit after sitemap() in `integrations` so the index exists
-// when this build:done hook runs.
+// Copies the sitemap index to common alias locations crawlers probe, for
+// coverage. Must sit after sitemap() so the index exists when this runs.
 function sitemapAliasIntegration() {
   return {
     name: 'sitemap-alias',

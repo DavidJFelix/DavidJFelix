@@ -1,3 +1,4 @@
+import {copyFile} from 'node:fs/promises'
 import {fileURLToPath} from 'node:url'
 // oxlint's import/default can't follow these adapters' default exports through
 // their conditional exports; the default import is the documented entry and
@@ -39,6 +40,25 @@ function pagefindIntegration() {
         } finally {
           // release the pagefind backing service even when indexing fails
           await pagefind.close()
+        }
+      },
+    },
+  }
+}
+
+// Serves the sitemap index at /sitemap.xml and /sitemap_index.xml too -- the
+// conventional paths crawlers and validators probe before reading robots.txt
+// (the underscore name is the WordPress/Yoast convention). @astrojs/sitemap
+// only emits sitemap-index.xml and has no option for other names, so copy the
+// built file. Must sit after sitemap() in `integrations` so the index exists
+// when this build:done hook runs.
+function sitemapAliasIntegration() {
+  return {
+    name: 'sitemap-alias',
+    hooks: {
+      'astro:build:done': async ({dir}) => {
+        for (const alias of ['sitemap.xml', 'sitemap_index.xml']) {
+          await copyFile(new URL('sitemap-index.xml', dir), new URL(alias, dir))
         }
       },
     },
@@ -106,6 +126,7 @@ export default defineConfig({
     }),
     mdx(),
     sitemap(),
+    sitemapAliasIntegration(),
     pagefindIntegration(),
   ],
 })

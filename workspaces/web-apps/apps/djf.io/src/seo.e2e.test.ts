@@ -12,10 +12,14 @@ const sitemapPaths = async (request: APIRequestContext): Promise<string[]> => {
   return locsFrom(await sitemap.text())
 }
 
-test('robots.txt is served and points at the sitemap', async ({request}) => {
+test('robots.txt is served, points at the sitemap, and declares content signals', async ({
+  request,
+}) => {
   const response = await request.get('/robots.txt')
   expect(response.ok()).toBe(true)
-  expect(await response.text()).toContain('Sitemap: https://djf.io/sitemap-index.xml')
+  const body = await response.text()
+  expect(body).toContain('Sitemap: https://djf.io/sitemap-index.xml')
+  expect(body).toContain('Content-Signal: search=yes, ai-input=yes, ai-train=no')
 })
 
 test('sitemap lists the home page and every blog post', async ({request}) => {

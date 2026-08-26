@@ -46,3 +46,10 @@ depends = ["typecheck", "lint", "format", "lint:prose", "test", "build"]
 [tasks."sync-standard-site"]
 description = "Sync standard.site ATProto records (needs ATPROTO_APP_PASSWORD)"
 run = "bun bin/sync-standard-site.ts"
+
+# Not part of `check` -- needs CLOUDFLARE_API_TOKEN (djf.io zone, DNS:Edit +
+# DNSSEC:Edit) and writes to the public djf.io DNS zone. Idempotent; run once
+# to publish, and again whenever the desired set in src/lib/dns-aid.ts changes.
+[tasks."sync-dns-aid"]
+description = "Publish DNS-AID agent-discovery records to the djf.io zone (needs CLOUDFLARE_API_TOKEN)"
+run = "bun bin/sync-dns-aid.ts"

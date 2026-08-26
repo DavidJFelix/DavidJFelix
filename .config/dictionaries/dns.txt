@@ -1,3 +1,13 @@
-# DNS response codes as they appear in diagnostics and incident notes.
+# DNS protocol vocabulary: response codes as they appear in diagnostics and
+# incident notes, plus record-type and extension names.
 noerror
 nxdomain
+# Record type and extension names (RFC 9460 service bindings, DNSSEC signing).
+svcb
+dnssec
+# Segments of draft-mozleywilliams-dnsop-dnsaid (DNS for AI Discovery): the
+# draft authors' surnames run together, the IETF dnsop working group, and the
+# DNS-AID shorthand.
+mozleywilliams
+dnsop
+dnsaid

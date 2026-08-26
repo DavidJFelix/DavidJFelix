@@ -22,7 +22,7 @@
   // Topic dictionaries: system vocabularies and names shared by more than one
   // file. Entries and the reasons for them live in the .txt files themselves.
   "dictionaryDefinitions": [
-    {"name": "dns", "path": "dictionaries/dns.txt", "description": "DNS response codes"},
+    {"name": "dns", "path": "dictionaries/dns.txt", "description": "DNS protocol vocabulary"},
     {
       "name": "lezer",
       "path": "dictionaries/lezer.txt",

@@ -48,9 +48,9 @@ import {isNullish} from '@/diffs/lib/nullish'
 import {diffsChromeMapping} from '@/diffs/lib/theme/diffs-chrome-mapping'
 import {getDropdownThemeStyle} from '@/diffs/lib/theme/dropdown-chrome-style'
 import {CHROME_ICON_BUTTON_CLASS} from './chrome-button-styles'
-import {useDiffUrlContext} from './contexts/diff-url-context'
 import {DiffUrlForm} from './diff-url-form'
 import {useChromeThemeProps} from './hooks/use-chrome-theme-props'
+import {useDiffUrl} from './hooks/use-diff-url'
 
 type LightThemeName = string
 type DarkThemeName = string
@@ -130,7 +130,7 @@ export const DiffsHeader = memo(function DiffsHeader({
   setShowBackgrounds,
   showBackgrounds,
 }: HeaderProps) {
-  const {url: diffUrl} = useDiffUrlContext()
+  const diffUrl = useDiffUrl()
   const [currentUrl, setCurrentUrl] = useState(diffUrl)
   // Only show the external-link button when the input still reflects the
   // committed URL — otherwise we'd be pointing at a draft the user is editing.

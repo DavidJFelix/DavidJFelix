@@ -1,5 +1,6 @@
 import type {ThemesType, ThemeTypes} from '@pierre/diffs'
 import {useMemo} from 'react'
+import {useThemeSource} from '@/diffs/components/contexts/theme-source-context'
 import {isNullish} from '@/diffs/lib/nullish'
 import {
   type DiffThemeInput,
@@ -8,7 +9,6 @@ import {
 } from '@/diffs/lib/theme/diff-theme-props'
 import {hasThemeNameSelection} from '@/diffs/lib/theme/theme-source'
 import {useThemeSelection} from './use-theme-selection'
-import {useThemeSource} from './use-theme-source'
 
 // Names-now diffs hook. Reads the selection (names + scheme) — for the provider
 // path it comes from the controller; for an override `theme` prop the names are

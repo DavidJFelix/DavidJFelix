@@ -34,7 +34,6 @@ import {
 import {css, cx} from 'styled-system/css'
 import {SiteMark} from '@/components/site-mark'
 import {GitHubAuthControl} from '@/diffs/components/github-auth-control'
-import {Switch} from '@/diffs/components/switch'
 import {docsThemeCatalog} from '@/diffs/components/theme-catalog'
 import {Button} from '@/diffs/components/ui/button'
 import {ButtonGroup, ButtonGroupItem} from '@/diffs/components/ui/button-group'
@@ -44,6 +43,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/diffs/components/ui/dropdown-menu'
+import {Switch} from '@/diffs/components/ui/switch'
 import {isNullish} from '@/diffs/lib/nullish'
 import {diffsChromeMapping} from '@/diffs/lib/theme/diffs-chrome-mapping'
 import {getDropdownThemeStyle} from '@/diffs/lib/theme/dropdown-chrome-style'

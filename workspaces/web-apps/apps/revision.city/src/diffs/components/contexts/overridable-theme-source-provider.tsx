@@ -1,30 +1,26 @@
-import {createThemeResolver, type ThemeController, type ThemeResolver} from '@pierre/theming'
+import {type ThemeController, type ThemeResolver} from '@pierre/theming'
 import {type ReactNode, useMemo} from 'react'
 import {
   ThemeResolverContext,
-  ThemeSourceContext,
   useThemeResolver,
-  useThemeSource,
-} from '@/diffs/components/hooks/use-theme-source'
-import {isNullish} from '@/diffs/lib/nullish'
+} from '@/diffs/components/contexts/theme-resolver-context'
+import {ThemeSourceContext, useThemeSource} from '@/diffs/components/contexts/theme-source-context'
 import {controllerSource, fixedSource, type ThemeInput} from '@/diffs/lib/theme/theme-source'
 import {ThemeControllerContext} from './theme-controller-context'
 
 interface ControllerProviderProps {
   controller: ThemeController
-  theme?: never
   children: ReactNode
 }
 
 interface OverrideProviderProps {
   controller?: never
   resolver?: ThemeResolver
-  // A name, a resolved theme object, or a { light, dark } pair (names/objects).
-  theme?: ThemeInput
+  theme: ThemeInput
   children: ReactNode
 }
 
-type ThemeSourceProviderProps = ControllerProviderProps | OverrideProviderProps
+type OverridableThemeSourceProviderProps = ControllerProviderProps | OverrideProviderProps
 
 // Carries the current ThemeSource to the subtree. `controller=` makes the
 // default, follows-the-selector source. `theme=` (no controller) makes a frozen
@@ -33,17 +29,14 @@ type ThemeSourceProviderProps = ControllerProviderProps | OverrideProviderProps
 // the slot matching the current mode. Precedence falls out of context nesting:
 // nearest provider wins, and a per-component `theme` prop (in the prop hooks)
 // bypasses the context entirely.
-export function ThemeSourceProvider(props: ThemeSourceProviderProps) {
-  if (!isNullish(props.controller)) {
+export function OverridableThemeSourceProvider(props: OverridableThemeSourceProviderProps) {
+  if (props.controller !== undefined) {
     return (
       <ControllerThemeProvider controller={props.controller}>
         {props.children}
       </ControllerThemeProvider>
     )
   }
-  // A direct undefined check (not the isNullish predicate) so TypeScript
-  // narrows the props union itself and `props.resolver` stays accessible.
-  if (props.theme === undefined) return <>{props.children}</>
   return (
     <OverrideThemeProvider resolver={props.resolver} theme={props.theme}>
       {props.children}
@@ -79,10 +72,9 @@ function OverrideThemeProvider({
 }) {
   // The parent provider's mode feeds slot selection for a { light, dark } pair override.
   const parentSource = useThemeSource()
-  const parentResolver = useThemeResolver()
+  const contextResolver = useThemeResolver()
   const colorScheme = parentSource.activeTheme.colorScheme
-  const localResolver = useMemo(() => createThemeResolver(), [])
-  const selectedResolver = resolver ?? parentResolver ?? localResolver
+  const selectedResolver = resolver ?? contextResolver
   const source = useMemo(() => {
     return fixedSource(theme, {resolver: selectedResolver, colorScheme})
   }, [theme, selectedResolver, colorScheme])

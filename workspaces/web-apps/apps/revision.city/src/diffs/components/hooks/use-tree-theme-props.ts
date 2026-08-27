@@ -1,10 +1,10 @@
-import {createThemeResolver} from '@pierre/theming'
 import type {TreeThemeStyles} from '@pierre/trees'
 import {useMemo} from 'react'
+import {useThemeResolver} from '@/diffs/components/contexts/theme-resolver-context'
+import {useThemeSource} from '@/diffs/components/contexts/theme-source-context'
 import {isNullish} from '@/diffs/lib/nullish'
 import {fixedSource, type ThemeInput} from '@/diffs/lib/theme/theme-source'
 import {type TreeThemePropsOptions, treeThemeProps} from '@/diffs/lib/theme/tree-theme-props'
-import {useThemeResolver, useThemeSource} from './use-theme-source'
 
 // Returns the spreadable FileTree style props for the active theme (provider, or
 // the per-component `theme` override). Pass reconcileForegroundFromChrome to
@@ -14,10 +14,8 @@ export function useTreeThemeProps(
   options?: TreeThemePropsOptions,
 ): {style: TreeThemeStyles} {
   const providerSource = useThemeSource()
-  const contextResolver = useThemeResolver()
+  const resolver = useThemeResolver()
   const colorScheme = providerSource.activeTheme.colorScheme
-  const localResolver = useMemo(() => createThemeResolver(), [])
-  const resolver = contextResolver ?? localResolver
   // A local override source shadows the provider; constructed only when a `theme`
   // prop is given. Pair overrides use the provider color scheme to pick a slot;
   // for a single value the scheme is ignored, and for a name the resolved

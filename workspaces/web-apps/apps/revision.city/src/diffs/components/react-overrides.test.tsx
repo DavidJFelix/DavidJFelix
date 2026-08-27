@@ -7,7 +7,7 @@ import {act, createRef} from 'react'
 import {createRoot, type Root} from 'react-dom/client'
 import {expect, test} from 'vitest'
 import type {ChromeMapping} from '@/diffs/lib/theme/chrome-theme-props'
-import {ThemeSourceProvider} from './contexts/theme-source-provider'
+import {OverridableThemeSourceProvider} from './contexts/overridable-theme-source-provider'
 import {ThemedCodeView} from './themed-code-view'
 import {ThemedSurface} from './themed-surface'
 
@@ -106,9 +106,9 @@ test('React themed component overrides: ThemedCodeView preserves caller themeTyp
 test('React themed component overrides: per-component theme pairs use the provider color scheme', async () => {
   // given
   const {container} = render(
-    <ThemeSourceProvider theme={darkTheme}>
+    <OverridableThemeSourceProvider theme={darkTheme}>
       <ThemedSurface mapping={themeNameMapping} theme={{light: lightTheme, dark: darkTheme}} />
-    </ThemeSourceProvider>,
+    </OverridableThemeSourceProvider>,
   )
 
   // when

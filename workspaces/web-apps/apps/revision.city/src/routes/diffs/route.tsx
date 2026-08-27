@@ -1,6 +1,6 @@
 import {ogTags} from '@davidjfelix/og'
 import {createFileRoute, Outlet} from '@tanstack/react-router'
-import {ThemeProvider} from '@/diffs/components/contexts/theme-provider'
+import {ThemeProvider} from '@/diffs/components/contexts/theme-context'
 import {PreloadHighlighter} from '@/diffs/components/preload-highlighter'
 import {ScrollbarGutterVariables} from '@/diffs/components/scrollbar-gutter-variables'
 import {Toaster} from '@/diffs/components/ui/toaster'

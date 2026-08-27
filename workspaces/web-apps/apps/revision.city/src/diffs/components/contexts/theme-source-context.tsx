@@ -1,20 +1,14 @@
-import type {ThemeResolver} from '@pierre/theming'
 import {createContext, useContext, useRef, useSyncExternalStore} from 'react'
 import {isNullish} from '@/diffs/lib/nullish'
 import type {ActiveThemeSnapshot, ThemeSource} from '@/diffs/lib/theme/theme-source'
-
-export const ThemeSourceContext = createContext<ThemeSource | undefined>(undefined)
-
-export const ThemeResolverContext = createContext<ThemeResolver | undefined>(undefined)
 
 const EMPTY_SNAPSHOT: ActiveThemeSnapshot = {
   theme: undefined,
   colorScheme: 'light',
 }
 
-// Returns whether two snapshots are equal by the fields React cares about, so
-// useSyncExternalStore can keep a stable reference and avoid a render loop (the
-// source may allocate a fresh object on every getSnapshot call).
+export const ThemeSourceContext = createContext<ThemeSource | undefined>(undefined)
+
 function snapshotsEqual(a: ActiveThemeSnapshot, b: ActiveThemeSnapshot): boolean {
   return a.theme === b.theme && a.colorScheme === b.colorScheme
 }
@@ -41,8 +35,4 @@ export function useThemeSource(override?: ThemeSource): {
     () => EMPTY_SNAPSHOT,
   )
   return {activeTheme, source}
-}
-
-export function useThemeResolver(): ThemeResolver | undefined {
-  return useContext(ThemeResolverContext)
 }

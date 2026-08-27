@@ -1,6 +1,6 @@
 import {useStableCallback} from '@pierre/diffs/react'
 import {IconX} from '@pierre/icons'
-import {useRouter} from '@tanstack/react-router'
+import {useNavigate} from '@tanstack/react-router'
 import {type ReactNode, type SubmitEvent, useEffect, useRef, useState, useTransition} from 'react'
 import {createPortal} from 'react-dom'
 import {css, cx} from 'styled-system/css'
@@ -38,7 +38,7 @@ export function DiffUrlForm({
   placeholder,
   children,
 }: DiffUrlFormProps) {
-  const router = useRouter()
+  const navigate = useNavigate()
   const [isPending, startTransition] = useTransition()
   const [url, setURL] = useState(initialUrl)
   const [validationError, setValidationError] = useState<string | null>(null)
@@ -80,7 +80,7 @@ export function DiffUrlForm({
     isSubmittingRef.current = false
     const normalizedURL = url.trim()
     const viewerHref = getPatchViewerHref(normalizedURL)
-    if (isNullish(viewerHref)) {
+    if (viewerHref === undefined) {
       const rect = inputRef.current?.getBoundingClientRect()
       if (!isNullish(rect)) setErrorAnchor({top: rect.bottom, left: rect.left})
       setValidationError('Please enter a valid URL')
@@ -89,7 +89,7 @@ export function DiffUrlForm({
     setValidationError(null)
     setURL(normalizedURL)
     startTransition(() => {
-      router.history.push(viewerHref)
+      navigate({ to: '/diffs/$', params: {_splat: viewerHref}})
     })
   })
 

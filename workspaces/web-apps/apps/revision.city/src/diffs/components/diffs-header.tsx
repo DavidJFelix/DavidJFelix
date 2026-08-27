@@ -34,7 +34,6 @@ import {
 import {css, cx} from 'styled-system/css'
 import {SiteMark} from '@/components/site-mark'
 import {GitHubAuthControl} from '@/diffs/components/github-auth-control'
-import {Switch} from '@/diffs/components/switch'
 import {docsThemeCatalog} from '@/diffs/components/theme-catalog'
 import {Button} from '@/diffs/components/ui/button'
 import {ButtonGroup, ButtonGroupItem} from '@/diffs/components/ui/button-group'
@@ -44,13 +43,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/diffs/components/ui/dropdown-menu'
+import {Switch} from '@/diffs/components/ui/switch'
 import {isNullish} from '@/diffs/lib/nullish'
 import {diffsChromeMapping} from '@/diffs/lib/theme/diffs-chrome-mapping'
 import {getDropdownThemeStyle} from '@/diffs/lib/theme/dropdown-chrome-style'
 import {CHROME_ICON_BUTTON_CLASS} from './chrome-button-styles'
-import {useDiffUrlContext} from './contexts/diff-url-context'
 import {DiffUrlForm} from './diff-url-form'
 import {useChromeThemeProps} from './hooks/use-chrome-theme-props'
+import {useRoutedDiffUrl} from './hooks/use-routed-diff-url'
 
 type LightThemeName = string
 type DarkThemeName = string
@@ -130,11 +130,11 @@ export const DiffsHeader = memo(function DiffsHeader({
   setShowBackgrounds,
   showBackgrounds,
 }: HeaderProps) {
-  const {url: diffUrl} = useDiffUrlContext()
+  const diffUrl = useRoutedDiffUrl()
   const [currentUrl, setCurrentUrl] = useState(diffUrl)
   // Only show the external-link button when the input still reflects the
   // committed URL — otherwise we'd be pointing at a draft the user is editing.
-  const showExternalLink = currentUrl === diffUrl
+  const isExternalLinkIconVisible = currentUrl === diffUrl
   // Mirror the sidebar's themed chrome so the header bar lives on the same
   // Shiki surface (background, text, icons, borders) instead of the global
   // light/dark palette. Falls back to the diffs-sidebar-bg CSS variable
@@ -232,7 +232,7 @@ export const DiffsHeader = memo(function DiffsHeader({
           <IconFileTreeFill className={ICON_SIZE_CLASS} />
         </Button>
         <div className={css({display: 'flex', alignItems: 'center', gap: '2'})}>
-          {showExternalLink && (
+          {isExternalLinkIconVisible && (
             <>
               <Button
                 asChild

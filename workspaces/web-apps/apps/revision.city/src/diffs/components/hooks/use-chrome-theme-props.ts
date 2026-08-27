@@ -1,9 +1,9 @@
-import {createThemeResolver} from '@pierre/theming'
 import {type CSSProperties, useMemo} from 'react'
+import {useThemeResolver} from '@/diffs/components/contexts/theme-resolver-context'
+import {useThemeSource} from '@/diffs/components/contexts/theme-source-context'
 import {isNullish} from '@/diffs/lib/nullish'
 import {type ChromeMapping, chromeThemeProps} from '@/diffs/lib/theme/chrome-theme-props'
 import {fixedSource, type ThemeInput} from '@/diffs/lib/theme/theme-source'
-import {useThemeResolver, useThemeSource} from './use-theme-source'
 
 // Returns the spreadable chrome style props for the active theme, mapped to the
 // app's CSS variables by the supplied mapping (diffs passes diffsChromeMapping).
@@ -12,10 +12,8 @@ export function useChromeThemeProps(
   theme?: ThemeInput,
 ): {style: CSSProperties} {
   const providerSource = useThemeSource()
-  const contextResolver = useThemeResolver()
+  const resolver = useThemeResolver()
   const colorScheme = providerSource.activeTheme.colorScheme
-  const localResolver = useMemo(() => createThemeResolver(), [])
-  const resolver = contextResolver ?? localResolver
   const override = useMemo(() => {
     if (isNullish(theme)) return
     return fixedSource(theme, {resolver, colorScheme})

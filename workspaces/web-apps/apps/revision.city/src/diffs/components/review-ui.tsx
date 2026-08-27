@@ -27,7 +27,7 @@ import {upsertSavedCommentSidebarEntry} from '@/diffs/lib/upsert-saved-comment-s
 import {docsThemeCatalog, themeController} from '@/diffs/state/theme-controller'
 import type {SymbolSelection} from '@/symbols/components/symbol-changes-list'
 import type {EntityDiffRequest} from '@/symbols/lib/entity-diff-client'
-import {ThemeSourceProvider} from './contexts/theme-source-provider'
+import {OverridableThemeSourceProvider} from './contexts/overridable-theme-source-provider'
 import {DiffsHeader} from './diffs-header'
 import {DiffsSidebar} from './diffs-sidebar'
 import {DiffsStatusPanel} from './diffs-status-panel'
@@ -45,9 +45,9 @@ export function ReviewUI({domain, path}: ReviewUIProps) {
   // Provide the diffs-scoped theme context, then render the body BELOW it so
   // the diffs hook + selection hook can read the controller context.
   return (
-    <ThemeSourceProvider controller={themeController}>
+    <OverridableThemeSourceProvider controller={themeController}>
       <ReviewUIInner domain={domain} path={path} />
-    </ThemeSourceProvider>
+    </OverridableThemeSourceProvider>
   )
 }
 

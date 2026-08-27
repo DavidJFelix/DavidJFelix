@@ -1,7 +1,6 @@
 import {getGitHubPathFromURL} from './get-github-path-from-url'
 import {normalizeGitHubPath} from './normalize-github-path'
 import {isNullish} from './nullish'
-import {DIFFS_BASE_PATH} from './site'
 
 // Matches GitHub shorthand "owner/repo#123" -> /owner/repo/pull/123.
 const GITHUB_SHORTHAND_PATTERN = /^([^/\s]+)\/([^/\s#]+)#(\d+)$/
@@ -21,16 +20,16 @@ export function getPatchViewerHref(input: string): string | undefined {
   // GitHub shorthand: "owner/repo#123" -> "/owner/repo/pull/123"
   const shorthandMatch = GITHUB_SHORTHAND_PATTERN.exec(trimmed)
   if (!isNullish(shorthandMatch)) {
-    return `${DIFFS_BASE_PATH}/${shorthandMatch[1]}/${shorthandMatch[2]}/pull/${shorthandMatch[3]}`
+    return `${shorthandMatch[1]}/${shorthandMatch[2]}/pull/${shorthandMatch[3]}`
   }
 
   // Full URL with protocol (most common case).
   try {
     const parsedURL = new URL(trimmed)
     const githubPath = getGitHubPathFromURL(parsedURL)
-    if (!isNullish(githubPath)) return `${DIFFS_BASE_PATH}${githubPath}`
+    if (!isNullish(githubPath)) return `${githubPath}`
     if (parsedURL.pathname !== '/') {
-      return `${DIFFS_BASE_PATH}${parsedURL.pathname}?domain=${encodeURIComponent(parsedURL.hostname)}`
+      return `${parsedURL.pathname.slice(1)}?domain=${encodeURIComponent(parsedURL.hostname)}`
     }
     return undefined
   } catch {
@@ -46,9 +45,9 @@ export function getPatchViewerHref(input: string): string | undefined {
     try {
       const parsedURL = new URL(`https://${trimmed}`)
       const githubPath = getGitHubPathFromURL(parsedURL)
-      if (!isNullish(githubPath)) return `${DIFFS_BASE_PATH}${githubPath}`
+      if (!isNullish(githubPath)) return `${githubPath}`
       if (parsedURL.pathname !== '/') {
-        return `${DIFFS_BASE_PATH}${parsedURL.pathname}?domain=${encodeURIComponent(parsedURL.hostname)}`
+        return `${parsedURL.pathname.slice(1)}?domain=${encodeURIComponent(parsedURL.hostname)}`
       }
     } catch {
       // Not parseable even with https:// prefix.
@@ -61,7 +60,7 @@ export function getPatchViewerHref(input: string): string | undefined {
   const bareMatch = BARE_GITHUB_PATH_PATTERN.exec(trimmed)
   if (!isNullish(bareMatch)) {
     const [, owner, repo, rest = ''] = bareMatch
-    return `${DIFFS_BASE_PATH}${normalizeGitHubPath(`/${owner}/${repo}${rest}`)}`
+    return `${normalizeGitHubPath(`/${owner}/${repo}${rest}`).slice(1)}`
   }
 
   return undefined

@@ -10,7 +10,7 @@ export function getGitHubPathFromURL(parsedURL: URL): string | undefined {
     if (parsedURL.pathname === '/') {
       return undefined
     }
-    return normalizeGitHubPath(parsedURL.pathname)
+    return normalizeGitHubPath(parsedURL.pathname).slice(1)
   }
 
   if (parsedURL.hostname !== GITHUB_RAW_DIFF_HOST) {
@@ -29,5 +29,5 @@ export function getGitHubPathFromURL(parsedURL: URL): string | undefined {
     return undefined
   }
 
-  return `/${owner}/${repo}/pull/${pullFile}`
+  return `${owner}/${repo}/pull/${pullFile}`
 }

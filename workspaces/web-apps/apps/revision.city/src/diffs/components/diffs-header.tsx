@@ -50,7 +50,7 @@ import {getDropdownThemeStyle} from '@/diffs/lib/theme/dropdown-chrome-style'
 import {CHROME_ICON_BUTTON_CLASS} from './chrome-button-styles'
 import {DiffUrlForm} from './diff-url-form'
 import {useChromeThemeProps} from './hooks/use-chrome-theme-props'
-import {useDiffUrl} from './hooks/use-diff-url'
+import {useRoutedDiffUrl} from './hooks/use-routed-diff-url'
 
 type LightThemeName = string
 type DarkThemeName = string
@@ -130,11 +130,11 @@ export const DiffsHeader = memo(function DiffsHeader({
   setShowBackgrounds,
   showBackgrounds,
 }: HeaderProps) {
-  const diffUrl = useDiffUrl()
+  const diffUrl = useRoutedDiffUrl()
   const [currentUrl, setCurrentUrl] = useState(diffUrl)
   // Only show the external-link button when the input still reflects the
   // committed URL — otherwise we'd be pointing at a draft the user is editing.
-  const showExternalLink = currentUrl === diffUrl
+  const isExternalLinkIconVisible = currentUrl === diffUrl
   // Mirror the sidebar's themed chrome so the header bar lives on the same
   // Shiki surface (background, text, icons, borders) instead of the global
   // light/dark palette. Falls back to the diffs-sidebar-bg CSS variable
@@ -232,7 +232,7 @@ export const DiffsHeader = memo(function DiffsHeader({
           <IconFileTreeFill className={ICON_SIZE_CLASS} />
         </Button>
         <div className={css({display: 'flex', alignItems: 'center', gap: '2'})}>
-          {showExternalLink && (
+          {isExternalLinkIconVisible && (
             <>
               <Button
                 asChild

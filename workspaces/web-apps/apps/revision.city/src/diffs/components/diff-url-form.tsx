@@ -89,7 +89,7 @@ export function DiffUrlForm({
     setValidationError(null)
     setURL(normalizedURL)
     startTransition(() => {
-      navigate({ to: '/diffs/$', params: {_splat: viewerHref}})
+      void navigate({to: '/diffs/$', params: {_splat: viewerHref}})
     })
   })
 

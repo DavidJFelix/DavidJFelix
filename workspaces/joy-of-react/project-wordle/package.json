@@ -29,7 +29,7 @@
     "spell": "cspell --config ../../../.config/cspell.jsonc \"**\""
   },
   "browserslist": "> 0.5%, last 2 versions, not dead",
-  "packageManager": "pnpm@11.22.0",
+  "packageManager": "pnpm@11.24.0",
   "engines": {
     "node": ">=22"
   }

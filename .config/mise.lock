@@ -395,7 +395,7 @@ backend = "npm:@earendil-works/pi-coding-agent"
 allow_builds = '["@google/genai", "protobufjs"]'
 
 [[tools."npm:@sentry/warden"]]
-version = "0.46.2"
+version = "0.48.0"
 backend = "npm:@sentry/warden"
 
 [tools."npm:@sentry/warden".options]

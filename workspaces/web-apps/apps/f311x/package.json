@@ -42,7 +42,7 @@
     "alchemy": "2.0.0-beta.72",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "effect": "4.0.0-rc.111",
+    "effect": "4.0.0-rc.112",
     "lucide-react": "^1.18.0",
     "marked": "^18.0.5",
     "posthog-js": "^1.393.0",
@@ -61,7 +61,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "5.20260821.1",
-    "@effect/platform-node": "4.0.0-rc.111",
+    "@effect/platform-node": "4.0.0-rc.112",
     "@playwright/test": "1.62.1",
     "@tailwindcss/typography": "0.5.20",
     "@tanstack/devtools-vite": "catalog:",

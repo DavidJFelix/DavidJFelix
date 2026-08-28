@@ -402,7 +402,7 @@ backend = "npm:@sentry/warden"
 trust_policy_excludes = '["@sentry/warden"]'
 
 [[tools."npm:cspell"]]
-version = "10.1.0"
+version = "10.1.1"
 backend = "npm:cspell"
 
 [[tools."npm:oxfmt"]]

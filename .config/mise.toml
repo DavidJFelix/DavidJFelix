@@ -14,7 +14,7 @@ actionlint = "1"
 ghalint = "1"
 zizmor = "1.29.0"
 pinact = "4.1.1"
-"npm:cspell" = "10.1.0"
+"npm:cspell" = "10.1.1"
 # Warden CLI: AI code review run locally (`warden run`) and in CI (the Depot
 # ci-warden.yml workflow uses the getsentry/warden action, which bundles its
 # own copy). Pinned like cspell via mise's npm backend; there is no root

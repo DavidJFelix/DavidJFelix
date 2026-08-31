@@ -27,7 +27,7 @@
     "@astrojs/cloudflare": "14.2.3",
     "@davidjfelix/og": "workspace:*",
     "@davidjfelix/theme": "workspace:*",
-    "@earendil-works/pi-ai": "0.84.2",
+    "@earendil-works/pi-ai": "0.84.3",
     "@flue/react": "2.0.3",
     "@flue/runtime": "2.0.3",
     "@flue/sdk": "2.0.3",

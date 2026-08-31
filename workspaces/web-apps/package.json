@@ -15,7 +15,7 @@
     }
   },
   "overrides": {
-    "rolldown": "1.2.5",
+    "rolldown": "1.2.6",
     "@earendil-works/pi-ai": "0.84.3",
     "@effect/platform-node-shared": "4.0.0-rc.112",
     "effect": "4.0.0-rc.112",

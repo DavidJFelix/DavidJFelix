@@ -48,7 +48,7 @@
     "@playwright/test": "1.62.1",
     "@sentry/cloudflare": "10.71.0",
     "@types/react": "19.2.18",
-    "@types/react-dom": "19.2.4",
+    "@types/react-dom": "19.2.5",
     "@vitest/coverage-v8": "4.1.11",
     "oxlint-tsgolint": "7.0.2001",
     "typescript": "7.0.2",

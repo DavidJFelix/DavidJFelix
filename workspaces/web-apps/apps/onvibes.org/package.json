@@ -24,7 +24,7 @@
     "test:e2e:update": "playwright test --update-snapshots"
   },
   "dependencies": {
-    "@astrojs/cloudflare": "14.2.3",
+    "@astrojs/cloudflare": "14.2.5",
     "@davidjfelix/og": "workspace:*",
     "@davidjfelix/theme": "workspace:*",
     "@earendil-works/pi-ai": "0.84.3",

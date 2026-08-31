@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",
-    "@sentry/cloudflare": "10.71.0",
+    "@sentry/cloudflare": "10.72.0",
     "@types/bun": "1.4.0",
     "@vitest/coverage-v8": "4.1.11",
     "oxlint-tsgolint": "7.0.2001",

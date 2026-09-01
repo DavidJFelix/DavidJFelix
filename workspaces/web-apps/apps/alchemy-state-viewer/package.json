@@ -19,7 +19,7 @@
     "test:watch": "vitest"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "5.20260827.1",
+    "@cloudflare/workers-types": "5.20260829.1",
     "@pandacss/dev": "1.12.0",
     "@sveltejs/adapter-cloudflare": "7.2.9",
     "@sveltejs/kit": "2.70.3",
@@ -33,7 +33,7 @@
     "typescript": "6.0.3",
     "vite": "8.2.2",
     "vitest": "4.1.11",
-    "wrangler": "4.127.0"
+    "wrangler": "4.127.1"
   },
   "dependencies": {
     "@ark-ui/svelte": "^5.22.1",

@@ -1,8 +1,8 @@
 import {expect, test} from '@playwright/test'
-import {SENTRY_TUNNEL_ROUTE} from '../lib/sentry-tunnel'
+import {SENTRY_TUNNEL_ROUTE} from './lib/sentry-tunnel'
 
-// Exercises the deployed worker's tunnel route end to end (local `wrangler dev`
-// boot and the per-PR preview worker alike). Every case is rejected before the
+// Exercises the deployed worker's tunnel route end to end (local `vite preview`
+// boot and the per-PR preview alike). Every case is rejected before the
 // upstream forward, so the suite never touches Sentry -- deterministic and
 // secret-free, the same bar as the rest of the e2e suite.
 

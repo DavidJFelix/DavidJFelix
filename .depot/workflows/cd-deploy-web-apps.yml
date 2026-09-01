@@ -112,6 +112,10 @@ jobs:
           STANDARD_SITE_RESOLVE: ${{ steps.atproto.outputs.present }}
           PUBLIC_SENTRY_DSN: ${{ vars[format('SENTRY_DSN_{0}', matrix.app.envSuffix)] }}
           PUBLIC_POSTHOG_KEY: ${{ vars[format('POSTHOG_KEY_{0}', matrix.app.envSuffix)] }}
+          # Same values under the Vite prefix for the TanStack Start apps,
+          # whose client builds inline VITE_PUBLIC_* (see src/observability).
+          VITE_PUBLIC_SENTRY_DSN: ${{ vars[format('SENTRY_DSN_{0}', matrix.app.envSuffix)] }}
+          VITE_PUBLIC_POSTHOG_KEY: ${{ vars[format('POSTHOG_KEY_{0}', matrix.app.envSuffix)] }}
           SENTRY_PROJECT: ${{ vars[format('SENTRY_PROJECT_{0}', matrix.app.envSuffix)] }}
           SENTRY_ORG: ${{ vars.SENTRY_ORG }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}

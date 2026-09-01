@@ -23,8 +23,8 @@ export type WebAppTarget = {
   readonly worker: string
   // Routes the preview smoke gate fetches, comma-separated.
   readonly smokeRoutes: string
-  // Explicit wrangler config, for adapters that emit a resolved one (Astro's
-  // Cloudflare adapter, flue). Empty means the app's own wrangler.toml.
+  // Explicit wrangler config, for builds that emit a resolved one (Astro's
+  // Cloudflare adapter). Empty means the app's own wrangler.toml.
   readonly wranglerConfig: string
   // 'wrangler' -- covered by the shared matrix; 'none' -- has its own
   // workflow because its lifecycle genuinely differs.
@@ -130,9 +130,9 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
   {
     dir: 'onvibes.org',
     worker: 'onvibes-org',
-    smokeRoutes: '/,/chat',
-    wranglerConfig: 'dist-flue/onvibes_org/wrangler.json',
-    preview: 'none',
+    smokeRoutes: '/',
+    wranglerConfig: '',
+    preview: 'wrangler',
     deploy: 'wrangler',
     envSuffix: 'ONVIBES_ORG',
     devEnv: '',

@@ -16,11 +16,8 @@
   },
   "overrides": {
     "rolldown": "1.2.6",
-    "@earendil-works/pi-ai": "0.84.3",
     "@effect/platform-node-shared": "4.0.0-rc.112",
-    "effect": "4.0.0-rc.112",
-    "@modelcontextprotocol/sdk": "1.30.0",
-    "hono": "4.13.3"
+    "effect": "4.0.0-rc.112"
   },
   "trustedDependencies": [
     "@sentry/cli",

@@ -2,8 +2,7 @@ import {expect, test} from '@playwright/test'
 
 // Exercises the theme contract (docs/projects/theme-switcher-unification/plan.md)
 // against the home page: pre-paint OS resolution, a persisted override beating
-// the OS, and the toggle cycling + persisting each mode. The `_` prefix keeps
-// Astro from treating this file in src/pages/ as a route.
+// the OS, and the toggle cycling + persisting each mode.
 
 test('system dark is honored at first paint', async ({page}) => {
   await page.emulateMedia({colorScheme: 'dark'})

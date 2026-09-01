@@ -2,9 +2,9 @@ import {expect, test} from '@playwright/test'
 
 // The /diag reverse proxy can only reach PostHog from a real Cloudflare deploy,
 // so these run against the per-PR preview (PREVIEW_URL set) -- not the local
-// `wrangler dev` boot, whose workerd can't egress to PostHog. They exercise the
+// `vite preview` boot, whose workerd can't egress to PostHog. They exercise the
 // backend per the repo's runtime-gate rule, and need no PostHog key (the proxy is
-// key-agnostic; the key only gates the client snippet).
+// key-agnostic; the key only gates the client bootstrap).
 const previewOnly =
   'needs the deployed preview; the proxy upstream is unreachable from a local boot'
 

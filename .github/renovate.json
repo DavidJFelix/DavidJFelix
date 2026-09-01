@@ -53,11 +53,6 @@
       "groupName": "cloudflare workers packages"
     },
     {
-      "description": "the @flue packages (sdk, react, runtime, cli) release as a matched set at a single version, so group every update type into a single PR that moves them together",
-      "matchPackageNames": ["@flue/**"],
-      "groupName": "flue packages"
-    },
-    {
       "description": "the @tanstack/ai packages (core plus framework bindings and adapters) release as a matched set, so group every update type into a single PR that moves them together",
       "matchPackageNames": ["@tanstack/ai", "@tanstack/ai-*"],
       "groupName": "tanstack ai packages"
@@ -163,7 +158,7 @@
       "groupName": "alchemy packages"
     },
     {
-      "description": "the @earendil-works pi packages (pi-ai in apps, pi-coding-agent in mise) come from one org and share the pi runtime, so group every update type across both managers",
+      "description": "the @earendil-works pi packages (pi-coding-agent in mise; pi-ai left with Flue in 2026-08) come from one org and share the pi runtime, so group every update type across both managers",
       "matchPackageNames": ["@earendil-works/**", "npm:@earendil-works/pi-coding-agent"],
       "groupName": "earendil pi packages"
     },

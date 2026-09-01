@@ -3,9 +3,10 @@
 // The browser SDK normally POSTs envelopes straight to `*.ingest.sentry.io`,
 // which ad/tracker blockers drop -- so a chunk of real-user errors never arrive.
 // Setting the SDK's `tunnel` to a same-origin path makes it POST here instead;
-// the on-demand endpoint (src/pages/bugs.ts) forwards the envelope on to Sentry's
-// ingest API server-side, where no blocker can see it. Blockers match Sentry's
-// ingest *hosts*, not arbitrary first-party paths, so the relay slips through.
+// the on-demand /bugs endpoint (src/routes/bugs.ts) forwards the envelope on to
+// Sentry's ingest API server-side, where no blocker can see it. Blockers match
+// Sentry's ingest *hosts*, not arbitrary first-party paths, so the relay slips
+// through.
 //
 // `forwardEnvelope` is the whole relay. It is the security boundary: it forwards
 // only to a genuine Sentry ingest host (so a forged envelope DSN can't turn the
@@ -14,7 +15,7 @@
 // through this domain).
 
 // The path the SDK tunnels through and the endpoint serves. Single source of
-// truth, imported by both sentry.client.config.ts and src/pages/bugs.ts. Neutral
+// truth, imported by both the client bootstrap and src/routes/bugs.ts. Neutral
 // on purpose -- it must not read as "sentry"/"telemetry", or blockers would match
 // the path too. Keep it clear of real routes (no `/bugs` page exists).
 export const SENTRY_TUNNEL_ROUTE = '/bugs'

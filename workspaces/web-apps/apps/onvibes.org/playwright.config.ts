@@ -1,12 +1,12 @@
 import {defineConfig, devices} from '@playwright/test'
 
 // onvibes.org's visual-regression suite. It runs against either:
-//   - a deployed per-PR preview (PREVIEW_URL set by cd-preview-onvibes-org.yml), or
+//   - a deployed per-PR preview (PREVIEW_URL set by cd-preview-web-apps.yml), or
 //   - a local production boot (no PREVIEW_URL) for writing/checking baselines.
 //
-// The local boot serves the built worker + assets via `wrangler dev` -- the same
-// boot bin/smoke-local.ts uses, so the on-demand /diag and /bugs routes are
-// reachable.
+// The local boot serves the built SSR worker in workerd via `vite preview` (the
+// @cloudflare/vite-plugin) -- the same boot bin/smoke-local.ts uses, so the page
+// matches what the preview deploy serves.
 const PORT = Number(process.env.PLAYWRIGHT_PORT ?? 4324)
 const PREVIEW_URL = process.env.PREVIEW_URL
 const BASE_URL = PREVIEW_URL ?? `http://127.0.0.1:${PORT}`
@@ -24,16 +24,13 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   projects: [{name: 'chromium', use: {...devices['Desktop Chrome']}}],
-  // Nothing to boot when pointed at a deployed preview. The local boot uses the
-  // Flue worker config -- the artifact CD deploys (Astro hosted inside it, /api
-  // agent DOs included) -- so e2e exercises the same worker production runs.
-  // --local-upstream pins the origin wrangler dev pretends to serve (otherwise
-  // the configured onvibes.org route wins and runtime-built absolute URLs like
-  // the agent streamUrl would point at production).
+  // Nothing to boot when pointed at a deployed preview.
   webServer: PREVIEW_URL
     ? undefined
     : {
-        command: `node_modules/.bin/wrangler dev -c dist-flue/onvibes_org/wrangler.json --ip 127.0.0.1 --port ${PORT} --local-upstream 127.0.0.1:${PORT} --upstream-protocol http`,
+        // Spawn the vite binary directly (not via `bun x`) so Playwright's
+        // teardown kills workerd instead of a wrapper that outlives it.
+        command: `node_modules/.bin/vite preview --host 127.0.0.1 --port ${PORT}`,
         url: BASE_URL,
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,

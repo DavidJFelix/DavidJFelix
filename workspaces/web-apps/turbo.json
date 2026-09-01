@@ -36,7 +36,6 @@
       "outputs": [
         "dist/**",
         "dist-ssr/**",
-        "dist-flue/**",
         ".output/**",
         ".svelte-kit/**",
         ".astro/**",

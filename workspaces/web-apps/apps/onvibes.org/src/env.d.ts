@@ -1,8 +1,10 @@
-/// <reference path="../.astro/types.d.ts" />
-/// <reference types="astro/client" />
+/// <reference types="vite/client" />
 
-// PostHog project key, injected at build on the production deploy. Absent
-// everywhere else, which is what keeps analytics off locally/CI/preview.
+// Client-exposed observability config. Optional: each integration stays off until
+// its value is provided at build, so the app runs uninstrumented in dev and in
+// any deploy where the vars aren't set. src/server.ts inlines the same
+// VITE_PUBLIC_SENTRY_DSN for worker-side capture.
 interface ImportMetaEnv {
-  readonly PUBLIC_POSTHOG_KEY?: string
+  readonly VITE_PUBLIC_SENTRY_DSN?: string
+  readonly VITE_PUBLIC_POSTHOG_KEY?: string
 }

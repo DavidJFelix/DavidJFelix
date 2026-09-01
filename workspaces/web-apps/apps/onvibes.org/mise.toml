@@ -2,18 +2,15 @@
 # tasks delegate to package.json scripts. Assumes `bun install` has run.
 
 [tasks.typecheck]
-description = "Type-check with astro check"
+description = "Type-check with tsc"
 run = "bun run typecheck"
-# astro check and astro build both regenerate .astro/ types; serialize them
-# when both are scheduled (e.g. via the check umbrella task)
-wait_for = ["build"]
 
 [tasks.lint]
 description = "Lint with Oxlint + Biome"
 run = "bun run lint"
 
 [tasks.format]
-description = "Check formatting (oxfmt; Biome for astro/svelte; Prettier for md/mdx)"
+description = "Check formatting (oxfmt; Prettier for md/mdx)"
 run = "bun run format"
 
 [tasks."format:fix"]
@@ -21,15 +18,15 @@ description = "Apply formatting fixes"
 run = "bun run format:fix"
 
 [tasks.test]
-description = "Unit tests with Vitest (passWithNoTests until the first test lands)"
+description = "Unit tests with Vitest"
 run = "bun run test"
 
 [tasks.build]
-description = "Build the site (Astro) and the deployable Flue worker"
+description = "Build with Vite"
 run = "bun run build"
 
 [tasks.smoke]
-description = "Smoke-test a local production boot (wrangler dev on the built Flue worker)"
+description = "Smoke-test a local production boot (vite preview on workerd)"
 depends = ["build"]
 run = "bun run smoke"
 

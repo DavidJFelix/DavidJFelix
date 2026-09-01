@@ -1,10 +1,11 @@
 #:schema node_modules/wrangler/config-schema.json
 name = "onvibes-org"
-# Flue owns the deployed Worker and hosts Astro inside it (src/app.ts); the
-# @astrojs/cloudflare adapter reads wrangler-astro.jsonc instead of this file.
-# No `main` here on purpose: Flue's Vite plugin fills it with the generated
-# Worker entry only when the config leaves it unset -- an authored value would
-# win and get bundled as the Worker.
+# Custom server entry (src/server.ts) wraps the TanStack Start handler with Sentry
+# (@sentry/cloudflare withSentry); @cloudflare/vite-plugin needs this explicit
+# entry instead of the default @tanstack/react-start/server-entry
+# (cloudflare/workers-sdk#11100). Server-side Sentry reads VITE_PUBLIC_SENTRY_DSN
+# (inlined at build, same as the client); no-op until it's set.
+main = "src/server.ts"
 compatibility_date = "2026-06-01"
 compatibility_flags = ["nodejs_compat"]
 
@@ -19,15 +20,6 @@ routes = [
   { pattern = "www.onvibes.org", custom_domain = true },
 ]
 
-# Astro's static client output. Cloudflare serves these before the Worker, so
-# prerendered pages and hashed assets come straight from here; `run_worker_first`
-# routes the Flue agent API (/api/*) to the Worker instead. Non-asset requests
-# fall through to the Worker, which forwards them to the Astro handler.
-[assets]
-directory = "./dist/client"
-binding = "ASSETS"
-run_worker_first = ["/api/*"]
-
 # Logs and traces ship to Grafana Cloud through the account-level
 # observability destinations configured in the dashboard.
 [observability.logs]
@@ -37,25 +29,3 @@ destinations = ["2026-aug-16-grafana-cloud-logs"]
 [observability.traces]
 enabled = true
 destinations = ["2026-aug-16-grafana-cloud-traces"]
-
-# Durable Objects backing the Flue agent runtime. The Flue Vite plugin
-# generates FlueAssistantAgent (one class per 'use agent' export) and exports
-# it from the Worker; the migration history below stays user-authored and
-# append-only. SQLite storage must be enabled via a migration. Astro reads a
-# separate, DO-free config (wrangler-astro.jsonc) so its own build doesn't try
-# to validate these classes it never exports.
-#
-# FlueRegistry is a beta-era Flue class the v2 runtime no longer generates. It
-# stays in the history (and exported, as an inert stand-in from
-# src/cloudflare.ts) because a deleted_classes migration cannot deploy to a
-# fresh per-PR preview Worker -- the full-history replay rejects deleting a
-# class no prior version exported (Cloudflare error 10074). Flue 2's schema
-# reset strands beta-era FlueAssistantAgent conversation databases either way;
-# that's fine here, conversations are throwaway per-tab echoes and new ids
-# start on fresh storage.
-#
-# NOTE: array-of-tables must come after all top-level keys in TOML, or the keys
-# below a `[[...]]` header get absorbed into it.
-[[migrations]]
-tag = "v1"
-new_sqlite_classes = ["FlueAssistantAgent", "FlueRegistry"]

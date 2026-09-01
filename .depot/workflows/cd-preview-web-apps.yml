@@ -11,8 +11,8 @@ name: CD Preview web-apps
 # will fail the deploy step -- acceptable for a personal monorepo; do NOT switch
 # to pull_request_target.
 #
-# f311x (alchemy) and onvibes.org (real worker + teardown) have their own
-# preview workflows: their lifecycles genuinely differ.
+# f311x (alchemy) has its own preview workflow: its lifecycle genuinely
+# differs.
 on:
   pull_request:
     types: [opened, synchronize, reopened]

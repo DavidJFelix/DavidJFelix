@@ -13,7 +13,7 @@ description: >-
   steps only -- never from inside another composite action. Run steps in a
   nested composite do not inherit the job's default working-directory, so the
   version resolve and `bun x` would run at the repo root and fail; the
-  preview-wrangler and preview-worker composites inline these steps instead.
+  preview-wrangler composite inlines these steps instead.
 
 runs:
   using: composite

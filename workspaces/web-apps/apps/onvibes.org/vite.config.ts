@@ -1,15 +1,14 @@
 import {cloudflare} from '@cloudflare/vite-plugin'
-import {flue, flueWorkerConfig} from '@flue/vite'
+import {devtools} from '@tanstack/devtools-vite'
+import {tanstackStart} from '@tanstack/react-start/plugin/vite'
+import viteReact from '@vitejs/plugin-react'
 import {defineConfig} from 'vite'
 
-// Builds the deployable Flue Worker (Flue 2 dropped `flue build` for Vite).
-// This config is the worker build only: `astro build` keeps its own pipeline
-// (astro.config.mjs) and runs first, so src/app.ts can import the prebuilt
-// Astro worker it hosts. flue() must precede cloudflare() -- it scans the
-// 'use agent' modules and hands the generated Worker entry plus per-agent
-// Durable Object bindings to the Cloudflare plugin through its config hook.
-// outDir keeps the worker artifact out of Astro's dist/ (client + server).
-export default defineConfig({
-  plugins: [flue(), cloudflare({config: flueWorkerConfig()})],
-  build: {outDir: 'dist-flue'},
+// The cloudflare() plugin runs the SSR environment in workerd and must come
+// before tanstackStart() so the server build targets Workers.
+const config = defineConfig({
+  resolve: {tsconfigPaths: true},
+  plugins: [devtools(), cloudflare({viteEnvironment: {name: 'ssr'}}), tanstackStart(), viteReact()],
 })
+
+export default config

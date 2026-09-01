@@ -22,23 +22,12 @@
 # - effect and @effect/platform-node-shared are pinned to the same version as
 #   f311x's direct effect/@effect/platform-node so exactly ONE physical effect
 #   lands in the tree; mixed copies are the prime suspect for the SchemaAST
-#   TypeError chased on 2026-06-11. effect is the workspace's only unpinned
-#   route to a second copy: @standard-community/standard-{json,openapi}
-#   (onvibes.org, via @flue/runtime) take it as an optional peer, and without
-#   the pin bun resolves them to whatever effect the lockfile last saw.
-#   This is a floor, not a cap -- the beta.94 cap was for effect beta.97
-#   removing Schedule.either, which alchemy beta.62 migrated onto the new
-#   Schedule API, and beta.67 now requires effect >= 4.0.0-beta.100.
-# - @modelcontextprotocol/sdk is pinned so @earendil-works/pi-ai dedupes to ONE
-#   physical copy in onvibes.org. pi-ai's API-transport registry is module
-#   state, and @flue/runtime and the `agents` SDK declare peer ranges that can
-#   otherwise split it (#339 did) -- src/app.test.ts asserts the invariant.
-#   Drop once the two peers agree without help.
-# - hono is pinned to onvibes.org's direct version so the app and
-#   @flue/runtime share ONE physical copy. With two copies (flue resolved
-#   4.12.29 beside the app's 4.12.34), `app.route('/api', flue())` fails
-#   astro check: the two Hono type identities are incompatible (4.12.34's
-#   HonoRequest added [GET_MATCH_RESULT]). Move the pin with the app's hono.
+#   TypeError chased on 2026-06-11. This is a floor, not a cap -- the beta.94
+#   cap was for effect beta.97 removing Schedule.either, which alchemy beta.62
+#   migrated onto the new Schedule API, and beta.67 now requires effect >=
+#   4.0.0-beta.100. (The pi-ai, @modelcontextprotocol/sdk, and hono pins that
+#   used to sit beside these existed to dedupe onvibes.org's Flue dependency
+#   tree; they left with Flue in 2026-08.)
 
 # Root package.json "devDependencies" context: @astrojs/check + typescript
 # 6.0.3 live at the workspace ROOT, and the Astro apps deliberately do not

@@ -12,8 +12,15 @@
     "topological": {
       "dependsOn": ["^topological"]
     },
+    // After build, not beside it: the framework checkers regenerate the same
+    // files build regenerates (`svelte-kit sync` and `vite build` both rewrite
+    // .svelte-kit/generated; `astro check` and `astro build` both write .astro;
+    // vite rewrites routeTree.gen.ts under a running tsc), and none of them
+    // write atomically. Run in parallel, build once read a half-written
+    // error-template.js and failed with "default is not exported" -- a race,
+    // not a code error. Sequencing removes the overlap.
     "typecheck": {
-      "dependsOn": ["topological"]
+      "dependsOn": ["topological", "build"]
     },
     "lint": {
       "dependsOn": ["topological"]

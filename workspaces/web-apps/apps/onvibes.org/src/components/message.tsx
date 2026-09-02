@@ -1,7 +1,6 @@
+import {Sparkle} from 'lucide-react'
 import type {Ref} from 'react'
 import {css} from 'styled-system/css'
-
-import {SparkIcon} from '@/components/icons'
 import type {Message} from '@/lib/conversations'
 
 // Two voices, one hue: the assistant speaks in plain text beside a small mark,
@@ -62,7 +61,7 @@ export function MessageBubble({message, ref}: MessageBubbleProps) {
   return (
     <div ref={ref} className={assistantClass} data-role="assistant">
       <span className={markClass}>
-        <SparkIcon />
+        <Sparkle size={14} />
       </span>
       <p className={bodyClass}>{message.text}</p>
     </div>

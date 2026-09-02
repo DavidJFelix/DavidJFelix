@@ -17,3 +17,7 @@ playwright/.cache/
 
 # vitest coverage output
 coverage/
+
+# vitest browser mode: failure screenshots and test attachments
+__screenshots__/
+.vitest-attachments/

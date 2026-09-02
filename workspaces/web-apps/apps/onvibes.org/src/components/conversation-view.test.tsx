@@ -1,13 +1,8 @@
-import {cleanup, fireEvent, render, screen} from '@testing-library/react'
 import {expect, test, vi} from 'vitest'
+import {render} from 'vitest-browser-react'
 
 import {type Conversation, createConversation} from '@/lib/conversations'
 import {ConversationView} from './conversation-view'
-
-// jsdom has no layout, so it does not implement scrollIntoView; stubbing it
-// here also lets the tests assert which bubble asks to be scrolled to.
-const scrollIntoView = vi.fn<Element['scrollIntoView']>()
-Element.prototype.scrollIntoView = scrollIntoView
 
 const thread: Conversation = {
   id: 'thread',
@@ -20,27 +15,47 @@ const thread: Conversation = {
   ],
 }
 
-function renderView(conversation: Conversation) {
-  cleanup()
-  const onSend = vi.fn<(text: string) => void>()
-  const onOpenSidebar = vi.fn<() => void>()
-  scrollIntoView.mockClear()
-  render(
-    <ConversationView conversation={conversation} onSend={onSend} onOpenSidebar={onOpenSidebar} />,
-  )
-  return {onSend, onOpenSidebar}
+// A thread tall enough to overflow the fixed-height frame below.
+const longThread: Conversation = {
+  ...thread,
+  messages: Array.from({length: 30}, (_, i) => ({
+    id: `long-${i}`,
+    role: i % 2 === 0 ? ('user' as const) : ('assistant' as const),
+    text: `Message number ${i + 1}`,
+  })),
 }
 
-test('the conversation title is the page heading', () => {
-  renderView(thread)
-  expect(screen.getByRole('heading', {level: 1, name: 'Trail map'})).toBeDefined()
+const FRAME_HEIGHT = 320
+
+async function renderView(conversation: Conversation) {
+  const onSend = vi.fn<(text: string) => void>()
+  const onOpenSidebar = vi.fn<() => void>()
+  // The view fills its parent, so the frame gives it a real height to scroll in.
+  const screen = await render(
+    <div style={{height: FRAME_HEIGHT}}>
+      <ConversationView conversation={conversation} onSend={onSend} onOpenSidebar={onOpenSidebar} />
+    </div>,
+  )
+  const main = screen.getByRole('main')
+  return {screen, main, onSend, onOpenSidebar}
+}
+
+test('the conversation title is the page heading', async () => {
+  // given
+  const {screen} = await renderView(thread)
+
+  // then
+  await expect.element(screen.getByRole('heading', {level: 1})).toHaveTextContent('Trail map')
 })
 
-test('every message renders in order with its role', () => {
-  renderView(thread)
-  const main = screen.getByRole('main')
-  const bubbles = [...main.querySelectorAll('[data-role]')]
+test('every message renders in order with its role', async () => {
+  // given
+  const {main} = await renderView(thread)
 
+  // when
+  const bubbles = [...main.element().querySelectorAll('[data-role]')]
+
+  // then
   expect(bubbles.map((el) => el.getAttribute('data-role'))).toEqual(['user', 'assistant', 'user'])
   expect(bubbles.map((el) => el.textContent)).toEqual([
     'Map the canyons',
@@ -49,39 +64,51 @@ test('every message renders in order with its role', () => {
   ])
 })
 
-test('only the newest message is scrolled into view', () => {
-  renderView(thread)
-
-  expect(scrollIntoView).toHaveBeenCalledOnce()
-  expect(scrollIntoView.mock.instances[0]).toHaveProperty(
-    'textContent',
-    'Cluster them when zoomed out',
+test('the thread opens scrolled to the newest message', async () => {
+  // given
+  const {main, screen} = await renderView(longThread)
+  const scroller = [...main.element().querySelectorAll('div')].find(
+    (el) => getComputedStyle(el).overflowY === 'auto',
   )
+  if (!scroller) throw new Error('scroll container not found')
+  const newest = screen.getByText('Message number 30').element()
+
+  // then
+  await expect.poll(() => scroller.scrollTop).toBeGreaterThan(0)
+  const frame = scroller.getBoundingClientRect()
+  const bubble = newest.getBoundingClientRect()
+  expect(bubble.top).toBeGreaterThanOrEqual(frame.top)
+  expect(bubble.bottom).toBeLessThanOrEqual(frame.bottom + 1)
 })
 
-test('an empty conversation shows the empty state instead of a thread', () => {
-  renderView(createConversation({id: 'fresh'}))
+test('an empty conversation shows the empty state instead of a thread', async () => {
+  // given
+  const {screen, main} = await renderView(createConversation({id: 'fresh'}))
 
-  expect(screen.getByText('What do you want to build?')).toBeDefined()
-  expect(screen.getByRole('main').querySelector('[data-role]')).toBeNull()
-  expect(scrollIntoView).not.toHaveBeenCalled()
+  // then
+  await expect.element(screen.getByText('What do you want to build?')).toBeVisible()
+  expect(main.element().querySelector('[data-role]')).toBeNull()
 })
 
-test('the composer hands the sent text up', () => {
-  const {onSend} = renderView(thread)
+test('the composer hands the sent text up', async () => {
+  // given
+  const {screen, onSend} = await renderView(thread)
+  await screen.getByRole('textbox', {name: 'Message'}).fill('Export as PDF?')
 
-  fireEvent.change(screen.getByRole('textbox', {name: 'Message'}), {
-    target: {value: 'Export as PDF?'},
-  })
-  fireEvent.click(screen.getByRole('button', {name: 'Send message'}))
+  // when
+  await screen.getByRole('button', {name: 'Send message'}).click()
 
+  // then
   expect(onSend).toHaveBeenCalledExactlyOnceWith('Export as PDF?')
 })
 
-test('the header button opens the sidebar', () => {
-  const {onOpenSidebar} = renderView(thread)
+test('the header button opens the sidebar', async () => {
+  // given
+  const {screen, onOpenSidebar} = await renderView(thread)
 
-  fireEvent.click(screen.getByRole('button', {name: 'Open sidebar'}))
+  // when
+  await screen.getByRole('button', {name: 'Open sidebar'}).click()
 
+  // then
   expect(onOpenSidebar).toHaveBeenCalledOnce()
 })

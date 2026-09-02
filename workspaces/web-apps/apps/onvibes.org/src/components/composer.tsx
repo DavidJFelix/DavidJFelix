@@ -1,7 +1,7 @@
+import {ArrowUp} from 'lucide-react'
 import {type FormEvent, type KeyboardEvent, useId, useState} from 'react'
 import {css} from 'styled-system/css'
 import {IconButton} from '@/components/icon-button'
-import {ArrowUpIcon} from '@/components/icons'
 
 const MAX_HEIGHT_PX = 240
 
@@ -35,14 +35,6 @@ const textareaClass = css({
   _placeholder: {color: 'text.muted'},
 })
 
-// Fit the textarea to its content on every commit; a callback ref runs after
-// the DOM holds the latest value, so it needs no effect and no dependency list.
-function autosize(el: HTMLTextAreaElement | null) {
-  if (!el) return
-  el.style.height = 'auto'
-  el.style.height = `${Math.min(el.scrollHeight, MAX_HEIGHT_PX)}px`
-}
-
 export interface ComposerProps {
   onSend: (text: string) => void
 }
@@ -51,6 +43,17 @@ export function Composer({onSend}: ComposerProps) {
   const [draft, setDraft] = useState('')
   const labelId = useId()
   const text = draft.trim()
+
+  // Fit the textarea to its content. A callback ref runs after the DOM holds
+  // the latest value, so it needs no effect and no dependency list -- but only
+  // when React sees a new function, which is why it is created per render
+  // rather than hoisted: a stable ref would run once, on mount, and never
+  // follow the draft.
+  const autosize = (el: HTMLTextAreaElement | null) => {
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${Math.min(el.scrollHeight, MAX_HEIGHT_PX)}px`
+  }
 
   const submit = () => {
     if (text.length === 0) return
@@ -87,7 +90,7 @@ export function Composer({onSend}: ComposerProps) {
         className={textareaClass}
       />
       <IconButton label="Send message" type="submit" variant="primary" disabled={text.length === 0}>
-        <ArrowUpIcon />
+        <ArrowUp size={18} />
       </IconButton>
     </form>
   )

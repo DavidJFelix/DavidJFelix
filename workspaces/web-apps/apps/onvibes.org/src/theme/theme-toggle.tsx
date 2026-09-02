@@ -1,4 +1,5 @@
 import {NEXT_THEME_MODE, useTheme} from '@davidjfelix/theme/react'
+import {Monitor, Moon, Sun} from 'lucide-react'
 import {css} from 'styled-system/css'
 
 const buttonClass = css({
@@ -25,53 +26,6 @@ const ICON_LIGHT = css({display: 'none', '[data-theme-mode=light] &': {display: 
 const ICON_DARK = css({display: 'none', '[data-theme-mode=dark] &': {display: 'block'}})
 const ICON_SYSTEM = css({display: 'none', '[data-theme-mode=system] &': {display: 'block'}})
 
-// onvibes.org has no icon library (unlike f311x's lucide-react): these
-// mirror lucide's sun/moon/monitor glyphs as plain inline SVG.
-function IconBase({className, children}: {className: string; children: React.ReactNode}) {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      className={className}
-    >
-      {children}
-    </svg>
-  )
-}
-
-function SunIcon() {
-  return (
-    <IconBase className={ICON_LIGHT}>
-      <circle cx="12" cy="12" r="5" />
-      <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-    </IconBase>
-  )
-}
-
-function MoonIcon() {
-  return (
-    <IconBase className={ICON_DARK}>
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
-    </IconBase>
-  )
-}
-
-function MonitorIcon() {
-  return (
-    <IconBase className={ICON_SYSTEM}>
-      <rect x="2" y="3" width="20" height="14" rx="2" />
-      <path d="M8 21h8M12 17v4" />
-    </IconBase>
-  )
-}
-
 export function ThemeToggle() {
   const {mode, setMode} = useTheme()
   // Until mounted the mode is unknown to React (the SSR markup must be
@@ -90,9 +44,9 @@ export function ThemeToggle() {
         setMode(NEXT_THEME_MODE[mode ?? 'system'])
       }}
     >
-      <SunIcon />
-      <MoonIcon />
-      <MonitorIcon />
+      <Sun size={18} className={ICON_LIGHT} />
+      <Moon size={18} className={ICON_DARK} />
+      <Monitor size={18} className={ICON_SYSTEM} />
     </button>
   )
 }

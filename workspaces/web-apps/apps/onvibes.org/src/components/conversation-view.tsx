@@ -1,8 +1,7 @@
+import {PanelLeft} from 'lucide-react'
 import {css} from 'styled-system/css'
-
 import {Composer} from '@/components/composer'
 import {IconButton} from '@/components/icon-button'
-import {PanelLeftIcon} from '@/components/icons'
 import {MessageBubble} from '@/components/message'
 import type {Conversation} from '@/lib/conversations'
 
@@ -79,7 +78,7 @@ export function ConversationView({conversation, onSend, onOpenSidebar}: Conversa
           onClick={onOpenSidebar}
           className={css({md: {display: 'none'}})}
         >
-          <PanelLeftIcon />
+          <PanelLeft size={18} />
         </IconButton>
         <h1
           className={css({

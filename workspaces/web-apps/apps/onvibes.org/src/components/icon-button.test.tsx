@@ -1,11 +1,10 @@
-import {cleanup, fireEvent, render, screen} from '@testing-library/react'
 import {expect, test, vi} from 'vitest'
+import {render} from 'vitest-browser-react'
 
 import {IconButton, type IconButtonProps} from './icon-button'
 
-function renderIconButton(props: Omit<IconButtonProps, 'children'>) {
-  cleanup()
-  render(
+async function renderIconButton(props: Omit<IconButtonProps, 'children'>) {
+  const screen = await render(
     <IconButton {...props}>
       <svg aria-hidden="true" />
     </IconButton>,
@@ -13,37 +12,65 @@ function renderIconButton(props: Omit<IconButtonProps, 'children'>) {
   return screen.getByRole('button', {name: props.label})
 }
 
-test('the label is the accessible name and the title', () => {
-  const button = renderIconButton({label: 'Open sidebar'})
+test('the label is the accessible name and the title', async () => {
+  // given
+  const button = await renderIconButton({label: 'Open sidebar'})
 
-  expect(button.getAttribute('title')).toBe('Open sidebar')
-  expect(button.getAttribute('type')).toBe('button')
+  // then
+  await expect.element(button).toHaveAccessibleName('Open sidebar')
+  await expect.element(button).toHaveAttribute('title', 'Open sidebar')
+  await expect.element(button).toHaveAttribute('type', 'button')
 })
 
-test('the submit variant is a real submit button', () => {
-  const button = renderIconButton({label: 'Send message', type: 'submit'})
-  expect(button.getAttribute('type')).toBe('submit')
+test('the submit variant is a real submit button', async () => {
+  // given
+  const button = await renderIconButton({label: 'Send message', type: 'submit'})
+
+  // then
+  await expect.element(button).toHaveAttribute('type', 'submit')
 })
 
-test('clicks reach the handler', () => {
+test('the hit area is at least 36px square', async () => {
+  // given
+  const button = await renderIconButton({label: 'Go'})
+
+  // when
+  const {width, height} = button.element().getBoundingClientRect()
+
+  // then
+  expect(width).toBeGreaterThanOrEqual(36)
+  expect(height).toBeGreaterThanOrEqual(36)
+})
+
+test('clicks reach the handler', async () => {
+  // given
   const onClick = vi.fn<() => void>()
-  const button = renderIconButton({label: 'Go', onClick})
+  const button = await renderIconButton({label: 'Go', onClick})
 
-  fireEvent.click(button)
+  // when
+  await button.click()
 
+  // then
   expect(onClick).toHaveBeenCalledOnce()
 })
 
-test('a disabled button swallows clicks', () => {
+test('a disabled button swallows clicks', async () => {
+  // given
   const onClick = vi.fn<() => void>()
-  const button = renderIconButton({label: 'Go', onClick, disabled: true})
+  const button = await renderIconButton({label: 'Go', onClick, disabled: true})
 
-  fireEvent.click(button)
+  // when
+  await button.click({force: true})
 
+  // then
   expect(onClick).not.toHaveBeenCalled()
+  await expect.element(button).toBeDisabled()
 })
 
-test('a custom className is merged in', () => {
-  const button = renderIconButton({label: 'Go', className: 'marker'})
-  expect(button.className).toContain('marker')
+test('a custom className is merged in', async () => {
+  // given
+  const button = await renderIconButton({label: 'Go', className: 'marker'})
+
+  // then
+  expect(button.element().className).toContain('marker')
 })

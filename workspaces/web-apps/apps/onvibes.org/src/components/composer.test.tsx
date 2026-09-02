@@ -1,63 +1,104 @@
-import {cleanup, fireEvent, render, screen} from '@testing-library/react'
 import {expect, test, vi} from 'vitest'
+import {userEvent} from 'vitest/browser'
+import {render} from 'vitest-browser-react'
 
 import {Composer} from './composer'
 
-// Without vitest globals, Testing Library does not unmount between tests on
-// its own; each helper starts from an empty document instead of a hook.
-function renderComposer() {
-  cleanup()
+async function renderComposer() {
   const onSend = vi.fn<(text: string) => void>()
-  render(<Composer onSend={onSend} />)
+  const screen = await render(<Composer onSend={onSend} />)
   const input = screen.getByRole('textbox', {name: 'Message'})
   const send = screen.getByRole('button', {name: 'Send message'})
   return {onSend, input, send}
 }
 
-test('send is disabled until the draft has non-whitespace text', () => {
-  const {input, send} = renderComposer()
-  expect(send).toHaveProperty('disabled', true)
+test('send is disabled until the draft has non-whitespace text', async () => {
+  // given
+  const {input, send} = await renderComposer()
+  await expect.element(send).toBeDisabled()
 
-  fireEvent.change(input, {target: {value: '   '}})
-  expect(send).toHaveProperty('disabled', true)
+  // when
+  await input.fill('   ')
 
-  fireEvent.change(input, {target: {value: 'A pocket metronome'}})
-  expect(send).toHaveProperty('disabled', false)
+  // then
+  await expect.element(send).toBeDisabled()
+
+  // when
+  await input.fill('A pocket metronome')
+
+  // then
+  await expect.element(send).toBeEnabled()
 })
 
-test('clicking send submits the trimmed draft and clears the field', () => {
-  const {onSend, input, send} = renderComposer()
-  fireEvent.change(input, {target: {value: '  A pocket metronome  '}})
+test('clicking send submits the trimmed draft and clears the field', async () => {
+  // given
+  const {onSend, input, send} = await renderComposer()
+  await input.fill('  A pocket metronome  ')
 
-  fireEvent.click(send)
+  // when
+  await send.click()
 
+  // then
   expect(onSend).toHaveBeenCalledExactlyOnceWith('A pocket metronome')
-  expect(input).toHaveProperty('value', '')
+  await expect.element(input).toHaveValue('')
 })
 
-test('Enter sends, Shift+Enter keeps composing', () => {
-  const {onSend, input} = renderComposer()
-  fireEvent.change(input, {target: {value: 'line one'}})
+test('Enter sends and clears the draft', async () => {
+  // given
+  const {onSend, input} = await renderComposer()
+  await input.fill('line one')
 
-  fireEvent.keyDown(input, {key: 'Enter', shiftKey: true})
-  expect(onSend).not.toHaveBeenCalled()
-  expect(input).toHaveProperty('value', 'line one')
+  // when
+  await userEvent.keyboard('{Enter}')
 
-  fireEvent.keyDown(input, {key: 'Enter'})
+  // then
   expect(onSend).toHaveBeenCalledExactlyOnceWith('line one')
-  expect(input).toHaveProperty('value', '')
+  await expect.element(input).toHaveValue('')
 })
 
-test('Enter with an empty draft sends nothing', () => {
-  const {onSend, input} = renderComposer()
+test('Shift+Enter breaks the line without sending', async () => {
+  // given
+  const {onSend, input} = await renderComposer()
+  await input.fill('line one')
 
-  fireEvent.keyDown(input, {key: 'Enter'})
+  // when
+  await userEvent.keyboard('{Shift>}{Enter}{/Shift}')
+  await userEvent.keyboard('line two')
 
+  // then
+  expect(onSend).not.toHaveBeenCalled()
+  await expect.element(input).toHaveValue('line one\nline two')
+})
+
+test('Enter with an empty draft sends nothing', async () => {
+  // given
+  const {onSend, input} = await renderComposer()
+  await input.click()
+
+  // when
+  await userEvent.keyboard('{Enter}')
+
+  // then
   expect(onSend).not.toHaveBeenCalled()
 })
 
-test('the textarea has a visible-to-assistive-tech label, not just a placeholder', () => {
-  const {input} = renderComposer()
-  expect(input).toHaveProperty('placeholder', 'Describe the app you want to build')
-  expect(screen.getByText('Message').tagName).toBe('LABEL')
+test('the textarea grows with its content', async () => {
+  // given
+  const {input} = await renderComposer()
+  const before = input.element().getBoundingClientRect().height
+
+  // when
+  await input.fill('one\ntwo\nthree\nfour')
+
+  // then
+  expect(input.element().getBoundingClientRect().height).toBeGreaterThan(before)
+})
+
+test('the textarea is labelled, and the placeholder only shows the expected input', async () => {
+  // given
+  const {input} = await renderComposer()
+
+  // then
+  await expect.element(input).toHaveAccessibleName('Message')
+  await expect.element(input).toHaveAttribute('placeholder', 'Describe the app you want to build')
 })

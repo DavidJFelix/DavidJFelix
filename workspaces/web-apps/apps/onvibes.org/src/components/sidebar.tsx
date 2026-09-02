@@ -1,6 +1,6 @@
+import {Plus, X} from 'lucide-react'
 import {css} from 'styled-system/css'
 import {IconButton} from '@/components/icon-button'
-import {CloseIcon, PlusIcon} from '@/components/icons'
 import {type Conversation, formatRelativeTime, previewOf} from '@/lib/conversations'
 import {ThemeToggle} from '@/theme/theme-toggle'
 
@@ -105,14 +105,14 @@ export function Sidebar({conversations, activeId, onSelect, onNew, onClose}: Sid
           onvibes.org
         </span>
         <IconButton label="New conversation" onClick={onNew}>
-          <PlusIcon />
+          <Plus size={18} />
         </IconButton>
         <IconButton
           label="Close sidebar"
           onClick={onClose}
           className={css({md: {display: 'none'}})}
         >
-          <CloseIcon />
+          <X size={18} />
         </IconButton>
       </div>
 

@@ -47,6 +47,11 @@ it (`djf.io`):
 - **CI**: a `smoke` job per deployed app, mirroring the `vitest` job.
 - **e2e** (Playwright, `*.e2e.test.ts`) is the heavier browser-based layer for hydration /
   interaction / visual regression; optional per app, and a superset of smoke (see `djf.io`).
+- **Component tests** (`*.test.tsx`) render in real Chromium through Vitest browser mode
+  (`@vitest/browser-playwright` + `vitest-browser-react`), not jsdom, so they can assert layout,
+  focus, and scrolling -- see `onvibes.org`'s `vitest.config.ts` for the two-project split. The
+  browser project needs Chromium on the runner: the `ci-web-apps` check job runs `setup-playwright`
+  for it.
 
 ## Coverage and the monorepo aggregator
 

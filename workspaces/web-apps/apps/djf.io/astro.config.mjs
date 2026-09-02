@@ -1,4 +1,4 @@
-import {copyFile} from 'node:fs/promises'
+import {copyFile, readFile} from 'node:fs/promises'
 import {fileURLToPath} from 'node:url'
 // oxlint's import/default can't follow these adapters' default exports through
 // their conditional exports; the default import is the documented entry and
@@ -19,6 +19,30 @@ function pagefindIntegration() {
   return {
     name: 'pagefind',
     hooks: {
+      // Dev has no index, so serve the one from the last `astro build` (run it
+      // once for search to work locally). Streams files from dist/client/pagefind
+      // at /pagefind/* before the request reaches the workerd runner.
+      'astro:server:setup': ({server}) => {
+        const types = {
+          '.js': 'text/javascript',
+          '.css': 'text/css',
+          '.json': 'application/json',
+          '.wasm': 'application/wasm',
+        }
+        server.middlewares.use('/pagefind', async (req, res, next) => {
+          const file = fileURLToPath(
+            new URL(`dist/client/pagefind${new URL(req.url, 'http://x').pathname}`, import.meta.url),
+          )
+          try {
+            const data = await readFile(file)
+            const ext = file.slice(file.lastIndexOf('.'))
+            res.setHeader('Content-Type', types[ext] ?? 'application/octet-stream')
+            res.end(data)
+          } catch {
+            next()
+          }
+        })
+      },
       'astro:build:done': async ({dir, logger}) => {
         const outDir = fileURLToPath(dir)
         try {
@@ -91,9 +115,13 @@ const sentrySourceMaps =
 // otherwise load the Cloudflare Vite plugin and reject Vitest's SSR config. Unit
 // tests cover only pure src/lib logic + the content schema, so they need no
 // adapter.
+// In dev, requests run inside workerd where sharp can't load, so 'custom'
+// leaves every astro:assets image 404ing at /_image. 'passthrough' serves the
+// original files instead -- unresized previews, but visible. Builds keep sharp.
+const isDev = process.argv.includes('dev')
 const adapter = process.env.VITEST
   ? undefined
-  : cloudflare({imageService: 'custom', prerenderEnvironment: 'node'})
+  : cloudflare({imageService: isDev ? 'passthrough' : 'custom', prerenderEnvironment: 'node'})
 
 // https://astro.build/config
 export default defineConfig({
@@ -113,6 +141,22 @@ export default defineConfig({
   },
   markdown: {
     processor: unified(),
+  },
+  vite: {
+    ssr: {
+      optimizeDeps: {
+        // Vite discovers these lazily on the first dev-server request, which
+        // triggers a mid-run re-optimization; the adapter's workerd runner then
+        // requests the just-deleted chunk hashes and crashes the dev process.
+        // Predeclaring them keeps optimization to startup.
+        include: [
+          'astro/app/manifest',
+          'astro/assets/services/noop',
+          'astro/assets/services/sharp',
+          'astro/logger/json',
+        ],
+      },
+    },
   },
   integrations: [
     sentry({

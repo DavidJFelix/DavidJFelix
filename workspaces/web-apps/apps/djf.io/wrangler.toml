@@ -17,8 +17,27 @@ binding = "ASSETS"
 # can see, so page requests must reach it instead of being served straight
 # from assets. The negated prefixes are pure static files (hashed bundles,
 # fonts, images, the search index) that can never negotiate to markdown; they
-# keep bypassing the worker entirely.
-run_worker_first = ["/*", "!/_astro/*", "!/pagefind/*", "!/og/*", "!/favicon.svg", "!/robots.txt"]
+# keep bypassing the worker entirely. The "!/@fs/*", "!/@id/*", "!/@vite/*",
+# "!/src/*", "!/Users/*", and "!/node_modules/*" negations are dev-only: the
+# vite plugin honors these rules in dev too, and vite serves module scripts,
+# CSS, and /_image source files from those prefixes -- routed into the worker
+# they 404 and no client JS runs. None exist as pages or assets in production,
+# so there the patterns only turn the styled 404 page into a plain asset 404
+# for probes of those paths.
+run_worker_first = [
+  "/*",
+  "!/_astro/*",
+  "!/@fs/*",
+  "!/@id/*",
+  "!/@vite/*",
+  "!/src/*",
+  "!/Users/*",
+  "!/node_modules/*",
+  "!/pagefind/*",
+  "!/og/*",
+  "!/favicon.svg",
+  "!/robots.txt",
+]
 
 # Logs and traces ship to Grafana Cloud through the account-level
 # observability destinations configured in the dashboard.

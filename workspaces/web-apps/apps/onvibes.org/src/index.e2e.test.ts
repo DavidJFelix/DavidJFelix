@@ -102,10 +102,10 @@ test('the sidebar becomes a drawer on small screens', async ({page}) => {
   await expect(sidebar).toBeInViewport()
 
   // when
-  await sidebar.getByRole('button', {name: /Pomodoro timer/u}).click()
+  await sidebar.getByRole('button', {name: /Focus timer/u}).click()
 
   // then
-  await expect(page.getByRole('heading', {level: 1, name: /Pomodoro timer/u})).toBeVisible()
+  await expect(page.getByRole('heading', {level: 1, name: /Focus timer/u})).toBeVisible()
   await expect(sidebar).not.toBeInViewport()
 })
 

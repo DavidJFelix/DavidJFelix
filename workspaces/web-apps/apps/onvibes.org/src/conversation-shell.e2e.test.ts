@@ -19,8 +19,8 @@ test('the shell is fully keyboard operable', async ({page}) => {
   await page.keyboard.press('Enter')
 
   // then
-  await expect(page.getByRole('heading', {level: 1, name: /Pomodoro timer/u})).toBeVisible()
-  await expect(sidebar.getByRole('button', {name: /Pomodoro timer/u})).toHaveAttribute(
+  await expect(page.getByRole('heading', {level: 1, name: /Focus timer/u})).toBeVisible()
+  await expect(sidebar.getByRole('button', {name: /Focus timer/u})).toHaveAttribute(
     'aria-current',
     'true',
   )

@@ -120,17 +120,17 @@ export const SEED_CONVERSATIONS: ReadonlyArray<Conversation> = [
     ],
   },
   {
-    id: 'pomodoro',
-    title: 'Pomodoro timer with ambient sound',
+    id: 'focus-timer',
+    title: 'Focus timer with ambient sound',
     updatedMinutesAgo: 3 * MINUTES_PER_HOUR,
     messages: [
       {
-        id: 'pomodoro-1',
+        id: 'focus-timer-1',
         role: 'user',
-        text: 'Build a pomodoro timer that plays rain sounds during focus blocks and goes quiet on breaks.',
+        text: 'Build a focus timer that plays rain sounds during focus blocks and goes quiet on breaks.',
       },
       {
-        id: 'pomodoro-2',
+        id: 'focus-timer-2',
         role: 'assistant',
         text: 'Done: 25/5 by default, both adjustable, and the rain loops through the Web Audio API with a two-second fade so the transition into a break is not abrupt. The tab title shows the remaining time.',
       },

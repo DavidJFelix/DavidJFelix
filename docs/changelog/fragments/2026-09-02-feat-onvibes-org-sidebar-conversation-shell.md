@@ -14,5 +14,12 @@ sidebar column from `md` up, off-canvas drawer with scrim and Escape-to-close be
 (assistant in plain text beside a mark, user in an inverted bubble), `Composer` (a textarea that
 grows with its content, Enter sends, Shift+Enter breaks the line) and `IconButton`.
 `panda.config.ts` gains the semantic tokens the shell needs (`bg.surface`/`hover`/`selected`/
-`backdrop`, `inverse.bg`/`text`, `focus.ring`). The Playwright suite now covers selection, sending,
-new-conversation titling and the small-screen drawer, and the visual baseline was re-recorded.
+`backdrop`, `inverse.bg`/`text`, `focus.ring`).
+
+Tests land at three levels. Every component has a co-located React Testing Library test
+(`@testing-library/react` joins the app's dev dependencies, matching f311x's pins); each render
+helper calls `cleanup()` itself rather than registering a lifecycle hook. `index.e2e.test.ts` covers
+the happy paths (selection, sending, new-conversation titling, the drawer) with the visual baseline
+re-recorded, and a new `conversation-shell.e2e.test.ts` covers the interaction contract: keyboard
+operation, Shift+Enter, scroll-to-newest, every drawer close path, plus dark-mode and small-screen
+drawer baselines.

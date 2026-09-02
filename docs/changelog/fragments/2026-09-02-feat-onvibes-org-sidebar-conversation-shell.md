@@ -24,7 +24,9 @@ through Vitest browser mode (`@vitest/browser-playwright` + `vitest-browser-reac
 the tests assert real layout: the drawer off-canvas below `md` and beside main above it, a long
 title truncating inside its row, the newest message scrolled into view, the textarea growing with
 its draft. That last one caught a real bug -- the callback ref that fits the textarea to its draft
-had been hoisted to module scope, so React ran it once on mount and the textarea never regrew.
+had been hoisted to module scope, so React ran it once on mount and the textarea never regrew. The
+`ci-web-apps` check job now runs `setup-playwright` so the browser project has Chromium on the
+runner, and [testing.md](../contributing/testing.md) documents the component-test layer.
 `index.e2e.test.ts` covers the happy paths (selection, sending, new-conversation titling, the
 drawer) with the visual baseline re-recorded, and a new `conversation-shell.e2e.test.ts` covers the
 interaction contract: keyboard operation, Shift+Enter, scroll-to-newest, every drawer close path,

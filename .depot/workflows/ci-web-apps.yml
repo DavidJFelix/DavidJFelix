@@ -49,6 +49,14 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
+    # onvibes.org's `test` task renders its component tests in real Chromium
+    # (Vitest browser mode, Playwright provider), so the job needs a browser.
+    # setup-playwright resolves the Playwright version and `bun x` against the
+    # job's working directory, hence the app-scoped default; the turbo step
+    # resets to the repo root.
+    defaults:
+      run:
+        working-directory: workspaces/web-apps/apps/onvibes.org
     steps:
       - name: checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -56,7 +64,10 @@ jobs:
           persist-credentials: false
       - name: setup web-apps
         uses: ./.depot/actions/setup-web-apps
+      - name: setup playwright
+        uses: ./.depot/actions/setup-playwright
       - name: turbo run
+        working-directory: ${{ github.workspace }}
         run: bun bin/turbo-run.ts typecheck lint format build test --continue
 
   # Never cached (turbo.json sets cache: false): the smoke boot is the gate

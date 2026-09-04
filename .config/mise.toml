@@ -15,6 +15,8 @@ ghalint = "1"
 zizmor = "1.30.0"
 pinact = "4.1.1"
 "npm:cspell" = "10.1.1"
+# JUnit reporter for the spell:ci task (Depot's test results view).
+"npm:@cspell/cspell-junit-reporter" = { version = "10.2.2", allow_low_downloads = true }
 # Warden CLI: AI code review run locally (`warden run`) and in CI (the Depot
 # ci-warden.yml workflow uses the getsentry/warden action, which bundles its
 # own copy). Pinned like cspell via mise's npm backend; there is no root
@@ -75,6 +77,17 @@ dir = "{{config_root}}"
 [tasks.spell]
 description = "Spell-check repo-owned sources (cspell)"
 run = "cspell --config .config/cspell.jsonc --no-progress --dot 'workspaces/web-apps/**' 'docs/**' 'bin/**' '*.md' '.agents/agents/**' '.config/**' '.github/**'"
+dir = "{{config_root}}"
+
+# Same check, reported as JUnit XML for Depot's test results view. The reporter
+# lives in its own mise install, off cspell's module path, so it is passed by
+# file path; it writes to stdout, so the report is the redirected output.
+[tasks."spell:ci"]
+description = "Spell-check like `spell`, writing a JUnit report to test-results/ instead of the console (CI)"
+run = [
+  "mkdir -p test-results",
+  "cspell --config .config/cspell.jsonc --no-progress --dot --reporter \"$(mise where npm:@cspell/cspell-junit-reporter)/node_modules/@cspell/cspell-junit-reporter/dist/esm/index.js\" 'workspaces/web-apps/**' 'docs/**' 'bin/**' '*.md' '.agents/agents/**' '.config/**' '.github/**' > test-results/cspell-junit.xml",
+]
 dir = "{{config_root}}"
 
 [tasks."test:bin"]

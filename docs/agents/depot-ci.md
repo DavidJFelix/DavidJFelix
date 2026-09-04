@@ -60,6 +60,10 @@ In order of signal per token:
 5. `depot ci status <run-id>` -- the workflow/job/attempt tree, when you need the shape of the whole
    run.
 
+Jobs that upload a JUnit report (so far only `ci-spell`, via `depot/test-report-action`) also show
+their failures parsed out in the Depot dashboard's test results view, one test case per finding.
+That view is a summary; the job log is still the full picture.
+
 ## Acting on it
 
 - `depot ci retry <run-id> --failed` retries every failed job in the workflow (`--workflow` if the

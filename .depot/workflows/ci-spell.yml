@@ -29,4 +29,9 @@ jobs:
       - name: mise
         uses: ./.depot/actions/setup-mise
       - name: spell
-        run: mise run spell
+        run: mise run spell:ci
+      - name: test-report-action
+        uses: depot/test-report-action@2ad5779840a9c63e884fa26f11d019768a27a941 # v1.0.1
+        if: ${{ !cancelled() }}
+        with:
+          path: test-results/cspell-junit.xml

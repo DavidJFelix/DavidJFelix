@@ -174,7 +174,7 @@
     },
     {
       "description": "cspell is managed by mise for the repo-wide spell task and pinned with @cspell dictionaries in the exercise workspaces, so group every update type across both managers to keep the versions aligned",
-      "matchPackageNames": ["cspell", "npm:cspell", "@cspell/**"],
+      "matchPackageNames": ["cspell", "npm:cspell", "@cspell/**", "npm:@cspell/**"],
       "groupName": "cspell packages"
     },
     {

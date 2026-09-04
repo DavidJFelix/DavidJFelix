@@ -115,5 +115,5 @@ test('React themed component overrides: per-component theme pairs use the provid
   const surface = container.firstElementChild
 
   // then
-  expect(surface).toHaveStyle({'--test-theme-name': 'dark-theme'})
+  expect(surface).toHaveStyle('--test-theme-name: dark-theme')
 })

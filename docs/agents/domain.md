@@ -4,16 +4,18 @@ How the engineering skills should consume this repo's domain documentation when 
 codebase.
 
 **Layout: multi-context.** A `CONTEXT-MAP.md` at the repo root points to the repo-level `CONTEXT.md`
-plus app contexts under `apps/<app>/`. App contexts are created lazily (see below).
+plus app contexts under `workspaces/web-apps/apps/<app>/`. App contexts are created lazily (see
+below).
 
 ## Before exploring, read these
 
 - **`CONTEXT-MAP.md`** at the repo root -- it points at each `CONTEXT.md`. Read each one relevant to
   the area you're working in.
 - **`CONTEXT.md`** at the repo root -- the glossary for repo-wide organization terms.
-- **`apps/<app>/CONTEXT.md`** -- the glossary for that app.
-- **`docs/adr/`** at the root for system-wide decisions, and **`apps/<app>/docs/adr/`** for
-  app-scoped decisions. Read ADRs that touch the area you're about to work in.
+- **`workspaces/web-apps/apps/<app>/CONTEXT.md`** -- the glossary for that app.
+- **`docs/adr/`** at the root for system-wide decisions, and
+  **`workspaces/web-apps/apps/<app>/docs/adr/`** for app-scoped decisions. Read ADRs that touch the
+  area you're about to work in.
 
 If any of these files don't exist, **proceed silently**. Don't flag their absence; don't suggest
 creating them upfront. The `/domain-modeling` skill (reached via `/grill-with-docs` and
@@ -28,7 +30,7 @@ Multi-context (presence of `CONTEXT-MAP.md` at the root):
 ├── CONTEXT-MAP.md
 ├── CONTEXT.md                         ← repo-wide organization language
 ├── docs/adr/                          ← system-wide decisions
-└── apps/
+└── workspaces/web-apps/apps/
     ├── djf.io/
     │   ├── CONTEXT.md
     │   └── docs/adr/                  ← app-specific decisions

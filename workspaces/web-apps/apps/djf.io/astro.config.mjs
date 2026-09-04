@@ -31,7 +31,10 @@ function pagefindIntegration() {
         }
         server.middlewares.use('/pagefind', async (req, res, next) => {
           const file = fileURLToPath(
-            new URL(`dist/client/pagefind${new URL(req.url, 'http://x').pathname}`, import.meta.url),
+            new URL(
+              `dist/client/pagefind${new URL(req.url, 'http://x').pathname}`,
+              import.meta.url,
+            ),
           )
           try {
             const data = await readFile(file)

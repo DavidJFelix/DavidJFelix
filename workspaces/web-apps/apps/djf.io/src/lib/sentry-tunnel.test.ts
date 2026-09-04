@@ -62,11 +62,7 @@ test('forwards a non-regional ingest host (no region segment)', async () => {
 
 test('rejects an envelope whose header has no DSN with 400', async () => {
   const fetchImpl = stubFetch()
-  const response = await forwardEnvelope(
-    post(envelopeWith({event_id: 'no-dsn'})),
-    {},
-    fetchImpl,
-  )
+  const response = await forwardEnvelope(post(envelopeWith({event_id: 'no-dsn'})), {}, fetchImpl)
   expect(response.status).toBe(400)
   expect(fetchImpl).not.toHaveBeenCalled()
 })

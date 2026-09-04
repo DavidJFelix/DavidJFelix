@@ -114,8 +114,10 @@ The ownership map above covers quality tooling; this covers the rest of what age
   (`workspaces/web-apps/`, `docs/`, `bin/`, root markdown, `.config/`, `.github/`). Noise is
   filtered by `ignorePaths` in `.config/cspell.jsonc` (node_modules, build output, generated trees,
   lockfiles). The `ci-spell.yml` workflow runs it on every push and PR — no paths filter, because
-  it's universal. Apps do **not** carry their own cspell dependency or `spell` script; the root gate
-  covers them.
+  it's universal. CI runs `mise run spell:ci`, which adds the JUnit reporter
+  (`.config/cspell-ci.mjs` over the same base config) and uploads the report so Depot's test results
+  view lists each misspelling; the log output stays the human-readable default. Apps do **not**
+  carry their own cspell dependency or `spell` script; the root gate covers them.
 - **Oxlint + Biome + oxfmt + typecheck + tests** are per-project scripts in each project's
   package.json, mirrored as mise tasks in its `mise.toml` for working inside one app. Turborepo
   orchestrates them across the workspace: `mise run check` at the repo root runs the whole graph

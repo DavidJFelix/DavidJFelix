@@ -15,6 +15,10 @@ ghalint = "1"
 zizmor = "1.30.0"
 pinact = "4.1.1"
 "npm:cspell" = "10.1.1"
+# JUnit reporter for cspell, used only by the spell:ci task so Depot's test
+# results view shows each misspelling as a test case. Its own mise install
+# means it is not on cspell's module path; the task passes its file path.
+"npm:@cspell/cspell-junit-reporter" = { version = "10.2.2", allow_low_downloads = true }
 # Warden CLI: AI code review run locally (`warden run`) and in CI (the Depot
 # ci-warden.yml workflow uses the getsentry/warden action, which bundles its
 # own copy). Pinned like cspell via mise's npm backend; there is no root
@@ -47,14 +51,14 @@ depends = ["format:workspace-config"]
 # --ignore-path: the root .prettierignore ignores everything but md/mdx (it
 # scopes Prettier), which would blank oxfmt's explicit file list too
 run = [
-  "oxfmt --check --ignore-path=.gitignore workspaces/web-apps/biome.jsonc .oxfmtrc.json workspaces/web-apps/.oxlintrc.jsonc .prettierrc.json .config/cspell.jsonc .github/renovate.json .vscode/settings.json .vscode/extensions.json",
+  "oxfmt --check --ignore-path=.gitignore workspaces/web-apps/biome.jsonc .oxfmtrc.json workspaces/web-apps/.oxlintrc.jsonc .prettierrc.json .config/cspell.jsonc .config/cspell-ci.mjs .github/renovate.json .vscode/settings.json .vscode/extensions.json",
   "biome lint .vscode/settings.json .vscode/extensions.json",
 ]
 dir = "{{config_root}}"
 
 [tasks."format:fix"]
 description = "Apply formatting fixes to repo-root config files"
-run = "oxfmt --ignore-path=.gitignore workspaces/web-apps/biome.jsonc .oxfmtrc.json workspaces/web-apps/.oxlintrc.jsonc .prettierrc.json .config/cspell.jsonc .github/renovate.json .vscode/settings.json .vscode/extensions.json"
+run = "oxfmt --ignore-path=.gitignore workspaces/web-apps/biome.jsonc .oxfmtrc.json workspaces/web-apps/.oxlintrc.jsonc .prettierrc.json .config/cspell.jsonc .config/cspell-ci.mjs .github/renovate.json .vscode/settings.json .vscode/extensions.json"
 dir = "{{config_root}}"
 
 [tasks."format:md"]
@@ -74,7 +78,17 @@ dir = "{{config_root}}"
 
 [tasks.spell]
 description = "Spell-check repo-owned sources (cspell)"
-run = "cspell --config .config/cspell.jsonc --no-progress --dot 'workspaces/web-apps/**' 'docs/**' 'bin/**' '*.md' '.agents/agents/**' '.config/**' '.github/**'"
+usage = 'flag "--config <config>" default=".config/cspell.jsonc" help="cspell config file to run with"'
+run = "cspell --config \"$usage_config\" --no-progress --dot 'workspaces/web-apps/**' 'docs/**' 'bin/**' '*.md' '.agents/agents/**' '.config/**' '.github/**'"
+dir = "{{config_root}}"
+
+# CI variant of `spell`: the same check through .config/cspell-ci.mjs, which
+# adds the JUnit reporter so Depot's test results view lists each misspelling.
+# The reporter's own mise install is off cspell's module path, so its location
+# is resolved here and handed to that config through the environment.
+[tasks."spell:ci"]
+description = "Spell-check like `spell`, also writing a JUnit report to test-results/ (CI)"
+run = "CSPELL_JUNIT_REPORTER=\"$(mise where npm:@cspell/cspell-junit-reporter)/node_modules/@cspell/cspell-junit-reporter/dist/esm/index.js\" mise run spell --config .config/cspell-ci.mjs"
 dir = "{{config_root}}"
 
 [tasks."test:bin"]

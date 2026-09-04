@@ -30,10 +30,6 @@ jobs:
         uses: ./.depot/actions/setup-mise
       - name: spell
         run: mise run spell:ci
-      # Uploads the JUnit report so Depot's test results view lists each
-      # misspelling; Depot CI authenticates the upload with its native OIDC, no
-      # token or id-token permission needed. Runs after a failed spell step too,
-      # since that is the run whose report matters.
       - name: test-report-action
         uses: depot/test-report-action@2ad5779840a9c63e884fa26f11d019768a27a941 # v1.0.1
         if: ${{ !cancelled() }}

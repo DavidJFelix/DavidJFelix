@@ -78,17 +78,16 @@ dir = "{{config_root}}"
 
 [tasks.spell]
 description = "Spell-check repo-owned sources (cspell)"
-usage = 'flag "--config <config>" default=".config/cspell.jsonc" help="cspell config file to run with"'
-run = "cspell --config \"$usage_config\" --no-progress --dot 'workspaces/web-apps/**' 'docs/**' 'bin/**' '*.md' '.agents/agents/**' '.config/**' '.github/**'"
+run = "cspell --config .config/cspell.jsonc --no-progress --dot 'workspaces/web-apps/**' 'docs/**' 'bin/**' '*.md' '.agents/agents/**' '.config/**' '.github/**'"
 dir = "{{config_root}}"
 
-# CI variant of `spell`: the same check through .config/cspell-ci.mjs, which
-# adds the JUnit reporter so Depot's test results view lists each misspelling.
-# The reporter's own mise install is off cspell's module path, so its location
-# is resolved here and handed to that config through the environment.
+# Same check through the CI config, which adds the JUnit reporter for Depot's
+# test results view. The reporter's own mise install is off cspell's module
+# path, so the config gets its location from the environment.
 [tasks."spell:ci"]
 description = "Spell-check like `spell`, also writing a JUnit report to test-results/ (CI)"
-run = "CSPELL_JUNIT_REPORTER=\"$(mise where npm:@cspell/cspell-junit-reporter)/node_modules/@cspell/cspell-junit-reporter/dist/esm/index.js\" mise run spell --config .config/cspell-ci.mjs"
+env = { CSPELL_JUNIT_REPORTER = "{{exec(command='mise where npm:@cspell/cspell-junit-reporter')}}/node_modules/@cspell/cspell-junit-reporter/dist/esm/index.js" }
+run = "cspell --config .config/cspell-ci.mjs --no-progress --dot 'workspaces/web-apps/**' 'docs/**' 'bin/**' '*.md' '.agents/agents/**' '.config/**' '.github/**'"
 dir = "{{config_root}}"
 
 [tasks."test:bin"]

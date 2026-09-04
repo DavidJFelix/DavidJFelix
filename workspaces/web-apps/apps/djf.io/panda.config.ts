@@ -84,10 +84,11 @@ export default defineConfig({
         prose: {
           className: 'prose',
           description: 'Long-form article body styling, shared by blog posts and the about page.',
-          jsxName: 'Prose',
+          jsx: ['Prose'],
           base: {
             color: 'text',
             lineHeight: '1.7',
+            maxW: 'prose',
             '& h2': {fontSize: '2xl', fontWeight: 'bold', mt: '8', mb: '4', color: 'text'},
             '& h3': {fontSize: 'xl', fontWeight: 'semibold', mt: '6', mb: '3', color: 'text'},
             '& h4': {fontSize: 'md', fontWeight: 'bold', mt: '4', mb: '2', color: 'text'},

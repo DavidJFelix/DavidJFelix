@@ -145,8 +145,7 @@ test('BlogPost JSON-LD uses the post author and falls back to David J Felix', as
   expect(withoutAuthor.author).toEqual({'@type': 'Person', name: 'David J Felix'})
 })
 
-const neighbor = (id: string, title: string) =>
-  ({...fixturePost({title}), id}) as unknown as CollectionEntry<'blog'>
+const neighbor = (id: string, title: string) => ({...fixturePost({title}), id})
 
 test('BlogPost embeds a BreadcrumbList after the BlogPosting', async () => {
   const html = await container.renderToString(BlogPost, {

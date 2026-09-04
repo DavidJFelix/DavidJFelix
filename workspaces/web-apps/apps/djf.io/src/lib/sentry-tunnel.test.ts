@@ -23,7 +23,7 @@ test('rejects non-POST methods with 405 and an Allow header, without forwarding'
   const response = await forwardEnvelope(
     new Request(`https://djf.io${SENTRY_TUNNEL_ROUTE}`),
     {},
-    fetchImpl as unknown as typeof fetch,
+    fetchImpl,
   )
   expect(response.status).toBe(405)
   expect(response.headers.get('allow')).toBe('POST')
@@ -33,7 +33,7 @@ test('rejects non-POST methods with 405 and an Allow header, without forwarding'
 test('forwards a valid envelope to the project ingest endpoint and returns its response', async () => {
   const fetchImpl = stubFetch()
   const body = envelopeWith({event_id: 'e1', dsn: DSN})
-  const response = await forwardEnvelope(post(body), {}, fetchImpl as unknown as typeof fetch)
+  const response = await forwardEnvelope(post(body), {}, fetchImpl)
 
   expect(response.status).toBe(200)
   expect(fetchImpl).toHaveBeenCalledWith(INGEST_URL, {
@@ -46,14 +46,14 @@ test('forwards a valid envelope to the project ingest endpoint and returns its r
 test('forwards a header-only envelope with no trailing newline', async () => {
   const fetchImpl = stubFetch()
   const body = JSON.stringify({dsn: DSN})
-  await forwardEnvelope(post(body), {}, fetchImpl as unknown as typeof fetch)
+  await forwardEnvelope(post(body), {}, fetchImpl)
   expect(fetchImpl).toHaveBeenCalledWith(INGEST_URL, expect.objectContaining({body}))
 })
 
 test('forwards a non-regional ingest host (no region segment)', async () => {
   const fetchImpl = stubFetch()
   const body = envelopeWith({dsn: 'https://abc@o42.ingest.sentry.io/789'})
-  await forwardEnvelope(post(body), {}, fetchImpl as unknown as typeof fetch)
+  await forwardEnvelope(post(body), {}, fetchImpl)
   expect(fetchImpl).toHaveBeenCalledWith(
     'https://o42.ingest.sentry.io/api/789/envelope/',
     expect.anything(),
@@ -62,11 +62,7 @@ test('forwards a non-regional ingest host (no region segment)', async () => {
 
 test('rejects an envelope whose header has no DSN with 400', async () => {
   const fetchImpl = stubFetch()
-  const response = await forwardEnvelope(
-    post(envelopeWith({event_id: 'no-dsn'})),
-    {},
-    fetchImpl as unknown as typeof fetch,
-  )
+  const response = await forwardEnvelope(post(envelopeWith({event_id: 'no-dsn'})), {}, fetchImpl)
   expect(response.status).toBe(400)
   expect(fetchImpl).not.toHaveBeenCalled()
 })
@@ -103,7 +99,7 @@ test('rejects a DSN on a non-Sentry host with 400 (open-proxy guard)', async () 
   const response = await forwardEnvelope(
     post(envelopeWith({dsn: 'https://abc@evil.example/1'})),
     {},
-    fetchImpl as unknown as typeof fetch,
+    fetchImpl,
   )
   expect(response.status).toBe(400)
   expect(fetchImpl).not.toHaveBeenCalled()
@@ -121,7 +117,7 @@ test('forwards when the envelope DSN matches the configured project', async () =
   const response = await forwardEnvelope(
     post(envelopeWith({dsn: DSN})),
     {allowedDsn: DSN},
-    fetchImpl as unknown as typeof fetch,
+    fetchImpl,
   )
   expect(response.status).toBe(200)
   expect(fetchImpl).toHaveBeenCalledWith(INGEST_URL, expect.anything())
@@ -132,7 +128,7 @@ test('rejects with 403 when the envelope DSN points at a different host', async 
   const response = await forwardEnvelope(
     post(envelopeWith({dsn: 'https://abc@o99.ingest.sentry.io/789'})),
     {allowedDsn: DSN},
-    fetchImpl as unknown as typeof fetch,
+    fetchImpl,
   )
   expect(response.status).toBe(403)
   expect(fetchImpl).not.toHaveBeenCalled()

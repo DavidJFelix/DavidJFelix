@@ -18,7 +18,7 @@ export const getStaticPaths = async () => {
       props: {
         title: post.data.title,
         description: post.data.description,
-        date: post.data.date as Date | undefined,
+        date: post.data.date,
       },
     })),
   ]

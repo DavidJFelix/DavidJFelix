@@ -120,7 +120,7 @@ const sentrySourceMaps =
 // adapter.
 // In dev, requests run inside workerd where sharp can't load, so 'custom'
 // leaves every astro:assets image 404ing at /_image. 'passthrough' serves the
-// original files instead -- unresized previews, but visible. Builds keep sharp.
+// original files instead -- full-size previews, but visible. Builds keep sharp.
 const isDev = process.argv.includes('dev')
 const adapter = process.env.VITEST
   ? undefined
@@ -151,7 +151,7 @@ export default defineConfig({
         // Vite discovers these lazily on the first dev-server request, which
         // triggers a mid-run re-optimization; the adapter's workerd runner then
         // requests the just-deleted chunk hashes and crashes the dev process.
-        // Predeclaring them keeps optimization to startup.
+        // Listing them up front keeps optimization to startup.
         include: [
           'astro/app/manifest',
           'astro/assets/services/noop',

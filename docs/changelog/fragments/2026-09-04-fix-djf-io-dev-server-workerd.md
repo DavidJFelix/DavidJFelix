@@ -3,9 +3,9 @@
 `astro dev` runs requests inside the Cloudflare adapter's workerd runner, and four things broke
 there. Vite discovered several SSR deps lazily on the first request, and the resulting mid-run
 re-optimization deleted chunk hashes the runner was still requesting, crashing the dev process; they
-are now predeclared in `ssr.optimizeDeps.include` so optimization finishes at startup. Sharp cannot
-load inside workerd, so every `astro:assets` image 404ed at `/_image`; dev now uses the
-`passthrough` image service (unresized but visible) while builds keep sharp. Search had no index in
+are now listed up front in `ssr.optimizeDeps.include` so optimization finishes at startup. Sharp
+cannot load inside workerd, so every `astro:assets` image 404ed at `/_image`; dev now uses the
+`passthrough` image service (full-size but visible) while builds keep sharp. Search had no index in
 dev, so the Pagefind integration now serves the last build's `dist/client/pagefind` at
 `/pagefind/*`. And `run_worker_first` routed Vite's dev-only URL prefixes (`/@fs`, `/@id`, `/@vite`,
 `/src`, `/node_modules`, and the absolute source path) into the worker, where they 404ed and no

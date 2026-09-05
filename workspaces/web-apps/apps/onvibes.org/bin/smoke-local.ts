@@ -1,7 +1,8 @@
 /// <reference types="bun" />
 // Pre-merge smoke gate: boots the production build and checks the critical path
 // serves a working bundle -- the route returns 200, the response is a complete
-// HTML document, and any hashed client asset it references itself serves.
+// HTML document, and any hashed client asset it references itself serves --
+// and that the chat route answers to its contract (checkChat below).
 //
 // onvibes.org is a TanStack Start app on Cloudflare Workers; its
 // @cloudflare/vite-plugin makes `vite preview` serve the built worker (SSR) in
@@ -50,6 +51,28 @@ async function check(route: string): Promise<string | null> {
   return null
 }
 
+// The chat route is the app's backend: a hydrated shell talking to a dead
+// route is still broken. No key is available here, so the contract is what
+// gets checked -- a body outside it is rejected (400), a valid one reaches the
+// handler: 503 while unconfigured, 200 when .dev.vars carries a key.
+async function checkChat(): Promise<string | null> {
+  const post = (body: unknown) =>
+    fetch(new URL('/api/chat', BASE_URL), {
+      method: 'POST',
+      headers: {'content-type': 'application/json'},
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(15_000),
+    })
+  const rejected = await post({messages: []})
+  if (rejected.status !== 400) return `/api/chat accepted an invalid body (HTTP ${rejected.status})`
+  const accepted = await post({messages: [{role: 'user', content: 'smoke'}]})
+  // Never read a real reply to its end: the status is the check.
+  await accepted.body?.cancel()
+  if (accepted.status !== 200 && accepted.status !== 503)
+    return `/api/chat -> HTTP ${accepted.status}`
+  return null
+}
+
 async function waitForReady(): Promise<boolean> {
   const deadline = Date.now() + READY_TIMEOUT_MS
   while (Date.now() < deadline) {
@@ -75,6 +98,13 @@ try {
         console.error(`::error::smoke test failed — ${problem}`)
         exitCode = 1
       }
+    }
+    const chatProblem = await checkChat()
+    if (chatProblem === null) {
+      console.log('OK: /api/chat holds its contract')
+    } else {
+      console.error(`::error::smoke test failed — ${chatProblem}`)
+      exitCode = 1
     }
   } else {
     console.error(

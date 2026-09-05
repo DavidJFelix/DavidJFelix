@@ -92,7 +92,9 @@ A couple's blog for Monica & David. Basic landing shipped; the actual posts are 
 
 A showcase of "vibecoded" apps plus a builder toolchain to create them, rebuilt as a TanStack Start
 app with TanStack AI as the agent framework (plan doc retired with the Flue removal; a new one lands
-when the builder work is picked up). The builder's LLM must sit behind auth (mechanism TBD).
+when the builder work is picked up). Text chat through OpenRouter is wired (`/api/chat`, in-memory
+conversations, no database yet). The endpoint has no auth yet (mechanism TBD), which gates setting
+the production `OPENROUTER_API_KEY`.
 
 **Status**: Placeholder
 

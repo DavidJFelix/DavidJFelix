@@ -94,6 +94,29 @@ test('the textarea grows with its content', async () => {
   expect(input.element().getBoundingClientRect().height).toBeGreaterThan(before)
 })
 
+test('while busy the button stops instead of sending, and Enter waits', async () => {
+  // given
+  const onSend = vi.fn<(text: string) => void>()
+  const onStop = vi.fn<() => void>()
+  const screen = await render(<Composer onSend={onSend} busy onStop={onStop} />)
+  const input = screen.getByRole('textbox', {name: 'Message'})
+  await input.fill('one more thing')
+
+  // when
+  await userEvent.keyboard('{Enter}')
+
+  // then
+  expect(onSend).not.toHaveBeenCalled()
+  await expect.element(input).toHaveValue('one more thing')
+  expect(screen.container.querySelector('button[type=submit]')).toBeNull()
+
+  // when
+  await screen.getByRole('button', {name: 'Stop generating'}).click()
+
+  // then
+  expect(onStop).toHaveBeenCalledOnce()
+})
+
 test('the textarea is labelled, and the placeholder only shows the expected input', async () => {
   // given
   const {input} = await renderComposer()

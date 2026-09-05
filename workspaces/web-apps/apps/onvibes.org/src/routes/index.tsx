@@ -1,28 +1,33 @@
 import {createFileRoute} from '@tanstack/react-router'
-import {useCallback, useState} from 'react'
+import {useCallback, useId, useState} from 'react'
 
+import {ActiveConversation, type MessagesChange} from '@/components/active-conversation'
 import {AppShell} from '@/components/app-shell'
-import {ConversationView} from '@/components/conversation-view'
 import {Sidebar} from '@/components/sidebar'
 import {
-  appendMessage,
   type Conversation,
   createConversation,
   replaceConversation,
-  SEED_CONVERSATIONS,
+  withMessages,
 } from '@/lib/conversations'
 
 export const Route = createFileRoute('/')({
   component: Home,
 })
 
-// Client state only: the seed fixtures are the "backend" until TanStack AI
-// lands. Every transition goes through the pure functions in lib/conversations
-// so swapping the store later is a change to this component alone.
+// Conversations are client state for the page's lifetime: the list and the
+// selection live here, the active thread is driven by TanStack AI inside
+// ActiveConversation and mirrored back through withMessages. Every transition
+// goes through the pure functions in lib/conversations, so persisting the list
+// later is a change to this component alone.
 function Home() {
-  const [conversations, setConversations] =
-    useState<ReadonlyArray<Conversation>>(SEED_CONVERSATIONS)
-  const [activeId, setActiveId] = useState<string>(SEED_CONVERSATIONS[0]?.id ?? '')
+  // Stable across SSR and hydration, unlike a random id, so the first
+  // conversation is the same one on both sides.
+  const firstId = useId()
+  const [conversations, setConversations] = useState<ReadonlyArray<Conversation>>(() => [
+    createConversation({id: firstId, now: Date.now()}),
+  ])
+  const [activeId, setActiveId] = useState(firstId)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const closeSidebar = useCallback(() => setSidebarOpen(false), [])
 
@@ -34,21 +39,22 @@ function Home() {
   }
 
   const startNew = () => {
-    const fresh = createConversation({id: crypto.randomUUID()})
+    const fresh = createConversation({id: crypto.randomUUID(), now: Date.now()})
     setConversations([fresh, ...conversations])
     select(fresh.id)
   }
 
-  const send = (text: string) => {
-    if (active === undefined) return
-    const message = {id: crypto.randomUUID(), role: 'user' as const, text}
-    setConversations(
-      replaceConversation({
-        conversations,
-        conversation: appendMessage({conversation: active, message}),
-      }),
-    )
-  }
+  // Stable identity: ActiveConversation re-syncs whenever this changes.
+  const handleMessagesChange = useCallback(({id, messages}: MessagesChange) => {
+    setConversations((current) => {
+      const conversation = current.find((c) => c.id === id)
+      if (conversation === undefined) return current
+      const next = withMessages({conversation, messages, now: Date.now()})
+      return next === conversation
+        ? current
+        : replaceConversation({conversations: current, conversation: next})
+    })
+  }, [])
 
   return (
     <AppShell
@@ -65,9 +71,10 @@ function Home() {
       }
     >
       {active === undefined ? null : (
-        <ConversationView
+        <ActiveConversation
+          key={active.id}
           conversation={active}
-          onSend={send}
+          onMessagesChange={handleMessagesChange}
           onOpenSidebar={() => setSidebarOpen(true)}
         />
       )}

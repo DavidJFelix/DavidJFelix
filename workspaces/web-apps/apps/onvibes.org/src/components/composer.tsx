@@ -1,4 +1,4 @@
-import {ArrowUp} from 'lucide-react'
+import {ArrowUp, Square} from 'lucide-react'
 import {type FormEvent, type KeyboardEvent, useId, useState} from 'react'
 import {css} from 'styled-system/css'
 import {IconButton} from '@/components/icon-button'
@@ -37,9 +37,13 @@ const textareaClass = css({
 
 export interface ComposerProps {
   onSend: (text: string) => void
+  // While a reply is on its way the one button stops it instead of sending,
+  // and Enter waits: the draft stays put until the reply lands or is stopped.
+  busy?: boolean
+  onStop?: () => void
 }
 
-export function Composer({onSend}: ComposerProps) {
+export function Composer({onSend, busy = false, onStop}: ComposerProps) {
   const [draft, setDraft] = useState('')
   const labelId = useId()
   const text = draft.trim()
@@ -56,7 +60,7 @@ export function Composer({onSend}: ComposerProps) {
   }
 
   const submit = () => {
-    if (text.length === 0) return
+    if (busy || text.length === 0) return
     onSend(text)
     setDraft('')
   }
@@ -89,9 +93,20 @@ export function Composer({onSend}: ComposerProps) {
         onKeyDown={handleKeyDown}
         className={textareaClass}
       />
-      <IconButton label="Send message" type="submit" variant="primary" disabled={text.length === 0}>
-        <ArrowUp size={18} />
-      </IconButton>
+      {busy ? (
+        <IconButton label="Stop generating" variant="primary" onClick={onStop}>
+          <Square size={14} fill="currentColor" />
+        </IconButton>
+      ) : (
+        <IconButton
+          label="Send message"
+          type="submit"
+          variant="primary"
+          disabled={text.length === 0}
+        >
+          <ArrowUp size={18} />
+        </IconButton>
+      )}
     </form>
   )
 }

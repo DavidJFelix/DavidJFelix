@@ -1,4 +1,5 @@
 import {Plus, X} from 'lucide-react'
+import {useEffect, useState} from 'react'
 import {css} from 'styled-system/css'
 import {IconButton} from '@/components/icon-button'
 import {type Conversation, formatRelativeTime, previewOf} from '@/lib/conversations'
@@ -32,10 +33,11 @@ const truncate = css({
 interface ConversationRowProps {
   conversation: Conversation
   active: boolean
+  now: number
   onSelect: () => void
 }
 
-function ConversationRow({conversation, active, onSelect}: ConversationRowProps) {
+function ConversationRow({conversation, active, now, onSelect}: ConversationRowProps) {
   return (
     <li>
       <button
@@ -50,7 +52,7 @@ function ConversationRow({conversation, active, onSelect}: ConversationRowProps)
         <span
           className={css({fontSize: 'xs', color: 'text.muted', fontVariantNumeric: 'tabular-nums'})}
         >
-          {formatRelativeTime({minutesAgo: conversation.updatedMinutesAgo})}
+          {formatRelativeTime({updatedAt: conversation.updatedAt, now})}
         </span>
         <span
           className={`${truncate} ${css({gridColumn: '1 / -1', fontSize: 'xs', color: 'text.muted'})}`}
@@ -71,7 +73,22 @@ export interface SidebarProps {
   onClose: () => void
 }
 
+const CLOCK_TICK_MS = 30_000
+
+// The clock behind the age labels: one reading shared by every row, refreshed
+// often enough that a row never shows 'now' for long after it stopped being
+// true. Read in state (not during render) so SSR and hydration agree.
+function useNow(): number {
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), CLOCK_TICK_MS)
+    return () => clearInterval(timer)
+  }, [])
+  return now
+}
+
 export function Sidebar({conversations, activeId, onSelect, onNew, onClose}: SidebarProps) {
+  const now = useNow()
   return (
     <div
       className={css({
@@ -132,6 +149,7 @@ export function Sidebar({conversations, activeId, onSelect, onNew, onClose}: Sid
               key={conversation.id}
               conversation={conversation}
               active={conversation.id === activeId}
+              now={now}
               onSelect={() => onSelect(conversation.id)}
             />
           ))}

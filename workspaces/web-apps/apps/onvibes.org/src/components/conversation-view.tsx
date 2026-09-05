@@ -1,8 +1,8 @@
-import {PanelLeft} from 'lucide-react'
+import {PanelLeft, Sparkle} from 'lucide-react'
 import {css} from 'styled-system/css'
 import {Composer} from '@/components/composer'
 import {IconButton} from '@/components/icon-button'
-import {MessageBubble} from '@/components/message'
+import {MessageBubble, markClass} from '@/components/message'
 import type {Conversation} from '@/lib/conversations'
 
 // Shared measure for the message column and the composer so they line up.
@@ -33,9 +33,74 @@ function EmptyState() {
   )
 }
 
+// Holds the assistant's place between the send and the first token, in the
+// assistant's own layout so the reply lands where the dots were.
+function PendingReply() {
+  return (
+    <output
+      aria-label="Waiting for a reply"
+      className={css({display: 'flex', gap: '3', alignItems: 'flex-start'})}
+    >
+      <span className={markClass}>
+        <Sparkle size={14} />
+      </span>
+      <p className={css({fontSize: 'md', lineHeight: 'relaxed', color: 'text.muted'})}>…</p>
+    </output>
+  )
+}
+
+interface ReplyFailedProps {
+  message: string
+  onRetry?: () => void
+}
+
+function ReplyFailed({message, onRetry}: ReplyFailedProps) {
+  return (
+    <div
+      role="alert"
+      className={css({
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'baseline',
+        gap: '3',
+        ps: '10',
+        fontSize: 'sm',
+        color: 'text.muted',
+      })}
+    >
+      <span>{message}</span>
+      <button
+        type="button"
+        onClick={onRetry}
+        className={css({
+          color: 'text',
+          fontWeight: 'medium',
+          textDecoration: 'underline',
+          textUnderlineOffset: '[0.2em]',
+          cursor: 'pointer',
+          _focusVisible: {
+            outline: '[2px solid]',
+            outlineColor: 'focus.ring',
+            outlineOffset: '[2px]',
+          },
+        })}
+      >
+        Try again
+      </button>
+    </div>
+  )
+}
+
 export interface ConversationViewProps {
   conversation: Conversation
+  // A reply is on its way: the composer offers stop, the thread follows the
+  // stream, and a placeholder holds the assistant's place until the first token.
+  busy?: boolean
+  // The last reply failed; the copy is already user-facing.
+  error?: string
   onSend: (text: string) => void
+  onStop?: () => void
+  onRetry?: () => void
   onOpenSidebar: () => void
 }
 
@@ -46,8 +111,22 @@ function scrollIntoView(el: HTMLDivElement | null) {
   el?.scrollIntoView({block: 'end'})
 }
 
-export function ConversationView({conversation, onSend, onOpenSidebar}: ConversationViewProps) {
+export function ConversationView({
+  conversation,
+  busy = false,
+  error,
+  onSend,
+  onStop,
+  onRetry,
+  onOpenSidebar,
+}: ConversationViewProps) {
   const count = conversation.messages.length
+  const awaitingReply = busy && conversation.messages.at(-1)?.role === 'user'
+
+  // While a reply streams the last bubble grows in place rather than mounting,
+  // so a per-render ref (a new function each time, which React re-invokes)
+  // keeps following it; once settled the stable ref takes over again.
+  const followLast = busy ? (el: HTMLDivElement | null) => scrollIntoView(el) : scrollIntoView
 
   return (
     <main
@@ -108,9 +187,11 @@ export function ConversationView({conversation, onSend, onOpenSidebar}: Conversa
               <MessageBubble
                 key={message.id}
                 message={message}
-                ref={index === count - 1 ? scrollIntoView : undefined}
+                ref={index === count - 1 ? followLast : undefined}
               />
             ))}
+            {awaitingReply && <PendingReply />}
+            {error !== undefined && <ReplyFailed message={error} onRetry={onRetry} />}
           </div>
         )}
       </div>
@@ -123,7 +204,7 @@ export function ConversationView({conversation, onSend, onOpenSidebar}: Conversa
         })}
       >
         <div className={columnClass}>
-          <Composer onSend={onSend} />
+          <Composer onSend={onSend} busy={busy} onStop={onStop} />
         </div>
       </div>
     </main>

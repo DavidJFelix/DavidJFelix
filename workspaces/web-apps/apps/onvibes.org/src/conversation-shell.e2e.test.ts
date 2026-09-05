@@ -1,26 +1,35 @@
 import {expect, test} from '@playwright/test'
+import {mockReply} from './e2e-support'
 
 // Interaction contract of the sidebar + conversation shell, beyond the
 // happy paths in index.e2e.test.ts: keyboard-only use, the composer's key
-// bindings, the small-screen drawer's every close path, and the dark and
-// small-screen visual baselines. Fixture-backed, so all of it is deterministic.
+// bindings, the thread following a streamed reply, the small-screen drawer's
+// every close path, and the dark and small-screen visual baselines. The chat
+// endpoint is mocked (mockReply), so all of it is deterministic.
 
 test('the shell is fully keyboard operable', async ({page}) => {
-  // given: Chromium starts sequential focus at the last message scrolled into
-  // view, so anchor at the sidebar's first control and walk the rows from there
+  // given: two conversations, the older one titled by its first message
+  await mockReply(page, 'Done.')
   await page.goto('/')
   const sidebar = page.getByRole('navigation', {name: 'Conversations'})
-  await page.getByRole('button', {name: 'New conversation'}).focus()
+  await page.getByRole('textbox', {name: 'Message'}).fill('Trail map')
+  await page.getByRole('button', {name: 'Send message'}).click()
+  await expect(page.getByRole('main').getByText('Done.')).toBeVisible()
+  await page.getByRole('button', {name: 'New conversation', exact: true}).click()
+  await expect(sidebar.getByRole('button')).toHaveCount(2)
+  // Anchor at the sidebar's first control and walk the rows from there.
+  await page.getByRole('button', {name: 'New conversation', exact: true}).focus()
 
   // when
   await page.keyboard.press('Tab')
-  await expect(sidebar.getByRole('button', {name: /Trail map/u})).toBeFocused()
+  await expect(sidebar.getByRole('button', {name: /New conversation/u})).toBeFocused()
   await page.keyboard.press('Tab')
+  await expect(sidebar.getByRole('button', {name: /Trail map/u})).toBeFocused()
   await page.keyboard.press('Enter')
 
   // then
-  await expect(page.getByRole('heading', {level: 1, name: /Focus timer/u})).toBeVisible()
-  await expect(sidebar.getByRole('button', {name: /Focus timer/u})).toHaveAttribute(
+  await expect(page.getByRole('heading', {level: 1, name: 'Trail map'})).toBeVisible()
+  await expect(sidebar.getByRole('button', {name: /Trail map/u})).toHaveAttribute(
     'aria-current',
     'true',
   )
@@ -28,10 +37,11 @@ test('the shell is fully keyboard operable', async ({page}) => {
 
 test('Shift+Enter breaks the line without sending', async ({page}) => {
   // given
+  await mockReply(page, 'Two lines received.')
   await page.goto('/')
   const input = page.getByRole('textbox', {name: 'Message'})
   const bubbles = page.getByRole('main').locator('[data-role]')
-  await expect(bubbles).toHaveCount(4)
+  await expect(bubbles).toHaveCount(0)
 
   // when
   await input.fill('first line')
@@ -40,34 +50,37 @@ test('Shift+Enter breaks the line without sending', async ({page}) => {
 
   // then
   await expect(input).toHaveValue('first line\nsecond line')
-  await expect(bubbles).toHaveCount(4)
+  await expect(bubbles).toHaveCount(0)
 
   // when
   await input.press('Enter')
 
   // then
-  await expect(bubbles).toHaveCount(5)
-  await expect(bubbles.last()).toHaveText(/first line\s+second line/u)
+  await expect(bubbles).toHaveCount(2)
+  await expect(bubbles.first()).toHaveText(/first line\s+second line/u)
+  await expect(bubbles.last()).toHaveText('Two lines received.')
   await expect(input).toHaveValue('')
 })
 
-test('a sent message scrolls into view at the bottom of the thread', async ({page}) => {
-  // given
+test('the thread follows a reply to its end as it streams', async ({page}) => {
+  // given: a short frame and a reply taller than it
   await page.setViewportSize({width: 1280, height: 480})
+  const lines = Array.from({length: 24}, (_, i) => `Line ${i + 1} of the plan.`)
+  await mockReply(page, lines.join('\n'))
   await page.goto('/')
   const main = page.getByRole('main')
-  await expect(main.getByText('clustering to a short pure function')).toBeInViewport()
 
   // when
-  await page.getByRole('textbox', {name: 'Message'}).fill('And a legend for the pins')
+  await page.getByRole('textbox', {name: 'Message'}).fill('Plan the whole app')
   await page.getByRole('button', {name: 'Send message'}).click()
 
   // then
-  await expect(main.getByText('And a legend for the pins')).toBeInViewport()
+  await expect(main.getByText('Line 24 of the plan.')).toBeInViewport()
 })
 
 test('sending keeps the composer focused for the next message', async ({page}) => {
   // given
+  await mockReply(page, 'Done.')
   await page.goto('/')
   const input = page.getByRole('textbox', {name: 'Message'})
   await input.fill('one')

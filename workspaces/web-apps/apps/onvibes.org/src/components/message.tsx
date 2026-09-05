@@ -13,7 +13,8 @@ const assistantClass = css({
   maxW: '[85%]',
 })
 
-const markClass = css({
+// Exported so the pending-reply placeholder shares the assistant's mark.
+export const markClass = css({
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',

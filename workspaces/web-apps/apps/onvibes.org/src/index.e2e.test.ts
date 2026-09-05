@@ -1,11 +1,14 @@
 import {expect, test} from '@playwright/test'
+import {mockReply} from './e2e-support'
 
-// onvibes.org renders a sidebar of conversations beside the selected
-// conversation, from fixture data (no backend yet), so the visual baseline is
-// stable. These run against a local production boot (baseline authoring) or a
-// deployed preview URL (CI) -- see playwright.config.ts.
+// onvibes.org opens on a fresh conversation beside a sidebar that fills in as
+// conversations start. The chat endpoint is answered per test by Playwright
+// with a canned AG-UI stream (mockReply in e2e-support.ts), so the suite is
+// deterministic and needs no OpenRouter key whether it runs against a local
+// production boot (baseline authoring) or a deployed preview URL (CI) -- see
+// playwright.config.ts. One test hits the real route to prove it is deployed.
 
-test('home page renders the sidebar and the first conversation', async ({page}) => {
+test('home page opens on a fresh conversation', async ({page}) => {
   // given
   const sidebar = page.getByRole('navigation', {name: 'Conversations'})
 
@@ -13,79 +16,101 @@ test('home page renders the sidebar and the first conversation', async ({page}) 
   await page.goto('/')
 
   // then
-  await expect(sidebar.getByRole('button')).toHaveCount(5)
-  await expect(sidebar.getByRole('button', {name: /Trail map for Starved Rock/u})).toHaveAttribute(
+  await expect(sidebar.getByRole('button')).toHaveCount(1)
+  await expect(sidebar.getByRole('button', {name: /New conversation/u})).toHaveAttribute(
     'aria-current',
     'true',
   )
-  await expect(
-    page.getByRole('heading', {level: 1, name: 'Trail map for Starved Rock'}),
-  ).toBeVisible()
-  await expect(
-    page.getByRole('main').getByText('Can the pins cluster when zoomed out?'),
-  ).toBeVisible()
+  await expect(page.getByRole('heading', {level: 1, name: 'New conversation'})).toBeVisible()
+  await expect(page.getByText('What do you want to build?')).toBeVisible()
 })
 
-test('selecting a conversation swaps the main view', async ({page}) => {
+test('sending a message streams the reply in and names the conversation', async ({page}) => {
   // given
+  await mockReply(page, 'Fourteen pins, one card each.')
   await page.goto('/')
-  const sidebar = page.getByRole('navigation', {name: 'Conversations'})
-
-  // when
-  await sidebar.getByRole('button', {name: /Recipe scaler/u}).click()
-
-  // then
-  await expect(page.getByRole('heading', {level: 1, name: 'Recipe scaler'})).toBeVisible()
-  await expect(page.getByRole('main').getByText('Add a toggle for metric.')).toBeVisible()
-  await expect(sidebar.getByRole('button', {name: /Recipe scaler/u})).toHaveAttribute(
-    'aria-current',
-    'true',
-  )
-})
-
-test('sending a message appends it to the conversation', async ({page}) => {
-  // given
-  await page.goto('/')
+  const main = page.getByRole('main')
   const input = page.getByRole('textbox', {name: 'Message'})
   const send = page.getByRole('button', {name: 'Send message'})
   await expect(send).toBeDisabled()
 
   // when
-  await input.fill('Can it export the map as a PDF?')
+  await input.fill('Map the canyons of Starved Rock')
   await expect(send).toBeEnabled()
   await input.press('Enter')
 
   // then
-  await expect(page.getByRole('main').getByText('Can it export the map as a PDF?')).toBeVisible()
+  const bubbles = main.locator('[data-role]')
+  await expect(bubbles).toHaveCount(2)
+  await expect(bubbles.first()).toHaveText('Map the canyons of Starved Rock')
+  await expect(bubbles.last()).toHaveText('Fourteen pins, one card each.')
+  await expect(
+    page.getByRole('heading', {level: 1, name: 'Map the canyons of Starved Rock'}),
+  ).toBeVisible()
+  const row = page.getByRole('navigation', {name: 'Conversations'}).getByRole('button')
+  await expect(row).toHaveText(/Map the canyons of Starved Rock.*Fourteen pins, one card each\./u)
   await expect(input).toHaveValue('')
   await expect(send).toBeDisabled()
 })
 
-test('a new conversation starts empty and takes its title from the first message', async ({
-  page,
-}) => {
+test('a new conversation starts empty and the old one keeps its thread', async ({page}) => {
   // given
+  await mockReply(page, 'Done.')
   await page.goto('/')
   const sidebar = page.getByRole('navigation', {name: 'Conversations'})
+  const main = page.getByRole('main')
+  await page.getByRole('textbox', {name: 'Message'}).fill('A pocket metronome')
+  await page.getByRole('button', {name: 'Send message'}).click()
+  await expect(main.getByText('Done.')).toBeVisible()
 
   // when
-  await page.getByRole('button', {name: 'New conversation'}).click()
+  await page.getByRole('button', {name: 'New conversation', exact: true}).click()
 
   // then
   await expect(page.getByRole('heading', {level: 1, name: 'New conversation'})).toBeVisible()
   await expect(page.getByText('What do you want to build?')).toBeVisible()
-  await expect(sidebar.getByRole('button')).toHaveCount(6)
-
-  // when
-  await page.getByRole('textbox', {name: 'Message'}).fill('A pocket metronome')
-  await page.getByRole('button', {name: 'Send message'}).click()
-
-  // then
-  await expect(page.getByRole('heading', {level: 1, name: 'A pocket metronome'})).toBeVisible()
-  await expect(sidebar.getByRole('button', {name: /A pocket metronome/u})).toHaveAttribute(
+  await expect(sidebar.getByRole('button')).toHaveCount(2)
+  await expect(sidebar.getByRole('button', {name: /New conversation/u})).toHaveAttribute(
     'aria-current',
     'true',
   )
+
+  // when
+  await sidebar.getByRole('button', {name: /A pocket metronome/u}).click()
+
+  // then
+  await expect(page.getByRole('heading', {level: 1, name: 'A pocket metronome'})).toBeVisible()
+  const bubbles = main.locator('[data-role]')
+  await expect(bubbles.first()).toHaveText('A pocket metronome')
+  await expect(bubbles.last()).toHaveText('Done.')
+})
+
+test('a failed reply says so, and trying again asks once more', async ({page}) => {
+  // given
+  await page.route('**/api/chat', (route) =>
+    route.fulfill({status: 503, body: 'Chat is not configured'}),
+  )
+  await page.goto('/')
+  const main = page.getByRole('main')
+  await page.getByRole('textbox', {name: 'Message'}).fill('Anyone there?')
+  await page.getByRole('button', {name: 'Send message'}).click()
+  await expect(page.getByRole('alert')).toHaveText(/Chat is not set up on this server yet\./u)
+
+  // when
+  await mockReply(page, 'Here now.')
+  await page.getByRole('button', {name: 'Try again'}).click()
+
+  // then
+  await expect(main.getByText('Here now.')).toBeVisible()
+  await expect(page.getByRole('alert')).toHaveCount(0)
+})
+
+test('the deployed chat route holds its contract', async ({request}) => {
+  // when: a body outside the contract, so no key or model is involved
+  const rejected = await request.post('/api/chat', {data: {messages: []}})
+
+  // then
+  expect(rejected.status()).toBe(400)
 })
 
 test('the sidebar becomes a drawer on small screens', async ({page}) => {
@@ -102,10 +127,10 @@ test('the sidebar becomes a drawer on small screens', async ({page}) => {
   await expect(sidebar).toBeInViewport()
 
   // when
-  await sidebar.getByRole('button', {name: /Focus timer/u}).click()
+  await page.getByRole('button', {name: 'New conversation', exact: true}).click()
 
   // then
-  await expect(page.getByRole('heading', {level: 1, name: /Focus timer/u})).toBeVisible()
+  await expect(sidebar.getByRole('button')).toHaveCount(2)
   await expect(sidebar).not.toBeInViewport()
 })
 

@@ -1,0 +1,7 @@
+# Local secrets for `vite dev` and `vite preview` (read by the Cloudflare Vite
+# plugin). Copy to .dev.vars (gitignored) and fill in. Production sets the same
+# names with `wrangler secret put`.
+
+# OpenRouter API key behind /api/chat (https://openrouter.ai/keys). Leave unset
+# and the route answers 503; the shell shows that chat is not set up.
+OPENROUTER_API_KEY=

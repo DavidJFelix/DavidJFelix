@@ -1,9 +1,20 @@
 import type {Page} from '@playwright/test'
 
 // Shared by the Playwright specs (not a spec itself: importing one spec from
-// another would register its tests twice). Answers every chat request with a
-// canned AG-UI stream, so the suite is deterministic and needs no OpenRouter
-// key whether it runs against a local production boot or a preview deploy.
+// another would register its tests twice). openApp lands on the shell once it
+// is interactive; mockReply answers every chat request with a canned AG-UI
+// stream, so the suite is deterministic and needs no OpenRouter key whether it
+// runs against a local production boot or a preview deploy.
+
+// Navigates and waits for React to hydrate (the root shell marks <body> once
+// it has; see src/routes/__root.tsx). Before that the server-rendered
+// composer takes keystrokes that no state sees, so a fill that lands early --
+// routine against a deployed preview, where the bundle takes longer to
+// arrive -- leaves the send button disabled for good.
+export async function openApp(page: Page, path = '/') {
+  await page.goto(path)
+  await page.locator('body[data-hydrated]').waitFor()
+}
 
 function sse(events: ReadonlyArray<Record<string, unknown>>): string {
   return events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join('')

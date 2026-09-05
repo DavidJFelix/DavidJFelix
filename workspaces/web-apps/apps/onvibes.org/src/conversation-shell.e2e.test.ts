@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/test'
-import {mockReply} from './e2e-support'
+import {mockReply, openApp} from './e2e-support'
 
 // Interaction contract of the sidebar + conversation shell, beyond the
 // happy paths in index.e2e.test.ts: keyboard-only use, the composer's key
@@ -10,7 +10,7 @@ import {mockReply} from './e2e-support'
 test('the shell is fully keyboard operable', async ({page}) => {
   // given: two conversations, the older one titled by its first message
   await mockReply(page, 'Done.')
-  await page.goto('/')
+  await openApp(page)
   const sidebar = page.getByRole('navigation', {name: 'Conversations'})
   await page.getByRole('textbox', {name: 'Message'}).fill('Trail map')
   await page.getByRole('button', {name: 'Send message'}).click()
@@ -38,7 +38,7 @@ test('the shell is fully keyboard operable', async ({page}) => {
 test('Shift+Enter breaks the line without sending', async ({page}) => {
   // given
   await mockReply(page, 'Two lines received.')
-  await page.goto('/')
+  await openApp(page)
   const input = page.getByRole('textbox', {name: 'Message'})
   const bubbles = page.getByRole('main').locator('[data-role]')
   await expect(bubbles).toHaveCount(0)
@@ -67,7 +67,7 @@ test('the thread follows a reply to its end as it streams', async ({page}) => {
   await page.setViewportSize({width: 1280, height: 480})
   const lines = Array.from({length: 24}, (_, i) => `Line ${i + 1} of the plan.`)
   await mockReply(page, lines.join('\n'))
-  await page.goto('/')
+  await openApp(page)
   const main = page.getByRole('main')
 
   // when
@@ -81,7 +81,7 @@ test('the thread follows a reply to its end as it streams', async ({page}) => {
 test('sending keeps the composer focused for the next message', async ({page}) => {
   // given
   await mockReply(page, 'Done.')
-  await page.goto('/')
+  await openApp(page)
   const input = page.getByRole('textbox', {name: 'Message'})
   await input.fill('one')
 
@@ -95,7 +95,7 @@ test('sending keeps the composer focused for the next message', async ({page}) =
 test('the drawer closes on Escape and on the scrim', async ({page}) => {
   // given
   await page.setViewportSize({width: 390, height: 844})
-  await page.goto('/')
+  await openApp(page)
   const sidebar = page.getByRole('navigation', {name: 'Conversations'})
   const open = page.getByRole('button', {name: 'Open sidebar'})
   await open.click()
@@ -120,7 +120,7 @@ test('the drawer closes on Escape and on the scrim', async ({page}) => {
 
 test('the drawer close button lives only in the small-screen layout', async ({page}) => {
   // given
-  await page.goto('/')
+  await openApp(page)
   const close = page.getByRole('navigation', {name: 'Conversations'}).locator('..')
 
   // then
@@ -137,7 +137,7 @@ test('the drawer close button lives only in the small-screen layout', async ({pa
 test('dark mode matches the visual baseline', async ({page}) => {
   // given
   await page.emulateMedia({colorScheme: 'dark'})
-  await page.goto('/')
+  await openApp(page)
   await page.evaluate(() => document.fonts.ready)
 
   // then
@@ -147,7 +147,7 @@ test('dark mode matches the visual baseline', async ({page}) => {
 test('the small-screen drawer matches the visual baseline', async ({page}) => {
   // given
   await page.setViewportSize({width: 390, height: 844})
-  await page.goto('/')
+  await openApp(page)
 
   // when
   await page.getByRole('button', {name: 'Open sidebar'}).click()

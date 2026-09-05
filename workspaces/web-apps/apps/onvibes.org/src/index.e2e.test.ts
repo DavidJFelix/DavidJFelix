@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/test'
-import {mockReply} from './e2e-support'
+import {mockReply, openApp} from './e2e-support'
 
 // onvibes.org opens on a fresh conversation beside a sidebar that fills in as
 // conversations start. The chat endpoint is answered per test by Playwright
@@ -13,7 +13,7 @@ test('home page opens on a fresh conversation', async ({page}) => {
   const sidebar = page.getByRole('navigation', {name: 'Conversations'})
 
   // when
-  await page.goto('/')
+  await openApp(page)
 
   // then
   await expect(sidebar.getByRole('button')).toHaveCount(1)
@@ -28,7 +28,7 @@ test('home page opens on a fresh conversation', async ({page}) => {
 test('sending a message streams the reply in and names the conversation', async ({page}) => {
   // given
   await mockReply(page, 'Fourteen pins, one card each.')
-  await page.goto('/')
+  await openApp(page)
   const main = page.getByRole('main')
   const input = page.getByRole('textbox', {name: 'Message'})
   const send = page.getByRole('button', {name: 'Send message'})
@@ -56,7 +56,7 @@ test('sending a message streams the reply in and names the conversation', async 
 test('a new conversation starts empty and the old one keeps its thread', async ({page}) => {
   // given
   await mockReply(page, 'Done.')
-  await page.goto('/')
+  await openApp(page)
   const sidebar = page.getByRole('navigation', {name: 'Conversations'})
   const main = page.getByRole('main')
   await page.getByRole('textbox', {name: 'Message'}).fill('A pocket metronome')
@@ -90,7 +90,7 @@ test('a failed reply says so, and trying again asks once more', async ({page}) =
   await page.route('**/api/chat', (route) =>
     route.fulfill({status: 503, body: 'Chat is not configured'}),
   )
-  await page.goto('/')
+  await openApp(page)
   const main = page.getByRole('main')
   await page.getByRole('textbox', {name: 'Message'}).fill('Anyone there?')
   await page.getByRole('button', {name: 'Send message'}).click()
@@ -116,7 +116,7 @@ test('the deployed chat route holds its contract', async ({request}) => {
 test('the sidebar becomes a drawer on small screens', async ({page}) => {
   // given
   await page.setViewportSize({width: 390, height: 844})
-  await page.goto('/')
+  await openApp(page)
   const sidebar = page.getByRole('navigation', {name: 'Conversations'})
   await expect(sidebar).not.toBeInViewport()
 
@@ -136,7 +136,7 @@ test('the sidebar becomes a drawer on small screens', async ({page}) => {
 
 test('home page matches the visual baseline', async ({page}) => {
   // given
-  await page.goto('/')
+  await openApp(page)
   await page.evaluate(() => document.fonts.ready)
 
   // then

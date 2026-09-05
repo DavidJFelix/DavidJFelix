@@ -44,3 +44,10 @@ Playwright then failed on a login form. The probes now send an Access service to
 `preview-wrangler` action as optional inputs and into the app's Playwright `extraHTTPHeaders`), and
 a landing on the Access login page is reported as exactly that instead of a vacuous pass
 (`bin/cloudflare-access.ts`, unit-tested). Hosts without Access see no difference.
+
+The same preview run then caught a hydration race that never shows locally: against the deployed
+preview the bundle arrives late enough that Playwright's first fill lands in the server-rendered
+textarea before React has hydrated, so the text sits in the DOM while the draft state stays empty
+and the send button never enables. The root shell now marks `<body data-hydrated>` once React is
+live, and the shell suites navigate through `openApp` (in `e2e-support.ts`), which waits for that
+mark before interacting.

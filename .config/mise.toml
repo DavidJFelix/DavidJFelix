@@ -14,7 +14,7 @@ actionlint = "1"
 ghalint = "1"
 zizmor = "1.30.0"
 pinact = "4.1.1"
-"npm:cspell" = "10.1.1"
+"npm:cspell" = "10.2.0"
 # JUnit reporter for the spell:ci task (Depot's test results view).
 "npm:@cspell/cspell-junit-reporter" = { version = "10.2.2", allow_low_downloads = true }
 # Warden CLI: AI code review run locally (`warden run`) and in CI (the Depot

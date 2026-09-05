@@ -45,6 +45,19 @@ inputs:
   github-token:
     description: GITHUB_TOKEN for the sticky PR comment (needs pull-requests write).
     required: true
+  cf-access-client-id:
+    description: >-
+      Optional Cloudflare Access service-token client id. A worker whose
+      workers.dev hostname sits behind Access (onvibes.org) redirects every
+      probe to the login page; with a token the readiness, smoke, and
+      Playwright steps authenticate as that service instead. Harmless for
+      hosts without Access.
+    required: false
+    default: ""
+  cf-access-client-secret:
+    description: Optional Cloudflare Access service-token client secret (pairs with the id).
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -88,6 +101,8 @@ runs:
       env:
         READY_URL: ${{ steps.deploy.outputs.url }}
         READY_ROUTES: ${{ inputs.smoke-routes }}
+        CF_ACCESS_CLIENT_ID: ${{ inputs.cf-access-client-id }}
+        CF_ACCESS_CLIENT_SECRET: ${{ inputs.cf-access-client-secret }}
       run: bun "$GITHUB_WORKSPACE/bin/await-url-ready.ts"
 
     # Readiness is proven above; these retries only cover transient blips.
@@ -99,6 +114,8 @@ runs:
         SMOKE_ROUTES: ${{ inputs.smoke-routes }}
         SMOKE_ATTEMPTS: "5"
         SMOKE_RETRY_DELAY_MS: "5000"
+        CF_ACCESS_CLIENT_ID: ${{ inputs.cf-access-client-id }}
+        CF_ACCESS_CLIENT_SECRET: ${{ inputs.cf-access-client-secret }}
       run: bun "$GITHUB_WORKSPACE/bin/smoke-url.ts"
 
     # Browsers and apt debs both restore from cache; warm runs skip the apt
@@ -137,12 +154,15 @@ runs:
 
     # PREVIEW_URL set => playwright.config.ts skips the local boot and points at
     # the deployed preview. `bun run` (not `mise run`) avoids the e2e task's
-    # local build dependency, which the preview path doesn't need.
+    # local build dependency, which the preview path doesn't need. The Access
+    # token reaches the browser as extra HTTP headers (see the app's config).
     - name: screenshots
       id: e2e
       shell: bash
       env:
         PREVIEW_URL: ${{ steps.deploy.outputs.url }}
+        CF_ACCESS_CLIENT_ID: ${{ inputs.cf-access-client-id }}
+        CF_ACCESS_CLIENT_SECRET: ${{ inputs.cf-access-client-secret }}
       run: bun run test:e2e
 
     - name: upload playwright report

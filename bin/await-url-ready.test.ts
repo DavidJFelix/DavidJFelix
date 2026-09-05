@@ -109,6 +109,23 @@ test('probes the exact bare route urls downstream checks will fetch', async () =
   )
 })
 
+test('probeUrl treats a landing on the Cloudflare Access login page as not ready', async () => {
+  // given: a 200 after following the Access redirect (`url` is the final
+  // URL fetch reports, a read-only accessor, so it is shadowed on the instance)
+  const login = new Response('<html>login</html>', {status: 200})
+  Object.defineProperty(login, 'url', {
+    value: 'https://acct.cloudflareaccess.com/cdn-cgi/access/login/pr-1-app.acct.workers.dev',
+  })
+  const fetchImpl = () => Promise.resolve(login)
+
+  // when
+  const probe = await probeUrl('https://pr-1-app.acct.workers.dev/', fetchImpl)
+
+  // then
+  expect(probe.ok).toBe(false)
+  expect(probe.detail).toContain('Cloudflare Access')
+})
+
 test('probeUrl treats a 2xx response as ready', async () => {
   const result = await probeUrl('https://example.workers.dev/', () =>
     Promise.resolve(new Response('ok')),

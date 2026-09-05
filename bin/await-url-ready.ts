@@ -28,6 +28,8 @@
 // Usage: READY_URL=https://app-pr-1.acct.workers.dev READY_ROUTES=/,/chat \
 //        bun bin/await-url-ready.ts
 
+import {ACCESS_LOGIN_DETAIL, accessHeaders, isAccessLogin} from './cloudflare-access'
+
 export interface Probe {
   ok: boolean
   detail: string
@@ -60,13 +62,20 @@ function seconds(ms: number): string {
  * A plain fetch on purpose -- same request shape as bin/smoke-url.ts and the
  * browser, so the gate sees the same (possibly cached) response they will.
  * Status-only, also on purpose: content correctness is the smoke test's job.
+ * The one addition is Cloudflare Access: the service-token headers downstream
+ * sends too, and a landing on the Access login page counts as not ready
+ * rather than as the 200 it reads as.
  */
 export async function probeUrl(
   url: string,
   fetchImpl: (url: string, init?: RequestInit) => Promise<Response> = fetch,
 ): Promise<Probe> {
   try {
-    const res = await fetchImpl(url, {signal: AbortSignal.timeout(10_000)})
+    const res = await fetchImpl(url, {
+      signal: AbortSignal.timeout(10_000),
+      headers: accessHeaders(process.env),
+    })
+    if (isAccessLogin(res)) return {ok: false, detail: ACCESS_LOGIN_DETAIL}
     return {ok: res.ok, detail: `HTTP ${res.status}`}
   } catch (err) {
     return {ok: false, detail: err instanceof Error ? err.message : String(err)}

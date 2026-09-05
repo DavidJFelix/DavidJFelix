@@ -35,3 +35,12 @@ deterministic against a preview deploy with no key involved; one test posts an i
 real route and expects 400. The three visual baselines were re-recorded for the empty first
 conversation. The smoke gate now also POSTs the chat route: 400 for an invalid body, and 503 (or 200
 with a local key) for a valid one.
+
+The preview pipeline learned about Cloudflare Access along the way. onvibes.org's workers.dev
+previews now sit behind Access, so every unauthenticated probe was answered with a 302 to the login
+page: the readiness gate and `bin/smoke-url.ts` read the followed 200 as a working bundle, and
+Playwright then failed on a login form. The probes now send an Access service token
+(`CF_ACCESS_CLIENT_ID` / `CF_ACCESS_CLIENT_SECRET`, Depot secrets plumbed through the
+`preview-wrangler` action as optional inputs and into the app's Playwright `extraHTTPHeaders`), and
+a landing on the Access login page is reported as exactly that instead of a vacuous pass
+(`bin/cloudflare-access.ts`, unit-tested). Hosts without Access see no difference.

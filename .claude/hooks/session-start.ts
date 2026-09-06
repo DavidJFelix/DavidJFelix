@@ -9,9 +9,9 @@ import {join, resolve} from 'node:path'
 // A fresh web container ships with neither the mise toolchain nor any
 // node_modules, so it cannot run a single mise task or boot an app. This hook
 // bootstraps all of it: the mise-pinned runtimes (node, bun), the repo-root
-// package.json's linters and formatters, and the web-apps workspace
-// dependencies (turbo included), so checks (typecheck / lint / format / test /
-// build) and smoke boots work the same way they do in CI.
+// package.json's linters, formatters, and turbo, and the web-apps workspace
+// dependencies, so checks (typecheck / lint / format / test / build) and
+// smoke boots work the same way they do in CI.
 //
 // Local sessions only need shell activation persisted for later tool calls.
 // Remote web sessions also need the toolchain and app dependencies installed.

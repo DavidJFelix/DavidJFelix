@@ -3,8 +3,8 @@ description: >-
   Install the repo toolchain: the mise-managed tools (node, bun, and the
   non-npm CLIs) with a cache key scoped to the root tool config and lockfile
   (.config/mise.toml + .config/mise.lock), then the repo-root package.json's
-  devDependencies -- biome, oxlint, oxfmt, prettier, cspell, warden -- with a
-  frozen `bun install` at the repo root. Editing app-level mise.toml (e.g.
+  devDependencies -- biome, oxlint, oxfmt, prettier, cspell, warden, turbo --
+  with a frozen `bun install` at the repo root. Editing app-level mise.toml (e.g.
   adding tasks) does not bust the shared cache; only genuine tool-version
   bumps do. A stale root bun.lock fails the install here, so a package.json
   edit must ship with its lockfile update.
@@ -25,8 +25,6 @@ runs:
         cache: ${{ inputs.cache }}
         cache_key: mise-v1-{{platform}}-${{ hashFiles('.config/mise.toml', '.config/mise.lock') }}
 
-    # Explicit working-directory: run steps in a composite action do not
-    # inherit the caller job's default, and several jobs default into an app.
     - name: bun install (repo root)
       shell: bash
       working-directory: ${{ github.workspace }}

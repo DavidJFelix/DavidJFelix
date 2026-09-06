@@ -1,8 +1,0 @@
-# Workspace-level mise config: no tools (CI's `mise install` reads only the
-# repo-root .config/mise.toml), just PATH. The workspace's own bins -- turbo
-# above all -- resolve from any directory under it once mise is activated,
-# per https://mise.jdx.dev/mise-cookbook/nodejs.html. The repo-root config
-# does the same for the root package.json's linters and formatters.
-
-[env]
-_.path = ["{{config_root}}/node_modules/.bin"]

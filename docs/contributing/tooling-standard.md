@@ -82,23 +82,22 @@ The ownership map above covers quality tooling; this covers the rest of what age
   no-scope PAT works -- and retry. Do not skip the lockfile update.)
 - **npm-distributed tools**: the repo-root `package.json` (not a workspace) pins every npm CLI the
   repo runs as a tool -- `@biomejs/biome`, `oxlint`, `oxfmt`, `prettier`, `cspell` and its JUnit
-  reporter, `@sentry/warden`, the pi coding agent -- as exact-version devDependencies, locked by the
-  root `bun.lock` and installed by `bun install` at the repo root (`bunfig.toml` there carries the
-  same release-age cooldown as the workspace). Two things put those bins on PATH: mise's
+  reporter, `@sentry/warden`, the pi coding agent, `turbo` -- as exact-version devDependencies,
+  locked by the root `bun.lock` and installed by `bun install` at the repo root (`bunfig.toml` there
+  carries the same release-age cooldown as the workspace). Two things put those bins on PATH: mise's
   `[env] _.path` directive adds the root `node_modules/.bin` to every activated shell and every
-  `mise run` / `mise exec`, and `bun run` walks up from an app to the repo root on its own, so an
-  app's `lint` / `format` scripts find the same copies without activation. Turborepo is the one
-  exception: it is a devDependency of `workspaces/web-apps/package.json` (the workspace it
-  orchestrates, whose `mise.toml` adds that `node_modules/.bin` to PATH the same way), and the root
-  `bin/turbo-run.ts` / `bin/plan-affected-apps.ts` invoke that copy by path. Bump a tool by editing
-  the manifest, running `bun install` in that directory, and committing the lockfile with it.
+  `mise run` / `mise exec`, and `bun run` walks up from any directory to the repo root on its own,
+  so an app's `lint` / `format` scripts find the same copies without activation, and
+  `bin/turbo-run.ts` / `bin/plan-affected-apps.ts` reach turbo with `bun run turbo` from the
+  workspace (turbo still roots itself at the workspace's `turbo.json`). Bump a tool by editing the
+  root manifest, running `bun install` there, and committing the lockfile with it.
 - **Catalogs**: shared dev tooling in the web-apps workspace (vitest and its coverage/browser
   packages, Playwright, wrangler, vite and its React plugin, the oxlint plugins, `@types/bun` /
-  `@types/node` / React types, jsdom, Panda, the Cloudflare plugin and worker types, svelte-check,
-  turbo) is pinned once in the workspace root's `workspaces.catalog` and referenced as `catalog:`
-  from every app and package. The two legacy pnpm trees under `workspaces/joy-of-react/` do the same
-  with a `catalog:` block in their `pnpm-workspace.yaml`. Add a new shared tool to the catalog
-  rather than pinning it per app.
+  `@types/node` / React types, jsdom, Panda, the Cloudflare plugin and worker types, svelte-check)
+  is pinned once in the workspace root's `workspaces.catalog` and referenced as `catalog:` from
+  every app and package. The two legacy pnpm trees under `workspaces/joy-of-react/` do the same with
+  a `catalog:` block in their `pnpm-workspace.yaml`. Add a new shared tool to the catalog rather
+  than pinning it per app.
 - **JS/TS package manager**: `bun` -- installer (`bun install`), script runner (`bun run`), and
   local-bin runner (`bun x`). Node stays the toolchain runtime: vitest, Playwright, wrangler, and
   the framework CLIs all run on the mise-pinned node, and `bun test` does not replace vitest. `npm`
@@ -118,9 +117,9 @@ The ownership map above covers quality tooling; this covers the rest of what age
   has both `pnpm-lock.yaml` and `bun.lock`, keep `bun.lock` and delete `pnpm-lock.yaml`.
 - **Python**: `uv`. `pip` is banned -- never invoke it directly. `poetry` is banned.
 - **Rust**: `cargo`. **Go**: `go mod`.
-- **Tasks & scripts**: prefer `mise` tasks; Turborepo (a `workspaces/web-apps` devDependency) fans
-  them out across the web-apps workspace and owns the caching. If a task is too complex for a mise
-  task, write it as a `bun` script in a `bin/` directory -- the full language-choice order and the
+- **Tasks & scripts**: prefer `mise` tasks; Turborepo (a repo-root devDependency) fans them out
+  across the web-apps workspace and owns the caching. If a task is too complex for a mise task,
+  write it as a `bun` script in a `bin/` directory -- the full language-choice order and the
   `sed`/`perl` ban (which includes CI) live in [scripting-style.md](scripting-style.md). Remove
   `justfile`s when found. Do not introduce new task tooling (moon, Taskfile, etc.) without an
   explicit ask.

@@ -32,7 +32,6 @@
       "oxlint-tailwindcss": "1.10.2",
       "oxlint-tsgolint": "7.0.2001",
       "svelte-check": "4.7.6",
-      "turbo": "2.10.11",
       "vite": "8.2.2",
       "vitest": "4.1.11",
       "wrangler": "4.129.0"
@@ -53,7 +52,6 @@
   ],
   "devDependencies": {
     "@astrojs/check": "0.9.10",
-    "turbo": "catalog:",
     "typescript": "6.0.3"
   }
 }

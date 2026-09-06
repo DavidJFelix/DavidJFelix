@@ -4,14 +4,17 @@ import {render} from 'vitest-browser-react'
 import type {Conversation} from '@/lib/conversations'
 import {Sidebar} from './sidebar'
 
+const MINUTE = 60_000
+const minutesAgo = (minutes: number) => Date.now() - minutes * MINUTE
+
 const conversations: ReadonlyArray<Conversation> = [
   {
     id: 'alpha',
     title: 'Alpha',
-    updatedMinutesAgo: 12,
+    updatedAt: minutesAgo(12),
     messages: [{id: 'a1', role: 'assistant', text: 'Last word on alpha'}],
   },
-  {id: 'beta', title: 'Beta', updatedMinutesAgo: 3 * 60, messages: []},
+  {id: 'beta', title: 'Beta', updatedAt: minutesAgo(3 * 60), messages: []},
 ]
 
 interface RenderSidebarOptions {
@@ -104,7 +107,7 @@ test('a long title truncates inside the row instead of overflowing it', async ()
   const long: Conversation = {
     id: 'long',
     title: 'A title long enough that it cannot possibly fit inside the sidebar row',
-    updatedMinutesAgo: 1,
+    updatedAt: minutesAgo(1),
     messages: [],
   }
   const screen = await render(

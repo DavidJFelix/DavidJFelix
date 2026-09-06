@@ -1,7 +1,9 @@
-// The conversation model behind the sidebar + conversation shell. Nothing here
-// talks to a backend: the seed below is fixture data so the shell has something
-// to render, and the functions are pure so the eventual TanStack AI wiring can
-// replace the seed without touching the components.
+// The conversation model behind the sidebar + conversation shell. TanStack AI
+// drives the active conversation; this plain data is what the sidebar lists
+// and what a conversation is restored from when selected again. Nothing
+// persists: conversations live in memory for the page's lifetime.
+
+import type {UIMessage} from '@tanstack/ai-react'
 
 export type MessageRole = 'user' | 'assistant'
 
@@ -14,24 +16,25 @@ export interface Message {
 export interface Conversation {
   id: string
   title: string
-  // Minutes since the last message. Fixture data carries an offset rather than
-  // a timestamp so the rendered label is deterministic (no clock, no drift in
-  // the visual baseline); a backend would derive this from a real timestamp.
-  updatedMinutesAgo: number
+  // Epoch milliseconds of the last change, behind the sidebar's age label.
+  updatedAt: number
   messages: ReadonlyArray<Message>
 }
 
 export const NEW_CONVERSATION_TITLE = 'New conversation'
 const TITLE_MAX_LENGTH = 40
+const MS_PER_MINUTE = 60_000
 const MINUTES_PER_HOUR = 60
 const MINUTES_PER_DAY = 24 * MINUTES_PER_HOUR
 
 export interface FormatRelativeTimeParams {
-  minutesAgo: number
+  updatedAt: number
+  now: number
 }
 
 // Compact "how long ago" label for the sidebar: 'now', '12m', '3h', '2d'.
-export function formatRelativeTime({minutesAgo}: FormatRelativeTimeParams): string {
+export function formatRelativeTime({updatedAt, now}: FormatRelativeTimeParams): string {
+  const minutesAgo = (now - updatedAt) / MS_PER_MINUTE
   if (minutesAgo < 1) return 'now'
   if (minutesAgo < MINUTES_PER_HOUR) return `${Math.floor(minutesAgo)}m`
   if (minutesAgo < MINUTES_PER_DAY) return `${Math.floor(minutesAgo / MINUTES_PER_HOUR)}h`
@@ -55,26 +58,40 @@ export function titleFrom(text: string): string {
 
 export interface CreateConversationParams {
   id: string
+  now: number
 }
 
-export function createConversation({id}: CreateConversationParams): Conversation {
-  return {id, title: NEW_CONVERSATION_TITLE, updatedMinutesAgo: 0, messages: []}
+export function createConversation({id, now}: CreateConversationParams): Conversation {
+  return {id, title: NEW_CONVERSATION_TITLE, updatedAt: now, messages: []}
 }
 
-export interface AppendMessageParams {
+function sameMessage(a: Message, b: Message): boolean {
+  return a.id === b.id && a.role === b.role && a.text === b.text
+}
+
+function sameMessages(a: ReadonlyArray<Message>, b: ReadonlyArray<Message>): boolean {
+  return a.length === b.length && a.every((message, index) => sameMessage(message, b[index]))
+}
+
+export interface WithMessagesParams {
   conversation: Conversation
-  message: Message
+  messages: ReadonlyArray<Message>
+  now: number
 }
 
-// Returns a new conversation with the message appended and the row metadata
-// refreshed; an untitled conversation takes its title from this message.
-export function appendMessage({conversation, message}: AppendMessageParams): Conversation {
-  const isFirst = conversation.messages.length === 0
+// Adopts the live thread from the chat client. Returns the very same
+// conversation when nothing changed, so a caller can skip the state update;
+// otherwise refreshes the row metadata, and an untitled conversation takes its
+// title from the first message.
+export function withMessages({conversation, messages, now}: WithMessagesParams): Conversation {
+  if (sameMessages(conversation.messages, messages)) return conversation
+  const first = messages[0]
+  const untitled = conversation.messages.length === 0 && first !== undefined
   return {
     ...conversation,
-    title: isFirst ? titleFrom(message.text) : conversation.title,
-    updatedMinutesAgo: 0,
-    messages: [...conversation.messages, message],
+    title: untitled ? titleFrom(first.text) : conversation.title,
+    updatedAt: now,
+    messages,
   }
 }
 
@@ -91,105 +108,27 @@ export function replaceConversation({
   return conversations.map((c) => (c.id === conversation.id ? conversation : c))
 }
 
-export const SEED_CONVERSATIONS: ReadonlyArray<Conversation> = [
-  {
-    id: 'trail-map',
-    title: 'Trail map for Starved Rock',
-    updatedMinutesAgo: 12,
-    messages: [
-      {
-        id: 'trail-map-1',
-        role: 'user',
-        text: 'I want a single-page trail map for Starved Rock with the canyons marked and a rough difficulty for each loop.',
-      },
-      {
-        id: 'trail-map-2',
-        role: 'assistant',
-        text: 'Here is the plan: a static map image with the fourteen canyons pinned, each pin opening a card with distance, elevation gain, and a one-line difficulty note. No backend, one HTML file, works offline once loaded.',
-      },
-      {
-        id: 'trail-map-3',
-        role: 'user',
-        text: 'Can the pins cluster when zoomed out? The east side gets crowded.',
-      },
-      {
-        id: 'trail-map-4',
-        role: 'assistant',
-        text: 'Yes. Pins within 24px of each other collapse into a count badge, and tapping the badge zooms one level in and fans them out. I kept the clustering to a short pure function so it is easy to tune.',
-      },
-    ],
-  },
-  {
-    id: 'focus-timer',
-    title: 'Focus timer with ambient sound',
-    updatedMinutesAgo: 3 * MINUTES_PER_HOUR,
-    messages: [
-      {
-        id: 'focus-timer-1',
-        role: 'user',
-        text: 'Build a focus timer that plays rain sounds during focus blocks and goes quiet on breaks.',
-      },
-      {
-        id: 'focus-timer-2',
-        role: 'assistant',
-        text: 'Done: 25/5 by default, both adjustable, and the rain loops through the Web Audio API with a two-second fade so the transition into a break is not abrupt. The tab title shows the remaining time.',
-      },
-    ],
-  },
-  {
-    id: 'recipe-scaler',
-    title: 'Recipe scaler',
-    updatedMinutesAgo: MINUTES_PER_DAY + 4 * MINUTES_PER_HOUR,
-    messages: [
-      {
-        id: 'recipe-scaler-1',
-        role: 'user',
-        text: 'Paste a recipe, pick how many servings, get the ingredients scaled. Fractions should stay fractions.',
-      },
-      {
-        id: 'recipe-scaler-2',
-        role: 'assistant',
-        text: 'The parser picks out quantity, unit, and ingredient per line and scales the quantity as a rational, so 3/4 cup times two prints as 1 1/2 cups rather than 1.5. Lines it cannot parse pass through unchanged.',
-      },
-      {
-        id: 'recipe-scaler-3',
-        role: 'user',
-        text: 'Nice. Add a toggle for metric.',
-      },
-    ],
-  },
-  {
-    id: 'habit-widget',
-    title: 'Habit tracker widget',
-    updatedMinutesAgo: 3 * MINUTES_PER_DAY,
-    messages: [
-      {
-        id: 'habit-widget-1',
-        role: 'user',
-        text: 'A tiny embeddable widget: one habit, a row of dots for the last 30 days, tap today to mark it.',
-      },
-      {
-        id: 'habit-widget-2',
-        role: 'assistant',
-        text: 'It is a single web component, state in localStorage keyed by the habit name, and the dot row is one flex container so it fits any width you drop it into.',
-      },
-    ],
-  },
-  {
-    id: 'split-bill',
-    title: 'Split the bill by item',
-    updatedMinutesAgo: 6 * MINUTES_PER_DAY,
-    messages: [
-      {
-        id: 'split-bill-1',
-        role: 'user',
-        text: 'Split a restaurant bill by who ordered what, with tax and tip spread proportionally.',
-      },
-      {
-        id: 'split-bill-2',
-        role: 'assistant',
-        text: 'Each person gets a column, each line item a row, and you tap cells to assign shares. Tax and tip are distributed by each person’s pre-tax share and rounded so the totals always sum to the bill.',
-      },
-    ],
-  },
-]
+// Bridges to TanStack AI's parts-based UIMessage. The shell renders plain
+// text, so a message is the concatenation of its text parts (reasoning and
+// tool parts, should a model emit them, stay out of the bubble) and goes back
+// out as a single text part. System messages never reach the thread.
+export function messagesFromUI(messages: ReadonlyArray<UIMessage>): ReadonlyArray<Message> {
+  return messages.flatMap((message) =>
+    message.role === 'system'
+      ? []
+      : [
+          {
+            id: message.id,
+            role: message.role,
+            text: message.parts
+              .filter((part) => part.type === 'text')
+              .map((part) => part.content)
+              .join(''),
+          },
+        ],
+  )
+}
+
+export function messageToUI({id, role, text}: Message): UIMessage {
+  return {id, role, parts: [{type: 'text', content: text}]}
+}

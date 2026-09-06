@@ -7,7 +7,7 @@ import {ConversationView} from './conversation-view'
 const thread: Conversation = {
   id: 'thread',
   title: 'Trail map',
-  updatedMinutesAgo: 0,
+  updatedAt: 0,
   messages: [
     {id: 'm1', role: 'user', text: 'Map the canyons'},
     {id: 'm2', role: 'assistant', text: 'Fourteen pins, one card each'},
@@ -27,17 +27,42 @@ const longThread: Conversation = {
 
 const FRAME_HEIGHT = 320
 
-async function renderView(conversation: Conversation) {
+interface RenderViewOptions {
+  busy?: boolean
+  error?: string
+}
+
+async function renderView(conversation: Conversation, {busy, error}: RenderViewOptions = {}) {
   const onSend = vi.fn<(text: string) => void>()
+  const onStop = vi.fn<() => void>()
+  const onRetry = vi.fn<() => void>()
   const onOpenSidebar = vi.fn<() => void>()
   // The view fills its parent, so the frame gives it a real height to scroll in.
-  const screen = await render(
+  const view = (thread: Conversation) => (
     <div style={{height: FRAME_HEIGHT}}>
-      <ConversationView conversation={conversation} onSend={onSend} onOpenSidebar={onOpenSidebar} />
-    </div>,
+      <ConversationView
+        conversation={thread}
+        busy={busy}
+        error={error}
+        onSend={onSend}
+        onStop={onStop}
+        onRetry={onRetry}
+        onOpenSidebar={onOpenSidebar}
+      />
+    </div>
   )
+  const screen = await render(view(conversation))
   const main = screen.getByRole('main')
-  return {screen, main, onSend, onOpenSidebar}
+  const rerender = (thread: Conversation) => screen.rerender(view(thread))
+  return {screen, main, rerender, onSend, onStop, onRetry, onOpenSidebar}
+}
+
+function scrollerOf(main: Element): HTMLElement {
+  const scroller = [...main.querySelectorAll('div')].find(
+    (el) => getComputedStyle(el).overflowY === 'auto',
+  )
+  if (!scroller) throw new Error('scroll container not found')
+  return scroller
 }
 
 test('the conversation title is the page heading', async () => {
@@ -67,10 +92,7 @@ test('every message renders in order with its role', async () => {
 test('the thread opens scrolled to the newest message', async () => {
   // given
   const {main, screen} = await renderView(longThread)
-  const scroller = [...main.element().querySelectorAll('div')].find(
-    (el) => getComputedStyle(el).overflowY === 'auto',
-  )
-  if (!scroller) throw new Error('scroll container not found')
+  const scroller = scrollerOf(main.element())
   const newest = screen.getByText('Message number 30').element()
 
   // then
@@ -83,7 +105,7 @@ test('the thread opens scrolled to the newest message', async () => {
 
 test('an empty conversation shows the empty state instead of a thread', async () => {
   // given
-  const {screen, main} = await renderView(createConversation({id: 'fresh'}))
+  const {screen, main} = await renderView(createConversation({id: 'fresh', now: 0}))
 
   // then
   await expect.element(screen.getByText('What do you want to build?')).toBeVisible()
@@ -111,4 +133,75 @@ test('the header button opens the sidebar', async () => {
 
   // then
   expect(onOpenSidebar).toHaveBeenCalledOnce()
+})
+
+test('while a reply is awaited a placeholder holds its place and the composer offers stop', async () => {
+  // given
+  const {screen, main, onStop} = await renderView(thread, {busy: true})
+  const placeholder = screen.getByRole('status', {name: 'Waiting for a reply'})
+  await expect.element(placeholder).toBeVisible()
+  expect(main.element().querySelectorAll('[data-role]')).toHaveLength(3)
+
+  // when
+  await screen.getByRole('button', {name: 'Stop generating'}).click()
+
+  // then
+  expect(onStop).toHaveBeenCalledOnce()
+})
+
+test('once the reply starts arriving the placeholder gives way to the bubble', async () => {
+  // given
+  const streaming: Conversation = {
+    ...thread,
+    messages: [...thread.messages, {id: 'm4', role: 'assistant', text: 'Yes. Pins within'}],
+  }
+
+  // when
+  const {screen, main} = await renderView(streaming, {busy: true})
+
+  // then
+  await expect.element(main.getByText('Yes. Pins within')).toBeVisible()
+  expect(screen.container.querySelector('output')).toBeNull()
+})
+
+test('the thread follows a reply as it streams', async () => {
+  // given
+  const streaming: Conversation = {...longThread, messages: [...longThread.messages]}
+  const {main, rerender} = await renderView(streaming, {busy: true})
+  const scroller = scrollerOf(main.element())
+  const before = scroller.scrollTop
+
+  // when: the last bubble grows in place instead of a new one mounting
+  const grown = {
+    ...streaming,
+    messages: [
+      ...streaming.messages.slice(0, -1),
+      {id: 'long-29', role: 'assistant' as const, text: Array(12).fill('More words.').join('\n')},
+    ],
+  }
+  await rerender(grown)
+
+  // then
+  await expect.poll(() => scroller.scrollTop).toBeGreaterThan(before)
+  const bubble = main
+    .getByText(/More words\./u)
+    .element()
+    .getBoundingClientRect()
+  expect(bubble.bottom).toBeLessThanOrEqual(scroller.getBoundingClientRect().bottom + 1)
+})
+
+test('a failed reply says so and offers to try again', async () => {
+  // given
+  const {screen, onRetry} = await renderView(thread, {
+    error: 'Chat is not set up on this server yet.',
+  })
+  await expect
+    .element(screen.getByRole('alert'))
+    .toHaveTextContent('Chat is not set up on this server yet.')
+
+  // when
+  await screen.getByRole('button', {name: 'Try again'}).click()
+
+  // then
+  expect(onRetry).toHaveBeenCalledOnce()
 })

@@ -10,6 +10,12 @@
 // can target a local boot or a remote preview.
 //
 // Usage: SMOKE_URL=https://pr-1-app.acct.workers.dev SMOKE_ROUTES=/,/about bun bin/smoke-url.ts
+//
+// A host behind Cloudflare Access needs CF_ACCESS_CLIENT_ID / CF_ACCESS_CLIENT_SECRET
+// (a service token) or every fetch lands on the login page -- reported as such,
+// never as a passing 200. See bin/cloudflare-access.ts.
+
+import {ACCESS_LOGIN_DETAIL, accessHeaders, isAccessLogin} from './cloudflare-access'
 
 const base = process.env.SMOKE_URL
 if (!base) {
@@ -23,14 +29,17 @@ const retryDelayMs = Number(process.env.SMOKE_RETRY_DELAY_MS ?? 5_000)
 // One route passes when it serves a complete HTML document whose first hashed
 // client asset also serves -- the same contract every bin/smoke-local.ts uses,
 // pointed at a remote URL.
+const headers = accessHeaders(process.env)
+
 async function check(route: string): Promise<string | null> {
-  const page = await fetch(new URL(route, base), {signal: AbortSignal.timeout(15_000)})
+  const page = await fetch(new URL(route, base), {signal: AbortSignal.timeout(15_000), headers})
+  if (isAccessLogin(page)) return `${route} -> ${ACCESS_LOGIN_DETAIL}`
   if (!page.ok) return `${route} -> HTTP ${page.status}`
   const html = await page.text()
   if (!/<\/html>/i.test(html)) return `${route} -> response is not a complete HTML document`
   const asset = html.match(/(?:src|href)="(\/[^"]+\.(?:js|css))"/)?.[1]
   if (asset) {
-    const res = await fetch(new URL(asset, base), {signal: AbortSignal.timeout(15_000)})
+    const res = await fetch(new URL(asset, base), {signal: AbortSignal.timeout(15_000), headers})
     if (!res.ok) return `${route} asset ${asset} -> HTTP ${res.status}`
   }
   return null

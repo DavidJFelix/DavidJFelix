@@ -14,6 +14,11 @@ compatibility_flags = ["nodejs_compat"]
 # reachable pr-<N> URL. Does not affect production routing.
 preview_urls = true
 
+# The chat route (src/routes/api/chat.ts) talks to OpenRouter with the
+# OPENROUTER_API_KEY secret (`wrangler secret put OPENROUTER_API_KEY`; local dev
+# and preview read .dev.vars, see .dev.vars.example). Until it is set the route
+# answers 503 and the shell shows that chat is not set up.
+
 # Custom domains, wired up in the Cloudflare dashboard.
 routes = [
   { pattern = "onvibes.org", custom_domain = true },

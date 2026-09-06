@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BugsRouteImport } from './routes/bugs'
+import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as DiagSplatRouteImport } from './routes/diag/$'
 
 const IndexRoute = IndexRouteImport.update({
@@ -23,6 +24,11 @@ const BugsRoute = BugsRouteImport.update({
   path: '/bugs',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiChatRoute = ApiChatRouteImport.update({
+  id: '/api/chat',
+  path: '/api/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DiagSplatRoute = DiagSplatRouteImport.update({
   id: '/diag/$',
   path: '/diag/$',
@@ -32,30 +38,34 @@ const DiagSplatRoute = DiagSplatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bugs': typeof BugsRoute
+  '/api/chat': typeof ApiChatRoute
   '/diag/$': typeof DiagSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bugs': typeof BugsRoute
+  '/api/chat': typeof ApiChatRoute
   '/diag/$': typeof DiagSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/bugs': typeof BugsRoute
+  '/api/chat': typeof ApiChatRoute
   '/diag/$': typeof DiagSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/bugs' | '/diag/$'
+  fullPaths: '/' | '/bugs' | '/api/chat' | '/diag/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/bugs' | '/diag/$'
-  id: '__root__' | '/' | '/bugs' | '/diag/$'
+  to: '/' | '/bugs' | '/api/chat' | '/diag/$'
+  id: '__root__' | '/' | '/bugs' | '/api/chat' | '/diag/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BugsRoute: typeof BugsRoute
+  ApiChatRoute: typeof ApiChatRoute
   DiagSplatRoute: typeof DiagSplatRoute
 }
 
@@ -75,6 +85,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BugsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/chat': {
+      id: '/api/chat'
+      path: '/api/chat'
+      fullPath: '/api/chat'
+      preLoaderRoute: typeof ApiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/diag/$': {
       id: '/diag/$'
       path: '/diag/$'
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BugsRoute: BugsRoute,
+  ApiChatRoute: ApiChatRoute,
   DiagSplatRoute: DiagSplatRoute,
 }
 export const routeTree = rootRouteImport

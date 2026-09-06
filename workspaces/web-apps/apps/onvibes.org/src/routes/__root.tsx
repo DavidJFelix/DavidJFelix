@@ -4,6 +4,7 @@ import {ThemeProvider} from '@davidjfelix/theme/react'
 import {TanStackDevtools} from '@tanstack/react-devtools'
 import {createRootRoute, HeadContent, ScriptOnce, Scripts} from '@tanstack/react-router'
 import {TanStackRouterDevtoolsPanel} from '@tanstack/react-router-devtools'
+import {useSyncExternalStore} from 'react'
 import {css} from 'styled-system/css'
 import appCss from '../styles.css?url'
 
@@ -39,13 +40,32 @@ export const Route = createRootRoute({
   shellComponent: RootDocument,
 })
 
+// True once React has hydrated on the client. Until then the server-rendered
+// shell looks live but is inert: keystrokes land in the composer's textarea
+// without reaching React state, and buttons do nothing. The e2e suites wait
+// on the body attribute before interacting (see src/e2e-support.ts). The
+// server snapshot is false and the client one true, so the first client
+// render matches the server markup and the re-render after hydration flips it.
+const noSubscription = () => () => {}
+function useHydrated(): boolean {
+  return useSyncExternalStore(
+    noSubscription,
+    () => true,
+    () => false,
+  )
+}
+
 function RootDocument({children}: {children: React.ReactNode}) {
+  const hydrated = useHydrated()
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
-      <body className={css({bg: 'bg.canvas', color: 'text', fontFamily: 'sans'})}>
+      <body
+        data-hydrated={hydrated ? 'true' : undefined}
+        className={css({bg: 'bg.canvas', color: 'text', fontFamily: 'sans'})}
+      >
         {/* Resolves the persisted (or OS) color scheme before first paint so
             the page never flashes the wrong scheme. */}
         <ScriptOnce>{themeBootstrapScript}</ScriptOnce>

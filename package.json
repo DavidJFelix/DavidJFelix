@@ -8,7 +8,7 @@
     "protobufjs"
   ],
   "devDependencies": {
-    "@biomejs/biome": "2.5.10",
+    "@biomejs/biome": "2.5.12",
     "@cspell/cspell-junit-reporter": "10.2.2",
     "@earendil-works/pi-coding-agent": "0.84.2",
     "@sentry/warden": "0.48.0",

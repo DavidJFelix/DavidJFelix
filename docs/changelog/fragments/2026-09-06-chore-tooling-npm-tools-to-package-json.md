@@ -7,10 +7,10 @@ by `bun install` at the root and locked by a root `bun.lock`. The root `bunfig.t
 same 24-hour release-age cooldown as the workspace and selects bun's isolated linker, so only the
 tools themselves sit at the top of the root `node_modules`: Node's upward walk from an app must
 never find one of their transitive dependencies there (the first preview run did, and astro's
-prerenderer got warden's CommonJS `cookie` instead of its own). mise keeps the runtimes (node, bun)
-and the non-npm CLIs (actionlint, ghalint, zizmor, pinact, depot, worktrunk); `.config/mise.lock`
-lost the npm entries. Keeping the versions consistent had become the hard part: the same tools were
-pinned in three places under two managers.
+prerender step got warden's CommonJS `cookie` instead of its own). mise keeps the runtimes (node,
+bun) and the non-npm CLIs (actionlint, ghalint, zizmor, pinact, depot, worktrunk);
+`.config/mise.lock` lost the npm entries. Keeping the versions consistent had become the hard part:
+the same tools were pinned in three places under two managers.
 
 The root config adopts the mise Node.js cookbook's `[env] _.path` directive, so the root
 `node_modules/.bin` is on PATH in every activated shell and every `mise run` / `mise exec`, the way

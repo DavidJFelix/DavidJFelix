@@ -30,7 +30,7 @@ scripts rank 1 and rank 2 collapse into the same answer: **Bun + TypeScript.**
 
 ### 2. Bun / TypeScript (the monorepo default)
 
-This matches the repo rule that scripts are bun, not bash (declared in `.config/mise.toml`).
+This matches the repo rule that scripts are bun, not bash (bun is pinned in `.config/mise.toml`).
 
 - **Shebang `#!/usr/bin/env bun`.** ESM only -- `import`, top-level `await`. Never `require` (see
   [configuration-style.md](configuration-style.md#4-javascript--typescript-config-typescript--esm)).

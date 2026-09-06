@@ -20,6 +20,8 @@ on:
       - '.github/actionlint.yaml'
       - '.config/mise.toml'
       - '.config/mise.lock'
+      - 'package.json'
+      - 'bun.lock'
   pull_request:
     paths:
       - '.depot/workflows/**'
@@ -28,6 +30,8 @@ on:
       - '.github/actionlint.yaml'
       - '.config/mise.toml'
       - '.config/mise.lock'
+      - 'package.json'
+      - 'bun.lock'
 jobs:
   lint:
     name: actionlint + ghalint + zizmor + pinact

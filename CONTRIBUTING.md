@@ -13,8 +13,9 @@ rules live in [AGENTS.md](AGENTS.md); the detailed style guides live in
 4. Add a changelog fragment to `docs/changelog/fragments/` (never edit `docs/changelog/YYYY-MM.md`
    directly)
 5. If you touched `.config/mise.toml`, run `mise install` and commit the resulting
-   `.config/mise.lock` change in the same PR -- CI fails on a stale lockfile (see
-   [tooling-standard.md](docs/contributing/tooling-standard.md))
+   `.config/mise.lock` change in the same PR; if you touched the repo-root `package.json`, run
+   `bun install` there and commit the resulting `bun.lock`. CI fails on a stale lockfile either way
+   (see [tooling-standard.md](docs/contributing/tooling-standard.md))
 
 ### PR title format
 

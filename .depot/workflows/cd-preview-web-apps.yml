@@ -20,6 +20,8 @@ on:
       - 'workspaces/web-apps/**'
       - '.config/mise.toml'
       - '.config/mise.lock'
+      - 'package.json'
+      - 'bun.lock'
       - 'bin/**'
       - '.depot/workflows/cd-preview-web-apps.yml'
       - '.depot/actions/setup-web-apps/**'

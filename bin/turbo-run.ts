@@ -9,9 +9,15 @@ import {readFileSync} from 'node:fs'
 import {join, resolve} from 'node:path'
 
 const repo = resolve(import.meta.dir, '..')
+const workspace = join(repo, 'workspaces', 'web-apps')
+// package.json + bun.lock: the linters and formatters every app's scripts run
+// (biome, oxlint, oxfmt, prettier) are pinned at the repo root, not in the
+// workspace lockfile turbo hashes on its own.
 const hashedFiles = [
   '.config/mise.toml',
   '.config/mise.lock',
+  'package.json',
+  'bun.lock',
   '.oxfmtrc.json',
   '.prettierrc.json',
 ]
@@ -22,8 +28,10 @@ for (const file of hashedFiles) {
   hash.update(readFileSync(join(repo, file)))
 }
 
-const proc = Bun.spawnSync(['turbo', 'run', ...process.argv.slice(2)], {
-  cwd: join(repo, 'workspaces', 'web-apps'),
+// The workspace's own turbo (a devDependency there), by path rather than
+// PATH lookup, so the version the lockfile pins is the one that runs.
+const proc = Bun.spawnSync([join(workspace, 'node_modules', '.bin', 'turbo'), 'run', ...process.argv.slice(2)], {
+  cwd: workspace,
   stdio: ['inherit', 'inherit', 'inherit'],
   env: {...process.env, REPO_CONFIG_HASH: hash.digest('hex')},
 })

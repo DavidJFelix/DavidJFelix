@@ -9,8 +9,8 @@ This skill keeps the repo's packages and tools current. It runs in two modes: lo
 
 ## Ecosystems covered
 
-1. **npm** — every `package.json` outside `node_modules` (see Discovery below). Each app has its own `pnpm-lock.yaml`; there is no root pnpm workspace today.
-2. **mise** — tools in `.config/mise.toml` (`mise.lock` is the source of truth for resolved versions).
+1. **npm** — every `package.json` outside `node_modules` (see Discovery below). The repo-root `package.json` (not a workspace; its own `bun.lock`) pins the npm CLIs the repo runs as tools -- biome, oxlint, oxfmt, prettier, cspell, warden, pi. The web-apps workspace shares one `bun.lock`, and its shared dev tooling is pinned in the workspace root's `workspaces.catalog`, so bump the catalog entry, not the `catalog:` references.
+2. **mise** — runtimes and non-npm CLIs in `.config/mise.toml` (`mise.lock` is the source of truth for resolved versions).
 3. **Cargo** — Rust workspace at the repo root, members under `Advent-of-Code/2022/rust/*` plus standalone crates under `Exercism/rust/*`.
 
 If new ecosystems appear (Go, etc.), extend this skill rather than forking it.
@@ -111,7 +111,7 @@ Open a separate follow-up issue (assigned to `@DavidJFelix`, following the human
 ## Discovery details
 
 - Treat all `package.json` files outside `node_modules`, `dist`, `build`, `.next`, `.astro` as in-scope.
-- Currently in scope: the `workspaces/web-apps` bun workspace (one `bun.lock` covering every app and package), `Joy-of-React/project-wordle`, `Joy-of-React/project-toast`.
+- Currently in scope: the repo-root `package.json` (tooling CLIs, its own `bun.lock`), the `workspaces/web-apps` bun workspace (one `bun.lock` covering every app and package), `workspaces/joy-of-react/project-wordle`, `workspaces/joy-of-react/project-toast` (pnpm, with tooling pins in each `pnpm-workspace.yaml` catalog).
 - `Joy-of-React/*` projects are learning exercises — they are in scope for freshness but a failing verification there should be a low-priority issue, not a blocker.
 
 ## Lockfile hygiene

@@ -135,6 +135,8 @@ on:
       - 'workspaces/web-apps/**'
       - '.config/mise.toml'
       - '.config/mise.lock'
+      - 'package.json'
+      - 'bun.lock'
       - '.oxfmtrc.json'
       - '.prettierrc.json'
       - 'bin/**'

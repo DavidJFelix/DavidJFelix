@@ -32,13 +32,13 @@
   },
   "devDependencies": {
     "@nuxtjs/color-mode": "4.0.1",
-    "@pandacss/dev": "1.12.0",
-    "@playwright/test": "1.62.1",
-    "@vitest/coverage-v8": "4.1.11",
-    "oxlint-tsgolint": "7.0.2001",
+    "@pandacss/dev": "catalog:",
+    "@playwright/test": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "oxlint-tsgolint": "catalog:",
     "typescript": "6.0.3",
-    "vitest": "4.1.11",
+    "vitest": "catalog:",
     "vue-tsc": "3.3.11",
-    "wrangler": "4.129.0"
+    "wrangler": "catalog:"
   }
 }

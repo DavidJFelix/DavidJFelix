@@ -1,0 +1,11 @@
+# Bun install settings for the repo-root package.json (the CLI tools the root
+# mise tasks run: biome, oxlint, oxfmt, prettier, cspell, warden, pi). Not a
+# workspace -- workspaces/web-apps/ has its own bunfig.toml and bun.lock; bun
+# reads only the bunfig.toml in the directory it installs from, so the
+# supply-chain cooldown has to be repeated here.
+#
+# minimumReleaseAge (seconds): dependency resolution skips versions published
+# within the last 24 hours.
+
+[install]
+minimumReleaseAge = 86400

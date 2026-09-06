@@ -1,3 +1,8 @@
+# Runtimes and the non-npm CLIs only. Every npm-distributed tool (biome,
+# oxlint, oxfmt, prettier, cspell and its JUnit reporter, warden, pi, turbo)
+# is a devDependency of the repo-root package.json, installed by `bun install`
+# at the root and pinned by the root bun.lock. The [env] block below puts
+# their bins on PATH.
 [tools]
 node = "26"
 # bun is the app package manager and script runner (and runs the deploy/smoke
@@ -6,30 +11,22 @@ node = "26"
 # mise.toml [tools]. Node stays the toolchain runtime for vitest, Playwright,
 # wrangler, and the framework CLIs.
 bun = "1.4.2"
-biome = "2"
-oxlint = "1"
-"npm:oxfmt" = "0.66.0"
-prettier = "3.9.6"
 actionlint = "1"
 ghalint = "1"
 zizmor = "1.30.0"
 pinact = "4.1.1"
-"npm:cspell" = "10.2.0"
-# JUnit reporter for the spell:ci task (Depot's test results view).
-"npm:@cspell/cspell-junit-reporter" = { version = "10.2.2", allow_low_downloads = true }
-# Warden CLI: AI code review run locally (`warden run`) and in CI (the Depot
-# ci-warden.yml workflow uses the getsentry/warden action, which bundles its
-# own copy). Pinned like cspell via mise's npm backend; there is no root
-# package.json. Config lives in /warden.toml.
-"npm:@sentry/warden" = { version = "0.48.0", trust_policy_excludes = ["@sentry/warden"] }
 depot = { version = "latest", exe = "depot" }
-# Turborepo: task graph + caching for the web-apps workspace. Root tasks wrap
-# it via bin/turbo-run.ts so repo-root config changes hash into every task.
-"npm:turbo" = "2"
-"npm:@earendil-works/pi-coding-agent" = { version = "latest", allow_builds = ["@google/genai", "protobufjs"] }
 # worktrunk (`wt`): git-worktree manager backing the one-workspace-per-agent
 # flow. Landing rule: push + PR from the workspace; `wt merge` is not the flow.
 worktrunk = "latest"
+
+# The root package.json's bins (biome, oxlint, oxfmt, prettier, cspell, warden,
+# pi, turbo) resolve from any directory once mise is activated, the way its shims did
+# when these were mise tools -- https://mise.jdx.dev/mise-cookbook/nodejs.html.
+# `bun run` inside an app already walks up to this directory on its own, so
+# app scripts find the same copies without activation.
+[env]
+_.path = ["{{config_root}}/node_modules/.bin"]
 
 # Repo-root checks, scoped to the config files the root owns. Legacy project
 # dirs and isolated workspace trees are intentionally out of scope; the
@@ -49,14 +46,14 @@ depends = ["format:workspace-config"]
 # --ignore-path: the root .prettierignore ignores everything but md/mdx (it
 # scopes Prettier), which would blank oxfmt's explicit file list too
 run = [
-  "oxfmt --check --ignore-path=.gitignore workspaces/web-apps/biome.jsonc .oxfmtrc.json workspaces/web-apps/.oxlintrc.jsonc .prettierrc.json .config/cspell.jsonc .github/renovate.json .vscode/settings.json .vscode/extensions.json",
+  "oxfmt --check --ignore-path=.gitignore package.json workspaces/web-apps/biome.jsonc .oxfmtrc.json workspaces/web-apps/.oxlintrc.jsonc .prettierrc.json .config/cspell.jsonc .github/renovate.json .vscode/settings.json .vscode/extensions.json",
   "biome lint .vscode/settings.json .vscode/extensions.json",
 ]
 dir = "{{config_root}}"
 
 [tasks."format:fix"]
 description = "Apply formatting fixes to repo-root config files"
-run = "oxfmt --ignore-path=.gitignore workspaces/web-apps/biome.jsonc .oxfmtrc.json workspaces/web-apps/.oxlintrc.jsonc .prettierrc.json .config/cspell.jsonc .github/renovate.json .vscode/settings.json .vscode/extensions.json"
+run = "oxfmt --ignore-path=.gitignore package.json workspaces/web-apps/biome.jsonc .oxfmtrc.json workspaces/web-apps/.oxlintrc.jsonc .prettierrc.json .config/cspell.jsonc .github/renovate.json .vscode/settings.json .vscode/extensions.json"
 dir = "{{config_root}}"
 
 [tasks."format:md"]
@@ -80,13 +77,13 @@ run = "cspell --config .config/cspell.jsonc --no-progress --dot 'workspaces/web-
 dir = "{{config_root}}"
 
 # Same check, reported as JUnit XML for Depot's test results view. The reporter
-# lives in its own mise install, off cspell's module path, so it is passed by
-# file path; it writes to stdout, so the report is the redirected output.
+# is a root devDependency beside cspell, so it resolves by package name; it
+# writes to stdout, so the report is the redirected output.
 [tasks."spell:ci"]
 description = "Spell-check like `spell`, writing a JUnit report to test-results/ instead of the console (CI)"
 run = [
   "mkdir -p test-results",
-  "cspell --config .config/cspell.jsonc --no-progress --dot --reporter \"$(mise where npm:@cspell/cspell-junit-reporter)/node_modules/@cspell/cspell-junit-reporter/dist/esm/index.js\" 'workspaces/web-apps/**' 'docs/**' 'bin/**' '*.md' '.agents/agents/**' '.config/**' '.github/**' > test-results/cspell-junit.xml",
+  "cspell --config .config/cspell.jsonc --no-progress --dot --reporter @cspell/cspell-junit-reporter 'workspaces/web-apps/**' 'docs/**' 'bin/**' '*.md' '.agents/agents/**' '.config/**' '.github/**' > test-results/cspell-junit.xml",
 ]
 dir = "{{config_root}}"
 

@@ -14,6 +14,8 @@ on:
       - '.prettierignore'
       - '.config/mise.toml'
       - '.config/mise.lock'
+      - 'package.json'
+      - 'bun.lock'
       - '.depot/workflows/ci-docs.yml'
   pull_request:
     paths:
@@ -24,6 +26,8 @@ on:
       - '.prettierignore'
       - '.config/mise.toml'
       - '.config/mise.lock'
+      - 'package.json'
+      - 'bun.lock'
       - '.depot/workflows/ci-docs.yml'
 env:
   MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}

@@ -41,22 +41,22 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "1.54.4",
-    "@cloudflare/workers-types": "5.20260903.1",
-    "@pandacss/dev": "1.12.0",
-    "@playwright/test": "1.62.1",
+    "@cloudflare/vite-plugin": "catalog:",
+    "@cloudflare/workers-types": "catalog:",
+    "@pandacss/dev": "catalog:",
+    "@playwright/test": "catalog:",
     "@tanstack/devtools-vite": "catalog:",
-    "@types/bun": "1.4.0",
-    "@types/node": "26.4.1",
-    "@types/react": "19.2.18",
-    "@types/react-dom": "19.2.5",
-    "@vitejs/plugin-react": "6.1.1",
-    "@vitest/coverage-v8": "4.1.11",
-    "jsdom": "30.0.1",
-    "oxlint-tsgolint": "7.0.2001",
+    "@types/bun": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "jsdom": "catalog:",
+    "oxlint-tsgolint": "catalog:",
     "typescript": "7.0.2",
-    "vite": "8.2.2",
-    "vitest": "4.1.11",
-    "wrangler": "4.129.0"
+    "vite": "catalog:",
+    "vitest": "catalog:",
+    "wrangler": "catalog:"
   }
 }

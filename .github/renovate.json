@@ -99,8 +99,8 @@
       "groupName": "react major"
     },
     {
-      "description": "the @sentry javascript sdks (astro, browser, cloudflare, react) release in lockstep, and warden -- the same org's review tooling -- is pinned twice (npm:@sentry/warden via the mise npm backend and the getsentry/warden action in the Depot workflows), so group every update type into a single org PR across all three managers",
-      "matchPackageNames": ["@sentry/**", "npm:@sentry/warden", "getsentry/warden"],
+      "description": "the @sentry javascript sdks (astro, browser, cloudflare, react) release in lockstep, and warden -- the same org's review tooling -- is pinned twice (@sentry/warden in the repo-root package.json and the getsentry/warden action in the Depot workflows), so group every update type into a single org PR across both managers",
+      "matchPackageNames": ["@sentry/**", "getsentry/warden"],
       "groupName": "sentry packages"
     },
     {
@@ -158,23 +158,23 @@
       "groupName": "alchemy packages"
     },
     {
-      "description": "the @earendil-works pi packages (pi-coding-agent in mise; pi-ai left with Flue in 2026-08) come from one org and share the pi runtime, so group every update type across both managers",
-      "matchPackageNames": ["@earendil-works/**", "npm:@earendil-works/pi-coding-agent"],
+      "description": "the @earendil-works pi packages (pi-coding-agent in the repo-root package.json; pi-ai left with Flue in 2026-08) come from one org and share the pi runtime, so group every update type into a single PR",
+      "matchPackageNames": ["@earendil-works/**"],
       "groupName": "earendil pi packages"
     },
     {
-      "description": "oxlint (mise), oxfmt (mise npm backend), and the oxlint-tailwindcss plugin all track the oxc project's release train, so group every update type across both managers",
-      "matchPackageNames": ["oxlint", "oxfmt", "npm:oxfmt", "oxlint-tailwindcss"],
+      "description": "oxlint and oxfmt (repo-root package.json, plus oxlint in the legacy exercise workspaces) and the oxlint plugins (web-apps catalog) all track the oxc project's release train, so group every update type into a single PR that moves every manifest together",
+      "matchPackageNames": ["oxlint", "oxfmt", "oxlint-tailwindcss", "oxlint-tsgolint"],
       "groupName": "oxc packages"
     },
     {
-      "description": "biome is managed by mise for the toolchain and pinned as @biomejs/biome in the legacy exercise workspaces, so group every update type across both managers to keep the versions aligned",
-      "matchPackageNames": ["biome", "@biomejs/biome"],
+      "description": "@biomejs/biome is pinned in the repo-root package.json for the toolchain and again in the legacy exercise workspaces, so group every update type into a single PR to keep the versions aligned",
+      "matchPackageNames": ["@biomejs/biome"],
       "groupName": "biome packages"
     },
     {
-      "description": "cspell is managed by mise for the repo-wide spell task and pinned with @cspell dictionaries in the exercise workspaces, so group every update type across both managers to keep the versions aligned",
-      "matchPackageNames": ["cspell", "npm:cspell", "@cspell/**", "npm:@cspell/**"],
+      "description": "cspell and its JUnit reporter are pinned in the repo-root package.json for the repo-wide spell task, and cspell with @cspell dictionaries again in the exercise workspaces, so group every update type into a single PR to keep the versions aligned",
+      "matchPackageNames": ["cspell", "@cspell/**"],
       "groupName": "cspell packages"
     },
     {
@@ -184,7 +184,7 @@
       "groupName": "node major"
     },
     {
-      "description": "the bun runtime (mise), the packageManager pin, and @types/bun track the same major, so group major updates across both managers",
+      "description": "the bun runtime (mise), the packageManager pins (repo-root and web-apps package.json), and @types/bun track the same major, so group major updates across both managers",
       "matchUpdateTypes": ["major"],
       "matchPackageNames": ["bun", "@types/bun"],
       "groupName": "bun major"

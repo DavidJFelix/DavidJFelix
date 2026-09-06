@@ -232,7 +232,8 @@ if (import.meta.main) {
   // turbo compares against its own default and the matrix still plans.
   const {TURBO_SCM_BASE, ...rest} = process.env
   const env = isUsableScmBase(TURBO_SCM_BASE) ? process.env : rest
-  const turbo = Bun.spawnSync(['turbo', 'ls', '--affected', '--output', 'json'], {
+  // `bun run` resolves the repo-root turbo bin from the workspace on its own.
+  const turbo = Bun.spawnSync(['bun', 'run', 'turbo', 'ls', '--affected', '--output', 'json'], {
     cwd: workspace,
     env,
   })

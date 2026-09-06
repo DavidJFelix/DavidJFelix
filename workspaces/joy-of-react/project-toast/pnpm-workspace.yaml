@@ -3,3 +3,15 @@ allowBuilds:
   '@swc/core': true
   lmdb: true
   msgpackr-extract: true
+
+# Tooling pins, referenced from package.json as `catalog:` so the version
+# lives in one place per project.
+catalog:
+  '@biomejs/biome': 2.5.12
+  '@cspell/dict-typescript': 3.2.3
+  '@parcel/config-default': 2.16.4
+  cspell: 10.2.0
+  oxlint: 1.81.0
+  parcel: 2.16.4
+  parcel-reporter-static-files-copy: 1.5.3
+  rimraf: 6.1.3

@@ -29,13 +29,13 @@
     }
   },
   "devDependencies": {
-    "@types/react": "19.2.18",
-    "@vitest/coverage-v8": "4.1.11",
-    "jsdom": "30.0.1",
-    "oxlint-tsgolint": "7.0.2001",
+    "@types/react": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "jsdom": "catalog:",
+    "oxlint-tsgolint": "catalog:",
     "react": "19.2.8",
     "typescript": "7.0.2",
-    "vitest": "4.1.11",
+    "vitest": "catalog:",
     "zod": "4.5.4"
   }
 }

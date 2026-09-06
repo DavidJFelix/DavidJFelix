@@ -9,9 +9,15 @@ import {readFileSync} from 'node:fs'
 import {join, resolve} from 'node:path'
 
 const repo = resolve(import.meta.dir, '..')
+const workspace = join(repo, 'workspaces', 'web-apps')
+// package.json + bun.lock: turbo itself and the linters and formatters every
+// app's scripts run (biome, oxlint, oxfmt, prettier) are pinned at the repo
+// root, not in the workspace lockfile turbo hashes on its own.
 const hashedFiles = [
   '.config/mise.toml',
   '.config/mise.lock',
+  'package.json',
+  'bun.lock',
   '.oxfmtrc.json',
   '.prettierrc.json',
 ]
@@ -22,8 +28,9 @@ for (const file of hashedFiles) {
   hash.update(readFileSync(join(repo, file)))
 }
 
-const proc = Bun.spawnSync(['turbo', 'run', ...process.argv.slice(2)], {
-  cwd: join(repo, 'workspaces', 'web-apps'),
+// `bun run` resolves the repo-root turbo bin from the workspace on its own.
+const proc = Bun.spawnSync(['bun', 'run', 'turbo', 'run', ...process.argv.slice(2)], {
+  cwd: workspace,
   stdio: ['inherit', 'inherit', 'inherit'],
   env: {...process.env, REPO_CONFIG_HASH: hash.digest('hex')},
 })

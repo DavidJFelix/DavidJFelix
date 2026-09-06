@@ -12,8 +12,9 @@
 #   - workflow_dispatch on any branch (dispatch-review job): the action cannot
 #     review from a dispatch event (its analyze/report modes require a
 #     pull_request event; dispatch routes to schedule-type sweep triggers), so
-#     this path runs the mise-pinned warden CLI on the dispatched branch,
-#     diffed from its merge-base with the `base` input (default main).
+#     this path runs the warden CLI pinned in the repo-root package.json
+#     (installed by setup-mise) on the dispatched branch, diffed from its
+#     merge-base with the `base` input (default main).
 #     Findings print to the job log and the run fails per warden.toml's
 #     failOn; nothing is posted to a PR.
 #

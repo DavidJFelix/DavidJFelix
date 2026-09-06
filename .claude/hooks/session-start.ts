@@ -6,12 +6,12 @@ import {join, resolve} from 'node:path'
 
 // SessionStart hook for Claude Code on the web.
 //
-// A fresh web container ships with neither the mise toolchain nor the
-// workspace's node_modules, so it cannot run a single mise task or boot an
-// app. This hook bootstraps both: it installs the mise-pinned toolchain (node,
-// bun, turbo, and the linters) and the web-apps workspace dependencies, so
-// checks (typecheck / lint / format / test / build) and smoke boots work the
-// same way they do in CI.
+// A fresh web container ships with neither the mise toolchain nor any
+// node_modules, so it cannot run a single mise task or boot an app. This hook
+// bootstraps all of it: the mise-pinned runtimes (node, bun), the repo-root
+// package.json's linters, formatters, and turbo, and the web-apps workspace
+// dependencies, so checks (typecheck / lint / format / test / build) and
+// smoke boots work the same way they do in CI.
 //
 // Local sessions only need shell activation persisted for later tool calls.
 // Remote web sessions also need the toolchain and app dependencies installed.
@@ -68,28 +68,31 @@ for (const legacy of ['apps', 'packages']) {
   rmSync(legacyDir, {recursive: true, force: true})
 }
 
-// 4. Install the web-apps workspace: one bun install covers every app and
-//    package (they share the workspace root's single bun.lock). Frozen first
-//    so `latest` dev deps don't drift between runs and the session sees the
-//    same tree CI does; retry unfrozen to ride out lockfile drift or a
-//    transient registry blip. Keep going on failure -- a broken install
-//    shouldn't block the session.
+// 4. Install the repo-root package.json (biome, oxlint, oxfmt, prettier,
+//    cspell, warden -- what the root mise tasks and every app's lint/format
+//    scripts run) and the web-apps workspace, where one bun install covers
+//    every app and package (they share the workspace root's single bun.lock).
+//    Frozen first so the session sees the same tree CI does; retry unfrozen to
+//    ride out lockfile drift or a transient registry blip. Keep going on
+//    failure -- a broken install shouldn't block the session.
 const installEnv = {...process.env, CI: 'true'}
+const installRoots = [
+  {label: 'repo root', dir: repo},
+  {label: 'workspaces/web-apps', dir: join(repo, 'workspaces', 'web-apps')},
+]
+for (const {label, dir} of installRoots) {
+  console.log(`==> bun install: ${label}`)
+  let install = await $`bun install --frozen-lockfile`.cwd(dir).env(installEnv).nothrow().quiet()
+  if (install.exitCode !== 0) {
+    install = await $`bun install`.cwd(dir).env(installEnv).nothrow().quiet()
+  }
+  if (install.exitCode !== 0) {
+    console.error(`WARN: bun install failed in ${label}`)
+    console.error(install.stdout.toString())
+    console.error(install.stderr.toString())
+  }
+}
 const workspace = join(repo, 'workspaces', 'web-apps')
-console.log('==> bun install: workspaces/web-apps')
-let install = await $`bun install --frozen-lockfile`
-  .cwd(workspace)
-  .env(installEnv)
-  .nothrow()
-  .quiet()
-if (install.exitCode !== 0) {
-  install = await $`bun install`.cwd(workspace).env(installEnv).nothrow().quiet()
-}
-if (install.exitCode !== 0) {
-  console.error('WARN: bun install failed in workspaces/web-apps')
-  console.error(install.stdout.toString())
-  console.error(install.stderr.toString())
-}
 
 // 5. Install the Playwright chromium browser that djf.io's e2e suite and
 //    f311x's visual-regression tests need. The binary is shared across apps via

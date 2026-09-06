@@ -83,14 +83,17 @@ The ownership map above covers quality tooling; this covers the rest of what age
 - **npm-distributed tools**: the repo-root `package.json` (not a workspace) pins every npm CLI the
   repo runs as a tool -- `@biomejs/biome`, `oxlint`, `oxfmt`, `prettier`, `cspell` and its JUnit
   reporter, `@sentry/warden`, the pi coding agent, `turbo` -- as exact-version devDependencies,
-  locked by the root `bun.lock` and installed by `bun install` at the repo root (`bunfig.toml` there
-  carries the same release-age cooldown as the workspace). Two things put those bins on PATH: mise's
-  `[env] _.path` directive adds the root `node_modules/.bin` to every activated shell and every
-  `mise run` / `mise exec`, and `bun run` walks up from any directory to the repo root on its own,
-  so an app's `lint` / `format` scripts find the same copies without activation, and
-  `bin/turbo-run.ts` / `bin/plan-affected-apps.ts` reach turbo with `bun run turbo` from the
-  workspace (turbo still roots itself at the workspace's `turbo.json`). Bump a tool by editing the
-  root manifest, running `bun install` there, and committing the lockfile with it.
+  locked by the root `bun.lock` and installed by `bun install` at the repo root. The root
+  `bunfig.toml` carries the same release-age cooldown as the workspace and uses bun's isolated
+  linker, so nothing but the tools themselves is visible at the top of the root `node_modules` -- an
+  app resolving a bare specifier walks up past the workspace, and a transitive dependency of a root
+  tool must never be what it finds. Two things put those bins on PATH: mise's `[env] _.path`
+  directive adds the root `node_modules/.bin` to every activated shell and every `mise run` /
+  `mise exec`, and `bun run` walks up from any directory to the repo root on its own, so an app's
+  `lint` / `format` scripts find the same copies without activation, and `bin/turbo-run.ts` /
+  `bin/plan-affected-apps.ts` reach turbo with `bun run turbo` from the workspace (turbo still roots
+  itself at the workspace's `turbo.json`). Bump a tool by editing the root manifest, running
+  `bun install` there, and committing the lockfile with it.
 - **Catalogs**: shared dev tooling in the web-apps workspace (vitest and its coverage/browser
   packages, Playwright, wrangler, vite and its React plugin, the oxlint plugins, `@types/bun` /
   `@types/node` / React types, jsdom, Panda, the Cloudflare plugin and worker types, svelte-check)

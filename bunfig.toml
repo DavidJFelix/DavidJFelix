@@ -1,5 +1,7 @@
 # Repo-root install settings; workspaces/web-apps/bunfig.toml is separate
-# (bun reads only the bunfig.toml in the install directory).
+# (bun reads only the bunfig.toml in the install directory). Isolated so the
+# root tools' transitive deps never shadow a workspace package's resolution.
 
 [install]
+linker = "isolated"
 minimumReleaseAge = 86400

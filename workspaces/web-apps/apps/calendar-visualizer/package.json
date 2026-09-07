@@ -39,7 +39,7 @@
   "devDependencies": {
     "@pandacss/dev": "catalog:",
     "@playwright/test": "catalog:",
-    "@sentry/cloudflare": "10.72.0",
+    "@sentry/cloudflare": "10.73.0",
     "@types/bun": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "oxlint-tsgolint": "catalog:",

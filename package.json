@@ -10,7 +10,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.5.12",
     "@cspell/cspell-junit-reporter": "10.2.2",
-    "@earendil-works/pi-coding-agent": "0.84.2",
+    "@earendil-works/pi-coding-agent": "0.85.1",
     "@sentry/warden": "0.48.0",
     "cspell": "10.2.2",
     "oxfmt": "0.66.0",

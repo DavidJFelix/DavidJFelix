@@ -1,5 +1,5 @@
 import {type DiffIndicators} from '@pierre/diffs'
-import {type CodeViewHandle, useWorkerPool} from '@pierre/diffs/react'
+import {useWorkerPool} from '@pierre/diffs/react'
 import {type ColorMode} from '@pierre/theming'
 import {useThemeController} from '@pierre/theming/react'
 import {
@@ -18,10 +18,10 @@ import {isNullish} from '@/diffs/lib/nullish'
 import {removeSavedCommentSidebarEntry} from '@/diffs/lib/remove-saved-comment-sidebar-entry'
 import type {DarkThemeName, LightThemeName} from '@/diffs/lib/theme-names'
 import type {
-  CommentMetadata,
   DiffsDeletedCommentEvent,
   DiffsSavedCommentEntry,
   DiffsSavedCommentEvent,
+  DiffsViewerHandle,
 } from '@/diffs/lib/types'
 import {upsertSavedCommentSidebarEntry} from '@/diffs/lib/upsert-saved-comment-sidebar-entry'
 import {docsThemeCatalog, themeController} from '@/diffs/state/theme-controller'
@@ -116,7 +116,7 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
   })
 
   const scrollRef = useRef<HTMLDivElement>(null)
-  const viewerRef = useRef<CodeViewHandle<CommentMetadata> | null>(null)
+  const viewerRef = useRef<DiffsViewerHandle | null>(null)
   const loadDiffFiles = useMemo(
     () =>
       isNullish(domain) && githubSession.status === 'authenticated'

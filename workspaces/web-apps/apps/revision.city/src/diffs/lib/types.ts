@@ -1,4 +1,5 @@
 import type {AnnotationSide, SelectedLineRange} from '@pierre/diffs'
+import type {CodeViewHandle} from '@pierre/diffs/react'
 import type {FileTreeGitStatusPatch, GitStatusEntry} from '@pierre/trees'
 
 export type ViewerLoadState = 'fetching' | 'streaming' | 'parsing' | 'ready' | 'error'
@@ -19,6 +20,12 @@ export interface DraftCommentMetadata {
 }
 
 export type CommentMetadata = SavedCommentMetadata | DraftCommentMetadata
+
+// The imperative handle every diffs surface shares. @pierre/diffs 1.4 added a
+// second `Caret` parameter for its in-place editor; this app never opens an
+// edit session, so the caret type is pinned to `undefined` (the library's own
+// default) here rather than repeated at every ref and prop.
+export type DiffsViewerHandle = CodeViewHandle<CommentMetadata, undefined>
 
 export interface DiffsCommentSidebarFile {
   fileOrder: number

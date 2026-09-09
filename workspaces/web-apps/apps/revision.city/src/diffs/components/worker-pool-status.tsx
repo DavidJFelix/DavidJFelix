@@ -1,5 +1,5 @@
 import {areWorkerStatsEqual, DEFAULT_CODE_VIEW_FILE_METRICS, queueRender} from '@pierre/diffs'
-import {type CodeViewHandle, useWorkerPool} from '@pierre/diffs/react'
+import {useWorkerPool} from '@pierre/diffs/react'
 import type {WorkerStats} from '@pierre/diffs/worker'
 import {
   IconCircleFill,
@@ -13,7 +13,7 @@ import {
 import {type MouseEvent, memo, type RefObject, useEffect, useState} from 'react'
 import {css, cx} from 'styled-system/css'
 import {isNullish} from '@/diffs/lib/nullish'
-import type {CommentMetadata} from '@/diffs/lib/types'
+import type {DiffsViewerHandle} from '@/diffs/lib/types'
 import type {ThemeCycleControls} from './hooks/use-theme-cycle'
 import {StatItem} from './stat-item'
 import {StatusRow} from './status-row'
@@ -22,12 +22,12 @@ import {StatusRow} from './status-row'
 const TRANSITION_COLORS =
   '[color 150ms cubic-bezier(0.4, 0, 0.2, 1), background-color 150ms cubic-bezier(0.4, 0, 0.2, 1), border-color 150ms cubic-bezier(0.4, 0, 0.2, 1), opacity 150ms cubic-bezier(0.4, 0, 0.2, 1)]'
 
-class AutoScrollTester<LAnnotation> {
+class AutoScrollTester {
   private running: 0 | 1 | 2 = 0
   private direction = 1
 
   constructor(
-    private viewerRef: RefObject<CodeViewHandle<LAnnotation> | null>,
+    private viewerRef: RefObject<DiffsViewerHandle | null>,
     private onStateChange?: (running: boolean) => unknown,
   ) {}
 
@@ -90,7 +90,7 @@ interface WorkerPoolStatusProps {
   expanded: boolean
   onToggle: () => void
   themeCycle: ThemeCycleControls
-  viewerRef: RefObject<CodeViewHandle<CommentMetadata> | null>
+  viewerRef: RefObject<DiffsViewerHandle | null>
 }
 
 export const WorkerPoolStatus = memo(function WorkerPoolStatus({
@@ -132,7 +132,7 @@ interface StatsDisplayProps {
   onToggle: () => void
   stats: WorkerStats
   themeCycle: ThemeCycleControls
-  viewerRef: RefObject<CodeViewHandle<CommentMetadata> | null>
+  viewerRef: RefObject<DiffsViewerHandle | null>
 }
 
 // Panda classes for each status color, keyed the same way getStatusIcon

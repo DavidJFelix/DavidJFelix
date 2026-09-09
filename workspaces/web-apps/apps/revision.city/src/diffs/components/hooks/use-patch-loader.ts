@@ -4,7 +4,7 @@ import {
   type CodeViewLineSelection,
   processFile,
 } from '@pierre/diffs'
-import {type CodeViewHandle, useStableCallback} from '@pierre/diffs/react'
+import {useStableCallback} from '@pierre/diffs/react'
 import {
   type Dispatch,
   type RefObject,
@@ -39,6 +39,7 @@ import type {
   DiffsFileTreeSource,
   DiffsSavedCommentItem,
   DiffsStats,
+  DiffsViewerHandle,
   ViewerLoadState,
 } from '@/diffs/lib/types'
 
@@ -54,7 +55,7 @@ interface UsePatchLoaderOptions {
   domain?: string
   onLoadStart: () => void
   path: string
-  viewerRef: RefObject<CodeViewHandle<CommentMetadata> | null>
+  viewerRef: RefObject<DiffsViewerHandle | null>
 }
 
 interface UsePatchLoaderResult {
@@ -487,10 +488,7 @@ function getLineHashApplyKey(viewerKey: number, hash: string): string {
   return `${viewerKey}:${hash}`
 }
 
-function applyDiffsLineHashTarget(
-  viewer: CodeViewHandle<CommentMetadata>,
-  target: DiffsLineHashTarget,
-): boolean {
+function applyDiffsLineHashTarget(viewer: DiffsViewerHandle, target: DiffsLineHashTarget): boolean {
   const item = viewer.getItem(target.itemId)
   if (isNullish(item)) {
     return false
@@ -524,10 +522,7 @@ function applyDiffsLineHashTarget(
   return true
 }
 
-function applyDiffsItemIdRename(
-  viewer: CodeViewHandle<CommentMetadata> | null,
-  rename: DiffsItemIdRename,
-): void {
+function applyDiffsItemIdRename(viewer: DiffsViewerHandle | null, rename: DiffsItemIdRename): void {
   viewer?.updateItemId(rename.oldId, rename.newId)
 }
 

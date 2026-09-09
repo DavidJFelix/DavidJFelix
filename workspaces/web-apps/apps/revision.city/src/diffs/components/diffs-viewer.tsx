@@ -11,7 +11,7 @@ import {
   type SelectedLineRange,
   type ThemeTypes,
 } from '@pierre/diffs'
-import {type CodeViewHandle, useStableCallback} from '@pierre/diffs/react'
+import {useStableCallback} from '@pierre/diffs/react'
 import {IconChevronSm} from '@pierre/icons'
 import {memo, type RefObject, useMemo, useRef, useState} from 'react'
 
@@ -30,6 +30,7 @@ import type {
   CommentMetadata,
   DiffsDeletedCommentEvent,
   DiffsSavedCommentEvent,
+  DiffsViewerHandle,
 } from '@/diffs/lib/types'
 import {DraftAnnotation} from './draft-annotation'
 import {ExampleAnnotation} from './example-annotation'
@@ -41,7 +42,7 @@ function getNextItemVersion(item: CodeViewItem<CommentMetadata>): number {
 }
 
 function updateViewerDiffItem(
-  viewer: CodeViewHandle<CommentMetadata>,
+  viewer: DiffsViewerHandle,
   itemId: string,
   updateItem: (item: CodeViewDiffItem<CommentMetadata>) => boolean,
 ): CodeViewDiffItem<CommentMetadata> | undefined {
@@ -74,7 +75,7 @@ interface DiffsViewerProps {
   lineNumbers: boolean
   scrollRef: RefObject<HTMLDivElement | null>
   themeType: ThemeTypes
-  viewerRef: RefObject<CodeViewHandle<CommentMetadata> | null>
+  viewerRef: RefObject<DiffsViewerHandle | null>
   initialItems: CodeViewItem<CommentMetadata>[]
   loadDiffFiles?: FileDiffContentsLoader
   onLineLinkChange: (selection: CodeViewLineSelection | null) => void
@@ -132,7 +133,7 @@ export const DiffsViewer = memo(function DiffsViewer({
     },
   )
 
-  const handleViewerRef = useStableCallback((viewer: CodeViewHandle<CommentMetadata> | null) => {
+  const handleViewerRef = useStableCallback((viewer: DiffsViewerHandle | null) => {
     viewerRef.current = viewer
     if (!isNullish(viewer)) {
       onViewerReady()
@@ -413,7 +414,7 @@ export const DiffsViewer = memo(function DiffsViewer({
 
   // NOTE(amadeus): For some insane reason, the react compiler did not know how
   // to properly memoize this, so we pulled it into a `useMemo` for safety...
-  const options: CodeViewOptions<CommentMetadata> = useMemo(
+  const options: CodeViewOptions<CommentMetadata, undefined> = useMemo(
     () =>
       ({
         // Use this to validate itemMetrics when changing layout with unsafeCSS.
@@ -442,7 +443,7 @@ export const DiffsViewer = memo(function DiffsViewer({
         onLineSelectionEnd(range, context) {
           handleLineSelectionEnd(range, context.item)
         },
-      }) satisfies CodeViewOptions<CommentMetadata>,
+      }) satisfies CodeViewOptions<CommentMetadata, undefined>,
     [
       diffIndicators,
       diffStyle,

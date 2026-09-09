@@ -1,4 +1,3 @@
-import type {CodeViewHandle} from '@pierre/diffs/react'
 import {
   IconBraces,
   IconComment,
@@ -39,11 +38,11 @@ import {isNullish} from '@/diffs/lib/nullish'
 import {diffsChromeMapping} from '@/diffs/lib/theme/diffs-chrome-mapping'
 import {getDropdownThemeStyle} from '@/diffs/lib/theme/dropdown-chrome-style'
 import type {
-  CommentMetadata,
   DiffsFileTreeSource,
   DiffsSavedCommentEntry,
   DiffsSavedCommentItem,
   DiffsStats as DiffsStatsData,
+  DiffsViewerHandle,
 } from '@/diffs/lib/types'
 import {SymbolChangesList, type SymbolSelection} from '@/symbols/components/symbol-changes-list'
 import {useEntityDiffs} from '@/symbols/components/use-entity-diffs'
@@ -84,7 +83,7 @@ interface DiffsSidebarProps {
   streaming: boolean
   symbolsAvailable: boolean
   themeCycle: ThemeCycleControls
-  viewerRef: RefObject<CodeViewHandle<CommentMetadata> | null>
+  viewerRef: RefObject<DiffsViewerHandle | null>
 }
 
 export const DiffsSidebar = memo(function DiffsSidebar({

@@ -122,6 +122,18 @@ jobs:
       - name: turbo run
         working-directory: ${{ github.workspace }}
         run: bun bin/turbo-run.ts test:e2e --filter=@davidjfelix/djf.io
+      # The Playwright web server is `wrangler dev`; the job output carries only
+      # its stderr, while its debug log lands under ~/.config/.wrangler/logs.
+      # When the local worker dies mid-suite (seen once on #575: a bare
+      # `[ERROR]` line, then every remaining test ERR_CONNECTION_REFUSED) that
+      # log is the only record of why, so keep it whenever the job fails.
+      - name: upload wrangler logs
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: wrangler-logs
+          path: ~/.config/.wrangler/logs/
+          retention-days: 14
       - name: upload-artifact
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

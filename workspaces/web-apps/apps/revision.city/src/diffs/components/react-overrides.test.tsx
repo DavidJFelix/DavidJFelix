@@ -63,7 +63,7 @@ async function flushReact(): Promise<void> {
 test('React themed component overrides: ThemedCodeView preserves caller themeType while applying the active theme pair', async () => {
   const container = document.createElement('div')
   document.body.appendChild(container)
-  const codeViewRef = createRef<CodeViewHandle<undefined>>()
+  const codeViewRef = createRef<CodeViewHandle<undefined, undefined>>()
   let root: Root | undefined
 
   await act(async () => {

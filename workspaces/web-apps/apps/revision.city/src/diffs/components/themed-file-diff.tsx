@@ -4,19 +4,22 @@ import type {DiffThemeInput} from '@/diffs/lib/theme/diff-theme-props'
 import {useDiffThemeProps} from './hooks/use-diff-theme-props'
 import {useWorkerDiffTheme} from './hooks/use-worker-diff-theme'
 
-interface ThemedFileDiffProps<LAnnotation = undefined> extends FileDiffProps<LAnnotation> {
+interface ThemedFileDiffProps<LAnnotation = undefined, Caret = undefined> extends FileDiffProps<
+  LAnnotation,
+  Caret
+> {
   // Names-now override (omitted => follow the provider/source).
   theme?: DiffThemeInput
 }
 
 // Sugar over useDiffThemeProps: applies the active theme names + themeType to
 // the React <FileDiff> options and keeps the worker pool in step when present.
-export function ThemedFileDiff<LAnnotation = undefined>({
+export function ThemedFileDiff<LAnnotation = undefined, Caret = undefined>({
   disableWorkerPool = false,
   options,
   theme,
   ...props
-}: ThemedFileDiffProps<LAnnotation>) {
+}: ThemedFileDiffProps<LAnnotation, Caret>) {
   const diffTheme = useDiffThemeProps(theme)
   useWorkerDiffTheme(diffTheme.theme, disableWorkerPool)
   const themedOptions = useMemo(
@@ -28,7 +31,7 @@ export function ThemedFileDiff<LAnnotation = undefined>({
     [diffTheme, options],
   )
   return (
-    <FileDiff<LAnnotation>
+    <FileDiff<LAnnotation, Caret>
       {...props}
       disableWorkerPool={disableWorkerPool}
       options={themedOptions}

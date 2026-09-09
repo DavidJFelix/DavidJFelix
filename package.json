@@ -12,7 +12,7 @@
     "@cspell/cspell-junit-reporter": "10.2.2",
     "@earendil-works/pi-coding-agent": "0.84.2",
     "@sentry/warden": "0.48.0",
-    "cspell": "10.2.0",
+    "cspell": "10.2.2",
     "oxfmt": "0.66.0",
     "oxlint": "1.79.0",
     "prettier": "3.9.6",

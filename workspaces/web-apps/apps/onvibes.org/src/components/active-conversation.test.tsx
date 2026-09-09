@@ -104,13 +104,18 @@ test('a sent message posts the thread and streams the reply into the conversatio
   expect(fetch).toHaveBeenCalledOnce()
   expect(requests[0]?.threadId).toBe('thread')
   expect(requests[0]?.messages).toMatchObject([{role: 'user', content: 'Map the canyons'}])
-  expect(onMessagesChange).toHaveBeenLastCalledWith({
-    id: 'thread',
-    messages: [
-      {id: expect.any(String), role: 'user', text: 'Map the canyons'},
-      {id: 'reply', role: 'assistant', text: 'Fourteen pins, one card each'},
-    ],
-  })
+  // The reply is visible as soon as React paints the last delta; the effect
+  // that reports it upward runs after that paint, so poll rather than read the
+  // mock straight after the locator settles.
+  await expect
+    .poll(() => onMessagesChange.mock.lastCall?.[0])
+    .toEqual({
+      id: 'thread',
+      messages: [
+        {id: expect.any(String), role: 'user', text: 'Map the canyons'},
+        {id: 'reply', role: 'assistant', text: 'Fourteen pins, one card each'},
+      ],
+    })
 })
 
 test('a stored thread seeds the conversation without a request', async () => {

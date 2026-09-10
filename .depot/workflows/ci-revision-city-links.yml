@@ -1,0 +1,44 @@
+name: CI revision.city links
+# Comments on every pull request as it opens and on every push after that,
+# linking the PR and each commit to the revision.city diff viewer. A new
+# comment per push, on purpose: the thread becomes a log of what each push
+# changed, so there is no sticky-comment upsert and no concurrency group
+# (cancelling a superseded run would drop that push's commits from the log).
+# `opened` lists every commit in the PR; `synchronize` lists only the commits
+# the push added -- see bin/comment-revision-city-links.ts for how.
+#
+# Runs on every PR automatically rather than on a mention or a label, so per
+# github-actions-style.md it is a CI workflow, not a Bot. Deliberately
+# repo-wide: no paths filter, every PR gets its links. Fork PRs are skipped --
+# their GITHUB_TOKEN is read-only and could not post the comment.
+on:
+  pull_request:
+    types: [opened, synchronize]
+env:
+  MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
+jobs:
+  comment:
+    name: comment-revision-city-links
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: depot-ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: comment-revision-city-links
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_ACTION: ${{ github.event.action }}
+          # Only `synchronize` carries these; `opened` leaves them empty.
+          PUSH_BEFORE: ${{ github.event.before }}
+          PUSH_AFTER: ${{ github.event.after }}
+        run: bun bin/comment-revision-city-links.ts

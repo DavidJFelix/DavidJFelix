@@ -72,7 +72,7 @@ const refusedTokens = [
   ['not issued yet', () => mint({issuedAt: minutesFromNow(5)})],
 ] as const
 
-for (const [flaw, mintToken] of refusedTokens) {
+refusedTokens.forEach(([flaw, mintToken]) => {
   test(`a session token ${flaw} is refused`, async ({request}) => {
     test.skip(secret === undefined, 'needs E2E_SESSION_SECRET to mint a token the worker trusts')
     // given
@@ -84,4 +84,4 @@ for (const [flaw, mintToken] of refusedTokens) {
     // then
     expect(response.status()).toBe(401)
   })
-}
+})

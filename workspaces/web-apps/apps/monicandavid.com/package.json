@@ -15,6 +15,7 @@
     "format": "oxfmt --check . && biome format . && prettier --check --no-error-on-unmatched-pattern \"**/*.md\" \"**/*.mdx\"",
     "format:fix": "oxfmt . && biome format --write . && prettier --write --no-error-on-unmatched-pattern \"**/*.md\" \"**/*.mdx\"",
     "typecheck": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "db:generate": "drizzle-kit generate",
     "test": "vitest run --coverage",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
@@ -24,6 +25,8 @@
     "@ark-ui/svelte": "^5.22.1",
     "@davidjfelix/og": "workspace:*",
     "@sentry/browser": "^10.60.0",
+    "drizzle-orm": "0.45.2",
+    "jose": "6.2.12",
     "mode-watcher": "^1.1.0",
     "posthog-js": "^1.393.0"
   },
@@ -34,13 +37,17 @@
     "@sveltejs/kit": "2.70.3",
     "@sveltejs/vite-plugin-svelte": "7.3.0",
     "@types/node": "catalog:",
+    "@vitest/browser-playwright": "catalog:",
     "@vitest/coverage-v8": "catalog:",
+    "drizzle-kit": "0.31.10",
+    "fast-check": "4.9.0",
     "oxlint-tsgolint": "catalog:",
     "svelte": "5.57.0",
     "svelte-check": "catalog:",
     "typescript": "6.0.3",
     "vite": "catalog:",
     "vitest": "catalog:",
+    "vitest-browser-svelte": "3.1.0",
     "wrangler": "catalog:"
   }
 }

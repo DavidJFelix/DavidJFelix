@@ -13,3 +13,5 @@ riegel
 # Jakub Krehel, author of the vendored better-* interface skills (.agents/skills)
 jakub
 krehel
+# Douglas Crockford, whose base32 alphabet spells monicandavid.com's row ids
+crockford

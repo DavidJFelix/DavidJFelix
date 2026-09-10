@@ -85,6 +85,8 @@ server-side; deploys behind Cloudflare Access. Dark until Access + worker secret
 #### [monicandavid.com](./projects/monicandavid-com/plan.md)
 
 A couple's blog for Monica & David. Basic landing shipped; the actual posts are the next phase.
+Accounts groundwork is in (D1 user schema, session-token contract, a gated `/admin`); the Google
+sign-in flow and the D1 binding come next.
 
 **Status**: Placeholder
 

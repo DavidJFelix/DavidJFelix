@@ -28,3 +28,22 @@ destinations = ["2026-aug-16-grafana-cloud-traces"]
 [assets]
 directory = ".svelte-kit/cloudflare"
 binding = "ASSETS"
+
+# Secrets (`wrangler secret put <NAME>`; `.dev.vars` locally, see
+# .dev.vars.example):
+#   SESSION_SECRET -- HS256 key for the session cookie JWT (src/lib/server/session.ts).
+#     32+ random bytes; rotating it signs every visitor out.
+
+# The D1 database behind src/lib/server/db/schema.ts. Not bound yet: the
+# binding needs a database that exists in the account, and `wrangler deploy`
+# refuses a config that names one that does not. To wire it up:
+#   1. `wrangler d1 create monicandavid-com` and paste the id it prints below.
+#   2. Uncomment the block. `migrations_dir` points wrangler at the SQL files
+#      drizzle-kit writes (`mise run db:generate`), so
+#      `wrangler d1 migrations apply monicandavid-com` (add `--local` for the
+#      dev database) applies them.
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "monicandavid-com"
+# database_id = "<from wrangler d1 create>"
+# migrations_dir = "drizzle"

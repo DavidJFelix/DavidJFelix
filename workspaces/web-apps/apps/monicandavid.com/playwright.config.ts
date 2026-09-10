@@ -13,6 +13,16 @@ const PORT = Number(process.env.PLAYWRIGHT_PORT ?? 4327)
 const PREVIEW_URL = process.env.PREVIEW_URL
 const BASE_URL = PREVIEW_URL ?? `http://127.0.0.1:${PORT}`
 
+// The session-cookie specs (e2e/admin.e2e.test.ts) mint tokens with the
+// worker's SESSION_SECRET. The local boot is handed a throwaway one below and
+// the specs read it from E2E_SESSION_SECRET; against a preview the variable has
+// to come from the caller (it is the deployed worker's secret), and the signed
+// specs skip when it is absent.
+const LOCAL_SESSION_SECRET = 'local-playwright-session-secret-not-for-deployment'
+if (!PREVIEW_URL) {
+  process.env.E2E_SESSION_SECRET ??= LOCAL_SESSION_SECRET
+}
+
 export default defineConfig({
   testDir: './e2e',
   testMatch: '**/*.e2e.test.ts',
@@ -32,7 +42,7 @@ export default defineConfig({
     : {
         // Spawn the wrangler binary directly (not via `bun x`) so Playwright's
         // teardown kills workerd instead of a wrapper that outlives it.
-        command: `node_modules/.bin/wrangler dev --port ${PORT} --ip 127.0.0.1`,
+        command: `node_modules/.bin/wrangler dev --port ${PORT} --ip 127.0.0.1 --var SESSION_SECRET:${process.env.E2E_SESSION_SECRET}`,
         url: BASE_URL,
         env: {WRANGLER_SEND_METRICS: 'false'},
         reuseExistingServer: !process.env.CI,

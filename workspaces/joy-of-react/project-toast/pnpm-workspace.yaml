@@ -11,7 +11,7 @@ catalog:
   '@cspell/dict-typescript': 3.2.3
   '@parcel/config-default': 2.16.4
   cspell: 10.2.2
-  oxlint: 1.81.0
+  oxlint: 1.82.0
   parcel: 2.16.4
   parcel-reporter-static-files-copy: 1.5.3
   rimraf: 6.1.3

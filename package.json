@@ -13,8 +13,8 @@
     "@earendil-works/pi-coding-agent": "0.85.1",
     "@sentry/warden": "0.48.0",
     "cspell": "10.2.2",
-    "oxfmt": "0.66.0",
-    "oxlint": "1.81.0",
+    "oxfmt": "0.67.0",
+    "oxlint": "1.82.0",
     "prettier": "3.9.6",
     "turbo": "2.10.12"
   }

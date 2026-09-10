@@ -10,6 +10,6 @@ catalog:
   '@biomejs/biome': 2.5.12
   '@cspell/dict-typescript': 3.2.3
   cspell: 10.2.2
-  oxlint: 1.81.0
+  oxlint: 1.82.0
   parcel: 2.16.4
   rimraf: 6.1.3

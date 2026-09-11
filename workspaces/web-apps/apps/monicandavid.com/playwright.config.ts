@@ -15,9 +15,11 @@ const BASE_URL = PREVIEW_URL ?? `http://127.0.0.1:${PORT}`
 
 // The session-cookie specs (e2e/admin.e2e.test.ts) mint tokens with the
 // worker's SESSION_SECRET. The local boot is handed a throwaway one below and
-// the specs read it from E2E_SESSION_SECRET; against a preview the variable has
-// to come from the caller (it is the deployed worker's secret), and the signed
-// specs skip when it is absent.
+// the specs read it from E2E_SESSION_SECRET. A preview is a version of the dev
+// worker (wrangler.toml `[env.dev]`), whose own throwaway key reaches the
+// suite as the same variable from the Depot secret
+// E2E_SESSION_SECRET_MONICANDAVID_COM; the signed specs skip when it is absent.
+// Production's key is never involved.
 const LOCAL_SESSION_SECRET = 'local-playwright-session-secret-not-for-deployment'
 if (!PREVIEW_URL) {
   process.env.E2E_SESSION_SECRET ??= LOCAL_SESSION_SECRET

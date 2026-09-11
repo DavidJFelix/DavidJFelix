@@ -7,7 +7,8 @@ import {SESSION_COOKIE, signSession} from '../src/lib/server/session'
 // known: the local production boot (playwright.config.ts passes it to wrangler
 // and exposes it as E2E_SESSION_SECRET) or a preview given the same variable.
 
-const secret = process.env.E2E_SESSION_SECRET
+// An action input that was not supplied arrives as '', which is also absent.
+const secret = process.env.E2E_SESSION_SECRET || undefined
 const userId = 'user_01K4R3ZJ3M9EFB7GX0Q2T5V8WA' // cSpell:ignore 01K4R3ZJ3M9EFB7GX0Q2T5V8WA
 
 function minutesFromNow(minutes: number): Date {

@@ -58,6 +58,14 @@ inputs:
     description: Optional Cloudflare Access service-token client secret (pairs with the id).
     required: false
     default: ""
+  e2e-session-secret:
+    description: >-
+      Optional session-signing secret of the worker the preview is a version
+      of, for an app whose Playwright suite mints session cookies against it
+      (monicandavid.com). Exposed to the suite as E2E_SESSION_SECRET; the
+      signed cases skip without it. Only ever a dev worker's throwaway key.
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -76,7 +84,11 @@ runs:
         mise run build
 
     # Builds the app's `dist`/worker, uploads a preview version, and resolves the
-    # deterministic pr-<N> alias URL into `url` for the steps below.
+    # deterministic pr-<N> alias URL into `url` for the steps below. The
+    # environment reaches wrangler as `--env` (empty means the top-level
+    # config), so an app that deploys straight from its wrangler.toml uploads
+    # as a version of its dev worker; a build that already resolved the
+    # environment into a redirected config passes wrangler's match check.
     - name: upload preview
       id: deploy
       shell: bash
@@ -84,6 +96,7 @@ runs:
         PR_NUMBER: ${{ inputs.pr-number }}
         WORKER_NAME: ${{ inputs.worker-name }}
         WRANGLER_CONFIG: ${{ inputs.wrangler-config }}
+        CLOUDFLARE_ENV: ${{ inputs.cloudflare-env }}
         CLOUDFLARE_API_TOKEN: ${{ inputs.cloudflare-api-token }}
         CLOUDFLARE_ACCOUNT_ID: ${{ inputs.cloudflare-account-id }}
       run: bun "$GITHUB_WORKSPACE/bin/upload-preview.ts"
@@ -163,6 +176,7 @@ runs:
         PREVIEW_URL: ${{ steps.deploy.outputs.url }}
         CF_ACCESS_CLIENT_ID: ${{ inputs.cf-access-client-id }}
         CF_ACCESS_CLIENT_SECRET: ${{ inputs.cf-access-client-secret }}
+        E2E_SESSION_SECRET: ${{ inputs.e2e-session-secret }}
       run: bun run test:e2e
 
     - name: upload playwright report

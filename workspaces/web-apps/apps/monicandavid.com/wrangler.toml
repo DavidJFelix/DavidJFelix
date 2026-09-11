@@ -32,18 +32,47 @@ binding = "ASSETS"
 # Secrets (`wrangler secret put <NAME>`; `.dev.vars` locally, see
 # .dev.vars.example):
 #   SESSION_SECRET -- HS256 key for the session cookie JWT (src/lib/server/session.ts).
-#     32+ random bytes; rotating it signs every visitor out.
+#     32+ random bytes; rotating it signs every visitor out. Production and the
+#     dev worker below each hold their own; the dev worker's is a throwaway.
 
-# The D1 database behind src/lib/server/db/schema.ts. Not bound yet: the
-# binding needs a database that exists in the account, and `wrangler deploy`
-# refuses a config that names one that does not. To wire it up:
-#   1. `wrangler d1 create monicandavid-com` and paste the id it prints below.
-#   2. Uncomment the block. `migrations_dir` points wrangler at the SQL files
-#      drizzle-kit writes (`mise run db:generate`), so
-#      `wrangler d1 migrations apply monicandavid-com` (add `--local` for the
-#      dev database) applies them.
+# The D1 database behind src/lib/server/db/schema.ts. `migrations_dir` points
+# wrangler at the SQL files drizzle-kit writes (`mise run db:generate`), so
+# `wrangler d1 migrations apply monicandavid-com --remote` applies them
+# (`--local` for the database `wrangler dev` keeps under .wrangler/state).
+# cSpell:ignore c9a92d20-9a49-4608-ae06-efc48d934cd3 -- the database id
 [[d1_databases]]
 binding = "DB"
 database_name = "monicandavid-com"
 database_id = "c9a92d20-9a49-4608-ae06-efc48d934cd3"
 migrations_dir = "drizzle"
+
+# The dev worker. Per-PR previews upload as versions of it (never of
+# production), and main deploys it alongside production so its stable host
+# keeps tracking the codebase (bin/plan-affected-apps.ts, `devEnv`). It holds
+# its own SESSION_SECRET (`wrangler secret put SESSION_SECRET --env dev`), and
+# the same throwaway value is the Depot CI secret
+# E2E_SESSION_SECRET_MONICANDAVID_COM, which lets the preview e2e run mint
+# sessions this worker accepts. Production's key never leaves production.
+# Bindings are not inheritable, so this worker has no D1 until it gets its
+# own database (`wrangler d1 create monicandavid-com-dev`, bound here as
+# `[[env.dev.d1_databases]]`); nothing reads DB yet, so previews work without.
+[env.dev]
+# Explicit rather than wrangler's derived `<name>-<env>`: the plan registry
+# builds the pr-<N> preview URL from this name.
+name = "monicandavid-com-dev"
+# `routes` is inheritable. Without this empty list, deploying the environment
+# would reassign the production custom domains above to the dev worker.
+routes = []
+workers_dev = true
+preview_urls = true
+
+# Same Grafana Cloud export as production. `observability` is inheritable,
+# but an environment that defines any of it replaces the top-level tables
+# wholesale -- so the config is repeated in full rather than partially.
+[env.dev.observability.logs]
+enabled = true
+destinations = ["2026-aug-16-grafana-cloud-logs"]
+
+[env.dev.observability.traces]
+enabled = true
+destinations = ["2026-aug-16-grafana-cloud-traces"]

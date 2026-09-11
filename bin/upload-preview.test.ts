@@ -1,5 +1,42 @@
 import {expect, test} from 'bun:test'
-import {parsePreviewUrl} from './upload-preview'
+import {parsePreviewUrl, uploadCommand} from './upload-preview'
+
+test('uploads a non-active version under the pr alias from the app wrangler.toml', () => {
+  expect(uploadCommand({prNumber: '42'})).toEqual([
+    'bun',
+    'x',
+    'wrangler',
+    'versions',
+    'upload',
+    '--preview-alias',
+    'pr-42',
+  ])
+})
+
+test('points wrangler at an explicit config and at the dev environment when given', () => {
+  // A dev-worker preview (plan-affected-apps.ts devEnv) is a version of the
+  // dev worker, so the environment reaches wrangler as --env.
+  expect(uploadCommand({prNumber: '7', config: 'dist/server/wrangler.json', env: 'dev'})).toEqual(
+    [
+      'bun',
+      'x',
+      'wrangler',
+      'versions',
+      'upload',
+      '-c',
+      'dist/server/wrangler.json',
+      '--env',
+      'dev',
+      '--preview-alias',
+      'pr-7',
+    ],
+  )
+})
+
+test('treats an empty config and environment as absent', () => {
+  // The action passes its inputs through verbatim, and an unset input is ''.
+  expect(uploadCommand({prNumber: '3', config: '', env: ''})).toEqual(uploadCommand({prNumber: '3'}))
+})
 
 test('constructs the deterministic alias URL from the subdomain wrangler printed', () => {
   const stdout = [

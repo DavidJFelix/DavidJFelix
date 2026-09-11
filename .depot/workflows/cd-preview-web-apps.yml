@@ -99,3 +99,9 @@ jobs:
           # (onvibes.org); ignored by hosts without Access.
           cf-access-client-id: ${{ secrets.CF_ACCESS_CLIENT_ID }}
           cf-access-client-secret: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+          # monicandavid.com only: its dev worker's session-signing key, so
+          # the app's Playwright suite can mint cookies the preview accepts.
+          # Gated per app by name rather than resolved with a format() lookup
+          # like the observability vars: indexing the secrets context hands
+          # the job every secret (zizmor overprovisioned-secrets).
+          e2e-session-secret: ${{ matrix.app.dir == 'monicandavid.com' && secrets.E2E_SESSION_SECRET_MONICANDAVID_COM || '' }}

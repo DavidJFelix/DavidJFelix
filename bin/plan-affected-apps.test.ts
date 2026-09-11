@@ -28,8 +28,9 @@ test('selects only the apps turbo reported as affected', () => {
 })
 
 test('previews an app with a dev environment as its dev worker only', () => {
-  // revision.city previews must be versions of the dev worker: they share its
-  // GitHub App for the proxied sign-in, and must never touch production's.
+  // A preview must be a version of the dev worker so it never runs against
+  // production's secrets: revision.city's GitHub App for the proxied sign-in,
+  // monicandavid.com's session-signing key.
   const targets = [target({devEnv: 'dev'})]
 
   expect(planAffected({affectedPaths: ['apps/example.com'], kind: 'preview', targets})).toEqual([

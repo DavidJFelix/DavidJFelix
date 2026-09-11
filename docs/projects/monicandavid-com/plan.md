@@ -46,8 +46,13 @@ three-claim JWT (`sub`, `iat`, `exp`) signed with the `SESSION_SECRET` wrangler 
 - [x] D1 schema: `users` and `authentications`, prefixed UUID v7 ids, first migration. (2026-09-10)
 - [x] Session contract: HS256 JWT with `sub` / `iat` / `exp`; `/admin` refuses requests without a
       valid `session` cookie; vitest + Playwright coverage. (2026-09-10)
-- [ ] Human: create the D1 database, bind it in `wrangler.toml`, apply the migration, set the
-      `SESSION_SECRET` secret.
+- [x] Previews ride a dev worker (`[env.dev]`, `monicandavid-com-dev`) with its own throwaway
+      session key, so CI never holds production's. (2026-09-11)
+- [x] Production D1 database created and bound in `wrangler.toml`. (2026-09-11)
+- [ ] Human: set `SESSION_SECRET` on the dev worker and the matching Depot secret
+      `E2E_SESSION_SECRET_MONICANDAVID_COM` (unblocks the preview check); set production's own
+      `SESSION_SECRET`; apply the migration to production; give the dev worker its own database.
+      Commands in the 2026-09-10 progress note.
 - [ ] Google OpenID Connect sign-in: callback upserts the authentication (and the user on first
       sign-in), signs a session, sets the cookie; the hook redirects to it instead of 401.
 

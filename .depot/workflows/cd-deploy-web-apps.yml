@@ -125,6 +125,11 @@ jobs:
           if [ -z "$CLOUDFLARE_ENV" ]; then unset CLOUDFLARE_ENV; fi
           bun bin/turbo-run.ts build --filter=./apps/${{ matrix.app.dir }}
 
+      # A dev-worker entry hands its environment to wrangler as --env: an app
+      # that deploys straight from its wrangler.toml (monicandavid.com) needs
+      # it to target `[env.<dev>]`, and a build that already resolved the
+      # environment into a redirected config (revision.city) passes wrangler's
+      # match check. Production entries carry no environment and no flag.
       - name: wrangler deploy
         uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
         with:
@@ -132,4 +137,5 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: >-
             deploy ${{ matrix.app.wranglerConfig && format('-c {0}', matrix.app.wranglerConfig) || '' }}
+            ${{ matrix.app.cloudflareEnv && format('--env {0}', matrix.app.cloudflareEnv) || '' }}
           workingDirectory: workspaces/web-apps/apps/${{ matrix.app.dir }}

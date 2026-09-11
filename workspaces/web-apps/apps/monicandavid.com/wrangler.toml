@@ -42,8 +42,8 @@ binding = "ASSETS"
 #      drizzle-kit writes (`mise run db:generate`), so
 #      `wrangler d1 migrations apply monicandavid-com` (add `--local` for the
 #      dev database) applies them.
-# [[d1_databases]]
-# binding = "DB"
-# database_name = "monicandavid-com"
-# database_id = "<from wrangler d1 create>"
-# migrations_dir = "drizzle"
+[[d1_databases]]
+binding = "DB"
+database_name = "monicandavid-com"
+database_id = "c9a92d20-9a49-4608-ae06-efc48d934cd3"
+migrations_dir = "drizzle"

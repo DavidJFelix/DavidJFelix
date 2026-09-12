@@ -1,0 +1,7 @@
+# Copy to .dev.vars (gitignored) for `wrangler dev`. The deployed worker reads
+# the same names from its secrets (`wrangler secret put <NAME>`).
+
+# HS256 key for the session cookie JWT (src/lib/server/session.ts). Any
+# 32+ random bytes; `openssl rand -base64 48` is fine. Playwright does not
+# read this file -- it hands wrangler its own throwaway secret.
+SESSION_SECRET=

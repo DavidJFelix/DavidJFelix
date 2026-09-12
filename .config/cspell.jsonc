@@ -88,6 +88,9 @@
     "test-results",
     ".turbo",
     "worker-configuration.d.ts",
+    // drizzle-kit's migration journal and schema snapshots (the .sql files
+    // beside them are still checked).
+    "**/drizzle/meta/**",
   ],
   "ignoreRegExpList": [
     // Bluesky DID identifiers (did:plc:...) -- prefix-anchored so the pattern

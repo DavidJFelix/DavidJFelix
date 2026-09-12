@@ -37,9 +37,13 @@ export type WebAppTarget = {
   // Wrangler environment of the app's dev worker, '' for production-only apps.
   // When set, previews build under CLOUDFLARE_ENV=<devEnv> and upload as
   // versions of the dev worker (`<worker>-<devEnv>`) instead of the production
-  // one -- revision.city previews must share the dev worker's GitHub App, not
-  // production's -- and the dev worker deploys from main alongside production
-  // so its stable URL keeps tracking this codebase.
+  // one, so a preview never runs against production's secrets: revision.city
+  // previews must share the dev worker's GitHub App, and monicandavid.com's
+  // preview e2e mints sessions with the dev worker's throwaway key. The dev
+  // worker deploys from main alongside production so its stable URL keeps
+  // tracking this codebase. The upload and deploy steps hand the environment
+  // to wrangler as `--env`; for a build that already resolved it into a
+  // redirected config (the Cloudflare vite plugin) wrangler accepts the match.
   readonly devEnv: string
 }
 
@@ -125,7 +129,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     preview: 'wrangler',
     deploy: 'wrangler',
     envSuffix: 'MONICANDAVID_COM',
-    devEnv: '',
+    devEnv: 'dev',
   },
   {
     dir: 'onvibes.org',

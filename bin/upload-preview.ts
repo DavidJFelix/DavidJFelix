@@ -36,6 +36,31 @@ export function parsePreviewUrl(
   return `https://pr-${prNumber}-${workerName}.${match[1]}.workers.dev/`
 }
 
+export interface UploadCommandParams {
+  prNumber: string
+  // Explicit wrangler config path, '' or unset for the app's own wrangler.toml.
+  config?: string | undefined
+  // Wrangler environment to upload as a version of (the dev worker), '' or
+  // unset for the top-level config.
+  env?: string | undefined
+}
+
+// The `wrangler versions upload` invocation. Exported so the shape is
+// unit-testable without credentials or a real upload.
+export function uploadCommand({prNumber, config, env}: UploadCommandParams): string[] {
+  return [
+    'bun',
+    'x',
+    'wrangler',
+    'versions',
+    'upload',
+    ...(config ? ['-c', config] : []),
+    ...(env ? ['--env', env] : []),
+    '--preview-alias',
+    `pr-${prNumber}`,
+  ]
+}
+
 if (import.meta.main) {
   await main()
 }
@@ -58,18 +83,16 @@ async function main(): Promise<void> {
   // plain `[assets]` apps, which deploy straight from their wrangler.toml.
   const config = process.env.WRANGLER_CONFIG
 
+  // The dev worker's wrangler environment, for apps that preview as versions
+  // of their dev worker (plan-affected-apps.ts `devEnv`). Wrangler would read
+  // CLOUDFLARE_ENV on its own; passing it as `--env` keeps the logged command
+  // self-describing and treats an empty value as absent.
+  const env = process.env.CLOUDFLARE_ENV
+
   // Test seam: exercise the upload/parse path without credentials, e.g.
   // UPLOAD_PREVIEW_TEST_CMD='echo https://abc-app.acct.workers.dev'.
-  const cmd = process.env.UPLOAD_PREVIEW_TEST_CMD?.split(' ') ?? [
-    'bun',
-    'x',
-    'wrangler',
-    'versions',
-    'upload',
-    ...(config ? ['-c', config] : []),
-    '--preview-alias',
-    `pr-${prNumber}`,
-  ]
+  const cmd =
+    process.env.UPLOAD_PREVIEW_TEST_CMD?.split(' ') ?? uploadCommand({prNumber, config, env})
 
   const proc = Bun.spawn({cmd, stdout: 'pipe', stderr: 'inherit'})
   const stdout = await new Response(proc.stdout).text()

@@ -25,6 +25,10 @@ run = "bun run test"
 description = "Build with Vite"
 run = "bun run build"
 
+[tasks."db:generate"]
+description = "Write the next D1 migration from src/lib/server/db/schema.ts into drizzle/ (drizzle-kit)"
+run = "bun run db:generate"
+
 [tasks.smoke]
 description = "Smoke-test a local production boot (workerd via wrangler dev)"
 depends = ["build"]

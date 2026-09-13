@@ -7,8 +7,8 @@
   "dependencies": {
     "new-component": "6.0.0",
     "process": "0.11.10",
-    "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
   },
   "devDependencies": {
     "@biomejs/biome": "catalog:",
@@ -29,7 +29,7 @@
     "spell": "cspell --config ../../../.config/cspell.jsonc \"**\""
   },
   "browserslist": "> 0.5%, last 2 versions, not dead",
-  "packageManager": "pnpm@12.3.4",
+  "packageManager": "pnpm@12.4.1",
   "engines": {
     "node": ">=22"
   }

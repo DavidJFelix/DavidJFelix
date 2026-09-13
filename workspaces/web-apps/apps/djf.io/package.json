@@ -47,7 +47,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@atproto/api": "0.20.42",
+    "@atproto/api": "0.20.44",
     "@pandacss/dev": "catalog:",
     "@playwright/test": "catalog:",
     "@sentry/cloudflare": "10.73.0",

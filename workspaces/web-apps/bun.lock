@@ -251,7 +251,7 @@
         "@vitest/browser-playwright": "catalog:",
         "@vitest/coverage-v8": "catalog:",
         "drizzle-kit": "0.31.10",
-        "fast-check": "4.9.0",
+        "fast-check": "4.10.0",
         "oxlint-tsgolint": "catalog:",
         "svelte": "5.57.0",
         "svelte-check": "catalog:",
@@ -2753,7 +2753,7 @@
 
     "extend-shallow": ["extend-shallow@2.0.1", "", { "dependencies": { "is-extendable": "^0.1.0" } }, "sha512-zCnTtlxNoAiDc3gqY2aYAWFx7XWWiasuF2K8Me5WbN8otHKTUKBwjPtNpRs/rbUZm7KxWAaNj7P1a/p52GbVug=="],
 
-    "fast-check": ["fast-check@4.9.0", "", { "dependencies": { "pure-rand": "^8.0.0" } }, "sha512-7ms6T7SybUev/PQITciI0yLM2pOSFy5zpG8Ty7tQofcVaQUvrMXp6CBwqF6fThLCLOrfBtuHAtwq6Yu4XPCllg=="],
+    "fast-check": ["fast-check@4.10.0", "", { "dependencies": { "pure-rand": "^8.0.0" } }, "sha512-hhqQL+IJllZi3aM4TKvmCj3bywLEcycNTTLZeLhA9ttMxBrCqM07q7Di4kl+j9EWSTXvJH1+EpIgsDbF/+8H5Q=="],
 
     "fast-deep-equal": ["fast-deep-equal@3.1.3", "", {}, "sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q=="],
 

@@ -33,7 +33,7 @@
     "@vitest/coverage-v8": "catalog:",
     "jsdom": "catalog:",
     "oxlint-tsgolint": "catalog:",
-    "react": "19.2.8",
+    "react": "19.3.0",
     "typescript": "7.0.2",
     "vitest": "catalog:",
     "zod": "4.5.4"

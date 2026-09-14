@@ -40,7 +40,7 @@
     "@vitest/browser-playwright": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "drizzle-kit": "0.31.10",
-    "fast-check": "4.9.0",
+    "fast-check": "4.10.0",
     "oxlint-tsgolint": "catalog:",
     "svelte": "5.57.0",
     "svelte-check": "catalog:",

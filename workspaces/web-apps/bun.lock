@@ -391,7 +391,7 @@
         "@lezer/xml": "1.0.6",
         "@lezer/yaml": "1.0.4",
         "@pierre/diffs": "1.4.2",
-        "@pierre/icons": "0.7.1",
+        "@pierre/icons": "0.8.0",
         "@pierre/theme": "2.0.0",
         "@pierre/theming": "1.0.1",
         "@pierre/trees": "1.0.0-beta.6",
@@ -1389,7 +1389,7 @@
 
     "@pierre/diffs": ["@pierre/diffs@1.4.2", "", { "dependencies": { "@pierre/theme": "2.0.0", "@pierre/theming": "1.0.1", "@shikijs/transformers": "^3.0.0 || ^4.0.0", "diff": "9.0.0", "hast-util-to-html": "9.0.5", "lru_map": "0.4.1", "shiki": "^3.0.0 || ^4.0.0" }, "peerDependencies": { "react": "^18.3.1 || ^19.0.0", "react-dom": "^18.3.1 || ^19.0.0" }, "optionalPeers": ["react", "react-dom"] }, "sha512-X9njBs6fGN+BIBhJ/otJRcxzNfsU3fd31VNquPiRW5nK051IyjuNS5JuOunqFDmEN3VCS9fm0gauyka/nMdokg=="],
 
-    "@pierre/icons": ["@pierre/icons@0.7.1", "", { "peerDependencies": { "react": "^18.0.0 || ^19.0.0" } }, "sha512-GzuvLVd8Hp86DuENXvQNNqlVDW7JQ3H4y7KNTK1bP42NA7+WeM8BuagFTq50jnYhrfG7I1YUju7e2k3exw/0fQ=="],
+    "@pierre/icons": ["@pierre/icons@0.8.0", "", { "peerDependencies": { "react": "^18.0.0 || ^19.0.0" } }, "sha512-+nWaG+w1d03GaujorOtxBJVaFjwh461W891w9fUuKdDgoH+XGTs+t8Uyfj/ovoP0suAElRbNJ6H8OS7tcndV3w=="],
 
     "@pierre/theme": ["@pierre/theme@2.0.0", "", {}, "sha512-yNDd9GYLQl1mEUJR8AneJ5e4ohLIHQd/wZLWr4fagt78vS2RwwZNW530vVgHqXFAyFVcFlRmGUD5ramXH46OXw=="],
 

@@ -47,7 +47,7 @@
     "@lezer/xml": "1.0.6",
     "@lezer/yaml": "1.0.4",
     "@pierre/diffs": "1.4.2",
-    "@pierre/icons": "0.7.1",
+    "@pierre/icons": "0.8.0",
     "@pierre/theme": "2.0.0",
     "@pierre/theming": "1.0.1",
     "@pierre/trees": "1.0.0-beta.6",

@@ -9,7 +9,7 @@ allowBuilds:
 catalog:
   '@biomejs/biome': 2.5.13
   '@cspell/dict-typescript': 3.2.3
-  cspell: 10.3.0
+  cspell: 10.3.3
   oxlint: 1.82.0
   parcel: 2.16.4
   rimraf: 6.1.3

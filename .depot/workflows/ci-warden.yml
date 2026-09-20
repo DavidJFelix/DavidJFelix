@@ -113,6 +113,22 @@ jobs:
         with:
           mode: report
           findings-file: ${{ steps.warden-analyze.outputs.findings-file }}
+      # Warden posts inline comments only for findings on a diff line, so a
+      # clean run is visible only as check runs on the commit. This keeps one
+      # sticky PR comment current with the latest run's per-skill summary, so
+      # the conversation shows Warden looked at the head. (`reportOnSuccess`
+      # in warden.toml would be the built-in way, but 0.48.0 drops a body-only
+      # COMMENT review before posting, so it is inert.) Runs even when the
+      # report step failed the check on findings -- that is exactly when the
+      # summary matters -- but not without a findings file to summarize.
+      - name: comment-warden-summary
+        if: always() && steps.warden-analyze.outputs.findings-file != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          FINDINGS_FILE: ${{ steps.warden-analyze.outputs.findings-file }}
+        run: bun bin/comment-warden-summary.ts
 
   dispatch-review:
     name: warden (dispatch)

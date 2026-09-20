@@ -32,10 +32,10 @@ reportOn = "medium"
 # failure — Warden's determineConclusion only returns "failure" when failCheck
 # is set. This is what makes the gate actually gate.
 failCheck = true
-# Post a review comment even when there are no findings. Without this a clean
-# run is visible only as a check run on the commit, so it is hard to tell from
-# the PR conversation whether Warden looked at the current head at all.
-reportOnSuccess = true
+# No reportOnSuccess: in 0.48.0 a clean run renders a body-only COMMENT review
+# and the poster drops those before calling GitHub, so the option is inert. The
+# per-run summary comment on the PR comes from bin/comment-warden-summary.ts,
+# run as the last step of .depot/workflows/ci-warden.yml.
 
 # Reasoning effort for the repo-aware review agent (off, low, medium, high,
 # xhigh, max; runtime default when omitted). High is affordable because the

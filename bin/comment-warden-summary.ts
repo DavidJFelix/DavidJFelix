@@ -125,8 +125,8 @@ function makeGhClient(token: string): GhClient {
       },
       ...(payload === undefined ? {} : {body: JSON.stringify(payload)}),
     })
-    // Error bodies are text; keep them readable in the failure message.
-    const body = res.ok ? await res.json() : await res.text()
+    // DELETE replies 204 No Content; error bodies are text. Keep both readable.
+    const body = res.status === 204 ? undefined : res.ok ? await res.json() : await res.text()
     return {status: res.status, body}
   }
 }
@@ -138,17 +138,20 @@ interface IssueComment {
   readonly body?: string
 }
 
-// The id of the existing summary comment on the PR, if one was posted before.
-async function findExistingComment(gh: GhClient, path: string): Promise<number | undefined> {
+// Every summary comment on the PR, oldest first. The list endpoint has no
+// filter and no sort option, so every page is walked: on a PR with more than
+// a page of comments the summary falls off page one, and reading only that
+// page would post a fresh duplicate on every run.
+async function listMarkedComments(gh: GhClient, path: string): Promise<IssueComment[]> {
+  const marked: IssueComment[] = []
   for (let page = 1; ; page++) {
     const res = await gh('GET', `${path}?per_page=${PAGE_SIZE}&page=${page}`)
     if (res.status !== 200) {
       throw new Error(`GitHub API GET ${path} -> HTTP ${res.status} ${res.body}`)
     }
     const comments = res.body as IssueComment[]
-    const existing = comments.find((comment) => comment.body?.startsWith(MARKER))
-    if (existing) return existing.id
-    if (comments.length < PAGE_SIZE) return undefined
+    marked.push(...comments.filter((comment) => comment.body?.startsWith(MARKER)))
+    if (comments.length < PAGE_SIZE) return marked
   }
 }
 
@@ -159,25 +162,41 @@ export interface UpsertParams {
   readonly body: string
 }
 
-// Edits the previous summary comment in place, or posts one when the PR has
-// none yet, so the conversation carries a single always-current summary.
-export async function upsertComment(params: UpsertParams): Promise<'created' | 'updated'> {
+export interface UpsertOutcome {
+  readonly action: 'created' | 'updated'
+  readonly removed: number
+}
+
+// Edits the oldest summary comment in place (stable position in the thread),
+// or posts one when the PR has none yet, and deletes any other summary
+// comments: the review job runs on every push with no concurrency group, so
+// two overlapping runs can each post before either sees the other's, and
+// without this the loser's comment would sit stale on the PR forever.
+export async function upsertComment(params: UpsertParams): Promise<UpsertOutcome> {
   const {gh, repo, prNumber, body} = params
   const listPath = `/repos/${repo}/issues/${prNumber}/comments`
-  const existingId = await findExistingComment(gh, listPath)
-  if (existingId === undefined) {
+  const [keep, ...duplicates] = await listMarkedComments(gh, listPath)
+  for (const duplicate of duplicates) {
+    const deletePath = `/repos/${repo}/issues/comments/${duplicate.id}`
+    const res = await gh('DELETE', deletePath)
+    // Already gone -- a racing run got there first -- is the goal state.
+    if (res.status !== 204 && res.status !== 404) {
+      throw new Error(`GitHub API DELETE ${deletePath} -> HTTP ${res.status} ${res.body}`)
+    }
+  }
+  if (keep === undefined) {
     const res = await gh('POST', listPath, {body})
     if (res.status !== 201) {
       throw new Error(`GitHub API POST ${listPath} -> HTTP ${res.status} ${res.body}`)
     }
-    return 'created'
+    return {action: 'created', removed: duplicates.length}
   }
-  const editPath = `/repos/${repo}/issues/comments/${existingId}`
+  const editPath = `/repos/${repo}/issues/comments/${keep.id}`
   const res = await gh('PATCH', editPath, {body})
   if (res.status !== 200) {
     throw new Error(`GitHub API PATCH ${editPath} -> HTTP ${res.status} ${res.body}`)
   }
-  return 'updated'
+  return {action: 'updated', removed: duplicates.length}
 }
 
 if (import.meta.main) {
@@ -201,8 +220,9 @@ async function main(): Promise<void> {
 
   const summary = summarizeFindingsFile(await Bun.file(findingsFile).json())
   const body = buildCommentBody({repo, headSha, summary})
-  const outcome = await upsertComment({gh: makeGhClient(token), repo, prNumber, body})
+  const {action, removed} = await upsertComment({gh: makeGhClient(token), repo, prNumber, body})
+  const plural = (n: number, noun: string): string => `${n} ${noun}${n === 1 ? '' : 's'}`
   console.log(
-    `Warden run summary comment ${outcome} (${summary.skills.length} skill${summary.skills.length === 1 ? '' : 's'}, ${summary.totalFindings} finding${summary.totalFindings === 1 ? '' : 's'})`,
+    `Warden run summary comment ${action} (${plural(summary.skills.length, 'skill')}, ${plural(summary.totalFindings, 'finding')})${removed ? ` (removed ${plural(removed, 'duplicate')})` : ''}`,
   )
 }

@@ -137,45 +137,112 @@ interface Call {
   readonly payload?: unknown
 }
 
+interface FakeComment {
+  readonly id: number
+  readonly body: string
+}
+
 const fakeGh = (
-  comments: readonly {id: number; body: string}[],
+  pages: readonly (readonly FakeComment[])[],
+  deleteStatus = 204,
 ): {gh: GhClient; calls: Call[]} => {
   const calls: Call[] = []
   const gh: GhClient = async (method, path, payload): Promise<GhResponse> => {
     calls.push({method, path, payload})
-    if (method === 'GET') return {status: 200, body: comments}
+    if (method === 'GET') {
+      const page = Number(new URL(`https://x${path}`).searchParams.get('page'))
+      return {status: 200, body: pages[page - 1] ?? []}
+    }
     if (method === 'POST') return {status: 201, body: {}}
+    if (method === 'DELETE') return {status: deleteStatus, body: undefined}
     return {status: 200, body: {}}
   }
   return {gh, calls}
 }
 
+const writes = (calls: readonly Call[]): Call[] => calls.filter((call) => call.method !== 'GET')
+
 test('upsertComment posts a new comment when the PR has no summary yet', async () => {
-  const {gh, calls} = fakeGh([{id: 1, body: 'See this change in revision.city'}])
+  const {gh, calls} = fakeGh([[{id: 1, body: 'See this change in revision.city'}]])
 
   const outcome = await upsertComment({gh, repo, prNumber: '629', body: `${MARKER}\nnew`})
 
-  expect(outcome).toBe('created')
-  expect(calls.at(-1)).toEqual({
-    method: 'POST',
-    path: '/repos/DavidJFelix/DavidJFelix/issues/629/comments',
-    payload: {body: `${MARKER}\nnew`},
-  })
+  expect(outcome).toEqual({action: 'created', removed: 0})
+  expect(writes(calls)).toEqual([
+    {
+      method: 'POST',
+      path: '/repos/DavidJFelix/DavidJFelix/issues/629/comments',
+      payload: {body: `${MARKER}\nnew`},
+    },
+  ])
 })
 
 test('upsertComment edits the existing summary comment in place', async () => {
   const {gh, calls} = fakeGh([
-    {id: 1, body: 'unrelated'},
-    {id: 42, body: `${MARKER}\nold`},
+    [
+      {id: 1, body: 'unrelated'},
+      {id: 42, body: `${MARKER}\nold`},
+    ],
   ])
 
   const outcome = await upsertComment({gh, repo, prNumber: '629', body: `${MARKER}\nnew`})
 
-  expect(outcome).toBe('updated')
-  expect(calls.at(-1)).toEqual({
-    method: 'PATCH',
-    path: '/repos/DavidJFelix/DavidJFelix/issues/comments/42',
-    payload: {body: `${MARKER}\nnew`},
+  expect(outcome).toEqual({action: 'updated', removed: 0})
+  expect(writes(calls)).toEqual([
+    {
+      method: 'PATCH',
+      path: '/repos/DavidJFelix/DavidJFelix/issues/comments/42',
+      payload: {body: `${MARKER}\nnew`},
+    },
+  ])
+})
+
+test('upsertComment keeps the oldest summary and deletes duplicates from overlapping runs', async () => {
+  const {gh, calls} = fakeGh([
+    [
+      {id: 42, body: `${MARKER}\nfirst`},
+      {id: 43, body: `${MARKER}\nracer`},
+    ],
+  ])
+
+  const outcome = await upsertComment({gh, repo, prNumber: '629', body: `${MARKER}\nnew`})
+
+  expect(outcome).toEqual({action: 'updated', removed: 1})
+  expect(writes(calls)).toEqual([
+    {method: 'DELETE', path: '/repos/DavidJFelix/DavidJFelix/issues/comments/43', payload: undefined},
+    {
+      method: 'PATCH',
+      path: '/repos/DavidJFelix/DavidJFelix/issues/comments/42',
+      payload: {body: `${MARKER}\nnew`},
+    },
+  ])
+})
+
+test('upsertComment walks every page, so a summary past page one is still found', async () => {
+  const filler = Array.from({length: 100}, (_, i) => ({id: i + 1, body: `comment ${i + 1}`}))
+  const {gh, calls} = fakeGh([filler, [{id: 500, body: `${MARKER}\nold`}]])
+
+  const outcome = await upsertComment({gh, repo, prNumber: '629', body: MARKER})
+
+  expect(outcome).toEqual({action: 'updated', removed: 0})
+  expect(calls.filter((call) => call.method === 'GET')).toHaveLength(2)
+  expect(writes(calls).at(-1)?.path).toBe('/repos/DavidJFelix/DavidJFelix/issues/comments/500')
+})
+
+test('upsertComment treats a duplicate that is already gone as deleted', async () => {
+  const {gh} = fakeGh(
+    [
+      [
+        {id: 42, body: `${MARKER}\nfirst`},
+        {id: 43, body: `${MARKER}\nracer`},
+      ],
+    ],
+    404,
+  )
+
+  await expect(upsertComment({gh, repo, prNumber: '629', body: MARKER})).resolves.toEqual({
+    action: 'updated',
+    removed: 1,
   })
 })
 

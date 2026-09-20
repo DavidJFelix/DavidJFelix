@@ -128,6 +128,34 @@ test('a single-line location links one line and a skill error replaces its count
   )
 })
 
+test('a model-reported path cannot break out of the location link', () => {
+  const body = buildCommentBody({
+    repo,
+    headSha,
+    summary: {
+      totalFindings: 1,
+      skills: [
+        {
+          name: 'code-review',
+          findings: [
+            {
+              severity: 'low',
+              title: 't',
+              description: 'd',
+              location: {path: 'docs/a b"><script>&.md', startLine: 3},
+            },
+          ],
+        },
+      ],
+    },
+  })
+
+  expect(body).toContain(
+    '<a href="https://github.com/DavidJFelix/DavidJFelix/blob/46f59e1e652f8868b2e311463e73ef199c693ec4/docs/a%20b%22%3E%3Cscript%3E&amp;.md#L3">' +
+      '<code>docs/a b&quot;&gt;&lt;script&gt;&amp;.md:3</code></a>',
+  )
+})
+
 test.each([
   [0, '0s'],
   [11_600, '12s'],

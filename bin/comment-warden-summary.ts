@@ -101,7 +101,7 @@ const escapeCell = (text: string): string => text.replace(/\|/g, '\\|').replace(
 // Titles and paths land inside raw HTML (<summary>), where markup would render
 // instead of the words.
 const escapeHtml = (text: string): string =>
-  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
 export interface CommentBodyParams {
   // owner/name exactly as GitHub reports it (GITHUB_REPOSITORY).
@@ -110,19 +110,23 @@ export interface CommentBodyParams {
   readonly summary: RunSummary
 }
 
-// `path:12-14`, linked to those lines of the file at the reviewed head.
+// `path:12-14`, linked to those lines of the file at the reviewed head. The
+// path is model-reported, so it is percent-encoded for the URL and then
+// HTML-escaped for the attribute, the same as the visible copy.
 function renderLocation(repo: string, headSha: string, location: FindingLocation): string {
   const {path, startLine, endLine} = location
   const range = endLine !== undefined && endLine !== startLine ? `${startLine}-${endLine}` : `${startLine}`
   const anchor = endLine !== undefined && endLine !== startLine ? `L${startLine}-L${endLine}` : `L${startLine}`
-  const url = `https://github.com/${repo}/blob/${headSha}/${path}#${anchor}`
-  return `<a href="${url}"><code>${escapeHtml(path)}:${range}</code></a>`
+  const url = `https://github.com/${repo}/blob/${headSha}/${encodeURI(path)}#${anchor}`
+  return `<a href="${escapeHtml(url)}"><code>${escapeHtml(path)}:${range}</code></a>`
 }
 
 // One collapsible block per finding, the way Warden renders them in Checks:
 // the title, severity, and location on the summary line, the description
-// inside. Blank lines around the description keep Markdown rendering inside
-// the HTML block.
+// inside. The description is deliberately left as Markdown -- Warden posts the
+// same text as Markdown in its own inline review comments and check summaries,
+// and escaping it would turn every code span into literal backticks. Blank
+// lines around it keep Markdown rendering inside the HTML block.
 function renderFinding(repo: string, headSha: string, finding: FindingDetail): string {
   const where = finding.location ? ` · ${renderLocation(repo, headSha, finding.location)}` : ''
   return [

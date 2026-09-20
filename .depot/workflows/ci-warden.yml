@@ -113,10 +113,12 @@ jobs:
         with:
           mode: report
           findings-file: ${{ steps.warden-analyze.outputs.findings-file }}
-      # Warden posts inline comments only for findings on a diff line, so a
-      # clean run is visible only as check runs on the commit. This keeps one
-      # sticky PR comment current with the latest run's per-skill summary, so
-      # the conversation shows Warden looked at the head. (`reportOnSuccess`
+      # Warden posts inline comments only for findings at or above reportOn
+      # that land on a diff line; everything else lives in the Checks tab, and
+      # a clean run is visible only as check runs on the commit. This keeps one
+      # sticky PR comment current with the latest run: the per-skill summary
+      # and every finding in full, so the conversation shows what Warden saw
+      # on the head without a trip to Checks. (`reportOnSuccess`
       # in warden.toml would be the built-in way, but 0.48.0 drops a body-only
       # COMMENT review before posting, so it is inert.) Runs even when the
       # report step failed the check on findings -- that is exactly when the

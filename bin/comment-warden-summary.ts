@@ -1,19 +1,34 @@
 #!/usr/bin/env bun
 // Keeps one sticky PR comment current with the latest Warden run: which head
-// it reviewed, and per skill how many findings it produced, how long it took,
-// and what it cost. Warden itself posts inline review comments only for
-// findings that land on a diff line, and its `reportOnSuccess` option is inert
-// in 0.48.0 (a body-only COMMENT review is dropped before posting), so without
-// this a clean run is visible only as check runs on the commit -- nothing in
-// the PR conversation says Warden looked at the current head. Reads the
+// it reviewed, per skill how many findings it produced, how long it took, and
+// what it cost, and then every finding in full -- title, severity, a link to
+// the lines at that head, and the description. Warden itself posts inline
+// review comments only for findings at or above `reportOn` that land on a
+// diff line (the rest live in the Checks tab), and its `reportOnSuccess`
+// option is inert in 0.48.0 (a body-only COMMENT review is dropped before
+// posting), so without this a clean run is invisible in the PR conversation
+// and a low-severity finding takes a trip to Checks to read. Reads the
 // structured findings file the `warden analyze` step writes. Uses the
 // Actions-provided GITHUB_TOKEN (needs `pull-requests: write`).
 
 export const MARKER = '<!-- warden-run-summary -->'
 
+export interface FindingLocation {
+  readonly path: string
+  readonly startLine: number
+  readonly endLine?: number
+}
+
+export interface FindingDetail {
+  readonly severity: string
+  readonly title: string
+  readonly description: string
+  readonly location?: FindingLocation
+}
+
 export interface SkillSummary {
   readonly name: string
-  readonly findings: number
+  readonly findings: readonly FindingDetail[]
   readonly durationMs?: number
   readonly costUsd?: number
   readonly checkRunUrl?: string
@@ -25,10 +40,16 @@ export interface RunSummary {
   readonly skills: readonly SkillSummary[]
 }
 
+interface FindingsFileFinding {
+  readonly severity?: string
+  readonly title?: string
+  readonly description?: string
+  readonly location?: FindingLocation
+}
+
 interface FindingsFileSkill {
   readonly name: string
-  readonly findings?: readonly unknown[]
-  readonly findingsBySeverity?: Readonly<Record<string, number>>
+  readonly findings?: readonly FindingsFileFinding[]
   readonly durationMs?: number
   readonly usage?: {readonly costUSD?: number}
   readonly checkRunUrl?: string
@@ -40,10 +61,12 @@ interface FindingsFile {
   readonly skills?: readonly FindingsFileSkill[]
 }
 
-const countFindings = (skill: FindingsFileSkill): number =>
-  Array.isArray(skill.findings)
-    ? skill.findings.length
-    : Object.values(skill.findingsBySeverity ?? {}).reduce((sum, n) => sum + n, 0)
+const toFindingDetail = (finding: FindingsFileFinding): FindingDetail => ({
+  severity: finding.severity ?? 'unknown',
+  title: finding.title ?? '(untitled)',
+  description: finding.description ?? '',
+  location: finding.location,
+})
 
 // The parts of Warden's findings file (FindingsOutputSchema, version 1) the
 // comment needs. Tolerant of optional fields so a partial file -- a skill that
@@ -52,14 +75,14 @@ export function summarizeFindingsFile(raw: unknown): RunSummary {
   const file = (raw ?? {}) as FindingsFile
   const skills = (file.skills ?? []).map((skill) => ({
     name: skill.name,
-    findings: countFindings(skill),
+    findings: (skill.findings ?? []).map(toFindingDetail),
     durationMs: skill.durationMs,
     costUsd: skill.usage?.costUSD,
     checkRunUrl: skill.checkRunUrl,
     error: skill.error?.message,
   }))
   const totalFindings =
-    file.summary?.totalFindings ?? skills.reduce((sum, skill) => sum + skill.findings, 0)
+    file.summary?.totalFindings ?? skills.reduce((sum, skill) => sum + skill.findings.length, 0)
   return {totalFindings, skills}
 }
 
@@ -75,11 +98,41 @@ const formatCost = (usd: number): string => `$${usd.toFixed(2)}`
 // A table cell must stay on one line and must not split the row.
 const escapeCell = (text: string): string => text.replace(/\|/g, '\\|').replace(/\r?\n/g, ' ')
 
+// Titles and paths land inside raw HTML (<summary>), where markup would render
+// instead of the words.
+const escapeHtml = (text: string): string =>
+  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
 export interface CommentBodyParams {
   // owner/name exactly as GitHub reports it (GITHUB_REPOSITORY).
   readonly repo: string
   readonly headSha: string
   readonly summary: RunSummary
+}
+
+// `path:12-14`, linked to those lines of the file at the reviewed head.
+function renderLocation(repo: string, headSha: string, location: FindingLocation): string {
+  const {path, startLine, endLine} = location
+  const range = endLine !== undefined && endLine !== startLine ? `${startLine}-${endLine}` : `${startLine}`
+  const anchor = endLine !== undefined && endLine !== startLine ? `L${startLine}-L${endLine}` : `L${startLine}`
+  const url = `https://github.com/${repo}/blob/${headSha}/${path}#${anchor}`
+  return `<a href="${url}"><code>${escapeHtml(path)}:${range}</code></a>`
+}
+
+// One collapsible block per finding, the way Warden renders them in Checks:
+// the title, severity, and location on the summary line, the description
+// inside. Blank lines around the description keep Markdown rendering inside
+// the HTML block.
+function renderFinding(repo: string, headSha: string, finding: FindingDetail): string {
+  const where = finding.location ? ` · ${renderLocation(repo, headSha, finding.location)}` : ''
+  return [
+    '<details>',
+    `<summary><strong>${escapeHtml(finding.title)}</strong> · ${escapeHtml(finding.severity)}${where}</summary>`,
+    '',
+    finding.description.trim(),
+    '',
+    '</details>',
+  ].join('\n')
 }
 
 export function buildCommentBody(params: CommentBodyParams): string {
@@ -90,21 +143,28 @@ export function buildCommentBody(params: CommentBodyParams): string {
     totalFindings === 0
       ? 'no findings'
       : `${totalFindings} finding${totalFindings === 1 ? '' : 's'}`
-  const lines = [
-    MARKER,
-    `Warden reviewed ${commitLink}: ${verdict}.`,
-    '',
+  const table = [
     '| Skill | Findings | Duration | Cost |',
     '| --- | --- | --- | --- |',
     ...skills.map((skill) => {
       const name = skill.checkRunUrl ? `[${skill.name}](${skill.checkRunUrl})` : skill.name
-      const findings = skill.error ? `error: ${escapeCell(skill.error)}` : String(skill.findings)
+      const findings = skill.error
+        ? `error: ${escapeCell(skill.error)}`
+        : String(skill.findings.length)
       const duration = skill.durationMs === undefined ? '' : formatDuration(skill.durationMs)
       const cost = skill.costUsd === undefined ? '' : formatCost(skill.costUsd)
       return `| ${name} | ${findings} | ${duration} | ${cost} |`
     }),
   ]
-  return lines.join('\n')
+  const findings = skills
+    .filter((skill) => skill.findings.length > 0)
+    .flatMap((skill) => [
+      '',
+      `**${skill.name}**`,
+      '',
+      ...skill.findings.map((finding) => renderFinding(repo, headSha, finding)),
+    ])
+  return [MARKER, `Warden reviewed ${commitLink}: ${verdict}.`, '', ...table, ...findings].join('\n')
 }
 
 export interface GhResponse {

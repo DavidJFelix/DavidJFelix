@@ -20,12 +20,12 @@ test('the body leads with the marker, names the head, and tabulates every skill'
       skills: [
         {
           name: 'security-review',
-          findings: 0,
+          findings: [],
           durationMs: 126_000,
           costUsd: 0.0149,
           checkRunUrl: 'https://github.com/DavidJFelix/DavidJFelix/runs/1',
         },
-        {name: 'code-review', findings: 0, durationMs: 327_000, costUsd: 0.12},
+        {name: 'code-review', findings: [], durationMs: 327_000, costUsd: 0.12},
       ],
     },
   })
@@ -41,15 +41,81 @@ test('the body leads with the marker, names the head, and tabulates every skill'
   )
 })
 
-test('findings are counted in the headline and a skill error replaces its count', () => {
+test('each finding is posted in full under its skill, with a link to the lines at the head', () => {
+  const body = buildCommentBody({
+    repo,
+    headSha,
+    summary: {
+      totalFindings: 2,
+      skills: [
+        {name: 'security-review', findings: [], durationMs: 4000, costUsd: 0},
+        {
+          name: 'code-review',
+          findings: [
+            {
+              severity: 'low',
+              title: 'Sticky summary never cleans up <duplicates> & such',
+              description: 'The first paragraph.\n\nA `second` one.\n',
+              location: {path: 'bin/comment-warden-summary.ts', startLine: 164, endLine: 180},
+            },
+            {severity: 'medium', title: 'No location', description: 'Applies to the whole change.'},
+          ],
+          durationMs: 746_000,
+          costUsd: 0.21,
+        },
+      ],
+    },
+  })
+
+  expect(body).toBe(
+    `${MARKER}\n` +
+      'Warden reviewed [`46f59e1`](https://github.com/DavidJFelix/DavidJFelix/commit/46f59e1e652f8868b2e311463e73ef199c693ec4): 2 findings.\n' +
+      '\n' +
+      '| Skill | Findings | Duration | Cost |\n' +
+      '| --- | --- | --- | --- |\n' +
+      '| security-review | 0 | 4s | $0.00 |\n' +
+      '| code-review | 2 | 12m 26s | $0.21 |\n' +
+      '\n' +
+      '**code-review**\n' +
+      '\n' +
+      '<details>\n' +
+      '<summary><strong>Sticky summary never cleans up &lt;duplicates&gt; &amp; such</strong> · low · ' +
+      '<a href="https://github.com/DavidJFelix/DavidJFelix/blob/46f59e1e652f8868b2e311463e73ef199c693ec4/bin/comment-warden-summary.ts#L164-L180">' +
+      '<code>bin/comment-warden-summary.ts:164-180</code></a></summary>\n' +
+      '\n' +
+      'The first paragraph.\n\nA `second` one.\n' +
+      '\n' +
+      '</details>\n' +
+      '<details>\n' +
+      '<summary><strong>No location</strong> · medium</summary>\n' +
+      '\n' +
+      'Applies to the whole change.\n' +
+      '\n' +
+      '</details>',
+  )
+})
+
+test('a single-line location links one line and a skill error replaces its count', () => {
   const body = buildCommentBody({
     repo,
     headSha,
     summary: {
       totalFindings: 1,
       skills: [
-        {name: 'security-review', findings: 1, durationMs: 4000, costUsd: 0},
-        {name: 'code-review', findings: 0, error: 'model | catalog\nmiss'},
+        {
+          name: 'security-review',
+          findings: [
+            {
+              severity: 'high',
+              title: 'One line',
+              description: 'd',
+              location: {path: 'warden.toml', startLine: 7, endLine: 7},
+            },
+          ],
+          durationMs: 4000,
+          costUsd: 0,
+        },
+        {name: 'code-review', findings: [], error: 'model | catalog\nmiss'},
       ],
     },
   })
@@ -57,6 +123,9 @@ test('findings are counted in the headline and a skill error replaces its count'
   expect(body).toContain(': 1 finding.\n')
   expect(body).toContain('| security-review | 1 | 4s | $0.00 |')
   expect(body).toContain('| code-review | error: model \\| catalog miss |  |  |')
+  expect(body).toContain(
+    '<a href="https://github.com/DavidJFelix/DavidJFelix/blob/46f59e1e652f8868b2e311463e73ef199c693ec4/warden.toml#L7"><code>warden.toml:7</code></a>',
+  )
 })
 
 test.each([
@@ -77,7 +146,18 @@ test('summarizeFindingsFile lifts what the comment needs out of the findings fil
       {
         name: 'security-review',
         summary: 'x',
-        findings: [{id: 'a'}, {id: 'b'}],
+        findings: [
+          {
+            id: 'a',
+            severity: 'low',
+            confidence: 'high',
+            title: 'T',
+            description: 'D',
+            location: {path: 'p.ts', startLine: 1, endLine: 2},
+            reportedBy: [{skillName: 'security-review', role: 'origin'}],
+          },
+          {id: 'b', severity: 'medium', title: 'U', description: 'E'},
+        ],
         durationMs: 1000,
         usage: {inputTokens: 1, outputTokens: 1, costUSD: 0.5},
         checkRunUrl: 'https://example.test/run',
@@ -85,7 +165,7 @@ test('summarizeFindingsFile lifts what the comment needs out of the findings fil
       {
         name: 'code-review',
         summary: 'y',
-        findingsBySeverity: {high: 0, medium: 0, low: 0},
+        findings: [],
         error: {code: 'runtime_error', message: 'boom'},
       },
     ],
@@ -96,7 +176,15 @@ test('summarizeFindingsFile lifts what the comment needs out of the findings fil
     skills: [
       {
         name: 'security-review',
-        findings: 2,
+        findings: [
+          {
+            severity: 'low',
+            title: 'T',
+            description: 'D',
+            location: {path: 'p.ts', startLine: 1, endLine: 2},
+          },
+          {severity: 'medium', title: 'U', description: 'E', location: undefined},
+        ],
         durationMs: 1000,
         costUsd: 0.5,
         checkRunUrl: 'https://example.test/run',
@@ -104,7 +192,7 @@ test('summarizeFindingsFile lifts what the comment needs out of the findings fil
       },
       {
         name: 'code-review',
-        findings: 0,
+        findings: [],
         durationMs: undefined,
         costUsd: undefined,
         checkRunUrl: undefined,
@@ -116,12 +204,12 @@ test('summarizeFindingsFile lifts what the comment needs out of the findings fil
 
 test('summarizeFindingsFile tolerates an empty or malformed file', () => {
   expect(summarizeFindingsFile(undefined)).toEqual({totalFindings: 0, skills: []})
-  expect(summarizeFindingsFile({skills: [{name: 'only'}]})).toEqual({
-    totalFindings: 0,
+  expect(summarizeFindingsFile({skills: [{name: 'only', findings: [{}]}]})).toEqual({
+    totalFindings: 1,
     skills: [
       {
         name: 'only',
-        findings: 0,
+        findings: [{severity: 'unknown', title: '(untitled)', description: '', location: undefined}],
         durationMs: undefined,
         costUsd: undefined,
         checkRunUrl: undefined,

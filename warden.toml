@@ -32,6 +32,10 @@ reportOn = "medium"
 # failure — Warden's determineConclusion only returns "failure" when failCheck
 # is set. This is what makes the gate actually gate.
 failCheck = true
+# Post a review comment even when there are no findings. Without this a clean
+# run is visible only as a check run on the commit, so it is hard to tell from
+# the PR conversation whether Warden looked at the current head at all.
+reportOnSuccess = true
 
 # Reasoning effort for the repo-aware review agent (off, low, medium, high,
 # xhigh, max; runtime default when omitted). High is affordable because the

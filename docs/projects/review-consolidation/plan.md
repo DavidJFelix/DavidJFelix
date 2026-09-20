@@ -14,8 +14,8 @@ the other tool steps back. No two tools should post competing findings on the sa
 
 - Warden landed 2026-06-30 (`warden.toml`, `.depot/workflows/ci-warden.yml`, CLI pinned via mise —
   see the [changelog](../../changelog/2026-06.md)). It runs the built-in `security-review` and
-  `code-review` skills on PRs labeled `Warden` (label-gated since 2026-07-05; always-on before
-  that).
+  `code-review` skills on every non-draft PR (always-on again since 2026-09-19; label-gated from
+  2026-07-05 while the model of the day made per-push reviews expensive).
 - The 2026-06 Depot migration deleted the old `bot-claude-code-review.yml` auto-reviewer, so the
   **automated PR-review slot has been empty since**. Warden refills it — it is a replacement, not a
   duplicate.
@@ -27,7 +27,7 @@ the other tool steps back. No two tools should post competing findings on the sa
 
 | Tool                                        | Slot                        | When                       | Posts to PR?                 |
 | ------------------------------------------- | --------------------------- | -------------------------- | ---------------------------- |
-| **Warden**                                  | Canonical automated gate    | PR labeled `Warden` (CI)   | **Yes** — sole source        |
+| **Warden**                                  | Canonical automated gate    | Every non-draft PR (CI)    | **Yes** — sole source        |
 | Built-in `/code-review`, `/security-review` | Local inner loop, on-demand | Before you push            | No (run without `--comment`) |
 | `/review` (Standards + Spec)                | Holistic, on-demand         | When judging a branch/spec | No                           |
 
@@ -54,13 +54,17 @@ not file removal.
    _Standards_ axis is still needed or is now subsumed by the gate. Keep the _Spec_ axis regardless
    — Warden does not check conformance to the originating issue/PRD. Collapse surfaces only where
    they genuinely duplicate.
-5. **Tune and retire.** Always-on vs. label-gated: decided 2026-07-05 — two days of live per-push
-   reviews cost too much, so the gate is label-only (`labeled` events + `Warden` label; the warden
-   action cannot review a PR from `workflow_dispatch` — it routes dispatch events to schedule-type
-   sweeps — so `ci-warden.yml`'s dispatch job runs the CLI instead, reviewing any branch into the
-   job log rather than onto a PR). Remaining: calibrate `failOn` / `reportOn`; decide where
-   CodeRabbit fits: it currently reviews every PR in parallel with Warden — under evaluation; the
-   thesis says one of them must end up owning posted findings. Confirm no other stale review
+5. **Tune and retire.** Always-on vs. label-gated: went label-only 2026-07-05 after two days of
+   per-push reviews cost too much on the model of the day; back to always-on 2026-09-19 (every
+   non-draft PR, `[defaults.agent] effort = "high"`) now that `WARDEN_MODEL` points at a model cheap
+   enough that per-push spend is negligible. PRs from the repo's GitHub App (`djf-renovate[bot]`:
+   Renovate bumps and the changelog roll-up) are excluded by the job guard, since `warden.toml`
+   cannot filter on author. The `Warden` label stays as the re-run / draft / bot-PR opt-in lever.
+   The warden action cannot review a PR from `workflow_dispatch` — it routes dispatch events to
+   schedule-type sweeps — so `ci-warden.yml`'s dispatch job runs the CLI instead, reviewing any
+   branch into the job log rather than onto a PR. Remaining: calibrate `failOn` / `reportOn`; decide
+   where CodeRabbit fits: it currently reviews every PR in parallel with Warden — under evaluation;
+   the thesis says one of them must end up owning posted findings. Confirm no other stale review
    automation remains. Capture the outcome in the changelog and delete this project directory.
 
 ## Non-goals

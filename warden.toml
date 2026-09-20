@@ -33,20 +33,33 @@ reportOn = "medium"
 # is set. This is what makes the gate actually gate.
 failCheck = true
 
+# Reasoning effort for the repo-aware review agent (off, low, medium, high,
+# xhigh, max; runtime default when omitted). High is affordable because the
+# model behind WARDEN_MODEL is cheap per token; if the model changes to a
+# pricier one, this is the first dial to turn back down.
+[defaults.agent]
+effort = "high"
+
 # Built-in baseline application-security review. Whole-repo: no `paths` filter,
 # so it sees the entire PR diff across all apps and root config.
 [[skills]]
 name = "security-review"
 
-# Label-gated: `labeled` is the only action, and on labeled events the matcher
-# only fires when the event's label is in `labels`. Adding the "Warden" label
-# to a PR (draft included — labeling is the explicit opt-in) reviews its
-# current head; remove and re-add to re-run. Mirrors the job-level guard in
-# .depot/workflows/ci-warden.yml, which keeps other labels from even
-# allocating a runner.
+# Always-on for non-draft PRs. With `draft` set, the matcher runs on
+# (non-draft) OR (has this label), and `labeled` events only match this
+# specific label. Net effect: every ready PR reviews on open and on each push,
+# random labels never trigger re-reviews, and adding the "Warden" label is the
+# manual lever — it re-runs a review on the current head (remove and re-add
+# to re-run again) and opts a draft in. .depot/workflows/ci-warden.yml carries
+# the same filter at the job level so skipped events never allocate a runner,
+# plus one rule this file cannot express (triggers filter on action, draft,
+# label, and paths — not author): PRs opened by the repo's GitHub App
+# (Renovate bumps, the changelog roll-up) skip the automatic review and only
+# run when labeled.
 [[skills.triggers]]
 type = "pull_request"
-actions = ["labeled"]
+actions = ["opened", "synchronize", "reopened", "ready_for_review", "labeled"]
+draft = false
 labels = ["Warden"]
 
 # Built-in correctness / logic-bug review. Also whole-repo.
@@ -55,5 +68,6 @@ name = "code-review"
 
 [[skills.triggers]]
 type = "pull_request"
-actions = ["labeled"]
+actions = ["opened", "synchronize", "reopened", "ready_for_review", "labeled"]
+draft = false
 labels = ["Warden"]

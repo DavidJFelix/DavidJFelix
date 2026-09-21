@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BugsRouteImport } from './routes/bugs'
 import { Route as DiagSplatRouteImport } from './routes/diag/$'
+import { Route as OgDefaultDotpngRouteImport } from './routes/og/default[.]png'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,35 +29,44 @@ const DiagSplatRoute = DiagSplatRouteImport.update({
   path: '/diag/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OgDefaultDotpngRoute = OgDefaultDotpngRouteImport.update({
+  id: '/og/default.png',
+  path: '/og/default.png',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bugs': typeof BugsRoute
   '/diag/$': typeof DiagSplatRoute
+  '/og/default.png': typeof OgDefaultDotpngRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bugs': typeof BugsRoute
   '/diag/$': typeof DiagSplatRoute
+  '/og/default.png': typeof OgDefaultDotpngRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/bugs': typeof BugsRoute
   '/diag/$': typeof DiagSplatRoute
+  '/og/default.png': typeof OgDefaultDotpngRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/bugs' | '/diag/$'
+  fullPaths: '/' | '/bugs' | '/diag/$' | '/og/default.png'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/bugs' | '/diag/$'
-  id: '__root__' | '/' | '/bugs' | '/diag/$'
+  to: '/' | '/bugs' | '/diag/$' | '/og/default.png'
+  id: '__root__' | '/' | '/bugs' | '/diag/$' | '/og/default.png'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BugsRoute: typeof BugsRoute
   DiagSplatRoute: typeof DiagSplatRoute
+  OgDefaultDotpngRoute: typeof OgDefaultDotpngRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +92,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DiagSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/og/default.png': {
+      id: '/og/default.png'
+      path: '/og/default.png'
+      fullPath: '/og/default.png'
+      preLoaderRoute: typeof OgDefaultDotpngRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BugsRoute: BugsRoute,
   DiagSplatRoute: DiagSplatRoute,
+  OgDefaultDotpngRoute: OgDefaultDotpngRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

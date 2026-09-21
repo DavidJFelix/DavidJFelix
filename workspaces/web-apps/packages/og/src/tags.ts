@@ -43,6 +43,45 @@ export interface OgParams {
 
 export type OgTag = {property: string; content: string} | {name: string; content: string}
 
+export interface OgSiteParams {
+  // The site's canonical origin ('https://djf.io'); og:url and og:image are
+  // resolved against it, since scrapers only follow absolute URLs.
+  origin: string | URL
+  siteName: string
+  title: string
+  description: string
+  // The described page's path, for og:url; the root when omitted.
+  path?: string
+  // The card's path on the same origin.
+  image?: string
+  twitter?: OgTwitter
+}
+
+// The site-level bundle every app carries: url and image on the site's origin,
+// the shared card size and alt text, the large-image twitter card. A page
+// spreads over the result to override just its own fields.
+export const ogSite = (params: OgSiteParams): OgParams => {
+  const {
+    origin,
+    siteName,
+    title,
+    description,
+    path = '/',
+    image = '/og/default.png',
+    twitter,
+  } = params
+  return {
+    title,
+    description,
+    type: 'website',
+    siteName,
+    locale: 'en_US',
+    url: new URL(path, origin),
+    image: {url: new URL(image, origin), alt: `Title card for ${siteName}`, ...ogImageSize},
+    twitter: {card: 'summary_large_image', ...twitter},
+  }
+}
+
 // `title`/`description` feed both og: and twitter: variants -- scrapers that
 // honor twitter:* prefer it over og:*, so emitting both keeps them agreeing.
 export const ogTags = (params: OgParams): Array<OgTag> => {

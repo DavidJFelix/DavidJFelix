@@ -2,8 +2,11 @@
 
 ## Status
 
-**Draft** (2026-09-20) -- inventory complete; the plan below awaits David's answers to the open
-decisions before any code changes. No app has changed yet.
+**Active** (2026-09-21) -- implemented on one branch after the 2026-09-20 inventory and David's
+decisions below: every public app now serves a share card rendered at request time on its Worker,
+with `og:url`, a canonical link, and the large-image twitter card. Close into the changelog once the
+PR merges and the first production deploy confirms the cards render within the Workers plan's CPU
+budget (see "Risks"). The dynamic-card follow-ups below stay open as their own efforts.
 
 ## Goal
 
@@ -12,14 +15,14 @@ Bluesky, or Discord: a 1200x630 image, a title, a description, and a canonical U
 the app's own origin. djf.io is the bar. `@davidjfelix/og` (`workspaces/web-apps/packages/og`) is
 the mechanism, and it is already a dependency of every app.
 
-## Where each app stands (2026-09-20 inventory)
+## Where each app stood (2026-09-20 inventory)
 
-Every app already calls `ogTags` from `@davidjfelix/og` (the 2026-08 extraction wired it in). What
-differs is which fields each app passes. Scrapers care about four things: an absolute 1200x630
+Every app already called `ogTags` from `@davidjfelix/og` (the 2026-08 extraction wired it in). What
+differed was which fields each app passed. Scrapers care about four things: an absolute 1200x630
 `og:image`, `og:title` + `og:description`, `og:url`, and `twitter:card` (X only picks the
 large-image layout when it is set).
 
-| App                  | Stack                                 | Emits today                                                                                                                                                      | Missing for a real card                                                                | Notes                                                                                                                                                                                                                                                                            |
+| App                  | Stack                                 | Emitted before                                                                                                                                                   | Was missing for a real card                                                            | Notes                                                                                                                                                                                                                                                                            |
 | -------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | djf.io               | Astro                                 | title, description, type, site_name, locale, url, image (+width/height/alt), article:\*, twitter card/site/creator, canonical; per-post generated cards; seo e2e | --                                                                                     | The reference. `src/pages/og/[...slug].png.ts` prerenders one card per post plus a default.                                                                                                                                                                                      |
 | davidjfelix.com      | Astro                                 | title, description, type, site_name                                                                                                                              | url, image, twitter card, locale, canonical                                            | `site` is already set in `astro.config.mjs`, so absolute URLs are free.                                                                                                                                                                                                          |
@@ -29,101 +32,114 @@ large-image layout when it is set).
 | forzamonica.com      | TanStack Start                        | root defaults; eight routes override title                                                                                                                       | url, image, twitter card, locale, canonical                                            | Product routes already load Shopify's `featuredImage` into `loaderData`: a per-product `og:image` is a one-line follow-up, and works against mock.shop today.                                                                                                                    |
 | revision.city        | TanStack Start                        | root title and description are the placeholder string "revision.city"; `/` overrides description; `/diffs` overrides title + description                         | real root description, url, image, twitter card, canonical                             |                                                                                                                                                                                                                                                                                  |
 | startchi.com         | TanStack Start                        | title, description "startchi.com" (placeholder), type, site_name                                                                                                 | real description, url, image, twitter card, canonical                                  |                                                                                                                                                                                                                                                                                  |
-| f311x                | TanStack Start                        | title, type, site_name                                                                                                                                           | description, url, image, twitter card, canonical                                       | Will move behind auth; the landing page is what gets shared.                                                                                                                                                                                                                     |
+| f311x                | TanStack Start                        | title, type, site_name                                                                                                                                           | description, url, image, twitter card, canonical                                       | Will move behind auth; the landing page is what gets shared. Deploys through alchemy without the Cloudflare Vite plugin.                                                                                                                                                         |
 | calendar-visualizer  | Astro                                 | title, type                                                                                                                                                      | description (there is no meta description either), site_name, url, image, twitter card | Intentionally on workers.dev until the product is defined; the repo holds no canonical origin for it, so absolute image/url tags cannot be built yet.                                                                                                                            |
 | onvibes.org          | TanStack Start                        | title, description, type, site_name                                                                                                                              | -- (moot)                                                                              | Behind Cloudflare Access: scrapers get the login redirect, never the page.                                                                                                                                                                                                       |
 | alchemy-state-viewer | SvelteKit                             | title, type (home only)                                                                                                                                          | -- (moot)                                                                              | Behind Cloudflare Access; same.                                                                                                                                                                                                                                                  |
 
-In short: outside djf.io, no app emits `og:image`, `og:url`, or `twitter:card`, none has a
-`<link rel="canonical">`, and no static social image exists anywhere. Two apps ship their domain
-name as their description. The tag builder is solved; the image and the absolute URLs are the gap.
+In short: outside djf.io, no app emitted `og:image`, `og:url`, or `twitter:card`, none had a
+`<link rel="canonical">`, and no static social image existed anywhere. Two apps shipped their domain
+name as their description. The tag builder was solved; the image and the absolute URLs were the gap.
+
+## Decisions (David, 2026-09-21)
+
+1. A site-level helper in the package where possible; an app that needs its own parameters spreads
+   over it.
+2. One shared card template for now; per-app customization later.
+3. Cards render at **request time** on the Worker, not at build and not as committed PNGs.
+4. Descriptions: the drafts below stand until edited.
+5. ravrun's canonical origin is ravrun.com.
+6. No twitter handle on the new sites; djf.io keeps its `@davidjfelix`.
+7. Everything lands in one PR.
+8. Card colors come from each app's design tokens.
 
 ## The contract
 
-What every public app emits once this lands (djf.io already does):
+What every public app emits (djf.io already did):
 
 1. `og:title`, `og:description`, `og:type=website`, `og:site_name`, `og:locale=en_US`.
-2. `og:url` plus `<link rel="canonical">`, absolute, on the app's canonical domain. Skipped only
-   where the document cannot know its own path (ravrun's prerendered SPA shell).
+2. `og:url` plus `<link rel="canonical">`, absolute, on the app's canonical domain, naming the
+   requested page (TanStack roots read the path off the leaf match; Astro, SvelteKit, and Nuxt read
+   their own URL). Skipped only where the document cannot know its own path (ravrun's prerendered
+   SPA shell).
 3. `og:image`, absolute on the same origin, 1200x630, with `og:image:width`, `og:image:height`, and
-   `og:image:alt`; `twitter:image` mirrors it (the builder already does this).
-4. `twitter:card=summary_large_image`; `twitter:site`/`twitter:creator` only on David's own sites.
+   `og:image:alt`; `twitter:image` mirrors it.
+4. `twitter:card=summary_large_image` wherever a card exists; `summary` where none does.
 5. A real description: no app ships its domain name as its description.
 6. Per-route overrides (forzamonica.com's titled routes, revision.city's `/diffs`) keep composing
    through head merging; a route passes only the fields that differ.
-7. Each app's e2e suite asserts the tags on the home page and fetches `og:image`, checking the PNG
-   header for 1200x630 -- djf.io's `src/seo.e2e.test.ts` pattern.
+7. Each app's e2e suite asserts the tags on the home page and fetches `og:image` from the local
+   workerd boot, checking the PNG header for 1200x630 -- djf.io's `src/seo.e2e.test.ts` pattern.
 
 ## Mechanism
 
-Three package changes, then per-app wiring.
+The package renders on WebAssembly everywhere, and each framework only decides how the binaries
+reach it. `packages/og/README.md` is the reference; the shape:
 
-1. **`ogSite` helper** on the package root. Takes
-   `{origin, siteName, title, description, path?, twitter?}` and returns the full `OgParams`: `url`
-   from origin + path, `image` = `${origin}/og/default.png` with `ogImageSize` and a "Title card for
-   <siteName>" alt, `locale`, and `twitter.card`. Apps call `ogTags(ogSite({...}))`; djf.io keeps
-   its explicit call. (Decision 1: helper vs. inlining the four fields in eleven call sites.)
-2. **Card theming in `renderOgImage`**: an optional `theme` param
-   (`{background, foreground, muted, accent: [from, to]}`) defaulting to today's zinc/blue-violet
-   djf.io look, so djf.io's output stays byte-identical (its contract tests prove it). Fonts stay
-   Inter for v1; per-app brand fonts are a follow-up.
-3. **A build-time card generator**: `packages/og/bin/render-card.ts`, exposed as the workspace bin
-   `og-card`. It reads the app's `og.config.ts` (`{siteName, title, description, theme?, out}`) and
-   writes `public/og/default.png` (`static/og/` for SvelteKit). Each single-card app runs it first
-   in `build` (`"build": "og-card && vite build"`). The PNG is gitignored and rides into `dist/`,
-   `.output/`, or `.svelte-kit/` through the framework's static copy, which turbo's `build.outputs`
-   already covers. satori, sharp, and `@fontsource/inter` resolve from `packages/og`'s own tree
-   because the script lives there, so no app adds the three dependencies (the isolated-linker trap
-   the package README records). djf.io keeps its prerendered endpoint because it needs one card per
-   post.
+- **`ogSite`** on the package root takes
+  `{origin, siteName, title, description, path?, image?, twitter?}` and returns the full `OgParams`
+  (absolute url and image with the shared size and alt text, locale, the large-image card). Apps
+  call `ogTags(ogSite({...site, path}))` from a per-app `site.ts` that also carries the card theme.
+- **`createOgRenderer(runtime)`** on `./image` draws the card with satori (standalone build, Yoga
+  handed in as a module) and rasterizes it with `@resvg/resvg-wasm`; `sharp` is gone from the
+  package. `OgTheme` is `{background, foreground, muted, accent?}`, defaulting to djf.io's card.
+- **`ogCard`** on `./card` is the `/og/default.png` handler: it renders once and keeps the response
+  in the Workers Cache API's default cache, so a burst of scrapers rasterizes once per edge
+  location.
+- **Runtimes** load the two wasm binaries and the Inter files: `./runtime/vite` (`.wasm` imports the
+  Cloudflare Vite plugin turns into uploaded modules, `?inline` fonts), `./runtime/nitro` (unwasm's
+  `?module`, Nitro's `raw:`), `./runtime/node` (disk reads, for djf.io's prerender and the tests).
+  Resolution starts inside the package, so no app declares satori, resvg, or the fonts; djf.io is
+  the exception because its Node prerender externalizes them.
+- **Per framework**: TanStack Start apps mount a server route at `og/default[.]png.ts`; Astro an
+  on-demand endpoint (`prerender = false`); SvelteKit a `+server.ts` that loads the runtime on the
+  first request (its build imports every route module in Node to read page options) behind a small
+  Vite plugin that leaves `.wasm` imports for wrangler's bundler; Nuxt a Nitro route behind
+  `nitro.experimental.wasm`.
+- **satori is held at 0.32** (`.github/renovate.json`): 0.33's HarfBuzz shaper cannot load on
+  Workers (it reads `self.location` and compiles wasm from bytes).
 
-Alternatives considered: committing a PNG per app (binaries in the repo, which the package
-extraction deliberately avoided), and runtime rendering on Workers with satori + resvg-wasm (only
-needed for dynamic cards; see Phase 3).
+## What landed
 
-## Phases
+- Package: `ogSite`, the portable renderer with themes, `ogCard`, the three runtimes with consumer
+  type surfaces, `pngSize` on `./png`, a Vitest plugin that stands in for the bundlers so every
+  runtime renders a real card in the suite, 100% coverage.
+- djf.io: same prerendered endpoint and cards, now on the wasm rasterizer (`sharp` stays only for
+  astro:assets); its seo e2e and og route contract tests are the proof.
+- Cards + full tags + canonical + e2e: startchi.com, davidjfelix.com, monicandavid.com, ravrun (no
+  og:url, per the SPA shell), revision.city, forzamonica.com (product pages also offer the product
+  photo as the card), pkg.dog.
+- Tags only: f311x (deploys through alchemy without the Cloudflare Vite plugin, so no wasm module
+  rule to ride; `summary` card, no image) and calendar-visualizer (no canonical origin yet).
+- Unchanged: onvibes.org and alchemy-state-viewer, behind Cloudflare Access.
 
-1. **Package** -- `ogSite`, card theming, the `og-card` bin, and a `pngSize` helper on a `./png`
-   subpath (djf.io carries two copies today, in `src/seo.e2e.test.ts` and
-   `src/pages/og/_og-routes.test.ts`), each with unit tests. davidjfelix.com is wired as the first
-   consumer to prove the generator end to end (Astro, `site` already set). One PR.
-2. **Public apps** -- ravrun, monicandavid.com, pkg.dog, forzamonica.com, revision.city,
-   startchi.com, f311x: an origin constant, the `ogSite` call, `og.config.ts` + the build hook, the
-   canonical link, real descriptions, and one e2e case each. Grouped by framework for review
-   (TanStack x5, SvelteKit, Nuxt) or one PR per app under the affected-driven CI (Decision 6).
-3. **Dynamic cards** -- follow-ups, each its own project when the app is ready:
-   - forzamonica.com: per-product `og:image` from `featuredImage` (small enough to ride Phase 2).
-   - ravrun: shared-plan cards. Needs server rendering (a Worker `/og/*.png` route with satori +
-     resvg-wasm) because plans are URL state and the SPA shell is static.
-   - revision.city: per-diff cards under `/diffs`.
-   - monicandavid.com: per-post cards once posts exist, on djf.io's pattern.
-4. **Deferred** -- calendar-visualizer gets description, site_name, and the twitter card now (cheap,
-   no origin needed) and the image once it has a domain. onvibes.org and alchemy-state-viewer stay
-   as they are until they leave Cloudflare Access.
+## Risks
 
-## Open decisions
+- **Workers CPU budget.** A cold render (wasm instantiation plus satori and resvg) took about a
+  second of wall time under miniflare; a cached repeat takes milliseconds. The Workers free plan
+  caps CPU at 10 ms per request and would kill the first render; the paid plan does not. Confirm the
+  account's plan on the first production deploy by fetching one `/og/default.png` cold. If it is the
+  free plan, the fallback is to prerender the default card at build the way djf.io does.
+- **satori pinned at 0.32** until upstream's standalone init accepts the HarfBuzz module; the
+  Renovate rule documents it and every app's e2e would catch a bad bump.
 
-1. `ogSite` helper (recommended) vs. inlining url/image/locale/twitter in eleven call sites.
-2. One shared card template with per-app colors (recommended for v1) vs. bespoke cards per app.
-3. Build-time generated PNG, gitignored (recommended) vs. committed PNGs vs. runtime rendering.
-4. Descriptions -- drafts that need David's edit:
-   - startchi.com: "The Chicago and Midwest startup ecosystem: a directory, signal boost, and org
-     hub."
-   - revision.city (root): "Version control, centered on review." (already on `/`)
-   - f311x: "A small chat playground on Cloudflare."
-   - calendar-visualizer: "A full-year calendar that overlays weekends, holidays, and your own
-     phases."
-5. ravrun's canonical origin: ravrun.com or rav.run. And which apps carry `twitter:site`
-   `@davidjfelix` (djf.io has it; davidjfelix.com and ravrun are the candidates).
-6. PR shape for Phase 2: per framework or per app.
-7. Card colors per app: pulled from each app's Panda/Tailwind tokens (forzamonica.com's paper tones,
-   and so on), or the shared zinc card everywhere first and tuned later.
+## Follow-ups (each its own effort)
+
+- ravrun: shared-plan cards once URL state ships (a parameterized `/og/*.png` route on the same
+  runtime).
+- revision.city: per-diff cards under `/diffs`.
+- monicandavid.com: per-post cards once posts exist, on djf.io's pattern.
+- calendar-visualizer: `og:url` and the card once it has a domain.
+- f311x: a card once its deploy pipeline carries a wasm module rule (or it moves to the Cloudflare
+  Vite plugin).
+- Per-app card customization (brand fonts, layouts) beyond the shared template.
 
 ## Links
 
 - Package: [`workspaces/web-apps/packages/og/`](../../../workspaces/web-apps/packages/og/README.md)
-  -- per-framework usage and the peer-dependency trap
-- Reference implementation: `workspaces/web-apps/apps/djf.io/src/layouts/BaseLayout.astro`,
-  `src/pages/og/[...slug].png.ts`, `src/seo.e2e.test.ts`
+- Reference implementations: `workspaces/web-apps/apps/startchi.com` (TanStack Start),
+  `workspaces/web-apps/apps/davidjfelix.com` (Astro), `workspaces/web-apps/apps/monicandavid.com`
+  (SvelteKit), `workspaces/web-apps/apps/pkg.dog` (Nuxt),
+  `workspaces/web-apps/apps/djf.io/src/pages/og/[...slug].png.ts` (prerendered per-post cards)
 - Extraction record: [`docs/changelog/2026-08.md`](../../changelog/2026-08.md), "feat(og): extract
   the OpenGraph integration into @davidjfelix/og and wire it into every app"

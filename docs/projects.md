@@ -137,10 +137,11 @@ hand-rolled core into a standalone package.
 ### [OpenGraph Rollout](./projects/opengraph-rollout/plan.md)
 
 Give every public app a real share card on the contract djf.io already meets: an absolute 1200x630
-`og:image` generated at build from the shared renderer, `og:url` plus a canonical link, and
-`twitter:card`. Inventory done; the plan awaits decisions before code changes.
+`og:image` rendered at request time on the app's Worker by the shared renderer, `og:url` plus a
+canonical link, and `twitter:card`. Implemented on one branch; closes after merge and a first-deploy
+check of the Workers CPU budget.
 
-**Status**: Active (planning)
+**Status**: Active (in review)
 
 ## Infrastructure & hygiene
 

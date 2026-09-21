@@ -1,3 +1,5 @@
+harfbuzzjs
 libdom
 resvg
 tsgolint
+unwasm

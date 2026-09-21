@@ -15,9 +15,12 @@ export default defineNuxtConfig({
     storageKey: 'theme',
     disableTransition: true,
   },
-  // Deploy as a Cloudflare Worker (module syntax) via Nitro.
+  // Deploy as a Cloudflare Worker (module syntax) via Nitro. Wasm is for the
+  // share card's satori/resvg modules (the cloudflare presets already import
+  // wasm as native modules via unwasm's esmImport).
   nitro: {
     preset: 'cloudflare_module',
+    experimental: {wasm: true},
   },
   // Public observability config, baked at build from the NUXT_PUBLIC_SENTRY_DSN /
   // NUXT_PUBLIC_POSTHOG_KEY build env (the deploy workflow sets them from repo

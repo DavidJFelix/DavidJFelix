@@ -1,11 +1,11 @@
 ---
-import {ogTags} from '@davidjfelix/og'
+import {ogSite, ogTags} from '@davidjfelix/og'
 import {createThemeBootstrapScript} from '@davidjfelix/theme/bootstrap'
 import Analytics from '../components/analytics.astro'
 import ThemeToggle from '../components/theme-toggle.astro'
+import {site} from '../site'
 
-const title = 'David J. Felix'
-const description = 'Personal site of David J. Felix.'
+const social = ogSite({...site, path: Astro.url.pathname})
 
 // Only ship analytics on builds that carry the key (production deploy). Sentry is
 // injected separately by the @sentry/astro integration when PUBLIC_SENTRY_DSN is
@@ -28,11 +28,10 @@ const themeBootstrapScript = createThemeBootstrapScript({storageKey: 'theme'})
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
-    <meta name="description" content={description} />
-    <title>{title}</title>
-    {ogTags({title, description, type: 'website', siteName: 'davidjfelix.com'}).map((tag) => (
-      <meta {...tag} />
-    ))}
+    <meta name="description" content={site.description} />
+    <title>{site.title}</title>
+    <link rel="canonical" href={social.url} />
+    {ogTags(social).map((tag) => <meta {...tag} />)}
     {posthogEnabled && <Analytics />}
     <style>
       :root {

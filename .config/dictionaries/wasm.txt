@@ -1,0 +1,6 @@
+# WebAssembly toolchain names that appear in comments and docs around the
+# share-card renderer (workspaces/web-apps/packages/og): the compiler behind
+# satori's text-shaping module and the shaping engine itself. Package names
+# (resvg, unwasm, harfbuzzjs) live in npm.txt.
+Emscripten
+HarfBuzz

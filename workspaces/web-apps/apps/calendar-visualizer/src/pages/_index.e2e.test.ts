@@ -11,6 +11,28 @@ test('home page renders the calendar', async ({page}) => {
   await expect(page.getByRole('heading', {level: 1, name: 'Calendar'})).toBeVisible()
 })
 
+test('home page carries OpenGraph meta', async ({page}) => {
+  await page.goto('/')
+  const head = page.locator('head')
+  await expect(head.locator('meta[name="description"]')).toHaveAttribute(
+    'content',
+    'A full-year calendar that overlays weekends, holidays, and your own phases.',
+  )
+  await expect(head.locator('meta[property="og:title"]')).toHaveAttribute(
+    'content',
+    'Calendar Visualizer',
+  )
+  await expect(head.locator('meta[property="og:description"]')).toHaveAttribute(
+    'content',
+    'A full-year calendar that overlays weekends, holidays, and your own phases.',
+  )
+  await expect(head.locator('meta[property="og:site_name"]')).toHaveAttribute(
+    'content',
+    'Calendar Visualizer',
+  )
+  await expect(head.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary')
+})
+
 test('home page matches the visual baseline', async ({page}) => {
   await page.goto('/')
   // Let web fonts settle so the snapshot is stable across runs.

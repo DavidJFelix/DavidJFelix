@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import {ogTags} from '@davidjfelix/og'
+import {ogSite, ogTags} from '@davidjfelix/og'
 import {css} from 'styled-system/css'
+import {site} from '../shared/site'
 
-const title = 'pkg.dog'
+const title = site.title
 const tag = 'package manager'
 const eyebrow = 'A focusing lens for packages'
 const heading = 'Only the parts you use.'
-const description =
-  'pkg.dog tree-shakes published packages into their independent parts and republishes them — so updates and vulnerabilities only reach the code you actually import.'
+const description = site.description
 
 const features = [
   {
@@ -20,12 +20,12 @@ const features = [
   },
 ]
 
+const social = ogSite({...site, path: useRoute().path})
+
 useHead({
   title,
-  meta: [
-    {name: 'description', content: description},
-    ...ogTags({title, description, type: 'website', siteName: title}),
-  ],
+  meta: [{name: 'description', content: description}, ...ogTags(social)],
+  link: [{rel: 'canonical', href: String(social.url)}],
 })
 </script>
 

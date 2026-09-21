@@ -134,6 +134,14 @@ hand-rolled core into a standalone package.
 
 **Status**: Active
 
+### [OpenGraph Rollout](./projects/opengraph-rollout/plan.md)
+
+Give every public app a real share card on the contract djf.io already meets: an absolute 1200x630
+`og:image` generated at build from the shared renderer, `og:url` plus a canonical link, and
+`twitter:card`. Inventory done; the plan awaits decisions before code changes.
+
+**Status**: Active (planning)
+
 ## Infrastructure & hygiene
 
 Repo plumbing. Real work, but lower priority than moving the apps forward.

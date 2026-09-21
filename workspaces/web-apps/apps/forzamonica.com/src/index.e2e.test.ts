@@ -1,3 +1,4 @@
+import {pngSize} from '@davidjfelix/og/png'
 import {expect, test} from '@playwright/test'
 
 // forzamonica.com's e2e suite: the gallery home, the shared chrome, and the
@@ -31,6 +32,38 @@ test('root path serves the coming-soon landing without shop chrome', async ({pag
   )
   await expect(page.getByRole('banner')).toHaveCount(0)
   await expect(page.getByRole('contentinfo')).toHaveCount(0)
+})
+
+test('home page carries OpenGraph meta and serves the card it points at', async ({
+  page,
+  request,
+}) => {
+  await page.goto('/')
+  const head = page.locator('head')
+  await expect(head.locator('meta[property="og:title"]')).toHaveAttribute(
+    'content',
+    'forzamonica art',
+  )
+  await expect(head.locator('meta[property="og:description"]')).toHaveAttribute('content', /\S/)
+  await expect(head.locator('meta[property="og:url"]')).toHaveAttribute(
+    'content',
+    'https://forzamonica.com/',
+  )
+  await expect(head.locator('link[rel="canonical"]')).toHaveAttribute(
+    'href',
+    'https://forzamonica.com/',
+  )
+  await expect(head.locator('meta[name="twitter:card"]')).toHaveAttribute(
+    'content',
+    'summary_large_image',
+  )
+  const image = await head.locator('meta[property="og:image"]').getAttribute('content')
+  expect(image).toBe('https://forzamonica.com/og/default.png')
+  // The card renders on the worker at request time; fetch it from this boot.
+  const response = await request.get(new URL(image as string).pathname)
+  expect(response.ok()).toBe(true)
+  expect(response.headers()['content-type']).toContain('image/png')
+  expect(pngSize(await response.body())).toEqual({width: 1200, height: 630})
 })
 
 test('gallery page renders the hero and shop chrome', async ({page}) => {

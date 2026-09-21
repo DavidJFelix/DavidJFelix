@@ -1,6 +1,13 @@
+import {ogTags} from '@davidjfelix/og'
 import {createFileRoute, Link} from '@tanstack/react-router'
 
+const title = 'About — ravrun'
+
 export const Route = createFileRoute('/about')({
+  // Per-route heads are client-only in SPA mode (only the root's head is part
+  // of the prerendered shell), but updating the tab title on navigation is
+  // still worth it.
+  head: () => ({meta: [{title}, ...ogTags({title})]}),
   component: AboutComponent,
 })
 

@@ -16,6 +16,7 @@ import { Route as CartRouteImport } from './routes/cart'
 import { Route as CommissionsRouteImport } from './routes/commissions'
 import { Route as MonicaRouteImport } from './routes/monica'
 import { Route as DiagSplatRouteImport } from './routes/diag/$'
+import { Route as OgDefaultDotpngRouteImport } from './routes/og/default[.]png'
 import { Route as PoliciesPrivacyRouteImport } from './routes/policies/privacy'
 import { Route as PoliciesReturnsRouteImport } from './routes/policies/returns'
 import { Route as PoliciesShippingRouteImport } from './routes/policies/shipping'
@@ -57,6 +58,11 @@ const DiagSplatRoute = DiagSplatRouteImport.update({
   path: '/diag/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OgDefaultDotpngRoute = OgDefaultDotpngRouteImport.update({
+  id: '/og/default.png',
+  path: '/og/default.png',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PoliciesPrivacyRoute = PoliciesPrivacyRouteImport.update({
   id: '/policies/privacy',
   path: '/policies/privacy',
@@ -91,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/commissions': typeof CommissionsRoute
   '/monica': typeof MonicaRoute
   '/diag/$': typeof DiagSplatRoute
+  '/og/default.png': typeof OgDefaultDotpngRoute
   '/policies/privacy': typeof PoliciesPrivacyRoute
   '/policies/returns': typeof PoliciesReturnsRoute
   '/policies/shipping': typeof PoliciesShippingRoute
@@ -105,6 +112,7 @@ export interface FileRoutesByTo {
   '/commissions': typeof CommissionsRoute
   '/monica': typeof MonicaRoute
   '/diag/$': typeof DiagSplatRoute
+  '/og/default.png': typeof OgDefaultDotpngRoute
   '/policies/privacy': typeof PoliciesPrivacyRoute
   '/policies/returns': typeof PoliciesReturnsRoute
   '/policies/shipping': typeof PoliciesShippingRoute
@@ -120,6 +128,7 @@ export interface FileRoutesById {
   '/commissions': typeof CommissionsRoute
   '/monica': typeof MonicaRoute
   '/diag/$': typeof DiagSplatRoute
+  '/og/default.png': typeof OgDefaultDotpngRoute
   '/policies/privacy': typeof PoliciesPrivacyRoute
   '/policies/returns': typeof PoliciesReturnsRoute
   '/policies/shipping': typeof PoliciesShippingRoute
@@ -136,6 +145,7 @@ export interface FileRouteTypes {
     | '/commissions'
     | '/monica'
     | '/diag/$'
+    | '/og/default.png'
     | '/policies/privacy'
     | '/policies/returns'
     | '/policies/shipping'
@@ -150,6 +160,7 @@ export interface FileRouteTypes {
     | '/commissions'
     | '/monica'
     | '/diag/$'
+    | '/og/default.png'
     | '/policies/privacy'
     | '/policies/returns'
     | '/policies/shipping'
@@ -164,6 +175,7 @@ export interface FileRouteTypes {
     | '/commissions'
     | '/monica'
     | '/diag/$'
+    | '/og/default.png'
     | '/policies/privacy'
     | '/policies/returns'
     | '/policies/shipping'
@@ -179,6 +191,7 @@ export interface RootRouteChildren {
   CommissionsRoute: typeof CommissionsRoute
   MonicaRoute: typeof MonicaRoute
   DiagSplatRoute: typeof DiagSplatRoute
+  OgDefaultDotpngRoute: typeof OgDefaultDotpngRoute
   PoliciesPrivacyRoute: typeof PoliciesPrivacyRoute
   PoliciesReturnsRoute: typeof PoliciesReturnsRoute
   PoliciesShippingRoute: typeof PoliciesShippingRoute
@@ -237,6 +250,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DiagSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/og/default.png': {
+      id: '/og/default.png'
+      path: '/og/default.png'
+      fullPath: '/og/default.png'
+      preLoaderRoute: typeof OgDefaultDotpngRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/policies/privacy': {
       id: '/policies/privacy'
       path: '/policies/privacy'
@@ -283,6 +303,7 @@ const rootRouteChildren: RootRouteChildren = {
   CommissionsRoute: CommissionsRoute,
   MonicaRoute: MonicaRoute,
   DiagSplatRoute: DiagSplatRoute,
+  OgDefaultDotpngRoute: OgDefaultDotpngRoute,
   PoliciesPrivacyRoute: PoliciesPrivacyRoute,
   PoliciesReturnsRoute: PoliciesReturnsRoute,
   PoliciesShippingRoute: PoliciesShippingRoute,

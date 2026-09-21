@@ -1,4 +1,4 @@
-import {ogTags} from '@davidjfelix/og'
+import {ogSite, ogTags} from '@davidjfelix/og'
 import {createThemeBootstrapScript, type ThemeColorPair} from '@davidjfelix/theme/bootstrap'
 import {ThemeProvider} from '@davidjfelix/theme/react'
 import {TanStackDevtools} from '@tanstack/react-devtools'
@@ -17,6 +17,7 @@ import {button} from 'styled-system/recipes'
 import {SiteFooter} from '@/components/SiteFooter.tsx'
 import {SiteHeader} from '@/components/SiteHeader.tsx'
 import {fetchCartQuantity} from '@/lib/shopify/cart.ts'
+import {site} from '@/site.ts'
 
 import appCss from '../styles.css?url'
 
@@ -31,31 +32,29 @@ const themeBootstrapScript = createThemeBootstrapScript({
 })
 
 export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      {charSet: 'utf-8'},
-      {name: 'viewport', content: 'width=device-width, initial-scale=1'},
-      {title: 'forzamonica art'},
-      {
-        name: 'description',
-        content: 'Original watercolors and archival prints by Monica Felix.',
-      },
-      ...ogTags({
-        title: 'forzamonica art',
-        description: 'Original watercolors and archival prints by Monica Felix.',
-        type: 'website',
-        siteName: 'forzamonica art',
-      }),
-    ],
-    // Fonts are self-hosted (see src/styles.css), so appCss is the only
-    // stylesheet and no visitor request leaves the site's origin for type.
-    links: [
-      // Declared on the root route so every page inherits the mark; child
-      // routes override title and description but never the icon.
-      {rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg'},
-      {rel: 'stylesheet', href: appCss},
-    ],
-  }),
+  // The leaf match carries the requested path, so og:url and the canonical
+  // link name the page being shared rather than the site root.
+  head: ({matches}) => {
+    const social = ogSite({...site, path: matches.at(-1)?.pathname ?? '/'})
+    return {
+      meta: [
+        {charSet: 'utf-8'},
+        {name: 'viewport', content: 'width=device-width, initial-scale=1'},
+        {title: site.title},
+        {name: 'description', content: site.description},
+        ...ogTags(social),
+      ],
+      // Fonts are self-hosted (see src/styles.css), so appCss is the only
+      // stylesheet and no visitor request leaves the site's origin for type.
+      links: [
+        {rel: 'canonical', href: String(social.url)},
+        // Declared on the root route so every page inherits the mark; child
+        // routes override title and description but never the icon.
+        {rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg'},
+        {rel: 'stylesheet', href: appCss},
+      ],
+    }
+  },
   // Re-runs on every navigation, keeping the header badge in sync with cart
   // mutations (which all end in router.invalidate()).
   loader: () => fetchCartQuantity(),

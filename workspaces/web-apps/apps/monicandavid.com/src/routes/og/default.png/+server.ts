@@ -1,5 +1,5 @@
 import {ogCard} from '@davidjfelix/og/card'
-import {cardTheme, site} from '$lib/site'
+import {cardTheme, site} from '../../../site'
 import type {RequestHandler} from './$types'
 
 // The share card every page's og:image points at, rendered on the Worker at

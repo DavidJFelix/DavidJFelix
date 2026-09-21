@@ -1,3 +1,4 @@
+import {pngSize} from '@davidjfelix/og/png'
 import {expect, type Page, test} from '@playwright/test'
 
 // revision.city is a single SSR landing page (no dynamic content), so the visual
@@ -12,6 +13,38 @@ test('home page renders the landing', async ({page}) => {
   // the added roadmap line and the call-to-action card.
   await expect(page.getByRole('link', {name: '+ diffs'})).toHaveAttribute('href', '/diffs')
   await expect(page.getByRole('link', {name: /Open Diffs/u})).toHaveAttribute('href', '/diffs')
+})
+
+test('home page carries OpenGraph meta and serves the card it points at', async ({
+  page,
+  request,
+}) => {
+  await page.goto('/')
+  const head = page.locator('head')
+  await expect(head.locator('meta[property="og:title"]')).toHaveAttribute(
+    'content',
+    'revision.city',
+  )
+  await expect(head.locator('meta[property="og:description"]')).toHaveAttribute('content', /\S/)
+  await expect(head.locator('meta[property="og:url"]')).toHaveAttribute(
+    'content',
+    'https://revision.city/',
+  )
+  await expect(head.locator('link[rel="canonical"]')).toHaveAttribute(
+    'href',
+    'https://revision.city/',
+  )
+  await expect(head.locator('meta[name="twitter:card"]')).toHaveAttribute(
+    'content',
+    'summary_large_image',
+  )
+  const image = await head.locator('meta[property="og:image"]').getAttribute('content')
+  expect(image).toBe('https://revision.city/og/default.png')
+  // The card renders on the worker at request time; fetch it from this boot.
+  const response = await request.get(new URL(image as string).pathname)
+  expect(response.ok()).toBe(true)
+  expect(response.headers()['content-type']).toContain('image/png')
+  expect(pngSize(await response.body())).toEqual({width: 1200, height: 630})
 })
 
 // The home page shares the diffs theme, including the persisted/OS color

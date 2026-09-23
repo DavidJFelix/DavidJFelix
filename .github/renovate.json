@@ -78,11 +78,6 @@
       "groupName": "tailwind css packages"
     },
     {
-      "description": "effect and the @effect scope packages version against a shared core and release in lockstep, so group every update type into a single PR that moves them together",
-      "matchPackageNames": ["effect", "@effect/**"],
-      "groupName": "effect packages"
-    },
-    {
       "description": "astro, the @astrojs integrations and adapters, and @astrojs/check version against astro core releases (spread across several repos in the astro org), so group every update type into a single PR that moves the framework together",
       "matchPackageNames": ["astro", "@astrojs/**"],
       "groupName": "astro packages"
@@ -158,8 +153,8 @@
       "groupName": "testing library packages"
     },
     {
-      "description": "alchemy and the @distilled.cloud provider packages (pinned via workspace overrides) must stay compatible with each other, so group every update type into a single PR",
-      "matchPackageNames": ["alchemy", "@distilled.cloud/**"],
+      "description": "alchemy, the @distilled.cloud provider packages, and effect with its @effect scope must move together: alchemy pins an exact effect release candidate as its peer range, the workspace overrides pin effect to that same version so exactly one copy lands in the tree, and each side alone breaks the other (alchemy beta.78 needed effect rc.115's PascalCase Config constructors while the pinned rc.112 only had the lowercase ones, and the reverse held for the effect bump), so group every update type into a single PR",
+      "matchPackageNames": ["alchemy", "@distilled.cloud/**", "effect", "@effect/**"],
       "groupName": "alchemy packages"
     },
     {

@@ -389,7 +389,10 @@ export function withSetCookieHeaders(
   return response
 }
 
-function readGitHubAppCredentials(): GitHubAppCredentials | undefined {
+// Also the credentials behind the share cards' public lookups (see
+// github-public-pull-request.ts), which send them as basic auth for the app's
+// rate limit and never as a user.
+export function readGitHubAppCredentials(): GitHubAppCredentials | undefined {
   const clientId = process.env.GITHUB_APP_CLIENT_ID
   const clientSecret = process.env.GITHUB_APP_CLIENT_SECRET
   if (isNullish(clientId) || clientId === '' || isNullish(clientSecret) || clientSecret === '') {

@@ -7,15 +7,15 @@ at request time on Cloudflare Workers, or at build time in Node for djf.io's pre
 cards. Consumed as a workspace dependency; apps import raw TypeScript source (no build step -- every
 consumer bundles with Vite or Nitro).
 
-| Subpath           | Contents                                                                                    |
-| ----------------- | ------------------------------------------------------------------------------------------- |
-| `.`               | `ogTags` -- OpenGraph/Twitter meta tags as plain attribute objects; `ogSite`; `ogImageSize` |
-| `./image`         | `createOgRenderer` -- the title card as PNG bytes, given a runtime; `OgTheme`               |
-| `./card`          | `ogCard` -- the `/og/default.png` request handler with edge caching                         |
-| `./runtime/vite`  | The runtime for Vite-bundled Workers (TanStack Start, Astro, SvelteKit)                     |
-| `./runtime/nitro` | The runtime for Nitro-bundled Workers (Nuxt)                                                |
-| `./runtime/node`  | The runtime for Node: build-time prerendering and tests                                     |
-| `./png`           | `pngSize` -- reads a PNG's dimensions from its header, for tests                            |
+| Subpath           | Contents                                                                                                                              |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `.`               | `ogTags` -- OpenGraph/Twitter meta tags as plain attribute objects; `ogSite`; `ogImageSize`                                           |
+| `./image`         | `createOgRenderer` -- the title card as PNG bytes, given a runtime; `OgTheme`                                                         |
+| `./card`          | `ogCard` -- the `/og/default.png` request handler with edge caching; `ogCards` -- the same for a family of cards resolved per request |
+| `./runtime/vite`  | The runtime for Vite-bundled Workers (TanStack Start, Astro, SvelteKit)                                                               |
+| `./runtime/nitro` | The runtime for Nitro-bundled Workers (Nuxt)                                                                                          |
+| `./runtime/node`  | The runtime for Node: build-time prerendering and tests                                                                               |
+| `./png`           | `pngSize` -- reads a PNG's dimensions from its header, for tests                                                                      |
 
 ## Tags
 
@@ -94,6 +94,10 @@ Node prerender, where the emitted chunk resolves from the app's tree instead.
 `ogCard({runtime, ...card})` is the request handler apps mount at `/og/default.png`: it renders once
 and keeps the response in the Workers Cache API's default cache (a day's `max-age`), so a burst of
 scrapers unfurling one shared link rasterizes it once per edge location.
+`ogCards({runtime, card, maxAge?})` is the same handler for a family of cards: `card(request)`
+returns the params for the card a request names (revision.city reads the diff out of the path and
+asks GitHub for the pull request's public title), or `undefined` for a 404, which is never cached.
+Each URL is its own cache entry.
 
 satori is held at 0.32: 0.33 added HarfBuzz text shaping whose Emscripten loader reads
 `self.location` and compiles wasm from bytes, neither of which works on Workers

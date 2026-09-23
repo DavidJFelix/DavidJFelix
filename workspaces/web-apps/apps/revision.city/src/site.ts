@@ -19,3 +19,8 @@ export const cardTheme: OgTheme = {
   foreground: '#fafafa',
   muted: '#a3a3a3',
 }
+
+// A diff's card runs its bar from added to deleted, in the viewer's own line
+// colors (the badges on src/routes/diffs/index.tsx), so a shared diff reads as
+// one at a glance while the site card keeps its plain bar.
+export const diffCardTheme: OgTheme = {...cardTheme, accent: ['#07c480', '#ff6762']}

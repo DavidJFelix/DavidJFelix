@@ -28,6 +28,10 @@ diffs as first-class objects.
   the functions, classes and config keys a diff changed, across the fifteen first-party Lezer
   grammars that carry symbols. Parsed in the worker and streamed down; works signed out on public
   repos.
+- A shared `/diffs` link unfurls as the diff it names (2026-09-23): title, description, and a card
+  at `/og/diffs/<path>.png` derived from the URL, plus the public pull request title, author, state,
+  and counts where GitHub shows them to anyone. Private diffs unfurl with only what the link already
+  says.
 - Reviews remain unscoped pending the MVP-shape doc (the Phase 2 gate below).
 
 ## Stack

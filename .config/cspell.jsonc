@@ -18,6 +18,7 @@
     "people-names",
     "pierre",
     "web-platform",
+    "wasm",
   ],
   // Topic dictionaries: system vocabularies and names shared by more than one
   // file. Entries and the reasons for them live in the .txt files themselves.
@@ -57,6 +58,11 @@
       "name": "web-platform",
       "path": "dictionaries/web-platform.txt",
       "description": "Web-platform acronyms",
+    },
+    {
+      "name": "wasm",
+      "path": "dictionaries/wasm.txt",
+      "description": "WebAssembly toolchain names (share-card renderer)",
     },
   ],
   // Spellings this repo rejects outright; cspell reports the replacement. The

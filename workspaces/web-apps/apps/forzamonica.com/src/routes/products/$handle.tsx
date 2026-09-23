@@ -17,7 +17,28 @@ export const Route = createFileRoute('/products/$handle')({
   loader: ({params}) => fetchProduct({data: params.handle}),
   head: ({loaderData}) => {
     const title = loaderData ? `${loaderData.title} — forzamonica art` : 'forzamonica art'
-    return {meta: [{title}, ...ogTags({title})]}
+    const featuredImage = loaderData?.featuredImage
+    return {
+      meta: [
+        {title},
+        // A product with a photo shares that photo as its card; one without
+        // (not yet photographed, or the handle doesn't resolve) keeps the
+        // site's default card.
+        ...ogTags(
+          featuredImage
+            ? {
+                title,
+                image: {
+                  url: featuredImage.url,
+                  alt: featuredImage.altText ?? title,
+                  width: featuredImage.width,
+                  height: featuredImage.height,
+                },
+              }
+            : {title},
+        ),
+      ],
+    }
   },
   component: ProductPage,
 })

@@ -1,9 +1,10 @@
-import {ogTags} from '@davidjfelix/og'
+import {ogSite, ogTags} from '@davidjfelix/og'
 import {createThemeBootstrapScript, type ThemeColorPair} from '@davidjfelix/theme/bootstrap'
 import {ThemeProvider} from '@davidjfelix/theme/react'
 import {TanStackDevtools} from '@tanstack/react-devtools'
 import {createRootRoute, HeadContent, ScriptOnce, Scripts} from '@tanstack/react-router'
 import {TanStackRouterDevtoolsPanel} from '@tanstack/react-router-devtools'
+import {site} from '@/site'
 import appCss from '../styles.css?url'
 
 // Navbar tint (iOS Safari's <meta name="theme-color">) for each resolved color
@@ -17,15 +18,26 @@ const themeBootstrapScript = createThemeBootstrapScript({
 })
 
 export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      {charSet: 'utf-8'},
-      {name: 'viewport', content: 'width=device-width, initial-scale=1'},
-      {title: 'f311x'},
-      ...ogTags({title: 'f311x', type: 'website', siteName: 'f311x'}),
-    ],
-    links: [{rel: 'stylesheet', href: appCss}],
-  }),
+  // The leaf match carries the requested path, so og:url and the canonical
+  // link name the page being shared rather than the site root.
+  head: ({matches}) => {
+    const social = ogSite({...site, path: matches.at(-1)?.pathname ?? '/'})
+    return {
+      meta: [
+        {charSet: 'utf-8'},
+        {name: 'viewport', content: 'width=device-width, initial-scale=1'},
+        {title: site.title},
+        {name: 'description', content: site.description},
+        // No card route (see src/site.ts): drop the image and fall back to a
+        // plain summary card instead of claiming a large image that 404s.
+        ...ogTags({...social, image: undefined, twitter: {card: 'summary'}}),
+      ],
+      links: [
+        {rel: 'canonical', href: String(social.url)},
+        {rel: 'stylesheet', href: appCss},
+      ],
+    }
+  },
   shellComponent: RootDocument,
 })
 

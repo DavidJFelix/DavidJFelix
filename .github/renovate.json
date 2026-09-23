@@ -33,6 +33,11 @@
       "allowedVersions": "<7"
     },
     {
+      "description": "satori 0.33 added HarfBuzz text shaping through harfbuzzjs, whose Emscripten loader reads self.location and compiles wasm from bytes -- neither works on Cloudflare Workers, where @davidjfelix/og renders every app's share card at request time (the cf-wasm project hit the same crash in its issue 100). Hold satori at 0.32 until its standalone init accepts the HarfBuzz module the way it accepts Yoga's",
+      "matchPackageNames": ["satori"],
+      "allowedVersions": "<0.33.0"
+    },
+    {
       "matchUpdateTypes": ["patch", "minor"],
       "matchManagers": ["cargo"],
       "groupName": "cargo patch/minor"

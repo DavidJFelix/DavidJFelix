@@ -1,4 +1,3 @@
-import {ogTags} from '@davidjfelix/og'
 import {IconArrowRightShort} from '@pierre/icons'
 import {createFileRoute, Link} from '@tanstack/react-router'
 
@@ -13,14 +12,10 @@ import diffsCss from '@/diffs/diffs.css?url'
 // Content-wise it is a front door for the one part of the city that is open:
 // status is told in diff notation -- an added line for diffs, with reviews and
 // repos as context lines that have not landed yet.
+// No description override: the root route's site.description is already this
+// exact text (src/site.ts).
 export const Route = createFileRoute('/')({
-  head: () => ({
-    meta: [
-      {name: 'description', content: 'Version control, centered on review.'},
-      ...ogTags({description: 'Version control, centered on review.'}),
-    ],
-    links: [{rel: 'stylesheet', href: diffsCss}],
-  }),
+  head: () => ({links: [{rel: 'stylesheet', href: diffsCss}]}),
   component: Home,
 })
 

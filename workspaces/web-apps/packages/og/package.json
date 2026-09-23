@@ -5,7 +5,18 @@
   "type": "module",
   "exports": {
     ".": "./src/tags.ts",
-    "./image": "./src/image.ts"
+    "./image": "./src/image.ts",
+    "./card": "./src/card.ts",
+    "./png": "./src/png.ts",
+    "./runtime/node": "./src/runtime/node.ts",
+    "./runtime/vite": {
+      "types": "./src/runtime/vite.d.ts",
+      "default": "./src/runtime/vite.ts"
+    },
+    "./runtime/nitro": {
+      "types": "./src/runtime/nitro.d.ts",
+      "default": "./src/runtime/nitro.ts"
+    }
   },
   "scripts": {
     "lint": "biome check . && oxlint",
@@ -16,30 +27,16 @@
     "test": "vitest run --coverage",
     "test:watch": "vitest"
   },
-  "peerDependencies": {
-    "@fontsource/inter": "^5.2.8",
-    "satori": "^0.26.0 || ^0.29.0 || ^0.32.0 || ^0.33.0",
-    "sharp": "^0.35.1"
-  },
-  "peerDependenciesMeta": {
-    "@fontsource/inter": {
-      "optional": true
-    },
-    "satori": {
-      "optional": true
-    },
-    "sharp": {
-      "optional": true
-    }
+  "dependencies": {
+    "@fontsource/inter": "5.3.0",
+    "@resvg/resvg-wasm": "2.6.2",
+    "satori": "0.32.0"
   },
   "devDependencies": {
-    "@fontsource/inter": "5.3.0",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "oxlint-tsgolint": "catalog:",
-    "satori": "0.33.4",
-    "sharp": "0.35.4",
     "typescript": "7.0.2",
     "vitest": "catalog:"
   }

@@ -7,6 +7,9 @@ import {Calendar} from '../components/calendar'
 import ThemeToggle from '../components/theme-toggle.astro'
 import '../index.css'
 
+const title = 'Calendar Visualizer'
+const description = 'A full-year calendar that overlays weekends, holidays, and your own phases.'
+
 // Only ship analytics on builds that carry the key (production deploy). The
 // component guards on the key at runtime too; gating the render here keeps it out
 // of local/CI/preview output entirely. Sentry is injected separately by the
@@ -35,8 +38,17 @@ const themeBootstrapScript = createThemeBootstrapScript({storageKey: 'theme'})
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
-    <title>Calendar Visualizer</title>
-    {ogTags({title: 'Calendar Visualizer', type: 'website'}).map((tag) => <meta {...tag} />)}
+    <meta name="description" content={description} />
+    <title>{title}</title>
+    {/* og:url and og:image wait on a canonical domain -- this app sits on
+        workers.dev by design. */}
+    {ogTags({
+      title,
+      description,
+      type: 'website',
+      siteName: 'Calendar Visualizer',
+      twitter: {card: 'summary'},
+    }).map((tag) => <meta {...tag} />)}
     {posthogEnabled && <Analytics />}
   </head>
   <!--

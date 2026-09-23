@@ -108,8 +108,11 @@ const sentrySourceMaps =
 // from assets.
 //
 // `prerenderEnvironment: 'node'` keeps prerendering in Node rather than the
-// adapter's default workerd, because the build optimizes images and renders OG
-// cards with native `sharp` (src/pages/og), which can't load in workerd.
+// adapter's default workerd, because the build optimizes images with native
+// `sharp`, which can't load in workerd. (The OG cards under src/pages/og render
+// on wasm through @davidjfelix/og and would run either way; in Node they read
+// their wasm and font files from this app's tree, hence the satori, resvg, and
+// @fontsource/inter dependencies.)
 // `imageService: 'custom'` keeps Astro's default sharp service so astro:assets
 // are optimized at build; the adapter's other modes (incl. 'compile') hand
 // images off unoptimized, which shipped the blog banner at its 3.7MB source size.

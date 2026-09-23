@@ -1,4 +1,5 @@
 import {getCollection} from 'astro:content'
+import {pngSize} from '@davidjfelix/og/png'
 import type {APIContext} from 'astro'
 import {expect, test} from 'vitest'
 import {GET, getStaticPaths} from './[...slug].png.ts'
@@ -8,15 +9,6 @@ import {GET, getStaticPaths} from './[...slug].png.ts'
 
 const paths = await getStaticPaths()
 const posts = await getCollection('blog')
-
-// Every PNG starts with a fixed-layout header: an 8-byte signature, then the
-// image's big-endian width at byte 16 and height at byte 20. Reading those
-// directly keeps image libraries out of the app.
-const pngSize = (png: Uint8Array): {width: number; height: number} => {
-  expect(Array.from(png.subarray(1, 4))).toEqual(Array.from('PNG').map((c) => c.charCodeAt(0)))
-  const view = new DataView(png.buffer, png.byteOffset, png.byteLength)
-  return {width: view.getUint32(16), height: view.getUint32(20)}
-}
 
 const render = async (props: (typeof paths)[number]['props']): Promise<Uint8Array> => {
   const response = await GET({props} as APIContext<(typeof paths)[number]['props']>)

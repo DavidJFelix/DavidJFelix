@@ -1,5 +1,58 @@
 import {expect, test} from 'vitest'
-import {ogImageSize, ogTags} from './tags.ts'
+import {ogImageSize, ogSite, ogTags} from './tags'
+
+test('ogSite bundles the site defaults: absolute url and image, locale, large twitter card', () => {
+  const params = ogSite({
+    origin: 'https://startchi.com',
+    siteName: 'startchi.com',
+    title: 'startchi.com',
+    description: 'The Midwest startup ecosystem.',
+  })
+  expect(params).toEqual({
+    title: 'startchi.com',
+    description: 'The Midwest startup ecosystem.',
+    type: 'website',
+    siteName: 'startchi.com',
+    locale: 'en_US',
+    url: new URL('https://startchi.com/'),
+    image: {
+      url: new URL('https://startchi.com/og/default.png'),
+      alt: 'Title card for startchi.com',
+      ...ogImageSize,
+    },
+    twitter: {card: 'summary_large_image'},
+  })
+})
+
+test('ogSite resolves page and image paths on the origin and keeps twitter extras', () => {
+  const params = ogSite({
+    origin: new URL('https://djf.io'),
+    siteName: 'djf.io',
+    title: 'About',
+    description: 'Bio',
+    path: '/about/',
+    image: '/og/about.png',
+    twitter: {site: '@davidjfelix'},
+  })
+  expect(String(params.url)).toBe('https://djf.io/about/')
+  expect(String(params.image?.url)).toBe('https://djf.io/og/about.png')
+  expect(params.twitter).toEqual({card: 'summary_large_image', site: '@davidjfelix'})
+})
+
+test('ogSite output renders through ogTags with absolute url and image tags', () => {
+  const tags = ogTags(
+    ogSite({
+      origin: 'https://pkg.dog',
+      siteName: 'pkg.dog',
+      title: 'pkg.dog',
+      description: 'Parts.',
+    }),
+  )
+  expect(tags).toContainEqual({property: 'og:url', content: 'https://pkg.dog/'})
+  expect(tags).toContainEqual({property: 'og:image', content: 'https://pkg.dog/og/default.png'})
+  expect(tags).toContainEqual({property: 'og:image:width', content: '1200'})
+  expect(tags).toContainEqual({name: 'twitter:card', content: 'summary_large_image'})
+})
 
 test('ogTags emits nothing when no fields are provided', () => {
   expect(ogTags({})).toEqual([])

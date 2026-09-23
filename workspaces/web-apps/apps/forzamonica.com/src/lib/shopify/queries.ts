@@ -10,6 +10,11 @@ export interface Money {
 export interface ProductImage {
   url: string
   altText: string | null
+  // Only PRODUCT_QUERY below fetches these (the product detail page needs
+  // them to size its OpenGraph card image) -- absent from the summary and
+  // cart queries' featuredImage.
+  width?: number
+  height?: number
 }
 
 export interface ProductSummary {
@@ -104,6 +109,8 @@ export const PRODUCT_QUERY = /* GraphQL */ `
       featuredImage {
         url
         altText
+        width
+        height
       }
       variants(first: 50) {
         edges {

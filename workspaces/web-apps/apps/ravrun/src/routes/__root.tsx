@@ -1,4 +1,4 @@
-import {ogTags} from '@davidjfelix/og'
+import {ogSite, ogTags} from '@davidjfelix/og'
 import {createThemeBootstrapScript} from '@davidjfelix/theme/bootstrap'
 import {ThemeProvider} from '@davidjfelix/theme/react'
 import {
@@ -10,6 +10,7 @@ import {
   Scripts,
 } from '@tanstack/react-router'
 import React from 'react'
+import {site} from '../site'
 import appCss from '../styles.css?url'
 import {ThemeToggle} from '../theme/theme-toggle'
 
@@ -32,19 +33,13 @@ export const Route = createRootRoute({
     meta: [
       {charSet: 'utf-8'},
       {name: 'viewport', content: 'width=device-width, initial-scale=1.0'},
-      {
-        name: 'description',
-        content:
-          'Tell ravrun your race and current fitness; get a phased, paced training plan you can share as a link and export to your calendar.',
-      },
-      {title: 'ravrun — training plan generator'},
-      ...ogTags({
-        title: 'ravrun — training plan generator',
-        description:
-          'Tell ravrun your race and current fitness; get a phased, paced training plan you can share as a link and export to your calendar.',
-        type: 'website',
-        siteName: 'ravrun',
-      }),
+      {name: 'description', content: site.description},
+      {title: site.title},
+      // SPA mode prerenders one shell for every path (see vite.config.ts), so
+      // an og:url in it would claim "/" for whichever page a scraper actually
+      // requested -- omit it rather than lie. The card is still real: og:image
+      // points at the request-time /og/default.png route below.
+      ...ogTags({...ogSite({...site}), url: undefined}),
     ],
     links: [{rel: 'stylesheet', href: appCss}],
   }),

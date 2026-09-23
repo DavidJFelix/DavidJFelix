@@ -1,17 +1,22 @@
 <script lang="ts">
-import {ogTags} from '@davidjfelix/og'
+import {ogSite, ogTags} from '@davidjfelix/og'
 import {css} from 'styled-system/css'
+import {page} from '$app/state'
 import ThemeToggle from '$lib/components/theme-toggle.svelte'
+import {site} from '../site'
 
-const brand = 'Monica & David'
-const description = 'A little blog about our life together. Posts coming soon.'
+const brand = site.title
+const description = site.description
 
-const socialTags = ogTags({title: brand, description, type: 'website', siteName: brand})
+// og:url and the canonical link name the page being shared, not the root.
+const social = ogSite({...site, path: page.url.pathname})
+const socialTags = ogTags(social)
 </script>
 
 <svelte:head>
   <title>{brand}</title>
   <meta name="description" content={description} />
+  <link rel="canonical" href={String(social.url)} />
   {#each socialTags as tag (tag)}
     <meta {...tag} />
   {/each}

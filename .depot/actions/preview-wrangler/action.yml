@@ -70,13 +70,35 @@ inputs:
 runs:
   using: composite
   steps:
+    # The build bakes the preview's own URL into every absolute tag it emits
+    # (og:url, og:image, the canonical link -- see packages/og), so a scraper
+    # reading the preview finds the card the preview serves, not production's.
+    # The pr-<N> alias URL is deterministic; only the account's workers.dev
+    # subdomain has to be looked up, which happens here, ahead of the build. A
+    # failed lookup only warns, and the build falls back to the app's canonical
+    # origin.
+    - name: resolve preview url
+      id: preview-url
+      shell: bash
+      env:
+        PR_NUMBER: ${{ inputs.pr-number }}
+        WORKER_NAME: ${{ inputs.worker-name }}
+        CLOUDFLARE_API_TOKEN: ${{ inputs.cloudflare-api-token }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ inputs.cloudflare-account-id }}
+      run: bun "$GITHUB_WORKSPACE/bin/preview-url.ts"
+
     # CLOUDFLARE_ENV is exported only when an environment is requested: an
     # empty string is a named environment to wrangler's config resolution, not
-    # an absent one.
+    # an absent one. The preview URL reaches each framework's build under its
+    # own public prefix (Astro PUBLIC_, Vite VITE_PUBLIC_, Nuxt NUXT_PUBLIC_),
+    # the same way the production deploy hands over the observability keys.
     - name: build
       shell: bash
       env:
         PREVIEW_CLOUDFLARE_ENV: ${{ inputs.cloudflare-env }}
+        PUBLIC_SITE_URL: ${{ steps.preview-url.outputs.url }}
+        VITE_PUBLIC_SITE_URL: ${{ steps.preview-url.outputs.url }}
+        NUXT_PUBLIC_SITE_URL: ${{ steps.preview-url.outputs.url }}
       run: |
         if [ -n "$PREVIEW_CLOUDFLARE_ENV" ]; then
           export CLOUDFLARE_ENV="$PREVIEW_CLOUDFLARE_ENV"

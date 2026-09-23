@@ -12,6 +12,21 @@ test('home page renders the chat shell', async ({page}) => {
   await expect(page.getByPlaceholder('Message the agent…')).toBeVisible()
 })
 
+test('home page carries OpenGraph meta', async ({page}) => {
+  await page.goto('/')
+  const head = page.locator('head')
+  await expect(head.locator('meta[property="og:title"]')).toHaveAttribute('content', 'f311x')
+  await expect(head.locator('meta[property="og:description"]')).toHaveAttribute('content', /\S/)
+  await expect(head.locator('meta[property="og:url"]')).toHaveAttribute(
+    'content',
+    'https://f311x.com/',
+  )
+  await expect(head.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://f311x.com/')
+  await expect(head.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary')
+  // No card route (deploys through alchemy, no wasm module rule -- src/site.ts).
+  await expect(head.locator('meta[property="og:image"]')).toHaveCount(0)
+})
+
 test('system dark is applied before first paint', async ({page}) => {
   await page.emulateMedia({colorScheme: 'dark'})
   await page.goto('/')

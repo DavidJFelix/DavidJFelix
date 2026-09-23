@@ -2,7 +2,10 @@ import type {OgTheme} from '@davidjfelix/og/image'
 
 // What the site says about itself wherever a page or a share card names it.
 export const site = {
-  origin: 'https://davidjfelix.com',
+  // A preview build bakes in its own pr-<N> URL (PUBLIC_SITE_URL, set by
+  // .depot/actions/preview-wrangler) so its absolute tags name the host that
+  // serves them; production builds carry the canonical origin.
+  origin: import.meta.env.PUBLIC_SITE_URL || 'https://davidjfelix.com',
   siteName: 'davidjfelix.com',
   title: 'David J. Felix',
   description: 'Personal site of David J. Felix.',

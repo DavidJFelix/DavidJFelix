@@ -98,6 +98,14 @@ reach it. `packages/og/README.md` is the reference; the shape:
   `nitro.experimental.wasm`.
 - **satori is held at 0.32** (`.github/renovate.json`): 0.33's HarfBuzz shaper cannot load on
   Workers (it reads `self.location` and compiles wasm from bytes).
+- **Preview builds carry their own origin.** The absolute tags are baked at build, so
+  `.depot/actions/preview-wrangler` resolves the deterministic `pr-<N>` alias URL ahead of the build
+  (`bin/preview-url.ts` reads the account's workers.dev subdomain from the Cloudflare API) and hands
+  it to the build as `PUBLIC_SITE_URL`, `VITE_PUBLIC_SITE_URL`, and `NUXT_PUBLIC_SITE_URL`; each
+  app's `site.origin` prefers it over the canonical origin, and each e2e expects the `PREVIEW_URL`
+  origin when it runs against a preview. Production builds set nothing and keep the canonical
+  origin. f311x's alchemy preview learns its URL only after deploying, so its tags keep naming
+  production (it has no card anyway).
 
 ## What landed
 

@@ -20,7 +20,11 @@ const features = [
   },
 ]
 
-const social = ogSite({...site, path: useRoute().path})
+// A preview build bakes in its own pr-<N> URL (NUXT_PUBLIC_SITE_URL, set by
+// .depot/actions/preview-wrangler) so its absolute tags name the host that
+// serves them; production builds carry the canonical origin.
+const {siteUrl} = useRuntimeConfig().public
+const social = ogSite({...site, origin: siteUrl || site.origin, path: useRoute().path})
 
 useHead({
   title,

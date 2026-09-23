@@ -12,6 +12,12 @@ import {expect, test} from '@playwright/test'
 const PLAN_URL =
   '/?dist=marathon&race=2026-10-18&goal=4:30:00&wm=24&weeks=20&rd=fiveK&rt=25:00&today=2026-07-01'
 
+// A preview build bakes its pr-<N> URL into the absolute tags (see
+// .depot/actions/preview-wrangler); a local boot carries the canonical origin.
+const origin = process.env.PREVIEW_URL
+  ? new URL(process.env.PREVIEW_URL).origin
+  : 'https://ravrun.com'
+
 // The grid (desktop) and agenda (phones) both render race day; filter to
 // whichever the current viewport shows.
 const raceDay = (page: Page) => page.getByText('RACE! - 26.2').filter({visible: true})
@@ -59,7 +65,7 @@ test('home page carries OpenGraph meta and serves the card it points at', async 
     'summary_large_image',
   )
   const image = await head.locator('meta[property="og:image"]').getAttribute('content')
-  expect(image).toBe('https://ravrun.com/og/default.png')
+  expect(image).toBe(`${origin}/og/default.png`)
   // The card renders on the worker at request time; fetch it from this boot.
   const response = await request.get(new URL(image as string).pathname)
   expect(response.ok()).toBe(true)

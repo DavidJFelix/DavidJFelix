@@ -6,4 +6,6 @@
 interface ImportMetaEnv {
   readonly VITE_PUBLIC_SENTRY_DSN?: string
   readonly VITE_PUBLIC_POSTHOG_KEY?: string
+  // The deployment's own URL, set for preview builds (src/site.ts).
+  readonly VITE_PUBLIC_SITE_URL?: string
 }

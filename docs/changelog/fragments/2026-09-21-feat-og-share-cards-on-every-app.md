@@ -32,6 +32,11 @@ and alchemy-state-viewer sit behind Cloudflare Access and stay as they were. Eve
 asserts the tags and fetches the card from the local workerd boot, checking the PNG header for
 1200x630 through the package's `pngSize`.
 
+Preview deploys bake their own `pr-<N>` URL into those tags: the preview action resolves the alias
+URL ahead of the build (`bin/preview-url.ts`, from the account's workers.dev subdomain) and hands it
+to the build under each framework's public env prefix, and each app's e2e expects that origin when
+it runs against a preview. Production builds keep the canonical origin.
+
 satori is held at 0.32 by a Renovate rule: 0.33 added HarfBuzz text shaping whose Emscripten loader
 reads `self.location` and compiles wasm from bytes, neither of which Workers allow. The Workers plan
 tier is not knowable from the repo, and a cold render took about a second under miniflare, far past

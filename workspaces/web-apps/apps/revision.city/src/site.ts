@@ -2,7 +2,10 @@ import type {OgTheme} from '@davidjfelix/og/image'
 
 // What the site says about itself wherever a page or a share card names it.
 export const site = {
-  origin: 'https://revision.city',
+  // A preview build bakes in its own pr-<N> URL (VITE_PUBLIC_SITE_URL, set by
+  // .depot/actions/preview-wrangler) so its absolute tags name the host that
+  // serves them; production builds carry the canonical origin.
+  origin: import.meta.env.VITE_PUBLIC_SITE_URL || 'https://revision.city',
   siteName: 'revision.city',
   title: 'revision.city',
   description: 'Version control, centered on review.',

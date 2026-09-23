@@ -6,6 +6,12 @@ import {expect, type Page, test} from '@playwright/test'
 // authoring) or a deployed preview URL (CI) -- see playwright.config.ts. Lives
 // outside src/routes/ so the TanStack route generator does not pick it up.
 
+// A preview build bakes its pr-<N> URL into the absolute tags (see
+// .depot/actions/preview-wrangler); a local boot carries the canonical origin.
+const origin = process.env.PREVIEW_URL
+  ? new URL(process.env.PREVIEW_URL).origin
+  : 'https://revision.city'
+
 test('home page renders the landing', async ({page}) => {
   await page.goto('/')
   await expect(page.getByRole('heading', {level: 1, name: 'revision.city'})).toBeVisible()
@@ -26,20 +32,14 @@ test('home page carries OpenGraph meta and serves the card it points at', async 
     'revision.city',
   )
   await expect(head.locator('meta[property="og:description"]')).toHaveAttribute('content', /\S/)
-  await expect(head.locator('meta[property="og:url"]')).toHaveAttribute(
-    'content',
-    'https://revision.city/',
-  )
-  await expect(head.locator('link[rel="canonical"]')).toHaveAttribute(
-    'href',
-    'https://revision.city/',
-  )
+  await expect(head.locator('meta[property="og:url"]')).toHaveAttribute('content', `${origin}/`)
+  await expect(head.locator('link[rel="canonical"]')).toHaveAttribute('href', `${origin}/`)
   await expect(head.locator('meta[name="twitter:card"]')).toHaveAttribute(
     'content',
     'summary_large_image',
   )
   const image = await head.locator('meta[property="og:image"]').getAttribute('content')
-  expect(image).toBe('https://revision.city/og/default.png')
+  expect(image).toBe(`${origin}/og/default.png`)
   // The card renders on the worker at request time; fetch it from this boot.
   const response = await request.get(new URL(image as string).pathname)
   expect(response.ok()).toBe(true)

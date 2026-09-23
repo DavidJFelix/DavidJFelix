@@ -2,7 +2,10 @@ import type {OgTheme} from '@davidjfelix/og/image'
 
 // What the site says about itself wherever a page or a share card names it.
 export const site = {
-  origin: 'https://startchi.com',
+  // A preview build bakes in its own pr-<N> URL (VITE_PUBLIC_SITE_URL, set by
+  // .depot/actions/preview-wrangler) so its absolute tags name the host that
+  // serves them; production builds carry the canonical origin.
+  origin: import.meta.env.VITE_PUBLIC_SITE_URL || 'https://startchi.com',
   siteName: 'startchi.com',
   title: 'startchi.com',
   description: 'The Chicago and Midwest startup ecosystem: a directory, signal boost, and org hub.',

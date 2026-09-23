@@ -62,6 +62,11 @@ A page spreads over the helper to override or drop fields: ravrun's prerendered 
 every path, so it passes `url: undefined`; an app without a card passes `image: undefined` and
 `twitter: {card: 'summary'}`.
 
+The origin is a build-time value. A preview build receives its own `pr-<N>` URL from
+`.depot/actions/preview-wrangler` under the framework's public env prefix (`PUBLIC_SITE_URL`,
+`VITE_PUBLIC_SITE_URL`, `NUXT_PUBLIC_SITE_URL`) and each app's `site.origin` prefers it, so a
+preview's tags name the preview; production builds carry the canonical origin.
+
 ## The card
 
 `createOgRenderer(runtime)` returns

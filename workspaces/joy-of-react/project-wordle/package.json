@@ -5,7 +5,7 @@
   "license": "SEE LICENSE IN LICENSE.md",
   "author": "Josh Comeau <me@joshwcomeau.com>",
   "dependencies": {
-    "new-component": "6.0.0",
+    "new-component": "7.0.0",
     "process": "0.11.10",
     "react": "19.3.0",
     "react-dom": "19.3.0"

@@ -52,14 +52,18 @@ effort = "medium"
 maxTurns = 25
 
 # Hunk analyses in flight at once, across both skills; the action's `parallel`
-# input (5) is the fallback when this is unset. A 27-file PR needs 60 to 165
-# worker-minutes of hunk time, so five wide the job overran ci-warden.yml's
-# 20-minute cap twice on 2026-09-24. Twenty wide, a run takes about as long
-# as its slowest hunk plus a minute or two, and wider cannot help, since the
-# slowest hunk sets the floor; the effort setting above is what shortens the
-# hunks themselves. Spend is per token, so this moves wall time, not cost.
+# input (5) is the fallback when this is unset. Five wide, a 27-file PR at
+# high effort overran ci-warden.yml's 20-minute cap twice on 2026-09-24, and
+# twenty wide it fit by seconds. The ceiling is OpenRouter's credit balance,
+# not the model: every in-flight request reserves its worst-case cost up
+# front, and a request the balance cannot cover is refused ("would exceed
+# your available credits given your current in-flight requests"), which
+# Warden counts as a provider failure and stops the run after five in a row.
+# Twenty ran once and was refused the next time, so this stays at what the
+# balance carries with room to spare; top the balance up before raising it.
+# Spend is per token, so the width moves wall time, not cost.
 [runner]
-concurrency = 20
+concurrency = 8
 
 # Built-in baseline application-security review. Whole-repo: no `paths` filter,
 # so it sees the entire PR diff across all apps and root config.

@@ -194,8 +194,8 @@ importers:
   .:
     dependencies:
       new-component:
-        specifier: 7.0.0
-        version: 7.0.0
+        specifier: 7.1.0
+        version: 7.1.0
       process:
         specifier: 0.11.10
         version: 0.11.10
@@ -1523,8 +1523,8 @@ packages:
   msgpackr@1.12.1:
     resolution: {integrity: sha512-4EUH9tQHnMmEgzW/MdAP0KIfa1T9AF+htl0ffe2n5vb2EKn9y2co8ccpgWko6S52Jy1PQZKwRnx5/KkYjtd9MQ==}
 
-  new-component@7.0.0:
-    resolution: {integrity: sha512-Bx0DEfbdlwMDY23GizAr2v4SbJO9KT8Bts2hFS0EQxYPHwWEoxPvm+jwdTFe9yznAYPkDt99Tx/9RVYjlKp3Lw==}
+  new-component@7.1.0:
+    resolution: {integrity: sha512-FDNg0N2XLOzMuQpXOU7heJNXPqn3VhRfVWNYLY//790Z2lfXRts+mpVBcXfTkL1GSwCVMIsfZHGE9eQmcjJZwg==}
     hasBin: true
 
   node-addon-api@6.1.0:
@@ -3085,7 +3085,7 @@ snapshots:
     optionalDependencies:
       msgpackr-extract: 3.0.4
 
-  new-component@7.0.0:
+  new-component@7.1.0:
     dependencies:
       chalk: 4.1.2
       commander: 10.0.1

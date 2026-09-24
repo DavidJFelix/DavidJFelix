@@ -11,6 +11,10 @@ import {diffCardTheme, site} from '@/site'
 // An hour, matching the pull request lookup behind it: a title can change,
 // and the card should follow within the day rather than after it.
 const CARD_MAX_AGE_SECONDS = 60 * 60
+// A card drawn without GitHub's answer (a private or missing pull request, or
+// no answer in time) lives only as long as the lookup remembers a miss, so a
+// passing failure is not baked into the edge for the full hour.
+const FALLBACK_CARD_MAX_AGE_SECONDS = 5 * 60
 
 // The share card behind every /diffs/<path> link, at /og/diffs/<path>.png:
 // rendered on the Worker from the same text the page's og: tags carry, and
@@ -36,6 +40,7 @@ const card = ogCards({
       ...getDiffShareText({source, pull}).card,
       siteName: site.siteName,
       theme: diffCardTheme,
+      ...(source.kind === 'pull' && isNullish(pull) ? {maxAge: FALLBACK_CARD_MAX_AGE_SECONDS} : {}),
     }
   },
 })

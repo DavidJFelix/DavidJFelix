@@ -97,7 +97,8 @@ scrapers unfurling one shared link rasterizes it once per edge location.
 `ogCards({runtime, card, maxAge?})` is the same handler for a family of cards: `card(request)`
 returns the params for the card a request names (revision.city reads the diff out of the path and
 asks GitHub for the pull request's public title), or `undefined` for a 404, which is never cached.
-Each URL is its own cache entry.
+Each URL is its own cache entry, and a card may carry its own `maxAge` when the resolver knows
+better than the default (a card drawn without the data it asked for keeps a short life).
 
 satori is held at 0.32: 0.33 added HarfBuzz text shaping whose Emscripten loader reads
 `self.location` and compiles wasm from bytes, neither of which works on Workers

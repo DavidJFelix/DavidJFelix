@@ -14,6 +14,13 @@ export interface OgCache {
 
 const DAY_SECONDS = 86_400
 
+export interface OgResolvedCard extends OgImageParams {
+  // How long this card stays cacheable, in seconds, when the resolver knows
+  // better than the handler's default: a card drawn without the data it asked
+  // for keeps a short life, so the next scraper gets another try at it.
+  maxAge?: number
+}
+
 export interface OgCardsParams {
   runtime: OgRuntime
   // Where rendered cards are kept between requests; the Workers Cache API's
@@ -23,7 +30,7 @@ export interface OgCardsParams {
   maxAge?: number
   // The card a request names, or undefined when it names none, which answers
   // 404 and is never cached.
-  card: (request: Request) => OgImageParams | undefined | Promise<OgImageParams | undefined>
+  card: (request: Request) => OgResolvedCard | undefined | Promise<OgResolvedCard | undefined>
 }
 
 export interface OgCardParams extends OgImageParams {
@@ -42,10 +49,11 @@ export const ogCards = ({runtime, cache, maxAge = DAY_SECONDS, card}: OgCardsPar
     const store = cache ?? defaultCache()
     const cached = await store?.match(request)
     if (cached) return cached
-    const params = await card(request)
-    if (!params) return new Response(null, {status: 404})
+    const resolved = await card(request)
+    if (!resolved) return new Response(null, {status: 404})
+    const {maxAge: cardMaxAge = maxAge, ...params} = resolved
     const response = new Response(await render(params), {
-      headers: {'Content-Type': 'image/png', 'Cache-Control': `public, max-age=${maxAge}`},
+      headers: {'Content-Type': 'image/png', 'Cache-Control': `public, max-age=${cardMaxAge}`},
     })
     await store?.put(request, response.clone())
     return response

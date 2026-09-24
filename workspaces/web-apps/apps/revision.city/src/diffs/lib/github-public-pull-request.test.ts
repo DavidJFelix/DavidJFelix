@@ -10,8 +10,10 @@ type FetchLike = (...args: Parameters<typeof fetch>) => ReturnType<typeof fetch>
 
 const REPO = {owner: 'acme', repo: 'widgets'}
 const NUMBER = '7'
-const PULL_URL = 'https://api.github.com/repos/acme/widgets/pulls/7'
+const PULLS_URL = 'https://api.github.com/repos/acme/widgets/pulls/'
 const CREDENTIALS = {clientId: 'client-id', clientSecret: 'client-secret'}
+const BASIC_AUTH = `Basic ${btoa('client-id:client-secret')}`
+const REJECTED_KEY = 'https://revision.city/.cache/github/credentials-rejected'
 const EXPECTED_PULL: PublicPullRequest = {
   title: 'Add widgets',
   author: 'maintainer',
@@ -39,10 +41,20 @@ const pullPayload = (overrides: Record<string, unknown> = {}) => ({
 const stubGitHub = (respond: (init: RequestInit | undefined) => Response | Promise<Response>) =>
   vi.fn<FetchLike>(async (input, init) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
-    if (url !== PULL_URL) {
+    if (!url.startsWith(PULLS_URL)) {
       throw new Error(`Unexpected fetch: ${url}`)
     }
     return respond(init)
+  })
+
+// A body that never arrives, until the deadline's abort tears it down.
+const stalledBody = (init: RequestInit | undefined) =>
+  new ReadableStream({
+    start(controller) {
+      init?.signal?.addEventListener('abort', () => {
+        controller.error(new Error('aborted'))
+      })
+    },
   })
 
 const readHeader = (init: RequestInit | undefined, name: string) =>
@@ -83,7 +95,7 @@ test('reads a public pull request with the app credentials as basic auth', async
   })
 
   expect(pull).toEqual(EXPECTED_PULL)
-  expect(readHeader(seen, 'Authorization')).toBe(`Basic ${btoa('client-id:client-secret')}`)
+  expect(readHeader(seen, 'Authorization')).toBe(BASIC_AUTH)
   expect(readHeader(seen, 'Accept')).toBe('application/vnd.github+json')
   expect(readHeader(seen, 'Cookie')).toBeNull()
 })
@@ -206,6 +218,30 @@ test('gives up when GitHub outlasts the timeout', async () => {
   expect(entries.size).toBe(0)
 })
 
+// The headers can arrive in time while the body never does; the deadline has
+// to cover reading it, or the page waits on GitHub past the fallback.
+test('gives up when the body outlasts the deadline', async () => {
+  const {cache, entries} = fakeCache()
+  const fetchImpl = stubGitHub(
+    (init) =>
+      new Response(stalledBody(init), {
+        status: 200,
+        headers: {'Content-Type': 'application/json'},
+      }),
+  )
+
+  const pull = await fetchPublicPullRequest({
+    repo: REPO,
+    number: NUMBER,
+    fetch: fetchImpl,
+    cache,
+    timeoutMs: 5,
+  })
+
+  expect(pull).toBeUndefined()
+  expect(entries.size).toBe(0)
+})
+
 test('retries once without credentials when GitHub rejects them', async () => {
   const seen: Array<string | null> = []
   const fetchImpl = stubGitHub((init) => {
@@ -221,7 +257,39 @@ test('retries once without credentials when GitHub rejects them', async () => {
   })
 
   expect(pull?.title).toBe('Add widgets')
-  expect(seen).toEqual([`Basic ${btoa('client-id:client-secret')}`, null])
+  expect(seen).toEqual([BASIC_AUTH, null])
+})
+
+// A rejection is remembered at the edge, so it costs one extra call an hour
+// rather than one per lookup, and lifts on its own once the hour passes.
+test('withholds the credentials for an hour after GitHub rejects them', async () => {
+  const {cache, entries} = fakeCache()
+  const seen: Array<string | null> = []
+  const fetchImpl = stubGitHub((init) => {
+    const authorization = readHeader(init, 'Authorization')
+    seen.push(authorization)
+    return authorization === null ? Response.json(pullPayload()) : new Response(null, {status: 401})
+  })
+
+  const first = await fetchPublicPullRequest({
+    repo: REPO,
+    number: '7',
+    fetch: fetchImpl,
+    credentials: CREDENTIALS,
+    cache,
+  })
+  const second = await fetchPublicPullRequest({
+    repo: REPO,
+    number: '8',
+    fetch: fetchImpl,
+    credentials: CREDENTIALS,
+    cache,
+  })
+
+  expect(first?.title).toBe('Add widgets')
+  expect(second?.title).toBe('Add widgets')
+  expect(seen).toEqual([BASIC_AUTH, null, null])
+  expect(entries.get(REJECTED_KEY)?.headers.get('Cache-Control')).toBe('public, max-age=3600')
 })
 
 test('does not retry an anonymous request GitHub answers 401', async () => {

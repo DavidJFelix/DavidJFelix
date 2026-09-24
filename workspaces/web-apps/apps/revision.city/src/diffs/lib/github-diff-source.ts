@@ -37,12 +37,23 @@ export function parseGitHubDiffSource(path: string): GitHubDiffSource | undefine
   if (!isNullish(compareMatch)) {
     return {
       kind: 'compare',
-      range: decodeURIComponent(compareMatch[3]),
+      range: decodeRange(compareMatch[3]),
       repo: {owner: compareMatch[1], repo: compareMatch[2]},
     }
   }
 
   return undefined
+}
+
+// A range arrives percent-encoded from a URL but already decoded from a
+// router param, and a ref may carry a percent sign of its own, so a range that
+// does not decode is taken as written rather than thrown at the caller.
+function decodeRange(range: string): string {
+  try {
+    return decodeURIComponent(range)
+  } catch {
+    return range
+  }
 }
 
 export function encodeURLSegment(value: string): string {

@@ -146,7 +146,16 @@ test.each([
   {name: 'a path without the card extension', pathname: '/og/diffs/acme/widgets/pull/7'},
   {name: 'a path outside the card route', pathname: '/og/other/acme/widgets/pull/7.png'},
   {name: 'a path that is not a diff', pathname: '/og/diffs/not-a-diff.png'},
-  {name: 'a range that does not decode', pathname: '/og/diffs/acme/widgets/compare/%E0%A4%A.png'},
 ])('names no card for $name', ({pathname}) => {
   expect(parseDiffCardPath(pathname)).toBeUndefined()
+})
+
+// The parser keeps a range that does not decode as written, so such a link
+// gets the same card its page unfurls with rather than a 404.
+test('keeps a compare range that does not decode as written', () => {
+  expect(parseDiffCardPath('/og/diffs/acme/widgets/compare/%E0%A4%A.png')).toEqual({
+    kind: 'compare',
+    range: '%E0%A4%A',
+    repo: REPO,
+  })
 })

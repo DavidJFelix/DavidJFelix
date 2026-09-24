@@ -77,6 +77,23 @@ test('resolves a card per request and caches each URL on its own', async () => {
   expect(resolve).toHaveBeenCalledTimes(2)
 })
 
+// A card drawn without the data it asked for should not sit at the edge for
+// the handler's whole default; the resolver says how long it is good for.
+test('lets a card set its own cache life', async () => {
+  const handler = ogCards({
+    runtime,
+    card: () => ({
+      title: 'Without a title',
+      description: 'Try again soon',
+      siteName: 'djf.io',
+      maxAge: 300,
+    }),
+  })
+  const response = await handler(new Request('https://djf.io/og/blog/fallback.png'))
+  expect(response.headers.get('Cache-Control')).toBe('public, max-age=300')
+  expect(pngSize(new Uint8Array(await response.arrayBuffer()))).toEqual(ogImageSize)
+})
+
 test('answers 404 without caching when the request names no card', async () => {
   const {cache, entries} = fakeCache()
   const handler = ogCards({runtime, cache, card: () => undefined})

@@ -6,16 +6,22 @@ const GITHUB_API_ROOT = 'https://api.github.com'
 const GITHUB_API_VERSION = '2022-11-28'
 const USER_AGENT = 'revision-city-diffs'
 // A human page load waits on this lookup for its title, so past this the page
-// falls back to what the URL already says rather than holding the reader.
+// falls back to what the URL already says rather than holding the reader. One
+// deadline covers the whole lookup: every attempt, and reading the body.
 const DEFAULT_TIMEOUT_MS = 2_000
 // A hit stays fresh for an hour: titles rarely change, and the point of the
 // cache is one GitHub call per pull request per edge, not one per scraper. A
 // miss is kept briefly, so a repository made public shows up without a wait.
 const HIT_MAX_AGE_SECONDS = 60 * 60
 const MISS_MAX_AGE_SECONDS = 5 * 60
-// Lookups are keyed on the site's own origin, which is the zone the Workers
-// cache belongs to in production; the path never resolves to a page.
-const CACHE_KEY_ROOT = 'https://revision.city/.cache/github/pulls/'
+// How long the app's credentials stay withheld after GitHub rejects them, so a
+// rejection costs one extra call an hour per edge rather than one per lookup;
+// a rotated secret takes effect within the hour.
+const CREDENTIALS_REJECTED_MAX_AGE_SECONDS = 60 * 60
+// Entries are keyed on the site's own origin, which is the zone the Workers
+// cache belongs to in production; the paths never resolve to a page.
+const CACHE_KEY_ROOT = 'https://revision.city/.cache/github/'
+const CREDENTIALS_REJECTED_KEY = `${CACHE_KEY_ROOT}credentials-rejected`
 
 type PullRequestFetch = (
   input: Parameters<typeof fetch>[0],
@@ -71,14 +77,14 @@ export async function fetchPublicPullRequest({
   timeoutMs = DEFAULT_TIMEOUT_MS,
 }: FetchPublicPullRequestParams): Promise<PublicPullRequest | undefined> {
   const cacheKey = new Request(
-    `${CACHE_KEY_ROOT}${encodeURLSegment(repo.owner)}/${encodeURLSegment(repo.repo)}/${encodeURLSegment(number)}`,
+    `${CACHE_KEY_ROOT}pulls/${encodeURLSegment(repo.owner)}/${encodeURLSegment(repo.repo)}/${encodeURLSegment(number)}`,
   )
   const cached = await readCachedLookup(cache, cacheKey)
   if (!isNullish(cached)) {
     return cached.kind === 'found' ? cached.pull : undefined
   }
 
-  const lookup = await lookupPullRequest({repo, number, fetcher, credentials, timeoutMs})
+  const lookup = await lookupPullRequest({repo, number, fetcher, credentials, cache, timeoutMs})
   if (lookup.kind === 'unavailable') {
     return undefined
   }
@@ -91,6 +97,7 @@ interface LookupPullRequestParams {
   number: string
   fetcher: PullRequestFetch
   credentials: GitHubAppCredentials | undefined
+  cache: ResponseCache | undefined
   timeoutMs: number
 }
 
@@ -99,59 +106,79 @@ async function lookupPullRequest({
   number,
   fetcher,
   credentials,
+  cache,
   timeoutMs,
 }: LookupPullRequestParams): Promise<PullRequestLookup> {
   const url = `${GITHUB_API_ROOT}/repos/${encodeURLSegment(repo.owner)}/${encodeURLSegment(repo.repo)}/pulls/${encodeURLSegment(number)}`
-  let response = await fetchWithTimeout({url, fetcher, credentials, timeoutMs})
-  // GitHub rejecting the app's own credentials would otherwise take every card
-  // down with it; one anonymous retry keeps public cards working at the lower
-  // limit until the credentials are fixed.
-  if (response?.status === 401 && !isNullish(credentials)) {
-    response = await fetchWithTimeout({url, fetcher, credentials: undefined, timeoutMs})
-  }
-  if (isNullish(response)) {
-    return {kind: 'unavailable'}
-  }
-  if (response.status === 404) {
-    return {kind: 'missing'}
-  }
-  if (!response.ok) {
-    return {kind: 'unavailable'}
-  }
-
-  const pull = parseGitHubPullRequest(await response.json().catch(() => undefined))
-  return isNullish(pull) ? {kind: 'unavailable'} : {kind: 'found', pull}
-}
-
-interface FetchWithTimeoutParams {
-  url: string
-  fetcher: PullRequestFetch
-  credentials: GitHubAppCredentials | undefined
-  timeoutMs: number
-}
-
-// Undefined for a network failure or a lookup that outlasts the timeout: both
-// read as "GitHub had no answer", never as "the pull request is missing".
-async function fetchWithTimeout({
-  url,
-  fetcher,
-  credentials,
-  timeoutMs,
-}: FetchWithTimeoutParams): Promise<Response | undefined> {
   const controller = new AbortController()
   const timer = setTimeout(() => {
     controller.abort()
   }, timeoutMs)
   try {
-    return await fetcher(url, {
-      cache: 'no-store',
-      headers: createHeaders(credentials),
-      signal: controller.signal,
-    })
-  } catch {
-    return undefined
+    const offered =
+      isNullish(credentials) || (await readCredentialsRejected(cache)) ? undefined : credentials
+    let answer = await fetchJSON({url, fetcher, credentials: offered, signal: controller.signal})
+    // GitHub rejecting the app's own credentials would otherwise take every
+    // card down with it: one anonymous retry keeps public cards working at the
+    // lower limit, and the rejection is remembered so later lookups skip the
+    // attempt until the credentials are fixed.
+    if (answer?.status === 401 && !isNullish(offered)) {
+      await writeCredentialsRejected(cache)
+      answer = await fetchJSON({url, fetcher, credentials: undefined, signal: controller.signal})
+    }
+    if (isNullish(answer)) {
+      return {kind: 'unavailable'}
+    }
+    if (answer.status === 404) {
+      return {kind: 'missing'}
+    }
+    if (!answer.ok) {
+      return {kind: 'unavailable'}
+    }
+
+    const pull = parseGitHubPullRequest(answer.data)
+    return isNullish(pull) ? {kind: 'unavailable'} : {kind: 'found', pull}
   } finally {
     clearTimeout(timer)
+  }
+}
+
+interface FetchJSONParams {
+  url: string
+  fetcher: PullRequestFetch
+  credentials: GitHubAppCredentials | undefined
+  signal: AbortSignal
+}
+
+interface JSONAnswer {
+  status: number
+  ok: boolean
+  data: unknown
+}
+
+// The status and, for a successful answer, the parsed body -- read under the
+// caller's deadline, since a body can stall after its headers arrive. Undefined
+// for a network failure, an abort, or a body that is not JSON: all of them
+// "GitHub had no answer", never "the pull request is missing".
+async function fetchJSON({
+  url,
+  fetcher,
+  credentials,
+  signal,
+}: FetchJSONParams): Promise<JSONAnswer | undefined> {
+  try {
+    const response = await fetcher(url, {
+      cache: 'no-store',
+      headers: createHeaders(credentials),
+      signal,
+    })
+    if (!response.ok) {
+      void response.body?.cancel().catch(() => undefined)
+      return {status: response.status, ok: false, data: undefined}
+    }
+    return {status: response.status, ok: true, data: await response.json()}
+  } catch {
+    return undefined
   }
 }
 
@@ -240,6 +267,28 @@ async function writeCachedLookup(
     )
   } catch {
     // Nothing to do: the next lookup asks GitHub again.
+  }
+}
+
+async function readCredentialsRejected(cache: ResponseCache | undefined): Promise<boolean> {
+  try {
+    return !isNullish(await cache?.match(new Request(CREDENTIALS_REJECTED_KEY)))
+  } catch {
+    return false
+  }
+}
+
+async function writeCredentialsRejected(cache: ResponseCache | undefined): Promise<void> {
+  try {
+    await cache?.put(
+      new Request(CREDENTIALS_REJECTED_KEY),
+      Response.json(
+        {rejected: true},
+        {headers: {'Cache-Control': `public, max-age=${CREDENTIALS_REJECTED_MAX_AGE_SECONDS}`}},
+      ),
+    )
+  } catch {
+    // Nothing to do: the next lookup offers the credentials again.
   }
 }
 

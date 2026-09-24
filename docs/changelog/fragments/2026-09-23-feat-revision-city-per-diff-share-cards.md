@@ -13,12 +13,15 @@ The rule for private diffs is that the card may carry only what the link already
 request lookup never authenticates as the visitor or as an installation; it sends the app's own
 client id and secret as basic auth, which GitHub answers with public data only at the app's rate
 limit rather than the anonymous per-address one the Worker shares with every other Worker, and
-retries once anonymously if GitHub ever rejects them. A private or missing pull request, or GitHub
-not answering within two seconds, falls back to the URL-only text, and since GitHub answers 404 for
-both, the card is no oracle for whether a private repository exists. Lookups are kept in the Workers
-cache for an hour (a miss for five minutes), so a shared link costs one GitHub call per pull request
-per edge, not one per scraper. The viewer route's loader runs the lookup through a server function,
-so the same title also names the tab.
+retries once anonymously if GitHub ever rejects them, remembering the rejection for an hour. A
+private or missing pull request, or GitHub not answering within two seconds, falls back to the
+URL-only text, and since GitHub answers 404 for both, the card is no oracle for whether a private
+repository exists. Lookups are kept in the Workers cache for an hour (a miss for five minutes), so a
+shared link costs one GitHub call per pull request per edge, not one per scraper; a card drawn
+without GitHub's answer is cached for those same five minutes rather than the hour. The viewer
+route's loader runs the lookup through a server function, so the same title also names the tab.
+Parsing a diff path no longer throws on a compare range that does not percent-decode (a ref with a
+stray percent sign): the range is taken as written, where the route used to fail.
 
 The card lives at `/og/diffs/<path>.png`, mirroring the viewer path, rendered on the Worker from the
 same text in the diffs dark theme with an added-to-deleted accent bar, and cached for an hour;

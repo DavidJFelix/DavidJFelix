@@ -164,13 +164,9 @@ export function parseDiffCardPath(pathname: string): GitHubDiffSource | undefine
   if (!pathname.startsWith(`${DIFF_CARD_BASE_PATH}/`) || !pathname.endsWith(DIFF_CARD_EXTENSION)) {
     return undefined
   }
-  const path = pathname.slice(DIFF_CARD_BASE_PATH.length, -DIFF_CARD_EXTENSION.length)
-  try {
-    return parseGitHubDiffSource(path)
-  } catch {
-    // A compare range that does not decode is not a diff the viewer serves.
-    return undefined
-  }
+  return parseGitHubDiffSource(
+    pathname.slice(DIFF_CARD_BASE_PATH.length, -DIFF_CARD_EXTENSION.length),
+  )
 }
 
 function shortenSha(sha: string): string {

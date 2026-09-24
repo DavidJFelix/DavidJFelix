@@ -57,6 +57,22 @@ test('a commit link unfurls with its short SHA', async ({page}) => {
   )
 })
 
+// A ref may carry a percent sign, which the router hands over decoded and the
+// parser must not decode again: such a link renders instead of failing the route.
+test('a compare range with a stray percent sign still unfurls', async ({page}) => {
+  const response = await page.goto(`/diffs/${REPO}/compare/foo%25...bar`)
+  expect(response?.status()).toBe(200)
+  const head = page.locator('head')
+  await expect(head.locator('meta[property="og:title"]')).toHaveAttribute(
+    'content',
+    `${REPO} foo%...bar`,
+  )
+  await expect(head.locator('meta[property="og:image"]')).toHaveAttribute(
+    'content',
+    `${origin}/og/diffs/${REPO}/compare/foo%25...bar.png`,
+  )
+})
+
 // A path under an alternate domain is another diff, so the domain rides on
 // og:url and the canonical link; the text and card stay the generic ones, since
 // only GitHub paths have a shape the viewer can name.
@@ -83,13 +99,19 @@ test('an alternate-domain link keeps its domain in og:url and shares the generic
   )
 })
 
-// The card renders on the worker at request time; fetch it from this boot.
-;[`/og/diffs/${REPO}/pull/1.png`, `/og/diffs/${REPO}/compare/v1.0...v2.0.png`].forEach((path) => {
+// The card renders on the worker at request time; fetch it from this boot. A
+// pull request card drawn without GitHub's answer lives only as long as the
+// lookup remembers a miss; a compare card has nothing to wait for and keeps
+// the hour.
+;[
+  {path: `/og/diffs/${REPO}/pull/1.png`, cacheControl: 'public, max-age=300'},
+  {path: `/og/diffs/${REPO}/compare/v1.0...v2.0.png`, cacheControl: 'public, max-age=3600'},
+].forEach(({path, cacheControl}) => {
   test(`${path} serves a diff card at the shared size`, async ({request}) => {
     const response = await request.get(path)
     expect(response.ok()).toBe(true)
     expect(response.headers()['content-type']).toContain('image/png')
-    expect(response.headers()['cache-control']).toBe('public, max-age=3600')
+    expect(response.headers()['cache-control']).toBe(cacheControl)
     expect(pngSize(await response.body())).toEqual({width: 1200, height: 630})
   })
 })

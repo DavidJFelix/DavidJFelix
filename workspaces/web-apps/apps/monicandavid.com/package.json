@@ -39,7 +39,7 @@
     "@types/node": "catalog:",
     "@vitest/browser-playwright": "catalog:",
     "@vitest/coverage-v8": "catalog:",
-    "drizzle-kit": "0.31.10",
+    "drizzle-kit": "0.31.11",
     "fast-check": "4.10.2",
     "oxlint-tsgolint": "catalog:",
     "svelte": "5.57.1",

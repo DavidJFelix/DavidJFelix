@@ -40,9 +40,7 @@ failCheck = true
 # Reasoning effort for the repo-aware review agent (off, low, medium, high,
 # xhigh, max; runtime default when omitted).
 [defaults.agent]
-effort = "medium"
-# Round trips one hunk may take before its review is cut short (runtime default 50).
-maxTurns = 10
+effort = "high"
 
 # Hunk analyses in flight at once, across both skills (action default 5).
 # OpenRouter reserves credit per in-flight request, so this needs a balance behind it.

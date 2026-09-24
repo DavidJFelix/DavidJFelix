@@ -42,7 +42,7 @@
     "drizzle-kit": "0.31.10",
     "fast-check": "4.10.1",
     "oxlint-tsgolint": "catalog:",
-    "svelte": "5.57.0",
+    "svelte": "5.57.1",
     "svelte-check": "catalog:",
     "typescript": "6.0.3",
     "vite": "catalog:",

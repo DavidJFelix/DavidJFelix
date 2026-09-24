@@ -44,6 +44,17 @@ failCheck = true
 [defaults.agent]
 effort = "high"
 
+# Hunk analyses in flight at once, across both skills; the action's `parallel`
+# input (5) is the fallback when this is unset. A 24-file PR at high effort
+# needs about 110 worker-minutes of hunk time, with single hunks running
+# anywhere from seconds to fourteen minutes, so five wide the job overran
+# ci-warden.yml's 20-minute cap twice on 2026-09-24. Twenty wide, a run takes
+# about as long as its slowest hunk plus a minute or two; wider cannot help,
+# since the slowest hunk sets the floor. Spend is per token, so this moves
+# wall time, not cost.
+[runner]
+concurrency = 20
+
 # Built-in baseline application-security review. Whole-repo: no `paths` filter,
 # so it sees the entire PR diff across all apps and root config.
 [[skills]]

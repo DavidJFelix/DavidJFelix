@@ -99,6 +99,25 @@ test('an alternate-domain link keeps its domain in og:url and shares the generic
   )
 })
 
+// The router hands every match the raw search along with what its route
+// validates, so the root keeps only the params that make a path another page:
+// a tracker's tag on a shared link stays off og:url and the canonical link.
+test('a tracker tag on the link stays off og:url and the canonical link', async ({page}) => {
+  await page.goto(`${PULL_PATH}?utm_source=newsletter&domain=tangled.org`)
+  const head = page.locator('head')
+  await expect(head.locator('meta[property="og:url"]')).toHaveAttribute(
+    'content',
+    `${origin}${PULL_PATH}?domain=tangled.org`,
+  )
+  await expect(head.locator('link[rel="canonical"]')).toHaveAttribute(
+    'href',
+    `${origin}${PULL_PATH}?domain=tangled.org`,
+  )
+  await page.goto('/?utm_source=newsletter')
+  await expect(head.locator('meta[property="og:url"]')).toHaveAttribute('content', `${origin}/`)
+  await expect(head.locator('link[rel="canonical"]')).toHaveAttribute('href', `${origin}/`)
+})
+
 // The card renders on the worker at request time; fetch it from this boot. A
 // pull request card drawn without GitHub's answer lives only as long as the
 // lookup remembers a miss; a compare card has nothing to wait for and keeps

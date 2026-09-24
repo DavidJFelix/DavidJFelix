@@ -18,10 +18,18 @@ const MISS_MAX_AGE_SECONDS = 5 * 60
 // rejection costs one extra call an hour per edge rather than one per lookup;
 // a rotated secret takes effect within the hour.
 const CREDENTIALS_REJECTED_MAX_AGE_SECONDS = 60 * 60
+// How long lookups stay off GitHub after it answers that the rate limit is
+// spent: until the reset it names, a minute when it names none, an hour at
+// most. Every distinct reference costs a call, so a crawler walking pull
+// request numbers can spend the budget; once it is gone, asking again would
+// only cost each page the two-second wait for an answer GitHub will not give.
+const RATE_LIMITED_DEFAULT_SECONDS = 60
+const RATE_LIMITED_MAX_AGE_SECONDS = 60 * 60
 // Entries are keyed on the site's own origin, which is the zone the Workers
 // cache belongs to in production; the paths never resolve to a page.
 const CACHE_KEY_ROOT = 'https://revision.city/.cache/github/'
 const CREDENTIALS_REJECTED_KEY = `${CACHE_KEY_ROOT}credentials-rejected`
+const RATE_LIMITED_KEY = `${CACHE_KEY_ROOT}rate-limited`
 
 type PullRequestFetch = (
   input: Parameters<typeof fetch>[0],
@@ -115,15 +123,20 @@ async function lookupPullRequest({
     controller.abort()
   }, timeoutMs)
   try {
+    if (await readMarker(cache, RATE_LIMITED_KEY)) {
+      return {kind: 'unavailable'}
+    }
     const offered =
-      isNullish(credentials) || (await readCredentialsRejected(cache)) ? undefined : credentials
+      isNullish(credentials) || (await readMarker(cache, CREDENTIALS_REJECTED_KEY))
+        ? undefined
+        : credentials
     let answer = await fetchJSON({url, fetcher, credentials: offered, signal: controller.signal})
     // GitHub rejecting the app's own credentials would otherwise take every
     // card down with it: one anonymous retry keeps public cards working at the
     // lower limit, and the rejection is remembered so later lookups skip the
     // attempt until the credentials are fixed.
     if (answer?.status === 401 && !isNullish(offered)) {
-      await writeCredentialsRejected(cache)
+      await writeMarker(cache, CREDENTIALS_REJECTED_KEY, CREDENTIALS_REJECTED_MAX_AGE_SECONDS)
       answer = await fetchJSON({url, fetcher, credentials: undefined, signal: controller.signal})
     }
     if (isNullish(answer)) {
@@ -131,6 +144,10 @@ async function lookupPullRequest({
     }
     if (answer.status === 404) {
       return {kind: 'missing'}
+    }
+    if (!isNullish(answer.rateLimitedForSeconds)) {
+      await writeMarker(cache, RATE_LIMITED_KEY, answer.rateLimitedForSeconds)
+      return {kind: 'unavailable'}
     }
     if (!answer.ok) {
       return {kind: 'unavailable'}
@@ -154,6 +171,8 @@ interface JSONAnswer {
   status: number
   ok: boolean
   data: unknown
+  // Set when the answer says the rate limit is spent: how long to stay away.
+  rateLimitedForSeconds?: number
 }
 
 // The status and, for a successful answer, the parsed body -- read under the
@@ -174,12 +193,42 @@ async function fetchJSON({
     })
     if (!response.ok) {
       void response.body?.cancel().catch(() => undefined)
-      return {status: response.status, ok: false, data: undefined}
+      return {
+        status: response.status,
+        ok: false,
+        data: undefined,
+        rateLimitedForSeconds: readRateLimitedFor(response),
+      }
     }
     return {status: response.status, ok: true, data: await response.json()}
   } catch {
     return undefined
   }
+}
+
+// How long GitHub asks callers to stay away when an answer says the rate limit
+// is spent: a 403 or 429 naming a retry-after (the secondary limit), or a 403
+// whose remaining count is zero (the primary limit), which names its reset as
+// a unix time. Undefined for a 403 refused for another reason.
+function readRateLimitedFor(response: Response): number | undefined {
+  if (response.status !== 403 && response.status !== 429) {
+    return undefined
+  }
+  const retryAfter = Number(response.headers.get('retry-after'))
+  if (retryAfter > 0) {
+    return clampWait(retryAfter)
+  }
+  const spent = response.headers.get('x-ratelimit-remaining') === '0'
+  if (response.status === 403 && !spent) {
+    return undefined
+  }
+  const reset = Number(response.headers.get('x-ratelimit-reset'))
+  const untilReset = spent && reset > 0 ? reset - Date.now() / 1000 : 0
+  return clampWait(untilReset > 0 ? untilReset : RATE_LIMITED_DEFAULT_SECONDS)
+}
+
+function clampWait(seconds: number): number {
+  return Math.min(Math.ceil(seconds), RATE_LIMITED_MAX_AGE_SECONDS)
 }
 
 function createHeaders(credentials: GitHubAppCredentials | undefined): Record<string, string> {
@@ -270,25 +319,31 @@ async function writeCachedLookup(
   }
 }
 
-async function readCredentialsRejected(cache: ResponseCache | undefined): Promise<boolean> {
+// A marker is a fact the edge remembers for a while -- the credentials were
+// rejected, the rate limit is spent -- whose presence is the whole message.
+async function readMarker(cache: ResponseCache | undefined, key: string): Promise<boolean> {
   try {
-    return !isNullish(await cache?.match(new Request(CREDENTIALS_REJECTED_KEY)))
+    return !isNullish(await cache?.match(new Request(key)))
   } catch {
     return false
   }
 }
 
-async function writeCredentialsRejected(cache: ResponseCache | undefined): Promise<void> {
+async function writeMarker(
+  cache: ResponseCache | undefined,
+  key: string,
+  maxAgeSeconds: number,
+): Promise<void> {
   try {
     await cache?.put(
-      new Request(CREDENTIALS_REJECTED_KEY),
+      new Request(key),
       Response.json(
-        {rejected: true},
-        {headers: {'Cache-Control': `public, max-age=${CREDENTIALS_REJECTED_MAX_AGE_SECONDS}`}},
+        {marked: true},
+        {headers: {'Cache-Control': `public, max-age=${maxAgeSeconds}`}},
       ),
     )
   } catch {
-    // Nothing to do: the next lookup offers the credentials again.
+    // Nothing to do: the next lookup asks GitHub again.
   }
 }
 

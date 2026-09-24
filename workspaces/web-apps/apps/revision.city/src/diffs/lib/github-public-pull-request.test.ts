@@ -14,6 +14,7 @@ const PULLS_URL = 'https://api.github.com/repos/acme/widgets/pulls/'
 const CREDENTIALS = {clientId: 'client-id', clientSecret: 'client-secret'}
 const BASIC_AUTH = `Basic ${btoa('client-id:client-secret')}`
 const REJECTED_KEY = 'https://revision.city/.cache/github/credentials-rejected'
+const RATE_LIMITED_KEY = 'https://revision.city/.cache/github/rate-limited'
 const EXPECTED_PULL: PublicPullRequest = {
   title: 'Add widgets',
   author: 'maintainer',
@@ -173,7 +174,7 @@ test('keeps a hit for an hour and serves the next lookup from the cache', async 
 
 test.each([
   {name: 'a server error', respond: () => new Response(null, {status: 500})},
-  {name: 'a rate limit', respond: () => new Response(null, {status: 403})},
+  {name: 'a 403 that names no rate limit', respond: () => new Response(null, {status: 403})},
   {name: 'a payload without a title', respond: () => Response.json({number: 7})},
   {name: 'a body that is not JSON', respond: () => new Response('<html>', {status: 200})},
   {
@@ -193,6 +194,81 @@ test.each([
   expect(second).toBeUndefined()
   expect(fetchImpl).toHaveBeenCalledTimes(2)
   expect(entries.size).toBe(0)
+})
+
+// Once GitHub says the budget is spent, asking again would only cost each page
+// its wait: lookups stay off GitHub until the reset the answer names, and a
+// spent limit is not a miss, so nothing is remembered about the pull request.
+test('stays off GitHub until the reset a spent rate limit names', async () => {
+  const {cache, entries} = fakeCache()
+  const now = 1_790_000_000_000
+  const clock = vi.spyOn(Date, 'now').mockReturnValue(now)
+  try {
+    const fetchImpl = stubGitHub(
+      () =>
+        new Response(null, {
+          status: 403,
+          headers: {'x-ratelimit-remaining': '0', 'x-ratelimit-reset': String(now / 1000 + 120)},
+        }),
+    )
+
+    const first = await fetchPublicPullRequest({repo: REPO, number: '7', fetch: fetchImpl, cache})
+    const second = await fetchPublicPullRequest({repo: REPO, number: '8', fetch: fetchImpl, cache})
+
+    expect(first).toBeUndefined()
+    expect(second).toBeUndefined()
+    expect(fetchImpl).toHaveBeenCalledTimes(1)
+    expect([...entries.keys()]).toEqual([RATE_LIMITED_KEY])
+    expect(entries.get(RATE_LIMITED_KEY)?.headers.get('Cache-Control')).toBe('public, max-age=120')
+  } finally {
+    clock.mockRestore()
+  }
+})
+
+const RATE_LIMIT_ANSWERS: Array<{
+  name: string
+  status: number
+  headers: Record<string, string>
+  maxAge: number
+}> = [
+  {name: 'a retry-after header', status: 429, headers: {'retry-after': '30'}, maxAge: 30},
+  {name: 'a 429 that names no reset', status: 429, headers: {}, maxAge: 60},
+  {
+    name: 'a spent limit that names no reset',
+    status: 403,
+    headers: {'x-ratelimit-remaining': '0'},
+    maxAge: 60,
+  },
+  {
+    name: 'a reset that already passed',
+    status: 403,
+    headers: {
+      'x-ratelimit-remaining': '0',
+      'x-ratelimit-reset': String(Math.floor(Date.now() / 1000) - 5),
+    },
+    maxAge: 60,
+  },
+  {
+    name: 'a reset more than an hour away',
+    status: 403,
+    headers: {
+      'x-ratelimit-remaining': '0',
+      'x-ratelimit-reset': String(Math.floor(Date.now() / 1000) + 7200),
+    },
+    maxAge: 3600,
+  },
+]
+
+test.each(RATE_LIMIT_ANSWERS)('waits out $name', async ({status, headers, maxAge}) => {
+  const {cache, entries} = fakeCache()
+  const fetchImpl = stubGitHub(() => new Response(null, {status, headers}))
+
+  const pull = await fetchPublicPullRequest({repo: REPO, number: NUMBER, fetch: fetchImpl, cache})
+
+  expect(pull).toBeUndefined()
+  expect(entries.get(RATE_LIMITED_KEY)?.headers.get('Cache-Control')).toBe(
+    `public, max-age=${maxAge}`,
+  )
 })
 
 test('gives up when GitHub outlasts the timeout', async () => {

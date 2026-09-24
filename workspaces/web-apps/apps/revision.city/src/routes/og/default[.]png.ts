@@ -1,12 +1,16 @@
 import {ogCard} from '@davidjfelix/og/card'
 import {viteRuntime} from '@davidjfelix/og/runtime/vite'
 import {createFileRoute} from '@tanstack/react-router'
+import {readDeployedVersion} from '@/deployed-version'
 import {cardTheme, site} from '@/site'
 
 // The share card every page's og:image points at, rendered on the Worker at
-// request time (satori + resvg on wasm) and kept in the edge cache.
+// request time (satori + resvg on wasm) and kept in the edge cache under the
+// deployed version, so a redesign shows on the next deploy rather than a day
+// later.
 const card = ogCard({
   runtime: viteRuntime,
+  version: readDeployedVersion,
   title: site.title,
   description: site.description,
   siteName: site.siteName,

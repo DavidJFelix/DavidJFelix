@@ -9,11 +9,31 @@ import {themeBootstrapScript} from '@/diffs/lib/theme-bootstrap'
 import {site} from '@/site'
 import appCss from '../styles.css?url'
 
+// The search params that make a path another page: the viewer's `domain`
+// points the same path at another host, so it belongs in og:url and the
+// canonical link. Listed here rather than read off the match, because the
+// router hands every match the raw search merged with what its route
+// validates, so a tracker's tag on the link would ride along otherwise.
+const SHARED_SEARCH_KEYS: ReadonlySet<string> = new Set(['domain'])
+
+function getSharePath(leaf: {pathname: string; search: object} | undefined): string {
+  if (leaf === undefined) {
+    return '/'
+  }
+  const search = new URLSearchParams(
+    Object.entries(leaf.search).filter(
+      (entry): entry is [string, string] =>
+        SHARED_SEARCH_KEYS.has(entry[0]) && typeof entry[1] === 'string' && entry[1] !== '',
+    ),
+  ).toString()
+  return search === '' ? leaf.pathname : `${leaf.pathname}?${search}`
+}
+
 export const Route = createRootRoute({
   // The leaf match carries the requested path, so og:url and the canonical
   // link name the page being shared rather than the site root.
   head: ({matches}) => {
-    const social = ogSite({...site, path: matches.at(-1)?.pathname ?? '/'})
+    const social = ogSite({...site, path: getSharePath(matches.at(-1))})
     return {
       meta: [
         {charSet: 'utf-8'},

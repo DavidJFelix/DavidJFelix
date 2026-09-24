@@ -135,7 +135,8 @@ reach it. `packages/og/README.md` is the reference; the shape:
 
 - ravrun: shared-plan cards once URL state ships (a parameterized `/og/*.png` route on the same
   runtime).
-- revision.city: per-diff cards under `/diffs`.
+- revision.city: per-diff cards under `/diffs` -- landed 2026-09-23 (`ogCards` in the package; the
+  changelog fragment `2026-09-23-feat-revision-city-per-diff-share-cards.md` has the shape).
 - monicandavid.com: per-post cards once posts exist, on djf.io's pattern.
 - calendar-visualizer: `og:url` and the card once it has a domain.
 - f311x: a card once its deploy pipeline carries a wasm module rule (or it moves to the Cloudflare

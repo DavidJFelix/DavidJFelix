@@ -38,11 +38,14 @@ failCheck = true
 # run as the last step of .depot/workflows/ci-warden.yml.
 
 # Reasoning effort for the repo-aware review agent (off, low, medium, high,
-# xhigh, max; runtime default when omitted). High is affordable because the
-# model behind WARDEN_MODEL is cheap per token; if the model changes to a
-# pricier one, this is the first dial to turn back down.
+# xhigh, max; runtime default when omitted).
 [defaults.agent]
 effort = "high"
+
+# Hunk analyses in flight at once, across both skills (action default 5).
+# OpenRouter reserves credit per in-flight request, so this needs a balance behind it.
+[runner]
+concurrency = 20
 
 # Built-in baseline application-security review. Whole-repo: no `paths` filter,
 # so it sees the entire PR diff across all apps and root config.

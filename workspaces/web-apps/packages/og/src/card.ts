@@ -14,6 +14,17 @@ export interface OgCache {
 
 const DAY_SECONDS = 86_400
 
+// The deployed version rendering the cards, when the runtime knows it (on
+// Workers, the version metadata binding's id), or a function that resolves
+// it per request. A cached card outlives the deploy that drew it, so each
+// version keeps its own entries and a deploy never serves the cards of the
+// one before it. Without a version, a card stays at the edge for its whole
+// cache life, across deploys.
+export type OgCardVersion =
+  | string
+  | undefined
+  | (() => string | undefined | Promise<string | undefined>)
+
 export interface OgResolvedCard extends OgImageParams {
   // How long this card stays cacheable, in seconds, when the resolver knows
   // better than the handler's default: a card drawn without the data it asked
@@ -26,6 +37,7 @@ export interface OgCardsParams {
   // Where rendered cards are kept between requests; the Workers Cache API's
   // default cache when the runtime offers one, nothing otherwise.
   cache?: OgCache
+  version?: OgCardVersion
   // How long a rendered card stays cacheable, in seconds; a day when omitted.
   maxAge?: number
   // The card a request names, or undefined when it names none, which answers
@@ -36,6 +48,7 @@ export interface OgCardsParams {
 export interface OgCardParams extends OgImageParams {
   runtime: OgRuntime
   cache?: OgCache
+  version?: OgCardVersion
 }
 
 // `caches.default` is Cloudflare's addition to CacheStorage, absent from the
@@ -43,11 +56,21 @@ export interface OgCardParams extends OgImageParams {
 const defaultCache = (): OgCache | undefined =>
   (globalThis as {caches?: {default?: OgCache}}).caches?.default
 
-export const ogCards = ({runtime, cache, maxAge = DAY_SECONDS, card}: OgCardsParams) => {
+// The cache keys on the URL alone, so the version rides in a query parameter
+// no route reads; the request itself is answered as it was asked.
+const cacheKey = (request: Request, version: string | undefined): Request => {
+  if (!version) return request
+  const url = new URL(request.url)
+  url.searchParams.set('v', version)
+  return new Request(url.href)
+}
+
+export const ogCards = ({runtime, cache, version, maxAge = DAY_SECONDS, card}: OgCardsParams) => {
   const render = createOgRenderer(runtime)
   return async (request: Request): Promise<Response> => {
     const store = cache ?? defaultCache()
-    const cached = await store?.match(request)
+    const key = cacheKey(request, typeof version === 'function' ? await version() : version)
+    const cached = await store?.match(key)
     if (cached) return cached
     const resolved = await card(request)
     if (!resolved) return new Response(null, {status: 404})
@@ -55,10 +78,10 @@ export const ogCards = ({runtime, cache, maxAge = DAY_SECONDS, card}: OgCardsPar
     const response = new Response(await render(params), {
       headers: {'Content-Type': 'image/png', 'Cache-Control': `public, max-age=${cardMaxAge}`},
     })
-    await store?.put(request, response.clone())
+    await store?.put(key, response.clone())
     return response
   }
 }
 
-export const ogCard = ({runtime, cache, ...card}: OgCardParams) =>
-  ogCards({runtime, cache, card: () => card})
+export const ogCard = ({runtime, cache, version, ...card}: OgCardParams) =>
+  ogCards({runtime, cache, version, card: () => card})

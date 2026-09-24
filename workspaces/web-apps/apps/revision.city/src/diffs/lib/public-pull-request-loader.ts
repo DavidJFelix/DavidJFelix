@@ -10,7 +10,7 @@ import {type PullRequestReference, validatePullRequestReference} from './pull-re
 // limit all live on the Worker. The validator's declared input is what the
 // loader must hand over; the check inside it is what the wire gets.
 export const loadPublicPullRequest = createServerFn()
-  .inputValidator((input: PullRequestReference) => validatePullRequestReference(input))
+  .validator((input: PullRequestReference) => validatePullRequestReference(input))
   .handler(({data}): Promise<PublicPullRequest | undefined> =>
     fetchPublicPullRequest({
       repo: {owner: data.owner, repo: data.repo},

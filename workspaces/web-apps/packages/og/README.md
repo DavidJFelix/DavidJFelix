@@ -100,6 +100,13 @@ asks GitHub for the pull request's public title), or `undefined` for a 404, whic
 Each URL is its own cache entry, and a card may carry its own `maxAge` when the resolver knows
 better than the default (a card drawn without the data it asked for keeps a short life).
 
+A cached card outlives the deploy that drew it, so both handlers take `version`: the deployed
+version rendering the cards, or a function resolving it per request. Each version keeps its own
+cache entries and a deploy starts from an empty card cache instead of serving the previous version's
+cards until they expire. On Workers the version is the version metadata binding's id
+(`[version_metadata]` in `wrangler.toml`, read through `cloudflare:workers`); revision.city's
+`src/deployed-version.ts` is the reference.
+
 satori is held at 0.32: 0.33 added HarfBuzz text shaping whose Emscripten loader reads
 `self.location` and compiles wasm from bytes, neither of which works on Workers
 (`.github/renovate.json` records the hold).

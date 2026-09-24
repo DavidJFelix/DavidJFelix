@@ -94,6 +94,34 @@ test('lets a card set its own cache life', async () => {
   expect(pngSize(new Uint8Array(await response.arrayBuffer()))).toEqual(ogImageSize)
 })
 
+// A cached card outlives the deploy that drew it, so the deployed version is
+// part of the key: a new version starts from an empty cache instead of serving
+// the previous version's cards, and the same version keeps serving its own.
+test('keeps each deployed version to its own cache entries', async () => {
+  const {cache, entries} = fakeCache()
+  const resolve = vi.fn<() => OgImageParams>(() => card)
+  const first = ogCards({runtime, cache, version: 'v1', card: resolve})
+  const second = ogCards({runtime, cache, version: async () => 'v2', card: resolve})
+
+  await first(request)
+  await first(request)
+  await second(request)
+
+  expect([...entries.keys()]).toEqual([
+    'https://startchi.com/og/default.png?v=v1',
+    'https://startchi.com/og/default.png?v=v2',
+  ])
+  expect(resolve).toHaveBeenCalledTimes(2)
+})
+
+test('keys the default card by version as well, and by URL alone without one', async () => {
+  const {cache, entries} = fakeCache()
+  await ogCard({...card, cache, version: 'v1'})(request)
+  await ogCard({...card, cache, version: async () => undefined})(request)
+
+  expect([...entries.keys()]).toEqual(['https://startchi.com/og/default.png?v=v1', request.url])
+})
+
 test('answers 404 without caching when the request names no card', async () => {
   const {cache, entries} = fakeCache()
   const handler = ogCards({runtime, cache, card: () => undefined})

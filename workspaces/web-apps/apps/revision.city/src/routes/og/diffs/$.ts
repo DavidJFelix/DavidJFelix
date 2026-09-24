@@ -2,6 +2,7 @@ import {ogCards} from '@davidjfelix/og/card'
 import {viteRuntime} from '@davidjfelix/og/runtime/vite'
 import {createFileRoute} from '@tanstack/react-router'
 
+import {readDeployedVersion} from '@/deployed-version'
 import {getDiffShareText, parseDiffCardPath} from '@/diffs/lib/diff-share-text'
 import {readGitHubAppCredentials} from '@/diffs/lib/github-auth'
 import {fetchPublicPullRequest} from '@/diffs/lib/github-public-pull-request'
@@ -18,10 +19,11 @@ const FALLBACK_CARD_MAX_AGE_SECONDS = 5 * 60
 
 // The share card behind every /diffs/<path> link, at /og/diffs/<path>.png:
 // rendered on the Worker from the same text the page's og: tags carry, and
-// kept in the edge cache. Scrapers fetch it without the visitor's cookie, so
-// it asks GitHub only for what GitHub shows to anyone.
+// kept in the edge cache under the deployed version. Scrapers fetch it without
+// the visitor's cookie, so it asks GitHub only for what GitHub shows to anyone.
 const card = ogCards({
   runtime: viteRuntime,
+  version: readDeployedVersion,
   maxAge: CARD_MAX_AGE_SECONDS,
   card: async (request) => {
     const source = parseDiffCardPath(new URL(request.url).pathname)

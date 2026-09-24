@@ -26,11 +26,14 @@ stray percent sign): the range is taken as written, where the route used to fail
 The card lives at `/og/diffs/<path>.png`, mirroring the viewer path, rendered on the Worker from the
 same text in the diffs dark theme with an added-to-deleted accent bar, and cached for an hour;
 `@davidjfelix/og` grew `ogCards` for it, the per-request form of `ogCard` that resolves a card from
-the request and answers 404, uncached, when the path names none. Paths under an alternate domain
-(`?domain=`) keep the generic text and the site card, since only GitHub paths have a shape the
-viewer can name, and `og:url` and the canonical link now carry that `domain` query: the root route
-builds the shared path from the leaf match's validated search params, where before a tangled.org
-link canonicalized to the GitHub reading of the same path. Unit tests cover the share text, the card
-path round trip, and the lookup's auth, caching, timeout, and fallback branches; the e2e suite
-asserts the rendered head and fetches the card against a repository name GitHub cannot host, so it
-never depends on live content.
+the request and answers 404, uncached, when the path names none. Both card routes now key that edge
+cache on the deployed Worker version (the version metadata binding), because a rendered card
+outlives the deploy that drew it: a deploy starts from an empty card cache instead of serving the
+previous version's cards until they expire, which is how the preview's e2e run came to read the
+cards of the deploy before it. Paths under an alternate domain (`?domain=`) keep the generic text
+and the site card, since only GitHub paths have a shape the viewer can name, and `og:url` and the
+canonical link now carry that `domain` query: the root route builds the shared path from the leaf
+match's validated search params, where before a tangled.org link canonicalized to the GitHub reading
+of the same path. Unit tests cover the share text, the card path round trip, and the lookup's auth,
+caching, timeout, and fallback branches; the e2e suite asserts the rendered head and fetches the
+card against a repository name GitHub cannot host, so it never depends on live content.

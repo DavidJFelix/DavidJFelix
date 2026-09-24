@@ -25,7 +25,7 @@
     "@ark-ui/svelte": "^5.22.1",
     "@davidjfelix/og": "workspace:*",
     "@sentry/browser": "^10.60.0",
-    "drizzle-orm": "0.45.2",
+    "drizzle-orm": "0.45.3",
     "jose": "6.2.12",
     "mode-watcher": "^1.1.0",
     "posthog-js": "^1.393.0"

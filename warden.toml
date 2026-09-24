@@ -38,20 +38,26 @@ failCheck = true
 # run as the last step of .depot/workflows/ci-warden.yml.
 
 # Reasoning effort for the repo-aware review agent (off, low, medium, high,
-# xhigh, max; runtime default when omitted). High is affordable because the
-# model behind WARDEN_MODEL is cheap per token; if the model changes to a
-# pricier one, this is the first dial to turn back down.
+# xhigh, max; runtime default when omitted). This is the wall-time dial as
+# much as the cost one: at high, single hunks of a 27-file PR ran for up to
+# eighteen minutes on 2026-09-24 and a whole run for twenty, most of it the
+# model reasoning at length on every turn, while the four findings the same
+# diff drew were all plain to a medium read. Turn it back up if a review
+# starts missing things, not if it merely gets quicker.
 [defaults.agent]
-effort = "high"
+effort = "medium"
+# Round trips one hunk may take before its review is cut short (the runtime
+# allows 50). The eighteen-minute hunks were exploration: a review that has
+# not settled after this many turns is chasing the repo, not the diff.
+maxTurns = 25
 
 # Hunk analyses in flight at once, across both skills; the action's `parallel`
-# input (5) is the fallback when this is unset. A 24-file PR at high effort
-# needs about 110 worker-minutes of hunk time, with single hunks running
-# anywhere from seconds to fourteen minutes, so five wide the job overran
-# ci-warden.yml's 20-minute cap twice on 2026-09-24. Twenty wide, a run takes
-# about as long as its slowest hunk plus a minute or two; wider cannot help,
-# since the slowest hunk sets the floor. Spend is per token, so this moves
-# wall time, not cost.
+# input (5) is the fallback when this is unset. A 27-file PR needs 60 to 165
+# worker-minutes of hunk time, so five wide the job overran ci-warden.yml's
+# 20-minute cap twice on 2026-09-24. Twenty wide, a run takes about as long
+# as its slowest hunk plus a minute or two, and wider cannot help, since the
+# slowest hunk sets the floor; the effort setting above is what shortens the
+# hunks themselves. Spend is per token, so this moves wall time, not cost.
 [runner]
 concurrency = 20
 

@@ -72,9 +72,6 @@ jobs:
         )
       )
     runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
-    # A budget, not a fit: warden.toml's `[runner]` and `[defaults.agent]`
-    # are tuned so a 27-file PR reviews well inside it, and a run that needs
-    # more is a run to make cheaper, not a cap to raise.
     timeout-minutes: 20
     # contents: write is required for resolving review threads via GraphQL.
     # See: https://github.com/orgs/community/discussions/44650

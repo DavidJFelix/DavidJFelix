@@ -34,10 +34,20 @@ test('home page carries OpenGraph meta and serves the card it points at', async 
   const image = await head.locator('meta[property="og:image"]').getAttribute('content')
   expect(image).toBe(`${origin}/og/default.png`)
   // The card renders on the worker at request time; fetch it from this boot.
-  const response = await request.get(new URL(image as string).pathname)
+  const cardPath = new URL(image as string).pathname
+  const response = await request.get(cardPath)
   expect(response.ok()).toBe(true)
   expect(response.headers()['content-type']).toContain('image/png')
-  expect(pngSize(await response.body())).toEqual({width: 1200, height: 630})
+  const png = await response.body()
+  expect(pngSize(png)).toEqual({width: 1200, height: 630})
+  // Scrapers and CDNs probe the image with HEAD before fetching it: GET's
+  // status and headers, no body. Nitro answers through unenv's node-compat
+  // fetch bridge, whose `createCall` deletes `content-length` from every HEAD
+  // response after the handler has set it, so the length is not asserted here.
+  const probe = await request.head(cardPath)
+  expect(probe.status()).toBe(200)
+  expect(probe.headers()['content-type']).toContain('image/png')
+  expect((await probe.body()).byteLength).toBe(0)
 })
 
 test('home page matches the visual baseline', async ({page}) => {

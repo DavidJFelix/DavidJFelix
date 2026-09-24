@@ -131,11 +131,22 @@ test('a tracker tag on the link stays off og:url and the canonical link', async 
     expect(response.ok()).toBe(true)
     expect(response.headers()['content-type']).toContain('image/png')
     expect(response.headers()['cache-control']).toBe(cacheControl)
-    expect(pngSize(await response.body())).toEqual({width: 1200, height: 630})
+    const png = await response.body()
+    expect(pngSize(png)).toEqual({width: 1200, height: 630})
+    // Scrapers and CDNs probe the image with HEAD before fetching it: GET's
+    // status and headers, no body.
+    const probe = await request.head(path)
+    expect(probe.status()).toBe(200)
+    expect(probe.headers()['content-type']).toContain('image/png')
+    expect(probe.headers()['cache-control']).toBe(cacheControl)
+    expect(probe.headers()['content-length']).toBe(String(png.byteLength))
+    expect((await probe.body()).byteLength).toBe(0)
   })
 })
 
 test('a card path that names no diff answers 404', async ({request}) => {
   const response = await request.get('/og/diffs/not-a-diff.png')
   expect(response.status()).toBe(404)
+  const probe = await request.head('/og/diffs/not-a-diff.png')
+  expect(probe.status()).toBe(404)
 })

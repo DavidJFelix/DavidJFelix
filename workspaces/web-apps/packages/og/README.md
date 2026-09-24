@@ -100,6 +100,14 @@ asks GitHub for the pull request's public title), or `undefined` for a 404, whic
 Each URL is its own cache entry, and a card may carry its own `maxAge` when the resolver knows
 better than the default (a card drawn without the data it asked for keeps a short life).
 
+Both handlers answer HEAD as well as GET -- the same status and headers, `Content-Length` included,
+and no body -- because some scrapers and CDNs probe an image before fetching it, and both key the
+cache by a GET request whatever the incoming method, the only key the Workers cache accepts. Each
+framework delivers HEAD to them its own way: the TanStack Start routes register `HEAD` beside `GET`,
+pkg.dog mounts a `default.png.head.ts` beside the `.get.ts` (Nitro has no HEAD-to-GET fallback, and
+its unenv fetch bridge drops the `Content-Length` from a HEAD response on the way out), and Astro
+and SvelteKit forward a HEAD to the `GET` export themselves.
+
 A cached card outlives the deploy that drew it, so both handlers take `version`: the deployed
 version rendering the cards, or a function resolving it per request. Each version keeps its own
 cache entries and a deploy starts from an empty card cache instead of serving the previous version's

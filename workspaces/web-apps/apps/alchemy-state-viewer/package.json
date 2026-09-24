@@ -28,7 +28,7 @@
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "oxlint-tsgolint": "catalog:",
-    "svelte": "5.57.0",
+    "svelte": "5.57.1",
     "svelte-check": "catalog:",
     "typescript": "6.0.3",
     "vite": "catalog:",

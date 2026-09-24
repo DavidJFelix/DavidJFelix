@@ -87,6 +87,18 @@ test('counts a single changed file in the singular', () => {
   )
 })
 
+test('groups large counts in thousands', () => {
+  const share = getDiffShareText({
+    source: PULL,
+    pull: {...PUBLIC_PULL, changedFiles: 2188, additions: 1009257, deletions: 4024},
+  })
+
+  expect(share.description).toBe(
+    'Pull request #7 by maintainer in acme/widgets: 2,188 files changed, +1,009,257 -4,024.',
+  )
+  expect(share.card.description).toBe('acme/widgets #7 · 2,188 files changed, +1,009,257 -4,024')
+})
+
 test('leaves out the byline and the counts when GitHub did not send them', () => {
   const share = getDiffShareText({
     source: PULL,

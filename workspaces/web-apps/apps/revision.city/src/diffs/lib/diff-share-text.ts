@@ -118,12 +118,19 @@ function describePullRequestKind(pull: PublicPullRequest): string {
   return pull.draft ? 'Draft pull request' : 'Pull request'
 }
 
+// Counts read as GitHub prints them, grouped in thousands: a large diff is
+// exactly where the numbers matter, and "+1009257" is not a number anyone reads.
 function formatPullRequestStats(pull: PublicPullRequest): string | undefined {
   if (isNullish(pull.changedFiles) || isNullish(pull.additions) || isNullish(pull.deletions)) {
     return undefined
   }
-  const files = pull.changedFiles === 1 ? '1 file changed' : `${pull.changedFiles} files changed`
-  return `${files}, +${pull.additions} -${pull.deletions}`
+  const files =
+    pull.changedFiles === 1 ? '1 file changed' : `${formatCount(pull.changedFiles)} files changed`
+  return `${files}, +${formatCount(pull.additions)} -${formatCount(pull.deletions)}`
+}
+
+function formatCount(count: number): string {
+  return count.toLocaleString('en-US')
 }
 
 // How the viewer names each kind of diff: the repository, then what in it.

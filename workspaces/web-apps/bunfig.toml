@@ -29,20 +29,20 @@
 #   used to sit beside these existed to dedupe onvibes.org's Flue dependency
 #   tree; they left with Flue in 2026-08.)
 
-# Root package.json "devDependencies" context: @astrojs/check + typescript
-# 6.0.3 live at the workspace ROOT, and the Astro apps deliberately do not
-# declare @astrojs/check themselves. astro check is built on the TypeScript JS
-# compiler API, which typescript 7 (native) does not ship, and @astrojs/check
-# resolves its typescript peer beside its own instance
-# (createRequire(import.meta.url)) -- so wherever it is declared decides which
-# compiler checks the .astro files. Declared in an app it would peer with the
-# app's typescript 7 and crash at startup; declared only at the root it peers
-# with the root's 6.0.3, and `astro check` in each app finds it by walking up
-# (astro's getPackage resolves from the app dir with normal node resolution).
-# The apps keep typescript 7 for everything else. Renovate holds the root
-# typescript below 7; both move to the app manifests again when the Astro
-# language server runs on the native compiler
-# (https://github.com/withastro/roadmap/discussions/1321, expected ~7.1).
+# Astro app "devDependencies" context: each Astro app pins @astrojs/check
+# beside typescript 6.0.3, the same hold the Svelte and Nuxt apps carry for
+# svelte-check and vue-tsc. astro check is built on the TypeScript JS compiler
+# API, which typescript 7 (native) does not ship. From 2026-08 to 2026-09 the
+# root package.json carried @astrojs/check + typescript 6.0.3 instead, so the
+# apps could run typescript 7 while astro check walked up to the root's 6:
+# @astrojs/check resolves its typescript peer beside its own instance, so
+# wherever it is declared decides which compiler checks the .astro files. astro
+# 7.3.4 closed that seam (withastro/astro#18053): `astro check` now resolves
+# typescript from the app directory first and refuses to run when that is 7,
+# whatever @astrojs/check would have peered with. Renovate holds typescript
+# below 7 in every framework-checked app; the Astro apps move to 7 once
+# `astro check` is replaced by tsgo plus @astrojs/ts-content-mapper, which
+# needs typescript 7.1 (https://github.com/withastro/roadmap/discussions/1321).
 
 # Root package.json "workspaces.catalog" context: the @tanstack entries exist
 # so no app declares the `latest` dist-tag -- frozen installs re-resolve

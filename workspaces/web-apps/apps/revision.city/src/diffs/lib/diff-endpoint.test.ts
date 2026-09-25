@@ -1,6 +1,7 @@
 import {expect, test, vi} from 'vitest'
 
 import {handleDiffRequest} from './diff-endpoint'
+import type {ResponseCache} from './github-app-budget'
 import {encodeCookiePayload} from './github-auth'
 
 type FetchLike = (...args: Parameters<typeof fetch>) => ReturnType<typeof fetch>
@@ -21,6 +22,9 @@ const COMPARE_API_URL = 'https://api.github.com/repos/acme/widgets/compare/base0
 const PUBLIC_COMMIT_URL = 'https://github.com/acme/widgets/commit/83fea5e.diff'
 const COMMIT_API_URL = 'https://api.github.com/repos/acme/widgets/commits/83fea5e'
 const TANGLED_PATCH_URL = 'https://tangled.org/acme/widgets/pulls/7.patch'
+const REJECTED_KEY = 'https://revision.city/.cache/github/credentials-rejected'
+const RATE_LIMITED_KEY = 'https://revision.city/.cache/github/rate-limited'
+const RESERVED_KEY = 'https://revision.city/.cache/github/budget-reserved'
 const SESSION_COOKIE = `diffs-github-auth=${encodeCookiePayload({accessToken: TOKEN, login: 'reviewer'})}`
 
 interface UpstreamCall {
@@ -69,6 +73,22 @@ const diffRequest = (search: string, cookie?: string) =>
 // Each failed attempt is logged; the spy keeps that out of the test output and
 // lets a test read what was logged. Restored by the test that took it.
 const spyOnWarnings = () => vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+// The Workers cache hands back a fresh Response per match, so the double
+// clones what it stored rather than sharing one consumed body.
+const fakeCache = () => {
+  const entries = new Map<string, Response>()
+  const cache: ResponseCache = {
+    match: async (key) => entries.get(key.url)?.clone(),
+    put: async (key, response) => {
+      entries.set(key.url, response)
+    },
+  }
+  return {cache, entries}
+}
+
+const maxAge = (entries: Map<string, Response>, key: string) =>
+  entries.get(key)?.headers.get('Cache-Control')
 
 // The endpoint's JSON error body, read without trusting its shape.
 const readError = async (response: Response): Promise<{message: string; remedy: unknown}> => {
@@ -303,5 +323,144 @@ test('a signed-in 404 still reaches the API as the visitor, whose token can see 
     [PULL_API_URL, VISITOR_AUTH],
     [COMPARE_API_URL, VISITOR_AUTH],
   ])
+  warn.mockRestore()
+})
+
+test.each([
+  {key: RATE_LIMITED_KEY, hold: 'rate-limited'},
+  {key: REJECTED_KEY, hold: 'credentials-rejected'},
+  {key: RESERVED_KEY, hold: 'reserved'},
+])(
+  'a signed-out diff leaves the app credentials alone while the edge remembers $hold',
+  async ({key, hold}) => {
+    const warn = spyOnWarnings()
+    const {cache, entries} = fakeCache()
+    entries.set(key, Response.json({marked: true}))
+    const upstream = stubUpstream({[PUBLIC_PULL_URL]: () => failureAnswer(503)})
+
+    const response = await handleDiffRequest(diffRequest('path=/acme/widgets/pull/7'), {
+      cache,
+      credentials: CREDENTIALS,
+      fetch: upstream.fetchImpl,
+    })
+
+    expect(response.status).toBe(503)
+    expect((await readError(response)).remedy).toEqual({kind: 'sign-in'})
+    expect(upstream.calls).toHaveLength(1)
+    expect(warn).toHaveBeenCalledWith(
+      'diff app fallback withheld',
+      expect.objectContaining({target: 'app-authenticated pull metadata', hold}),
+    )
+    warn.mockRestore()
+  },
+)
+
+test('remembers GitHub rejecting the app credentials, so the next signed-out diff does not offer them', async () => {
+  const warn = spyOnWarnings()
+  const {cache, entries} = fakeCache()
+  const upstream = stubUpstream({
+    [PUBLIC_PULL_URL]: () => failureAnswer(503),
+    [PULL_API_URL]: () => failureAnswer(401),
+  })
+  const options = {cache, credentials: CREDENTIALS, fetch: upstream.fetchImpl}
+
+  const first = await handleDiffRequest(diffRequest('path=/acme/widgets/pull/7'), options)
+  const second = await handleDiffRequest(diffRequest('path=/acme/widgets/pull/7'), options)
+
+  expect(first.status).toBe(401)
+  expect(second.status).toBe(503)
+  expect(upstream.calls.map((call) => call.url)).toEqual([
+    PUBLIC_PULL_URL,
+    PULL_API_URL,
+    PUBLIC_PULL_URL,
+  ])
+  expect(maxAge(entries, REJECTED_KEY)).toBe('public, max-age=3600')
+  warn.mockRestore()
+})
+
+test('stays off the API until the reset once GitHub says the app budget is spent', async () => {
+  const warn = spyOnWarnings()
+  const {cache, entries} = fakeCache()
+  const upstream = stubUpstream({
+    [PUBLIC_PULL_URL]: () => failureAnswer(503),
+    [PULL_API_URL]: () => failureAnswer(429, {headers: {'retry-after': '30'}}),
+  })
+  const options = {cache, credentials: CREDENTIALS, fetch: upstream.fetchImpl}
+
+  const first = await handleDiffRequest(diffRequest('path=/acme/widgets/pull/7'), options)
+  const second = await handleDiffRequest(diffRequest('path=/acme/widgets/pull/7'), options)
+
+  expect(first.status).toBe(429)
+  expect(second.status).toBe(503)
+  expect(upstream.calls.map((call) => call.url)).toEqual([
+    PUBLIC_PULL_URL,
+    PULL_API_URL,
+    PUBLIC_PULL_URL,
+  ])
+  expect(maxAge(entries, RATE_LIMITED_KEY)).toBe('public, max-age=30')
+  warn.mockRestore()
+})
+
+// The fallback that got through still reports what is left, and stands down
+// under the reserve until the reset, leaving the rest of the hour to the cards.
+test('stands down under the reserve after a fallback that succeeded reports a low count', async () => {
+  const warn = spyOnWarnings()
+  const {cache, entries} = fakeCache()
+  const now = 1_790_000_000_000
+  const clock = vi.spyOn(Date, 'now').mockReturnValue(now)
+  try {
+    const upstream = stubUpstream({
+      [PUBLIC_PULL_URL]: () => failureAnswer(503),
+      [PULL_API_URL]: () => pullMetadataAnswer(),
+      [COMPARE_API_URL]: () =>
+        new Response(DIFF, {
+          headers: {
+            'Content-Type': `${DIFF_MEDIA_TYPE}; charset=utf-8`,
+            'x-ratelimit-remaining': '999',
+            'x-ratelimit-reset': String(now / 1000 + 120),
+          },
+        }),
+    })
+    const options = {cache, credentials: CREDENTIALS, fetch: upstream.fetchImpl}
+
+    const first = await handleDiffRequest(diffRequest('path=/acme/widgets/pull/7'), options)
+    const second = await handleDiffRequest(diffRequest('path=/acme/widgets/pull/7'), options)
+
+    expect(first.status).toBe(200)
+    expect(await first.text()).toBe(DIFF)
+    expect(second.status).toBe(503)
+    expect(upstream.calls.map((call) => call.url)).toEqual([
+      PUBLIC_PULL_URL,
+      PULL_API_URL,
+      COMPARE_API_URL,
+      PUBLIC_PULL_URL,
+    ])
+    expect(maxAge(entries, RESERVED_KEY)).toBe('public, max-age=120')
+    expect(warn).toHaveBeenCalledWith(
+      'diff app fallback withheld',
+      expect.objectContaining({hold: 'reserved'}),
+    )
+  } finally {
+    clock.mockRestore()
+    warn.mockRestore()
+  }
+})
+
+test('a signed-in diff never consults the app budget', async () => {
+  const warn = spyOnWarnings()
+  const match = vi.fn<ResponseCache['match']>(async () => undefined)
+  const cache: ResponseCache = {match, put: async () => undefined}
+  const upstream = stubUpstream({
+    [PUBLIC_PULL_URL]: (call) =>
+      call.authorization === VISITOR_AUTH ? diffAnswer() : failureAnswer(503),
+  })
+
+  const response = await handleDiffRequest(
+    diffRequest('path=/acme/widgets/pull/7', SESSION_COOKIE),
+    {cache, credentials: CREDENTIALS, fetch: upstream.fetchImpl},
+  )
+
+  expect(response.status).toBe(200)
+  expect(match).not.toHaveBeenCalled()
   warn.mockRestore()
 })

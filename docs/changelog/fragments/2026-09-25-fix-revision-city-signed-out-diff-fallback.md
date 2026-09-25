@@ -19,3 +19,12 @@ the identity it was tried as, GitHub's status, and its throttling headers, so th
 503 can be told from a rate limit without reproducing it; a handled failure is not an exception, so
 nothing else recorded it. The endpoint gained its first unit tests, covering the chain for each
 identity, the 404 short-circuit, the remedy, and the log lines.
+
+The app's budget is one budget. GitHub's verdicts on the credentials now live in a module both
+consumers share, keyed on the same Workers cache entries the share-card lookup already wrote, so a
+rejection or a spent limit seen by either keeps both off the credentials until the hour turns. The
+diff fallback also stands down while the hour's remaining count, as the last app-authenticated
+answer reported it, is under a reserve of a thousand requests kept for the cards: a card costs one
+call per pull request per edge per hour, where an outage can send the fallback every anonymous diff
+load at two calls each. A withheld fallback is logged with the hold in force, so a signed-out 503
+with no fallback attempt behind it reads as the budget's doing rather than GitHub's.

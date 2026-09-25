@@ -44,7 +44,10 @@ test('home page carries OpenGraph meta and serves the card it points at', async 
   const png = await response.body()
   expect(pngSize(png)).toEqual({width: 1200, height: 630})
   // Scrapers and CDNs probe the image with HEAD before fetching it: GET's
-  // status and headers, no body.
+  // status and headers, no body. Astro hands a HEAD to the endpoint's GET
+  // export, which is the og handler, so the handler builds the HEAD response
+  // and its Content-Length reaches the wire (verified on the workerd boot and
+  // on the deployed preview), unlike Nuxt's bridge, which strips it.
   const probe = await request.head(cardPath)
   expect(probe.status()).toBe(200)
   expect(probe.headers()['content-type']).toContain('image/png')

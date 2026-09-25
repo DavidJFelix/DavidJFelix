@@ -37,10 +37,22 @@ test('home page carries OpenGraph meta and serves the card it points at', async 
   const image = await head.locator('meta[property="og:image"]').getAttribute('content')
   expect(image).toBe(`${origin}/og/default.png`)
   // The card renders on the worker at request time; fetch it from this boot.
-  const response = await request.get(new URL(image as string).pathname)
+  const cardPath = new URL(image as string).pathname
+  const response = await request.get(cardPath)
   expect(response.ok()).toBe(true)
   expect(response.headers()['content-type']).toContain('image/png')
-  expect(pngSize(await response.body())).toEqual({width: 1200, height: 630})
+  const png = await response.body()
+  expect(pngSize(png)).toEqual({width: 1200, height: 630})
+  // Scrapers and CDNs probe the image with HEAD before fetching it: GET's
+  // status and headers, no body. Astro hands a HEAD to the endpoint's GET
+  // export, which is the og handler, so the handler builds the HEAD response
+  // and its Content-Length reaches the wire (verified on the workerd boot and
+  // on the deployed preview), unlike Nuxt's bridge, which strips it.
+  const probe = await request.head(cardPath)
+  expect(probe.status()).toBe(200)
+  expect(probe.headers()['content-type']).toContain('image/png')
+  expect(probe.headers()['content-length']).toBe(String(png.byteLength))
+  expect((await probe.body()).byteLength).toBe(0)
 })
 
 test('system dark is applied before first paint', async ({page}) => {

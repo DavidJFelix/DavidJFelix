@@ -9,12 +9,18 @@ import {ogImageSize} from './tags'
 const runtime = await nodeRuntime()
 const card = {runtime, title: 'startchi.com', description: 'A directory.', siteName: 'startchi.com'}
 const request = new Request('https://startchi.com/og/default.png')
+const headRequest = new Request(request.url, {method: 'HEAD'})
 
+// Mirrors the Workers Cache API as verified under workerd: entries are keyed
+// by GET requests alone -- `put` refuses any other method and `match` never
+// finds one -- so a handler that hands the cache a HEAD key fails here the way
+// it fails at the edge.
 const fakeCache = () => {
   const entries = new Map<string, Response>()
   const cache: OgCache = {
-    match: async (key) => entries.get(key.url),
+    match: async (key) => (key.method === 'GET' ? entries.get(key.url) : undefined),
     put: async (key, response) => {
+      if (key.method !== 'GET') throw new TypeError('Cannot cache response to non-GET request.')
       entries.set(key.url, response)
     },
   }
@@ -23,9 +29,11 @@ const fakeCache = () => {
 
 test('serves the rendered card as a cacheable PNG when no cache exists', async () => {
   const response = await ogCard(card)(request)
+  const png = new Uint8Array(await response.arrayBuffer())
   expect(response.headers.get('Content-Type')).toBe('image/png')
   expect(response.headers.get('Cache-Control')).toBe('public, max-age=86400')
-  expect(pngSize(new Uint8Array(await response.arrayBuffer()))).toEqual(ogImageSize)
+  expect(response.headers.get('Content-Length')).toBe(String(png.byteLength))
+  expect(pngSize(png)).toEqual(ogImageSize)
 })
 
 test('stores a miss in the given cache and serves the hit from it afterwards', async () => {
@@ -36,6 +44,39 @@ test('stores a miss in the given cache and serves the hit from it afterwards', a
   const hit = await handler(request)
   expect(hit).toBe(entries.get(request.url))
   expect(new Uint8Array(await hit.arrayBuffer())).toEqual(new Uint8Array(await miss.arrayBuffer()))
+})
+
+test('answers HEAD with the status and headers GET carries and no body', async () => {
+  const handler = ogCard(card)
+  const png = new Uint8Array(await (await handler(request)).arrayBuffer())
+  const head = await handler(headRequest)
+  expect(head.status).toBe(200)
+  expect(head.headers.get('Content-Type')).toBe('image/png')
+  expect(head.headers.get('Cache-Control')).toBe('public, max-age=86400')
+  expect(head.headers.get('Content-Length')).toBe(String(png.byteLength))
+  expect(head.body).toBeNull()
+})
+
+test('a HEAD miss fills the cache under the GET key, so the GET after it is a hit', async () => {
+  const {cache, entries} = fakeCache()
+  const handler = ogCard({...card, cache})
+  const head = await handler(headRequest)
+  expect(entries.size).toBe(1)
+  const hit = await handler(request)
+  expect(hit).toBe(entries.get(request.url))
+  expect(head.headers.get('Content-Length')).toBe(hit.headers.get('Content-Length'))
+})
+
+test('a HEAD hit is served from the cached GET entry without its body', async () => {
+  const {cache, entries} = fakeCache()
+  const handler = ogCard({...card, cache})
+  await handler(request)
+  const head = await handler(headRequest)
+  expect(entries.size).toBe(1)
+  expect(head.body).toBeNull()
+  expect(head.headers.get('Content-Length')).toBe(
+    entries.get(request.url)?.headers.get('Content-Length'),
+  )
 })
 
 // The stub is undone inline rather than in a hook; the vitest API for that
@@ -125,7 +166,9 @@ test('keys the default card by version as well, and by URL alone without one', a
 test('answers 404 without caching when the request names no card', async () => {
   const {cache, entries} = fakeCache()
   const handler = ogCards({runtime, cache, card: () => undefined})
-  const response = await handler(new Request('https://djf.io/og/blog/missing.png'))
+  const missing = 'https://djf.io/og/blog/missing.png'
+  const response = await handler(new Request(missing))
   expect(response.status).toBe(404)
+  expect((await handler(new Request(missing, {method: 'HEAD'}))).status).toBe(404)
   expect(entries.size).toBe(0)
 })

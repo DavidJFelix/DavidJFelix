@@ -17,6 +17,8 @@ const card = ogCard({
   theme: cardTheme,
 })
 
+// HEAD is registered beside GET, not left to Start's HEAD-to-GET fallback: the
+// handler answers both, so the route says so.
 export const Route = createFileRoute('/og/default.png')({
-  server: {handlers: {GET: ({request}) => card(request)}},
+  server: {handlers: {GET: ({request}) => card(request), HEAD: ({request}) => card(request)}},
 })

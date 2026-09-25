@@ -102,6 +102,14 @@ test('every sitemap page has Open Graph and Twitter card meta with a served og i
     // The size the og:image:width/height meta advertises, read from the PNG
     // header without an image library.
     expect(pngSize(await response.body()), `${imagePath} size`).toEqual({width: 1200, height: 630})
+    // Scrapers and CDNs probe the image with HEAD before fetching it. The
+    // cards are static assets here, and Workers Assets answers a HEAD without
+    // a Content-Length (locally and in production alike), so the status, the
+    // type, and the empty body are what is checked.
+    const probe = await request.head(imagePath)
+    expect(probe.status(), `${imagePath} HEAD status`).toBe(200)
+    expect(probe.headers()['content-type'], `${imagePath} HEAD content type`).toContain('image/png')
+    expect((await probe.body()).byteLength, `${imagePath} HEAD body`).toBe(0)
   }
 })
 

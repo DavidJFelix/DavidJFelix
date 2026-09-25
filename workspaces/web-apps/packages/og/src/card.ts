@@ -56,14 +56,22 @@ export interface OgCardParams extends OgImageParams {
 const defaultCache = (): OgCache | undefined =>
   (globalThis as {caches?: {default?: OgCache}}).caches?.default
 
-// The cache keys on the URL alone, so the version rides in a query parameter
-// no route reads; the request itself is answered as it was asked.
+// The cache keys on a GET request for the URL alone, whatever the incoming
+// method: the Workers Cache API refuses any other method (`put` throws,
+// `match` never finds one), so a HEAD reads and fills the entry its GET would.
+// The version rides in a query parameter no route reads; the request itself
+// is answered as it was asked.
 const cacheKey = (request: Request, version: string | undefined): Request => {
-  if (!version) return request
   const url = new URL(request.url)
-  url.searchParams.set('v', version)
+  if (version) url.searchParams.set('v', version)
   return new Request(url.href)
 }
+
+// A HEAD answers with GET's status and headers, Content-Length included, and
+// no body; the frameworks that forward HEAD to the GET handler leave that to
+// the handler.
+const respond = (request: Request, response: Response): Response =>
+  request.method === 'HEAD' ? new Response(null, response) : response
 
 export const ogCards = ({runtime, cache, version, maxAge = DAY_SECONDS, card}: OgCardsParams) => {
   const render = createOgRenderer(runtime)
@@ -71,15 +79,20 @@ export const ogCards = ({runtime, cache, version, maxAge = DAY_SECONDS, card}: O
     const store = cache ?? defaultCache()
     const key = cacheKey(request, typeof version === 'function' ? await version() : version)
     const cached = await store?.match(key)
-    if (cached) return cached
+    if (cached) return respond(request, cached)
     const resolved = await card(request)
     if (!resolved) return new Response(null, {status: 404})
     const {maxAge: cardMaxAge = maxAge, ...params} = resolved
-    const response = new Response(await render(params), {
-      headers: {'Content-Type': 'image/png', 'Cache-Control': `public, max-age=${cardMaxAge}`},
+    const png = await render(params)
+    const response = new Response(png, {
+      headers: {
+        'Content-Type': 'image/png',
+        'Content-Length': String(png.byteLength),
+        'Cache-Control': `public, max-age=${cardMaxAge}`,
+      },
     })
     await store?.put(key, response.clone())
-    return response
+    return respond(request, response)
   }
 }
 

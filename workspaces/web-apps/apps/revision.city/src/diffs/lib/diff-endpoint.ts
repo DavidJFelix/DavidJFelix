@@ -1,5 +1,18 @@
 import type {GitHubAccessRemedy} from './github-access-remedy'
-import {type GitHubAuthSession, resolveGitHubAuth, withSetCookieHeaders} from './github-auth'
+import {
+  type AppBudgetHold,
+  defaultResponseCache,
+  noteAppBudgetAnswer,
+  type ResponseCache,
+  readAppBudgetHold,
+} from './github-app-budget'
+import {
+  type GitHubAppCredentials,
+  type GitHubAuthSession,
+  readGitHubAppCredentials,
+  resolveGitHubAuth,
+  withSetCookieHeaders,
+} from './github-auth'
 import {
   encodeURLSegment,
   type GitHubDiffSource,
@@ -21,25 +34,64 @@ const NON_DIFF_RESPONSE_MESSAGE = 'GitHub did not return a diff for this URL.'
 const NON_WHITESPACE_PATTERN = /\S/
 const RAW_GITHUB_DIFF_PATH_PATTERN = /^\/raw\/[^/]+\/[^/]+\/pull\/[^/]+\.(?:diff|patch)$/
 const GITHUB_PULL_TAB_PATH_PATTERN = /^\/([^/]+)\/([^/]+)\/pull\/(\d+)\/(?:changes|files)$/
+const UPSTREAM_FAILURE_LOG_MESSAGE = 'diff upstream attempt failed'
+const APP_FALLBACK_WITHHELD_LOG_MESSAGE = 'diff app fallback withheld'
 
 const HIDDEN_PATCH_DOMAIN_RULES = [{domainRoot: 'tangled.org', defaultExtension: '.patch'}] as const
 
+type DiffFetch = (
+  input: Parameters<typeof fetch>[0],
+  init?: Parameters<typeof fetch>[1],
+) => ReturnType<typeof fetch>
+
+export interface DiffRequestOptions {
+  // The app's own client id and secret. A signed-out visitor's diff falls back
+  // to GitHub's API with these as basic auth, which GitHub answers with public
+  // data only, at the app's rate limit instead of the anonymous per-address one
+  // the Worker shares with every other Worker. Read from the worker env when
+  // not given.
+  credentials?: GitHubAppCredentials
+  fetch?: DiffFetch
+  // Where the edge remembers GitHub's verdicts on those credentials, shared
+  // with the share-card lookup so both back off together. The Workers cache
+  // when not given.
+  cache?: ResponseCache
+}
+
+// How a GitHub API attempt identifies itself: as the signed-in visitor, whose
+// token also reaches private repositories, or as the app itself, which GitHub
+// honors for public data only.
+type GitHubAPIAuth =
+  | {kind: 'visitor'; token: string}
+  | {kind: 'app'; credentials: GitHubAppCredentials}
+
+type GitHubAPIAuthKind = GitHubAPIAuth['kind']
+
 interface DirectPatchFetchTarget {
   kind?: 'direct'
+  // Whose credentials the attempt carries, if any. An app-authenticated
+  // attempt spends the shared budget, so it waits on the budget's holds.
+  auth?: GitHubAPIAuthKind
   label?: string
   patchURL: string
   requestHeaders?: Record<string, string>
+  // Set on a fallback that can see no more than the attempt before it could:
+  // after a 404 it is skipped, since the diff is missing or private either way.
+  skipAfterNotFound?: boolean
   sourceURL?: string
 }
 
 interface GitHubPullPatchFetchTarget {
   kind: 'github-pull'
+  auth: GitHubAPIAuthKind
+  authorization: string
+  compareLabel: string
   label?: string
   pullURL: string
   repo: GitHubRepo
   requestHeaders: Record<string, string>
+  skipAfterNotFound?: boolean
   sourceURL: string
-  token: string
 }
 
 type PatchFetchTarget = DirectPatchFetchTarget | GitHubPullPatchFetchTarget
@@ -70,21 +122,42 @@ interface PatchFailure {
 // returns a streaming proxy response so the client can render files as they
 // arrive instead of waiting for the full patch text. GitHub auth comes from
 // the signed-in session cookie, never from the client request itself.
-export async function handleDiffRequest(request: Request): Promise<Response> {
-  const auth = await resolveGitHubAuth(request)
-  const response = await createDiffResponse(request, auth.session)
+export async function handleDiffRequest(
+  request: Request,
+  options: DiffRequestOptions = {},
+): Promise<Response> {
+  const auth = await resolveGitHubAuth(request, options)
+  const response = await createDiffResponse({
+    request,
+    session: auth.session,
+    credentials: options.credentials ?? readGitHubAppCredentials(),
+    fetcher: options.fetch ?? fetch,
+    cache: options.cache ?? defaultResponseCache(),
+  })
   return withSetCookieHeaders(response, auth.setCookieHeaders)
 }
 
-async function createDiffResponse(
-  request: Request,
-  session: GitHubAuthSession | undefined,
-): Promise<Response> {
+interface CreateDiffResponseParams {
+  request: Request
+  session: GitHubAuthSession | undefined
+  credentials: GitHubAppCredentials | undefined
+  fetcher: DiffFetch
+  cache: ResponseCache | undefined
+}
+
+async function createDiffResponse({
+  request,
+  session,
+  credentials,
+  fetcher,
+  cache,
+}: CreateDiffResponseParams): Promise<Response> {
   const searchParams = new URL(request.url).searchParams
   const path = searchParams.get('path')
   const domain = searchParams.get('domain')
   const url = searchParams.get('url')
   const token = session?.accessToken
+  const apiAuth = resolveGitHubAPIAuth({token, credentials})
 
   if (isNullish(path) && isNullish(url)) {
     return createErrorResponse({message: 'Path or URL parameter is required', status: 400})
@@ -95,14 +168,17 @@ async function createDiffResponse(
     // exposes raw PR diffs through patch-diff.githubusercontent.com. Tangled
     // paths use an explicit domain query parameter and are normalized to their
     // patch endpoint.
-    const patchRequest = resolvePatchRequest({path, domain, url, token})
+    const patchRequest = resolvePatchRequest({path, domain, url, apiAuth})
     if (isNullish(patchRequest)) {
       return createErrorResponse({message: 'Invalid GitHub patch URL format', status: 400})
     }
 
-    return await createPatchStreamResponse(patchRequest, request.signal, {
-      login: session?.login,
-      token,
+    return await createPatchStreamResponse({
+      patchRequest,
+      requestSignal: request.signal,
+      viewer: {login: session?.login, token},
+      fetcher,
+      cache,
     })
   } catch (error) {
     return createErrorResponse({
@@ -112,6 +188,34 @@ async function createDiffResponse(
   }
 }
 
+interface ResolveGitHubAPIAuthParams {
+  token: string | undefined
+  credentials: GitHubAppCredentials | undefined
+}
+
+// A signed-in visitor's token sees everything their account can; everyone else
+// borrows the app's own credentials, when configured, so a public diff has a
+// second route off the anonymous lane.
+function resolveGitHubAPIAuth({
+  token,
+  credentials,
+}: ResolveGitHubAPIAuthParams): GitHubAPIAuth | undefined {
+  if (!isNullish(token)) {
+    return {kind: 'visitor', token}
+  }
+  if (!isNullish(credentials)) {
+    return {kind: 'app', credentials}
+  }
+  return undefined
+}
+
+interface ResolvePatchRequestParams {
+  path: string | null
+  domain: string | null
+  url: string | null
+  apiAuth: GitHubAPIAuth | undefined
+}
+
 // Resolves the accepted URL shapes to the exact upstream URL to fetch. Most
 // callers send a GitHub-relative path, but this also permits GitHub's raw PR
 // diff host and Tangled patch URLs without becoming a general URL fetcher.
@@ -119,15 +223,10 @@ function resolvePatchRequest({
   path,
   domain,
   url,
-  token,
-}: {
-  path: string | null
-  domain: string | null
-  url: string | null
-  token: string | undefined
-}): ResolvedPatchRequest | undefined {
+  apiAuth,
+}: ResolvePatchRequestParams): ResolvedPatchRequest | undefined {
   if (!isNullish(url)) {
-    return resolvePatchURLInput(url, token)
+    return resolvePatchURLInput(url, apiAuth)
   }
 
   if (isNullish(path)) {
@@ -139,15 +238,15 @@ function resolvePatchRequest({
     return isNullish(patchURL) ? undefined : {patchURL}
   }
 
-  return resolvePatchURLInput(path, token)
+  return resolvePatchURLInput(path, apiAuth)
 }
 
 function resolvePatchURLInput(
   input: string,
-  token: string | undefined,
+  apiAuth: GitHubAPIAuth | undefined,
 ): ResolvedPatchRequest | undefined {
   if (input.startsWith('/')) {
-    return resolveGitHubPatchRequest(input, token)
+    return resolveGitHubPatchRequest(input, apiAuth)
   }
 
   let parsedURL: URL
@@ -162,28 +261,22 @@ function resolvePatchURLInput(
   }
 
   if (parsedURL.hostname === GITHUB_HOST) {
-    return resolveGitHubPatchRequest(parsedURL.pathname, token)
+    return resolveGitHubPatchRequest(parsedURL.pathname, apiAuth)
   }
 
   if (
     parsedURL.hostname === GITHUB_RAW_DIFF_HOST &&
     RAW_GITHUB_DIFF_PATH_PATTERN.test(parsedURL.pathname)
   ) {
+    const gitHubPath = parsedURL.pathname.slice('/raw'.length)
     const publicRequest: ResolvedPatchRequest = {
       label: 'public patch-diff URL',
       patchURL: parsedURL.href,
-      sourceURL: createGitHubSourceURL(parsedURL.pathname.slice('/raw'.length)),
+      sourceURL: createGitHubSourceURL(gitHubPath),
     }
-    if (!isNullish(token)) {
-      const gitHubPath = parsedURL.pathname.slice('/raw'.length)
-      const authenticatedWebRequest = resolveAuthenticatedGitHubWebPatchRequest(gitHubPath, token)
-      const authenticatedAPIRequest = resolveAuthenticatedGitHubPatchRequest(gitHubPath, token)
-      return {
-        ...publicRequest,
-        fallbacks: [authenticatedWebRequest, authenticatedAPIRequest].filter(isPatchFetchTarget),
-      }
-    }
-    return publicRequest
+    return isNullish(apiAuth)
+      ? publicRequest
+      : {...publicRequest, fallbacks: resolveGitHubFallbacks(gitHubPath, apiAuth)}
   }
 
   const domainPatchURL = resolveDomainPatchURL(parsedURL.hostname, parsedURL.pathname)
@@ -192,34 +285,36 @@ function resolvePatchURLInput(
 
 function resolveGitHubPatchRequest(
   path: string,
-  token: string | undefined,
+  apiAuth: GitHubAPIAuth | undefined,
 ): ResolvedPatchRequest | undefined {
   const patchURL = resolveGitHubPath(path)
-  const publicRequest = isNullish(patchURL)
-    ? undefined
-    : ({
-        label: 'public github.com diff URL',
-        patchURL,
-        // Carried even on the unauthenticated attempt so a failure can still be
-        // traced back to a repository, which is what makes "sign in and grant
-        // access" answerable for signed-out visitors.
-        sourceURL: createGitHubSourceURL(path),
-      } satisfies ResolvedPatchRequest)
-  if (!isNullish(token)) {
-    const authenticatedWebRequest = resolveAuthenticatedGitHubWebPatchRequest(path, token)
-    const authenticatedAPIRequest = resolveAuthenticatedGitHubPatchRequest(path, token)
-    if (!isNullish(publicRequest)) {
-      return {
-        ...publicRequest,
-        fallbacks: [authenticatedWebRequest, authenticatedAPIRequest].filter(isPatchFetchTarget),
-      }
-    }
-    if (authenticatedAPIRequest?.kind !== 'github-pull') {
-      return authenticatedAPIRequest
-    }
+  if (isNullish(patchURL)) {
+    return undefined
   }
 
-  return publicRequest
+  const publicRequest: ResolvedPatchRequest = {
+    label: 'public github.com diff URL',
+    patchURL,
+    // Carried even on the unauthenticated attempt so a failure can still be
+    // traced back to a repository, which is what makes "sign in and grant
+    // access" answerable for signed-out visitors.
+    sourceURL: createGitHubSourceURL(path),
+  }
+  return isNullish(apiAuth)
+    ? publicRequest
+    : {...publicRequest, fallbacks: resolveGitHubFallbacks(path, apiAuth)}
+}
+
+// What to try once the public route fails. A visitor's token also works on
+// github.com itself, so their chain retries the same route signed in before
+// turning to the API. The app's credentials work on the API alone, and see only
+// public data, so their one attempt is not worth spending after a 404.
+function resolveGitHubFallbacks(path: string, apiAuth: GitHubAPIAuth): PatchFetchTarget[] {
+  const webRequest =
+    apiAuth.kind === 'visitor'
+      ? resolveAuthenticatedGitHubWebPatchRequest(path, apiAuth.token)
+      : undefined
+  return [webRequest, resolveGitHubAPIPatchRequest(path, apiAuth)].filter(isPatchFetchTarget)
 }
 
 function resolveAuthenticatedGitHubWebPatchRequest(
@@ -231,15 +326,16 @@ function resolveAuthenticatedGitHubWebPatchRequest(
     return undefined
   }
   return {
+    auth: 'visitor',
     label: 'authenticated github.com diff URL',
     patchURL,
     requestHeaders: createGitHubAuthHeaders(token),
   }
 }
 
-function resolveAuthenticatedGitHubPatchRequest(
+function resolveGitHubAPIPatchRequest(
   path: string,
-  token: string,
+  apiAuth: GitHubAPIAuth,
 ): PatchFetchTarget | undefined {
   const normalizedPath = normalizeGitHubPath(path)
   const source = parseGitHubDiffSource(normalizedPath)
@@ -248,19 +344,32 @@ function resolveAuthenticatedGitHubPatchRequest(
   }
 
   const sourceURL = createGitHubSourceURL(path)
+  const authorization = createAuthorizationHeader(apiAuth)
+  const labelPrefix = apiAuth.kind === 'visitor' ? 'authenticated' : 'app-authenticated'
+  const skipAfterNotFound = apiAuth.kind === 'app'
   if (source.kind === 'pull') {
     return {
       kind: 'github-pull',
-      label: 'authenticated pull metadata',
+      auth: apiAuth.kind,
+      authorization,
+      compareLabel: `${labelPrefix} pull compare diff API`,
+      label: `${labelPrefix} pull metadata`,
       pullURL: createGitHubDiffApiUrl(source),
       repo: source.repo,
-      requestHeaders: createGitHubJSONAPIHeaders(token),
+      requestHeaders: createGitHubJSONAPIHeaders(authorization),
+      skipAfterNotFound,
       sourceURL,
-      token,
     }
   }
 
-  return createGitHubDiffTarget(source, token, sourceURL)
+  return {
+    auth: apiAuth.kind,
+    label: `${labelPrefix} ${source.kind} diff API`,
+    patchURL: createGitHubDiffApiUrl(source),
+    requestHeaders: createGitHubDiffAPIHeaders(authorization),
+    skipAfterNotFound,
+    sourceURL,
+  }
 }
 
 function isPatchFetchTarget(target: PatchFetchTarget | undefined): target is PatchFetchTarget {
@@ -369,17 +478,10 @@ function createGitHubDiffApiUrl(source: GitHubDiffSource): string {
   }
 }
 
-function createGitHubDiffTarget(
-  source: Exclude<GitHubDiffSource, {kind: 'pull'}>,
-  token: string,
-  sourceURL: string,
-): DirectPatchFetchTarget {
-  return {
-    label: `authenticated ${source.kind} diff API`,
-    patchURL: createGitHubDiffApiUrl(source),
-    requestHeaders: createGitHubDiffAPIHeaders(token),
-    sourceURL,
-  }
+function createAuthorizationHeader(apiAuth: GitHubAPIAuth): string {
+  return apiAuth.kind === 'visitor'
+    ? `Bearer ${apiAuth.token}`
+    : `Basic ${btoa(`${apiAuth.credentials.clientId}:${apiAuth.credentials.clientSecret}`)}`
 }
 
 function createGitHubAuthHeaders(token: string): Record<string, string> {
@@ -392,18 +494,18 @@ function createGitHubApiUrl(path: string): string {
   return new URL(path, GITHUB_API_ROOT).href
 }
 
-function createGitHubDiffAPIHeaders(token: string): Record<string, string> {
+function createGitHubDiffAPIHeaders(authorization: string): Record<string, string> {
   return {
     Accept: GITHUB_DIFF_MEDIA_TYPE,
-    Authorization: `Bearer ${token}`,
+    Authorization: authorization,
     'X-GitHub-Api-Version': GITHUB_API_VERSION,
   }
 }
 
-function createGitHubJSONAPIHeaders(token: string): Record<string, string> {
+function createGitHubJSONAPIHeaders(authorization: string): Record<string, string> {
   return {
     Accept: GITHUB_JSON_MEDIA_TYPE,
-    Authorization: `Bearer ${token}`,
+    Authorization: authorization,
     'X-GitHub-Api-Version': GITHUB_API_VERSION,
   }
 }
@@ -427,19 +529,38 @@ function createPatchTextResponse(
   return createTextResponse(patchText, options)
 }
 
+interface CreatePatchStreamResponseParams {
+  patchRequest: ResolvedPatchRequest
+  requestSignal: AbortSignal
+  viewer: DiffViewerAuth
+  fetcher: DiffFetch
+  cache: ResponseCache | undefined
+}
+
 // Validates the upstream response before opening the client-facing stream so
 // GitHub HTML pages and redirects become small text errors instead of framework
-// error documents.
-async function createPatchStreamResponse(
-  patchRequest: ResolvedPatchRequest,
-  requestSignal: AbortSignal,
-  viewer: DiffViewerAuth,
-): Promise<Response> {
+// error documents. Each failed attempt is logged and the next fallback tried;
+// only the last one is explained to the visitor. An app-authenticated attempt
+// spends the shared budget, so it waits on the budget's holds and reports its
+// answer back for the next caller.
+async function createPatchStreamResponse({
+  patchRequest,
+  requestSignal,
+  viewer,
+  fetcher,
+  cache,
+}: CreatePatchStreamResponseParams): Promise<Response> {
   const upstreamController = new AbortController()
   const abortUpstream = () => {
     upstreamController.abort()
   }
   requestSignal.addEventListener('abort', abortUpstream, {once: true})
+  // Read once per request, and only once an app-authenticated fallback is due.
+  let budgetHold: Promise<AppBudgetHold | undefined> | undefined
+  const readBudgetHold = () => {
+    budgetHold ??= readAppBudgetHold({cache})
+    return budgetHold
+  }
 
   let activeRequest: PatchFetchTarget = patchRequest
   const fallbackRequests = [...(patchRequest.fallbacks ?? [])]
@@ -447,11 +568,19 @@ async function createPatchStreamResponse(
   let responseTarget: DirectPatchFetchTarget | undefined
   for (;;) {
     try {
-      const fetchResult = await fetchPatchTarget(activeRequest, upstreamController.signal)
+      const fetchResult = await fetchPatchTarget({
+        target: activeRequest,
+        signal: upstreamController.signal,
+        fetcher,
+      })
       response = fetchResult.response
       responseTarget = fetchResult.target
-    } catch {
-      const fallbackRequest = fallbackRequests.shift()
+    } catch (error) {
+      // A visitor leaving mid-fetch aborts the upstream too; that is not GitHub's failure.
+      if (!requestSignal.aborted) {
+        logUpstreamFailure({target: activeRequest, viewer, error})
+      }
+      const fallbackRequest = await takeNextFallback({queue: fallbackRequests, readBudgetHold})
       if (!isNullish(fallbackRequest)) {
         activeRequest = fallbackRequest
         continue
@@ -461,12 +590,21 @@ async function createPatchStreamResponse(
       return createErrorResponse({message: 'Failed to fetch patch.', status: 502})
     }
 
-    const failure = await getPatchResponseFailure(response, responseTarget, viewer)
+    if (responseTarget.auth === 'app') {
+      await noteAppBudgetAnswer({cache, response, offered: true})
+    }
+
+    const failure = readPatchResponseFailure(response, responseTarget)
     if (isNullish(failure)) {
       break
     }
 
-    const fallbackRequest = fallbackRequests.shift()
+    logUpstreamFailure({target: responseTarget, viewer, response})
+    const fallbackRequest = await takeNextFallback({
+      queue: fallbackRequests,
+      upstreamStatus: response.status,
+      readBudgetHold,
+    })
     if (!isNullish(fallbackRequest)) {
       await response.body?.cancel().catch(() => {})
       activeRequest = fallbackRequest
@@ -475,7 +613,7 @@ async function createPatchStreamResponse(
 
     requestSignal.removeEventListener('abort', abortUpstream)
     return createErrorResponse({
-      ...failure,
+      ...(await explainPatchFailure({failure, response, target: responseTarget, viewer, fetcher})),
       sourceURL: responseTarget.sourceURL ?? responseTarget.patchURL,
     })
   }
@@ -514,22 +652,60 @@ async function createPatchStreamResponse(
   return createTextResponse(stream, options)
 }
 
-function fetchPatchTarget(
-  target: PatchFetchTarget,
-  signal: AbortSignal,
-): Promise<PatchFetchResult> {
-  if (target.kind === 'github-pull') {
-    return fetchGitHubPullPatchTarget(target, signal)
-  }
-
-  return fetchDirectPatchTarget(target, signal)
+interface TakeNextFallbackParams {
+  queue: PatchFetchTarget[]
+  // What the failed attempt answered; nothing when it did not answer at all.
+  upstreamStatus?: number
+  readBudgetHold: () => Promise<AppBudgetHold | undefined>
 }
 
-async function fetchDirectPatchTarget(
-  target: DirectPatchFetchTarget,
-  signal: AbortSignal,
-): Promise<PatchFetchResult> {
-  const response = await fetch(target.patchURL, {
+// The next fallback worth trying: one that can only repeat a 404 is passed
+// over, and so is one that would spend the app's budget while a hold is on it.
+async function takeNextFallback({
+  queue,
+  upstreamStatus,
+  readBudgetHold,
+}: TakeNextFallbackParams): Promise<PatchFetchTarget | undefined> {
+  for (;;) {
+    const next = queue.shift()
+    if (isNullish(next)) {
+      return undefined
+    }
+    if (upstreamStatus === 404 && next.skipAfterNotFound === true) {
+      continue
+    }
+    const hold = next.auth === 'app' ? await readBudgetHold() : undefined
+    if (isNullish(hold)) {
+      return next
+    }
+    logAppFallbackWithheld({target: next, hold})
+  }
+}
+
+interface FetchPatchTargetParams<T extends PatchFetchTarget> {
+  target: T
+  signal: AbortSignal
+  fetcher: DiffFetch
+}
+
+function fetchPatchTarget({
+  target,
+  signal,
+  fetcher,
+}: FetchPatchTargetParams<PatchFetchTarget>): Promise<PatchFetchResult> {
+  if (target.kind === 'github-pull') {
+    return fetchGitHubPullPatchTarget({target, signal, fetcher})
+  }
+
+  return fetchDirectPatchTarget({target, signal, fetcher})
+}
+
+async function fetchDirectPatchTarget({
+  target,
+  signal,
+  fetcher,
+}: FetchPatchTargetParams<DirectPatchFetchTarget>): Promise<PatchFetchResult> {
+  const response = await fetcher(target.patchURL, {
     cache: 'no-store',
     headers: {'User-Agent': 'revision-city-diffs', ...target.requestHeaders},
     signal,
@@ -537,17 +713,19 @@ async function fetchDirectPatchTarget(
   return {response, target}
 }
 
-async function fetchGitHubPullPatchTarget(
-  target: GitHubPullPatchFetchTarget,
-  signal: AbortSignal,
-): Promise<PatchFetchResult> {
-  const pullResponse = await fetch(target.pullURL, {
+async function fetchGitHubPullPatchTarget({
+  target,
+  signal,
+  fetcher,
+}: FetchPatchTargetParams<GitHubPullPatchFetchTarget>): Promise<PatchFetchResult> {
+  const pullResponse = await fetcher(target.pullURL, {
     cache: 'no-store',
     headers: {'User-Agent': 'revision-city-diffs', ...target.requestHeaders},
     signal,
   })
 
   const pullTarget: DirectPatchFetchTarget = {
+    auth: target.auth,
     label: target.label,
     patchURL: target.pullURL,
     requestHeaders: target.requestHeaders,
@@ -577,42 +755,31 @@ async function fetchGitHubPullPatchTarget(
     ? `${baseSha}...${headSha}`
     : `${compareBaseRepo.owner}:${baseSha}...${compareHeadRepo.owner}:${headSha}`
 
-  return fetchDirectPatchTarget(
-    {
+  return fetchDirectPatchTarget({
+    target: {
+      auth: target.auth,
       patchURL: createGitHubApiUrl(
         `/repos/${encodeURLSegment(compareBaseRepo.owner)}/${encodeURLSegment(compareBaseRepo.repo)}/compare/${encodeURLSegment(compareRange)}`,
       ),
-      label: 'authenticated pull compare diff API',
-      requestHeaders: createGitHubDiffAPIHeaders(target.token),
+      label: target.compareLabel,
+      requestHeaders: createGitHubDiffAPIHeaders(target.authorization),
       sourceURL: target.sourceURL,
     },
     signal,
-  )
+    fetcher,
+  })
 }
 
-async function getPatchResponseFailure(
+// What went wrong at the transport level, before anyone is asked why: a status,
+// a body that is not a diff, or a diff with nothing in it.
+function readPatchResponseFailure(
   response: Response,
   target: DirectPatchFetchTarget,
-  viewer: DiffViewerAuth,
-): Promise<PatchFailure | undefined> {
+): PatchFailure | undefined {
   if (!response.ok) {
-    const status = response.status >= 400 ? response.status : 502
-    // A diagnosed access failure replaces the transport-level message wholesale:
-    // it names the actual obstacle and carries the step out of it, where
-    // "authenticated pull metadata: 404 Not Found" only names the attempt.
-    const accessFailure = await diagnoseGitHubAccess({
-      login: viewer.login,
-      source: readGitHubSourceFromURL(target.sourceURL),
-      status,
-      token: viewer.token,
-    })
-    if (!isNullish(accessFailure)) {
-      return {...accessFailure, status}
-    }
-
     return {
-      status,
-      message: `Failed to fetch patch from ${target.label ?? 'upstream'}: ${response.status} ${response.statusText}.`,
+      status: response.status >= 400 ? response.status : 502,
+      message: `Failed to fetch patch from ${target.label ?? 'upstream'}: ${describeStatus(response)}.`,
     }
   }
 
@@ -626,6 +793,126 @@ async function getPatchResponseFailure(
   }
 
   return undefined
+}
+
+interface ExplainPatchFailureParams {
+  failure: PatchFailure
+  response: Response
+  target: DirectPatchFetchTarget
+  viewer: DiffViewerAuth
+  fetcher: DiffFetch
+}
+
+// Turns the last attempt's failure into something the visitor can act on. A
+// diagnosed access failure replaces the transport-level message wholesale: it
+// names the actual obstacle and carries the step out of it, where
+// "authenticated pull metadata: 404 Not Found" only names the attempt. Asked
+// once, of the final attempt, since the answer for an earlier one is discarded.
+async function explainPatchFailure({
+  failure,
+  response,
+  target,
+  viewer,
+  fetcher,
+}: ExplainPatchFailureParams): Promise<PatchFailure> {
+  if (response.ok) {
+    return failure
+  }
+
+  const source = readGitHubSourceFromURL(target.sourceURL)
+  const accessFailure = await diagnoseGitHubAccess({
+    fetch: fetcher,
+    login: viewer.login,
+    source,
+    status: failure.status,
+    token: viewer.token,
+  })
+  if (!isNullish(accessFailure)) {
+    return {...accessFailure, status: failure.status}
+  }
+
+  const anonymousFailure = describeAnonymousUpstreamFailure({response, source, viewer})
+  return isNullish(anonymousFailure) ? failure : {...anonymousFailure, status: failure.status}
+}
+
+interface DescribeAnonymousUpstreamFailureParams {
+  response: Response
+  source: GitHubDiffSource | undefined
+  viewer: DiffViewerAuth
+}
+
+// GitHub turning away a signed-out request with an outage-shaped status is not
+// the last word on the diff: a signed-in visitor's request travels routes the
+// anonymous one cannot, and gets through when this one does not. So the panel
+// offers the sign-in rather than a bare status. Only for GitHub sources, since
+// signing in does nothing for a tangled.org patch.
+function describeAnonymousUpstreamFailure({
+  response,
+  source,
+  viewer,
+}: DescribeAnonymousUpstreamFailureParams): Omit<PatchFailure, 'status'> | undefined {
+  if (!isNullish(viewer.token) || isNullish(source)) {
+    return undefined
+  }
+  if (response.status !== 429 && response.status < 500) {
+    return undefined
+  }
+  return {
+    message: `GitHub turned away the anonymous request for this diff with ${describeStatus(response)}. Signing in with GitHub requests it with your account instead.`,
+    remedy: {kind: 'sign-in'},
+  }
+}
+
+// The status with its reason phrase when the upstream sent one; HTTP/2 carries
+// none, and "503 " reads like a typo.
+function describeStatus(response: Response): string {
+  return response.statusText === ''
+    ? String(response.status)
+    : `${response.status} ${response.statusText}`
+}
+
+interface LogUpstreamFailureParams {
+  target: PatchFetchTarget
+  viewer: DiffViewerAuth
+  response?: Response
+  error?: unknown
+}
+
+// One structured line per failed attempt, for Workers Logs: which route was
+// tried as whom, what GitHub answered, and its throttling headers, so the next
+// signed-out 503 can be told from a rate limit without reproducing it. A handled
+// failure is not an exception, so nothing else records it.
+function logUpstreamFailure({target, viewer, response, error}: LogUpstreamFailureParams): void {
+  console.warn(UPSTREAM_FAILURE_LOG_MESSAGE, {
+    target: target.label ?? 'upstream',
+    url: target.kind === 'github-pull' ? target.pullURL : target.patchURL,
+    source: target.sourceURL,
+    signedIn: !isNullish(viewer.token),
+    status: response?.status,
+    retryAfter: response?.headers.get('retry-after') ?? undefined,
+    rateLimitRemaining: response?.headers.get('x-ratelimit-remaining') ?? undefined,
+    rateLimitReset: response?.headers.get('x-ratelimit-reset') ?? undefined,
+    error: isNullish(error) ? undefined : describeError(error),
+  })
+}
+
+function describeError(error: unknown): string {
+  return error instanceof Error ? error.message : 'unknown error'
+}
+
+interface LogAppFallbackWithheldParams {
+  target: PatchFetchTarget
+  hold: AppBudgetHold
+}
+
+// The line behind a signed-out failure with no fallback attempt on record: the
+// app's credentials were on hold, and this is why.
+function logAppFallbackWithheld({target, hold}: LogAppFallbackWithheldParams): void {
+  console.warn(APP_FALLBACK_WITHHELD_LOG_MESSAGE, {
+    target: target.label ?? 'upstream',
+    source: target.sourceURL,
+    hold,
+  })
 }
 
 function readGitHubSourceFromURL(sourceURL: string | undefined): GitHubDiffSource | undefined {

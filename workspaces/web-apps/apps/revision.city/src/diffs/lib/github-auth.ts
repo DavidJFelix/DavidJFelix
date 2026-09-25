@@ -390,8 +390,9 @@ export function withSetCookieHeaders(
 }
 
 // Also the credentials behind the share cards' public lookups (see
-// github-public-pull-request.ts), which send them as basic auth for the app's
-// rate limit and never as a user.
+// github-public-pull-request.ts) and a signed-out diff's API fallback (see
+// diff-endpoint.ts), which send them as basic auth for the app's rate limit and
+// never as a user.
 export function readGitHubAppCredentials(): GitHubAppCredentials | undefined {
   const clientId = process.env.GITHUB_APP_CLIENT_ID
   const clientSecret = process.env.GITHUB_APP_CLIENT_SECRET

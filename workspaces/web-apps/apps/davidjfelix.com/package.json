@@ -29,12 +29,13 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@astrojs/check": "0.9.10",
     "@playwright/test": "catalog:",
     "@sentry/cloudflare": "10.75.2",
     "@types/bun": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "oxlint-tsgolint": "catalog:",
-    "typescript": "7.0.2",
+    "typescript": "6.0.3",
     "vitest": "catalog:",
     "wrangler": "catalog:"
   }

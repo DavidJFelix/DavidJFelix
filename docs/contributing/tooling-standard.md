@@ -44,13 +44,13 @@ sorting).
 
 Type checking is the native `tsc` (`typescript` 7) wherever the check is bare tsc. Framework apps
 keep their framework checker -- `astro check`, `svelte-check`, `vue-tsc` (via `nuxt typecheck`) --
-and those embed the TypeScript JS compiler API that the native compiler no longer ships. The Astro
-apps still run `typescript` 7: `@astrojs/check` resolves its TypeScript peer beside its own
-instance, so it is declared once at the web-apps workspace root next to a `typescript` 6 devDep --
-`astro check` in each app walks up to that copy and never sees the app's 7 (rationale note in the
-workspace `bunfig.toml`). The Svelte and Nuxt apps pin `typescript` 6 outright -- `svelte-check` and
-`vue-tsc` resolve TypeScript from the project, so there is no seam for a second copy. Renovate holds
-the pinned spots below 7 until the checkers support TS 7, expected around 7.1.
+and those embed the TypeScript JS compiler API that the native compiler no longer ships, so every
+framework-checked app pins `typescript` 6 outright, with `@astrojs/check` declared beside it in the
+Astro apps. (The Astro apps ran `typescript` 7 for a while by keeping `@astrojs/check` and a
+`typescript` 6 at the workspace root for `astro check` to walk up to; astro 7.3.4 closed that seam
+by resolving `typescript` from the app itself and refusing 7 -- rationale note in the workspace
+`bunfig.toml`.) Renovate holds the pinned spots below 7 until the checkers support TS 7, expected
+around 7.1.
 
 ### Rust _(aspirational — not yet implemented)_
 

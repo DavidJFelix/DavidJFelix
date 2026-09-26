@@ -31,7 +31,7 @@
   "devDependencies": {
     "@astrojs/check": "0.9.10",
     "@playwright/test": "catalog:",
-    "@sentry/cloudflare": "10.75.2",
+    "@sentry/cloudflare": "10.75.3",
     "@types/bun": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "oxlint-tsgolint": "catalog:",

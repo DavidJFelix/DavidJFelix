@@ -46,6 +46,15 @@ export const Website = Cloudflare.Website.Vite(
           destinations: ['2026-aug-16-grafana-cloud-traces'],
         },
       },
+      // Prod pins the Worker's physical name. Alchemy otherwise derives it as
+      // f311x-website-prod-<random16> and keeps the suffix only in state. When a
+      // stray CI bootstrap rotated the state store's encryption key
+      // (2026-08-31) that record became unreadable, and a fresh deploy would
+      // have created a second Worker and moved the domains onto it. Naming the
+      // live Worker lets a deploy adopt it (Durable Objects and domains
+      // included) once its dead state is deleted, and keeps prod immune to the
+      // next state loss. bin/smoke-test.ts targets the same name.
+      //
       // Alchemy attaches the custom domains on deploy and Cloudflare
       // materializes the DNS records. The f311x.com zone must already exist in
       // this account. Prod-only: binding them unconditionally let a local
@@ -53,7 +62,13 @@ export const Website = Cloudflare.Website.Vite(
       // dev worker (2026-06-12). `www` is an alias, not a redirect: both
       // hostnames serve the Worker, matching the flat array this replaced
       // (alchemy beta.66 reshaped `domain` into canonical name + aliases).
-      ...(stage === 'prod' ? {domain: {name: 'f311x.com', aliases: ['www.f311x.com']}} : {}),
+      // cSpell:ignore f311x-website-prod-ddptpca6nyzpodvc -- alchemy's generated suffix, not a word
+      ...(stage === 'prod'
+        ? {
+            name: 'f311x-website-prod-ddptpca6nyzpodvc',
+            domain: {name: 'f311x.com', aliases: ['www.f311x.com']},
+          }
+        : {}),
     }
   }),
 )

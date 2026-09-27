@@ -42,8 +42,8 @@
   "dependencies": {
     "@davidjfelix/og": "workspace:*",
     "@davidjfelix/theme": "workspace:*",
-    "@sentry/cloudflare": "^10.60.0",
-    "@sentry/react": "^10.60.0",
+    "@sentry/cloudflare": "^11.0.0",
+    "@sentry/react": "^11.0.0",
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-start": "catalog:",
     "@tanstack/router-devtools": "catalog:",

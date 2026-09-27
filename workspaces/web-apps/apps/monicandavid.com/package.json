@@ -35,7 +35,7 @@
     "@playwright/test": "catalog:",
     "@sveltejs/adapter-cloudflare": "7.2.9",
     "@sveltejs/kit": "2.70.3",
-    "@sveltejs/vite-plugin-svelte": "7.3.0",
+    "@sveltejs/vite-plugin-svelte": "7.3.1",
     "@types/node": "catalog:",
     "@vitest/browser-playwright": "catalog:",
     "@vitest/coverage-v8": "catalog:",

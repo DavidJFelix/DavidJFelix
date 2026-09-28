@@ -26,8 +26,8 @@
   "dependencies": {
     "@davidjfelix/og": "workspace:*",
     "@davidjfelix/theme": "workspace:*",
-    "@sentry/cloudflare": "^10.60.0",
-    "@sentry/react": "^10.60.0",
+    "@sentry/cloudflare": "^11.0.0",
+    "@sentry/react": "^11.0.0",
     "@tanstack/ai": "0.58.0",
     "@tanstack/ai-openrouter": "0.19.16",
     "@tanstack/ai-react": "0.27.3",

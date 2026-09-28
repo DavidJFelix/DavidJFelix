@@ -1,10 +1,7 @@
 import {expect, test, vi} from 'vitest'
 
-import {
-  fetchPublicPullRequest,
-  type PublicPullRequest,
-  type ResponseCache,
-} from './github-public-pull-request'
+import type {ResponseCache} from './github-app-budget'
+import {fetchPublicPullRequest, type PublicPullRequest} from './github-public-pull-request'
 
 type FetchLike = (...args: Parameters<typeof fetch>) => ReturnType<typeof fetch>
 

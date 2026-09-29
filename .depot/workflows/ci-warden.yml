@@ -105,11 +105,11 @@ jobs:
       # separately minted report-only app token would be needed for that.
       - name: warden analyze
         id: warden-analyze
-        uses: getsentry/warden@043d207021e6f6d262fdd568d9cf1adfa8aac771 # v0.49.0
+        uses: getsentry/warden@877bdc9b2418f9d44d6e6cc2631f3ee6c754eef7 # v0.50.0
         with:
           mode: analyze
       - name: warden report
-        uses: getsentry/warden@043d207021e6f6d262fdd568d9cf1adfa8aac771 # v0.49.0
+        uses: getsentry/warden@877bdc9b2418f9d44d6e6cc2631f3ee6c754eef7 # v0.50.0
         with:
           mode: report
           findings-file: ${{ steps.warden-analyze.outputs.findings-file }}

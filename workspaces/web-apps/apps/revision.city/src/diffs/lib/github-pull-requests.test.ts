@@ -31,6 +31,7 @@ interface GitHubStubOptions {
   subscriptions?: unknown
   subscriptionsStatus?: number
   searchStatus?: number
+  searchStatusByQualifier?: Record<string, number>
 }
 
 // Stands in for GitHub's search, org, and subscription endpoints. Search
@@ -55,6 +56,10 @@ const stubGitHubFetch = (options: GitHubStubOptions = {}) =>
       const qualifiers = (url.searchParams.get('q') ?? '')
         .replace('is:pr is:open archived:false ', '')
         .trim()
+      const status = options.searchStatusByQualifier?.[qualifiers]
+      if (status !== undefined) {
+        return Response.json({message: 'Validation Failed'}, {status})
+      }
       const body = options.searchByQualifier?.[qualifiers] ?? {total_count: 0, items: []}
       return Response.json(body)
     }
@@ -212,6 +217,38 @@ test('an app without org or watching visibility reports those groups empty', asy
 test('a failing search answers 502 rather than an empty list', async () => {
   const response = await listPullRequests(stubGitHubFetch({searchStatus: 403}))
   expect(response.status).toBe(502)
+})
+
+// GitHub answers 422 to a `user:`/`org:`/`repo:` qualifier that names nothing
+// the token can search, which is what an account with no repositories granted
+// to the app looks like. That visitor has no pull requests, not an outage.
+test('a visitor with nothing searchable gets empty groups, not 502', async () => {
+  const response = await listPullRequests(stubGitHubFetch({searchStatus: 422}))
+  expect(response.status).toBe(200)
+  const groups = await readGroups(response)
+
+  expect(groups.map((group) => group.kind)).toEqual(['assigned', 'owned', 'member', 'watched'])
+  expect(groups.every((group) => group.pullRequests.length === 0)).toBe(true)
+  expect(groups.every((group) => group.totalCount === 0)).toBe(true)
+})
+
+test('one unsearchable group leaves the others listed', async () => {
+  const fetchImpl = stubGitHubFetch({
+    orgs: [{login: 'test-org'}],
+    subscriptions: [{full_name: 'other/watched-repo'}],
+    searchByQualifier: {
+      'assignee:@me': {total_count: 1, items: [searchItem({number: 7})]},
+    },
+    searchStatusByQualifier: {'user:@me': 422, 'org:test-org': 422, 'repo:other/watched-repo': 422},
+  })
+
+  const response = await listPullRequests(fetchImpl)
+  expect(response.status).toBe(200)
+  const groups = await readGroups(response)
+  expect(groups[0]?.pullRequests.map((pr) => pr.number)).toEqual([7])
+  expect(groups[1]).toEqual({kind: 'owned', pullRequests: [], totalCount: 0})
+  expect(groups[2]).toEqual({kind: 'member', pullRequests: [], totalCount: 0})
+  expect(groups[3]).toEqual({kind: 'watched', pullRequests: [], totalCount: 0})
 })
 
 test('searches carry the session token and never a client-supplied one', async () => {

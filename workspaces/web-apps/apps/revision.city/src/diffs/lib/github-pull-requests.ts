@@ -45,7 +45,9 @@ export interface PullRequestListBody {
 // Lists open pull requests the signed-in visitor can reach, grouped by why
 // they can reach them. Each pull request is reported once, under the first
 // group that claims it. Answers 401 signed out and 502 when GitHub's search
-// is unavailable, so the client can tell "sign in" from "try again later".
+// is unavailable, so the client can tell "sign in" from "try again later". A
+// visitor with nothing searchable (no pull requests, or no repositories
+// granted to the app) gets 200 with empty groups, not an error.
 export async function handlePullRequestListRequest(
   request: Request,
   options: GitHubAuthOptions = {},

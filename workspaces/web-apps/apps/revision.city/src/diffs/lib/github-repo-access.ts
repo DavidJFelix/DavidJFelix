@@ -134,7 +134,12 @@ async function describeMissingRepoAccess({
   const repoName = formatRepo(repo)
   const installations = await readGitHubAppInstallations(token, fetcher)
   const ownerInstallation = findInstallationForOwner(installations, repo.owner)
-  const grantURL = ownerInstallation?.configureURL ?? GITHUB_APP_INSTALL_URL
+  const grantURL =
+    !isNullish(ownerInstallation) &&
+    !isNullish(login) &&
+    canConfigureInstallation(ownerInstallation, login)
+      ? ownerInstallation.configureURL
+      : GITHUB_APP_INSTALL_URL
   // Granting access to someone else's account or organization may be a
   // permission the visitor does not hold; GitHub turns the same flow into a
   // request to an owner, which is worth saying before they click.
@@ -151,24 +156,41 @@ async function describeMissingRepoAccess({
 
 export interface ResolveGitHubManageAccessURLParams {
   fetch?: AccessFetch
+  // The signed-in login, which decides whether an installation's own settings
+  // page is one the visitor can open.
+  login: string
   token: string
 }
 
 // Where a signed-in visitor goes to change which repositories the app may read,
-// with no particular repository in mind. One installation has one obvious page;
-// none or several means letting GitHub ask which account they meant.
+// with no particular repository in mind. One installation on their own account
+// has one obvious page; anything else means letting GitHub ask which account
+// they meant.
 export async function resolveGitHubManageAccessURL({
   fetch: fetcher = fetch,
+  login,
   token,
 }: ResolveGitHubManageAccessURLParams): Promise<string> {
   const installations = await readGitHubAppInstallations(token, fetcher)
   const soleInstallation = installations.length === 1 ? installations[0] : undefined
-  return soleInstallation?.configureURL ?? GITHUB_APP_INSTALL_URL
+  return !isNullish(soleInstallation) && canConfigureInstallation(soleInstallation, login)
+    ? soleInstallation.configureURL
+    : GITHUB_APP_INSTALL_URL
 }
 
 interface GitHubAppInstallation {
   accountLogin?: string
   configureURL: string
+}
+
+// The installation list covers every installation the visitor can reach through
+// a repository, but an installation's settings page opens only for an admin of
+// the account it is on: a collaborator on someone else's repository, or a plain
+// member of an organization, gets a 404 there. The visitor is an admin of their
+// own account and nothing else is knowable, so everyone else goes through the
+// install page, where GitHub picks the account and handles who may configure it.
+function canConfigureInstallation(installation: GitHubAppInstallation, login: string): boolean {
+  return installation.accountLogin?.toLowerCase() === login.toLowerCase()
 }
 
 // Lists the app's installations this token can see, each paired with the page

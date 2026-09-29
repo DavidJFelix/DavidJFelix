@@ -12,7 +12,7 @@ const FORBIDDEN = [
   {code: '”', name: 'curly double quote (close)'},
 ]
 
-const glob = new Glob('src/{content,drafts}/**/*.md')
+const glob = new Glob('src/{content,drafts}/**/*.{md,mdx}')
 let violations = 0
 
 for (const path of glob.scanSync('.')) {

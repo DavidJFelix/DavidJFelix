@@ -7,6 +7,7 @@ import {fileURLToPath} from 'node:url'
 import cloudflare from '@astrojs/cloudflare'
 import {unified} from '@astrojs/markdown-remark'
 import mdx from '@astrojs/mdx'
+import react from '@astrojs/react'
 import sitemap from '@astrojs/sitemap'
 // eslint-disable-next-line import/default
 import sentry from '@sentry/astro'
@@ -170,6 +171,9 @@ export default defineConfig({
       telemetry: false,
       ...sentrySourceMaps,
     }),
+    // React components used inside .mdx posts. They render to static HTML at
+    // build time; one ships JS only when a post adds a client:* directive.
+    react(),
     mdx(),
     sitemap(),
     sitemapAliasIntegration(),

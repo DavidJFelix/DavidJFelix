@@ -29,6 +29,8 @@ import {
 } from '../src/lib/standard-site'
 
 const BLOG_DIR = fileURLToPath(new URL('../src/content/blog', import.meta.url))
+// The extensions the blog collection loads (src/content.config.ts).
+const POST_FILE = /^(.+)\.mdx?$/u
 
 interface Frontmatter {
   title: string
@@ -41,8 +43,8 @@ async function loadPosts(): Promise<Array<{slug: string; data: Frontmatter}>> {
   const entries = await readdir(BLOG_DIR, {recursive: true})
   const posts: Array<{slug: string; data: Frontmatter}> = []
   for (const entry of entries) {
-    if (!entry.endsWith('.md')) continue
-    const slug = entry.slice(0, -'.md'.length)
+    const slug = POST_FILE.exec(entry)?.[1]
+    if (slug === undefined) continue
     const raw = await readFile(`${BLOG_DIR}/${entry}`, 'utf8')
     posts.push({slug, data: matter(raw).data as Frontmatter})
   }

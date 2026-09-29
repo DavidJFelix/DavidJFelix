@@ -80,7 +80,33 @@ test('offers a fresh sign-in when GitHub rejects the token', async () => {
   expect(failure?.remedy).toEqual({kind: 'sign-in-again'})
 })
 
-test('points at the existing installation when the app is installed but the repo is not granted', async () => {
+test('points at the installation on the account the visitor owns', async () => {
+  const failure = await diagnoseGitHubAccess({
+    fetch: stubGitHub({
+      installations: [
+        installation({
+          html_url: 'https://github.com/settings/installations/42',
+          target_type: 'User',
+        }),
+      ],
+    }),
+    login: 'acme',
+    source: PULL_SOURCE,
+    status: 404,
+    token: TOKEN,
+  })
+
+  expect(failure?.remedy).toEqual({
+    kind: 'grant-repo-access',
+    url: 'https://github.com/settings/installations/42',
+  })
+  expect(failure?.message).toContain('installed on acme')
+  expect(failure?.message).not.toContain('approve')
+})
+
+// Only an admin of the account can open an installation's settings page; a
+// member or collaborator who can see the installation gets a 404 from GitHub.
+test('routes an installation on another account through the install page', async () => {
   const failure = await diagnoseGitHubAccess({
     fetch: stubGitHub({installations: [installation()]}),
     login: 'reviewer',
@@ -89,10 +115,7 @@ test('points at the existing installation when the app is installed but the repo
     token: TOKEN,
   })
 
-  expect(failure?.remedy).toEqual({
-    kind: 'grant-repo-access',
-    url: 'https://github.com/organizations/acme/settings/installations/42',
-  })
+  expect(failure?.remedy).toEqual({kind: 'grant-repo-access', url: INSTALL_URL})
   expect(failure?.message).toContain('installed on acme')
   expect(failure?.message).toContain('asks an owner of acme to approve')
 })
@@ -104,6 +127,7 @@ test('reconstructs the installation settings URL when GitHub omits it', async ()
         installation({html_url: undefined, target_type: 'User', account: {login: 'Acme'}}),
       ],
     }),
+    login: 'acme',
     source: PULL_SOURCE,
     status: 404,
     token: TOKEN,
@@ -153,13 +177,33 @@ test('separates a readable repository from an unreadable pull request', async ()
   expect(failure?.message).toContain('pull request #7')
 })
 
-test('manages access at the installation itself when there is exactly one', async () => {
+test('manages access at the installation on the account the visitor owns when it is the only one', async () => {
   const url = await resolveGitHubManageAccessURL({
-    fetch: stubGitHub({installations: [installation()]}),
+    fetch: stubGitHub({
+      installations: [
+        installation({
+          html_url: 'https://github.com/settings/installations/42',
+          target_type: 'User',
+        }),
+      ],
+    }),
+    login: 'Acme',
     token: TOKEN,
   })
 
-  expect(url).toBe('https://github.com/organizations/acme/settings/installations/42')
+  expect(url).toBe('https://github.com/settings/installations/42')
+})
+
+// A collaborator on someone else's repository sees that installation without
+// being able to open its settings page, which 404s for anyone but the owner.
+test('sends a visitor whose only installation is on another account to the install page', async () => {
+  const url = await resolveGitHubManageAccessURL({
+    fetch: stubGitHub({installations: [installation()]}),
+    login: 'reviewer',
+    token: TOKEN,
+  })
+
+  expect(url).toBe(INSTALL_URL)
 })
 
 test('lets GitHub ask which account when there are several installations', async () => {
@@ -167,6 +211,7 @@ test('lets GitHub ask which account when there are several installations', async
     fetch: stubGitHub({
       installations: [installation(), installation({id: 43, account: {login: 'other-org'}})],
     }),
+    login: 'acme',
     token: TOKEN,
   })
 
@@ -174,7 +219,11 @@ test('lets GitHub ask which account when there are several installations', async
 })
 
 test('sends a visitor with no installation to the install page', async () => {
-  const url = await resolveGitHubManageAccessURL({fetch: stubGitHub({}), token: TOKEN})
+  const url = await resolveGitHubManageAccessURL({
+    fetch: stubGitHub({}),
+    login: 'acme',
+    token: TOKEN,
+  })
 
   expect(url).toBe(INSTALL_URL)
 })

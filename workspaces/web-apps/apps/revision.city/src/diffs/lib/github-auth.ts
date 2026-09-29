@@ -280,6 +280,7 @@ export async function handleGitHubManageAccessRequest(
 
   const manageAccessURL = await resolveGitHubManageAccessURL({
     fetch: options.fetch,
+    login: auth.session.login,
     token: auth.session.accessToken,
   })
   return createRedirectResponse(manageAccessURL, auth.setCookieHeaders)

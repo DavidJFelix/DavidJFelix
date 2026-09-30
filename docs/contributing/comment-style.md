@@ -129,9 +129,8 @@ comment silently. Edge cases recognized so far:
 
 Warden runs `comment-review` (`.agents/skills/comment-review/SKILL.md`) on every non-draft PR
 alongside its built-in skills, and findings follow the sections of this guide. The skill is
-harness-neutral: it lives in `.agents/skills/` like every other skill, so any agent that reads that
-directory can run it on a diff before the PR does. Its rules are this guide's; when the two
-disagree, fix the guide first.
+harness-neutral. It lives in `.agents/skills/` like every other skill, so any agent can run it on a
+diff before the PR does. Its rules are this guide's; when the two disagree, fix the guide first.
 
 ## References
 

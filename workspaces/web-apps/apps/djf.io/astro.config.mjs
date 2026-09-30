@@ -171,8 +171,6 @@ export default defineConfig({
       telemetry: false,
       ...sentrySourceMaps,
     }),
-    // React components used inside .mdx posts. They render to static HTML at
-    // build time; one ships JS only when a post adds a client:* directive.
     react(),
     mdx(),
     sitemap(),

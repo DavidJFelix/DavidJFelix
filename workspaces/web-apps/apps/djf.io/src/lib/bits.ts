@@ -5,46 +5,53 @@
 
 export type Bit = 0 | 1
 
+// A Uint8Array with its length in the type, so two arrays can be required to
+// match. That only bites for literal lengths (Uint8Array.of returns length:
+// number, and MDX is not type-checked), so bitsByByte also checks at runtime.
+export type Uint8ArrayOfLength<L extends number> = Uint8Array & {readonly length: L}
+
 export interface PositionedBit {
   value: Bit
   // Place in the whole value, counted from the least significant bit (0).
   position: number
 }
 
-export interface BitsByByteParams {
-  // Big-endian: bytes[0] holds the most significant bits.
-  bytes: Uint8Array
-  // The value's width in bits; defaults to every bit in bytes. A width that is
-  // not a multiple of 8 right-aligns the value, so the top bits of bytes[0]
-  // are unused and must be 0: Uint8Array.of(0b1011) at 4 bits reads 1011.
-  bitLength?: number
+export interface BitsByByteParams<L extends number> {
+  bigEndianBytes: Uint8ArrayOfLength<L>
+  // The value's bits, byte for byte with bigEndianBytes: ones from the least
+  // significant bit up, starting in the first byte (Uint8Array.of(0x0f) for a
+  // 4-bit value). Defaults to every bit. NoInfer keeps L from widening to fit
+  // a mask of the wrong length.
+  lsbBitMask?: Uint8ArrayOfLength<NoInfer<L>>
 }
 
-export function bitsByByte({
-  bytes,
-  bitLength = bytes.length * 8,
-}: BitsByByteParams): Array<Array<PositionedBit>> {
-  if (!Number.isInteger(bitLength) || bitLength < 1) {
-    throw new RangeError(`bitLength must be a whole number above 0, got ${bitLength}`)
-  }
-  const byteLength = Math.ceil(bitLength / 8)
-  if (bytes.length !== byteLength) {
-    throw new RangeError(`${bitLength} bits take ${byteLength} bytes, got ${bytes.length}`)
-  }
-  const unused = byteLength * 8 - bitLength
-  if (bytes[0] >> (8 - unused) !== 0) {
-    const first = bytes[0].toString(2).padStart(8, '0')
+const SHIFTS_MSB_FIRST = [7, 6, 5, 4, 3, 2, 1, 0]
+
+const bitAt = (byte: number, shift: number): Bit => (((byte >> shift) & 1) === 1 ? 1 : 0)
+
+export function bitsByByte<L extends number>({
+  bigEndianBytes,
+  lsbBitMask,
+}: BitsByByteParams<L>): Array<Array<PositionedBit>> {
+  const mask: Uint8Array = lsbBitMask ?? bigEndianBytes.map(() => 0xff)
+  if (mask.length !== bigEndianBytes.length) {
     throw new RangeError(
-      `a ${bitLength}-bit value leaves the top ${unused} bits of bytes[0] unused, but bytes[0] is 0b${first}`,
+      `lsbBitMask has ${mask.length} bytes but bigEndianBytes has ${bigEndianBytes.length}`,
     )
   }
-  return Array.from(bytes, (byte, byteIndex) => {
-    const count = byteIndex === 0 ? 8 - unused : 8
+  const maskBytes = Array.from(mask, (byte) => byte.toString(2).padStart(8, '0'))
+  // At most 7 leading zeros: every byte passed holds at least one bit of the
+  // value, so a figure can't silently show the low half of a wider value.
+  if (!/^0{0,7}1+$/.test(maskBytes.join(''))) {
+    throw new RangeError(
+      `lsbBitMask must be ones from the least significant bit up, starting in the first byte (like 00001111 11111111), got "${maskBytes.join(' ')}"`,
+    )
+  }
+  return Array.from(bigEndianBytes, (byte, byteIndex) => {
     // Position of this byte's least significant bit within the value.
-    const base = (byteLength - 1 - byteIndex) * 8
-    return Array.from({length: count}, (_, index): PositionedBit => {
-      const shift = count - 1 - index
-      return {value: ((byte >> shift) & 1) === 1 ? 1 : 0, position: base + shift}
-    })
+    const base = (bigEndianBytes.length - 1 - byteIndex) * 8
+    return SHIFTS_MSB_FIRST.filter((shift) => bitAt(mask[byteIndex], shift) === 1).map(
+      (shift): PositionedBit => ({value: bitAt(byte, shift), position: base + shift}),
+    )
   })
 }

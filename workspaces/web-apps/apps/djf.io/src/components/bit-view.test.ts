@@ -1,7 +1,7 @@
 import {createElement} from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
 import {expect, test} from 'vitest'
-import {uint8ArrayOf} from '../lib/bits'
+import {uint8ArrayOfLengthOf} from '../lib/bits'
 import {BitView} from './bit-view'
 
 // Without a client directive the component ships as this static markup, so the
@@ -10,7 +10,7 @@ const render = (bytes: Array<number>, mask?: number) =>
   renderToStaticMarkup(
     createElement(BitView, {
       bigEndianBytes: Uint8Array.from(bytes),
-      leastSignificantByteMask: mask === undefined ? undefined : uint8ArrayOf(mask),
+      leastSignificantByteMask: mask === undefined ? undefined : uint8ArrayOfLengthOf(mask),
     }),
   )
 

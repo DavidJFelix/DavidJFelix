@@ -1,10 +1,10 @@
 import {expect, test} from 'vitest'
-import {bitsByByte, uint8ArrayOf} from './bits'
+import {bitsByByte, uint8ArrayOfLengthOf} from './bits'
 
 const read = (bytes: Array<number>, mask?: number) =>
   bitsByByte({
     bigEndianBytes: Uint8Array.from(bytes),
-    leastSignificantByteMask: mask === undefined ? undefined : uint8ArrayOf(mask),
+    leastSignificantByteMask: mask === undefined ? undefined : uint8ArrayOfLengthOf(mask),
   }).map((bits) => bits.map((bit) => bit.value).join(''))
 
 test('every byte value shows its top bits at every mask width', () => {
@@ -37,7 +37,7 @@ test.each([
 test('positions count down to 0 at the lowest masked bit of the last byte', () => {
   const byteGroups = bitsByByte({
     bigEndianBytes: Uint8Array.of(0xab, 0xe0),
-    leastSignificantByteMask: uint8ArrayOf(0xe0),
+    leastSignificantByteMask: uint8ArrayOfLengthOf(0xe0),
   })
 
   expect(byteGroups.map((bits) => bits.map((bit) => bit.position))).toEqual([
@@ -56,7 +56,7 @@ test.each([
 })
 
 test('rejects a mask longer than one byte, which untyped MDX can still pass', () => {
-  const twoByteMask = uint8ArrayOf(0xff, 0x00)
+  const twoByteMask = uint8ArrayOfLengthOf(0xff, 0x00)
 
   expect(() =>
     // @ts-expect-error -- the type allows only one byte; MDX is not type-checked

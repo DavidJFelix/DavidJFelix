@@ -5,30 +5,22 @@
 
 export type Bit = 0 | 1
 
-// A Uint8Array with its length in the type. MDX is not type-checked, so
-// bitsByByte checks lengths at runtime too.
 export type Uint8ArrayOfLength<L extends number> = Uint8Array & {readonly length: L}
 
-// Uint8Array.of with the byte count in the type: uint8ArrayOf(0xf0) is a
-// Uint8ArrayOfLength<1>.
-export function uint8ArrayOf<const T extends ReadonlyArray<number>>(
+export function uint8ArrayOfLengthOf<const T extends ReadonlyArray<number>>(
   ...bytes: T
 ): Uint8ArrayOfLength<T['length']>
-export function uint8ArrayOf(...bytes: ReadonlyArray<number>): Uint8Array {
+export function uint8ArrayOfLengthOf(...bytes: ReadonlyArray<number>): Uint8Array {
   return Uint8Array.from(bytes)
 }
 
 export interface PositionedBit {
   value: Bit
-  // Place in the whole value, counted from its least significant bit (0).
   position: number
 }
 
 export interface BitsByByteParams {
   bigEndianBytes: Uint8Array
-  // Which bits of the last (least significant) byte belong to the value: ones
-  // from the top, zeros from the least significant bit up (0b11110000 keeps
-  // the top 4 bits). Every earlier byte is whole. Defaults to 0b11111111.
   leastSignificantByteMask?: Uint8ArrayOfLength<1>
 }
 
@@ -38,7 +30,7 @@ const bitAt = (byte: number, shift: number): Bit => (((byte >> shift) & 1) === 1
 
 export function bitsByByte({
   bigEndianBytes,
-  leastSignificantByteMask = uint8ArrayOf(0xff),
+  leastSignificantByteMask = uint8ArrayOfLengthOf(0xff),
 }: BitsByByteParams): Array<Array<PositionedBit>> {
   if (bigEndianBytes.length === 0) {
     throw new RangeError('bigEndianBytes is empty')

@@ -48,6 +48,7 @@ interface GitHubStubOptions {
   installations?: unknown[]
   // Grant lists keyed by installation id, for selected-repository installations.
   installationRepositories?: Record<string, {total_count?: number; repositories: unknown[]}>
+  installationRepositoriesStatus?: number
   searchStatus?: number
   searchStatusByQualifier?: Record<string, number>
   // The body sent with a failing search; a 422 defaults to the unsearchable
@@ -89,6 +90,9 @@ const stubGitHubFetch = (options: GitHubStubOptions = {}) =>
     }
     const grantMatch = /^\/user\/installations\/(\d+)\/repositories$/.exec(url.pathname)
     if (grantMatch !== null) {
+      if (options.installationRepositoriesStatus !== undefined) {
+        return Response.json({message: 'blocked'}, {status: options.installationRepositoriesStatus})
+      }
       const grant = options.installationRepositories?.[grantMatch[1] ?? '']
       return Response.json({
         total_count: grant?.total_count ?? grant?.repositories.length ?? 0,
@@ -280,6 +284,21 @@ test('a selected-repository installation searches only the watched repositories 
   expect(searchedQualifiers(fetchImpl)).toContain('repo:other/granted')
   expect(searchedQualifiers(fetchImpl).some((query) => query.includes('other/hidden'))).toBe(false)
   expect(groups[3]?.truncated).toBeUndefined()
+})
+
+// A failed grant read is not an empty grant list: the repositories under it
+// are unknown, so they are left out and the group says so.
+test('a grant list that cannot be read leaves the watched group truncated', async () => {
+  const fetchImpl = stubGitHubFetch({
+    subscriptions: [{full_name: 'other/granted'}],
+    installations: [installation('other', {id: 7, repository_selection: 'selected'})],
+    installationRepositoriesStatus: 500,
+  })
+
+  const groups = await readGroups(await listPullRequests(fetchImpl))
+
+  expect(searchedQualifiers(fetchImpl).some((query) => query.includes('other/granted'))).toBe(false)
+  expect(groups[3]?.truncated).toBe(true)
 })
 
 test('a grant list longer than one page leaves the watched group truncated', async () => {

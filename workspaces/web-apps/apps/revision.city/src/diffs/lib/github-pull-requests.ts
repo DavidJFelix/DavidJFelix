@@ -302,7 +302,9 @@ interface InstallationRepositoryNames {
   truncated: boolean
 }
 
-// One page of the repositories a selected-repository installation grants.
+// One page of the repositories a selected-repository installation grants. A
+// read that fails is not an empty grant list: the repositories under it are
+// unknown rather than absent, so the result reads as truncated.
 async function fetchInstallationRepositoryNames(
   installationId: number,
   token: string,
@@ -313,13 +315,15 @@ async function fetchInstallationRepositoryNames(
     token,
     fetcher,
   )
-  const entries = isRecord(data) && Array.isArray(data.repositories) ? data.repositories : []
+  if (!isRecord(data) || !Array.isArray(data.repositories)) {
+    return {names: [], truncated: true}
+  }
+  const entries = data.repositories
   const names = entries
     .map((repo) => (isRecord(repo) && typeof repo.full_name === 'string' ? repo.full_name : ''))
     .filter((name) => name !== '')
     .map((name) => name.toLowerCase())
-  const totalCount =
-    isRecord(data) && typeof data.total_count === 'number' ? data.total_count : names.length
+  const totalCount = typeof data.total_count === 'number' ? data.total_count : names.length
   return {names, truncated: totalCount > names.length}
 }
 

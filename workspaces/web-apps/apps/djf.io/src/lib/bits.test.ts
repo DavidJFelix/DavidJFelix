@@ -1,18 +1,18 @@
 import {expect, test} from 'vitest'
-import {bitsByByte, type Uint8ArrayOfLength} from './bits'
+import {bitsByByte, uint8ArrayOf} from './bits'
 
-const read = (bytes: Array<number>, mask?: Array<number>) =>
+const read = (bytes: Array<number>, mask?: number) =>
   bitsByByte({
     bigEndianBytes: Uint8Array.from(bytes),
-    lsbBitMask: mask && Uint8Array.from(mask),
+    leastSignificantByteMask: mask === undefined ? undefined : uint8ArrayOf(mask),
   }).map((bits) => bits.map((bit) => bit.value).join(''))
 
-test('every byte value reads as its masked binary digits at every width', () => {
+test('every byte value shows its top bits at every mask width', () => {
   for (let value = 0; value < 256; value += 1) {
     for (let width = 1; width <= 8; width += 1) {
-      const mask = (1 << width) - 1
-      const digits = (value & mask).toString(2).padStart(width, '0')
-      expect(read([value], [mask])).toEqual([digits])
+      const mask = (0xff << (8 - width)) & 0xff
+      const digits = (value >> (8 - width)).toString(2).padStart(width, '0')
+      expect(read([value], mask)).toEqual([digits])
     }
   }
 })
@@ -25,63 +25,41 @@ test.each([
     expected: ['00111111', '11000000', '00000000', '00000000'],
   },
   {
-    name: 'a 12-bit value shows only the masked low nibble of its first byte',
-    bytes: [0xfa, 0xbc],
-    mask: [0x0f, 0xff],
-    expected: ['1010', '10111100'],
+    name: 'a 12-bit value keeps its first byte whole and masks only the last',
+    bytes: [0xab, 0xcf],
+    mask: 0xf0,
+    expected: ['10101011', '1100'],
   },
 ])('$name', ({bytes, mask, expected}) => {
   expect(read(bytes, mask)).toEqual(expected)
 })
 
-test('positions count down to 0 at the least significant bit, across bytes', () => {
+test('positions count down to 0 at the lowest masked bit of the last byte', () => {
   const byteGroups = bitsByByte({
-    bigEndianBytes: Uint8Array.of(0x0a, 0xbc),
-    lsbBitMask: Uint8Array.of(0x0f, 0xff),
+    bigEndianBytes: Uint8Array.of(0xab, 0xe0),
+    leastSignificantByteMask: uint8ArrayOf(0xe0),
   })
 
   expect(byteGroups.map((bits) => bits.map((bit) => bit.position))).toEqual([
-    [11, 10, 9, 8],
-    [7, 6, 5, 4, 3, 2, 1, 0],
+    [10, 9, 8, 7, 6, 5, 4, 3],
+    [2, 1, 0],
   ])
 })
 
 test.each([
-  {
-    name: 'a mask shorter than the bytes',
-    bytes: [0x3f, 0xc0, 0x00, 0x00],
-    mask: [0xff, 0xff],
-    error: 'lsbBitMask has 2 bytes but bigEndianBytes has 4',
-  },
-  {
-    name: 'a mask longer than the bytes',
-    bytes: [0x3f],
-    mask: [0x0f, 0xff],
-    error: 'lsbBitMask has 2 bytes but bigEndianBytes has 1',
-  },
-  {name: 'no bytes', bytes: [], mask: undefined, error: 'got ""'},
-  {name: 'a mask with no bits', bytes: [0xff], mask: [0x00], error: 'got "00000000"'},
-  {name: 'a mask from the top down', bytes: [0xff], mask: [0xf0], error: 'got "11110000"'},
-  {name: 'a mask with a gap', bytes: [0xff], mask: [0x0d], error: 'got "00001101"'},
-  {
-    name: 'a mask that skips whole leading bytes',
-    bytes: [0x3f, 0xc0, 0x00, 0x00],
-    mask: [0x00, 0x00, 0xff, 0xff],
-    error: 'got "00000000 00000000 11111111 11111111"',
-  },
+  {name: 'no bytes', bytes: [], mask: undefined, error: 'bigEndianBytes is empty'},
+  {name: 'a mask with no bits', bytes: [0xff], mask: 0x00, error: 'got "00000000"'},
+  {name: 'a mask of the low bits', bytes: [0xff], mask: 0x0f, error: 'got "00001111"'},
+  {name: 'a mask with a gap', bytes: [0xff], mask: 0xd0, error: 'got "11010000"'},
 ])('rejects $name', ({bytes, mask, error}) => {
   expect(() => read(bytes, mask)).toThrow(error)
 })
 
-// Checked by `astro check`, not at runtime: without NoInfer on lsbBitMask, L
-// would widen to 4 | 2 and this call would compile.
-const mismatchedLengths = (
-  bigEndianBytes: Uint8ArrayOfLength<4>,
-  lsbBitMask: Uint8ArrayOfLength<2>,
-) =>
-  // @ts-expect-error -- lsbBitMask must be as long as bigEndianBytes
-  bitsByByte({bigEndianBytes, lsbBitMask})
+test('rejects a mask longer than one byte, which untyped MDX can still pass', () => {
+  const twoByteMask = uint8ArrayOf(0xff, 0x00)
 
-test('a mask of another literal length is a type error', () => {
-  expect(mismatchedLengths).toBeTypeOf('function')
+  expect(() =>
+    // @ts-expect-error -- the type allows only one byte; MDX is not type-checked
+    bitsByByte({bigEndianBytes: Uint8Array.of(0xff), leastSignificantByteMask: twoByteMask}),
+  ).toThrow('got "11111111 00000000"')
 })

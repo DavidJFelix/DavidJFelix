@@ -2,10 +2,10 @@ import {Fragment} from 'react'
 import {css, cva} from 'styled-system/css'
 import {bitsByByte, type Uint8ArrayOfLength} from '../lib/bits'
 
-interface BitViewProps<L extends number> {
-  bigEndianBytes: Uint8ArrayOfLength<L>
-  // Defaults to every bit; see bitsByByte.
-  lsbBitMask?: Uint8ArrayOfLength<NoInfer<L>>
+interface BitViewProps {
+  bigEndianBytes: Uint8Array
+  // Defaults to the whole last byte; see bitsByByte.
+  leastSignificantByteMask?: Uint8ArrayOfLength<1>
 }
 
 const row = css({display: 'flex', flexWrap: 'wrap', columnGap: '3', rowGap: '2', my: '6'})
@@ -35,8 +35,8 @@ const visuallyHidden = css({srOnly: true})
 
 // A value's bits as a row of cells, most significant first, grouped by byte.
 // Byte groups wrap as whole units on narrow screens.
-export function BitView<L extends number>({bigEndianBytes, lsbBitMask}: BitViewProps<L>) {
-  const byteGroups = bitsByByte({bigEndianBytes, lsbBitMask})
+export function BitView({bigEndianBytes, leastSignificantByteMask}: BitViewProps) {
+  const byteGroups = bitsByByte({bigEndianBytes, leastSignificantByteMask})
   const count = byteGroups.flat().length
   // Screen readers get the bits as text instead of the cells, with the digits
   // spaced so they are read one by one rather than as a single large number.

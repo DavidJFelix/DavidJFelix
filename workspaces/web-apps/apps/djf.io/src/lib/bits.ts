@@ -5,53 +5,63 @@
 
 export type Bit = 0 | 1
 
-// A Uint8Array with its length in the type, so two arrays can be required to
-// match. That only bites for literal lengths (Uint8Array.of returns length:
-// number, and MDX is not type-checked), so bitsByByte also checks at runtime.
+// A Uint8Array with its length in the type. MDX is not type-checked, so
+// bitsByByte checks lengths at runtime too.
 export type Uint8ArrayOfLength<L extends number> = Uint8Array & {readonly length: L}
+
+// Uint8Array.of with the byte count in the type: uint8ArrayOf(0xf0) is a
+// Uint8ArrayOfLength<1>.
+export function uint8ArrayOf<const T extends ReadonlyArray<number>>(
+  ...bytes: T
+): Uint8ArrayOfLength<T['length']>
+export function uint8ArrayOf(...bytes: ReadonlyArray<number>): Uint8Array {
+  return Uint8Array.from(bytes)
+}
 
 export interface PositionedBit {
   value: Bit
-  // Place in the whole value, counted from the least significant bit (0).
+  // Place in the whole value, counted from its least significant bit (0).
   position: number
 }
 
-export interface BitsByByteParams<L extends number> {
-  bigEndianBytes: Uint8ArrayOfLength<L>
-  // The value's bits, byte for byte with bigEndianBytes: ones from the least
-  // significant bit up, starting in the first byte (Uint8Array.of(0x0f) for a
-  // 4-bit value). Defaults to every bit. NoInfer keeps L from widening to fit
-  // a mask of the wrong length.
-  lsbBitMask?: Uint8ArrayOfLength<NoInfer<L>>
+export interface BitsByByteParams {
+  bigEndianBytes: Uint8Array
+  // Which bits of the last (least significant) byte belong to the value: ones
+  // from the top, zeros from the least significant bit up (0b11110000 keeps
+  // the top 4 bits). Every earlier byte is whole. Defaults to 0b11111111.
+  leastSignificantByteMask?: Uint8ArrayOfLength<1>
 }
 
 const SHIFTS_MSB_FIRST = [7, 6, 5, 4, 3, 2, 1, 0]
 
 const bitAt = (byte: number, shift: number): Bit => (((byte >> shift) & 1) === 1 ? 1 : 0)
 
-export function bitsByByte<L extends number>({
+export function bitsByByte({
   bigEndianBytes,
-  lsbBitMask,
-}: BitsByByteParams<L>): Array<Array<PositionedBit>> {
-  const mask: Uint8Array = lsbBitMask ?? bigEndianBytes.map(() => 0xff)
-  if (mask.length !== bigEndianBytes.length) {
+  leastSignificantByteMask = uint8ArrayOf(0xff),
+}: BitsByByteParams): Array<Array<PositionedBit>> {
+  if (bigEndianBytes.length === 0) {
+    throw new RangeError('bigEndianBytes is empty')
+  }
+  const maskBytes = Array.from(leastSignificantByteMask, (byte) =>
+    byte.toString(2).padStart(8, '0'),
+  )
+  if (maskBytes.length !== 1 || !/^1+0*$/.test(maskBytes[0])) {
     throw new RangeError(
-      `lsbBitMask has ${mask.length} bytes but bigEndianBytes has ${bigEndianBytes.length}`,
+      `leastSignificantByteMask must be one byte of ones then zeros (like 11110000), got "${maskBytes.join(' ')}"`,
     )
   }
-  const maskBytes = Array.from(mask, (byte) => byte.toString(2).padStart(8, '0'))
-  // At most 7 leading zeros: every byte passed holds at least one bit of the
-  // value, so a figure can't silently show the low half of a wider value.
-  if (!/^0{0,7}1+$/.test(maskBytes.join(''))) {
-    throw new RangeError(
-      `lsbBitMask must be ones from the least significant bit up, starting in the first byte (like 00001111 11111111), got "${maskBytes.join(' ')}"`,
-    )
-  }
+  const lastByte = bigEndianBytes.length - 1
+  const lastMask = leastSignificantByteMask[0]
+  // The mask's clear bits are the bottom of the last byte, below the value.
+  const unused = SHIFTS_MSB_FIRST.filter((shift) => bitAt(lastMask, shift) === 0).length
   return Array.from(bigEndianBytes, (byte, byteIndex) => {
-    // Position of this byte's least significant bit within the value.
-    const base = (bigEndianBytes.length - 1 - byteIndex) * 8
-    return SHIFTS_MSB_FIRST.filter((shift) => bitAt(mask[byteIndex], shift) === 1).map(
-      (shift): PositionedBit => ({value: bitAt(byte, shift), position: base + shift}),
+    const mask = byteIndex === lastByte ? lastMask : 0xff
+    return SHIFTS_MSB_FIRST.filter((shift) => bitAt(mask, shift) === 1).map(
+      (shift): PositionedBit => ({
+        value: bitAt(byte, shift),
+        position: (lastByte - byteIndex) * 8 + shift - unused,
+      }),
     )
   })
 }

@@ -3,8 +3,6 @@
 // formats; callers encode a value (float, int, packed quantized weights) into
 // bytes first.
 
-export type Bit = 0 | 1
-
 export type Uint8ArrayOfLength<L extends number> = Uint8Array & {readonly length: L}
 
 export function uint8ArrayOfLengthOf<const T extends ReadonlyArray<number>>(
@@ -15,7 +13,7 @@ export function uint8ArrayOfLengthOf(...bytes: ReadonlyArray<number>): Uint8Arra
 }
 
 export interface PositionedBit {
-  value: Bit
+  value: number
   position: number
 }
 
@@ -28,7 +26,7 @@ const SHIFTS_MSB_FIRST = [7, 6, 5, 4, 3, 2, 1, 0]
 
 const ONES_THEN_ZEROS = /^1+0*$/
 
-const bitAt = (byte: number, shift: number): Bit => (((byte >> shift) & 1) === 1 ? 1 : 0)
+const bitAt = (byte: number, shift: number) => (byte >> shift) & 1
 
 export function bitsByByte({
   bigEndianBytes,

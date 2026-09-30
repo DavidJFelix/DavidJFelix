@@ -48,6 +48,7 @@ One mini guide per concern, in `docs/contributing/`. Read the guide before worki
 | Guide                                                                | Owns                                                   |
 | -------------------------------------------------------------------- | ------------------------------------------------------ |
 | [code-style.md](docs/contributing/code-style.md)                     | formatting defaults, functional shape, named arguments |
+| [comment-style.md](docs/contributing/comment-style.md)               | when a comment earns its place, STE wording, API docs  |
 | [interface-style.md](docs/contributing/interface-style.md)           | the vendored better-\* interface skills and their use  |
 | [file-naming.md](docs/contributing/file-naming.md)                   | kebab-case rule and the framework-imposed exceptions   |
 | [testing.md](docs/contributing/testing.md)                           | test style, smoke/e2e runtime gates, coverage ratchets |
@@ -70,10 +71,13 @@ checklist -- whenever you add or touch one.
 ## Code review
 
 [Warden](https://warden.sentry.dev/guide) is the canonical automated reviewer: it runs its built-in
-`security-review` and `code-review` skills on every non-draft PR (`.depot/workflows/ci-warden.yml`)
-and owns the inline findings posted to the PR. Everything else complements it -- nothing else should
-post competing PR comments. The [review-consolidation](docs/projects/review-consolidation/plan.md)
-project tracks the direction (Warden is the path forward; other tools complement, not compete).
+`security-review` and `code-review` skills plus the repo's own `comment-review` skill
+(`.agents/skills/comment-review/`, the rules of
+[comment-style.md](docs/contributing/comment-style.md)) on every non-draft PR
+(`.depot/workflows/ci-warden.yml`) and owns the inline findings posted to the PR. Everything else
+complements it -- nothing else should post competing PR comments. The
+[review-consolidation](docs/projects/review-consolidation/plan.md) project tracks the direction
+(Warden is the path forward; other tools complement, not compete).
 
 - **Warden (CI gate, always-on).** Every non-draft PR is reviewed on open and on each push; drafts
   wait until marked ready, and PRs opened by the repo's GitHub App (Renovate bumps, the changelog
@@ -85,9 +89,12 @@ project tracks the direction (Warden is the path forward; other tools complement
 - **Built-in `/code-review` and `/security-review` (local).** Run on-demand before you push, as an
   inner-loop sanity pass. Do **not** pass `--comment` -- Warden owns posted comments, and
   double-posting the same diff is noise and double model spend.
+- **`comment-review` (on demand).** The same skill Warden runs, for comments and documentation
+  prose. Any agent that reads `.agents/skills/` can run it over a diff before you push; run without
+  posting, for the same reason as the built-ins.
 - **`/review` (Standards + Spec).** The holistic on-demand review: does the branch follow the repo's
-  documented standards, and does it match the originating issue/PRD? Warden checks neither, so this
-  stays.
+  documented standards, and does it match the originating issue/PRD? Warden checks the comment
+  standard only, so this stays.
 - **`/better-interface` (interface review, local).** The cross-discipline interface review over a
   screen, flow, or feature -- accessibility, layout, copy, typography, color, and polish
   consolidated into one ranked report. See

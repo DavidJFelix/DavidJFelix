@@ -1,0 +1,7 @@
+# Go toolchain names the bundled golang dictionary lacks (it has goimports and
+# goroot). They appear in the style guides (code-style, tooling-standard,
+# comment-style), the comment-review skill, and editor settings.
+godoc
+gofmt
+golangci
+gopls

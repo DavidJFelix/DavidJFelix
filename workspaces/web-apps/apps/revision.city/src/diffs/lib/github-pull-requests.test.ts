@@ -24,18 +24,53 @@ const searchItem = (overrides: Record<string, unknown> = {}): Record<string, unk
   ...overrides,
 })
 
+// What GitHub's search answers, verbatim, when a `user:`, `org:`, or `repo:`
+// qualifier names something the token cannot search.
+const UNSEARCHABLE_QUERY_BODY = {
+  message: 'Validation Failed',
+  errors: [
+    {
+      message:
+        'The listed users and repositories cannot be searched either because the resources do not exist or you do not have permission to view them.',
+      resource: 'Search',
+      field: 'q',
+      code: 'invalid',
+    },
+  ],
+}
+
 interface GitHubStubOptions {
   searchByQualifier?: Record<string, unknown>
   orgs?: unknown
   orgsStatus?: number
   subscriptions?: unknown
   subscriptionsStatus?: number
+  installations?: unknown[]
+  // Grant lists keyed by installation id, for selected-repository installations.
+  installationRepositories?: Record<string, {total_count?: number; repositories: unknown[]}>
   searchStatus?: number
   searchStatusByQualifier?: Record<string, number>
+  // The body sent with a failing search; a 422 defaults to the unsearchable
+  // query failure.
+  searchErrorBody?: unknown
 }
 
-// Stands in for GitHub's search, org, and subscription endpoints. Search
-// responses are keyed by the qualifier that follows the shared base query.
+const installation = (login: string, overrides: Record<string, unknown> = {}) => ({
+  id: login.length,
+  account: {login},
+  repository_selection: 'all',
+  ...overrides,
+})
+
+const searchErrorResponse = (options: GitHubStubOptions, status: number): Response =>
+  Response.json(
+    options.searchErrorBody ?? (status === 422 ? UNSEARCHABLE_QUERY_BODY : {message: 'blocked'}),
+    {status},
+  )
+
+// Stands in for GitHub's search, org, subscription, and installation
+// endpoints. Search responses are keyed by the qualifier that follows the
+// shared base query.
 const stubGitHubFetch = (options: GitHubStubOptions = {}) =>
   vi.fn<FetchLike>(async (input) => {
     const url = new URL(
@@ -49,22 +84,42 @@ const stubGitHubFetch = (options: GitHubStubOptions = {}) =>
         status: options.subscriptionsStatus ?? 200,
       })
     }
+    if (url.pathname === '/user/installations') {
+      return Response.json({installations: options.installations ?? []})
+    }
+    const grantMatch = /^\/user\/installations\/(\d+)\/repositories$/.exec(url.pathname)
+    if (grantMatch !== null) {
+      const grant = options.installationRepositories?.[grantMatch[1] ?? '']
+      return Response.json({
+        total_count: grant?.total_count ?? grant?.repositories.length ?? 0,
+        repositories: grant?.repositories ?? [],
+      })
+    }
     if (url.pathname === '/search/issues') {
       if (options.searchStatus !== undefined) {
-        return Response.json({message: 'rate limited'}, {status: options.searchStatus})
+        return searchErrorResponse(options, options.searchStatus)
       }
       const qualifiers = (url.searchParams.get('q') ?? '')
         .replace('is:pr is:open archived:false ', '')
         .trim()
       const status = options.searchStatusByQualifier?.[qualifiers]
       if (status !== undefined) {
-        return Response.json({message: 'Validation Failed'}, {status})
+        return searchErrorResponse(options, status)
       }
       const body = options.searchByQualifier?.[qualifiers] ?? {total_count: 0, items: []}
       return Response.json(body)
     }
     throw new Error(`Unexpected fetch: ${url.href}`)
   })
+
+// The search queries a stubbed fetch was asked, base query stripped.
+const searchedQualifiers = (fetchImpl: ReturnType<typeof stubGitHubFetch>): string[] =>
+  fetchImpl.mock.calls
+    // BACKLOG(davidjfelix) dude?
+    // oxlint-disable-next-line typescript/no-base-to-string -- this is already fucked and in a test. who cares
+    .map((call) => new URL(String(call[0])))
+    .filter((url) => url.pathname === '/search/issues')
+    .map((url) => (url.searchParams.get('q') ?? '').replace('is:pr is:open archived:false ', ''))
 
 const listPullRequests = (fetchImpl: FetchLike): Promise<Response> =>
   handlePullRequestListRequest(
@@ -93,6 +148,7 @@ test('answers 401 without a session, before touching GitHub', async () => {
 const FOUR_GROUP_STUB: GitHubStubOptions = {
   orgs: [{login: 'test-org'}],
   subscriptions: [{full_name: 'other/watched-repo'}],
+  installations: [installation('test-org'), installation('other')],
   searchByQualifier: {
     'assignee:@me': {
       total_count: 1,
@@ -182,19 +238,61 @@ test('watched repositories already covered by ownership or membership are not se
       {full_name: 'Test-Org/tools'},
       {full_name: 'other/watched-repo'},
     ],
+    installations: [installation('test-org'), installation('other')],
   })
 
   await listPullRequests(fetchImpl)
 
-  const searchQueries = fetchImpl.mock.calls
-    // BACKLOG(davidjfelix) dude?
-    // oxlint-disable-next-line typescript/no-base-to-string -- this is already fucked and in a test. who cares
-    .map((call) => new URL(String(call[0])))
-    .filter((url) => url.pathname === '/search/issues')
-    .map((url) => url.searchParams.get('q'))
-  expect(searchQueries).toContain('is:pr is:open archived:false repo:other/watched-repo')
-  expect(searchQueries.some((query) => query?.includes('repo:test-user/widgets'))).toBe(false)
-  expect(searchQueries.some((query) => query?.includes('repo:Test-Org/tools'))).toBe(false)
+  const searchQueries = searchedQualifiers(fetchImpl)
+  expect(searchQueries).toContain('repo:other/watched-repo')
+  expect(searchQueries.some((query) => query.includes('repo:test-user/widgets'))).toBe(false)
+  expect(searchQueries.some((query) => query.includes('repo:Test-Org/tools'))).toBe(false)
+})
+
+// GitHub rejects a whole search when any `org:` or `repo:` qualifier names an
+// account the app is not installed on, which would take the searchable ones
+// down with it, so those never make it into a query.
+test('organizations and watched repositories without the app installed are not searched', async () => {
+  const fetchImpl = stubGitHubFetch({
+    orgs: [{login: 'Installed-Org'}, {login: 'other-org'}],
+    subscriptions: [{full_name: 'granted/repo'}, {full_name: 'outsider/repo'}],
+    installations: [installation('installed-org'), installation('granted')],
+  })
+
+  await listPullRequests(fetchImpl)
+
+  const searchQueries = searchedQualifiers(fetchImpl)
+  expect(searchQueries).toContain('org:Installed-Org')
+  expect(searchQueries).toContain('repo:granted/repo')
+  expect(searchQueries.some((query) => query.includes('org:other-org'))).toBe(false)
+  expect(searchQueries.some((query) => query.includes('repo:outsider/repo'))).toBe(false)
+})
+
+test('a selected-repository installation searches only the watched repositories it grants', async () => {
+  const fetchImpl = stubGitHubFetch({
+    subscriptions: [{full_name: 'other/granted'}, {full_name: 'other/hidden'}],
+    installations: [installation('other', {id: 7, repository_selection: 'selected'})],
+    installationRepositories: {'7': {repositories: [{full_name: 'Other/Granted'}]}},
+  })
+
+  const groups = await readGroups(await listPullRequests(fetchImpl))
+
+  expect(searchedQualifiers(fetchImpl)).toContain('repo:other/granted')
+  expect(searchedQualifiers(fetchImpl).some((query) => query.includes('other/hidden'))).toBe(false)
+  expect(groups[3]?.truncated).toBeUndefined()
+})
+
+test('a grant list longer than one page leaves the watched group truncated', async () => {
+  const fetchImpl = stubGitHubFetch({
+    subscriptions: [{full_name: 'other/granted'}],
+    installations: [installation('other', {id: 7, repository_selection: 'selected'})],
+    installationRepositories: {
+      '7': {total_count: 101, repositories: [{full_name: 'other/granted'}]},
+    },
+  })
+
+  const groups = await readGroups(await listPullRequests(fetchImpl))
+  expect(groups[3]?.truncated).toBe(true)
 })
 
 test('an app without org or watching visibility reports those groups empty', async () => {
@@ -232,10 +330,36 @@ test('a visitor with nothing searchable gets empty groups, not 502', async () =>
   expect(groups.every((group) => group.totalCount === 0)).toBe(true)
 })
 
+test('a 422 that is not about the query still answers 502', async () => {
+  const response = await listPullRequests(
+    stubGitHubFetch({
+      searchStatus: 422,
+      searchErrorBody: {message: 'You have triggered an abuse detection mechanism.'},
+    }),
+  )
+  expect(response.status).toBe(502)
+})
+
+// GitHub rejects the whole query, so the pull requests under the other
+// qualifiers are unknown rather than absent: the group says so as truncated.
+test('a rejected query over several qualifiers marks the group truncated', async () => {
+  const fetchImpl = stubGitHubFetch({
+    orgs: [{login: 'org-a'}, {login: 'org-b'}],
+    installations: [installation('org-a'), installation('org-b')],
+    searchStatusByQualifier: {'org:org-a org:org-b': 422},
+  })
+
+  const response = await listPullRequests(fetchImpl)
+  expect(response.status).toBe(200)
+  const groups = await readGroups(response)
+  expect(groups[2]).toEqual({kind: 'member', pullRequests: [], totalCount: 0, truncated: true})
+})
+
 test('one unsearchable group leaves the others listed', async () => {
   const fetchImpl = stubGitHubFetch({
     orgs: [{login: 'test-org'}],
     subscriptions: [{full_name: 'other/watched-repo'}],
+    installations: [installation('test-org'), installation('other')],
     searchByQualifier: {
       'assignee:@me': {total_count: 1, items: [searchItem({number: 7})]},
     },

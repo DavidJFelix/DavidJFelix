@@ -39,14 +39,17 @@ export interface SearchPullRequestsParams {
 // GitHub answers 422 Validation Failed rather than an empty page when a `user:`,
 // `org:`, or `repo:` qualifier names something the token cannot search -- for
 // a GitHub App token, an account with no repositories granted to the app. That
-// is "nothing to see here", not an outage.
+// is "nothing to see here", not an outage. GitHub also uses 422 for abuse
+// throttling, so only a body naming the query as the invalid field counts.
 const EMPTY_SEARCH_RESULT: PullRequestSearchResult = {items: [], totalCount: 0}
-const SEARCH_UNSEARCHABLE_STATUS = 422
+const VALIDATION_FAILED_STATUS = 422
 
 // One search API call: open pull requests matching the qualifiers (all OR-ed
 // by GitHub), newest activity first. Throws on a non-ok answer so the caller
 // can tell "GitHub is unavailable" from "nothing matched", except the 422 that
 // means the qualifiers reach nothing the token can search, which is empty.
+// GitHub rejects the whole query for one such qualifier, so with several the
+// others may have hidden pull requests, and the result says so as truncated.
 export async function searchPullRequests({
   fetcher,
   qualifiers,
@@ -62,8 +65,8 @@ export async function searchPullRequests({
     cache: 'no-store',
     headers: createGitHubJSONHeaders(token),
   })
-  if (response.status === SEARCH_UNSEARCHABLE_STATUS) {
-    return EMPTY_SEARCH_RESULT
+  if (response.status === VALIDATION_FAILED_STATUS && (await isUnsearchableQueryError(response))) {
+    return qualifiers.length > 1 ? {...EMPTY_SEARCH_RESULT, truncated: true} : EMPTY_SEARCH_RESULT
   }
   if (!response.ok) {
     throw new Error(`GitHub search answered ${response.status}`)
@@ -107,7 +110,25 @@ export async function searchChunkedPullRequests({
     .toSorted((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''))
     .slice(0, SEARCH_PAGE_SIZE)
   const totalCount = results.reduce((sum, result) => sum + result.totalCount, 0)
-  return {items, totalCount, truncated}
+  return {
+    items,
+    totalCount,
+    truncated: truncated || results.some((result) => result.truncated === true),
+  }
+}
+
+// The validation failure for an unsearchable qualifier names the query field:
+// {"message": "Validation Failed", "errors": [{"resource": "Search",
+// "field": "q", "code": "invalid", "message": "The listed users and
+// repositories cannot be searched ..."}]}. Any other 422 body is not that.
+async function isUnsearchableQueryError(response: Response): Promise<boolean> {
+  const body: unknown = await response.json().catch(() => undefined)
+  if (!isRecord(body) || !Array.isArray(body.errors)) {
+    return false
+  }
+  return body.errors.some(
+    (error) => isRecord(error) && error.resource === 'Search' && error.field === 'q',
+  )
 }
 
 export interface QualifierChunks {

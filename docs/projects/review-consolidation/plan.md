@@ -52,8 +52,9 @@ not file removal.
    not just generic correctness. Started 2026-09-30 with `comment-review`
    (`.agents/skills/comment-review/`), which enforces
    [comment-style.md](../../contributing/comment-style.md) and set the pattern: the skill lives in
-   `.agents/skills/` where Warden discovers it by name, a `.claude/skills/` symlink makes it a local
-   slash command, and its rules cite the style guide rather than restating it.
+   `.agents/skills/` where Warden discovers it by name (with the usual `.claude/skills/` symlink),
+   it stays harness-neutral and reports in the built-ins' finding shape, and its rules cite the
+   style guide rather than restating it.
 4. **Reassess `/review` overlap.** Once Warden encodes standards, decide whether `/review`'s
    _Standards_ axis is still needed or is now subsumed by the gate. Keep the _Spec_ axis regardless
    — Warden does not check conformance to the originating issue/PRD. Collapse surfaces only where

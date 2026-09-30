@@ -12,7 +12,7 @@ list, not by adding the comment.
 The guide is enforced by `comment-review`, the first repo-authored Warden skill
 (`.agents/skills/comment-review/`, symlinked into `.claude/skills/`). Warden discovers it from
 `.agents/skills/` and runs it on every non-draft PR beside the built-in `security-review` and
-`code-review`, with the same triggers; it also runs locally as `/comment-review` and posts nothing.
+`code-review`, with the same triggers, and it reports findings in the same shape as the built-ins.
 Two reference files carry the Simplified Technical English digest and the per-language doc comment
 formats. This starts phase 3 of the review-consolidation project: encoding the repo's own standards
 as Warden skills.

@@ -84,8 +84,8 @@ labels = ["Warden"]
 # Repo-authored review of comments and documentation prose against
 # docs/contributing/comment-style.md. Resolved by name from .agents/skills/
 # (Warden searches .warden/skills, .agents/skills, .claude/skills, then its
-# built-ins), so the same SKILL.md is also the local /comment-review command
-# through the .claude/skills symlink. Whole-repo, same triggers as the
+# built-ins); the SKILL.md is harness-neutral and reports findings in the
+# built-ins' shape. Whole-repo, same triggers as the
 # built-ins; inherits the severity gate, so only a comment that contradicts
 # the code (its one `high`) fails the check.
 [[skills]]

@@ -6,27 +6,36 @@
     "typescript",
     "node",
     "npm",
-    "npm-local",
+    "npm-extra",
+    "golang",
+    "golang-extra",
+    "rust",
+    "rust-extra",
     "html",
     "css",
     "bash",
     "software-terms",
     "dns",
-    "go",
     "ics",
     "lezer",
     "licenses",
     "people-names",
     "pierre",
-    "rust",
     "web-platform",
     "wasm",
   ],
   // Topic dictionaries: system vocabularies and names shared by more than one
   // file. Entries and the reasons for them live in the .txt files themselves.
+  // A repo dictionary that extends one cspell bundles (npm, golang, rust) is
+  // named `<bundled>-extra` and enabled beside the bundled one above; a repo
+  // definition that reuses a bundled name replaces that dictionary silently.
   "dictionaryDefinitions": [
     {"name": "dns", "path": "dictionaries/dns.txt", "description": "DNS response codes"},
-    {"name": "go", "path": "dictionaries/go.txt", "description": "Go toolchain names"},
+    {
+      "name": "golang-extra",
+      "path": "dictionaries/golang-extra.txt",
+      "description": "Go toolchain names the bundled golang dictionary lacks",
+    },
     {
       "name": "lezer",
       "path": "dictionaries/lezer.txt",
@@ -43,9 +52,9 @@
       "description": "iCalendar (RFC 5545) property names",
     },
     {
-      "name": "npm-local",
-      "path": "dictionaries/npm.txt",
-      "description": "NPM package names and ecosystem words",
+      "name": "npm-extra",
+      "path": "dictionaries/npm-extra.txt",
+      "description": "NPM package names and ecosystem words the bundled npm dictionary lacks",
     },
     {
       "name": "people-names",
@@ -57,7 +66,11 @@
       "path": "dictionaries/pierre.txt",
       "description": "Pierre ecosystem vocabulary (diffs viewer port provenance)",
     },
-    {"name": "rust", "path": "dictionaries/rust.txt", "description": "Rust toolchain names"},
+    {
+      "name": "rust-extra",
+      "path": "dictionaries/rust-extra.txt",
+      "description": "Rust toolchain names the bundled rust dictionary lacks",
+    },
     {
       "name": "web-platform",
       "path": "dictionaries/web-platform.txt",

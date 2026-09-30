@@ -3,8 +3,8 @@
 How comments and documentation are written -- when a comment earns its place, how it is worded, and
 which code gets formal API docs. Code shape is [code-style.md](code-style.md); spelling is
 [spelling.md](spelling.md); where the domain vocabulary lives is
-[docs/agents/domain.md](../agents/domain.md). Review is automated: the `comment-review` Warden skill
-(`.agents/skills/comment-review/`) runs on every PR and locally as `/comment-review`.
+[docs/agents/domain.md](../agents/domain.md). Review is automated: the `comment-review` skill
+(`.agents/skills/comment-review/`) runs under Warden on every PR.
 
 ## The one test: would the code say it better?
 
@@ -128,9 +128,10 @@ comment silently. Edge cases recognized so far:
 ## Review
 
 Warden runs `comment-review` (`.agents/skills/comment-review/SKILL.md`) on every non-draft PR
-alongside its built-in skills, and findings follow the sections of this guide. Run the same skill
-locally as `/comment-review` before pushing. Its rules are this guide's; when the two disagree, fix
-the guide first.
+alongside its built-in skills, and findings follow the sections of this guide. The skill is
+harness-neutral: it lives in `.agents/skills/` like every other skill, so any agent that reads that
+directory can run it on a diff before the PR does. Its rules are this guide's; when the two
+disagree, fix the guide first.
 
 ## References
 

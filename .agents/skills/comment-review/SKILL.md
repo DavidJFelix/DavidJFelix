@@ -101,20 +101,20 @@ Skip, without a finding:
 - Tone, humor, or voice in blog content under an app's content directory; that is authored prose,
   not documentation.
 
-## Finding format
+## Finding Format
 
-- Title: the category and the comment's subject, for example "Comment instead of name: `t` in
+One finding per issue, anchored to the line of the comment it is about, or to the export that lacks
+its doc comment. Severity comes from the table above.
+
+- Title: name the category and the comment's subject, for example "Comment instead of name: `t` in
   `debounce.ts`".
-- Description: one sentence naming the problem and one naming the fix (the new name, the type, the
-  deletion, or the doc comment to add). Cite the guide section in parentheses, for example
-  "(comment-style.md, The one test)".
-- `verification`: the comment text as it appears, the code fact that decides the finding (the
-  identifier it describes, the contract it contradicts, the export it belongs to, the glossary entry
-  it drifts from), and the rule applied. Two to four bullets.
+- Description: one short public comment stating the problem and the fix (the new name, the type, the
+  deletion, or the doc comment to add). Use a second sentence only for the fix. Cite the guide
+  section in parentheses, for example "(comment-style.md, The one test)".
+- `verification`: write a short evidence trace with concrete code facts: the comment text as it
+  appears, the code fact that decides the finding (the identifier it describes, the contract it
+  contradicts, the export it belongs to, the glossary entry it drifts from), and the rule applied.
+  Use 2-4 bullets when helpful. Do not use checklist labels or restate the description.
 
-## Running locally
-
-Invoked as `/comment-review` in Claude Code, review `git diff <fixed-point>...HEAD` (three-dot),
-where the fixed point is what the user names; default to `main` and say so. Produce the same
-findings in the same format, grouped by file, ordered by severity, and end with one line: the count
-per severity, or "no findings" and stop. Do not post to the PR; Warden owns posted comments.
+No findings is a valid result. Report nothing rather than a finding that would not change the
+change.

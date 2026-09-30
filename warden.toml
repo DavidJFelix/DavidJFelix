@@ -13,10 +13,12 @@
 # Lives at the repo root because both the CLI and the getsentry/warden action
 # resolve `./warden.toml` relative to the git root (a documented-default, like
 # Cargo.toml — see docs/contributing/configuration-style.md). Skills are managed with
-# `warden add <name>` / `warden sync`. The bundled `warden` / `warden-sweep`
-# agent-authoring skills that `warden init` offers were deliberately not
-# installed into .agents/skills/ — add them later only if we author custom
-# review skills.
+# `warden add <name>` / `warden sync`. Repo-authored skills live in
+# .agents/skills/<name>/SKILL.md (agentskills.io frontmatter with
+# `allowed-tools`) and are added by name. The bundled `warden` / `warden-sweep`
+# agent-authoring skills that `warden init` offers are not installed; the
+# skill-writer reference ships inside the @sentry/warden package if one is
+# ever needed.
 
 version = 1
 
@@ -72,6 +74,22 @@ labels = ["Warden"]
 # Built-in correctness / logic-bug review. Also whole-repo.
 [[skills]]
 name = "code-review"
+
+[[skills.triggers]]
+type = "pull_request"
+actions = ["opened", "synchronize", "reopened", "ready_for_review", "labeled"]
+draft = false
+labels = ["Warden"]
+
+# Repo-authored review of comments and documentation prose against
+# docs/contributing/comment-style.md. Resolved by name from .agents/skills/
+# (Warden searches .warden/skills, .agents/skills, .claude/skills, then its
+# built-ins), so the same SKILL.md is also the local /comment-review command
+# through the .claude/skills symlink. Whole-repo, same triggers as the
+# built-ins; inherits the severity gate, so only a comment that contradicts
+# the code (its one `high`) fails the check.
+[[skills]]
+name = "comment-review"
 
 [[skills.triggers]]
 type = "pull_request"

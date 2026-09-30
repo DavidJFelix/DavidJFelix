@@ -1,0 +1,5 @@
+# Rust toolchain names that appear in the style guides (code-style, testing,
+# tooling-standard, comment-style), the comment-review skill, and the changelog.
+clippy
+proptest
+rustdoc

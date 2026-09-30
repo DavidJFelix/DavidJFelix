@@ -1,0 +1,8 @@
+# Go toolchain names that appear in the style guides (code-style, tooling-standard,
+# comment-style), the comment-review skill, and editor settings.
+godoc
+gofmt
+goimports
+golangci
+gopls
+goroot

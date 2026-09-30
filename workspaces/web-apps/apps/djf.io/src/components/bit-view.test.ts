@@ -14,8 +14,14 @@ const render = (bytes: Array<number>, mask?: number) =>
     }),
   )
 
+const HTML_TAGS = /<[^>]+>/g
+
+const ARIA_HIDDEN_ATTRIBUTES = /aria-hidden="true"/g
+
+const BIT_CELL_CLASSES = /<span class="([^"]+)">[01]</g
+
 // The text that copy/paste and the markdown rendition for agents see.
-const textOf = (html: string) => html.replace(/<[^>]+>/g, '')
+const textOf = (html: string) => html.replace(HTML_TAGS, '')
 
 test.each([
   {
@@ -34,13 +40,13 @@ test.each([
 )
 
 test('BitView hides the cells of each byte from screen readers, which read the summary', () => {
-  expect(render([0x3f, 0xc0]).match(/aria-hidden="true"/g)).toHaveLength(2)
+  expect(render([0x3f, 0xc0]).match(ARIA_HIDDEN_ATTRIBUTES)).toHaveLength(2)
 })
 
 test('BitView styles set and clear bits differently', () => {
-  const [setClass, clearClass] = [
-    ...render([0b10000000], 0xc0).matchAll(/<span class="([^"]+)">[01]</g),
-  ].map((match) => match[1])
+  const [setClass, clearClass] = [...render([0b10000000], 0xc0).matchAll(BIT_CELL_CLASSES)].map(
+    (match) => match[1],
+  )
 
   expect(setClass).not.toBe(clearClass)
 })

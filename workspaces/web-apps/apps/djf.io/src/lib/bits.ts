@@ -26,6 +26,8 @@ export interface BitsByByteParams {
 
 const SHIFTS_MSB_FIRST = [7, 6, 5, 4, 3, 2, 1, 0]
 
+const ONES_THEN_ZEROS = /^1+0*$/
+
 const bitAt = (byte: number, shift: number): Bit => (((byte >> shift) & 1) === 1 ? 1 : 0)
 
 export function bitsByByte({
@@ -38,7 +40,7 @@ export function bitsByByte({
   const maskBytes = Array.from(leastSignificantByteMask, (byte) =>
     byte.toString(2).padStart(8, '0'),
   )
-  if (maskBytes.length !== 1 || !/^1+0*$/.test(maskBytes[0])) {
+  if (maskBytes.length !== 1 || !ONES_THEN_ZEROS.test(maskBytes[0])) {
     throw new RangeError(
       `leastSignificantByteMask must be one byte of ones then zeros (like 11110000), got "${maskBytes.join(' ')}"`,
     )

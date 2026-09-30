@@ -7,14 +7,21 @@ const read = (bytes: Array<number>, mask?: number) =>
     leastSignificantByteMask: mask === undefined ? undefined : uint8ArrayOfLengthOf(mask),
   }).map((bits) => bits.map((bit) => bit.value).join(''))
 
-test('every byte value shows its top bits at every mask width', () => {
-  for (let value = 0; value < 256; value += 1) {
-    for (let width = 1; width <= 8; width += 1) {
-      const mask = (0xff << (8 - width)) & 0xff
-      const digits = (value >> (8 - width)).toString(2).padStart(width, '0')
-      expect(read([value], mask)).toEqual([digits])
-    }
-  }
+const EVERY_BYTE_VALUE = Array.from({length: 256}, (_, value) => value)
+
+const EVERY_MASK_WIDTH = Array.from({length: 8}, (_, index) => index + 1)
+
+test.each(
+  EVERY_BYTE_VALUE.flatMap((value) =>
+    EVERY_MASK_WIDTH.map((width) => ({
+      value,
+      width,
+      mask: (0xff << (8 - width)) & 0xff,
+      digits: (value >> (8 - width)).toString(2).padStart(width, '0'),
+    })),
+  ),
+)('byte $value shows its top $width bits as $digits', ({value, mask, digits}) => {
+  expect(read([value], mask)).toEqual([digits])
 })
 
 test.each([

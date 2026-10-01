@@ -26,9 +26,11 @@ function createFakeStorage(): Storage {
 // The module under test is a singleton created at import time, so each test
 // stubs the globals first and imports a fresh copy (no lifecycle hooks --
 // repo test style).
-function setup() {
+function setup({storedEntries = {}}: {storedEntries?: Record<string, string>} = {}) {
   vi.resetModules()
-  vi.stubGlobal('localStorage', createFakeStorage())
+  const storage = createFakeStorage()
+  for (const [key, value] of Object.entries(storedEntries)) storage.setItem(key, value)
+  vi.stubGlobal('localStorage', storage)
   vi.stubGlobal('matchMedia', () => ({
     matches: false,
     addEventListener: () => {},
@@ -60,6 +62,18 @@ test("another tab's theme-name choice is adopted via the storage event", async (
   window.dispatchEvent(new StorageEvent('storage', {key: 'diffs-dark-theme', newValue: nonDefault}))
 
   expect(themeController.getState().darkThemeName).toBe(nonDefault)
+})
+
+test('a stored theme name outside the catalog falls back to the default', async () => {
+  // given
+  const storedEntries = {'diffs-light-theme': 'retired-light', 'diffs-dark-theme': 'retired-dark'}
+
+  // when
+  const {docsThemeCatalog, themeController} = await setup({storedEntries})
+
+  // then
+  expect(themeController.getState().lightThemeName).toBe(docsThemeCatalog.defaultLightThemeName)
+  expect(themeController.getState().darkThemeName).toBe(docsThemeCatalog.defaultDarkThemeName)
 })
 
 test('a cleared store resets to the defaults', async () => {

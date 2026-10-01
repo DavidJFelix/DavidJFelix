@@ -47,6 +47,14 @@ function writeKey(key: string, value: string): void {
   }
 }
 
+// The controller hydrates stored names without a check, and diffs throws "No
+// valid theme loader registered" for a name it cannot load. A name that the
+// catalog no longer has (renamed, removed, or edited by hand) must not get
+// that far, so it falls back to the default.
+function catalogThemeNameOr(name: string | null, fallback: string): string {
+  return !isNullish(name) && docsThemeCatalog.hasTheme(name) ? name : fallback
+}
+
 // Maps the controller's selection onto the app's three storage keys: mode as a
 // plain `light`/`dark`/`system` string under `theme` (what the bootstrap script
 // reads), and the theme names under the diffs-prefixed keys.
@@ -59,8 +67,8 @@ const docsPersistence: ThemePersistence = {
     const validMode = themeModeSchema.parse(mode)
     return {
       mode: validMode,
-      lightThemeName: light ?? docsThemeCatalog.defaultLightThemeName,
-      darkThemeName: dark ?? docsThemeCatalog.defaultDarkThemeName,
+      lightThemeName: catalogThemeNameOr(light, docsThemeCatalog.defaultLightThemeName),
+      darkThemeName: catalogThemeNameOr(dark, docsThemeCatalog.defaultDarkThemeName),
     }
   },
   save(selection) {

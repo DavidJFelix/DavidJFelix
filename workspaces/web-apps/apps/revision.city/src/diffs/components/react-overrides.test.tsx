@@ -76,7 +76,7 @@ test('React themed component overrides: ThemedCodeView preserves caller themeTyp
           theme: {light: 'old-light', dark: 'old-dark'},
           themeType: 'system',
         }}
-        theme={{light: 'next-light', dark: 'next-dark'}}
+        theme={{light: 'pierre-light', dark: 'pierre-dark'}}
       />,
     )
     await flushReact()
@@ -91,8 +91,8 @@ test('React themed component overrides: ThemedCodeView preserves caller themeTyp
       }
     | undefined
   expect(instance?.options.theme).toEqual({
-    light: 'next-light',
-    dark: 'next-dark',
+    light: 'pierre-light',
+    dark: 'pierre-dark',
   })
   expect(instance?.options.themeType).toBe('system')
 

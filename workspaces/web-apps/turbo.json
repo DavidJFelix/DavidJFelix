@@ -2,6 +2,10 @@
   "$schema": "https://turborepo.dev/schema.json",
   "globalDependencies": ["biome.jsonc", ".oxlintrc.jsonc", "bunfig.toml"],
   "globalEnv": ["REPO_CONFIG_HASH"],
+  // Off: when turbo detects an AI agent it writes a managed block into an
+  // AGENTS.md beside this file, an untracked file that agents then commit by
+  // accident. The repo's agent docs live in the root AGENTS.md instead.
+  "agentGuidance": false,
   "tasks": {
     // Load-bearing, despite doing nothing: a task's hash only folds in a
     // dependency package's files when a dependency EDGE reaches it. Without

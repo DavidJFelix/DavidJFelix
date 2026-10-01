@@ -30,7 +30,7 @@
       "@vitest/coverage-v8": "4.1.11",
       "jsdom": "30.0.1",
       "oxlint-tailwindcss": "1.10.2",
-      "oxlint-tsgolint": "7.0.2001",
+      "oxlint-tsgolint": "7.0.2003",
       "svelte-check": "4.7.6",
       "vite": "8.2.2",
       "vitest": "4.1.11",

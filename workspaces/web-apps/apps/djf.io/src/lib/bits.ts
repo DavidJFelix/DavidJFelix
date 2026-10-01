@@ -28,6 +28,10 @@ const ONES_THEN_ZEROS = /^1+0*$/
 
 const bitAt = (byte: number, shift: number) => (byte >> shift) & 1
 
+export function byteToBinaryString(byte: number): string {
+  return byte.toString(2).padStart(8, '0')
+}
+
 export function bitsByByte({
   bigEndianBytes,
   leastSignificantByteMask = uint8ArrayOfLengthOf(0xff),
@@ -35,9 +39,7 @@ export function bitsByByte({
   if (bigEndianBytes.length === 0) {
     throw new RangeError('bigEndianBytes is empty')
   }
-  const maskBytes = Array.from(leastSignificantByteMask, (byte) =>
-    byte.toString(2).padStart(8, '0'),
-  )
+  const maskBytes = Array.from(leastSignificantByteMask, (byte) => byteToBinaryString(byte))
   if (maskBytes.length !== 1 || !ONES_THEN_ZEROS.test(maskBytes[0])) {
     throw new RangeError(
       `leastSignificantByteMask must be one byte of ones then zeros (like 11110000), got "${maskBytes.join(' ')}"`,

@@ -1,5 +1,5 @@
 import {expect, test} from 'vitest'
-import {bitsByByte, uint8ArrayOfLengthOf} from './bits'
+import {bitsByByte, byteToBinaryString, uint8ArrayOfLengthOf} from './bits'
 
 const read = (bytes: Array<number>, mask?: number) =>
   bitsByByte({
@@ -10,6 +10,25 @@ const read = (bytes: Array<number>, mask?: number) =>
 const EVERY_BYTE_VALUE = Array.from({length: 256}, (_, value) => value)
 
 const EVERY_MASK_WIDTH = Array.from({length: 8}, (_, index) => index + 1)
+
+const EIGHT_BINARY_DIGITS = /^[01]{8}$/
+
+test.each([
+  {byte: 0x00, binary: '00000000'},
+  {byte: 0x01, binary: '00000001'},
+  {byte: 0x3f, binary: '00111111'},
+  {byte: 0xf0, binary: '11110000'},
+  {byte: 0xff, binary: '11111111'},
+])('byteToBinaryString($byte) is $binary', ({byte, binary}) => {
+  expect(byteToBinaryString(byte)).toBe(binary)
+})
+
+test.each(EVERY_BYTE_VALUE)('byte %i is 8 binary digits that read back as itself', (byte) => {
+  const binary = byteToBinaryString(byte)
+
+  expect(binary).toMatch(EIGHT_BINARY_DIGITS)
+  expect(Number.parseInt(binary, 2)).toBe(byte)
+})
 
 test.each(
   EVERY_BYTE_VALUE.flatMap((value) =>

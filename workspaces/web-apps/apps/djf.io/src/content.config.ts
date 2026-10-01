@@ -32,7 +32,7 @@ export const blogSchema = ({image}: SchemaContext) =>
   })
 
 const blog = defineCollection({
-  loader: glob({pattern: '**/*.md', base: './src/content/blog'}),
+  loader: glob({pattern: '**/*.{md,mdx}', base: './src/content/blog'}),
   schema: blogSchema,
 })
 

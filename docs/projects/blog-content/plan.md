@@ -7,6 +7,10 @@ Write blog posts for djf.io. David writes them; this just records that the work 
 - **attention is all you need** — leading candidate for the first post, not locked in. A callback to
   the Transformer paper ("Attention Is All You Need"), about utilizing LLMs in your work. David
   deferred committing to it pending a sharper angle.
+- **quantization formats**: the floating point formats and quantization methods used in ML, shown
+  with inline bit/byte figures in an `.mdx` post. The base figure, `BitView`
+  (`apps/djf.io/src/components/bit-view.tsx`), landed 2026-09-29: static bits of a `Uint8Array` at
+  any bit length. Format-specific figures and interactivity come later.
 
 ## Next steps
 

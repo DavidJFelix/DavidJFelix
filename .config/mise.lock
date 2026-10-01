@@ -123,64 +123,64 @@ checksum = "sha256:78c221c2376f79731ccf4e4af0b3bb46d81fefa3296c5abee09ad8a1b21e6
 url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.2/bun-windows-x64-baseline.zip"
 
 [[tools.depot]]
-version = "2.102.14"
+version = "2.102.15"
 backend = "github:depot/cli"
 specifiers = ["latest"]
 
 [tools.depot."platforms.linux-arm64"]
-checksum = "sha256:be16a494065f0e9a892cbf84ef0a883ed7552cfaa7d7ecb09d9a63f3905d1b71"
-url = "https://github.com/depot/cli/releases/download/v2.102.14/depot_2.102.14_linux_arm64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/595644952"
+checksum = "sha256:c9c0515a146af35f5f6d09285c680f8ac227656cfc072b305b6c8ade0d0fbc6e"
+url = "https://github.com/depot/cli/releases/download/v2.102.15/depot_2.102.15_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/601375045"
 
 [tools.depot."platforms.linux-arm64-musl"]
-checksum = "sha256:be16a494065f0e9a892cbf84ef0a883ed7552cfaa7d7ecb09d9a63f3905d1b71"
-url = "https://github.com/depot/cli/releases/download/v2.102.14/depot_2.102.14_linux_arm64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/595644952"
+checksum = "sha256:c9c0515a146af35f5f6d09285c680f8ac227656cfc072b305b6c8ade0d0fbc6e"
+url = "https://github.com/depot/cli/releases/download/v2.102.15/depot_2.102.15_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/601375045"
 
 [tools.depot."platforms.linux-x64"]
-checksum = "sha256:6c0779289427dc2794c572c2957a8592f0d647124df65cb50ea6e16edac85e75"
-url = "https://github.com/depot/cli/releases/download/v2.102.14/depot_2.102.14_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/595644955"
+checksum = "sha256:987ed8d389d73136b5e9678c44f92c4e5631e73a7e029db13e8777bda32307d8"
+url = "https://github.com/depot/cli/releases/download/v2.102.15/depot_2.102.15_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/601375040"
 
 [tools.depot."platforms.linux-x64-baseline"]
-checksum = "sha256:6c0779289427dc2794c572c2957a8592f0d647124df65cb50ea6e16edac85e75"
-url = "https://github.com/depot/cli/releases/download/v2.102.14/depot_2.102.14_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/595644955"
+checksum = "sha256:987ed8d389d73136b5e9678c44f92c4e5631e73a7e029db13e8777bda32307d8"
+url = "https://github.com/depot/cli/releases/download/v2.102.15/depot_2.102.15_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/601375040"
 
 [tools.depot."platforms.linux-x64-musl"]
-checksum = "sha256:6c0779289427dc2794c572c2957a8592f0d647124df65cb50ea6e16edac85e75"
-url = "https://github.com/depot/cli/releases/download/v2.102.14/depot_2.102.14_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/595644955"
+checksum = "sha256:987ed8d389d73136b5e9678c44f92c4e5631e73a7e029db13e8777bda32307d8"
+url = "https://github.com/depot/cli/releases/download/v2.102.15/depot_2.102.15_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/601375040"
 
 [tools.depot."platforms.linux-x64-musl-baseline"]
-checksum = "sha256:6c0779289427dc2794c572c2957a8592f0d647124df65cb50ea6e16edac85e75"
-url = "https://github.com/depot/cli/releases/download/v2.102.14/depot_2.102.14_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/595644955"
+checksum = "sha256:987ed8d389d73136b5e9678c44f92c4e5631e73a7e029db13e8777bda32307d8"
+url = "https://github.com/depot/cli/releases/download/v2.102.15/depot_2.102.15_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/601375040"
 
 [tools.depot."platforms.macos-arm64"]
-checksum = "sha256:70bcc2e6d7dd749433d213971d53835b606444b5409c1e6119daf3d58d119bc2"
-url = "https://github.com/depot/cli/releases/download/v2.102.14/depot_2.102.14_darwin_arm64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/595644957"
+checksum = "sha256:4839d30036754a085933b6275e1b3626eea01eebf3588cc253b77e83dd196d26"
+url = "https://github.com/depot/cli/releases/download/v2.102.15/depot_2.102.15_darwin_arm64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/601375044"
 
 [tools.depot."platforms.macos-x64"]
-checksum = "sha256:f6e82fd6e93d35ffad128fdfdb51859a93714a320e166e8341270df352fed699"
-url = "https://github.com/depot/cli/releases/download/v2.102.14/depot_2.102.14_darwin_amd64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/595644950"
+checksum = "sha256:936a74f6bf4195d637ba6508fe5564258c6e91456fd3e414dc9b83c633230106"
+url = "https://github.com/depot/cli/releases/download/v2.102.15/depot_2.102.15_darwin_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/601375043"
 
 [tools.depot."platforms.macos-x64-baseline"]
-checksum = "sha256:f6e82fd6e93d35ffad128fdfdb51859a93714a320e166e8341270df352fed699"
-url = "https://github.com/depot/cli/releases/download/v2.102.14/depot_2.102.14_darwin_amd64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/595644950"
+checksum = "sha256:936a74f6bf4195d637ba6508fe5564258c6e91456fd3e414dc9b83c633230106"
+url = "https://github.com/depot/cli/releases/download/v2.102.15/depot_2.102.15_darwin_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/601375043"
 
 [tools.depot."platforms.windows-x64"]
-checksum = "sha256:c4084903089f21c83ab9d156b4c53700853631e00799bbd412cfbd4fbe2b8db8"
-url = "https://github.com/depot/cli/releases/download/v2.102.14/depot_2.102.14_windows_amd64.zip"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/595644947"
+checksum = "sha256:d608689fdd5d923dcca7955a1c0c114178ebf15fb62de6fff370583e61a9f0ff"
+url = "https://github.com/depot/cli/releases/download/v2.102.15/depot_2.102.15_windows_amd64.zip"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/601375046"
 
 [tools.depot."platforms.windows-x64-baseline"]
-checksum = "sha256:c4084903089f21c83ab9d156b4c53700853631e00799bbd412cfbd4fbe2b8db8"
-url = "https://github.com/depot/cli/releases/download/v2.102.14/depot_2.102.14_windows_amd64.zip"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/595644947"
+checksum = "sha256:d608689fdd5d923dcca7955a1c0c114178ebf15fb62de6fff370583e61a9f0ff"
+url = "https://github.com/depot/cli/releases/download/v2.102.15/depot_2.102.15_windows_amd64.zip"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/601375046"
 
 [[tools.ghalint]]
 version = "1.5.6"

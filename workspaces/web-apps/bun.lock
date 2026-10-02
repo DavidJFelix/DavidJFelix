@@ -521,7 +521,6 @@
   },
   "trustedDependencies": [
     "sharp",
-    "msw",
     "esbuild",
     "workerd",
   ],

@@ -16,7 +16,7 @@ export const fetchProducts = createServerFn().handler(async () => {
 })
 
 export const fetchProduct = createServerFn()
-  .inputValidator((handle: string) => handle)
+  .validator((handle: string) => handle)
   .handler(async ({data: handle}) => {
     const data = await storefrontQuery<{product: ProductDetail | null}>(PRODUCT_QUERY, {handle})
     return data.product

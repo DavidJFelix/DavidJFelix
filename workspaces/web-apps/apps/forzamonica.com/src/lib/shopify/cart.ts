@@ -79,7 +79,7 @@ export const fetchCartQuantity = createServerFn().handler(async (): Promise<numb
 })
 
 export const addToCart = createServerFn({method: 'POST'})
-  .inputValidator((input: {variantId: string; quantity: number}) => input)
+  .validator((input: {variantId: string; quantity: number}) => input)
   .handler(async ({data: {variantId, quantity}}): Promise<Cart> => {
     const lines = [{merchandiseId: variantId, quantity}]
     const cartId = getCookie(CART_COOKIE)
@@ -109,7 +109,7 @@ export const addToCart = createServerFn({method: 'POST'})
 // cart page re-runs its loader after every mutation, so a null here resolves
 // to the empty-cart state rather than a stuck error loop.
 export const updateCartLine = createServerFn({method: 'POST'})
-  .inputValidator((input: {lineId: string; quantity: number}) => input)
+  .validator((input: {lineId: string; quantity: number}) => input)
   .handler(async ({data: {lineId, quantity}}): Promise<Cart | null> => {
     const cartId = getCookie(CART_COOKIE)
     if (!cartId) {
@@ -123,7 +123,7 @@ export const updateCartLine = createServerFn({method: 'POST'})
   })
 
 export const removeCartLine = createServerFn({method: 'POST'})
-  .inputValidator((input: {lineId: string}) => input)
+  .validator((input: {lineId: string}) => input)
   .handler(async ({data: {lineId}}): Promise<Cart | null> => {
     const cartId = getCookie(CART_COOKIE)
     if (!cartId) {
@@ -139,7 +139,7 @@ export const removeCartLine = createServerFn({method: 'POST'})
 // Backs the cart page's gift-note field; the note rides along to Shopify
 // checkout with the cart.
 export const updateCartNote = createServerFn({method: 'POST'})
-  .inputValidator((input: {note: string}) => input)
+  .validator((input: {note: string}) => input)
   .handler(async ({data: {note}}): Promise<Cart | null> => {
     const cartId = getCookie(CART_COOKIE)
     if (!cartId) {

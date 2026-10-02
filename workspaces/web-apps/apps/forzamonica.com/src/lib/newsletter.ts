@@ -6,7 +6,7 @@ import {createLoopsContact} from '@/lib/loops.ts'
 // LOOPS_API_KEY`, or `.dev.vars` locally): submissions resolve false and the
 // form shows its error state rather than pretending to subscribe anyone.
 export const subscribeToNewsletter = createServerFn({method: 'POST'})
-  .inputValidator((input: {email: string}) => input)
+  .validator((input: {email: string}) => input)
   .handler(async ({data: {email}}): Promise<boolean> => {
     // Dynamic import: `cloudflare:workers` only resolves in the workerd SSR
     // environment, and this keeps it out of the client bundle entirely.

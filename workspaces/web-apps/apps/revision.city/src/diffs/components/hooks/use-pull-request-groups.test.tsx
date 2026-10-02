@@ -8,7 +8,7 @@ import {type PullRequestGroupsState, usePullRequestGroups} from './use-pull-requ
 const ENDPOINT = '/api/diffs/pull-requests'
 
 const server = setupServer()
-server.listen({onUnhandledRequest: 'error'})
+server.listen({onUnhandledFrame: 'error'})
 
 type Respond = () => Response | Promise<Response>
 

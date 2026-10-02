@@ -20,7 +20,7 @@ interface EntityDiffBody {
 type EntityDiffResolver = HttpResponseResolver<PathParams, EntityDiffBody>
 
 const server = setupServer()
-server.listen({onUnhandledRequest: 'error'})
+server.listen({onUnhandledFrame: 'error'})
 
 function serveEntityDiffs(resolver: EntityDiffResolver): Mock<EntityDiffResolver> {
   const respond = vi.fn<EntityDiffResolver>(resolver)

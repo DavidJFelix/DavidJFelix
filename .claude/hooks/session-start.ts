@@ -25,11 +25,16 @@ const activationFile = join(repo, '.config', 'mise-agent-env.bash')
 const shellQuote = (value: string) => `'${value.replaceAll("'", "'\\''")}'`
 
 // Persist mise activation for every later bash command in the session. Claude
-// Code sources CLAUDE_ENV_FILE between tool calls; BASH_ENV makes each fresh
-// non-interactive bash shell source the activation script on startup.
+// Code sources CLAUDE_ENV_FILE into the tool shell after that shell has
+// started, so BASH_ENV alone never reaches it: a bare `bun` there resolved to
+// the container's unpinned bun, which rewrote bun.lock. The `source` line
+// activates mise in the tool shell itself; BASH_ENV covers every child bash
+// shell it starts. The activation script is idempotent, so sourcing it before
+// each command is safe.
 const envFile = process.env.CLAUDE_ENV_FILE
 if (envFile) {
-  appendFileSync(envFile, `export BASH_ENV=${shellQuote(activationFile)}\n`)
+  const quoted = shellQuote(activationFile)
+  appendFileSync(envFile, `export BASH_ENV=${quoted}\nsource ${quoted}\n`)
 }
 
 if (!isRemote) process.exit(0)

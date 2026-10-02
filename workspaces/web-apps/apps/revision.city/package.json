@@ -88,7 +88,7 @@
     "@vitejs/plugin-react": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "jsdom": "catalog:",
-    "msw": "2.15.0",
+    "msw": "3.0.0",
     "oxlint-tsgolint": "catalog:",
     "typescript": "7.0.2",
     "vite": "catalog:",

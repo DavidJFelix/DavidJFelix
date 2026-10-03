@@ -39,8 +39,8 @@
   },
   "overrides": {
     "rolldown": "1.2.11",
-    "@effect/platform-node-shared": "4.0.0-rc.117",
-    "effect": "4.0.0-rc.117"
+    "@effect/platform-node-shared": "4.0.0",
+    "effect": "4.0.0"
   },
   "trustedDependencies": [
     "@sentry/cli",

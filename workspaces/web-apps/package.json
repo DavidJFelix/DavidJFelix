@@ -38,7 +38,7 @@
     }
   },
   "overrides": {
-    "rolldown": "1.2.11",
+    "rolldown": "1.2.12",
     "@effect/platform-node-shared": "4.0.0",
     "effect": "4.0.0"
   },

@@ -1,8 +1,8 @@
 <script lang="ts">
 import {ModeWatcher} from 'mode-watcher'
-import {css} from 'styled-system/css'
 import type {Snippet} from 'svelte'
-import ThemeToggle from '$lib/components/theme-toggle.svelte'
+import ThemeToggle from '#lib/components/theme-toggle.svelte'
+import {css} from '#styled-system/css'
 import '../app.css'
 
 const {children}: {children: Snippet} = $props()

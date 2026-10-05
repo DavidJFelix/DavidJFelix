@@ -1,9 +1,9 @@
 import {error, redirect} from '@sveltejs/kit'
-import {env} from '$env/dynamic/private'
-import {resolveStateStoreSettings} from '$lib/server/config'
-import {rethrowAsHttpError} from '$lib/server/errors'
-import {createStateApi} from '$lib/server/state-api'
-import {maskState, type PersistedStateView} from '$lib/state'
+import {resolveStateStoreSettings} from '#lib/server/config.ts'
+import {rethrowAsHttpError} from '#lib/server/errors.ts'
+import {createStateApi} from '#lib/server/state-api.ts'
+import {maskState, type PersistedStateView} from '#lib/state.ts'
+import * as env from '$app/env/private'
 import type {PageServerLoad} from './$types'
 
 export const load: PageServerLoad = async ({params, platform}) => {

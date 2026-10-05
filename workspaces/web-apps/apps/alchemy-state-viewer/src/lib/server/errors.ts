@@ -1,5 +1,5 @@
 import {error} from '@sveltejs/kit'
-import {StateApiError} from '$lib/server/state-api'
+import {StateApiError} from '#lib/server/state-api.ts'
 
 /**
  * Convert a state-store failure into a SvelteKit HTTP error: upstream auth

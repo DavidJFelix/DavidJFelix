@@ -1,8 +1,8 @@
 <script lang="ts">
 import {ogSite, ogTags} from '@davidjfelix/og'
-import {css} from 'styled-system/css'
+import ThemeToggle from '#lib/components/theme-toggle.svelte'
+import {css} from '#styled-system/css'
 import {page} from '$app/state'
-import ThemeToggle from '$lib/components/theme-toggle.svelte'
 import {site} from '../site'
 
 const brand = site.title

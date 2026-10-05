@@ -1,7 +1,7 @@
-import {env} from '$env/dynamic/private'
-import {resolveStateStoreSettings} from '$lib/server/config'
-import {rethrowAsHttpError} from '$lib/server/errors'
-import {createStateApi, mapWithConcurrency} from '$lib/server/state-api'
+import {resolveStateStoreSettings} from '#lib/server/config.ts'
+import {rethrowAsHttpError} from '#lib/server/errors.ts'
+import {createStateApi, mapWithConcurrency} from '#lib/server/state-api.ts'
+import * as env from '$app/env/private'
 import type {PageServerLoad} from './$types'
 
 export const load: PageServerLoad = async ({platform}) => {

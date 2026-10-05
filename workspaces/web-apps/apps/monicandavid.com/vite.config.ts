@@ -1,6 +1,8 @@
 import {readFile} from 'node:fs/promises'
 import {basename, dirname, relative} from 'node:path'
+import adapter from '@sveltejs/adapter-cloudflare'
 import {sveltekit} from '@sveltejs/kit/vite'
+import {vitePreprocess} from '@sveltejs/vite-plugin-svelte'
 import type {Plugin} from 'vite'
 import {defineConfig, normalizePath} from 'vite'
 
@@ -37,7 +39,7 @@ const wasmModules = (): Plugin => ({
 })
 
 const config = defineConfig({
-  plugins: [sveltekit(), wasmModules()],
+  plugins: [sveltekit({adapter: adapter(), preprocess: vitePreprocess()}), wasmModules()],
 })
 
 export default config

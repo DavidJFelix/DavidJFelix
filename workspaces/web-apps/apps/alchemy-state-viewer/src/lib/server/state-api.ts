@@ -1,7 +1,7 @@
 // Minimal fetch client for the alchemy Cloudflare state store's HTTP API
 // (alchemy-effect packages/alchemy/src/State/HttpStateApi.ts). Read-only by
 // design: this app never exposes the store's PUT/DELETE surface.
-import type {PersistedStateView} from '$lib/state'
+import type {PersistedStateView} from '#lib/state.ts'
 
 /** The slice of fetch this client uses; keeps test stubs cast-free. */
 export type FetchLike = (

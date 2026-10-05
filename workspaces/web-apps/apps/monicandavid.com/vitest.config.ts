@@ -12,11 +12,6 @@ import {defineConfig} from 'vitest/config'
 // Svelte plugin alone (not SvelteKit) compiles the components for it.
 export default defineConfig({
   plugins: [svelte()],
-  resolve: {
-    // Mirrors the SvelteKit alias in svelte.config.js for the components'
-    // Panda imports; there is no kit plugin here to supply it.
-    alias: {'styled-system': new URL('./styled-system', import.meta.url).pathname},
-  },
   test: {
     // Playwright specs (*.e2e.test.ts) are driven by Playwright, not Vitest.
     exclude: ['**/*.e2e.test.ts', '**/node_modules/**'],

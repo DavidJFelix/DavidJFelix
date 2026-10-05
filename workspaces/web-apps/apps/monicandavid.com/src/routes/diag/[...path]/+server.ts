@@ -1,4 +1,4 @@
-import {postHogUpstream} from '$lib/posthog-proxy'
+import {postHogUpstream} from '#lib/posthog-proxy.ts'
 import type {RequestHandler} from './$types'
 
 // Reverse-proxies /diag/* to PostHog at request time so analytics ride this

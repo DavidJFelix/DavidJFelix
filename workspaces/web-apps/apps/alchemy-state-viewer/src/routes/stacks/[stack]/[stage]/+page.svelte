@@ -1,8 +1,8 @@
 <script lang="ts">
-import {css} from 'styled-system/css'
-import JsonView from '$lib/components/json-view.svelte'
-import StatusBadge from '$lib/components/status-badge.svelte'
-import {isAction, typeOf} from '$lib/state'
+import JsonView from '#lib/components/json-view.svelte'
+import StatusBadge from '#lib/components/status-badge.svelte'
+import {isAction, typeOf} from '#lib/state.ts'
+import {css} from '#styled-system/css'
 import type {PageServerData} from './$types'
 
 const {data}: {data: PageServerData} = $props()

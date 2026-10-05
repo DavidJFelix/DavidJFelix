@@ -1,6 +1,6 @@
 <script lang="ts">
 import {ogTags} from '@davidjfelix/og'
-import {css} from 'styled-system/css'
+import {css} from '#styled-system/css'
 import type {PageServerData} from './$types'
 
 const socialTags = ogTags({title: 'alchemy state', type: 'website'})

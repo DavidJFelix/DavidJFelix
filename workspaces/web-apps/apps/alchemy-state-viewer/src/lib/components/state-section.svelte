@@ -1,6 +1,6 @@
 <script lang="ts">
 import {Collapsible} from '@ark-ui/svelte/collapsible'
-import {css} from 'styled-system/css'
+import {css} from '#styled-system/css'
 import JsonView from './json-view.svelte'
 
 const {title, hint, value}: {title: string; hint?: string; value: unknown} = $props()

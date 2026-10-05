@@ -1,6 +1,6 @@
 <script lang="ts">
-import {badge} from 'styled-system/recipes'
-import {statusTone} from '$lib/state'
+import {statusTone} from '#lib/state.ts'
+import {badge} from '#styled-system/recipes'
 
 const {status}: {status: string | undefined} = $props()
 const tone = $derived(statusTone(status))

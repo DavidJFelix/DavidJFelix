@@ -1,4 +1,4 @@
-import {forwardEnvelope} from '$lib/sentry-tunnel'
+import {forwardEnvelope} from '#lib/sentry-tunnel.ts'
 import type {RequestHandler} from './$types'
 
 // The Sentry tunnel endpoint. The browser SDK POSTs error/trace envelopes here

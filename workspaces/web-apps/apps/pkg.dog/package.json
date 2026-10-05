@@ -38,7 +38,7 @@
     "oxlint-tsgolint": "catalog:",
     "typescript": "6.0.3",
     "vitest": "catalog:",
-    "vue-tsc": "3.3.11",
+    "vue-tsc": "3.3.12",
     "wrangler": "catalog:"
   }
 }

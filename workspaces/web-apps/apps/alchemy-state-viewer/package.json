@@ -3,6 +3,13 @@
   "private": true,
   "license": "(MIT OR Apache-2.0)",
   "type": "module",
+  "imports": {
+    "#lib/*": "./src/lib/*",
+    "#styled-system/*": {
+      "types": "./styled-system/*/index.d.ts",
+      "default": "./styled-system/*/index.mjs"
+    }
+  },
   "scripts": {
     "dev": "vite dev --port 3007",
     "prepare": "svelte-kit sync && panda codegen",

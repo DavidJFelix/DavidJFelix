@@ -1,6 +1,7 @@
-import {error, type Handle, type RequestEvent} from '@sveltejs/kit'
-import {env} from '$env/dynamic/private'
-import {SESSION_COOKIE, verifySession} from '$lib/server/session'
+import {error, type RequestEvent} from '@sveltejs/kit'
+import type {Handle} from '@sveltejs/kit/hooks'
+import {SESSION_COOKIE, verifySession} from '#lib/server/session.ts'
+import * as env from '$app/env/private'
 
 // Every request under /admin has to carry a valid session cookie; anything
 // else on the site is public. The check runs here, before routing, so it

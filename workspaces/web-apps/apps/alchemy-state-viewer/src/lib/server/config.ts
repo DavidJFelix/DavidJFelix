@@ -1,4 +1,4 @@
-import type {FetchLike} from '$lib/server/state-api'
+import type {FetchLike} from '#lib/server/state-api.ts'
 
 export interface StateStoreSettings {
   url: string
@@ -13,7 +13,7 @@ export interface SecretsStoreSecretBinding {
 }
 
 export interface ResolveStateStoreSettingsParams {
-  /** String environment ($env/dynamic/private): ALCHEMY_STATE_URL + optional dev token. */
+  /** String environment ($app/env/private): ALCHEMY_STATE_URL + optional dev token. */
   env: Record<string, string | undefined>
   /** platform.env from the cloudflare adapter, carrying the Secrets Store binding. */
   platformEnv?: Record<string, unknown>

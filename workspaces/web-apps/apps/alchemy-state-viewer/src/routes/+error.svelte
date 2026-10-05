@@ -1,5 +1,5 @@
 <script lang="ts">
-import {css} from 'styled-system/css'
+import {css} from '#styled-system/css'
 import {page} from '$app/state'
 
 const section = css({py: '12', textAlign: 'center'})

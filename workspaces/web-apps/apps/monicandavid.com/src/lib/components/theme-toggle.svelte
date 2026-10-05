@@ -6,8 +6,8 @@
 // "system" on a dark OS still shows the monitor icon.
 
 import {resetMode, setMode, userPrefersMode} from 'mode-watcher'
-import {css} from 'styled-system/css'
 import {onMount} from 'svelte'
+import {css} from '#styled-system/css'
 
 type ThemeMode = 'light' | 'dark' | 'system'
 

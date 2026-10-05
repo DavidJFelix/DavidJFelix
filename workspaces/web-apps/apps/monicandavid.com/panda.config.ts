@@ -7,6 +7,8 @@ export default defineConfig({
   include: ['./src/**/*.{js,ts,svelte}'],
   exclude: [],
   outdir: 'styled-system',
+  // Components import the output through the package.json subpath import.
+  importMap: '#styled-system',
   theme: {
     extend: {
       // Semantic palette for the shared theme-switcher contract

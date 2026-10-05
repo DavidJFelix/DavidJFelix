@@ -1,6 +1,6 @@
 <script lang="ts">
 import {JsonTreeView} from '@ark-ui/svelte/json-tree-view'
-import {css} from 'styled-system/css'
+import {css} from '#styled-system/css'
 
 const {value}: {value: unknown} = $props()
 

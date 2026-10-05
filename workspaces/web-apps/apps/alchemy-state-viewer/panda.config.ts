@@ -1,6 +1,6 @@
 import {defineConfig, defineRecipe} from '@pandacss/dev'
 
-// Status badge tones map 1:1 to $lib/state's StatusTone union.
+// Status badge tones map 1:1 to #lib/state's StatusTone union.
 const badge = defineRecipe({
   className: 'badge',
   base: {
@@ -28,6 +28,8 @@ export default defineConfig({
   strictTokens: true,
   include: ['./src/**/*.{ts,svelte}'],
   outdir: 'styled-system',
+  // Components import the output through the package.json subpath import.
+  importMap: '#styled-system',
   // The badge tone is selected at runtime from statusTone(), so static
   // extraction cannot see the variants -- emit them all.
   staticCss: {

@@ -1,5 +1,5 @@
-import {INGEST_PREFIX} from '$lib/posthog-proxy'
-import {SENTRY_TUNNEL_ROUTE} from '$lib/sentry-tunnel'
+import {INGEST_PREFIX} from '#lib/posthog-proxy.ts'
+import {SENTRY_TUNNEL_ROUTE} from '#lib/sentry-tunnel.ts'
 import {resolvePostHog, resolveSentry} from './config'
 
 // Starts client-side error monitoring (Sentry) and product analytics (PostHog),

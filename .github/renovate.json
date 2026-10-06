@@ -66,6 +66,12 @@
       "allowedVersions": "<0.33.0"
     },
     {
+      "description": "the bun manager supersedes npm for every package.json at or below a bun.lock (the repo root and the web-apps workspace), and the catalog custom manager reads the web-apps workspaces.catalog, so the npm rule above reaches only the pnpm exercise trees; batch these patch/minor updates into a separate weekly PR, so a web-app breakage does not hold back the exercise bumps. The named groups below override this groupName for their packages, so keep this rule above them",
+      "matchUpdateTypes": ["patch", "minor"],
+      "matchManagers": ["bun", "custom.jsonata"],
+      "groupName": "bun patch/minor"
+    },
+    {
       "matchUpdateTypes": ["patch", "minor"],
       "matchManagers": ["cargo"],
       "groupName": "cargo patch/minor"
@@ -121,7 +127,7 @@
       "groupName": "vue and nuxt packages"
     },
     {
-      "description": "react and react-dom release in lockstep and their @types packages track the same major, so group major updates into a single PR; patch/minor stays in the weekly npm batch because the @types packages churn independently",
+      "description": "react and react-dom release in lockstep and their @types packages track the same major, so group major updates into a single PR; patch/minor stays in the weekly bun batch because the @types packages churn independently",
       "matchUpdateTypes": ["major"],
       "matchPackageNames": ["react", "react-dom", "@types/react", "@types/react-dom"],
       "groupName": "react major"

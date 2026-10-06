@@ -15,11 +15,37 @@
     "description": "Workflows live in .depot/workflows/ (Depot CI), which the manager's default patterns do not cover; the action.yaml pattern re-adds composite-action coverage in case patterns replace rather than extend the defaults.",
     "managerFilePatterns": ["/^\\.depot/workflows/[^/]+\\.ya?ml$/", "/(^|/)action\\.ya?ml$/"]
   },
+  "customManagers": [
+    {
+      "description": "the bun manager does not read bun catalogs (renovatebot/renovate#42909 adds it), so it never saw the web-apps workspaces.catalog that pins the shared dev tooling; read the catalog here, and delete this manager and its bun.lock packageRule once a Renovate release extracts bun catalogs",
+      "customType": "jsonata",
+      "fileFormat": "json",
+      "managerFilePatterns": ["/^workspaces/web-apps/package\\.json$/"],
+      "matchStrings": [
+        "$each(workspaces.catalog, function($v, $k) { {\"depName\": $k, \"currentValue\": $v} })"
+      ],
+      "datasourceTemplate": "npm",
+      "versioningTemplate": "npm",
+      "depTypeTemplate": "catalog"
+    }
+  ],
   "packageRules": [
     {
       "matchUpdateTypes": ["patch", "minor"],
       "matchManagers": ["npm"],
       "groupName": "npm patch/minor"
+    },
+    {
+      "description": "the catalog custom manager changes only package.json, so refresh workspaces/web-apps/bun.lock after each catalog update: lockfile-only (no downloads) with lifecycle scripts off, as the bun manager does for its own lockfile updates. The command must match RENOVATE_ALLOWED_COMMANDS in .depot/workflows/cron-renovate.yml, and the bun constraint must match the bun pin in .config/mise.toml",
+      "matchManagers": ["custom.jsonata"],
+      "matchFileNames": ["workspaces/web-apps/package.json"],
+      "constraints": { "bun": "1.4.2" },
+      "postUpgradeTasks": {
+        "installTools": { "bun": {} },
+        "commands": ["bun install --cwd workspaces/web-apps --lockfile-only --ignore-scripts"],
+        "fileFilters": ["workspaces/web-apps/bun.lock"],
+        "executionMode": "update"
+      }
     },
     {
       "description": "svelte-check, vue-tsc, and astro check embed the TypeScript JS compiler API, which typescript 7 (native) no longer ships; hold these at 6.x until the framework checkers support TS 7 (expected ~7.1). The Astro apps are held too since astro 7.3.4: astro check now resolves typescript from the app itself and refuses to run when that is 7, so the workspace-root 6.x that used to serve @astrojs/check no longer helps (see the bunfig.toml devDependencies note)",

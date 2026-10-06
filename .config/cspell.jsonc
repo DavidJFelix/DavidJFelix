@@ -245,6 +245,7 @@
     "instameals",
     "iotv",
     "iterm",
+    "jsonata", // the JSONata JSON query language (a Renovate custom manager type)
     "mattpocock", // renovate config preset handle
     "menlo",
     "miniflare",
@@ -266,6 +267,7 @@
     "pulumi",
     "pyproject",
     "rasterizes",
+    "renovatebot", // Renovate's GitHub org
     "rspack",
     "schibsted",
     "shiki",

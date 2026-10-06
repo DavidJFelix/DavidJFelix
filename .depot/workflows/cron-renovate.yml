@@ -72,3 +72,9 @@ jobs:
           # it the dashboard warns "mise lock was requested to run, but mise
           # is not permitted in the allowedUnsafeExecutions".
           RENOVATE_ALLOWED_UNSAFE_EXECUTIONS: '["mise"]'
+          # The web-apps catalog custom manager refreshes bun.lock with a
+          # postUpgradeTask, and Renovate runs only the post-upgrade commands
+          # this allowlist matches. It is self-hosted-only like the option
+          # above, so it lives here; keep the pattern in step with the command
+          # in .github/renovate.json.
+          RENOVATE_ALLOWED_COMMANDS: '["^bun install --cwd workspaces/web-apps --lockfile-only --ignore-scripts$"]'

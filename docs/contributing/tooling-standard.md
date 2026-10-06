@@ -100,7 +100,10 @@ The ownership map above covers quality tooling; this covers the rest of what age
   is pinned once in the workspace root's `workspaces.catalog` and referenced as `catalog:` from
   every app and package. The two legacy pnpm trees under `workspaces/joy-of-react/` do the same with
   a `catalog:` block in their `pnpm-workspace.yaml`. Add a new shared tool to the catalog rather
-  than pinning it per app.
+  than pinning it per app. Renovate's bun manager does not read bun catalogs, so a JSONata custom
+  manager in `.github/renovate.json` tracks the web-apps catalog and refreshes `bun.lock` with a
+  post-upgrade `bun install --lockfile-only`; delete both when a Renovate release extracts bun
+  catalogs.
 - **JS/TS package manager**: `bun` -- installer (`bun install`), script runner (`bun run`), and
   local-bin runner (`bun x`). Node stays the toolchain runtime: vitest, Playwright, wrangler, and
   the framework CLIs all run on the mise-pinned node, and `bun test` does not replace vitest. `npm`

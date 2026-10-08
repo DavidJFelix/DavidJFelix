@@ -197,7 +197,7 @@ test('a failed reply says so and offers to try again', async () => {
   })
   await expect
     .element(screen.getByRole('alert'))
-    .toHaveTextContent('Chat is not set up on this server yet.')
+    .toMatchTextContent('Chat is not set up on this server yet.')
 
   // when
   await screen.getByRole('button', {name: 'Try again'}).click()

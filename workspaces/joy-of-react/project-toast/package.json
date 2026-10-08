@@ -35,7 +35,7 @@
   "staticFiles": {
     "staticPath": "assets"
   },
-  "packageManager": "pnpm@12.9.0",
+  "packageManager": "pnpm@12.9.1",
   "engines": {
     "node": ">=22"
   }

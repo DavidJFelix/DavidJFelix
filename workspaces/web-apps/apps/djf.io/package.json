@@ -54,6 +54,8 @@
     "@astrojs/check": "0.9.10",
     "@atproto/api": "0.23.0",
     "@pandacss/dev": "catalog:",
+    "@pandacss/preset-base": "catalog:",
+    "@pandacss/preset-panda": "catalog:",
     "@playwright/test": "catalog:",
     "@sentry/cloudflare": "11.4.0",
     "@types/hast": "3.0.5",

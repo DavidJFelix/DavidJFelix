@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "nuxt dev --port 3004",
-    "prepare": "panda codegen && nuxt prepare",
+    "prepare": "nuxt prepare && panda codegen",
     "build": "panda codegen && nuxt build",
     "preview": "nuxt preview",
     "smoke": "bun bin/smoke-local.ts",
@@ -33,6 +33,8 @@
   "devDependencies": {
     "@nuxtjs/color-mode": "4.0.1",
     "@pandacss/dev": "catalog:",
+    "@pandacss/preset-base": "catalog:",
+    "@pandacss/preset-panda": "catalog:",
     "@playwright/test": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "oxlint-tsgolint": "catalog:",

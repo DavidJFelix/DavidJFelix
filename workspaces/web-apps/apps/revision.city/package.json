@@ -76,6 +76,8 @@
   "devDependencies": {
     "@cloudflare/vite-plugin": "catalog:",
     "@pandacss/dev": "catalog:",
+    "@pandacss/preset-base": "catalog:",
+    "@pandacss/preset-panda": "catalog:",
     "@playwright/test": "catalog:",
     "@tanstack/devtools-vite": "catalog:",
     "@testing-library/dom": "catalog:",

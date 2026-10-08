@@ -26,6 +26,7 @@ const badge = defineRecipe({
 export default defineConfig({
   preflight: true,
   strictTokens: true,
+  presets: ['@pandacss/preset-base', '@pandacss/preset-panda'],
   include: ['./src/**/*.{ts,svelte}'],
   outdir: 'styled-system',
   // Components import the output through the package.json subpath import.

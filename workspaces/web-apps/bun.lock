@@ -15,6 +15,8 @@
       "devDependencies": {
         "@cloudflare/workers-types": "catalog:",
         "@pandacss/dev": "catalog:",
+        "@pandacss/preset-base": "catalog:",
+        "@pandacss/preset-panda": "catalog:",
         "@sveltejs/adapter-cloudflare": "8.0.0",
         "@sveltejs/kit": "3.0.0",
         "@sveltejs/vite-plugin-svelte": "7.3.1",
@@ -52,6 +54,8 @@
       "devDependencies": {
         "@astrojs/check": "0.9.10",
         "@pandacss/dev": "catalog:",
+        "@pandacss/preset-base": "catalog:",
+        "@pandacss/preset-panda": "catalog:",
         "@playwright/test": "catalog:",
         "@sentry/cloudflare": "11.4.0",
         "@types/bun": "catalog:",
@@ -122,6 +126,8 @@
         "@astrojs/check": "0.9.10",
         "@atproto/api": "0.23.0",
         "@pandacss/dev": "catalog:",
+        "@pandacss/preset-base": "catalog:",
+        "@pandacss/preset-panda": "catalog:",
         "@playwright/test": "catalog:",
         "@sentry/cloudflare": "11.4.0",
         "@types/hast": "3.0.5",
@@ -219,6 +225,8 @@
         "@cloudflare/vite-plugin": "catalog:",
         "@cloudflare/workers-types": "catalog:",
         "@pandacss/dev": "catalog:",
+        "@pandacss/preset-base": "catalog:",
+        "@pandacss/preset-panda": "catalog:",
         "@playwright/test": "catalog:",
         "@tanstack/devtools-vite": "catalog:",
         "@types/bun": "catalog:",
@@ -248,6 +256,8 @@
       },
       "devDependencies": {
         "@pandacss/dev": "catalog:",
+        "@pandacss/preset-base": "catalog:",
+        "@pandacss/preset-panda": "catalog:",
         "@playwright/test": "catalog:",
         "@sveltejs/adapter-cloudflare": "8.0.0",
         "@sveltejs/kit": "3.0.0",
@@ -291,6 +301,8 @@
         "@cloudflare/vite-plugin": "catalog:",
         "@cloudflare/workers-types": "catalog:",
         "@pandacss/dev": "catalog:",
+        "@pandacss/preset-base": "catalog:",
+        "@pandacss/preset-panda": "catalog:",
         "@playwright/test": "catalog:",
         "@tanstack/devtools-vite": "catalog:",
         "@types/bun": "catalog:",
@@ -324,6 +336,8 @@
       "devDependencies": {
         "@nuxtjs/color-mode": "4.0.1",
         "@pandacss/dev": "catalog:",
+        "@pandacss/preset-base": "catalog:",
+        "@pandacss/preset-panda": "catalog:",
         "@playwright/test": "catalog:",
         "@vitest/coverage-v8": "catalog:",
         "oxlint-tsgolint": "catalog:",
@@ -425,6 +439,8 @@
       "devDependencies": {
         "@cloudflare/vite-plugin": "catalog:",
         "@pandacss/dev": "catalog:",
+        "@pandacss/preset-base": "catalog:",
+        "@pandacss/preset-panda": "catalog:",
         "@playwright/test": "catalog:",
         "@tanstack/devtools-vite": "catalog:",
         "@testing-library/dom": "catalog:",
@@ -466,6 +482,8 @@
         "@cloudflare/vite-plugin": "catalog:",
         "@cloudflare/workers-types": "catalog:",
         "@pandacss/dev": "catalog:",
+        "@pandacss/preset-base": "catalog:",
+        "@pandacss/preset-panda": "catalog:",
         "@playwright/test": "catalog:",
         "@tanstack/devtools-vite": "catalog:",
         "@types/bun": "catalog:",
@@ -533,6 +551,8 @@
     "@cloudflare/vite-plugin": "1.62.5",
     "@cloudflare/workers-types": "5.20261005.1",
     "@pandacss/dev": "2.1.1",
+    "@pandacss/preset-base": "2.1.1",
+    "@pandacss/preset-panda": "2.1.1",
     "@playwright/test": "1.63.0",
     "@tanstack/devtools-vite": "0.8.5",
     "@tanstack/react-devtools": "0.10.13",
@@ -1312,6 +1332,10 @@
     "@pandacss/dev": ["@pandacss/dev@2.1.1", "", { "dependencies": { "@pandacss/cli": "2.1.1", "@pandacss/compiler": "2.1.1", "@pandacss/config": "2.1.1", "@pandacss/postcss": "2.1.1", "@pandacss/types": "2.1.1" }, "peerDependencies": { "postcss": ">=8" }, "optionalPeers": ["postcss"], "bin": { "panda": "bin.js", "pandacss": "bin.js" } }, "sha512-c7P4F54HB417E1nbtppKKEmMKWZzYDN7ecp+ajy7VZr/QoNOiOVhyHPnGS52//mWTCIIgnM0bsxZiPBMsFEuMA=="],
 
     "@pandacss/postcss": ["@pandacss/postcss@2.1.1", "", { "dependencies": { "@pandacss/compiler": "2.1.1", "@pandacss/compiler-shared": "2.1.1" }, "peerDependencies": { "postcss": ">=8" } }, "sha512-PX5qnlojrj2HhlOhZ2m5Az9b8DaqAmt+yFA8nZp4xPFRcl4+LKyYFSUlTsKD5bknSpmD9155Thdvo8yOpys3ZA=="],
+
+    "@pandacss/preset-base": ["@pandacss/preset-base@2.1.1", "", { "dependencies": { "@pandacss/types": "2.1.1" } }, "sha512-km9p/6m5gGyVdVPEc7/YPBGP0wiRqPhbvWdQaJSFlyluzQUFeGzycF7ZTi4heYKmUpVfNm0D56QM+gcxL4FVog=="],
+
+    "@pandacss/preset-panda": ["@pandacss/preset-panda@2.1.1", "", { "dependencies": { "@pandacss/types": "2.1.1" } }, "sha512-c7xaDhGkor/vM3nir6HlMFRmxE3s5uqgQCmrLybaA4s7BjRGsIl48qRv2nSpOHQstWXI/iBg7BvbKgGFZ/m+Sg=="],
 
     "@pandacss/types": ["@pandacss/types@2.1.1", "", {}, "sha512-ycF8sYdqg8mu2cdfdR2hM/pLRpSxBVkD2kJkCBhWAr+KvKb5SoRRNeERSzizgENDUKmThcWHF3N0kSFMA1Rt9A=="],
 

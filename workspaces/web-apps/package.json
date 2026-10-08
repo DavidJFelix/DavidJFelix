@@ -9,7 +9,7 @@
     ],
     "catalog": {
       "@cloudflare/vite-plugin": "1.62.5",
-      "@cloudflare/workers-types": "5.20261002.1",
+      "@cloudflare/workers-types": "5.20261005.1",
       "@pandacss/dev": "1.12.1",
       "@playwright/test": "1.63.0",
       "@tanstack/devtools-vite": "0.8.5",

@@ -24,7 +24,7 @@
     "@ark-ui/vue": "^5.37.2",
     "@davidjfelix/og": "workspace:*",
     "@sentry/browser": "^11.0.0",
-    "h3": "^1.15.11",
+    "h3": "^2.0.0",
     "nuxt": "^4.4.8",
     "posthog-js": "^1.393.0",
     "vue": "^3.5.38",

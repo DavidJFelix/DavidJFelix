@@ -39,6 +39,8 @@
   "devDependencies": {
     "@astrojs/check": "0.9.10",
     "@pandacss/dev": "catalog:",
+    "@pandacss/preset-base": "catalog:",
+    "@pandacss/preset-panda": "catalog:",
     "@playwright/test": "catalog:",
     "@sentry/cloudflare": "11.4.0",
     "@types/bun": "catalog:",

@@ -7,7 +7,7 @@
     "#lib/*": "./src/lib/*",
     "#styled-system/*": {
       "types": "./styled-system/*/index.d.ts",
-      "default": "./styled-system/*/index.mjs"
+      "default": "./styled-system/*/index.js"
     }
   },
   "scripts": {
@@ -39,6 +39,8 @@
   },
   "devDependencies": {
     "@pandacss/dev": "catalog:",
+    "@pandacss/preset-base": "catalog:",
+    "@pandacss/preset-panda": "catalog:",
     "@playwright/test": "catalog:",
     "@sveltejs/adapter-cloudflare": "8.0.0",
     "@sveltejs/kit": "3.0.0",

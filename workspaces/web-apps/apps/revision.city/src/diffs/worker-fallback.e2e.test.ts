@@ -19,7 +19,7 @@ const PATCH = [
 
 // worker-pool-context.tsx starts one worker less than the core count, and at
 // most three on a desktop browser. With this core count, the pool always starts
-// three workers, and each worker requests the script once.
+// three workers, and each worker loads the script once.
 const CORE_COUNT = 8
 const POOL_SIZE = 3
 
@@ -29,9 +29,11 @@ test('a diff renders highlighted on the main thread when the worker script fails
   await page.addInitScript((coreCount) => {
     Object.defineProperty(Navigator.prototype, 'hardwareConcurrency', {get: () => coreCount})
   }, CORE_COUNT)
-  let workerScriptRequests = 0
+  let workerScriptLoads = 0
   await page.route(/\/assets\/worker-[^/]+\.js$/, (route) => {
-    workerScriptRequests += 1
+    // The worker failure report fetches the script again to read its status.
+    // That request is a `fetch`, and a worker load is a `script`.
+    if (route.request().resourceType() === 'script') workerScriptLoads += 1
     return route.fulfill({status: 404, contentType: 'text/plain', body: 'Not Found'})
   })
   await page.route(/\/api\/diffs\/diff\?/, (route) =>
@@ -44,8 +46,8 @@ test('a diff renders highlighted on the main thread when the worker script fails
   await expect(addedLine).toHaveText('export const b = 3')
   // A highlighted token carries its color; a plain-text line has none.
   await expect(addedLine.locator('span[style*="--diffs-token-"]').first()).toBeVisible()
-  // Fewer requests means the route did not fail the pool. More requests means
-  // the viewer started the failed pool again, which hides the diff while the
-  // new workers initialize.
-  expect(workerScriptRequests).toBe(POOL_SIZE)
+  // Fewer loads means the route did not fail the pool. More loads means the
+  // viewer started the failed pool again, which hides the diff while the new
+  // workers initialize.
+  expect(workerScriptLoads).toBe(POOL_SIZE)
 })

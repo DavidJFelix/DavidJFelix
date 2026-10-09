@@ -16,5 +16,5 @@ viewer highlights on the main thread with the theme the reader picked.
 
 A Playwright test, `worker-fallback.e2e.test.ts`, answers the worker script with 404 and the diff
 request with a fixture patch. It pins the core count so the pool always starts three workers, then
-checks that the file renders with highlighted tokens and that the page requests the script exactly
-once for each pool worker.
+checks that the file renders with highlighted tokens and that each pool worker loads the script
+exactly once.

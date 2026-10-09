@@ -20,7 +20,6 @@ test.each(['model', 'reviewerId', 'systemPrompt', 'chunkText'] as const)(
   },
 )
 
-// Implements only the D1 calls the store makes.
 function createFakeD1() {
   const rows = new Map<string, string>()
   const prepare = (sql: string) => ({

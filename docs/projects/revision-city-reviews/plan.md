@@ -1,8 +1,9 @@
 # revision.city Reviews
 
-Make revision.city a standalone automated code reviewer: a GitHub App that reviews every pull
-request on the repositories that install it, posts findings as inline review comments, and replaces
-Warden in this repository. Spun out of the [revision.city](../revision-city/plan.md) umbrella.
+Make revision.city a standalone automated code reviewer. It is a GitHub App that reviews every pull
+request on the repositories that install it. It posts findings as inline review comments, and it
+replaces Warden in this repository. Spun out of the [revision.city](../revision-city/plan.md)
+umbrella.
 
 ## Goals
 
@@ -14,17 +15,19 @@ Warden in this repository. Spun out of the [revision.city](../revision-city/plan
   setting.
 - **Works for any installation, runs only here for now.** Code takes the installation and repository
   from the event; an allowlist limits it to `DavidJFelix/DavidJFelix` until billing exists.
-- **Clean-room.** Warden's behavior is the reference (per-hunk review, severity gate, inline
-  findings), but its source is FSL-licensed, so none of it is read or copied and the code does not
-  name it.
+- **Clean-room.** Warden's behavior is the reference: per-hunk review, a severity gate, and inline
+  findings. Its source is FSL-licensed. So none of it is read or copied, and the code does not name
+  it.
 
 ## Design
 
-- **Engine** (`src/reviews/lib/`): split each file's patch into chunks of up to 200 diff lines, run
-  three reviewers (security, correctness, comments) on each chunk, map findings back to new-file
-  lines, and decide the outcome: report `medium` and above, fail on `high` and above.
-- **Chunk-local line labels.** The prompt numbers lines from 1 inside the chunk, not by file line,
-  so an edit above a chunk does not change its text and its saved result stays valid.
+- **Engine** (`src/reviews/lib/`):
+  1. Split each file's patch into chunks of up to 200 diff lines.
+  2. Run three reviewers (security, correctness, comments) on each chunk.
+  3. Map findings back to new-file lines, one finding per line.
+  4. Report `medium` and above, and fail on `high` and above.
+- **Chunk-local line labels.** The prompt numbers lines from 1 inside the chunk, not by file line.
+  An edit above a chunk then does not change its text, and its saved result stays valid.
 - **Saved results** in D1 (`chunk_reviews`, `migrations/0001-chunk-reviews.sql`), keyed by a SHA-256
   of the model, reviewer, system prompt, and rendered chunk.
 - **Runner: Cloudflare Workflows.** The webhook route verifies the signature and the allowlist,

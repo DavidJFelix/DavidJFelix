@@ -105,7 +105,7 @@ export function renderChunk(chunk: ReviewChunk): RenderedChunk {
   const newLineByLabel: number[] = []
   const renderLine = (line: DiffLine): string => {
     const marker = {added: '+', removed: '-', context: ' '}[line.kind]
-    if (line.newLine === undefined) {
+    if (line.kind === 'removed') {
       return `${' '.repeat(5)} ${marker} ${line.text}`
     }
     newLineByLabel.push(line.newLine)

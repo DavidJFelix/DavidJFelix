@@ -19,7 +19,7 @@ test('parsePatchHunks splits on each hunk header and restarts numbering', () => 
 
   const hunks = parsePatchHunks(patch)
 
-  expect(hunks.map((hunk) => hunk.lines.map((line) => line.newLine))).toEqual([[1], [41, 42]])
+  expect(hunks).toMatchObject([{lines: [{newLine: 1}]}, {lines: [{newLine: 41}, {newLine: 42}]}])
 })
 
 test('parsePatchHunks ignores text before the first hunk and no-newline markers', () => {

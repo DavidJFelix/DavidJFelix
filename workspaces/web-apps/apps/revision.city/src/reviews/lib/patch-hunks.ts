@@ -1,11 +1,8 @@
-export type DiffLineKind = 'added' | 'removed' | 'context'
+export type DiffLine =
+  | {kind: 'added' | 'context'; text: string; newLine: number}
+  | {kind: 'removed'; text: string}
 
-export interface DiffLine {
-  kind: DiffLineKind
-  text: string
-  // Absent on removed lines: they have no line in the new file to anchor a comment to.
-  newLine?: number
-}
+type DiffLineKind = DiffLine['kind']
 
 export interface PatchHunk {
   lines: readonly DiffLine[]

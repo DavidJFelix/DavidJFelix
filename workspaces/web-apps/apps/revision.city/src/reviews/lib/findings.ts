@@ -14,9 +14,8 @@ export const modelFindingSchema = z.object({
   severity: z.enum(SEVERITIES),
   title: z.string().min(1),
   body: z.string().min(1),
-  // Chunk-local line labels, as printed by renderChunk.
-  line: z.int().positive(),
-  endLine: z.int().positive().nullish(),
+  label: z.int().positive(),
+  endLabel: z.int().positive().nullish(),
   suggestion: z.string().nullish(),
 })
 
@@ -30,9 +29,8 @@ export interface Finding {
   severity: Severity
   title: string
   body: string
-  line: number
-  // Present only when the finding spans more than one line.
-  startLine?: number
+  startLine: number
+  endLine: number
   suggestion?: string
 }
 
@@ -57,12 +55,11 @@ export function anchorFindings({
 }: AnchorFindingsParams): Finding[] {
   const toNewLine = (label: number) => rendered.newLineByLabel[label - 1]
   return findings.flatMap((finding) => {
-    const firstLine = toNewLine(finding.line)
-    if (firstLine === undefined) {
+    const startLine = toNewLine(finding.label)
+    if (startLine === undefined) {
       return []
     }
-    const lastLine = finding.endLine ? toNewLine(finding.endLine) : undefined
-    const spansLines = lastLine !== undefined && lastLine > firstLine
+    const lastLine = finding.endLabel ? toNewLine(finding.endLabel) : undefined
     return [
       {
         reviewerId,
@@ -70,23 +67,23 @@ export function anchorFindings({
         severity: finding.severity,
         title: finding.title,
         body: finding.body,
-        line: spansLines ? lastLine : firstLine,
-        ...(spansLines ? {startLine: firstLine} : {}),
+        startLine,
+        endLine: lastLine !== undefined && lastLine > startLine ? lastLine : startLine,
         ...(finding.suggestion ? {suggestion: finding.suggestion} : {}),
       },
     ]
   })
 }
 
-// Two reviewers can flag the same problem on the same line. Keeps the most
-// severe copy, in severity order.
+// One inline comment per line: when reviewers flag the same line, the most
+// severe finding wins. Returns findings in severity order.
 export function dedupeFindings(findings: readonly Finding[]): Finding[] {
   const bySeverity = findings.toSorted(
     (a, b) => SEVERITIES.indexOf(a.severity) - SEVERITIES.indexOf(b.severity),
   )
   const seen = new Set<string>()
   return bySeverity.filter((finding) => {
-    const key = `${finding.path}:${finding.line}:${finding.title.trim().toLowerCase()}`
+    const key = `${finding.path}:${finding.endLine}`
     if (seen.has(key)) {
       return false
     }

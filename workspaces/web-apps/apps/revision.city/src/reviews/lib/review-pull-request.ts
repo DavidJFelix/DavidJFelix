@@ -143,6 +143,6 @@ async function mapWithConcurrency<Item, Result>(
     )
     return worker()
   }
-  await Promise.all(Array.from({length: Math.min(limit, items.length)}, worker))
+  await Promise.all(Array.from({length: Math.min(Math.max(1, limit), items.length)}, worker))
   return results
 }

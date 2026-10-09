@@ -97,10 +97,10 @@ export interface RenderedChunk {
   newLineByLabel: readonly number[]
 }
 
-// Labels lines with chunk-local numbers instead of file line numbers, so an
-// edit above the chunk shifts nothing in the rendered text and a cached review
-// of the chunk stays valid. Removed lines get no label: a review comment can
-// only anchor to a line of the new file.
+// Labels lines with chunk-local numbers, not file line numbers. An edit above
+// the chunk then shifts nothing, so a cached review of the chunk stays valid.
+// Removed lines get no label: a review comment can only anchor to a line of the
+// new file.
 export function renderChunk(chunk: ReviewChunk): RenderedChunk {
   const newLineByLabel: number[] = []
   const renderLine = (line: DiffLine): string => {

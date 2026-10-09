@@ -69,27 +69,29 @@ export function anchorFindings({
         body: finding.body,
         startLine,
         endLine: lastLine !== undefined && lastLine > startLine ? lastLine : startLine,
-        ...(finding.suggestion ? {suggestion: finding.suggestion} : {}),
+        ...(typeof finding.suggestion === 'string' ? {suggestion: finding.suggestion} : {}),
       },
     ]
   })
 }
 
-// One inline comment per line: when reviewers flag the same line, the most
-// severe finding wins. Returns findings in severity order.
+// One inline comment per line: when the line ranges of two findings overlap,
+// the more severe finding wins. Returns findings in severity order.
 export function dedupeFindings(findings: readonly Finding[]): Finding[] {
   const bySeverity = findings.toSorted(
     (a, b) => SEVERITIES.indexOf(a.severity) - SEVERITIES.indexOf(b.severity),
   )
-  const seen = new Set<string>()
-  return bySeverity.filter((finding) => {
-    const key = `${finding.path}:${finding.endLine}`
-    if (seen.has(key)) {
-      return false
+  const kept: Finding[] = []
+  for (const finding of bySeverity) {
+    if (!kept.some((other) => findingsOverlap(finding, other))) {
+      kept.push(finding)
     }
-    seen.add(key)
-    return true
-  })
+  }
+  return kept
+}
+
+function findingsOverlap(a: Finding, b: Finding): boolean {
+  return a.path === b.path && a.startLine <= b.endLine && b.startLine <= a.endLine
 }
 
 export interface ReviewOutcome {

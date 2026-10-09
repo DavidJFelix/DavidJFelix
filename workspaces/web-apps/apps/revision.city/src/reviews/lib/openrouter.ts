@@ -74,12 +74,20 @@ export function createOpenRouterComplete({
   }
 }
 
-// Some models wrap JSON in a Markdown fence even when asked for a JSON object.
+const FENCED_BLOCK_PATTERN = /```(?:json)?\s*\n([\s\S]*?)\n```/
+
+// Some models wrap JSON in a Markdown fence, or add prose around it, even when
+// asked for a JSON object.
 export function extractJson(text: string): unknown {
-  const start = text.indexOf('{')
-  const end = text.lastIndexOf('}')
+  const fenced = FENCED_BLOCK_PATTERN.exec(text)?.[1]
+  const candidate = fenced ?? text.trim()
+  if (candidate.startsWith('{')) {
+    return JSON.parse(candidate)
+  }
+  const start = candidate.indexOf('{')
+  const end = candidate.lastIndexOf('}')
   if (start === -1 || end < start) {
     throw new Error('Model response has no JSON object')
   }
-  return JSON.parse(text.slice(start, end + 1))
+  return JSON.parse(candidate.slice(start, end + 1))
 }

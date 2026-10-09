@@ -12,12 +12,12 @@ export default defineConfig({
     // Playwright specs (*.e2e.test.ts) are driven by Playwright, not Vitest.
     exclude: ['**/*.e2e.test.ts', '**/node_modules/**'],
     // Coverage gate scoped to the tested pure logic: the observability relays
-    // (src/lib/{posthog-proxy,sentry-tunnel}) and the client-config resolver. The
-    // route glue + client bootstrap are exercised by build/smoke, not unit
-    // coverage.
+    // (src/lib/{posthog-proxy,sentry-tunnel}), the client-config resolver, and the
+    // PR review engine (src/reviews/lib). The route glue + client bootstrap are
+    // exercised by build/smoke, not unit coverage.
     coverage: {
       provider: 'v8',
-      include: ['src/lib/**', 'src/observability/config.ts'],
+      include: ['src/lib/**', 'src/observability/config.ts', 'src/reviews/lib/**'],
       reporter: ['text', 'text-summary'],
       thresholds: {statements: 100, branches: 90, functions: 100, lines: 100},
     },

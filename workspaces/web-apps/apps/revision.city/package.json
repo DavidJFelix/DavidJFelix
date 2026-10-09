@@ -12,6 +12,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "smoke": "bun bin/smoke-local.ts",
+    "review": "bun bin/review-pull-request.ts",
     "deploy": "bun run build && wrangler deploy",
     "lint": "biome check . && oxlint",
     "lint:fix": "biome check --write . && oxlint --fix",

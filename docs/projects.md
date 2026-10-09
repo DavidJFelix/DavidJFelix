@@ -192,6 +192,14 @@ its secrets exist (#302). Next: encode the repo's own standards as custom Warden
 
 **Status**: Active · Blocked (human activation, #302)
 
+### [revision.city Reviews](./projects/revision-city-reviews/plan.md)
+
+Turn revision.city into a standalone GitHub App reviewer that replaces Warden: webhook-triggered,
+Cloudflare Workflows runner, saved per-chunk results in D1, OpenRouter models. The review engine
+landed 2026-10-09; next is the webhook and Workflow wiring.
+
+**Status**: Active
+
 ### [Lint/Format Loose Ends](./projects/lint-format-loose-ends/plan.md)
 
 The concrete residual of the closed linter-formatter standardization: format all of `docs/` + add a

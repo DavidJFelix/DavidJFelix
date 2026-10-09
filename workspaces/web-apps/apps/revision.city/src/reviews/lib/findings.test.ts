@@ -87,9 +87,9 @@ test('anchorFindings drops a finding whose label is not in the chunk', () => {
 
 test('decideOutcome reports medium and above and fails on high and above', () => {
   const outcome = decideOutcome([
-    finding({severity: 'low', endLine: 1}),
-    finding({severity: 'medium', endLine: 2}),
-    finding({severity: 'high', endLine: 3}),
+    finding({severity: 'low', startLine: 1, endLine: 1}),
+    finding({severity: 'medium', startLine: 2, endLine: 2}),
+    finding({severity: 'high', startLine: 3, endLine: 3}),
   ])
 
   expect(outcome.reported.map((item) => item.severity)).toEqual(['high', 'medium'])
@@ -100,15 +100,32 @@ test('decideOutcome passes when nothing reaches the fail severity', () => {
   expect(decideOutcome([finding({severity: 'medium'})]).failed).toBe(false)
 })
 
-test('decideOutcome keeps only the most severe finding on a line', () => {
+test('decideOutcome keeps only the most severe of findings whose lines overlap', () => {
   const outcome = decideOutcome([
-    finding({reviewerId: 'correctness', severity: 'medium', title: 'Null check missing'}),
-    finding({reviewerId: 'security', severity: 'critical', title: 'Unchecked input'}),
-    finding({reviewerId: 'comments', severity: 'medium', endLine: 2}),
+    finding({reviewerId: 'correctness', severity: 'medium', startLine: 3, endLine: 3}),
+    finding({reviewerId: 'security', severity: 'critical', startLine: 1, endLine: 3}),
+    finding({reviewerId: 'comments', severity: 'medium', startLine: 4, endLine: 5}),
   ])
 
-  expect(outcome.reported.map((item) => [item.reviewerId, item.endLine])).toEqual([
+  expect(outcome.reported.map((item) => [item.reviewerId, item.startLine])).toEqual([
     ['security', 1],
-    ['comments', 2],
+    ['comments', 4],
   ])
+})
+
+test('decideOutcome keeps findings on the same line of different files', () => {
+  const outcome = decideOutcome([finding({path: 'a.ts'}), finding({path: 'b.ts'})])
+
+  expect(outcome.reported).toHaveLength(2)
+})
+
+test('anchorFindings keeps an empty suggestion, which deletes the flagged lines', () => {
+  const [anchored] = anchorFindings({
+    reviewerId: 'correctness',
+    chunk,
+    rendered,
+    findings: [modelFinding({label: 2, suggestion: ''})],
+  })
+
+  expect(anchored.suggestion).toBe('')
 })

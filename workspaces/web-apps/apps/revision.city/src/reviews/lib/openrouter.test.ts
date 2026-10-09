@@ -56,6 +56,17 @@ test('extractJson reads an object wrapped in a Markdown fence', () => {
   expect(extractJson('```json\n{"findings": []}\n```')).toEqual({findings: []})
 })
 
+test.each([
+  {name: 'a bare object', text: '{"findings": []}'},
+  {
+    name: 'a fenced object with prose around it',
+    text: 'Here {it} is:\n```json\n{"findings": []}\n```\nDone {x}',
+  },
+  {name: 'an object inside prose', text: 'Result: {"findings": []} as asked.'},
+])('extractJson reads $name', ({text}) => {
+  expect(extractJson(text)).toEqual({findings: []})
+})
+
 test('extractJson throws when there is no object', () => {
   expect(() => extractJson('no findings')).toThrow('Model response has no JSON object')
 })

@@ -132,6 +132,17 @@ alongside its built-in skills, and findings follow the sections of this guide. T
 harness-neutral. It lives in `.agents/skills/` like every other skill, so any agent can run it on a
 diff before the PR does. Its rules are this guide's; when the two disagree, fix the guide first.
 
+Run the skill over the branch diff before each push that adds or edits a comment or Markdown prose,
+and fix its findings first. Two findings recur, and you can find both yourself:
+
+- **A claim that the code does not support.** Every count, name, order, and guarantee in a comment
+  or a doc, changelog fragments included, must be true of the code it describes. Check each one
+  against the code. A fragment that says a handler "writes one sentence" is wrong when the handler
+  writes two.
+- **Old wording in a touched comment.** The review treats a comment that you move, or a sentence
+  that you edit in part, as new text. Bring the whole comment to this guide; do not carry the old
+  wording forward.
+
 ## References
 
 - [code-style.md](code-style.md) -- naming, shape, and typing, the tools that make comments

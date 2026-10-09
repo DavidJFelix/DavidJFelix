@@ -5,22 +5,22 @@ import {
   WorkerPoolContextProvider,
   type WorkerPoolOptions,
 } from '@pierre/diffs/react'
-// Vite bundles the highlight worker (and its shiki/wasm imports) into a
-// dedicated worker chunk; the import gives back the chunk's URL. Only
-// constructed in the browser via workerFactory below.
+// Vite bundles the highlight worker and its shiki/wasm imports into a dedicated worker chunk.
+// The import gives the URL of that chunk. `workerFactory` below constructs the worker, only in
+// the browser.
 import * as DiffsRenderWorkerUrlModule from '@pierre/diffs/worker/worker.js?worker&url'
 import type {ReactNode} from 'react'
 import {isNullish} from '@/diffs/lib/nullish'
 import {describeWorkerFailure} from '@/diffs/lib/worker-failure'
 
-// The default export is created by Vite's ?worker transform and typed by vite/client's
-// `declare module '*?worker&url'`, which is what tsc resolves and enforces. Since oxlint 1.73 the
-// import resolver follows the specifier past the suffix to the untransformed module, which
-// exports nothing, so it reports a default that only exists after the transform.
+// Vite's ?worker transform creates the default export, and vite/client types it with
+// `declare module '*?worker&url'`, which tsc enforces. Since oxlint 1.73, the import resolver
+// follows the specifier past the suffix to the untransformed module. That module exports nothing,
+// so oxlint reports a default export that exists only after the transform.
 // oxlint-disable-next-line import/namespace -- resolver false positive, see above
 const DiffsRenderWorkerUrl = DiffsRenderWorkerUrlModule.default
 
-// Every worker in the pool sends the same load failure, so each failure is reported once per page.
+// Every worker in the pool sends the same load failure, so the page reports each failure only once.
 const reportedWorkerFailures = new Set<string>()
 
 function reportWorkerFailure(event: Event): void {

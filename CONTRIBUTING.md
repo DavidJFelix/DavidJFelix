@@ -12,7 +12,11 @@ rules live in [AGENTS.md](AGENTS.md); the detailed style guides live in
 3. Open a PR with a [conventional commit](https://www.conventionalcommits.org/) title
 4. Add a changelog fragment to `docs/changelog/fragments/` (never edit `docs/changelog/YYYY-MM.md`
    directly)
-5. If you touched `.config/mise.toml`, run `mise install` and commit the resulting
+5. Before each push that adds or edits a comment or Markdown prose, run the `comment-review` skill
+   over the branch diff. The changelog fragment is Markdown prose too. Fix the findings before you
+   push. Warden runs the same skill on each push to a non-draft PR, so each finding it posts costs a
+   review round
+6. If you touched `.config/mise.toml`, run `mise install` and commit the resulting
    `.config/mise.lock` change in the same PR; if you touched the repo-root `package.json`, run
    `bun install` there and commit the resulting `bun.lock`. CI fails on a stale lockfile either way
    (see [tooling-standard.md](docs/contributing/tooling-standard.md))
@@ -89,9 +93,9 @@ complements it -- nothing else should post competing PR comments. The
 - **Built-in `/code-review` and `/security-review` (local).** Run on-demand before you push, as an
   inner-loop sanity pass. Do **not** pass `--comment` -- Warden owns posted comments, and
   double-posting the same diff is noise and double model spend.
-- **`comment-review` (on demand).** The same skill Warden runs, for comments and documentation
-  prose. Any agent that reads `.agents/skills/` can run it over a diff before you push; run without
-  posting, for the same reason as the built-ins.
+- **`comment-review` (before you push).** The same skill Warden runs, for comments and documentation
+  prose. Before each push that adds or edits a comment or Markdown prose, run it over the diff (PR
+  workflow step 5). Run it without posting, for the same reason as the built-ins.
 - **`/review` (Standards + Spec).** The holistic on-demand review: does the branch follow the repo's
   documented standards, and does it match the originating issue/PRD? Warden checks the comment
   standard only, so this stays.

@@ -5,12 +5,38 @@ import {
   WorkerPoolContextProvider,
   type WorkerPoolOptions,
 } from '@pierre/diffs/react'
-// Vite bundles the highlight worker (and its shiki/wasm imports) into a
-// dedicated worker chunk; the import gives back a Worker constructor. Only
-// constructed in the browser via workerFactory below.
-import * as DiffsRenderWorkerModule from '@pierre/diffs/worker/worker.js?worker'
+// Vite bundles the highlight worker and its shiki/wasm imports into a dedicated worker chunk.
+// The import gives the URL of that chunk. `workerFactory` below constructs the worker, only in
+// the browser.
+import * as DiffsRenderWorkerUrlModule from '@pierre/diffs/worker/worker.js?worker&url'
 import type {ReactNode} from 'react'
 import {isNullish} from '@/diffs/lib/nullish'
+import {describeWorkerFailure} from '@/diffs/lib/worker-failure'
+
+// Vite's ?worker transform creates the default export, and vite/client types it with
+// `declare module '*?worker&url'`, which tsc enforces. Since oxlint 1.73, the import resolver
+// follows the specifier past the suffix to the untransformed module. That module exports nothing,
+// so oxlint reports a default export that exists only after the transform.
+// oxlint-disable-next-line import/namespace -- resolver false positive, see above
+const DiffsRenderWorkerUrl = DiffsRenderWorkerUrlModule.default
+
+// Every worker in the pool sends the same load failure, so the page reports each failure only once.
+const reportedWorkerFailures = new Set<string>()
+
+function reportWorkerFailure(event: Event): void {
+  // The report below replaces the browser's own report of an uncaught worker error.
+  event.preventDefault()
+  const failureKey = event instanceof ErrorEvent ? event.message : event.type
+  if (reportedWorkerFailures.has(failureKey)) {
+    return
+  }
+
+  reportedWorkerFailures.add(failureKey)
+  // reportError raises the error like an uncaught one, so it reaches Sentry's onerror handler.
+  void describeWorkerFailure({event, scriptUrl: DiffsRenderWorkerUrl}).then((description) =>
+    reportError(new Error(description)),
+  )
+}
 
 function isMobileBrowser(): boolean {
   const navigator = globalThis.navigator
@@ -43,13 +69,10 @@ const PoolOptions: WorkerPoolOptions = {
   ),
   totalASTLRUCacheSize: WorkerResourceLimits.totalASTLRUCacheSize,
   workerFactory() {
-    // The default export is created by Vite's ?worker transform and typed by vite/client's
-    // `declare module '*?worker'`, which is what tsc resolves and enforces. Since oxlint 1.73 the
-    // import resolver follows the specifier past the suffix to the untransformed module, which
-    // exports nothing, so it reports a default that only exists after the transform.
-    // oxlint-disable-next-line import/namespace -- resolver false positive, see above
-    return new DiffsRenderWorkerModule.default()
+    // Vite serves the worker as an ES module in dev and bundles it as a classic script for builds.
+    return new Worker(DiffsRenderWorkerUrl, {type: import.meta.env.DEV ? 'module' : 'classic'})
   },
+  onWorkerError: reportWorkerFailure,
 }
 
 const HighlighterOptions: WorkerInitializationRenderOptions = {

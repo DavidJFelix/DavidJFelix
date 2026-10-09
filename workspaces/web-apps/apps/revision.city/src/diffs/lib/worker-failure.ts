@@ -1,6 +1,6 @@
 // A `Worker` reports a failure with an `error` event. Chromium sends a plain `Event`, with no
 // message, when it cannot fetch the worker script (an error status or a network error). It sends an
-// `ErrorEvent` when the script throws, and a script that is not JavaScript also throws.
+// `ErrorEvent` when the script throws. In a classic worker, a script that is not JavaScript throws.
 
 type WorkerFailureFetch = (...args: Parameters<typeof fetch>) => ReturnType<typeof fetch>
 

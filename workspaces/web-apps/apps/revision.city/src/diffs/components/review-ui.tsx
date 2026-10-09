@@ -1,5 +1,6 @@
 import {type DiffIndicators} from '@pierre/diffs'
 import {useWorkerPool} from '@pierre/diffs/react'
+import type {WorkerStats} from '@pierre/diffs/worker'
 import {type ColorMode} from '@pierre/theming'
 import {useThemeController} from '@pierre/theming/react'
 import {
@@ -52,7 +53,7 @@ export function ReviewUI({domain, path}: ReviewUIProps) {
 }
 
 function ReviewUIInner({domain, path}: ReviewUIProps) {
-  const isWorkerPoolReadyOrDisable = useIsWorkerPoolReadyOrDisabled()
+  const workerPoolState = useWorkerPoolState()
   const [diffStyle, setDiffStyle] = useState<'split' | 'unified'>('split')
   const [collapseMode, setCollapseMode] = useState<'expanded' | 'collapsed'>('expanded')
   const [fileTreeOverlayOpen, setFileTreeOverlayOpen] = useState(false)
@@ -272,7 +273,7 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
   // are still at their `DEFAULT_*_THEME` initial values and tokenize the
   // first batch of files against the wrong palette.
   const viewerAvailable =
-    isWorkerPoolReadyOrDisable &&
+    workerPoolState !== 'initializing' &&
     themesHydrated &&
     (loadState === 'ready' || (loadState === 'streaming' && initialItems.length > 0))
 
@@ -326,6 +327,10 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
             key={viewerKey}
             className={css({gridArea: 'viewer'})}
             diffStyle={diffStyle}
+            // A viewer that uses a failed pool starts a new initialization each
+            // time it sets its theme. Without the pool, the viewer highlights on
+            // the main thread with its own theme.
+            disableWorkerPool={workerPoolState === 'failed'}
             overflow={overflow}
             showBackgrounds={showBackgrounds}
             diffIndicators={diffIndicators}
@@ -353,22 +358,31 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
   )
 }
 
-function useIsWorkerPoolReadyOrDisabled() {
+type WorkerPoolState = 'initializing' | 'ready' | 'failed'
+
+function getWorkerPoolState(stats: WorkerStats): WorkerPoolState {
+  if (stats.workersFailed) return 'failed'
+  return stats.managerState === 'initialized' ? 'ready' : 'initializing'
+}
+
+function useWorkerPoolState(): WorkerPoolState {
   const workerPool = useWorkerPool()
-  const [isReady, setIsReady] = useState(() => workerPool?.isInitialized() ?? true)
-  const isReadyRef = useRef(isReady)
+  const [state, setState] = useState<WorkerPoolState>(() =>
+    isNullish(workerPool) ? 'ready' : getWorkerPoolState(workerPool.getStats()),
+  )
+  const stateRef = useRef(state)
   useEffect(() => {
     // The callback will always be fired immediately with the new state, so we
     // don't need to check for it in the effect
     return workerPool?.subscribeToStatChanges((stats) => {
-      const isReady = stats.managerState === 'initialized'
-      if (isReady !== isReadyRef.current) {
-        setIsReady(isReady)
-        isReadyRef.current = isReady
+      const nextState = getWorkerPoolState(stats)
+      if (nextState !== stateRef.current) {
+        setState(nextState)
+        stateRef.current = nextState
       }
     })
   }, [workerPool])
-  return isReady
+  return state
 }
 
 interface ReviewGridProps {

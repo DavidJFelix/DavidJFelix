@@ -15,7 +15,7 @@ const answering = (text: string) => vi.fn<Complete>(async () => ({text, usage}))
 
 test('reviewPullRequest runs every reviewer on every chunk and anchors findings', async () => {
   const complete = answering(
-    '{"findings": [{"severity": "high", "title": "Bug", "body": "Breaks", "line": 2}]}',
+    '{"findings": [{"severity": "high", "title": "Bug", "body": "Breaks", "label": 2}]}',
   )
 
   const review = await reviewPullRequest({
@@ -26,7 +26,7 @@ test('reviewPullRequest runs every reviewer on every chunk and anchors findings'
   })
 
   expect(complete).toHaveBeenCalledTimes(REVIEWERS.length)
-  expect(review.findings.map((finding) => [finding.reviewerId, finding.line])).toEqual(
+  expect(review.findings.map((finding) => [finding.reviewerId, finding.endLine])).toEqual(
     REVIEWERS.map((reviewer) => [reviewer.id, 6]),
   )
   expect(review.chunkReviewCount).toBe(REVIEWERS.length)
@@ -37,7 +37,7 @@ test('reviewPullRequest runs every reviewer on every chunk and anchors findings'
 test('reviewPullRequest answers a re-run from saved results without calling the model', async () => {
   const store = createMemoryChunkReviewStore()
   const complete = answering(
-    '{"findings": [{"severity": "high", "title": "Bug", "body": "Breaks", "line": 2}]}',
+    '{"findings": [{"severity": "high", "title": "Bug", "body": "Breaks", "label": 2}]}',
   )
   await reviewPullRequest({files: files(5), model: 'vendor/model', store, complete})
   complete.mockClear()
@@ -48,7 +48,7 @@ test('reviewPullRequest answers a re-run from saved results without calling the 
   expect(review.cachedCount).toBe(REVIEWERS.length)
   expect(review.usage.costUsd).toBe(0)
   // The chunk moved down the file; saved findings follow it.
-  expect(review.findings.every((finding) => finding.line === 41)).toBe(true)
+  expect(review.findings.map((finding) => finding.endLine)).toEqual(REVIEWERS.map(() => 41))
 })
 
 test('reviewPullRequest reports a chunk the model answered badly and does not save it', async () => {
@@ -90,4 +90,19 @@ test('reviewPullRequest makes no calls when no file is reviewable', async () => 
 
   expect(complete).not.toHaveBeenCalled()
   expect(review.chunkReviewCount).toBe(0)
+})
+
+test('reviewPullRequest still reviews every chunk when concurrency is below one', async () => {
+  const complete = answering('{"findings": []}')
+
+  const review = await reviewPullRequest({
+    files: files(5),
+    model: 'vendor/model',
+    store: createMemoryChunkReviewStore(),
+    complete,
+    concurrency: 0,
+  })
+
+  expect(complete).toHaveBeenCalledTimes(REVIEWERS.length)
+  expect(review.failures).toEqual([])
 })

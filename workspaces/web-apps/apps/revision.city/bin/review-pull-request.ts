@@ -55,7 +55,10 @@ const review = await reviewPullRequest({
 const outcome = decideOutcome(review.findings)
 
 for (const finding of outcome.reported) {
-  const lines = finding.startLine ? `${finding.startLine}-${finding.line}` : `${finding.line}`
+  const lines =
+    finding.startLine === finding.endLine
+      ? `${finding.endLine}`
+      : `${finding.startLine}-${finding.endLine}`
   console.log(`\n[${finding.severity}] ${finding.path}:${lines} (${finding.reviewerId})`)
   console.log(`${finding.title}\n${finding.body}`)
 }

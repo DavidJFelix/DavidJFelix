@@ -20,13 +20,13 @@ Severity:
 - info: worth knowing, not a defect.
 
 Answer with JSON only, in this shape:
-{"findings": [{"severity": "high", "title": "...", "body": "...", "line": 12, "endLine": 14, "suggestion": "..."}]}
+{"findings": [{"severity": "high", "title": "...", "body": "...", "label": 12, "endLabel": 14, "suggestion": "..."}]}
 
-- "line" is the number printed on the line the problem is on. Use a numbered line; when the problem is a removed line, use the nearest numbered line.
-- "endLine" is optional: the last numbered line, when the problem spans several lines.
+- "label" is the number printed on the line the problem is on. Use a numbered line; when the problem is a removed line, use the nearest numbered line.
+- "endLabel" is optional: the number of the last line, when the problem spans several lines.
 - "title" is one short sentence that states the problem.
 - "body" says what goes wrong, for which input or state, and how to fix it, in a few sentences.
-- "suggestion" is optional: replacement text for the lines from "line" to "endLine", exactly as it should appear in the file, without diff markers. Give it only when the fix is local and certain.`
+- "suggestion" is optional: replacement text for the lines from "label" to "endLabel", exactly as it should appear in the file, without diff markers. Give it only when the fix is local and certain.`
 
 export const REVIEWERS: readonly Reviewer[] = [
   {

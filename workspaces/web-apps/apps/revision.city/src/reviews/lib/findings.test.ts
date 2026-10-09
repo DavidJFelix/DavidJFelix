@@ -11,7 +11,7 @@ const modelFinding = (overrides: Partial<ModelFinding>): ModelFinding => ({
   severity: 'high',
   title: 'Problem',
   body: 'Details',
-  line: 1,
+  label: 1,
   ...overrides,
 })
 
@@ -21,7 +21,8 @@ const finding = (overrides: Partial<Finding>): Finding => ({
   severity: 'high',
   title: 'Problem',
   body: 'Details',
-  line: 1,
+  startLine: 1,
+  endLine: 1,
   ...overrides,
 })
 
@@ -38,7 +39,7 @@ test('anchorFindings maps a label to its new-file line', () => {
     reviewerId: 'security',
     chunk,
     rendered,
-    findings: [modelFinding({line: 2, suggestion: 'fixed'})],
+    findings: [modelFinding({label: 2, suggestion: 'fixed'})],
   })
 
   expect(anchored).toEqual({
@@ -47,7 +48,8 @@ test('anchorFindings maps a label to its new-file line', () => {
     severity: 'high',
     title: 'Problem',
     body: 'Details',
-    line: 21,
+    startLine: 21,
+    endLine: 21,
     suggestion: 'fixed',
   })
 })
@@ -57,10 +59,10 @@ test('anchorFindings turns a valid end label into a line range', () => {
     reviewerId: 'security',
     chunk,
     rendered,
-    findings: [modelFinding({line: 2, endLine: 3})],
+    findings: [modelFinding({label: 2, endLabel: 3})],
   })
 
-  expect([anchored.startLine, anchored.line]).toEqual([21, 22])
+  expect([anchored.startLine, anchored.endLine]).toEqual([21, 22])
 })
 
 test('anchorFindings drops a range end that is outside the chunk or not after the start', () => {
@@ -68,26 +70,26 @@ test('anchorFindings drops a range end that is outside the chunk or not after th
     reviewerId: 'security',
     chunk,
     rendered,
-    findings: [modelFinding({line: 2, endLine: 9}), modelFinding({line: 2, endLine: 1})],
+    findings: [modelFinding({label: 2, endLabel: 9}), modelFinding({label: 2, endLabel: 1})],
   })
 
-  expect(anchored.map((item) => [item.startLine, item.line])).toEqual([
-    [undefined, 21],
-    [undefined, 21],
+  expect(anchored.map((item) => [item.startLine, item.endLine])).toEqual([
+    [21, 21],
+    [21, 21],
   ])
 })
 
 test('anchorFindings drops a finding whose label is not in the chunk', () => {
   expect(
-    anchorFindings({reviewerId: 'security', chunk, rendered, findings: [modelFinding({line: 9})]}),
+    anchorFindings({reviewerId: 'security', chunk, rendered, findings: [modelFinding({label: 9})]}),
   ).toEqual([])
 })
 
 test('decideOutcome reports medium and above and fails on high and above', () => {
   const outcome = decideOutcome([
-    finding({severity: 'low', line: 1}),
-    finding({severity: 'medium', line: 2}),
-    finding({severity: 'high', line: 3}),
+    finding({severity: 'low', endLine: 1}),
+    finding({severity: 'medium', endLine: 2}),
+    finding({severity: 'high', endLine: 3}),
   ])
 
   expect(outcome.reported.map((item) => item.severity)).toEqual(['high', 'medium'])
@@ -98,13 +100,15 @@ test('decideOutcome passes when nothing reaches the fail severity', () => {
   expect(decideOutcome([finding({severity: 'medium'})]).failed).toBe(false)
 })
 
-test('decideOutcome keeps the most severe copy of a repeated finding', () => {
+test('decideOutcome keeps only the most severe finding on a line', () => {
   const outcome = decideOutcome([
     finding({reviewerId: 'correctness', severity: 'medium', title: 'Null check missing'}),
-    finding({reviewerId: 'security', severity: 'critical', title: 'null check missing '}),
+    finding({reviewerId: 'security', severity: 'critical', title: 'Unchecked input'}),
+    finding({reviewerId: 'comments', severity: 'medium', endLine: 2}),
   ])
 
-  expect(outcome.reported).toEqual([
-    finding({reviewerId: 'security', severity: 'critical', title: 'null check missing '}),
+  expect(outcome.reported.map((item) => [item.reviewerId, item.endLine])).toEqual([
+    ['security', 1],
+    ['comments', 2],
   ])
 })

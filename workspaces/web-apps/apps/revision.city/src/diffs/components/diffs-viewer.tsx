@@ -67,6 +67,7 @@ interface ActiveDraftComment {
 interface DiffsViewerProps {
   className?: string
   diffStyle: 'split' | 'unified'
+  disableWorkerPool: boolean
   onCommentDeleted: (comment: DiffsDeletedCommentEvent) => void
   onCommentSaved: (comment: DiffsSavedCommentEvent) => void
   overflow: 'wrap' | 'scroll'
@@ -85,6 +86,7 @@ interface DiffsViewerProps {
 export const DiffsViewer = memo(function DiffsViewer({
   className,
   diffStyle,
+  disableWorkerPool,
   onCommentDeleted,
   onCommentSaved,
   overflow,
@@ -460,6 +462,7 @@ export const DiffsViewer = memo(function DiffsViewer({
     <ThemedCodeView<CommentMetadata>
       ref={handleViewerRef}
       containerRef={scrollRef}
+      disableWorkerPool={disableWorkerPool}
       initialItems={initialItems}
       className={cx(
         className,

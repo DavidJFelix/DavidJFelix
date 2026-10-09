@@ -153,7 +153,7 @@ test('a rejected request explains itself, and trying again sends the thread once
   await send('Map the canyons')
   await expect
     .element(screen.getByRole('alert'))
-    .toHaveTextContent('Chat is not set up on this server yet.')
+    .toMatchTextContent('Chat is not set up on this server yet.')
 
   // when
   await screen.getByRole('button', {name: 'Try again'}).click()

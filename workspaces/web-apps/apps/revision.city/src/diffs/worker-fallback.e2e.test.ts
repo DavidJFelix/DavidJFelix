@@ -17,13 +17,18 @@ const PATCH = [
   '',
 ].join('\n')
 
-// The largest pool that worker-pool-context.tsx starts. Each worker in the pool
-// requests the script once.
-const MAX_POOL_SIZE = 3
+// worker-pool-context.tsx starts one worker less than the core count, and at
+// most three on a desktop browser. With this core count, the pool always starts
+// three workers, and each worker requests the script once.
+const CORE_COUNT = 8
+const POOL_SIZE = 3
 
 test('a diff renders highlighted on the main thread when the worker script fails to load', async ({
   page,
 }) => {
+  await page.addInitScript((coreCount) => {
+    Object.defineProperty(Navigator.prototype, 'hardwareConcurrency', {get: () => coreCount})
+  }, CORE_COUNT)
   let workerScriptRequests = 0
   await page.route(/\/assets\/worker-[^/]+\.js$/, (route) => {
     workerScriptRequests += 1
@@ -39,7 +44,8 @@ test('a diff renders highlighted on the main thread when the worker script fails
   await expect(addedLine).toHaveText('export const b = 3')
   // A highlighted token carries its color; a plain-text line has none.
   await expect(addedLine.locator('span[style*="--diffs-token-"]').first()).toBeVisible()
-  // A viewer that starts the failed pool again requests the script again, and
-  // hides the diff while the new workers initialize.
-  expect(workerScriptRequests).toBeLessThanOrEqual(MAX_POOL_SIZE)
+  // Fewer requests means the route did not fail the pool. More requests means
+  // the viewer started the failed pool again, which hides the diff while the
+  // new workers initialize.
+  expect(workerScriptRequests).toBe(POOL_SIZE)
 })

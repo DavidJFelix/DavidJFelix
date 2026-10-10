@@ -111,10 +111,11 @@ export function replaceConversation({
 // Bridges to TanStack AI's parts-based UIMessage. The shell renders plain
 // text, so a message is the concatenation of its text parts (reasoning and
 // tool parts, should a model emit them, stay out of the bubble) and goes back
-// out as a single text part. System messages never reach the thread.
+// out as a single text part. System and activity messages never reach the
+// thread.
 export function messagesFromUI(messages: ReadonlyArray<UIMessage>): ReadonlyArray<Message> {
   return messages.flatMap((message) =>
-    message.role === 'system'
+    message.role === 'system' || message.role === 'activity'
       ? []
       : [
           {

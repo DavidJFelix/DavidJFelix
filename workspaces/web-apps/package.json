@@ -10,10 +10,10 @@
     "catalog": {
       "@cloudflare/vite-plugin": "1.62.5",
       "@cloudflare/workers-types": "5.20261006.1",
-      "@pandacss/dev": "2.1.1",
-      "@pandacss/preset-base": "2.1.1",
-      "@pandacss/preset-panda": "2.1.1",
-      "@playwright/test": "1.63.0",
+      "@pandacss/dev": "2.1.2",
+      "@pandacss/preset-base": "2.1.2",
+      "@pandacss/preset-panda": "2.1.2",
+      "@playwright/test": "1.64.0",
       "@tanstack/devtools-vite": "0.8.5",
       "@tanstack/react-devtools": "0.10.13",
       "@tanstack/react-router": "1.170.41",
@@ -40,7 +40,7 @@
     }
   },
   "overrides": {
-    "rolldown": "1.2.12",
+    "rolldown": "1.2.13",
     "@effect/platform-node-shared": "4.0.1",
     "effect": "4.0.1"
   },

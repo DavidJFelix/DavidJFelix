@@ -39,7 +39,7 @@
       "description": "the catalog custom manager changes only package.json, so refresh workspaces/web-apps/bun.lock after each catalog update: lockfile-only (no downloads) with lifecycle scripts off, as the bun manager does for its own lockfile updates. The command must match RENOVATE_ALLOWED_COMMANDS in .depot/workflows/cron-renovate.yml, and the bun constraint must match the bun pin in .config/mise.toml",
       "matchManagers": ["custom.jsonata"],
       "matchFileNames": ["workspaces/web-apps/package.json"],
-      "constraints": { "bun": "1.4.2" },
+      "constraints": { "bun": "1.4.3" },
       "postUpgradeTasks": {
         "installTools": { "bun": {} },
         "commands": ["bun install --cwd workspaces/web-apps --lockfile-only --ignore-scripts"],

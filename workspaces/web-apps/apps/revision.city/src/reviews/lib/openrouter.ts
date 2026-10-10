@@ -29,7 +29,7 @@ export interface CreateOpenRouterCompleteParams {
 const OPENROUTER_CHAT_URL = 'https://openrouter.ai/api/v1/chat/completions'
 
 const chatResponseSchema = z.object({
-  choices: z.array(z.object({message: z.object({content: z.string()})})).min(1),
+  choices: z.array(z.object({message: z.object({content: z.string().nullish()})})).min(1),
   usage: z
     .object({
       prompt_tokens: z.number(),
@@ -64,7 +64,9 @@ export function createOpenRouterComplete({
     }
     const parsed = chatResponseSchema.parse(await response.json())
     return {
-      text: parsed.choices[0].message.content,
+      // A refusal can have no content. Empty text keeps the billed usage and
+      // then fails to parse as an answer.
+      text: parsed.choices[0].message.content ?? '',
       usage: {
         promptTokens: parsed.usage?.prompt_tokens ?? 0,
         completionTokens: parsed.usage?.completion_tokens ?? 0,
@@ -77,8 +79,7 @@ export function createOpenRouterComplete({
 const FENCED_BLOCK_PATTERN = /```(?:json)?\s*\n([\s\S]*?)\n```/
 
 // Some models wrap JSON in a Markdown fence, or add prose around it, even when
-// asked for a JSON object. The fenced block is the last resort, because a
-// finding's body can hold a fence of its own.
+// asked for a JSON object.
 export function extractJson(text: string): unknown {
   const start = text.indexOf('{')
   const end = text.lastIndexOf('}')

@@ -80,6 +80,48 @@ test('reviewPullRequest reports a chunk the model answered badly and does not sa
   expect(complete).toHaveBeenCalledTimes(1)
 })
 
+test('reviewPullRequest keeps the valid findings of an answer with a malformed one', async () => {
+  const store = createMemoryChunkReviewStore()
+  const complete = answering(
+    '{"findings": [{"severity": "high", "title": "Bug", "body": "Breaks", "label": 2}, {"severity": "high", "title": "", "body": "No title", "label": 0}]}',
+  )
+  const options = {files: files(5), model: 'vendor/model', store, reviewers: REVIEWERS.slice(0, 1)}
+
+  const review = await reviewPullRequest({...options, complete})
+
+  expect(review.findings.map((finding) => finding.endLine)).toEqual([6])
+  expect(review.failures).toEqual([
+    {path: 'a.ts', reviewerId: 'security', error: 'Malformed findings in the answer: 1'},
+  ])
+  complete.mockClear()
+  await reviewPullRequest({...options, complete})
+  expect(complete).toHaveBeenCalledTimes(1)
+})
+
+test('reviewPullRequest reviews and reports findings when the store fails', async () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+  const complete = answering(
+    '{"findings": [{"severity": "high", "title": "Bug", "body": "Breaks", "label": 2}]}',
+  )
+
+  const review = await reviewPullRequest({
+    files: files(5),
+    model: 'vendor/model',
+    store: {
+      get: async () => Promise.reject(new Error('D1 read failed')),
+      put: async () => Promise.reject(new Error('D1 write failed')),
+    },
+    complete,
+    reviewers: REVIEWERS.slice(0, 1),
+  })
+
+  expect(review.findings.map((finding) => finding.endLine)).toEqual([6])
+  expect(review.failures).toEqual([])
+  expect(review.usage).toEqual(usage)
+  expect(warn).toHaveBeenCalledTimes(2)
+  warn.mockRestore()
+})
+
 test('reviewPullRequest reports a chunk whose model call failed', async () => {
   const complete = vi.fn<Complete>(async () => {
     throw new Error('OpenRouter returned 500')

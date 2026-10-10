@@ -1,7 +1,7 @@
 /// <reference types="bun" />
-// Runs the review engine against a GitHub pull request from a terminal and
-// prints what it would post, so its findings can be compared with another
-// reviewer's on the same PR before the GitHub App posts anything.
+// Runs the review engine on a GitHub pull request and prints the findings that
+// the GitHub App would post. Use it to compare those findings with another
+// reviewer's on the same PR.
 //
 // Usage: bun bin/review-pull-request.ts <owner>/<repo>#<number>
 // Needs OPENROUTER_API_KEY and REVIEW_MODEL (an OpenRouter model slug).

@@ -60,6 +60,17 @@ test('chunkPullRequestFiles splits a hunk larger than the line budget', () => {
   expect(chunks.map((chunk) => chunk.hunks[0].lines.length)).toEqual([4, 4, 2])
 })
 
+test('chunkPullRequestFiles drops a slice that holds only removed lines', () => {
+  const removed = Array.from({length: 6}, (_, i) => `-old ${i}`).join('\n')
+  const files: PullRequestFile[] = [
+    {path: 'a.ts', status: 'modified', patch: `@@ -1,8 +1,2 @@\n top\n${removed}\n bottom`},
+  ]
+
+  const chunks = chunkPullRequestFiles(files, {maxLinesPerChunk: 3})
+
+  expect(chunks.map((chunk) => renderChunk(chunk).newLineByLabel.size)).toEqual([1, 1])
+})
+
 test('chunkPullRequestFiles treats a line budget below one as one', () => {
   const files: PullRequestFile[] = [{path: 'a.ts', status: 'added', patch: addedLines(1, 2)}]
 
@@ -82,7 +93,13 @@ test('renderChunk labels new-side lines from 1 and maps labels to file lines', (
       '\n',
     ),
   )
-  expect(rendered.newLineByLabel).toEqual([7, 8, 30])
+  expect(rendered.newLineByLabel).toEqual(
+    new Map([
+      [1, 7],
+      [2, 8],
+      [3, 30],
+    ]),
+  )
 })
 
 const renderAddedPairAt = (start: number) =>
@@ -92,5 +109,10 @@ const renderAddedPairAt = (start: number) =>
 
 test('renderChunk text does not change when the chunk moves down the file', () => {
   expect(renderAddedPairAt(1).text).toBe(renderAddedPairAt(100).text)
-  expect(renderAddedPairAt(100).newLineByLabel).toEqual([100, 101])
+  expect(renderAddedPairAt(100).newLineByLabel).toEqual(
+    new Map([
+      [1, 100],
+      [2, 101],
+    ]),
+  )
 })

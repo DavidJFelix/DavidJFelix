@@ -9,8 +9,9 @@ export type PullRequestFileStatus =
   | 'changed'
   | 'unchanged'
 
-// The shape of one entry from GitHub's "list pull request files" endpoint.
-// `patch` is absent for binary files and for diffs too large for GitHub to inline.
+// One file from GitHub's "list pull request files" endpoint, with `filename`
+// renamed to `path`. `patch` is absent for binary files and for diffs too large
+// for GitHub to inline.
 export interface PullRequestFile {
   path: string
   status: PullRequestFileStatus
@@ -62,7 +63,11 @@ export function chunkPullRequestFiles(
   {maxLinesPerChunk = DEFAULT_MAX_LINES_PER_CHUNK}: ChunkPullRequestFilesOptions = {},
 ): ReviewChunk[] {
   return files.filter(isReviewableFile).flatMap(({path, patch}) => {
-    const hunks = parsePatchHunks(patch).flatMap((hunk) => splitHunk(hunk, maxLinesPerChunk))
+    const hunks = parsePatchHunks(patch)
+      .flatMap((hunk) => splitHunk(hunk, maxLinesPerChunk))
+      // A slice of only removed lines has no labels, so `anchorFindings` would drop
+      // every finding in it. Its review would cost money and report nothing.
+      .filter((hunk) => hunk.lines.some((line) => line.kind !== 'removed'))
     return groupHunks(hunks, maxLinesPerChunk).map((group) => ({path, hunks: group}))
   })
 }
@@ -76,6 +81,8 @@ function splitHunk(hunk: PatchHunk, maxLines: number): PatchHunk[] {
   return slices
 }
 
+// Fills each chunk from the top of the file, so a push that grows or shrinks a
+// hunk can move the chunk boundaries below it.
 function groupHunks(hunks: readonly PatchHunk[], maxLines: number): PatchHunk[][] {
   const groups: PatchHunk[][] = []
   let groupLineCount = 0
@@ -94,23 +101,23 @@ function groupHunks(hunks: readonly PatchHunk[], maxLines: number): PatchHunk[][
 
 export interface RenderedChunk {
   text: string
-  // Index i holds the new-file line number of the chunk line labeled i + 1.
-  newLineByLabel: readonly number[]
+  newLineByLabel: ReadonlyMap<number, number>
 }
 
-// Labels lines with chunk-local numbers, not file line numbers. An edit above
-// the chunk then shifts nothing, so a cached review of the chunk stays valid.
-// Removed lines get no label: a review comment can only anchor to a line of the
-// new file.
+// Labels lines with chunk-local numbers, not file line numbers, so a chunk that
+// only moves in the file, for example after a rebase, keeps its text and its
+// saved review. Removed lines get no label, because findings anchor only to lines
+// of the new file.
 export function renderChunk(chunk: ReviewChunk): RenderedChunk {
-  const newLineByLabel: number[] = []
+  const newLineByLabel = new Map<number, number>()
   const renderLine = (line: DiffLine): string => {
     const marker = {added: '+', removed: '-', context: ' '}[line.kind]
     if (line.kind === 'removed') {
       return `${' '.repeat(5)} ${marker} ${line.text}`
     }
-    newLineByLabel.push(line.newLine)
-    return `${String(newLineByLabel.length).padStart(5)} ${marker} ${line.text}`
+    const label = newLineByLabel.size + 1
+    newLineByLabel.set(label, line.newLine)
+    return `${String(label).padStart(5)} ${marker} ${line.text}`
   }
   const body = chunk.hunks.map((hunk) => hunk.lines.map(renderLine).join('\n')).join('\n  ...\n')
   return {text: `File: ${chunk.path}\n\n${body}`, newLineByLabel}

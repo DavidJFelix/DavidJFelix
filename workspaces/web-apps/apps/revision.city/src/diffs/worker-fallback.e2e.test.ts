@@ -87,7 +87,6 @@ test('the pool starts again when the worker script fails to load but its refetch
   await page.goto(PULL_PATH)
 
   await expectHighlightedDiff(page)
-  // The first pool fails, the second pool starts, and the page does not reload.
   expect(workerScriptLoads).toBe(2 * POOL_SIZE)
   expect(pageLoads).toBe(1)
 })
@@ -110,7 +109,7 @@ test('the page reloads once when a deploy removed the worker script, then render
 
   await expect.poll(() => pageLoads).toBe(2)
   await expectHighlightedDiff(page)
-  // Each page load starts the pool once. The reload mark stops a second reload.
+  // The reload mark stops a second reload.
   expect(workerScriptLoads).toBe(2 * POOL_SIZE)
   expect(pageLoads).toBe(2)
 })

@@ -183,6 +183,11 @@ test('messagesFromUI joins the text parts and leaves the rest out', () => {
         {type: 'text', content: 'one card each'},
       ],
     },
+    {
+      id: 'act1',
+      role: 'activity',
+      parts: [{type: 'activity', activityType: 'progress', content: {step: 1}}],
+    },
   ]
 
   // when

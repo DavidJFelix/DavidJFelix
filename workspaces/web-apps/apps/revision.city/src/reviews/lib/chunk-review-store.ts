@@ -9,7 +9,7 @@ const chunkReviewResultSchema = z.object({
 export type ChunkReviewResult = z.infer<typeof chunkReviewResultSchema>
 
 // Saved model answers, keyed by everything that decides the answer, so a
-// re-run pays only for chunks whose content, model, or prompt changed.
+// re-run pays only for chunks whose content, model, reviewer, or prompt changed.
 export interface ChunkReviewStore {
   get: (key: string) => Promise<ChunkReviewResult | undefined>
   put: (key: string, result: ChunkReviewResult) => Promise<void>

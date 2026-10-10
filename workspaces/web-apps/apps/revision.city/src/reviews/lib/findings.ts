@@ -5,8 +5,8 @@ export const SEVERITIES = ['critical', 'high', 'medium', 'low', 'info'] as const
 
 export type Severity = (typeof SEVERITIES)[number]
 
-// Findings below this severity are not posted. Findings at or above the fail
-// severity also fail the check run.
+// Findings below this severity are not reported. Findings at or above the fail
+// severity mark the outcome as failed.
 export const REPORT_SEVERITY: Severity = 'medium'
 export const FAIL_SEVERITY: Severity = 'high'
 

@@ -1,5 +1,6 @@
 import {createRouter as createTanStackRouter} from '@tanstack/react-router'
 
+import {installMissingChunkReload} from './lib/missing-chunk-reload'
 import {initClientObservability} from './observability/client'
 import {routeTree} from './routeTree.gen'
 
@@ -12,10 +13,11 @@ export function getRouter() {
   })
 
   // Browser-only: SSR builds dead-code-eliminate this, so the SDKs never enter
-  // the worker bundle. Each integration stays dark until its VITE_PUBLIC_* var is
-  // set at build (see src/observability).
+  // the worker bundle. Each observability integration is off until the build
+  // sets its VITE_PUBLIC_* var (see src/observability).
   if (!import.meta.env.SSR) {
     initClientObservability()
+    installMissingChunkReload()
   }
 
   return router

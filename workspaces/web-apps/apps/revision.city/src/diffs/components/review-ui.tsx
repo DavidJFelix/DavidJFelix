@@ -36,6 +36,7 @@ import {DiffsViewer} from './diffs-viewer'
 import {useGitHubSession} from './hooks/use-github-session'
 import {usePatchLoader} from './hooks/use-patch-loader'
 import {useThemeCycle} from './hooks/use-theme-cycle'
+import {useWorkerPoolRecovering} from './worker-pool-context'
 
 interface ReviewUIProps {
   domain?: string
@@ -367,6 +368,7 @@ function getWorkerPoolState(stats: WorkerStats): WorkerPoolState {
 
 function useWorkerPoolState(): WorkerPoolState {
   const workerPool = useWorkerPool()
+  const recovering = useWorkerPoolRecovering()
   const [state, setState] = useState<WorkerPoolState>(() =>
     isNullish(workerPool) ? 'ready' : getWorkerPoolState(workerPool.getStats()),
   )
@@ -382,7 +384,7 @@ function useWorkerPoolState(): WorkerPoolState {
       }
     })
   }, [workerPool])
-  return state
+  return recovering ? 'initializing' : state
 }
 
 interface ReviewGridProps {

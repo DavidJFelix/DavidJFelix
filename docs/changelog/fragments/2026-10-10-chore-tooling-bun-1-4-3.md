@@ -1,7 +1,9 @@
-### chore(tooling): move bun to 1.4.3 in one place
+### chore(tooling): move every bun pin together
 
-Bun moves from 1.4.2 to 1.4.3 at every pin: the mise tool and its lockfile, the `packageManager`
-fields in the repo-root and web-apps `package.json`, and the bun constraint on the Renovate catalog
-rule. Renovate opened a separate PR for each manager that saw a pin, so a new `bun runtime` group
-rule now puts every patch and minor bun update into one PR. `@types/bun` stays in the weekly bun
-batch because it publishes on its own schedule (no 1.4.3 exists yet).
+The `packageManager` fields in the repo-root and web-apps `package.json` move to `bun@1.4.3`, to
+match the mise tool and the Renovate catalog constraint. Renovate reads those two fields from npm,
+which `config:best-practices` holds for 3 days, while the mise tool and the constraint read GitHub
+releases with no hold. So each bun release arrived as several PRs, and the `packageManager` pins
+came last or not at all. A new `bun runtime` group rule now puts every patch and minor bun update
+into one PR and holds the whole group for the same 3 days. `@types/bun` stays in the weekly bun
+batch because it publishes on its own schedule.

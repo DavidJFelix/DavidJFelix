@@ -87,9 +87,10 @@
       "groupName": "mise patch/minor"
     },
     {
-      "description": "bun is pinned four times -- the mise tool (.config/mise.toml and mise.lock), the packageManager fields (repo-root and web-apps package.json), and the catalog rule's bun constraint above -- and each manager opens its own PR, so a patch/minor bun release used to split across several PRs; group every bun pin into one PR. @types/bun publishes on its own schedule, so it stays in the weekly bun batch. Keep this rule below the per-manager batches so its groupName wins",
+      "description": "bun is pinned in three places with different datasources -- the mise tool (.config/mise.toml and mise.lock) and the catalog rule's bun constraint above read GitHub releases, while the packageManager fields (repo-root and web-apps package.json) read npm, which config:best-practices holds for 3 days -- so one bun release used to arrive as several PRs days apart, with the packageManager pins left behind. Group every bun pin into one PR and hold the whole group for the same 3 days so all pins move together. @types/bun publishes on its own schedule, so it stays in the weekly bun batch. Keep this rule below the per-manager batches so its groupName wins",
       "matchUpdateTypes": ["patch", "minor"],
       "matchPackageNames": ["bun"],
+      "minimumReleaseAge": "3 days",
       "groupName": "bun runtime"
     },
     {

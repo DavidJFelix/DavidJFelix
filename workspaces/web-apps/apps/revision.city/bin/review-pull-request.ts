@@ -70,3 +70,4 @@ console.log(
     `${review.chunkReviewCount} chunk reviews, ${review.failures.length} failed, ` +
     `$${review.usage.costUsd.toFixed(4)}`,
 )
+process.exitCode = outcome.failed ? 1 : 0

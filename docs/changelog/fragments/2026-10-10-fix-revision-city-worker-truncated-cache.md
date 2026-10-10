@@ -7,7 +7,8 @@ cached copy. That copy had only 256 KiB of the compressed response, which is 733
 characters in the script. The truncated script does not parse, so the worker failed. Because asset
 responses have `max-age=0, must-revalidate`, each page load revalidated the same copy, got 304
 again, and failed again. The report did not show this because the refetch used `cache: 'no-store'`
-and cancelled the body. No Mozilla bug or document describes this behavior; it comes from the HAR.
+and cancelled the body. The Firefox behavior comes from the HAR only; a search found no Mozilla bug
+that describes it.
 
 The refetch now uses `cache: 'reload'` and reads the full body. A `reload` request ignores the
 cached copy and puts the full response in the cache. The report also gives the size of the body that

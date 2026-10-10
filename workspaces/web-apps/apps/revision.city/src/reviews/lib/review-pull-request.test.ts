@@ -67,6 +67,8 @@ test('reviewPullRequest reports a chunk the model answered badly and does not sa
   expect(review.failures).toEqual([
     {path: 'a.ts', reviewerId: 'security', error: 'Error: Model response has no JSON object'},
   ])
+  // The bad answer was still billed.
+  expect(review.usage).toEqual(usage)
   complete.mockClear()
   await reviewPullRequest({
     files: files(5),
@@ -76,6 +78,25 @@ test('reviewPullRequest reports a chunk the model answered badly and does not sa
     reviewers: REVIEWERS.slice(0, 1),
   })
   expect(complete).toHaveBeenCalledTimes(1)
+})
+
+test('reviewPullRequest reports a chunk whose model call failed', async () => {
+  const complete = vi.fn<Complete>(async () => {
+    throw new Error('OpenRouter returned 500')
+  })
+
+  const review = await reviewPullRequest({
+    files: files(5),
+    model: 'vendor/model',
+    store: createMemoryChunkReviewStore(),
+    complete,
+    reviewers: REVIEWERS.slice(0, 1),
+  })
+
+  expect(review.failures).toEqual([
+    {path: 'a.ts', reviewerId: 'security', error: 'Error: OpenRouter returned 500'},
+  ])
+  expect(review.usage.costUsd).toBe(0)
 })
 
 test('reviewPullRequest makes no calls when no file is reviewable', async () => {

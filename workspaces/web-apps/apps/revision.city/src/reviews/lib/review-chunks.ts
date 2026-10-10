@@ -68,9 +68,10 @@ export function chunkPullRequestFiles(
 }
 
 function splitHunk(hunk: PatchHunk, maxLines: number): PatchHunk[] {
+  const step = Math.max(1, maxLines)
   const slices: PatchHunk[] = []
-  for (let start = 0; start < hunk.lines.length; start += maxLines) {
-    slices.push({lines: hunk.lines.slice(start, start + maxLines)})
+  for (let start = 0; start < hunk.lines.length; start += step) {
+    slices.push({lines: hunk.lines.slice(start, start + step)})
   }
   return slices
 }

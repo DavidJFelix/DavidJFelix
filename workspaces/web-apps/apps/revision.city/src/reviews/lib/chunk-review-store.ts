@@ -44,16 +44,26 @@ export function createD1ChunkReviewStore(db: D1Database): ChunkReviewStore {
         .prepare('SELECT result FROM chunk_reviews WHERE key = ?')
         .bind(key)
         .first<{result: string}>()
-      return row ? chunkReviewResultSchema.parse(JSON.parse(row.result)) : undefined
+      // A row that no longer matches the schema is a miss, and the next put
+      // replaces it.
+      return row ? parseSavedResult(row.result) : undefined
     },
     put: async (key, result) => {
       await db
         .prepare(
-          'INSERT INTO chunk_reviews (key, result) VALUES (?, ?) ON CONFLICT (key) DO NOTHING',
+          'INSERT INTO chunk_reviews (key, result) VALUES (?, ?) ON CONFLICT (key) DO UPDATE SET result = excluded.result',
         )
         .bind(key, JSON.stringify(result))
         .run()
     },
+  }
+}
+
+function parseSavedResult(text: string): ChunkReviewResult | undefined {
+  try {
+    return chunkReviewResultSchema.parse(JSON.parse(text))
+  } catch {
+    return undefined
   }
 }
 

@@ -20,8 +20,7 @@ test.each(['model', 'reviewerId', 'systemPrompt', 'chunkText'] as const)(
   },
 )
 
-function createFakeD1() {
-  const rows = new Map<string, string>()
+function createFakeD1(rows = new Map<string, string>()) {
   const prepare = (sql: string) => ({
     bind: (...values: string[]) => ({
       first: async () => {
@@ -29,7 +28,7 @@ function createFakeD1() {
         return saved === undefined ? null : {result: saved}
       },
       run: async () => {
-        if (sql.startsWith('INSERT') && !rows.has(values[0])) {
+        if (sql.startsWith('INSERT')) {
           rows.set(values[0], values[1])
         }
       },
@@ -45,4 +44,12 @@ test('createD1ChunkReviewStore returns what it saved and nothing for an unknown 
 
   expect(await store.get('key')).toEqual(result)
   expect(await store.get('missing')).toBeUndefined()
+})
+
+test('createD1ChunkReviewStore treats a row that fails the schema as a miss and replaces it', async () => {
+  const store = createD1ChunkReviewStore(createFakeD1(new Map([['key', '{"findings": "old"}']])))
+
+  expect(await store.get('key')).toBeUndefined()
+  await store.put('key', result)
+  expect(await store.get('key')).toEqual(result)
 })

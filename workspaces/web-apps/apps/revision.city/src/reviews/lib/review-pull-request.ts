@@ -22,6 +22,7 @@ export interface ChunkReviewOutcome {
   findings: Finding[]
   cached: boolean
   usage: CompletionUsage
+  error?: string
 }
 
 const NO_USAGE: CompletionUsage = {promptTokens: 0, completionTokens: 0, costUsd: 0}
@@ -48,10 +49,22 @@ export async function reviewChunk({
     return {findings: anchor(saved.findings), cached: true, usage: NO_USAGE}
   }
   const completion = await complete({model, system, prompt: rendered.text})
-  // A response that fails to parse is thrown, not saved, so a retry asks again.
-  const {findings} = modelFindingsSchema.parse(extractJson(completion.text))
+  const findings = parseModelFindings(completion.text)
+  // A response that fails to parse is not saved, so the next run asks again. Its
+  // usage is still returned, because the call was billed.
+  if (findings instanceof Error) {
+    return {findings: [], cached: false, usage: completion.usage, error: String(findings)}
+  }
   await store.put(key, {findings, usage: completion.usage})
   return {findings: anchor(findings), cached: false, usage: completion.usage}
+}
+
+function parseModelFindings(text: string): ModelFinding[] | Error {
+  try {
+    return modelFindingsSchema.parse(extractJson(text)).findings
+  } catch (error) {
+    return error instanceof Error ? error : new Error(String(error))
+  }
 }
 
 export interface ReviewPullRequestParams extends ChunkPullRequestFilesOptions {
@@ -77,9 +90,8 @@ export interface PullRequestReview {
   usage: CompletionUsage
 }
 
-// Reviews every chunk with every reviewer. One failed chunk does not stop the
-// others; it is reported in `failures` and is not saved, so the next run tries
-// it again.
+// One failed chunk does not stop the others; it is reported in `failures` and
+// is not saved, so the next run tries it again.
 export async function reviewPullRequest({
   files,
   model,
@@ -100,17 +112,12 @@ export async function reviewPullRequest({
   )
   return {
     findings: outcomes.flatMap((outcome) => outcome.findings),
-    failures: settled.flatMap((result, index) =>
-      result.status === 'rejected'
-        ? [
-            {
-              path: units[index].chunk.path,
-              reviewerId: units[index].reviewer.id,
-              error: String(result.reason),
-            },
-          ]
-        : [],
-    ),
+    failures: settled.flatMap((result, index) => {
+      const error = result.status === 'rejected' ? String(result.reason) : result.value.error
+      return error === undefined
+        ? []
+        : [{path: units[index].chunk.path, reviewerId: units[index].reviewer.id, error}]
+    }),
     chunkReviewCount: units.length,
     cachedCount: outcomes.filter((outcome) => outcome.cached).length,
     usage: outcomes.reduce(

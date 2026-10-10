@@ -60,6 +60,12 @@ test('chunkPullRequestFiles splits a hunk larger than the line budget', () => {
   expect(chunks.map((chunk) => chunk.hunks[0].lines.length)).toEqual([4, 4, 2])
 })
 
+test('chunkPullRequestFiles treats a line budget below one as one', () => {
+  const files: PullRequestFile[] = [{path: 'a.ts', status: 'added', patch: addedLines(1, 2)}]
+
+  expect(chunkPullRequestFiles(files, {maxLinesPerChunk: 0})).toHaveLength(2)
+})
+
 test('renderChunk labels new-side lines from 1 and maps labels to file lines', () => {
   const [chunk] = chunkPullRequestFiles([
     {

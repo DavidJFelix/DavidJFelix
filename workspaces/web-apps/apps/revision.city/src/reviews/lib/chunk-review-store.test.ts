@@ -1,5 +1,11 @@
+// @vitest-environment node
+
+import {DatabaseSync, type SQLInputValue} from 'node:sqlite'
+import {fileURLToPath} from 'node:url'
+import {drizzle} from 'drizzle-orm/sqlite-proxy'
+import {migrate} from 'drizzle-orm/sqlite-proxy/migrator'
 import {expect, test} from 'vitest'
-import {chunkReviewKey, createD1ChunkReviewStore} from './chunk-review-store'
+import {chunkReviewKey, createSqliteChunkReviewStore} from './chunk-review-store'
 
 const keyParams = {model: 'vendor/model', reviewerId: 'security', systemPrompt: 'p', chunkText: 't'}
 const result = {findings: [], usage: {promptTokens: 1, completionTokens: 1, costUsd: 0.1}}
@@ -20,25 +26,32 @@ test.each(['model', 'reviewerId', 'systemPrompt', 'chunkText'] as const)(
   },
 )
 
-function createFakeD1(rows = new Map<string, string>()) {
-  const prepare = (sql: string) => ({
-    bind: (...values: string[]) => ({
-      first: async () => {
-        const saved = rows.get(values[0])
-        return saved === undefined ? null : {result: saved}
-      },
-      run: async () => {
-        if (sql.startsWith('INSERT')) {
-          rows.set(values[0], values[1])
-        }
-      },
-    }),
+// D1 is SQLite, so the store runs the same SQL here as in the worker.
+async function createMigratedDatabase() {
+  const sqlite = new DatabaseSync(':memory:')
+  const db = drizzle(async (sql, params: SQLInputValue[], method) => {
+    const statement = sqlite.prepare(sql)
+    if (method === 'run') {
+      statement.run(...params)
+      return {rows: []}
+    }
+    return {rows: statement.all(...params).map((row) => Object.values(row))}
   })
-  return {prepare} as unknown as D1Database
+  const migrationsFolder = fileURLToPath(new URL('../../../drizzle', import.meta.url))
+  await migrate(
+    db,
+    async (queries) => {
+      for (const query of queries) {
+        sqlite.exec(query)
+      }
+    },
+    {migrationsFolder},
+  )
+  return {db, sqlite}
 }
 
-test('createD1ChunkReviewStore returns what it saved and nothing for an unknown key', async () => {
-  const store = createD1ChunkReviewStore(createFakeD1())
+test('createSqliteChunkReviewStore returns what it saved and nothing for an unknown key', async () => {
+  const store = createSqliteChunkReviewStore((await createMigratedDatabase()).db)
 
   await store.put('key', result)
 
@@ -46,8 +59,12 @@ test('createD1ChunkReviewStore returns what it saved and nothing for an unknown 
   expect(await store.get('missing')).toBeUndefined()
 })
 
-test('createD1ChunkReviewStore treats a row that fails the schema as a miss and replaces it', async () => {
-  const store = createD1ChunkReviewStore(createFakeD1(new Map([['key', '{"findings": "old"}']])))
+test('createSqliteChunkReviewStore treats a row that fails the schema as a miss and replaces it', async () => {
+  const {db, sqlite} = await createMigratedDatabase()
+  sqlite
+    .prepare('INSERT INTO chunk_reviews (key, result) VALUES (?, ?)')
+    .run('key', '{"findings": "old"}')
+  const store = createSqliteChunkReviewStore(db)
 
   expect(await store.get('key')).toBeUndefined()
   await store.put('key', result)

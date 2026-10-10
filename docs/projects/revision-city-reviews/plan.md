@@ -28,8 +28,8 @@ umbrella.
   4. Report `medium` and above. Fail on `high` and above, or when a chunk review fails.
 - **Chunk-local line labels.** The prompt numbers lines from 1 inside the chunk, not by file line.
   An edit above a chunk then does not change its text, and its saved result stays valid.
-- **Saved results** in D1 (`chunk_reviews`, `migrations/0001-chunk-reviews.sql`), keyed by a SHA-256
-  of the model, reviewer, system prompt, and rendered chunk.
+- **Saved results** in D1 (`chunk_reviews`, a drizzle schema with its migrations in `drizzle/`),
+  keyed by a SHA-256 of the model, reviewer, system prompt, and rendered chunk.
 - **Runner: Cloudflare Workflows.** The webhook route verifies the signature and the allowlist,
   starts a Workflow instance, and returns 202 inside GitHub's 10-second window. The Workflow fetches
   the files, reviews each chunk in its own durable step (a retry never pays twice), and posts one

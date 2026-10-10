@@ -5,8 +5,6 @@ export const SEVERITIES = ['critical', 'high', 'medium', 'low', 'info'] as const
 
 export type Severity = (typeof SEVERITIES)[number]
 
-// Findings below this severity are not reported. Findings at or above the fail
-// severity mark the outcome as failed.
 export const REPORT_SEVERITY: Severity = 'medium'
 export const FAIL_SEVERITY: Severity = 'high'
 
@@ -99,12 +97,23 @@ export interface ReviewOutcome {
   failed: boolean
 }
 
-export function decideOutcome(findings: readonly Finding[]): ReviewOutcome {
+export interface DecideOutcomeOptions {
+  failedChunkReviewCount?: number
+}
+
+// A review with a failed chunk is incomplete, so it fails even when no finding
+// reaches the fail severity.
+export function decideOutcome(
+  findings: readonly Finding[],
+  {failedChunkReviewCount = 0}: DecideOutcomeOptions = {},
+): ReviewOutcome {
   const reported = dedupeFindings(findings).filter((finding) =>
     isAtLeast(finding.severity, REPORT_SEVERITY),
   )
   return {
     reported,
-    failed: reported.some((finding) => isAtLeast(finding.severity, FAIL_SEVERITY)),
+    failed:
+      failedChunkReviewCount > 0 ||
+      reported.some((finding) => isAtLeast(finding.severity, FAIL_SEVERITY)),
   }
 }

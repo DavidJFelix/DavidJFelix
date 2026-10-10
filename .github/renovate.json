@@ -39,7 +39,7 @@
       "description": "the catalog custom manager changes only package.json, so refresh workspaces/web-apps/bun.lock after each catalog update: lockfile-only (no downloads) with lifecycle scripts off, as the bun manager does for its own lockfile updates. The command must match RENOVATE_ALLOWED_COMMANDS in .depot/workflows/cron-renovate.yml, and the bun constraint must match the bun pin in .config/mise.toml",
       "matchManagers": ["custom.jsonata"],
       "matchFileNames": ["workspaces/web-apps/package.json"],
-      "constraints": { "bun": "1.4.2" },
+      "constraints": { "bun": "1.4.3" },
       "postUpgradeTasks": {
         "installTools": { "bun": {} },
         "commands": ["bun install --cwd workspaces/web-apps --lockfile-only --ignore-scripts"],
@@ -85,6 +85,12 @@
       "matchUpdateTypes": ["patch", "minor"],
       "matchManagers": ["mise"],
       "groupName": "mise patch/minor"
+    },
+    {
+      "description": "bun is pinned four times -- the mise tool (.config/mise.toml and mise.lock), the packageManager fields (repo-root and web-apps package.json), and the catalog rule's bun constraint above -- and each manager opens its own PR, so a patch/minor bun release used to split across several PRs; group every bun pin into one PR. @types/bun publishes on its own schedule, so it stays in the weekly bun batch. Keep this rule below the per-manager batches so its groupName wins",
+      "matchUpdateTypes": ["patch", "minor"],
+      "matchPackageNames": ["bun"],
+      "groupName": "bun runtime"
     },
     {
       "description": "wrangler, @cloudflare/vite-plugin, and @cloudflare/workers-types all track the workers runtime (the plugin pins miniflare/workerd to a specific wrangler release; workers-types is generated from that runtime), so group every update type into a single PR that moves the cloudflare toolchain across all apps together",

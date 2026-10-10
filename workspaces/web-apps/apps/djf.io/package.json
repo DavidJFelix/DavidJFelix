@@ -57,7 +57,7 @@
     "@pandacss/preset-base": "catalog:",
     "@pandacss/preset-panda": "catalog:",
     "@playwright/test": "catalog:",
-    "@sentry/cloudflare": "11.4.0",
+    "@sentry/cloudflare": "11.5.0",
     "@types/hast": "3.0.5",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",

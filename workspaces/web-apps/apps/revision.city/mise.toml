@@ -34,6 +34,10 @@ run = "bun run smoke"
 description = "Review a GitHub pull request with the review engine and print the findings"
 run = "bun run review"
 
+[tasks."db:generate"]
+description = "Write the next D1 migration from src/reviews/lib/schema.ts into drizzle/ (drizzle-kit)"
+run = "bun run db:generate"
+
 [tasks."test:e2e"]
 description = "E2E + visual-regression tests with Playwright (builds first)"
 depends = ["build"]

@@ -1,5 +1,8 @@
+import {eq} from 'drizzle-orm'
+import type {BaseSQLiteDatabase} from 'drizzle-orm/sqlite-core'
 import {z} from 'zod'
 import {modelFindingSchema} from './findings'
+import {chunkReviews} from './schema'
 
 const chunkReviewResultSchema = z.object({
   findings: z.array(modelFindingSchema),
@@ -37,24 +40,25 @@ export async function chunkReviewKey({
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
-export function createD1ChunkReviewStore(db: D1Database): ChunkReviewStore {
+export function createSqliteChunkReviewStore(
+  db: BaseSQLiteDatabase<'async', unknown>,
+): ChunkReviewStore {
   return {
     get: async (key) => {
-      const row = await db
-        .prepare('SELECT result FROM chunk_reviews WHERE key = ?')
-        .bind(key)
-        .first<{result: string}>()
+      const [row] = await db
+        .select({result: chunkReviews.result})
+        .from(chunkReviews)
+        .where(eq(chunkReviews.key, key))
       // A row that no longer matches the schema is a miss, and the next put
       // replaces it.
       return row ? parseSavedResult(row.result) : undefined
     },
     put: async (key, result) => {
+      const text = JSON.stringify(result)
       await db
-        .prepare(
-          'INSERT INTO chunk_reviews (key, result) VALUES (?, ?) ON CONFLICT (key) DO UPDATE SET result = excluded.result',
-        )
-        .bind(key, JSON.stringify(result))
-        .run()
+        .insert(chunkReviews)
+        .values({key, result: text})
+        .onConflictDoUpdate({target: chunkReviews.key, set: {result: text}})
     },
   }
 }

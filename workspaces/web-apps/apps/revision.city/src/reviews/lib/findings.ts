@@ -19,7 +19,9 @@ export const modelFindingSchema = z.object({
 
 export type ModelFinding = z.infer<typeof modelFindingSchema>
 
-export const modelFindingsSchema = z.object({findings: z.array(modelFindingSchema)})
+// Findings stay unknown here, so that each one is checked on its own and one
+// malformed finding does not hide the valid ones.
+export const modelAnswerSchema = z.object({findings: z.array(z.unknown())})
 
 export interface Finding {
   reviewerId: string
@@ -32,7 +34,12 @@ export interface Finding {
   suggestion?: string
 }
 
-export function isAtLeast(severity: Severity, threshold: Severity): boolean {
+export interface IsAtLeastParams {
+  severity: Severity
+  threshold: Severity
+}
+
+export function isAtLeast({severity, threshold}: IsAtLeastParams): boolean {
   return SEVERITIES.indexOf(severity) <= SEVERITIES.indexOf(threshold)
 }
 
@@ -51,13 +58,13 @@ export function anchorFindings({
   rendered,
   findings,
 }: AnchorFindingsParams): Finding[] {
-  const toNewLine = (label: number) => rendered.newLineByLabel[label - 1]
   return findings.flatMap((finding) => {
-    const startLine = toNewLine(finding.label)
+    const startLine = rendered.newLineByLabel.get(finding.label)
     if (startLine === undefined) {
       return []
     }
-    const lastLine = finding.endLabel ? toNewLine(finding.endLabel) : undefined
+    const endLine = rangeEndLine({newLineByLabel: rendered.newLineByLabel, finding, startLine})
+    const {suggestion} = finding
     return [
       {
         reviewerId,
@@ -66,30 +73,53 @@ export function anchorFindings({
         title: finding.title,
         body: finding.body,
         startLine,
-        endLine: lastLine !== undefined && lastLine > startLine ? lastLine : startLine,
-        ...(typeof finding.suggestion === 'string' ? {suggestion: finding.suggestion} : {}),
+        endLine: endLine ?? startLine,
+        // A suggestion replaces the whole range that the model gave, so it does
+        // not fit a range that was cut to its first line.
+        ...(typeof suggestion === 'string' && endLine !== undefined ? {suggestion} : {}),
       },
     ]
   })
 }
 
-// One inline comment per line: when the line ranges of two findings overlap,
-// the more severe finding wins. Returns findings in severity order.
+interface RangeEndLineParams {
+  newLineByLabel: RenderedChunk['newLineByLabel']
+  finding: ModelFinding
+  startLine: number
+}
+
+function rangeEndLine({
+  newLineByLabel,
+  finding,
+  startLine,
+}: RangeEndLineParams): number | undefined {
+  const {label, endLabel} = finding
+  if (endLabel === undefined || endLabel === null) {
+    return startLine
+  }
+  const endLine = newLineByLabel.get(endLabel)
+  const endsAfterStart = endLabel >= label
+  // In one hunk, each next label is the next file line.
+  const staysInOneHunk = endLine !== undefined && endLine - startLine === endLabel - label
+  return endsAfterStart && staysInOneHunk ? endLine : undefined
+}
+
+// One inline comment per line: when findings end on the same line, where GitHub
+// shows the comment, the most severe finding wins. Findings whose ranges only
+// overlap are all kept, so that a wide range does not hide other problems in it.
+// Returns findings in severity order.
 export function dedupeFindings(findings: readonly Finding[]): Finding[] {
   const bySeverity = findings.toSorted(
     (a, b) => SEVERITIES.indexOf(a.severity) - SEVERITIES.indexOf(b.severity),
   )
-  const kept: Finding[] = []
+  const keptByCommentLine = new Map<string, Finding>()
   for (const finding of bySeverity) {
-    if (!kept.some((other) => findingsOverlap(finding, other))) {
-      kept.push(finding)
+    const commentLine = `${finding.path}:${finding.endLine}`
+    if (!keptByCommentLine.has(commentLine)) {
+      keptByCommentLine.set(commentLine, finding)
     }
   }
-  return kept
-}
-
-function findingsOverlap(a: Finding, b: Finding): boolean {
-  return a.path === b.path && a.startLine <= b.endLine && b.startLine <= a.endLine
+  return [...keptByCommentLine.values()]
 }
 
 export interface ReviewOutcome {
@@ -108,12 +138,12 @@ export function decideOutcome(
   {failedChunkReviewCount = 0}: DecideOutcomeOptions = {},
 ): ReviewOutcome {
   const reported = dedupeFindings(findings).filter((finding) =>
-    isAtLeast(finding.severity, REPORT_SEVERITY),
+    isAtLeast({severity: finding.severity, threshold: REPORT_SEVERITY}),
   )
   return {
     reported,
     failed:
       failedChunkReviewCount > 0 ||
-      reported.some((finding) => isAtLeast(finding.severity, FAIL_SEVERITY)),
+      reported.some((finding) => isAtLeast({severity: finding.severity, threshold: FAIL_SEVERITY})),
   }
 }

@@ -11,8 +11,7 @@ const chunkReviewResultSchema = z.object({
 
 export type ChunkReviewResult = z.infer<typeof chunkReviewResultSchema>
 
-// Saved model answers, keyed by everything that decides the answer, so a
-// re-run pays only for chunks whose content, model, reviewer, or prompt changed.
+// Saved model answers, keyed by the chunk text, model, reviewer, and system prompt.
 export interface ChunkReviewStore {
   get: (key: string) => Promise<ChunkReviewResult | undefined>
   put: (key: string, result: ChunkReviewResult) => Promise<void>
@@ -25,8 +24,8 @@ export interface ChunkReviewKeyParams {
   chunkText: string
 }
 
-// Increment to discard every saved result, for example after a change to how
-// results are parsed.
+// Increment to ignore every saved result, for example after a change to the
+// OpenRouter request settings or to how answers are parsed.
 const KEY_VERSION = 1
 
 export async function chunkReviewKey({

@@ -1,5 +1,11 @@
 import {type ChunkReviewStore, chunkReviewKey} from './chunk-review-store'
-import {anchorFindings, type Finding, type ModelFinding, modelFindingsSchema} from './findings'
+import {
+  anchorFindings,
+  type Finding,
+  type ModelFinding,
+  modelAnswerSchema,
+  modelFindingSchema,
+} from './findings'
 import {type Complete, type CompletionUsage, extractJson} from './openrouter'
 import {
   type ChunkPullRequestFilesOptions,
@@ -42,28 +48,55 @@ export async function reviewChunk({
     systemPrompt: system,
     chunkText: rendered.text,
   })
-  const saved = await store.get(key)
   const anchor = (findings: readonly ModelFinding[]) =>
     anchorFindings({reviewerId: reviewer.id, chunk, rendered, findings})
+  // The store only saves cost. When it fails, the chunk is reviewed anyway and
+  // the failure does not fail the review.
+  const saved = await store.get(key).catch(warnStoreFailure)
   if (saved) {
     return {findings: anchor(saved.findings), cached: true, usage: NO_USAGE}
   }
   const completion = await complete({model, system, prompt: rendered.text})
-  const findings = parseModelFindings(completion.text)
-  // A response that fails to parse is not saved, so the next run asks again. Its
-  // usage is still returned, because the call was billed.
-  if (findings instanceof Error) {
-    return {findings: [], cached: false, usage: completion.usage, error: String(findings)}
+  const answer = parseModelAnswer(completion.text)
+  // An answer that does not fully parse is not saved, so the next run asks again.
+  // Its usage is still returned, because the call was billed.
+  if (answer.error !== undefined) {
+    return {
+      findings: anchor(answer.findings),
+      cached: false,
+      usage: completion.usage,
+      error: answer.error,
+    }
   }
-  await store.put(key, {findings, usage: completion.usage})
-  return {findings: anchor(findings), cached: false, usage: completion.usage}
+  await store.put(key, {findings: answer.findings, usage: completion.usage}).catch(warnStoreFailure)
+  return {findings: anchor(answer.findings), cached: false, usage: completion.usage}
 }
 
-function parseModelFindings(text: string): ModelFinding[] | Error {
+const STORE_FAILURE_LOG_MESSAGE = 'Chunk review store failed; the review continues without it'
+
+function warnStoreFailure(error: unknown): undefined {
+  console.warn(STORE_FAILURE_LOG_MESSAGE, {error: String(error)})
+  return undefined
+}
+
+interface ParsedModelAnswer {
+  findings: ModelFinding[]
+  error?: string
+}
+
+function parseModelAnswer(text: string): ParsedModelAnswer {
   try {
-    return modelFindingsSchema.parse(extractJson(text)).findings
+    const answer = modelAnswerSchema.parse(extractJson(text))
+    const findings = answer.findings.flatMap((item) => {
+      const parsed = modelFindingSchema.safeParse(item)
+      return parsed.success ? [parsed.data] : []
+    })
+    const malformedCount = answer.findings.length - findings.length
+    return malformedCount > 0
+      ? {findings, error: `Malformed findings in the answer: ${malformedCount}`}
+      : {findings}
   } catch (error) {
-    return error instanceof Error ? error : new Error(String(error))
+    return {findings: [], error: String(error)}
   }
 }
 
@@ -104,9 +137,11 @@ export async function reviewPullRequest({
   const units = chunkPullRequestFiles(files, {maxLinesPerChunk}).flatMap((chunk) =>
     reviewers.map((reviewer) => ({chunk, reviewer})),
   )
-  const settled = await mapWithConcurrency(units, concurrency, ({chunk, reviewer}) =>
-    reviewChunk({chunk, reviewer, model, store, complete}),
-  )
+  const settled = await mapWithConcurrency({
+    items: units,
+    limit: concurrency,
+    run: ({chunk, reviewer}) => reviewChunk({chunk, reviewer, model, store, complete}),
+  })
   const outcomes = settled.flatMap((result) =>
     result.status === 'fulfilled' ? [result.value] : [],
   )
@@ -131,11 +166,17 @@ export async function reviewPullRequest({
   }
 }
 
-async function mapWithConcurrency<Item, Result>(
-  items: readonly Item[],
-  limit: number,
-  run: (item: Item) => Promise<Result>,
-): Promise<PromiseSettledResult<Result>[]> {
+interface MapWithConcurrencyParams<Item, Result> {
+  items: readonly Item[]
+  limit: number
+  run: (item: Item) => Promise<Result>
+}
+
+async function mapWithConcurrency<Item, Result>({
+  items,
+  limit,
+  run,
+}: MapWithConcurrencyParams<Item, Result>): Promise<PromiseSettledResult<Result>[]> {
   const results: PromiseSettledResult<Result>[] = Array.from({length: items.length})
   let nextIndex = 0
   const worker = async (): Promise<void> => {

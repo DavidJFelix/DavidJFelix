@@ -31,7 +31,7 @@ test.each([
   {severity: 'high', threshold: 'high', expected: true},
   {severity: 'medium', threshold: 'high', expected: false},
 ] as const)('isAtLeast($severity, $threshold) is $expected', ({severity, threshold, expected}) => {
-  expect(isAtLeast(severity, threshold)).toBe(expected)
+  expect(isAtLeast({severity, threshold})).toBe(expected)
 })
 
 test('anchorFindings maps a label to its new-file line', () => {
@@ -54,29 +54,51 @@ test('anchorFindings maps a label to its new-file line', () => {
   })
 })
 
-test('anchorFindings turns a valid end label into a line range', () => {
+test('anchorFindings turns a valid end label into a line range and keeps its suggestion', () => {
   const [anchored] = anchorFindings({
     reviewerId: 'security',
     chunk,
     rendered,
-    findings: [modelFinding({label: 2, endLabel: 3})],
+    findings: [modelFinding({label: 2, endLabel: 3, suggestion: 'fixed'})],
   })
 
-  expect([anchored.startLine, anchored.endLine]).toEqual([21, 22])
+  expect([anchored.startLine, anchored.endLine, anchored.suggestion]).toEqual([21, 22, 'fixed'])
 })
 
-test('anchorFindings drops a range end that is outside the chunk or not after the start', () => {
+test('anchorFindings cuts a range that leaves the chunk or ends before it starts, and drops its suggestion', () => {
   const anchored = anchorFindings({
     reviewerId: 'security',
     chunk,
     rendered,
-    findings: [modelFinding({label: 2, endLabel: 9}), modelFinding({label: 2, endLabel: 1})],
+    findings: [
+      modelFinding({label: 2, endLabel: 9, suggestion: 'fixed'}),
+      modelFinding({label: 2, endLabel: 1, suggestion: 'fixed'}),
+    ],
   })
 
-  expect(anchored.map((item) => [item.startLine, item.endLine])).toEqual([
-    [21, 21],
-    [21, 21],
+  expect(anchored.map((item) => [item.startLine, item.endLine, item.suggestion])).toEqual([
+    [21, 21, undefined],
+    [21, 21, undefined],
   ])
+})
+
+test('anchorFindings cuts a range that crosses the gap between two hunks', () => {
+  const [twoHunks] = chunkPullRequestFiles([
+    {
+      path: 'a.ts',
+      status: 'modified',
+      patch: '@@ -1,1 +1,2 @@\n ctx\n+first\n@@ -10,1 +11,2 @@\n ctx\n+second',
+    },
+  ])
+
+  const [anchored] = anchorFindings({
+    reviewerId: 'correctness',
+    chunk: twoHunks,
+    rendered: renderChunk(twoHunks),
+    findings: [modelFinding({label: 2, endLabel: 4, suggestion: 'fixed'})],
+  })
+
+  expect([anchored.startLine, anchored.endLine, anchored.suggestion]).toEqual([2, 2, undefined])
 })
 
 test('anchorFindings drops a finding whose label is not in the chunk', () => {
@@ -104,17 +126,22 @@ test('decideOutcome fails when a chunk review failed', () => {
   expect(decideOutcome([], {failedChunkReviewCount: 1}).failed).toBe(true)
 })
 
-test('decideOutcome keeps only the most severe of findings whose lines overlap', () => {
+test('decideOutcome keeps only the most severe of findings that end on the same line', () => {
   const outcome = decideOutcome([
     finding({reviewerId: 'correctness', severity: 'medium', startLine: 3, endLine: 3}),
     finding({reviewerId: 'security', severity: 'critical', startLine: 1, endLine: 3}),
-    finding({reviewerId: 'comments', severity: 'medium', startLine: 4, endLine: 5}),
   ])
 
-  expect(outcome.reported.map((item) => [item.reviewerId, item.startLine])).toEqual([
-    ['security', 1],
-    ['comments', 4],
+  expect(outcome.reported.map((item) => item.reviewerId)).toEqual(['security'])
+})
+
+test('decideOutcome keeps a finding inside the range of a more severe finding', () => {
+  const outcome = decideOutcome([
+    finding({reviewerId: 'comments', severity: 'critical', startLine: 1, endLine: 40}),
+    finding({reviewerId: 'correctness', severity: 'high', startLine: 12, endLine: 12}),
   ])
+
+  expect(outcome.reported.map((item) => item.reviewerId)).toEqual(['comments', 'correctness'])
 })
 
 test('decideOutcome keeps findings on the same line of different files', () => {

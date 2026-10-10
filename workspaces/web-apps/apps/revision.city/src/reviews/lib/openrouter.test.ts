@@ -43,6 +43,22 @@ test('createOpenRouterComplete reports zero usage when the response has none', a
   })
 })
 
+test('createOpenRouterComplete returns empty text with the usage when the answer has no content', async () => {
+  const complete = createOpenRouterComplete({
+    apiKey: 'key',
+    fetch: async () =>
+      Response.json({
+        choices: [{message: {content: null}}],
+        usage: {prompt_tokens: 100, completion_tokens: 0, cost: 0.001},
+      }),
+  })
+
+  expect(await complete(request)).toEqual({
+    text: '',
+    usage: {promptTokens: 100, completionTokens: 0, costUsd: 0.001},
+  })
+})
+
 test('createOpenRouterComplete throws on an error status', async () => {
   const complete = createOpenRouterComplete({
     apiKey: 'key',

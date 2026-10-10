@@ -11,10 +11,10 @@ export default defineConfig({
     include: ['src/**/*.test.{ts,tsx}'],
     // Playwright specs (*.e2e.test.ts) are driven by Playwright, not Vitest.
     exclude: ['**/*.e2e.test.ts', '**/node_modules/**'],
-    // Coverage gate scoped to the tested pure logic: the observability relays
+    // The coverage gate covers the unit-tested logic: the observability relays
     // (src/lib/{posthog-proxy,sentry-tunnel}), the client-config resolver, and the
-    // PR review engine (src/reviews/lib). The route glue + client bootstrap are
-    // exercised by build/smoke, not unit coverage.
+    // PR review engine (src/reviews/lib). The build and the smoke test exercise the
+    // route glue and the client bootstrap instead.
     coverage: {
       provider: 'v8',
       include: ['src/lib/**', 'src/observability/config.ts', 'src/reviews/lib/**'],

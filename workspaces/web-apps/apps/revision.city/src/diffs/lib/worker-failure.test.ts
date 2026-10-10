@@ -9,15 +9,24 @@ const PAGE_CONTEXT = String.raw`The page was open for \d+ s, and navigator\.onLi
 
 test.each([
   {
+    name: 'a success status with the size of the script it read',
+    refetch: async () =>
+      new Response('self.onmessage = () => {}', {
+        status: 200,
+        headers: {'content-type': 'text/javascript'},
+      }),
+    outcome: String.raw`returned 200 \(text/javascript, 25 bytes\)`,
+  },
+  {
     name: 'an error status with its content type',
     refetch: async () =>
       new Response('Not Found', {status: 404, headers: {'content-type': 'text/plain'}}),
-    outcome: String.raw`returned 404 \(text/plain\)`,
+    outcome: String.raw`returned 404 \(text/plain, 9 bytes\)`,
   },
   {
     name: 'an error status without a content type',
     refetch: async () => new Response(null, {status: 503}),
-    outcome: String.raw`returned 503 \(no content type\)`,
+    outcome: String.raw`returned 503 \(no content type, 0 bytes\)`,
   },
   {
     name: 'a network error',
@@ -42,7 +51,7 @@ test.each([
         String.raw`^The diffs worker script failed to load, and a refetch of /assets/worker-abc\.js ${outcome}\. ${PAGE_CONTEXT}$`,
       ),
     )
-    expect(fetchImpl).toHaveBeenCalledWith(SCRIPT_URL, expect.objectContaining({cache: 'no-store'}))
+    expect(fetchImpl).toHaveBeenCalledWith(SCRIPT_URL, expect.objectContaining({cache: 'reload'}))
   },
 )
 

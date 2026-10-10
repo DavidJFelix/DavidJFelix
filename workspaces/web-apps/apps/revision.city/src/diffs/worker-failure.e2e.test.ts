@@ -15,7 +15,7 @@ test('a diffs worker script that fails to load is reported once with its refetch
     .poll(() => pageErrors)
     .toEqual([
       expect.stringMatching(
-        /^The diffs worker script failed to load, and a refetch of \/assets\/worker-[^/]+\.js returned 404 \(text\/plain\)\./,
+        /^The diffs worker script failed to load, and a refetch of \/assets\/worker-[^/]+\.js returned 404 \(text\/plain, 9 bytes\)\./,
       ),
     ])
 })

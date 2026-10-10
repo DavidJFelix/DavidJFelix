@@ -67,7 +67,7 @@ test('reviewPullRequest reports a chunk the model answered badly and does not sa
   expect(review.failures).toEqual([
     {path: 'a.ts', reviewerId: 'security', error: 'Error: Model response has no JSON object'},
   ])
-  // The bad answer was still billed.
+  // OpenRouter still bills a bad answer.
   expect(review.usage).toEqual(usage)
   complete.mockClear()
   await reviewPullRequest({

@@ -100,6 +100,10 @@ test('decideOutcome passes when nothing reaches the fail severity', () => {
   expect(decideOutcome([finding({severity: 'medium'})]).failed).toBe(false)
 })
 
+test('decideOutcome fails when a chunk review failed', () => {
+  expect(decideOutcome([], {failedChunkReviewCount: 1}).failed).toBe(true)
+})
+
 test('decideOutcome keeps only the most severe of findings whose lines overlap', () => {
   const outcome = decideOutcome([
     finding({reviewerId: 'correctness', severity: 'medium', startLine: 3, endLine: 3}),

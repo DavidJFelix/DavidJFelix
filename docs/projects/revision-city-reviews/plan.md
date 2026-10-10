@@ -25,7 +25,7 @@ umbrella.
   1. Split each file's patch into chunks of up to 200 diff lines.
   2. Run three reviewers (security, correctness, comments) on each chunk.
   3. Map findings back to new-file lines, one finding per line.
-  4. Report `medium` and above, and fail on `high` and above.
+  4. Report `medium` and above. Fail on `high` and above, or when a chunk review fails.
 - **Chunk-local line labels.** The prompt numbers lines from 1 inside the chunk, not by file line.
   An edit above a chunk then does not change its text, and its saved result stays valid.
 - **Saved results** in D1 (`chunk_reviews`, `migrations/0001-chunk-reviews.sql`), keyed by a SHA-256

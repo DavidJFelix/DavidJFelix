@@ -52,7 +52,7 @@ const review = await reviewPullRequest({
   store: createMemoryChunkReviewStore(),
   complete: createOpenRouterComplete({apiKey: OPENROUTER_API_KEY}),
 })
-const outcome = decideOutcome(review.findings)
+const outcome = decideOutcome(review.findings, {failedChunkReviewCount: review.failures.length})
 
 for (const finding of outcome.reported) {
   const lines =

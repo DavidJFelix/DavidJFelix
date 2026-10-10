@@ -1,5 +1,6 @@
 import {createRouter as createTanStackRouter} from '@tanstack/react-router'
 
+import {installMissingChunkReload} from './lib/missing-chunk-reload'
 import {initClientObservability} from './observability/client'
 import {routeTree} from './routeTree.gen'
 
@@ -16,6 +17,7 @@ export function getRouter() {
   // set at build (see src/observability).
   if (!import.meta.env.SSR) {
     initClientObservability()
+    installMissingChunkReload()
   }
 
   return router

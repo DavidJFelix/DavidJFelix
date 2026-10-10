@@ -1,6 +1,5 @@
-// A page can reload because an asset is missing. If the asset is still missing after the reload,
-// the page must not reload again, or it reloads forever. The mark stays in session storage for the
-// life of the tab. A new deploy gives its assets new names, so a later deploy gets its own reload.
+// The mark stops a reload loop when the asset is still missing after the reload. A new deploy gives
+// its assets new names, so each deploy gets its own reload.
 const RELOAD_MARK_PREFIX = 'revision.city:reloaded-for-missing-asset:'
 
 export interface ClaimPageReloadParams {

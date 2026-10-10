@@ -95,7 +95,6 @@ async function recoverFromLoadFailure(): Promise<void> {
   setRecoveringFromLoadFailure(false)
 }
 
-// A reload needs the reload mark for the script, and a restart needs a mounted pool.
 function confirmRecovery(recovery: WorkerRecovery): WorkerRecovery {
   if (recovery === 'reload-page') {
     return claimPageReload({assetUrl: DiffsRenderWorkerUrl}) ? recovery : 'none'

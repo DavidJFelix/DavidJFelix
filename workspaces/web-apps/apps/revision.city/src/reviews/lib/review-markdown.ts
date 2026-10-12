@@ -67,10 +67,22 @@ export function formatFindingComment(finding: Finding, fingerprint: string): str
 // The fence is longer than each run of backticks in the suggestion, so that the
 // suggestion cannot close it. An empty suggestion deletes the lines.
 function suggestionBlock(suggestion: string): string {
-  const longestRun = Math.max(2, ...Array.from(suggestion.matchAll(/`+/g), ([run]) => run.length))
-  const fence = '`'.repeat(longestRun + 1)
+  const fence = '`'.repeat(Math.max(2, longestBacktickRun(suggestion)) + 1)
   const code = suggestion.replace(/\n$/, '')
   return code === '' ? `${fence}suggestion\n${fence}` : `${fence}suggestion\n${code}\n${fence}`
+}
+
+// The fence is longer than each run of backticks in the text, so that the text
+// cannot close the code span. A space keeps a backtick at an end of the text
+// apart from the fence. Markdown does not show the space.
+function codeSpan(text: string): string {
+  const fence = '`'.repeat(longestBacktickRun(text) + 1)
+  const padding = text.startsWith('`') || text.endsWith('`') ? ' ' : ''
+  return `${fence}${padding}${text}${padding}${fence}`
+}
+
+function longestBacktickRun(text: string): number {
+  return Math.max(0, ...Array.from(text.matchAll(/`+/g), ([run]) => run.length))
 }
 
 function findingLine(finding: Finding): string {
@@ -78,7 +90,7 @@ function findingLine(finding: Finding): string {
     finding.startLine === finding.endLine
       ? `${finding.endLine}`
       : `${finding.startLine}-${finding.endLine}`
-  return `- **${finding.severity}** \`${oneLine(finding.path)}:${lines}\` (${finding.reviewerId}): ${oneLine(finding.title)}`
+  return `- **${finding.severity}** ${codeSpan(`${oneLine(finding.path)}:${lines}`)} (${finding.reviewerId}): ${oneLine(finding.title)}`
 }
 
 export interface FormatReviewBodyParams {
@@ -137,12 +149,12 @@ export function formatCheckRunOutput({
       'Failed chunk reviews',
       review.failures.map(
         ({path, reviewerId, error}) =>
-          `- \`${oneLine(path)}\` (${reviewerId}): ${oneLine(error).slice(0, 300)}`,
+          `- ${codeSpan(oneLine(path))} (${reviewerId}): ${oneLine(error).slice(0, 300)}`,
       ),
     ),
     section(
       'Not reviewed',
-      notReviewed.map(({path, reason}) => `- \`${oneLine(path)}\`: ${reason}`),
+      notReviewed.map(({path, reason}) => `- ${codeSpan(oneLine(path))}: ${reason}`),
     ),
   ].filter((text) => text !== '')
   return {

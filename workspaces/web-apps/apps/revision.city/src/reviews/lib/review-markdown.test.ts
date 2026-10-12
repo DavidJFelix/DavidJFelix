@@ -199,6 +199,19 @@ test('formatCheckRunOutput lists findings, failures, and files that were not rev
   )
 })
 
+test('formatCheckRunOutput keeps each path with backticks inside its code span', () => {
+  const output = formatCheckRunOutput({
+    outcome: {reported: [{...finding, path: 'a`[x](https://example.com)`.ts'}], failed: true},
+    review: {...review, failures: [{path: '``b', reviewerId: 'comments', error: 'Error'}]},
+    notReviewed: [{path: 'c `', reason: 'GitHub shows no text diff'}],
+    postedCount: 0,
+  })
+
+  expect(output.text).toContain('- **high** ``a`[x](https://example.com)`.ts:4`` (security)')
+  expect(output.text).toContain('- ``` ``b ``` (comments)')
+  expect(output.text).toContain('- `` c ` ``: GitHub shows no text diff')
+})
+
 test('formatCheckRunOutput cuts a list longer than a check run can show', () => {
   const output = formatCheckRunOutput({
     outcome: {reported: [], failed: false},

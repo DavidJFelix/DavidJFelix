@@ -6,7 +6,7 @@ import {
   modelAnswerSchema,
   modelFindingSchema,
 } from './findings'
-import {type Complete, type CompletionUsage, extractJson} from './openrouter'
+import {addUsage, type Chat, type CompletionUsage, extractJson, NO_USAGE} from './openrouter'
 import {
   type ChunkPullRequestFilesOptions,
   chunkPullRequestFiles,
@@ -21,7 +21,7 @@ export interface ReviewChunkParams {
   reviewer: Reviewer
   model: string
   store: ChunkReviewStore
-  complete: Complete
+  chat: Chat
 }
 
 export interface ChunkReviewOutcome {
@@ -31,14 +31,12 @@ export interface ChunkReviewOutcome {
   error?: string
 }
 
-const NO_USAGE: CompletionUsage = {promptTokens: 0, completionTokens: 0, costUsd: 0}
-
 export async function reviewChunk({
   chunk,
   reviewer,
   model,
   store,
-  complete,
+  chat,
 }: ReviewChunkParams): Promise<ChunkReviewOutcome> {
   const rendered = renderChunk(chunk)
   const system = buildSystemPrompt(reviewer)
@@ -56,20 +54,26 @@ export async function reviewChunk({
   if (saved) {
     return {findings: anchor(saved.findings), cached: true, usage: NO_USAGE}
   }
-  const completion = await complete({model, system, prompt: rendered.text})
-  const answer = parseModelAnswer(completion.text)
+  const reply = await chat({
+    model,
+    messages: [
+      {role: 'system', content: system},
+      {role: 'user', content: rendered.text},
+    ],
+  })
+  const answer = parseModelAnswer(reply.content)
   // An answer that does not fully parse is not saved, so the next run asks again.
   // Its usage is still returned, because the call was billed.
   if (answer.error !== undefined) {
     return {
       findings: anchor(answer.findings),
       cached: false,
-      usage: completion.usage,
+      usage: reply.usage,
       error: answer.error,
     }
   }
-  await store.put(key, {findings: answer.findings, usage: completion.usage}).catch(warnStoreFailure)
-  return {findings: anchor(answer.findings), cached: false, usage: completion.usage}
+  await store.put(key, {findings: answer.findings, usage: reply.usage}).catch(warnStoreFailure)
+  return {findings: anchor(answer.findings), cached: false, usage: reply.usage}
 }
 
 const STORE_FAILURE_LOG_MESSAGE = 'Chunk review store failed; the review continues without it'
@@ -104,7 +108,7 @@ export interface ReviewPullRequestParams extends ChunkPullRequestFilesOptions {
   files: readonly PullRequestFile[]
   model: string
   store: ChunkReviewStore
-  complete: Complete
+  chat: Chat
   reviewers?: readonly Reviewer[]
   concurrency?: number
 }
@@ -129,7 +133,7 @@ export async function reviewPullRequest({
   files,
   model,
   store,
-  complete,
+  chat,
   reviewers = REVIEWERS,
   concurrency = 8,
   ...chunkOptions
@@ -140,7 +144,7 @@ export async function reviewPullRequest({
   const settled = await mapWithConcurrency({
     items: units,
     limit: concurrency,
-    run: ({chunk, reviewer}) => reviewChunk({chunk, reviewer, model, store, complete}),
+    run: ({chunk, reviewer}) => reviewChunk({chunk, reviewer, model, store, chat}),
   })
   const outcomes = settled.flatMap((result) =>
     result.status === 'fulfilled' ? [result.value] : [],
@@ -155,14 +159,7 @@ export async function reviewPullRequest({
     }),
     chunkReviewCount: units.length,
     cachedCount: outcomes.filter((outcome) => outcome.cached).length,
-    usage: outcomes.reduce(
-      (total, {usage}) => ({
-        promptTokens: total.promptTokens + usage.promptTokens,
-        completionTokens: total.completionTokens + usage.completionTokens,
-        costUsd: total.costUsd + usage.costUsd,
-      }),
-      NO_USAGE,
-    ),
+    usage: outcomes.map((outcome) => outcome.usage).reduce(addUsage, NO_USAGE),
   }
 }
 

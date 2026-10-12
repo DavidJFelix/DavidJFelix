@@ -1,35 +1,99 @@
 import {z} from 'zod'
 
-export interface CompletionRequest {
-  model: string
-  system: string
-  prompt: string
-}
-
 export interface CompletionUsage {
   promptTokens: number
   completionTokens: number
   costUsd: number
 }
 
-export interface Completion {
-  text: string
+export const NO_USAGE: CompletionUsage = {promptTokens: 0, completionTokens: 0, costUsd: 0}
+
+export function addUsage(total: CompletionUsage, usage: CompletionUsage): CompletionUsage {
+  return {
+    promptTokens: total.promptTokens + usage.promptTokens,
+    completionTokens: total.completionTokens + usage.completionTokens,
+    costUsd: total.costUsd + usage.costUsd,
+  }
+}
+
+type JsonSchema = Readonly<Record<string, unknown>>
+
+export interface ToolDefinition {
+  name: string
+  description: string
+  parameters: JsonSchema
+}
+
+export interface ToolCall {
+  id: string
+  name: string
+  // The arguments as the model wrote them: JSON text that can be invalid.
+  arguments: string
+}
+
+export type ChatMessage =
+  | {role: 'system' | 'user'; content: string}
+  | {role: 'assistant'; content: string; toolCalls: readonly ToolCall[]}
+  | {role: 'tool'; toolCallId: string; content: string}
+
+export interface ChatRequest {
+  model: string
+  messages: readonly ChatMessage[]
+  tools?: readonly ToolDefinition[]
+  toolChoice?: 'auto' | 'none'
+}
+
+export interface ChatReply {
+  content: string
+  toolCalls: ToolCall[]
   usage: CompletionUsage
 }
 
-export type Complete = (request: CompletionRequest) => Promise<Completion>
+export type Chat = (request: ChatRequest) => Promise<ChatReply>
 
 export type Fetch = (url: string, init: RequestInit) => Promise<Response>
 
-export interface CreateOpenRouterCompleteParams {
+export class OpenRouterError extends Error {
+  readonly temporary: boolean
+
+  constructor(message: string, temporary: boolean) {
+    super(message)
+    this.temporary = temporary
+  }
+}
+
+export interface CreateOpenRouterChatParams {
   apiKey: string
   fetch?: Fetch
+  // One wait per retry, so the length sets the retry count. Only temporary
+  // failures are retried.
+  retryDelaysMs?: readonly number[]
 }
 
 const OPENROUTER_CHAT_URL = 'https://openrouter.ai/api/v1/chat/completions'
 
+const DEFAULT_RETRY_DELAYS_MS = [2000, 8000]
+
+const RETRYABLE_STATUSES = new Set([408, 429, 500, 502, 503, 504])
+
 const chatResponseSchema = z.object({
-  choices: z.array(z.object({message: z.object({content: z.string().nullish()})})).min(1),
+  choices: z
+    .array(
+      z.object({
+        message: z.object({
+          content: z.string().nullish(),
+          tool_calls: z
+            .array(
+              z.object({
+                id: z.string(),
+                function: z.object({name: z.string(), arguments: z.string()}),
+              }),
+            )
+            .nullish(),
+        }),
+      }),
+    )
+    .min(1),
   usage: z
     .object({
       prompt_tokens: z.number(),
@@ -39,60 +103,164 @@ const chatResponseSchema = z.object({
     .optional(),
 })
 
-export function createOpenRouterComplete({
+// OpenRouter can answer 200 with an error object when the provider fails.
+const errorResponseSchema = z.object({error: z.object({message: z.string()})})
+
+export function createOpenRouterChat({
   apiKey,
   fetch: fetchImpl = fetch,
-}: CreateOpenRouterCompleteParams): Complete {
-  return async ({model, system, prompt}) => {
-    const response = await fetchImpl(OPENROUTER_CHAT_URL, {
+  retryDelaysMs = DEFAULT_RETRY_DELAYS_MS,
+}: CreateOpenRouterChatParams): Chat {
+  return async (request) => {
+    const init = {
       method: 'POST',
       headers: {authorization: `Bearer ${apiKey}`, 'content-type': 'application/json'},
-      body: JSON.stringify({
-        model,
-        messages: [
-          {role: 'system', content: system},
-          {role: 'user', content: prompt},
-        ],
-        response_format: {type: 'json_object'},
-        temperature: 0,
-        // Asks OpenRouter to return the billed cost with the token counts.
-        usage: {include: true},
-      }),
-    })
-    if (!response.ok) {
-      throw new Error(`OpenRouter returned ${response.status}: ${await response.text()}`)
+      body: JSON.stringify(toRequestBody(request)),
     }
-    const parsed = chatResponseSchema.parse(await response.json())
+    const parsed = chatResponseSchema.safeParse(
+      await postChat({fetch: fetchImpl, init, retryDelaysMs}),
+    )
+    if (!parsed.success) {
+      throw new OpenRouterError(
+        `OpenRouter returned an unexpected response: ${z.prettifyError(parsed.error)}`,
+        false,
+      )
+    }
+    const {choices, usage} = parsed.data
+    const {message} = choices[0]
     return {
-      // A refusal can have no content. Empty text keeps the billed usage and
-      // then fails to parse as an answer.
-      text: parsed.choices[0].message.content ?? '',
+      // A refusal or a reply with only tool calls can have no content. An empty
+      // final answer keeps the billed usage and then fails to parse.
+      content: message.content ?? '',
+      toolCalls: (message.tool_calls ?? []).map((call) => ({
+        id: call.id,
+        name: call.function.name,
+        arguments: call.function.arguments,
+      })),
       usage: {
-        promptTokens: parsed.usage?.prompt_tokens ?? 0,
-        completionTokens: parsed.usage?.completion_tokens ?? 0,
-        costUsd: parsed.usage?.cost ?? 0,
+        promptTokens: usage?.prompt_tokens ?? 0,
+        completionTokens: usage?.completion_tokens ?? 0,
+        costUsd: usage?.cost ?? 0,
       },
     }
   }
 }
 
-// Some models add prose or a Markdown fence around the JSON, even when the prompt
-// asks for a JSON object. The prose can quote other JSON, so the answer is the
-// first object that matches the schema.
-export function extractJson<Value>(text: string, schema: z.ZodType<Value>): Value {
-  let firstError: z.ZodError<Value> | undefined
-  for (let start = text.indexOf('{'); start !== -1; start = text.indexOf('{', start + 1)) {
-    const end = closingBraceIndex(text, start)
-    const parsed = end === undefined ? undefined : tryParseJson(text.slice(start, end + 1))
-    if (parsed !== undefined) {
-      const result = schema.safeParse(parsed)
-      if (result.success) {
-        return result.data
+function toRequestBody({model, messages, tools, toolChoice}: ChatRequest) {
+  return {
+    model,
+    messages: messages.map(toWireMessage),
+    ...(tools === undefined
+      ? {}
+      : {
+          tools: tools.map((tool) => ({type: 'function', function: tool})),
+          tool_choice: toolChoice ?? 'auto',
+        }),
+    response_format: {type: 'json_object'},
+    temperature: 0,
+    // Asks OpenRouter to return the billed cost with the token counts.
+    usage: {include: true},
+  }
+}
+
+function toWireMessage(message: ChatMessage) {
+  switch (message.role) {
+    case 'assistant':
+      return {
+        role: 'assistant',
+        // Some providers reject an empty text part next to tool calls.
+        content: message.content === '' ? null : message.content,
+        tool_calls: message.toolCalls.map((call) => ({
+          id: call.id,
+          type: 'function',
+          function: {name: call.name, arguments: call.arguments},
+        })),
       }
-      firstError ??= result.error
+    case 'tool':
+      return {role: 'tool', tool_call_id: message.toolCallId, content: message.content}
+    default:
+      return message
+  }
+}
+
+type ChatAttempt = {body: unknown} | {error: string; temporary: boolean}
+
+interface PostChatParams {
+  fetch: Fetch
+  init: RequestInit
+  retryDelaysMs: readonly number[]
+}
+
+async function postChat({fetch: fetchImpl, init, retryDelaysMs}: PostChatParams): Promise<unknown> {
+  const attempt = await attemptChat({fetch: fetchImpl, init})
+  if ('body' in attempt) {
+    return attempt.body
+  }
+  const [delayMs, ...laterDelaysMs] = retryDelaysMs
+  if (!attempt.temporary || delayMs === undefined) {
+    throw new OpenRouterError(attempt.error, attempt.temporary)
+  }
+  await new Promise((resolve) => setTimeout(resolve, delayMs))
+  return postChat({fetch: fetchImpl, init, retryDelaysMs: laterDelaysMs})
+}
+
+async function attemptChat({
+  fetch: fetchImpl,
+  init,
+}: Omit<PostChatParams, 'retryDelaysMs'>): Promise<ChatAttempt> {
+  const response = await fetchImpl(OPENROUTER_CHAT_URL, init).catch((error: unknown) =>
+    String(error),
+  )
+  if (typeof response === 'string') {
+    return {error: `OpenRouter request failed: ${response}`, temporary: true}
+  }
+  if (!response.ok) {
+    return {
+      error: `OpenRouter returned ${response.status}: ${await response.text()}`,
+      temporary: RETRYABLE_STATUSES.has(response.status),
     }
   }
-  throw firstError ?? new Error('Model response has no JSON object')
+  const body: unknown = await response.json()
+  const failure = errorResponseSchema.safeParse(body)
+  return failure.success
+    ? {error: `OpenRouter returned an error: ${failure.data.error.message}`, temporary: true}
+    : {body}
+}
+
+// Some models add prose or a Markdown fence around the JSON, even when the prompt
+// asks for a JSON object. The prose can quote other JSON, so the answer is the
+// first object that matches the schema. `extractJson` tries objects inside other
+// objects last, so that an object inside quoted JSON cannot hide an outer answer.
+export function extractJson<Value>(text: string, schema: z.ZodType<Value>): Value {
+  const objects = parseJsonObjects(text)
+  const results = [
+    ...objects.filter((object) => !object.nested),
+    ...objects.filter((object) => object.nested),
+  ].map((object) => schema.safeParse(object.value))
+  const match = results.find((result) => result.success)
+  if (match?.success) {
+    return match.data
+  }
+  throw results[0]?.error ?? new Error('Model response has no JSON object')
+}
+
+interface ParsedJsonObject {
+  value: unknown
+  nested: boolean
+}
+
+function parseJsonObjects(text: string): ParsedJsonObject[] {
+  const objects: ParsedJsonObject[] = []
+  let outerEnd = -1
+  for (let start = text.indexOf('{'); start !== -1; start = text.indexOf('{', start + 1)) {
+    const end = closingBraceIndex(text, start)
+    const value = end === undefined ? undefined : tryParseJson(text.slice(start, end + 1))
+    if (end !== undefined && value !== undefined) {
+      objects.push({value, nested: start < outerEnd})
+      outerEnd = Math.max(outerEnd, end)
+    }
+  }
+  return objects
 }
 
 function closingBraceIndex(text: string, start: number): number | undefined {

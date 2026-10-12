@@ -11,7 +11,7 @@
 import {z} from 'zod'
 import {createMemoryChunkReviewStore} from '../src/reviews/lib/chunk-review-store'
 import {decideOutcome} from '../src/reviews/lib/findings'
-import {createOpenRouterComplete} from '../src/reviews/lib/openrouter'
+import {createOpenRouterChat} from '../src/reviews/lib/openrouter'
 import type {PullRequestFile} from '../src/reviews/lib/review-chunks'
 import {reviewPullRequest} from '../src/reviews/lib/review-pull-request'
 
@@ -55,7 +55,7 @@ const review = await reviewPullRequest({
   files: await fetchPullRequestFiles(),
   model: REVIEW_MODEL,
   store: createMemoryChunkReviewStore(),
-  complete: createOpenRouterComplete({apiKey: OPENROUTER_API_KEY}),
+  chat: createOpenRouterChat({apiKey: OPENROUTER_API_KEY}),
 })
 const outcome = decideOutcome(review.findings, {failedChunkReviewCount: review.failures.length})
 

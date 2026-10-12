@@ -10,8 +10,9 @@ replaces Warden in this repository. This project started as part of
 - **Triggered by GitHub events, not CI.** A webhook starts the review; no CI job runs it.
 - **No configuration and no user-facing CLI.** Reviewers, severities, and thresholds are part of the
   product.
-- **Re-runs cost only what changed.** Each chunk's model answer is saved; a re-run after a push pays
-  only for chunks whose content, reviewer prompt, or model changed.
+- **Re-runs cost only what changed.** The app saves the model's answer for each chunk. A re-run
+  after a push pays only for chunks whose content, reviewer prompt, or model changed, or whose
+  answer the app did not save.
 - **OpenRouter for models.** The model is an operator secret (`REVIEW_MODEL`), not a repository
   setting.
 - **Works for any installation, runs only here for now.** Code takes the installation and repository

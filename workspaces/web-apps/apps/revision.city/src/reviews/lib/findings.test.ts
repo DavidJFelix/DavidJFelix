@@ -160,3 +160,30 @@ test('anchorFindings keeps an empty suggestion, which deletes the flagged lines'
 
   expect(anchored.suggestion).toBe('')
 })
+
+test('anchorFindings clips a long title and body and drops a long suggestion', () => {
+  const [anchored] = anchorFindings({
+    reviewerId: 'security',
+    chunk,
+    rendered,
+    findings: [
+      modelFinding({title: 't'.repeat(250), body: 'b'.repeat(3500), suggestion: 's'.repeat(3001)}),
+    ],
+  })
+
+  expect(anchored.title).toBe(`${'t'.repeat(197)}...`)
+  expect(anchored.body).toBe(`${'b'.repeat(2997)}...`)
+  expect(anchored).not.toHaveProperty('suggestion')
+})
+
+test('anchorFindings keeps the 20 most severe findings of one answer', () => {
+  const findings = [
+    ...Array.from({length: 25}, () => modelFinding({severity: 'low'})),
+    modelFinding({severity: 'critical', title: 'Worst'}),
+  ]
+
+  const anchored = anchorFindings({reviewerId: 'security', chunk, rendered, findings})
+
+  expect(anchored).toHaveLength(20)
+  expect(anchored[0]).toMatchObject({severity: 'critical', title: 'Worst'})
+})

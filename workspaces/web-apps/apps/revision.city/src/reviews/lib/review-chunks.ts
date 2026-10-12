@@ -47,15 +47,32 @@ const SKIPPED_FILE_NAMES = new Set([
 
 const SKIPPED_FILE_SUFFIXES = ['.min.js', '.min.css', '.map', '.snap']
 
-export function isReviewableFile(file: PullRequestFile): file is PullRequestFile & {patch: string} {
-  if (file.status === 'removed' || !file.patch) {
-    return false
-  }
+// A diff this long is almost always generated or vendored code. Its review
+// would cost more than it finds.
+export const MAX_PATCH_LINES_PER_FILE = 1500
+
+// `skipped`: removed files, lockfiles, and generated files, which are not
+// reviewed by design. A caller can report `no-text-diff` and `too-large` files as not
+// reviewed.
+export type FileReviewStatus = 'reviewable' | 'skipped' | 'no-text-diff' | 'too-large'
+
+export function fileReviewStatus(file: PullRequestFile): FileReviewStatus {
   const fileName = file.path.slice(file.path.lastIndexOf('/') + 1)
-  return (
-    !SKIPPED_FILE_NAMES.has(fileName) &&
-    !SKIPPED_FILE_SUFFIXES.some((suffix) => fileName.endsWith(suffix))
-  )
+  if (
+    file.status === 'removed' ||
+    SKIPPED_FILE_NAMES.has(fileName) ||
+    SKIPPED_FILE_SUFFIXES.some((suffix) => fileName.endsWith(suffix))
+  ) {
+    return 'skipped'
+  }
+  if (!file.patch) {
+    return 'no-text-diff'
+  }
+  return file.patch.split('\n').length > MAX_PATCH_LINES_PER_FILE ? 'too-large' : 'reviewable'
+}
+
+export function isReviewableFile(file: PullRequestFile): file is PullRequestFile & {patch: string} {
+  return fileReviewStatus(file) === 'reviewable'
 }
 
 export function chunkPullRequestFiles(

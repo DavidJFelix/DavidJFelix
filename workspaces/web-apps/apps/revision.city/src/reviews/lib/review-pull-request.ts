@@ -132,9 +132,9 @@ export async function reviewPullRequest({
   complete,
   reviewers = REVIEWERS,
   concurrency = 8,
-  maxLinesPerChunk,
+  ...chunkOptions
 }: ReviewPullRequestParams): Promise<PullRequestReview> {
-  const units = chunkPullRequestFiles(files, {maxLinesPerChunk}).flatMap((chunk) =>
+  const units = chunkPullRequestFiles(files, chunkOptions).flatMap((chunk) =>
     reviewers.map((reviewer) => ({chunk, reviewer})),
   )
   const settled = await mapWithConcurrency({

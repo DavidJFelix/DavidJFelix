@@ -23,7 +23,7 @@ export interface ReviewChunk {
   hunks: readonly PatchHunk[]
 }
 
-export interface ChunkPullRequestFilesOptions {
+export interface ChunkPullRequestFilesOptions extends FileReviewStatusOptions {
   maxLinesPerChunk?: number
 }
 
@@ -49,14 +49,21 @@ const SKIPPED_FILE_SUFFIXES = ['.min.js', '.min.css', '.map', '.snap']
 
 // A diff this long is almost always generated or vendored code. Its review
 // would cost more than it finds.
-export const MAX_PATCH_LINES_PER_FILE = 1500
+export const DEFAULT_MAX_PATCH_LINES_PER_FILE = 1500
+
+export interface FileReviewStatusOptions {
+  maxPatchLinesPerFile?: number
+}
 
 // `skipped`: removed files, lockfiles, and generated files, which are not
-// reviewed by design. A caller can report `no-text-diff` and `too-large` files as not
-// reviewed.
+// reviewed by design. A caller can report `no-text-diff` and `too-large` files
+// as not reviewed.
 export type FileReviewStatus = 'reviewable' | 'skipped' | 'no-text-diff' | 'too-large'
 
-export function fileReviewStatus(file: PullRequestFile): FileReviewStatus {
+export function fileReviewStatus(
+  file: PullRequestFile,
+  {maxPatchLinesPerFile = DEFAULT_MAX_PATCH_LINES_PER_FILE}: FileReviewStatusOptions = {},
+): FileReviewStatus {
   const fileName = file.path.slice(file.path.lastIndexOf('/') + 1)
   if (
     file.status === 'removed' ||
@@ -68,18 +75,25 @@ export function fileReviewStatus(file: PullRequestFile): FileReviewStatus {
   if (!file.patch) {
     return 'no-text-diff'
   }
-  return file.patch.split('\n').length > MAX_PATCH_LINES_PER_FILE ? 'too-large' : 'reviewable'
+  return file.patch.split('\n').length > maxPatchLinesPerFile ? 'too-large' : 'reviewable'
 }
 
-export function isReviewableFile(file: PullRequestFile): file is PullRequestFile & {patch: string} {
-  return fileReviewStatus(file) === 'reviewable'
+export function isReviewableFile(
+  file: PullRequestFile,
+  options?: FileReviewStatusOptions,
+): file is PullRequestFile & {patch: string} {
+  return fileReviewStatus(file, options) === 'reviewable'
 }
 
 export function chunkPullRequestFiles(
   files: readonly PullRequestFile[],
-  {maxLinesPerChunk = DEFAULT_MAX_LINES_PER_CHUNK}: ChunkPullRequestFilesOptions = {},
+  {
+    maxLinesPerChunk = DEFAULT_MAX_LINES_PER_CHUNK,
+    ...statusOptions
+  }: ChunkPullRequestFilesOptions = {},
 ): ReviewChunk[] {
-  return files.filter(isReviewableFile).flatMap(({path, patch}) => {
+  const reviewable = files.filter((file) => isReviewableFile(file, statusOptions))
+  return reviewable.flatMap(({path, patch}) => {
     const hunks = parsePatchHunks(patch)
       .flatMap((hunk) => splitHunk(hunk, maxLinesPerChunk))
       // A slice of only removed lines has no labels, so `anchorFindings` would drop

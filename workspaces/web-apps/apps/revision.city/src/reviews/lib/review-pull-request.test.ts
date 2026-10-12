@@ -155,6 +155,21 @@ test('reviewPullRequest makes no calls when no file is reviewable', async () => 
   expect(review.chunkReviewCount).toBe(0)
 })
 
+test('reviewPullRequest does not review a file over the line limit the caller sets', async () => {
+  const complete = answering('{"findings": []}')
+
+  const review = await reviewPullRequest({
+    files: files(5),
+    model: 'vendor/model',
+    store: createMemoryChunkReviewStore(),
+    complete,
+    maxPatchLinesPerFile: 2,
+  })
+
+  expect(complete).not.toHaveBeenCalled()
+  expect(review.chunkReviewCount).toBe(0)
+})
+
 test('reviewPullRequest still reviews every chunk when concurrency is below one', async () => {
   const complete = answering('{"findings": []}')
 

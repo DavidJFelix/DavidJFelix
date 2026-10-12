@@ -1,9 +1,9 @@
 import {expect, test} from 'vitest'
 import {
   chunkPullRequestFiles,
+  DEFAULT_MAX_PATCH_LINES_PER_FILE,
   fileReviewStatus,
   isReviewableFile,
-  MAX_PATCH_LINES_PER_FILE,
   type PullRequestFile,
   renderChunk,
 } from './review-chunks'
@@ -36,17 +36,30 @@ test.each([
   {
     path: 'src/generated.ts',
     status: 'added',
-    patch: addedLines(1, MAX_PATCH_LINES_PER_FILE),
+    patch: addedLines(1, DEFAULT_MAX_PATCH_LINES_PER_FILE),
     expected: 'too-large',
   },
   {
     path: 'src/long.ts',
     status: 'added',
-    patch: addedLines(1, MAX_PATCH_LINES_PER_FILE - 1),
+    patch: addedLines(1, DEFAULT_MAX_PATCH_LINES_PER_FILE - 1),
     expected: 'reviewable',
   },
 ] as const)('fileReviewStatus($path) is $expected', ({expected, ...file}) => {
   expect(fileReviewStatus(file)).toBe(expected)
+})
+
+test('fileReviewStatus reviews a diff over the default limit when the caller raises the limit', () => {
+  const file: PullRequestFile = {
+    path: 'src/big.ts',
+    status: 'added',
+    patch: addedLines(1, DEFAULT_MAX_PATCH_LINES_PER_FILE),
+  }
+
+  expect(fileReviewStatus(file)).toBe('too-large')
+  expect(fileReviewStatus(file, {maxPatchLinesPerFile: Number.POSITIVE_INFINITY})).toBe(
+    'reviewable',
+  )
 })
 
 test('chunkPullRequestFiles keeps small hunks of one file in one chunk', () => {

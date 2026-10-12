@@ -1,7 +1,10 @@
 import {expect, test, vi} from 'vitest'
+import {z} from 'zod'
 import {createOpenRouterComplete, extractJson, type Fetch} from './openrouter'
 
 const request = {model: 'vendor/model', system: 'system text', prompt: 'prompt text'}
+
+const answerSchema = z.looseObject({findings: z.array(z.unknown())})
 
 test('createOpenRouterComplete sends the prompt and returns text with usage', async () => {
   const fetchStub = vi.fn<Fetch>(async () =>
@@ -69,7 +72,7 @@ test('createOpenRouterComplete throws on an error status', async () => {
 })
 
 test('extractJson reads an object wrapped in a Markdown fence', () => {
-  expect(extractJson('```json\n{"findings": []}\n```')).toEqual({findings: []})
+  expect(extractJson('```json\n{"findings": []}\n```', answerSchema)).toEqual({findings: []})
 })
 
 test.each<{name: string; text: string; expected?: unknown}>([
@@ -93,10 +96,22 @@ test.each<{name: string; text: string; expected?: unknown}>([
     text: 'Here {it} is: {"findings": [], "note": "a \\"}\\" b {"} done',
     expected: {findings: [], note: 'a "}" b {'},
   },
+  {
+    name: 'an answer after other JSON in the prose',
+    text: 'It has {"type": "module"}. {"findings": []}',
+  },
 ])('extractJson reads $name', ({text, expected = {findings: []}}) => {
-  expect(extractJson(text)).toEqual(expected)
+  expect(extractJson(text, answerSchema)).toEqual(expected)
 })
 
 test('extractJson throws when there is no object', () => {
-  expect(() => extractJson('no findings')).toThrow('Model response has no JSON object')
+  expect(() => extractJson('no findings', answerSchema)).toThrow(
+    'Model response has no JSON object',
+  )
+})
+
+test('extractJson throws the schema error of the first object when no object matches', () => {
+  expect(() => extractJson('{"type": "module"} {"findings": "none"}', answerSchema)).toThrow(
+    'expected array, received undefined',
+  )
 })

@@ -86,7 +86,7 @@ interface ParsedModelAnswer {
 
 function parseModelAnswer(text: string): ParsedModelAnswer {
   try {
-    const answer = modelAnswerSchema.parse(extractJson(text))
+    const answer = extractJson(text, modelAnswerSchema)
     const findings = answer.findings.flatMap((item) => {
       const parsed = modelFindingSchema.safeParse(item)
       return parsed.success ? [parsed.data] : []

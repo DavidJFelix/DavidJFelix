@@ -80,6 +80,23 @@ test('reviewPullRequest reports a chunk the model answered badly and does not sa
   expect(complete).toHaveBeenCalledTimes(1)
 })
 
+test('reviewPullRequest reads the answer after other JSON that the model quotes', async () => {
+  const complete = answering(
+    'The file has {"type": "module"}. {"findings": [{"severity": "high", "title": "Bug", "body": "Breaks", "label": 2}]}',
+  )
+
+  const review = await reviewPullRequest({
+    files: files(5),
+    model: 'vendor/model',
+    store: createMemoryChunkReviewStore(),
+    complete,
+    reviewers: REVIEWERS.slice(0, 1),
+  })
+
+  expect(review.failures).toEqual([])
+  expect(review.findings.map((finding) => finding.endLine)).toEqual([6])
+})
+
 test('reviewPullRequest keeps the valid findings of an answer with a malformed one', async () => {
   const store = createMemoryChunkReviewStore()
   const complete = answering(

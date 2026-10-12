@@ -3,8 +3,9 @@ import {z} from 'zod'
 // Until billing exists, only these repositories get reviews.
 const ALLOWED_REPOSITORIES = new Set(['davidjfelix/davidjfelix'])
 
-// Adding this label to an open pull request starts a review of its head, also
-// for drafts and for pull requests that the automatic reviews skip.
+// When a maintainer adds this label to an open pull request, a review of its
+// head starts. This also works for drafts and for pull requests that the
+// automatic reviews skip.
 export const REVIEW_LABEL = 'Revision City'
 
 const AUTOMATIC_ACTIONS = new Set(['opened', 'synchronize', 'reopened', 'ready_for_review'])

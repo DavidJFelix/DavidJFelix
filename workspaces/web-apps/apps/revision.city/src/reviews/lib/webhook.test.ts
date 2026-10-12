@@ -42,14 +42,19 @@ const sign = (body: string): string =>
 interface WebhookRequestParams {
   payload: object
   event?: string
-  // Null leaves the signature header out.
-  signature?: string | null
+  signature?: string
+  omitSignature?: boolean
 }
 
-function webhookRequest({payload, event = 'pull_request', signature}: WebhookRequestParams) {
+function webhookRequest({
+  payload,
+  event = 'pull_request',
+  signature,
+  omitSignature = false,
+}: WebhookRequestParams) {
   const body = JSON.stringify(payload)
   const headers = new Headers({'x-github-event': event})
-  if (signature !== null) {
+  if (!omitSignature) {
     headers.set('x-hub-signature-256', signature ?? sign(body))
   }
   return new Request('https://revision.city/api/github/webhook', {method: 'POST', headers, body})
@@ -101,22 +106,25 @@ test.each([
 })
 
 test.each([
-  {name: 'is missing', signature: null},
+  {name: 'is missing', omitSignature: true},
   {name: 'is empty', signature: ''},
   {name: 'has another format', signature: 'sha1=0123456789abcdef'},
   {name: 'signs another body', signature: sign('{}')},
-])('handleReviewWebhook answers 401 when the signature $name', async ({signature}) => {
-  const workflow = fakeWorkflow()
+])(
+  'handleReviewWebhook answers 401 when the signature $name',
+  async ({signature, omitSignature}) => {
+    const workflow = fakeWorkflow()
 
-  const response = await handleReviewWebhook({
-    request: webhookRequest({payload: pullRequestEvent, signature}),
-    secret,
-    workflow,
-  })
+    const response = await handleReviewWebhook({
+      request: webhookRequest({payload: pullRequestEvent, signature, omitSignature}),
+      secret,
+      workflow,
+    })
 
-  expect(response.status).toBe(401)
-  expect(workflow.create).not.toHaveBeenCalled()
-})
+    expect(response.status).toBe(401)
+    expect(workflow.create).not.toHaveBeenCalled()
+  },
+)
 
 test('handleReviewWebhook ignores a signed body that is not JSON', async () => {
   const request = new Request('https://revision.city/api/github/webhook', {

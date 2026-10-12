@@ -52,7 +52,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "0.9.10",
-    "@atproto/api": "0.24.0",
+    "@atproto/api": "0.24.3",
     "@pandacss/dev": "catalog:",
     "@pandacss/preset-base": "catalog:",
     "@pandacss/preset-panda": "catalog:",

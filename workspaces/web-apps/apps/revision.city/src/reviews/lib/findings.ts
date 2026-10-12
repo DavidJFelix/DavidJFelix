@@ -50,6 +50,14 @@ export interface AnchorFindingsParams {
   findings: readonly ModelFinding[]
 }
 
+// Limits on what one model answer can add to a review. They keep the findings
+// within GitHub's limit of 65,536 characters for a comment and Cloudflare's
+// limit of 1 MiB for a Workflow step result.
+const MAX_FINDINGS_PER_ANSWER = 20
+const MAX_TITLE_LENGTH = 200
+const MAX_BODY_LENGTH = 3000
+const MAX_SUGGESTION_LENGTH = 3000
+
 // Maps chunk-local labels back to new-file lines. A finding whose label is not
 // in the chunk cannot become an inline comment, so it is dropped.
 export function anchorFindings({
@@ -58,28 +66,44 @@ export function anchorFindings({
   rendered,
   findings,
 }: AnchorFindingsParams): Finding[] {
-  return findings.flatMap((finding) => {
-    const startLine = rendered.newLineByLabel.get(finding.label)
-    if (startLine === undefined) {
-      return []
-    }
-    const endLine = rangeEndLine({newLineByLabel: rendered.newLineByLabel, finding, startLine})
-    const {suggestion} = finding
-    return [
-      {
-        reviewerId,
-        path: chunk.path,
-        severity: finding.severity,
-        title: finding.title,
-        body: finding.body,
-        startLine,
-        endLine: endLine ?? startLine,
-        // A suggestion replaces the whole range that the model gave, so it does
-        // not fit a range that was cut to its first line.
-        ...(typeof suggestion === 'string' && endLine !== undefined ? {suggestion} : {}),
-      },
-    ]
-  })
+  return findings
+    .flatMap((finding) => {
+      const startLine = rendered.newLineByLabel.get(finding.label)
+      if (startLine === undefined) {
+        return []
+      }
+      const endLine = rangeEndLine({newLineByLabel: rendered.newLineByLabel, finding, startLine})
+      const {suggestion} = finding
+      return [
+        {
+          reviewerId,
+          path: chunk.path,
+          severity: finding.severity,
+          title: clip(finding.title, MAX_TITLE_LENGTH),
+          body: clip(finding.body, MAX_BODY_LENGTH),
+          startLine,
+          endLine: endLine ?? startLine,
+          // A suggestion replaces the whole range that the model gave, so it does
+          // not fit a range that was cut to its first line. A cut suggestion
+          // would also replace the lines with broken code.
+          ...(typeof suggestion === 'string' &&
+          endLine !== undefined &&
+          suggestion.length <= MAX_SUGGESTION_LENGTH
+            ? {suggestion}
+            : {}),
+        },
+      ]
+    })
+    .toSorted(bySeverity)
+    .slice(0, MAX_FINDINGS_PER_ANSWER)
+}
+
+function clip(text: string, maxLength: number): string {
+  return text.length <= maxLength ? text : `${text.slice(0, maxLength - 3)}...`
+}
+
+function bySeverity(a: Finding, b: Finding): number {
+  return SEVERITIES.indexOf(a.severity) - SEVERITIES.indexOf(b.severity)
 }
 
 interface RangeEndLineParams {
@@ -109,11 +133,8 @@ function rangeEndLine({
 // overlap are all kept, so that a wide range does not hide other problems in it.
 // Returns findings in severity order.
 export function dedupeFindings(findings: readonly Finding[]): Finding[] {
-  const bySeverity = findings.toSorted(
-    (a, b) => SEVERITIES.indexOf(a.severity) - SEVERITIES.indexOf(b.severity),
-  )
   const keptByCommentLine = new Map<string, Finding>()
-  for (const finding of bySeverity) {
+  for (const finding of findings.toSorted(bySeverity)) {
     const commentLine = `${finding.path}:${finding.endLine}`
     if (!keptByCommentLine.has(commentLine)) {
       keptByCommentLine.set(commentLine, finding)

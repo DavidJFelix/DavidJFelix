@@ -15,13 +15,18 @@ const chunkReviewResultSchema = z.object({
 
 export type ChunkReviewResult = z.infer<typeof chunkReviewResultSchema>
 
-// Saved model answers, keyed by the chunk text, model, reviewer, and system prompt.
+// Saved model answers, keyed by the scope, chunk text, model, reviewer, and
+// system prompt.
 export interface ChunkReviewStore {
   get: (key: string) => Promise<ChunkReviewResult | undefined>
   put: (key: string, result: ChunkReviewResult) => Promise<void>
 }
 
 export interface ChunkReviewKeyParams {
+  // A saved result goes only to a review with the same scope, such as the same
+  // GitHub App installation. So it never shows that another installation
+  // reviewed the same code.
+  scope: string
   model: string
   reviewerId: string
   systemPrompt: string
@@ -33,12 +38,13 @@ export interface ChunkReviewKeyParams {
 const KEY_VERSION = 1
 
 export function chunkReviewKey({
+  scope,
   model,
   reviewerId,
   systemPrompt,
   chunkText,
 }: ChunkReviewKeyParams): Promise<string> {
-  return sha256Hex(JSON.stringify([KEY_VERSION, model, reviewerId, systemPrompt, chunkText]))
+  return sha256Hex(JSON.stringify([KEY_VERSION, scope, model, reviewerId, systemPrompt, chunkText]))
 }
 
 export function createSqliteChunkReviewStore(

@@ -33,7 +33,7 @@ replaces Warden in this repository. This project started as part of
   result. A push that grows or shrinks a hunk above it in the same file can still move the chunk
   boundaries.
 - **Saved results** in D1 (`chunk_reviews`, a drizzle schema with its migrations in `drizzle/`),
-  keyed by a SHA-256 of the model, reviewer, system prompt, and rendered chunk.
+  keyed by a SHA-256 of the scope, model, reviewer, system prompt, and rendered chunk.
 - **Runner: Cloudflare Workflows.** The webhook route verifies the signature and the allowlist,
   starts a Workflow instance, and returns 202 inside GitHub's 10-second window. The Workflow fetches
   the files, reviews each chunk in its own durable step (a retry never pays twice), and posts one

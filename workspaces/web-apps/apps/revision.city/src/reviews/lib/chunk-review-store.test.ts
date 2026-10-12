@@ -7,7 +7,13 @@ import {migrate} from 'drizzle-orm/sqlite-proxy/migrator'
 import {expect, test} from 'vitest'
 import {chunkReviewKey, createSqliteChunkReviewStore} from './chunk-review-store'
 
-const keyParams = {model: 'vendor/model', reviewerId: 'security', systemPrompt: 'p', chunkText: 't'}
+const keyParams = {
+  scope: 'installation:1',
+  model: 'vendor/model',
+  reviewerId: 'security',
+  systemPrompt: 'p',
+  chunkText: 't',
+}
 const result = {
   findings: [],
   usage: {promptTokens: 1, completionTokens: 1, costUsd: 0.1},
@@ -21,7 +27,7 @@ test('chunkReviewKey is a stable hex digest of its inputs', async () => {
   expect(await chunkReviewKey({...keyParams})).toBe(key)
 })
 
-test.each(['model', 'reviewerId', 'systemPrompt', 'chunkText'] as const)(
+test.each(['scope', 'model', 'reviewerId', 'systemPrompt', 'chunkText'] as const)(
   'chunkReviewKey changes when %s changes',
   async (field) => {
     expect(await chunkReviewKey({...keyParams, [field]: 'other'})).not.toBe(

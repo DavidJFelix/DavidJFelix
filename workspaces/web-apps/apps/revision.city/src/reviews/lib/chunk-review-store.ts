@@ -3,6 +3,7 @@ import type {BaseSQLiteDatabase} from 'drizzle-orm/sqlite-core'
 import {z} from 'zod'
 import {modelFindingSchema} from './findings'
 import {chunkReviews} from './schema'
+import {sha256Hex} from './sha256'
 
 const chunkReviewResultSchema = z.object({
   findings: z.array(modelFindingSchema),
@@ -28,15 +29,13 @@ export interface ChunkReviewKeyParams {
 // OpenRouter request settings or to how answers are parsed.
 const KEY_VERSION = 1
 
-export async function chunkReviewKey({
+export function chunkReviewKey({
   model,
   reviewerId,
   systemPrompt,
   chunkText,
 }: ChunkReviewKeyParams): Promise<string> {
-  const material = JSON.stringify([KEY_VERSION, model, reviewerId, systemPrompt, chunkText])
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(material))
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('')
+  return sha256Hex(JSON.stringify([KEY_VERSION, model, reviewerId, systemPrompt, chunkText]))
 }
 
 export function createSqliteChunkReviewStore(

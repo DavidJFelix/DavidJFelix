@@ -4,15 +4,22 @@
 // reviewer's on the same PR.
 //
 // Usage: bun bin/review-pull-request.ts <owner>/<repo>#<number>
-// Needs OPENROUTER_API_KEY and REVIEW_MODEL (an OpenRouter model slug).
-// GITHUB_TOKEN is optional for public repositories. Saved results live only for
-// this process, so every run pays for every chunk.
+// Needs OPENROUTER_API_KEY and REVIEW_MODEL (an OpenRouter model slug that
+// supports tool calls). GITHUB_TOKEN is optional for public repositories, but
+// without it GitHub allows 60 requests an hour, which the reviewers' file reads
+// soon use up. Saved results live only for this process, so every run pays
+// for every chunk.
 
-import {z} from 'zod'
 import {createMemoryChunkReviewStore} from '../src/reviews/lib/chunk-review-store'
 import {decideOutcome} from '../src/reviews/lib/findings'
+import {
+  createGitHubRequest,
+  getPullRequest,
+  listPullRequestFiles,
+} from '../src/reviews/lib/github-api'
 import {createOpenRouterChat} from '../src/reviews/lib/openrouter'
-import type {PullRequestFile} from '../src/reviews/lib/review-chunks'
+import {loadRepositorySnapshot} from '../src/reviews/lib/repository-snapshot'
+import {fileReviewStatus} from '../src/reviews/lib/review-chunks'
 import {reviewPullRequest} from '../src/reviews/lib/review-pull-request'
 
 const reference = /^([\w.-]+)\/([\w.-]+)#(\d+)$/.exec(process.argv[2] ?? '')
@@ -23,39 +30,24 @@ if (!reference || !OPENROUTER_API_KEY || !REVIEW_MODEL) {
   )
   process.exit(1)
 }
-const [, owner, repo, pullNumber] = reference
+const [, owner, name, pullNumberText] = reference
+const repository = {owner, name}
+const pullNumber = Number(pullNumberText)
 
-const pullRequestFilesSchema = z.array(
-  z.object({
-    filename: z.string(),
-    status: z.enum(['added', 'removed', 'modified', 'renamed', 'copied', 'changed', 'unchanged']),
-    patch: z.string().optional(),
-  }),
-)
-
-async function fetchPullRequestFiles(page = 1): Promise<PullRequestFile[]> {
-  const response = await fetch(
-    `https://api.github.com/repos/${owner}/${repo}/pulls/${pullNumber}/files?per_page=100&page=${page}`,
-    {
-      headers: {
-        'user-agent': 'revision.city',
-        ...(GITHUB_TOKEN ? {authorization: `Bearer ${GITHUB_TOKEN}`} : {}),
-      },
-    },
-  )
-  if (!response.ok) {
-    throw new Error(`GitHub returned ${response.status}: ${await response.text()}`)
-  }
-  const batch = pullRequestFilesSchema.parse(await response.json())
-  const files = batch.map(({filename, status, patch}) => ({path: filename, status, patch}))
-  return batch.length < 100 ? files : [...files, ...(await fetchPullRequestFiles(page + 1))]
+const request = createGitHubRequest({token: GITHUB_TOKEN ? async () => GITHUB_TOKEN : undefined})
+const pull = await getPullRequest({request, repository, pullNumber})
+const files = await listPullRequestFiles({request, repository, pullNumber})
+const snapshot = await loadRepositorySnapshot({request, repository, commitSha: pull.headSha})
+if (!snapshot) {
+  console.error('The repository tree is too large to load, so the reviewers run without tools.')
 }
 
 const review = await reviewPullRequest({
-  files: await fetchPullRequestFiles(),
+  files,
   model: REVIEW_MODEL,
   store: createMemoryChunkReviewStore(),
   chat: createOpenRouterChat({apiKey: OPENROUTER_API_KEY}),
+  headSnapshot: snapshot,
 })
 const outcome = decideOutcome(review.findings, {failedChunkReviewCount: review.failures.length})
 
@@ -69,6 +61,12 @@ for (const finding of outcome.reported) {
 }
 for (const failure of review.failures) {
   console.error(`\nFailed: ${failure.path} (${failure.reviewerId}): ${failure.error}`)
+}
+for (const file of files) {
+  const status = fileReviewStatus(file)
+  if (status === 'no-text-diff' || status === 'too-large') {
+    console.error(`Not reviewed (${status}): ${file.path}`)
+  }
 }
 console.log(
   `\n${outcome.failed ? 'FAIL' : 'PASS'}: ${outcome.reported.length} reported, ` +

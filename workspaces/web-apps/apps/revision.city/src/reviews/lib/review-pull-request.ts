@@ -7,6 +7,7 @@ import {
   modelFindingSchema,
 } from './findings'
 import {addUsage, type Chat, type CompletionUsage, extractJson, NO_USAGE} from './openrouter'
+import {type RepositorySnapshot, readsStillMatch} from './repository-snapshot'
 import {
   type ChunkPullRequestFilesOptions,
   chunkPullRequestFiles,
@@ -14,7 +15,9 @@ import {
   type ReviewChunk,
   renderChunk,
 } from './review-chunks'
+import {createReviewTools} from './review-tools'
 import {buildSystemPrompt, REVIEWERS, type Reviewer} from './reviewers'
+import {runToolLoop} from './tool-loop'
 
 export interface ReviewChunkParams {
   chunk: ReviewChunk
@@ -22,6 +25,8 @@ export interface ReviewChunkParams {
   model: string
   store: ChunkReviewStore
   chat: Chat
+  // With it, reviewers get tools that read files outside the chunk.
+  headSnapshot?: RepositorySnapshot
 }
 
 export interface ChunkReviewOutcome {
@@ -37,9 +42,11 @@ export async function reviewChunk({
   model,
   store,
   chat,
+  headSnapshot,
 }: ReviewChunkParams): Promise<ChunkReviewOutcome> {
   const rendered = renderChunk(chunk)
-  const system = buildSystemPrompt(reviewer)
+  const tools = headSnapshot === undefined ? undefined : createReviewTools(headSnapshot)
+  const system = buildSystemPrompt({reviewer, withTools: tools !== undefined})
   const key = await chunkReviewKey({
     model,
     reviewerId: reviewer.id,
@@ -51,29 +58,29 @@ export async function reviewChunk({
   // The store only saves cost. When it fails, the chunk is reviewed anyway and
   // the failure does not fail the review.
   const saved = await store.get(key).catch(warnStoreFailure)
-  if (saved) {
+  if (saved && readsStillMatch(saved.reads, headSnapshot)) {
     return {findings: anchor(saved.findings), cached: true, usage: NO_USAGE}
   }
-  const reply = await chat({
-    model,
-    messages: [
-      {role: 'system', content: system},
-      {role: 'user', content: rendered.text},
-    ],
-  })
-  const answer = parseModelAnswer(reply.content)
-  // An answer that does not fully parse is not saved, so the next run asks again.
-  // Its usage is still returned, because the call was billed.
+  const result = await runToolLoop({chat, model, system, prompt: rendered.text, tools})
+  // reviewChunk saves only an answer that fully parses, so the next run asks
+  // again after a failure. It still returns the usage of each model call before
+  // the failure, because the provider bills those calls.
+  if ('error' in result) {
+    return {findings: [], cached: false, usage: result.usage, error: String(result.error)}
+  }
+  const answer = parseModelAnswer(result.text)
   if (answer.error !== undefined) {
     return {
       findings: anchor(answer.findings),
       cached: false,
-      usage: reply.usage,
+      usage: result.usage,
       error: answer.error,
     }
   }
-  await store.put(key, {findings: answer.findings, usage: reply.usage}).catch(warnStoreFailure)
-  return {findings: anchor(answer.findings), cached: false, usage: reply.usage}
+  await store
+    .put(key, {findings: answer.findings, usage: result.usage, reads: result.reads})
+    .catch(warnStoreFailure)
+  return {findings: anchor(answer.findings), cached: false, usage: result.usage}
 }
 
 const STORE_FAILURE_LOG_MESSAGE = 'Chunk review store failed; the review continues without it'
@@ -109,6 +116,7 @@ export interface ReviewPullRequestParams extends ChunkPullRequestFilesOptions {
   model: string
   store: ChunkReviewStore
   chat: Chat
+  headSnapshot?: RepositorySnapshot
   reviewers?: readonly Reviewer[]
   concurrency?: number
 }
@@ -134,6 +142,7 @@ export async function reviewPullRequest({
   model,
   store,
   chat,
+  headSnapshot,
   reviewers = REVIEWERS,
   concurrency = 8,
   ...chunkOptions
@@ -144,7 +153,7 @@ export async function reviewPullRequest({
   const settled = await mapWithConcurrency({
     items: units,
     limit: concurrency,
-    run: ({chunk, reviewer}) => reviewChunk({chunk, reviewer, model, store, chat}),
+    run: ({chunk, reviewer}) => reviewChunk({chunk, reviewer, model, store, chat, headSnapshot}),
   })
   const outcomes = settled.flatMap((result) =>
     result.status === 'fulfilled' ? [result.value] : [],

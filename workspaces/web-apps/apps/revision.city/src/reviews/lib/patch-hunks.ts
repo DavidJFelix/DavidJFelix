@@ -22,7 +22,7 @@ const LINE_KINDS: Readonly<Record<string, DiffLineKind>> = {
 export function parsePatchHunks(patch: string): PatchHunk[] {
   const hunks: DiffLine[][] = []
   let nextNewLine = 0
-  for (const rawLine of patch.split('\n')) {
+  for (const rawLine of splitLines(patch)) {
     const header = HUNK_HEADER_PATTERN.exec(rawLine)
     if (header) {
       hunks.push([])
@@ -30,7 +30,8 @@ export function parsePatchHunks(patch: string): PatchHunk[] {
       continue
     }
     const current = hunks.at(-1)
-    const kind = LINE_KINDS[rawLine.charAt(0)]
+    // Some diff tools write a blank context line without its leading space.
+    const kind = rawLine === '' ? 'context' : LINE_KINDS[rawLine.charAt(0)]
     if (!current || !kind) {
       continue
     }
@@ -43,4 +44,10 @@ export function parsePatchHunks(patch: string): PatchHunk[] {
     }
   }
   return hunks.filter((lines) => lines.length > 0).map((lines) => ({lines}))
+}
+
+// A final newline ends the last line. It does not start an empty line.
+function splitLines(patch: string): string[] {
+  const lines = patch.split('\n')
+  return lines.at(-1) === '' ? lines.slice(0, -1) : lines
 }

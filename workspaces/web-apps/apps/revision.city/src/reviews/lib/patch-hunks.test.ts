@@ -32,6 +32,19 @@ test('parsePatchHunks ignores text before the first hunk and no-newline markers'
   expect(hunk.lines.map((line) => line.kind)).toEqual(['removed', 'added'])
 })
 
+test('parsePatchHunks counts a blank context line that has no leading space', () => {
+  const patch = ['@@ -1,3 +1,4 @@', ' a', '', '+b', ' c', ''].join('\n')
+
+  const [hunk] = parsePatchHunks(patch)
+
+  expect(hunk.lines).toEqual([
+    {kind: 'context', text: 'a', newLine: 1},
+    {kind: 'context', text: '', newLine: 2},
+    {kind: 'added', text: 'b', newLine: 3},
+    {kind: 'context', text: 'c', newLine: 4},
+  ])
+})
+
 test('parsePatchHunks returns nothing for an empty patch', () => {
   expect(parsePatchHunks('')).toEqual([])
 })

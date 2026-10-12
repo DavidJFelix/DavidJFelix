@@ -229,21 +229,38 @@ async function attemptChat({
 
 // Some models add prose or a Markdown fence around the JSON, even when the prompt
 // asks for a JSON object. The prose can quote other JSON, so the answer is the
-// first object that matches the schema.
+// first object that matches the schema. `extractJson` tries objects inside other
+// objects last, so that an object inside quoted JSON cannot hide an outer answer.
 export function extractJson<Value>(text: string, schema: z.ZodType<Value>): Value {
-  let firstError: z.ZodError<Value> | undefined
+  const objects = parseJsonObjects(text)
+  const results = [
+    ...objects.filter((object) => !object.nested),
+    ...objects.filter((object) => object.nested),
+  ].map((object) => schema.safeParse(object.value))
+  const match = results.find((result) => result.success)
+  if (match?.success) {
+    return match.data
+  }
+  throw results[0]?.error ?? new Error('Model response has no JSON object')
+}
+
+interface ParsedJsonObject {
+  value: unknown
+  nested: boolean
+}
+
+function parseJsonObjects(text: string): ParsedJsonObject[] {
+  const objects: ParsedJsonObject[] = []
+  let outerEnd = -1
   for (let start = text.indexOf('{'); start !== -1; start = text.indexOf('{', start + 1)) {
     const end = closingBraceIndex(text, start)
-    const parsed = end === undefined ? undefined : tryParseJson(text.slice(start, end + 1))
-    if (parsed !== undefined) {
-      const result = schema.safeParse(parsed)
-      if (result.success) {
-        return result.data
-      }
-      firstError ??= result.error
+    const value = end === undefined ? undefined : tryParseJson(text.slice(start, end + 1))
+    if (end !== undefined && value !== undefined) {
+      objects.push({value, nested: start < outerEnd})
+      outerEnd = Math.max(outerEnd, end)
     }
   }
-  throw firstError ?? new Error('Model response has no JSON object')
+  return objects
 }
 
 function closingBraceIndex(text: string, start: number): number | undefined {

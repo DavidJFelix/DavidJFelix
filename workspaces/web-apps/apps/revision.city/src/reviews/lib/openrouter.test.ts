@@ -211,6 +211,15 @@ test.each<{name: string; text: string; expected?: unknown}>([
     name: 'an answer after other JSON in the prose',
     text: 'It has {"type": "module"}. {"findings": []}',
   },
+  {
+    name: 'an answer after quoted JSON that has a findings list inside it',
+    text: 'The fixture is {"data": {"findings": []}}. {"findings": [1]}',
+    expected: {findings: [1]},
+  },
+  {
+    name: 'an answer that the model wrapped in another object',
+    text: '{"review": {"findings": []}}',
+  },
 ])('extractJson reads $name', ({text, expected = {findings: []}}) => {
   expect(extractJson(text, answerSchema)).toEqual(expected)
 })

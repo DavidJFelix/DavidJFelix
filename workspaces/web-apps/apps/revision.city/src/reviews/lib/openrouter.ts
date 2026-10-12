@@ -76,17 +76,23 @@ export function createOpenRouterComplete({
   }
 }
 
-// Some models wrap JSON in a Markdown fence, or add prose around it, even when
-// asked for a JSON object.
-export function extractJson(text: string): unknown {
+// Some models add prose or a Markdown fence around the JSON, even when the prompt
+// asks for a JSON object. The prose can quote other JSON, so the answer is the
+// first object that matches the schema.
+export function extractJson<Value>(text: string, schema: z.ZodType<Value>): Value {
+  let firstError: z.ZodError<Value> | undefined
   for (let start = text.indexOf('{'); start !== -1; start = text.indexOf('{', start + 1)) {
     const end = closingBraceIndex(text, start)
     const parsed = end === undefined ? undefined : tryParseJson(text.slice(start, end + 1))
     if (parsed !== undefined) {
-      return parsed
+      const result = schema.safeParse(parsed)
+      if (result.success) {
+        return result.data
+      }
+      firstError ??= result.error
     }
   }
-  throw new Error('Model response has no JSON object')
+  throw firstError ?? new Error('Model response has no JSON object')
 }
 
 function closingBraceIndex(text: string, start: number): number | undefined {

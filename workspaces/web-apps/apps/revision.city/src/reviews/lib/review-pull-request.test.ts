@@ -1,6 +1,6 @@
 import {expect, test, vi} from 'vitest'
 import {createMemoryChunkReviewStore} from './chunk-review-store'
-import type {Complete} from './openrouter'
+import type {Chat} from './openrouter'
 import type {PullRequestFile} from './review-chunks'
 import {reviewPullRequest} from './review-pull-request'
 import {REVIEWERS} from './reviewers'
@@ -11,10 +11,10 @@ const files = (start: number): PullRequestFile[] => [
   {path: 'a.ts', status: 'modified', patch: `@@ -${start},1 +${start},2 @@\n ctx\n+added`},
 ]
 
-const answering = (text: string) => vi.fn<Complete>(async () => ({text, usage}))
+const answering = (content: string) => vi.fn<Chat>(async () => ({content, toolCalls: [], usage}))
 
 test('reviewPullRequest runs every reviewer on every chunk and anchors findings', async () => {
-  const complete = answering(
+  const chat = answering(
     '{"findings": [{"severity": "high", "title": "Bug", "body": "Breaks", "label": 2}]}',
   )
 
@@ -22,10 +22,10 @@ test('reviewPullRequest runs every reviewer on every chunk and anchors findings'
     files: files(5),
     model: 'vendor/model',
     store: createMemoryChunkReviewStore(),
-    complete,
+    chat,
   })
 
-  expect(complete).toHaveBeenCalledTimes(REVIEWERS.length)
+  expect(chat).toHaveBeenCalledTimes(REVIEWERS.length)
   expect(review.findings.map((finding) => [finding.reviewerId, finding.endLine])).toEqual(
     REVIEWERS.map((reviewer) => [reviewer.id, 6]),
   )
@@ -36,15 +36,15 @@ test('reviewPullRequest runs every reviewer on every chunk and anchors findings'
 
 test('reviewPullRequest answers a re-run from saved results without calling the model', async () => {
   const store = createMemoryChunkReviewStore()
-  const complete = answering(
+  const chat = answering(
     '{"findings": [{"severity": "high", "title": "Bug", "body": "Breaks", "label": 2}]}',
   )
-  await reviewPullRequest({files: files(5), model: 'vendor/model', store, complete})
-  complete.mockClear()
+  await reviewPullRequest({files: files(5), model: 'vendor/model', store, chat})
+  chat.mockClear()
 
-  const review = await reviewPullRequest({files: files(40), model: 'vendor/model', store, complete})
+  const review = await reviewPullRequest({files: files(40), model: 'vendor/model', store, chat})
 
-  expect(complete).not.toHaveBeenCalled()
+  expect(chat).not.toHaveBeenCalled()
   expect(review.cachedCount).toBe(REVIEWERS.length)
   expect(review.usage.costUsd).toBe(0)
   // The chunk moved down the file; saved findings follow it.
@@ -53,13 +53,13 @@ test('reviewPullRequest answers a re-run from saved results without calling the 
 
 test('reviewPullRequest reports a chunk the model answered badly and does not save it', async () => {
   const store = createMemoryChunkReviewStore()
-  const complete = answering('not json')
+  const chat = answering('not json')
 
   const review = await reviewPullRequest({
     files: files(5),
     model: 'vendor/model',
     store,
-    complete,
+    chat,
     reviewers: REVIEWERS.slice(0, 1),
   })
 
@@ -69,19 +69,19 @@ test('reviewPullRequest reports a chunk the model answered badly and does not sa
   ])
   // OpenRouter still bills a bad answer.
   expect(review.usage).toEqual(usage)
-  complete.mockClear()
+  chat.mockClear()
   await reviewPullRequest({
     files: files(5),
     model: 'vendor/model',
     store,
-    complete,
+    chat,
     reviewers: REVIEWERS.slice(0, 1),
   })
-  expect(complete).toHaveBeenCalledTimes(1)
+  expect(chat).toHaveBeenCalledTimes(1)
 })
 
 test('reviewPullRequest reads the answer after other JSON that the model quotes', async () => {
-  const complete = answering(
+  const chat = answering(
     'The file has {"type": "module"}. {"findings": [{"severity": "high", "title": "Bug", "body": "Breaks", "label": 2}]}',
   )
 
@@ -89,7 +89,7 @@ test('reviewPullRequest reads the answer after other JSON that the model quotes'
     files: files(5),
     model: 'vendor/model',
     store: createMemoryChunkReviewStore(),
-    complete,
+    chat,
     reviewers: REVIEWERS.slice(0, 1),
   })
 
@@ -99,25 +99,25 @@ test('reviewPullRequest reads the answer after other JSON that the model quotes'
 
 test('reviewPullRequest keeps the valid findings of an answer with a malformed one', async () => {
   const store = createMemoryChunkReviewStore()
-  const complete = answering(
+  const chat = answering(
     '{"findings": [{"severity": "high", "title": "Bug", "body": "Breaks", "label": 2}, {"severity": "high", "title": "", "body": "No title", "label": 0}]}',
   )
   const options = {files: files(5), model: 'vendor/model', store, reviewers: REVIEWERS.slice(0, 1)}
 
-  const review = await reviewPullRequest({...options, complete})
+  const review = await reviewPullRequest({...options, chat})
 
   expect(review.findings.map((finding) => finding.endLine)).toEqual([6])
   expect(review.failures).toEqual([
     {path: 'a.ts', reviewerId: 'security', error: 'Malformed findings in the answer: 1'},
   ])
-  complete.mockClear()
-  await reviewPullRequest({...options, complete})
-  expect(complete).toHaveBeenCalledTimes(1)
+  chat.mockClear()
+  await reviewPullRequest({...options, chat})
+  expect(chat).toHaveBeenCalledTimes(1)
 })
 
 test('reviewPullRequest reviews and reports findings when the store fails', async () => {
   const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-  const complete = answering(
+  const chat = answering(
     '{"findings": [{"severity": "high", "title": "Bug", "body": "Breaks", "label": 2}]}',
   )
 
@@ -128,7 +128,7 @@ test('reviewPullRequest reviews and reports findings when the store fails', asyn
       get: async () => Promise.reject(new Error('D1 read failed')),
       put: async () => Promise.reject(new Error('D1 write failed')),
     },
-    complete,
+    chat,
     reviewers: REVIEWERS.slice(0, 1),
   })
 
@@ -140,7 +140,7 @@ test('reviewPullRequest reviews and reports findings when the store fails', asyn
 })
 
 test('reviewPullRequest reports a chunk whose model call failed', async () => {
-  const complete = vi.fn<Complete>(async () => {
+  const chat = vi.fn<Chat>(async () => {
     throw new Error('OpenRouter returned 500')
   })
 
@@ -148,7 +148,7 @@ test('reviewPullRequest reports a chunk whose model call failed', async () => {
     files: files(5),
     model: 'vendor/model',
     store: createMemoryChunkReviewStore(),
-    complete,
+    chat,
     reviewers: REVIEWERS.slice(0, 1),
   })
 
@@ -159,45 +159,45 @@ test('reviewPullRequest reports a chunk whose model call failed', async () => {
 })
 
 test('reviewPullRequest makes no calls when no file is reviewable', async () => {
-  const complete = answering('{"findings": []}')
+  const chat = answering('{"findings": []}')
 
   const review = await reviewPullRequest({
     files: [{path: 'bun.lock', status: 'modified', patch: '@@ -1 +1 @@\n+a'}],
     model: 'vendor/model',
     store: createMemoryChunkReviewStore(),
-    complete,
+    chat,
   })
 
-  expect(complete).not.toHaveBeenCalled()
+  expect(chat).not.toHaveBeenCalled()
   expect(review.chunkReviewCount).toBe(0)
 })
 
 test('reviewPullRequest does not review a file over the line limit the caller sets', async () => {
-  const complete = answering('{"findings": []}')
+  const chat = answering('{"findings": []}')
 
   const review = await reviewPullRequest({
     files: files(5),
     model: 'vendor/model',
     store: createMemoryChunkReviewStore(),
-    complete,
+    chat,
     maxPatchLinesPerFile: 2,
   })
 
-  expect(complete).not.toHaveBeenCalled()
+  expect(chat).not.toHaveBeenCalled()
   expect(review.chunkReviewCount).toBe(0)
 })
 
 test('reviewPullRequest still reviews every chunk when concurrency is below one', async () => {
-  const complete = answering('{"findings": []}')
+  const chat = answering('{"findings": []}')
 
   const review = await reviewPullRequest({
     files: files(5),
     model: 'vendor/model',
     store: createMemoryChunkReviewStore(),
-    complete,
+    chat,
     concurrency: 0,
   })
 
-  expect(complete).toHaveBeenCalledTimes(REVIEWERS.length)
+  expect(chat).toHaveBeenCalledTimes(REVIEWERS.length)
   expect(review.failures).toEqual([])
 })

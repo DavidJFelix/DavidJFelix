@@ -1,74 +1,185 @@
 import {expect, test, vi} from 'vitest'
 import {z} from 'zod'
-import {createOpenRouterComplete, extractJson, type Fetch} from './openrouter'
-
-const request = {model: 'vendor/model', system: 'system text', prompt: 'prompt text'}
+import {
+  addUsage,
+  type ChatRequest,
+  createOpenRouterChat,
+  extractJson,
+  type Fetch,
+  OpenRouterError,
+} from './openrouter'
 
 const answerSchema = z.looseObject({findings: z.array(z.unknown())})
 
-test('createOpenRouterComplete sends the prompt and returns text with usage', async () => {
+const request: ChatRequest = {
+  model: 'vendor/model',
+  messages: [
+    {role: 'system', content: 'system text'},
+    {role: 'user', content: 'prompt text'},
+  ],
+}
+
+const sentBody = (fetchStub: ReturnType<typeof vi.fn<Fetch>>, call = 0): unknown => {
+  const body = fetchStub.mock.calls[call][1].body
+  return typeof body === 'string' ? JSON.parse(body) : undefined
+}
+
+test('createOpenRouterChat sends the messages and returns the content with usage', async () => {
   const fetchStub = vi.fn<Fetch>(async () =>
     Response.json({
       choices: [{message: {content: '{"findings": []}'}}],
       usage: {prompt_tokens: 100, completion_tokens: 20, cost: 0.003},
     }),
   )
-  const complete = createOpenRouterComplete({apiKey: 'key', fetch: fetchStub})
+  const chat = createOpenRouterChat({apiKey: 'key', fetch: fetchStub})
 
-  const completion = await complete(request)
+  const reply = await chat(request)
 
-  expect(completion).toEqual({
-    text: '{"findings": []}',
+  expect(reply).toEqual({
+    content: '{"findings": []}',
+    toolCalls: [],
     usage: {promptTokens: 100, completionTokens: 20, costUsd: 0.003},
   })
   const [url, init] = fetchStub.mock.calls[0]
   expect(url).toBe('https://openrouter.ai/api/v1/chat/completions')
   expect(new Headers(init.headers).get('authorization')).toBe('Bearer key')
-  expect(typeof init.body === 'string' && JSON.parse(init.body)).toMatchObject({
+  expect(sentBody(fetchStub)).toEqual({
     model: 'vendor/model',
     messages: [
       {role: 'system', content: 'system text'},
       {role: 'user', content: 'prompt text'},
     ],
+    response_format: {type: 'json_object'},
+    temperature: 0,
+    usage: {include: true},
   })
 })
 
-test('createOpenRouterComplete reports zero usage when the response has none', async () => {
-  const complete = createOpenRouterComplete({
+test('createOpenRouterChat sends tools and tool messages, and returns tool calls', async () => {
+  const fetchStub = vi.fn<Fetch>(async () =>
+    Response.json({
+      choices: [
+        {
+          message: {
+            content: null,
+            tool_calls: [
+              {id: 'c2', type: 'function', function: {name: 'read_file', arguments: '{}'}},
+            ],
+          },
+        },
+      ],
+    }),
+  )
+  const chat = createOpenRouterChat({apiKey: 'key', fetch: fetchStub})
+  const tool = {name: 'read_file', description: 'Reads', parameters: {type: 'object'}}
+
+  const reply = await chat({
+    model: 'vendor/model',
+    messages: [
+      {role: 'user', content: 'prompt'},
+      {role: 'assistant', content: '', toolCalls: [{id: 'c1', name: 'read_file', arguments: '{}'}]},
+      {role: 'tool', toolCallId: 'c1', content: 'file text'},
+      {role: 'assistant', content: 'thinking', toolCalls: []},
+    ],
+    tools: [tool],
+    toolChoice: 'none',
+  })
+
+  expect(reply.toolCalls).toEqual([{id: 'c2', name: 'read_file', arguments: '{}'}])
+  expect(reply.content).toBe('')
+  expect(sentBody(fetchStub)).toMatchObject({
+    messages: [
+      {role: 'user', content: 'prompt'},
+      {
+        role: 'assistant',
+        content: null,
+        tool_calls: [{id: 'c1', type: 'function', function: {name: 'read_file', arguments: '{}'}}],
+      },
+      {role: 'tool', tool_call_id: 'c1', content: 'file text'},
+      {role: 'assistant', content: 'thinking', tool_calls: []},
+    ],
+    tools: [{type: 'function', function: tool}],
+    tool_choice: 'none',
+  })
+})
+
+test('createOpenRouterChat lets the model choose tools when no choice is given', async () => {
+  const fetchStub = vi.fn<Fetch>(async () => Response.json({choices: [{message: {content: '{}'}}]}))
+  const chat = createOpenRouterChat({apiKey: 'key', fetch: fetchStub})
+
+  await chat({...request, tools: []})
+
+  expect(sentBody(fetchStub)).toMatchObject({tools: [], tool_choice: 'auto'})
+})
+
+test('createOpenRouterChat reports zero usage when the response has none', async () => {
+  const chat = createOpenRouterChat({
     apiKey: 'key',
     fetch: async () => Response.json({choices: [{message: {content: '{}'}}]}),
   })
 
-  expect((await complete(request)).usage).toEqual({
-    promptTokens: 0,
-    completionTokens: 0,
-    costUsd: 0,
+  expect((await chat(request)).usage).toEqual({promptTokens: 0, completionTokens: 0, costUsd: 0})
+})
+
+test.each([
+  {name: 'a retryable status', failure: () => new Response('busy', {status: 503})},
+  {name: 'an error in a 200 response', failure: () => Response.json({error: {message: 'down'}})},
+  {
+    name: 'a network error',
+    failure: () => {
+      throw new TypeError('connection reset')
+    },
+  },
+])('createOpenRouterChat retries after $name', async ({failure}) => {
+  const fetchStub = vi
+    .fn<Fetch>()
+    .mockImplementationOnce(async () => failure())
+    .mockImplementationOnce(async () => Response.json({choices: [{message: {content: '{}'}}]}))
+  const chat = createOpenRouterChat({apiKey: 'key', fetch: fetchStub, retryDelaysMs: [0]})
+
+  expect((await chat(request)).content).toBe('{}')
+  expect(fetchStub).toHaveBeenCalledTimes(2)
+})
+
+test('createOpenRouterChat throws a temporary error when the retries run out', async () => {
+  const fetchStub = vi.fn<Fetch>(async () => new Response('rate limited', {status: 429}))
+  const chat = createOpenRouterChat({apiKey: 'key', fetch: fetchStub, retryDelaysMs: [0, 0]})
+
+  await expect(chat(request)).rejects.toEqual(
+    new OpenRouterError('OpenRouter returned 429: rate limited', true),
+  )
+  expect(fetchStub).toHaveBeenCalledTimes(3)
+})
+
+test('createOpenRouterChat does not retry a request that cannot succeed', async () => {
+  const fetchStub = vi.fn<Fetch>(async () => new Response('bad key', {status: 401}))
+  const chat = createOpenRouterChat({apiKey: 'key', fetch: fetchStub, retryDelaysMs: [0]})
+
+  await expect(chat(request)).rejects.toEqual(
+    new OpenRouterError('OpenRouter returned 401: bad key', false),
+  )
+  expect(fetchStub).toHaveBeenCalledTimes(1)
+})
+
+test('createOpenRouterChat throws an error that is not temporary for a response that it cannot read', async () => {
+  const chat = createOpenRouterChat({
+    apiKey: 'key',
+    fetch: async () => Response.json({choices: []}),
+  })
+
+  await expect(chat(request)).rejects.toMatchObject({
+    message: expect.stringContaining('OpenRouter returned an unexpected response'),
+    temporary: false,
   })
 })
 
-test('createOpenRouterComplete returns empty text with the usage when the answer has no content', async () => {
-  const complete = createOpenRouterComplete({
-    apiKey: 'key',
-    fetch: async () =>
-      Response.json({
-        choices: [{message: {content: null}}],
-        usage: {prompt_tokens: 100, completion_tokens: 0, cost: 0.001},
-      }),
-  })
-
-  expect(await complete(request)).toEqual({
-    text: '',
-    usage: {promptTokens: 100, completionTokens: 0, costUsd: 0.001},
-  })
-})
-
-test('createOpenRouterComplete throws on an error status', async () => {
-  const complete = createOpenRouterComplete({
-    apiKey: 'key',
-    fetch: async () => new Response('rate limited', {status: 429}),
-  })
-
-  await expect(complete(request)).rejects.toThrow('OpenRouter returned 429: rate limited')
+test('addUsage sums each field', () => {
+  expect(
+    addUsage(
+      {promptTokens: 1, completionTokens: 2, costUsd: 0.5},
+      {promptTokens: 10, completionTokens: 20, costUsd: 0.25},
+    ),
+  ).toEqual({promptTokens: 11, completionTokens: 22, costUsd: 0.75})
 })
 
 test('extractJson reads an object wrapped in a Markdown fence', () => {

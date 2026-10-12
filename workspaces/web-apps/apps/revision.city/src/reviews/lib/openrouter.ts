@@ -76,25 +76,42 @@ export function createOpenRouterComplete({
   }
 }
 
-const FENCED_BLOCK_PATTERN = /```(?:json)?\s*\n([\s\S]*?)\n```/
-
 // Some models wrap JSON in a Markdown fence, or add prose around it, even when
 // asked for a JSON object.
 export function extractJson(text: string): unknown {
-  const start = text.indexOf('{')
-  const end = text.lastIndexOf('}')
-  const candidates = [
-    text.trim(),
-    start !== -1 && end > start ? text.slice(start, end + 1) : undefined,
-    FENCED_BLOCK_PATTERN.exec(text)?.[1],
-  ]
-  for (const candidate of candidates) {
-    const parsed = candidate === undefined ? undefined : tryParseJson(candidate)
+  for (let start = text.indexOf('{'); start !== -1; start = text.indexOf('{', start + 1)) {
+    const end = closingBraceIndex(text, start)
+    const parsed = end === undefined ? undefined : tryParseJson(text.slice(start, end + 1))
     if (parsed !== undefined) {
       return parsed
     }
   }
   throw new Error('Model response has no JSON object')
+}
+
+function closingBraceIndex(text: string, start: number): number | undefined {
+  let depth = 0
+  let inString = false
+  for (let index = start; index < text.length; index++) {
+    const char = text[index]
+    if (inString) {
+      if (char === '\\') {
+        index++
+      } else if (char === '"') {
+        inString = false
+      }
+    } else if (char === '"') {
+      inString = true
+    } else if (char === '{') {
+      depth++
+    } else if (char === '}') {
+      depth--
+      if (depth === 0) {
+        return index
+      }
+    }
+  }
+  return undefined
 }
 
 function tryParseJson(text: string): unknown {

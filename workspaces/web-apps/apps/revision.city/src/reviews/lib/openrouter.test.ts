@@ -85,6 +85,14 @@ test.each<{name: string; text: string; expected?: unknown}>([
     text: '{"findings": [], "note": "```ts\\nx\\n```"}',
     expected: {findings: [], note: '```ts\nx\n```'},
   },
+  {name: 'an object after prose with braces', text: 'Here {it} is: {"findings": []}'},
+  {name: 'an object before prose with braces', text: '{"findings": []} See {x}.'},
+  {name: 'an object after an unclosed brace', text: 'Use { to open: {"findings": []}'},
+  {
+    name: 'an object with braces and quotes inside a string value, after prose with braces',
+    text: 'Here {it} is: {"findings": [], "note": "a \\"}\\" b {"} done',
+    expected: {findings: [], note: 'a "}" b {'},
+  },
 ])('extractJson reads $name', ({text, expected = {findings: []}}) => {
   expect(extractJson(text)).toEqual(expected)
 })

@@ -36,7 +36,12 @@ const pullRequestFilesSchema = z.array(
 async function fetchPullRequestFiles(page = 1): Promise<PullRequestFile[]> {
   const response = await fetch(
     `https://api.github.com/repos/${owner}/${repo}/pulls/${pullNumber}/files?per_page=100&page=${page}`,
-    {headers: GITHUB_TOKEN ? {authorization: `Bearer ${GITHUB_TOKEN}`} : {}},
+    {
+      headers: {
+        'user-agent': 'revision.city',
+        ...(GITHUB_TOKEN ? {authorization: `Bearer ${GITHUB_TOKEN}`} : {}),
+      },
+    },
   )
   if (!response.ok) {
     throw new Error(`GitHub returned ${response.status}: ${await response.text()}`)

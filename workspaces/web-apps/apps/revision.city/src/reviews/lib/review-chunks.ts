@@ -104,7 +104,7 @@ export interface RenderedChunk {
   newLineByLabel: ReadonlyMap<number, number>
 }
 
-// Labels lines with chunk-local numbers, not file line numbers, so a chunk that
+// Labels lines with chunk-local numbers, not file line numbers. So a chunk that
 // only moves in the file, for example after a rebase, keeps its text and its
 // saved review. Removed lines get no label, because findings anchor only to lines
 // of the new file.

@@ -2,8 +2,8 @@
 
 Make revision.city a standalone automated code reviewer. It is a GitHub App that reviews every pull
 request on the repositories that install it. It posts findings as inline review comments, and it
-replaces Warden in this repository. Spun out of the [revision.city](../revision-city/plan.md)
-umbrella.
+replaces Warden in this repository. This project started as part of
+[revision.city](../revision-city/plan.md).
 
 ## Goals
 
@@ -42,13 +42,13 @@ umbrella.
 
 1. **Review engine.** Chunking, reviewer prompts, OpenRouter client, saved results, and
    `mise run review` to print findings for any PR from a terminal. Done in this project's first PR.
-2. **GitHub App wiring.** D1 binding and database, webhook route with signature check and allowlist,
-   the Workflow, installation tokens, and the posted review: inline comments, a summary, and a check
-   run that fails on `high`. A `Revision City` label re-runs a review on the current head. Before
-   the allowlist opens, scope saved results by installation. Then a saved result never shows that
-   another installation reviewed the same code. Treat the diff and the model's text as untrusted,
-   because a PR author can steer the reviewers. Do not use the check run as the only security gate.
-   Do not let model text mention users or imitate the structure of the posted review.
+2. **GitHub App wiring.** The D1 binding and database, the webhook route with its signature check
+   and allowlist, the Workflow, and installation tokens. The review posts inline comments and a
+   summary. Its check run fails on `high`. A `Revision City` label re-runs a review on the current
+   head. Before the allowlist opens, scope saved results by installation. Then a saved result never
+   shows that another installation reviewed the same code. Treat the diff and the model's text as
+   untrusted, because a PR author can steer the reviewers. Do not use the check run as the only
+   security gate. Do not let model text mention users or imitate the structure of the posted review.
 3. **Retire Warden.** After a few PRs where both reviewers agree, delete `warden.toml`,
    `.depot/workflows/ci-warden.yml`, and the summary script, and update CONTRIBUTING and the
    [review consolidation](../review-consolidation/plan.md) plan.

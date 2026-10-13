@@ -3,6 +3,7 @@ import {z} from 'zod'
 import {
   createGitHubRequest,
   GitHubApiError,
+  getPullRequest,
   listAllPages,
   listPullRequestFiles,
   repositoryPath,
@@ -100,6 +101,21 @@ test('listAllPages stops at the page limit', async () => {
 
   expect(items).toHaveLength(200)
   expect(fetchStub.mock.calls[0][0]).toBe('https://api.github.com/items?per_page=100&page=1')
+})
+
+test('getPullRequest returns whether the pull request is open and its head', async () => {
+  const fetchStub = vi.fn<Fetch>(async () =>
+    Response.json({state: 'closed', head: {sha: 'abc'}, title: 'x'}),
+  )
+
+  const pull = await getPullRequest({
+    request: createGitHubRequest({fetch: fetchStub}),
+    repository,
+    pullNumber: 7,
+  })
+
+  expect(pull).toEqual({open: false, headSha: 'abc'})
+  expect(fetchStub.mock.calls[0][0]).toBe('https://api.github.com/repos/acme/repo/pulls/7')
 })
 
 test('listPullRequestFiles renames filename to path', async () => {

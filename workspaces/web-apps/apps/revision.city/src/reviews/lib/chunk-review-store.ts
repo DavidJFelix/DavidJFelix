@@ -8,6 +8,9 @@ import {sha256Hex} from './sha256'
 const chunkReviewResultSchema = z.object({
   findings: z.array(modelFindingSchema),
   usage: z.object({promptTokens: z.number(), completionTokens: z.number(), costUsd: z.number()}),
+  // The paths that the reviewer's tools looked up. The result is valid only
+  // while each path keeps its object id.
+  reads: z.array(z.object({path: z.string(), sha: z.string()})),
 })
 
 export type ChunkReviewResult = z.infer<typeof chunkReviewResultSchema>

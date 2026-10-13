@@ -106,6 +106,28 @@ export interface PullRequestParams {
   pullNumber: number
 }
 
+const pullRequestSchema = z.object({
+  state: z.string(),
+  head: z.object({sha: z.string()}),
+})
+
+export interface PullRequestState {
+  open: boolean
+  headSha: string
+}
+
+export async function getPullRequest({
+  request,
+  repository,
+  pullNumber,
+}: PullRequestParams): Promise<PullRequestState> {
+  const pull = await request({
+    path: `${repositoryPath(repository)}/pulls/${pullNumber}`,
+    schema: pullRequestSchema,
+  })
+  return {open: pull.state === 'open', headSha: pull.head.sha}
+}
+
 const pullRequestFileSchema = z.object({
   filename: z.string(),
   status: z.enum(['added', 'removed', 'modified', 'renamed', 'copied', 'changed', 'unchanged']),

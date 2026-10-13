@@ -8,7 +8,11 @@ import {expect, test} from 'vitest'
 import {chunkReviewKey, createSqliteChunkReviewStore} from './chunk-review-store'
 
 const keyParams = {model: 'vendor/model', reviewerId: 'security', systemPrompt: 'p', chunkText: 't'}
-const result = {findings: [], usage: {promptTokens: 1, completionTokens: 1, costUsd: 0.1}}
+const result = {
+  findings: [],
+  usage: {promptTokens: 1, completionTokens: 1, costUsd: 0.1},
+  reads: [{path: 'src/a.ts', sha: 'abc'}],
+}
 
 test('chunkReviewKey is a stable hex digest of its inputs', async () => {
   const key = await chunkReviewKey(keyParams)

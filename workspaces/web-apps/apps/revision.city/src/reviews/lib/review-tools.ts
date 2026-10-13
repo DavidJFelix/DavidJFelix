@@ -197,12 +197,14 @@ function numberLine(line: string, lineNumber: number): string {
 }
 
 function clip(text: string, maxLength: number): string {
-  if (text.length <= maxLength) {
-    return text
-  }
-  // Some model APIs refuse a request with half of a surrogate pair in it.
+  return text.length <= maxLength ? text : `${cutText(text, maxLength)}...`
+}
+
+// Some model APIs refuse a request with half of a surrogate pair in it. If a
+// cut would split a pair, the text ends before the pair.
+export function cutText(text: string, maxLength: number): string {
   const end = isHighSurrogate(text.charCodeAt(maxLength - 1)) ? maxLength - 1 : maxLength
-  return `${text.slice(0, end)}...`
+  return text.slice(0, end)
 }
 
 function isHighSurrogate(code: number): boolean {

@@ -1,6 +1,7 @@
 import {expect, test, vi} from 'vitest'
 import {createMemoryChunkReviewStore} from './chunk-review-store'
 import type {Chat} from './openrouter'
+import type {RepositoryEntry, RepositorySnapshot} from './repository-snapshot'
 import type {PullRequestFile} from './review-chunks'
 import {reviewPullRequest} from './review-pull-request'
 import {REVIEWERS} from './reviewers'
@@ -200,4 +201,122 @@ test('reviewPullRequest still reviews every chunk when concurrency is below one'
 
   expect(chat).toHaveBeenCalledTimes(REVIEWERS.length)
   expect(review.failures).toEqual([])
+})
+
+function createSnapshot(contents: Record<string, string>): RepositorySnapshot {
+  const entries = new Map<string, RepositoryEntry>([['', {type: 'tree', sha: 'root'}]])
+  for (const [path, text] of Object.entries(contents)) {
+    entries.set(path, {type: 'blob', sha: `${path}@${text}`})
+  }
+  return {
+    entries,
+    readBlob: async (sha) => new TextEncoder().encode(sha.slice(sha.indexOf('@') + 1)),
+  }
+}
+
+test('reviewPullRequest gives reviewers tools and re-reviews a chunk when a file it read changes', async () => {
+  const store = createMemoryChunkReviewStore()
+  const chat = vi
+    .fn<Chat>()
+    .mockResolvedValueOnce({
+      content: '',
+      toolCalls: [{id: '1', name: 'read_file', arguments: '{"path": "helper.ts"}'}],
+      usage,
+    })
+    .mockResolvedValue({content: '{"findings": []}', toolCalls: [], usage})
+  const options = {
+    files: files(5),
+    model: 'vendor/model',
+    store,
+    chat,
+    reviewers: REVIEWERS.slice(0, 1),
+  }
+
+  const first = await reviewPullRequest({
+    ...options,
+    headSnapshot: createSnapshot({'a.ts': 'a', 'helper.ts': 'v1'}),
+  })
+
+  expect(first.usage.costUsd).toBeCloseTo(0.02)
+  const [request] = chat.mock.calls[0]
+  expect(request.tools?.map((tool) => tool.name)).toEqual([
+    'read_file',
+    'list_directory',
+    'read_definition',
+  ])
+  expect(request.messages[0].content).toContain('the tools read files of the repository')
+  expect(chat.mock.calls[1][0].messages.at(-1)).toEqual({
+    role: 'tool',
+    toolCallId: '1',
+    content: 'helper.ts, lines 1-1 of 1:\nL1: v1',
+  })
+
+  chat.mockClear()
+  const unchanged = await reviewPullRequest({
+    ...options,
+    headSnapshot: createSnapshot({'a.ts': 'a2', 'helper.ts': 'v1'}),
+  })
+  expect(chat).not.toHaveBeenCalled()
+  expect(unchanged.cachedCount).toBe(1)
+
+  const changed = await reviewPullRequest({
+    ...options,
+    headSnapshot: createSnapshot({'a.ts': 'a', 'helper.ts': 'v2'}),
+  })
+  expect(chat).toHaveBeenCalledTimes(1)
+  expect(changed.cachedCount).toBe(0)
+})
+
+test('reviewPullRequest keeps the billed usage of a chunk review that fails after a tool call', async () => {
+  const chat = vi
+    .fn<Chat>()
+    .mockResolvedValueOnce({
+      content: '',
+      toolCalls: [{id: '1', name: 'read_file', arguments: '{"path": "helper.ts"}'}],
+      usage,
+    })
+    .mockRejectedValueOnce(new Error('OpenRouter returned 400'))
+    .mockResolvedValue({content: '{"findings": []}', toolCalls: [], usage})
+  const options = {
+    files: files(5),
+    model: 'vendor/model',
+    store: createMemoryChunkReviewStore(),
+    chat,
+    reviewers: REVIEWERS.slice(0, 1),
+    headSnapshot: createSnapshot({'a.ts': 'a', 'helper.ts': 'v1'}),
+  }
+
+  const review = await reviewPullRequest(options)
+
+  expect(review.failures).toEqual([
+    {path: 'a.ts', reviewerId: 'security', error: 'Error: OpenRouter returned 400'},
+  ])
+  expect(review.usage).toEqual(usage)
+  chat.mockClear()
+  await reviewPullRequest(options)
+  expect(chat).toHaveBeenCalledTimes(1)
+})
+
+test('reviewPullRequest reports a chunk review that throws and runs the other chunk reviews', async () => {
+  const chat = vi
+    .fn<Chat>()
+    .mockImplementationOnce(() => {
+      throw new Error('Chat failed before its request')
+    })
+    .mockResolvedValue({content: '{"findings": []}', toolCalls: [], usage})
+
+  const review = await reviewPullRequest({
+    files: files(5),
+    model: 'vendor/model',
+    store: createMemoryChunkReviewStore(),
+    chat,
+    reviewers: REVIEWERS.slice(0, 2),
+    concurrency: 1,
+  })
+
+  expect(review.failures).toEqual([
+    {path: 'a.ts', reviewerId: REVIEWERS[0].id, error: 'Error: Chat failed before its request'},
+  ])
+  expect(chat).toHaveBeenCalledTimes(2)
+  expect(review.usage).toEqual(usage)
 })

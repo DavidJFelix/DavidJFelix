@@ -61,7 +61,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "catalog:",
-    "@effect/platform-node": "4.0.2",
+    "@effect/platform-node": "4.0.3",
     "@playwright/test": "catalog:",
     "@tailwindcss/typography": "0.5.20",
     "@tanstack/devtools-vite": "catalog:",

@@ -103,8 +103,15 @@ const chatResponseSchema = z.object({
     .optional(),
 })
 
-// OpenRouter can answer 200 with an error object when the provider fails.
-const errorResponseSchema = z.object({error: z.object({message: z.string()})})
+const providerErrorSchema = z.object({message: z.string()})
+
+// After the provider accepts the request, OpenRouter answers 200 even if the
+// provider then fails. The error is at the top level, or in the first choice
+// next to a partial answer.
+const topLevelErrorSchema = z.object({error: providerErrorSchema})
+const firstChoiceErrorSchema = z.object({
+  choices: z.tuple([z.object({error: providerErrorSchema})], z.unknown()),
+})
 
 export function createOpenRouterChat({
   apiKey,
@@ -221,10 +228,12 @@ async function attemptChat({
     }
   }
   const body: unknown = await response.json()
-  const failure = errorResponseSchema.safeParse(body)
-  return failure.success
-    ? {error: `OpenRouter returned an error: ${failure.data.error.message}`, temporary: true}
-    : {body}
+  const failure =
+    topLevelErrorSchema.safeParse(body).data?.error ??
+    firstChoiceErrorSchema.safeParse(body).data?.choices[0].error
+  return failure === undefined
+    ? {body}
+    : {error: `OpenRouter returned an error: ${failure.message}`, temporary: true}
 }
 
 // Some models add prose or a Markdown fence around the JSON, even when the prompt

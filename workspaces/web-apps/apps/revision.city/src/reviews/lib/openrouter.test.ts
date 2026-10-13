@@ -125,6 +125,27 @@ test.each([
   {name: 'a retryable status', failure: () => new Response('busy', {status: 503})},
   {name: 'an error in a 200 response', failure: () => Response.json({error: {message: 'down'}})},
   {
+    name: 'an error in a 200 response that also has a choice',
+    failure: () =>
+      Response.json({
+        error: {message: 'down'},
+        choices: [{message: {content: '{"findings": []}'}, error: null}],
+      }),
+  },
+  {
+    name: 'a provider error next to a partial answer',
+    failure: () =>
+      Response.json({
+        choices: [
+          {
+            finish_reason: 'error',
+            message: {content: '{"findings": []}'},
+            error: {code: 502, message: 'Provider disconnected'},
+          },
+        ],
+      }),
+  },
+  {
     name: 'a network error',
     failure: () => {
       throw new TypeError('connection reset')

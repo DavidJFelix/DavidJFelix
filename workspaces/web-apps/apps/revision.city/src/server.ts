@@ -1,6 +1,9 @@
 import {withSentry} from '@sentry/cloudflare'
 import handler from '@tanstack/react-start/server-entry'
 
+// The Workflow class must be a named export of the worker's main module.
+export {ReviewWorkflow} from './reviews/review-workflow'
+
 // Custom worker entry: wraps TanStack Start's generated handler so unhandled
 // errors in SSR and server routes are captured server-side. @sentry/cloudflare is
 // workerd-native (no @sentry/node, so it sidesteps getsentry/sentry-javascript#20038);

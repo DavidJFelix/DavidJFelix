@@ -246,20 +246,26 @@ interface MapWithConcurrencyParams<Item, Result> {
   run: (item: Item) => Promise<Result>
 }
 
-async function mapWithConcurrency<Item, Result>({
+export async function mapWithConcurrency<Item, Result>({
   items,
   limit,
   run,
 }: MapWithConcurrencyParams<Item, Result>): Promise<Result[]> {
   const results: Result[] = Array.from({length: items.length})
   let nextIndex = 0
+  // The map rejects when one item fails, so the workers then start no more
+  // items. Each item can cost model calls.
+  let failed = false
   const worker = async (): Promise<void> => {
-    if (nextIndex >= items.length) {
+    if (failed || nextIndex >= items.length) {
       return
     }
     const index = nextIndex
     nextIndex += 1
-    results[index] = await run(items[index])
+    results[index] = await run(items[index]).catch((error: unknown) => {
+      failed = true
+      throw error
+    })
     return worker()
   }
   await Promise.all(Array.from({length: Math.min(Math.max(1, limit), items.length)}, worker))

@@ -5,7 +5,8 @@ const ALLOWED_REPOSITORIES = new Set(['davidjfelix/davidjfelix'])
 
 // When a maintainer adds this label to an open pull request, a review of its
 // head starts. This also works for drafts and for pull requests that the
-// automatic reviews skip.
+// automatic reviews skip. The review removes the label, so that a maintainer
+// can add it again to start another review.
 export const REVIEW_LABEL = 'Revision City'
 
 const AUTOMATIC_ACTIONS = new Set(['opened', 'synchronize', 'reopened', 'ready_for_review'])

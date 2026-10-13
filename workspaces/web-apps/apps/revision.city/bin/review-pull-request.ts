@@ -45,6 +45,7 @@ if (!snapshot) {
 const review = await reviewPullRequest({
   files,
   model: REVIEW_MODEL,
+  scope: 'local',
   store: createMemoryChunkReviewStore(),
   chat: createOpenRouterChat({apiKey: OPENROUTER_API_KEY}),
   headSnapshot: snapshot,

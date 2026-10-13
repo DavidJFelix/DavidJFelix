@@ -6,7 +6,14 @@ import {
   modelAnswerSchema,
   modelFindingSchema,
 } from './findings'
-import {addUsage, type Chat, type CompletionUsage, extractJson, NO_USAGE} from './openrouter'
+import {
+  addUsage,
+  type Chat,
+  type CompletionUsage,
+  extractJson,
+  NO_USAGE,
+  OpenRouterError,
+} from './openrouter'
 import {type RepositorySnapshot, readsStillMatch} from './repository-snapshot'
 import {
   type ChunkPullRequestFilesOptions,
@@ -19,27 +26,37 @@ import {createReviewTools} from './review-tools'
 import {buildSystemPrompt, REVIEWERS, type Reviewer} from './reviewers'
 import {runToolLoop} from './tool-loop'
 
-export interface ReviewChunkParams {
-  chunk: ReviewChunk
-  reviewer: Reviewer
+export interface ChunkReviewContext {
   model: string
+  scope: string
   store: ChunkReviewStore
   chat: Chat
   // With it, reviewers get tools that read files outside the chunk.
   headSnapshot?: RepositorySnapshot
 }
 
+export interface ChunkReviewUnit {
+  chunk: ReviewChunk
+  reviewer: Reviewer
+}
+
+export interface ReviewChunkParams extends ChunkReviewContext, ChunkReviewUnit {}
+
 export interface ChunkReviewOutcome {
   findings: Finding[]
   cached: boolean
   usage: CompletionUsage
   error?: string
+  // True when a call failed and a new attempt can succeed, for example after a
+  // network error. An answer that did not parse is not retryable.
+  retryable?: boolean
 }
 
 export async function reviewChunk({
   chunk,
   reviewer,
   model,
+  scope,
   store,
   chat,
   headSnapshot,
@@ -48,6 +65,7 @@ export async function reviewChunk({
   const tools = headSnapshot === undefined ? undefined : createReviewTools(headSnapshot)
   const system = buildSystemPrompt({reviewer, withTools: tools !== undefined})
   const key = await chunkReviewKey({
+    scope,
     model,
     reviewerId: reviewer.id,
     systemPrompt: system,
@@ -66,7 +84,13 @@ export async function reviewChunk({
   // again after a failure. It still returns the usage of each model call before
   // the failure, because the provider bills those calls.
   if ('error' in result) {
-    return {findings: [], cached: false, usage: result.usage, error: String(result.error)}
+    return {
+      findings: [],
+      cached: false,
+      usage: result.usage,
+      error: String(result.error),
+      retryable: isRetryable(result.error),
+    }
   }
   const answer = parseModelAnswer(result.text)
   if (answer.error !== undefined) {
@@ -81,6 +105,12 @@ export async function reviewChunk({
     .put(key, {findings: answer.findings, usage: result.usage, reads: result.reads})
     .catch(warnStoreFailure)
   return {findings: anchor(answer.findings), cached: false, usage: result.usage}
+}
+
+// An OpenRouter error that is not temporary, such as a bad key, happens again on
+// a new attempt.
+function isRetryable(error: unknown): boolean {
+  return !(error instanceof OpenRouterError) || error.temporary
 }
 
 const STORE_FAILURE_LOG_MESSAGE = 'Chunk review store failed; the review continues without it'
@@ -111,14 +141,45 @@ function parseModelAnswer(text: string): ParsedModelAnswer {
   }
 }
 
-export interface ReviewPullRequestParams extends ChunkPullRequestFilesOptions {
+export interface PlanChunkReviewsParams extends ChunkPullRequestFilesOptions {
   files: readonly PullRequestFile[]
-  model: string
-  store: ChunkReviewStore
-  chat: Chat
-  headSnapshot?: RepositorySnapshot
   reviewers?: readonly Reviewer[]
+}
+
+export function planChunkReviews({
+  files,
+  reviewers = REVIEWERS,
+  ...chunkOptions
+}: PlanChunkReviewsParams): ChunkReviewUnit[] {
+  return chunkPullRequestFiles(files, chunkOptions).flatMap((chunk) =>
+    reviewers.map((reviewer) => ({chunk, reviewer})),
+  )
+}
+
+export interface ReviewChunksParams extends ChunkReviewContext {
+  units: readonly ChunkReviewUnit[]
   concurrency?: number
+}
+
+// Returns one outcome per unit, in order. A unit that throws becomes an outcome
+// with an error, so one failed chunk does not stop the others.
+export async function reviewChunks({
+  units,
+  concurrency = 8,
+  ...context
+}: ReviewChunksParams): Promise<ChunkReviewOutcome[]> {
+  return mapWithConcurrency({
+    items: units,
+    limit: concurrency,
+    run: ({chunk, reviewer}) =>
+      reviewChunk({chunk, reviewer, ...context}).catch((error: unknown): ChunkReviewOutcome => ({
+        findings: [],
+        cached: false,
+        usage: NO_USAGE,
+        error: String(error),
+        retryable: isRetryable(error),
+      })),
+  })
 }
 
 export interface FailedChunkReview {
@@ -135,41 +196,48 @@ export interface PullRequestReview {
   usage: CompletionUsage
 }
 
-// One failed chunk does not stop the others; it is reported in `failures` and
-// is not saved, so the next run tries it again.
-export async function reviewPullRequest({
-  files,
-  model,
-  store,
-  chat,
-  headSnapshot,
-  reviewers = REVIEWERS,
-  concurrency = 8,
-  ...chunkOptions
-}: ReviewPullRequestParams): Promise<PullRequestReview> {
-  const units = chunkPullRequestFiles(files, chunkOptions).flatMap((chunk) =>
-    reviewers.map((reviewer) => ({chunk, reviewer})),
-  )
-  const settled = await mapWithConcurrency({
-    items: units,
-    limit: concurrency,
-    run: ({chunk, reviewer}) => reviewChunk({chunk, reviewer, model, store, chat, headSnapshot}),
-  })
-  const outcomes = settled.flatMap((result) =>
-    result.status === 'fulfilled' ? [result.value] : [],
-  )
+export interface SummarizeChunkReviewsParams {
+  units: readonly ChunkReviewUnit[]
+  // One outcome per unit, in the same order.
+  outcomes: readonly ChunkReviewOutcome[]
+}
+
+export function summarizeChunkReviews({
+  units,
+  outcomes,
+}: SummarizeChunkReviewsParams): PullRequestReview {
+  if (outcomes.length !== units.length) {
+    throw new Error(`Expected ${units.length} chunk review outcomes, got ${outcomes.length}`)
+  }
   return {
     findings: outcomes.flatMap((outcome) => outcome.findings),
-    failures: settled.flatMap((result, index) => {
-      const error = result.status === 'rejected' ? String(result.reason) : result.value.error
-      return error === undefined
+    failures: outcomes.flatMap(({error}, index) =>
+      error === undefined
         ? []
-        : [{path: units[index].chunk.path, reviewerId: units[index].reviewer.id, error}]
-    }),
+        : [{path: units[index].chunk.path, reviewerId: units[index].reviewer.id, error}],
+    ),
     chunkReviewCount: units.length,
     cachedCount: outcomes.filter((outcome) => outcome.cached).length,
     usage: outcomes.map((outcome) => outcome.usage).reduce(addUsage, NO_USAGE),
   }
+}
+
+export interface ReviewPullRequestParams extends ChunkReviewContext, PlanChunkReviewsParams {
+  concurrency?: number
+}
+
+// A failed chunk review goes into `failures`, and `reviewChunk` does not save
+// it, so the next run tries it again.
+export async function reviewPullRequest({
+  files,
+  reviewers,
+  maxLinesPerChunk,
+  maxPatchLinesPerFile,
+  ...context
+}: ReviewPullRequestParams): Promise<PullRequestReview> {
+  const units = planChunkReviews({files, reviewers, maxLinesPerChunk, maxPatchLinesPerFile})
+  const outcomes = await reviewChunks({units, ...context})
+  return summarizeChunkReviews({units, outcomes})
 }
 
 interface MapWithConcurrencyParams<Item, Result> {
@@ -182,8 +250,8 @@ async function mapWithConcurrency<Item, Result>({
   items,
   limit,
   run,
-}: MapWithConcurrencyParams<Item, Result>): Promise<PromiseSettledResult<Result>[]> {
-  const results: PromiseSettledResult<Result>[] = Array.from({length: items.length})
+}: MapWithConcurrencyParams<Item, Result>): Promise<Result[]> {
+  const results: Result[] = Array.from({length: items.length})
   let nextIndex = 0
   const worker = async (): Promise<void> => {
     if (nextIndex >= items.length) {
@@ -191,10 +259,7 @@ async function mapWithConcurrency<Item, Result>({
     }
     const index = nextIndex
     nextIndex += 1
-    results[index] = await run(items[index]).then(
-      (value) => ({status: 'fulfilled', value}) as const,
-      (reason: unknown) => ({status: 'rejected', reason}) as const,
-    )
+    results[index] = await run(items[index])
     return worker()
   }
   await Promise.all(Array.from({length: Math.min(Math.max(1, limit), items.length)}, worker))

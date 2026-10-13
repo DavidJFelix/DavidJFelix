@@ -1,9 +1,14 @@
 import {expect, test, vi} from 'vitest'
 import {createMemoryChunkReviewStore} from './chunk-review-store'
-import type {Chat} from './openrouter'
+import {type Chat, OpenRouterError} from './openrouter'
 import type {RepositoryEntry, RepositorySnapshot} from './repository-snapshot'
 import type {PullRequestFile} from './review-chunks'
-import {reviewPullRequest} from './review-pull-request'
+import {
+  planChunkReviews,
+  reviewChunks,
+  reviewPullRequest,
+  summarizeChunkReviews,
+} from './review-pull-request'
 import {REVIEWERS} from './reviewers'
 
 const usage = {promptTokens: 10, completionTokens: 5, costUsd: 0.01}
@@ -24,6 +29,7 @@ test('reviewPullRequest runs every reviewer on every chunk and anchors findings'
     model: 'vendor/model',
     store: createMemoryChunkReviewStore(),
     chat,
+    scope: 'test',
   })
 
   expect(chat).toHaveBeenCalledTimes(REVIEWERS.length)
@@ -40,10 +46,16 @@ test('reviewPullRequest answers a re-run from saved results without calling the 
   const chat = answering(
     '{"findings": [{"severity": "high", "title": "Bug", "body": "Breaks", "label": 2}]}',
   )
-  await reviewPullRequest({files: files(5), model: 'vendor/model', store, chat})
+  await reviewPullRequest({files: files(5), model: 'vendor/model', store, scope: 'test', chat})
   chat.mockClear()
 
-  const review = await reviewPullRequest({files: files(40), model: 'vendor/model', store, chat})
+  const review = await reviewPullRequest({
+    files: files(40),
+    model: 'vendor/model',
+    store,
+    scope: 'test',
+    chat,
+  })
 
   expect(chat).not.toHaveBeenCalled()
   expect(review.cachedCount).toBe(REVIEWERS.length)
@@ -61,6 +73,7 @@ test('reviewPullRequest reports a chunk the model answered badly and does not sa
     model: 'vendor/model',
     store,
     chat,
+    scope: 'test',
     reviewers: REVIEWERS.slice(0, 1),
   })
 
@@ -76,6 +89,7 @@ test('reviewPullRequest reports a chunk the model answered badly and does not sa
     model: 'vendor/model',
     store,
     chat,
+    scope: 'test',
     reviewers: REVIEWERS.slice(0, 1),
   })
   expect(chat).toHaveBeenCalledTimes(1)
@@ -91,6 +105,7 @@ test('reviewPullRequest reads the answer after other JSON that the model quotes'
     model: 'vendor/model',
     store: createMemoryChunkReviewStore(),
     chat,
+    scope: 'test',
     reviewers: REVIEWERS.slice(0, 1),
   })
 
@@ -103,7 +118,13 @@ test('reviewPullRequest keeps the valid findings of an answer with a malformed o
   const chat = answering(
     '{"findings": [{"severity": "high", "title": "Bug", "body": "Breaks", "label": 2}, {"severity": "high", "title": "", "body": "No title", "label": 0}]}',
   )
-  const options = {files: files(5), model: 'vendor/model', store, reviewers: REVIEWERS.slice(0, 1)}
+  const options = {
+    files: files(5),
+    model: 'vendor/model',
+    scope: 'test',
+    store,
+    reviewers: REVIEWERS.slice(0, 1),
+  }
 
   const review = await reviewPullRequest({...options, chat})
 
@@ -130,6 +151,7 @@ test('reviewPullRequest reviews and reports findings when the store fails', asyn
       put: async () => Promise.reject(new Error('D1 write failed')),
     },
     chat,
+    scope: 'test',
     reviewers: REVIEWERS.slice(0, 1),
   })
 
@@ -150,6 +172,7 @@ test('reviewPullRequest reports a chunk whose model call failed', async () => {
     model: 'vendor/model',
     store: createMemoryChunkReviewStore(),
     chat,
+    scope: 'test',
     reviewers: REVIEWERS.slice(0, 1),
   })
 
@@ -167,6 +190,7 @@ test('reviewPullRequest makes no calls when no file is reviewable', async () => 
     model: 'vendor/model',
     store: createMemoryChunkReviewStore(),
     chat,
+    scope: 'test',
   })
 
   expect(chat).not.toHaveBeenCalled()
@@ -181,6 +205,7 @@ test('reviewPullRequest does not review a file over the line limit the caller se
     model: 'vendor/model',
     store: createMemoryChunkReviewStore(),
     chat,
+    scope: 'test',
     maxPatchLinesPerFile: 2,
   })
 
@@ -196,6 +221,7 @@ test('reviewPullRequest still reviews every chunk when concurrency is below one'
     model: 'vendor/model',
     store: createMemoryChunkReviewStore(),
     chat,
+    scope: 'test',
     concurrency: 0,
   })
 
@@ -227,6 +253,7 @@ test('reviewPullRequest gives reviewers tools and re-reviews a chunk when a file
   const options = {
     files: files(5),
     model: 'vendor/model',
+    scope: 'test',
     store,
     chat,
     reviewers: REVIEWERS.slice(0, 1),
@@ -282,6 +309,7 @@ test('reviewPullRequest keeps the billed usage of a chunk review that fails afte
     model: 'vendor/model',
     store: createMemoryChunkReviewStore(),
     chat,
+    scope: 'test',
     reviewers: REVIEWERS.slice(0, 1),
     headSnapshot: createSnapshot({'a.ts': 'a', 'helper.ts': 'v1'}),
   }
@@ -310,6 +338,7 @@ test('reviewPullRequest reports a chunk review that throws and runs the other ch
     model: 'vendor/model',
     store: createMemoryChunkReviewStore(),
     chat,
+    scope: 'test',
     reviewers: REVIEWERS.slice(0, 2),
     concurrency: 1,
   })
@@ -319,4 +348,65 @@ test('reviewPullRequest reports a chunk review that throws and runs the other ch
   ])
   expect(chat).toHaveBeenCalledTimes(2)
   expect(review.usage).toEqual(usage)
+})
+
+test('reviewPullRequest keys saved results by scope', async () => {
+  const store = createMemoryChunkReviewStore()
+  const chat = answering('{"findings": []}')
+  const options = {files: files(5), model: 'vendor/model', store, chat, reviewers: REVIEWERS}
+
+  await reviewPullRequest({...options, scope: 'installation:1'})
+  await reviewPullRequest({...options, scope: 'installation:2'})
+
+  expect(chat).toHaveBeenCalledTimes(REVIEWERS.length * 2)
+})
+
+// The tool loop catches a chat that rejects. A chat that throws before it
+// returns a promise escapes the loop, and reviewChunks catches the error.
+test.each(
+  [
+    {name: 'a network error', error: new TypeError('connection reset'), retryable: true},
+    {
+      name: 'a temporary OpenRouter error',
+      error: new OpenRouterError('OpenRouter returned 503: busy', true),
+      retryable: true,
+    },
+    {
+      name: 'an OpenRouter error that is not temporary',
+      error: new OpenRouterError('OpenRouter returned 401: bad key', false),
+      retryable: false,
+    },
+  ].flatMap((row) => [
+    {...row, how: 'rejects'},
+    {...row, how: 'throws'},
+  ]),
+)(
+  'reviewChunks reports whether a retry can fix $name when the chat $how',
+  async ({error, retryable, how}) => {
+    const chat = vi.fn<Chat>(
+      how === 'throws'
+        ? () => {
+            throw error
+          }
+        : () => Promise.reject(error),
+    )
+
+    const [outcome] = await reviewChunks({
+      units: planChunkReviews({files: files(5), reviewers: REVIEWERS.slice(0, 1)}),
+      model: 'vendor/model',
+      scope: 'test',
+      store: createMemoryChunkReviewStore(),
+      chat,
+    })
+
+    expect(outcome).toMatchObject({findings: [], error: String(error), retryable})
+  },
+)
+
+test('summarizeChunkReviews throws when the outcomes do not match the units', () => {
+  const units = planChunkReviews({files: files(5), reviewers: REVIEWERS.slice(0, 2)})
+
+  expect(() => summarizeChunkReviews({units, outcomes: []})).toThrow(
+    'Expected 2 chunk review outcomes, got 0',
+  )
 })

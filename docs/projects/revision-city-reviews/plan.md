@@ -79,7 +79,8 @@ replaces Warden in this repository. This project started as part of
    [review consolidation](../review-consolidation/plan.md) plan.
 
 Later: a manual review request that can go over the 1,500-line limit, then billing per installation,
-then open the allowlist.
+then open the allowlist. `REVIEW_MODEL` is not secret, so it becomes a plain variable instead of a
+secret, and later a config value.
 
 ## Open questions
 

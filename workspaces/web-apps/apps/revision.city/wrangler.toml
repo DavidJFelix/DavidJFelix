@@ -48,6 +48,7 @@ class_name = "ReviewWorkflow"
 [[d1_databases]]
 binding = "DB"
 database_name = "revision-city"
+database_id = "e62e3ce1-5045-4b3f-a557-b05a13b0095f"
 migrations_dir = "drizzle"
 
 # The deployed version's id, read by the share-card routes (src/routes/og) to

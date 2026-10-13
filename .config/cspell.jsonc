@@ -270,6 +270,7 @@
     "renovatebot", // Renovate's GitHub org
     "rspack",
     "schibsted",
+    "scip", // Sourcegraph's code intelligence index format
     "shiki",
     "starlark",
     "strava",

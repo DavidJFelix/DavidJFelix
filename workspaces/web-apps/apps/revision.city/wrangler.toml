@@ -29,6 +29,27 @@ routes = [
   { pattern = "www.revision.city", custom_domain = true },
 ]
 
+# Pull request reviews (src/reviews). GitHub sends the app's webhooks to
+# /api/github/webhook, which starts one ReviewWorkflow instance for each review.
+# D1 keeps each chunk review. A saved review stays valid while the chunk and the
+# files that its reviewer read do not change. The one-time setup in #790 creates
+# the database and applies the drizzle/ migrations with
+# `wrangler d1 migrations apply revision-city --remote`. The reviews read five
+# secrets: GITHUB_APP_CLIENT_ID (above), GITHUB_APP_PRIVATE_KEY,
+# GITHUB_WEBHOOK_SECRET, OPENROUTER_API_KEY, and REVIEW_MODEL (an OpenRouter
+# model slug that supports tool calls). Environments do not inherit bindings, so
+# the dev worker and the previews have no reviews, and the webhook answers 503
+# there.
+[[workflows]]
+name = "revision-city-review"
+binding = "REVIEW_WORKFLOW"
+class_name = "ReviewWorkflow"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "revision-city"
+migrations_dir = "drizzle"
+
 # The deployed version's id, read by the share-card routes (src/routes/og) to
 # key their edge cache: a rendered card lives at the edge for its whole cache
 # life, and without the version in the key a deploy would keep serving the

@@ -4,6 +4,7 @@ import {type Chat, OpenRouterError} from './openrouter'
 import type {RepositoryEntry, RepositorySnapshot} from './repository-snapshot'
 import type {PullRequestFile} from './review-chunks'
 import {
+  mapWithConcurrency,
   planChunkReviews,
   reviewChunks,
   reviewPullRequest,
@@ -227,6 +228,27 @@ test('reviewPullRequest still reviews every chunk when concurrency is below one'
 
   expect(chat).toHaveBeenCalledTimes(REVIEWERS.length)
   expect(review.failures).toEqual([])
+})
+
+test('mapWithConcurrency starts no more items after one fails', async () => {
+  const started: number[] = []
+
+  const mapping = mapWithConcurrency({
+    items: [1, 2, 3, 4],
+    limit: 2,
+    run: async (item: number) => {
+      started.push(item)
+      if (item === 1) {
+        throw new Error('item 1 failed')
+      }
+      return item
+    },
+  })
+
+  await expect(mapping).rejects.toThrow('item 1 failed')
+  // Lets the other worker finish its item and look for the next one.
+  await new Promise((resolve) => setTimeout(resolve))
+  expect(started).toEqual([1, 2])
 })
 
 function createSnapshot(contents: Record<string, string>): RepositorySnapshot {

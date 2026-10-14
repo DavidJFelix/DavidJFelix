@@ -11,6 +11,7 @@ import {
   type Chat,
   type CompletionUsage,
   extractJson,
+  findJsonSyntaxError,
   NO_USAGE,
   OpenRouterError,
 } from './openrouter'
@@ -136,9 +137,25 @@ function parseModelAnswer(text: string): ParsedModelAnswer {
     return malformedCount > 0
       ? {findings, error: `Malformed findings in the answer: ${malformedCount}`}
       : {findings}
-  } catch (error) {
-    return {findings: [], error: String(error)}
+  } catch {
+    return {findings: [], error: describeUnreadableAnswer(text)}
   }
+}
+
+// The check run shows the first `MAX_FAILURE_CHARS` characters of each failure, so
+// the start and the end of the answer get 40 characters each. The two ends show
+// the shape of the answer and whether it is cut off.
+const ANSWER_END_CHARS = 40
+
+function describeUnreadableAnswer(text: string): string {
+  const reason = text.includes('{')
+    ? (findJsonSyntaxError(text) ?? 'No findings list')
+    : 'No JSON object'
+  const excerpt =
+    text.length <= 2 * ANSWER_END_CHARS
+      ? `: ${JSON.stringify(text)}`
+      : `. It starts with ${JSON.stringify(text.slice(0, ANSWER_END_CHARS))} and ends with ${JSON.stringify(text.slice(-ANSWER_END_CHARS))}`
+  return `${reason}. The answer has ${text.length} characters${excerpt}.`
 }
 
 export interface PlanChunkReviewsParams extends ChunkPullRequestFilesOptions {

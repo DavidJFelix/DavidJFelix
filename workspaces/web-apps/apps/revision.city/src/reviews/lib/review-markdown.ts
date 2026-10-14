@@ -114,6 +114,7 @@ export function formatReviewBody({findings, inlineAccepted}: FormatReviewBodyPar
 // GitHub accepts at most 65,535 characters in each check run output field.
 export const MAX_OUTPUT_CHARS = 65_000
 const CUT_NOTE = '\n\n(Cut: the list is longer than a check run can show.)'
+const MAX_FAILURE_CHARS = 300
 
 export interface CheckRunOutput {
   title: string
@@ -149,7 +150,7 @@ export function formatCheckRunOutput({
       'Failed chunk reviews',
       review.failures.map(
         ({path, reviewerId, error}) =>
-          `- ${codeSpan(oneLine(path))} (${reviewerId}): ${oneLine(error).slice(0, 300)}`,
+          `- ${codeSpan(oneLine(path))} (${reviewerId}): ${codeSpan(oneLine(error).slice(0, MAX_FAILURE_CHARS))}`,
       ),
     ),
     section(

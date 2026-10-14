@@ -279,6 +279,16 @@ test('read_definition sends a file without a grammar to read_file', async () => 
   })
 })
 
+test('read_definition sends a file too large to extract to read_file', async () => {
+  const keys = Array.from({length: 2001}, (_, index) => `"k${index}": 0`)
+  const large = createSnapshot({'large.json': {text: `{${keys.join(', ')}}`}})
+
+  expect(await run(large, 'read_definition', {path: 'large.json', name: 'k0'})).toEqual({
+    content: 'large.json is too large for read_definition. Use read_file.',
+    read: {path: 'large.json', sha: 'sha-large.json'},
+  })
+})
+
 test('read_definition reports a missing file', async () => {
   expect(await run(snapshot, 'read_definition', {path: 'src/gone.ts', name: 'x'})).toEqual({
     content: 'src/gone.ts does not exist at the pull request head.',

@@ -291,7 +291,11 @@ async function readDefinition({snapshot, path, name}: ReadDefinitionParams): Pro
   if (language === undefined) {
     return {content: `read_definition does not support ${path}. Use read_file.`, read: file.read}
   }
-  const entities = extractEntities({source: file.text, parser: await language.loadParser()})
+  const extraction = extractEntities({source: file.text, parser: await language.loadParser()})
+  if (extraction.tooLarge) {
+    return {content: `${path} is too large for read_definition. Use read_file.`, read: file.read}
+  }
+  const {entities} = extraction
   const matches = entities.filter((entity) => entity.name === name || entity.qualifiedName === name)
   if (matches.length === 0) {
     const names = [

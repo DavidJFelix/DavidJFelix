@@ -1,8 +1,21 @@
 import type {Parser} from '@lezer/common'
-import {expect, test} from 'vitest'
+import {expect, test, vi} from 'vitest'
 
+import type {CodeEntity} from './entity'
+import type * as EntitySignatureModule from './entity-signature'
+import {computeSignature} from './entity-signature'
+import type {ExtractEntitiesParams} from './extract-entities'
 import {extractEntities} from './extract-entities'
 import {LANGUAGES} from './language-registry'
+
+// The real signature, wrapped so a test can prove it was never called.
+vi.mock('./entity-signature', async (importOriginal) => {
+  const actual = await importOriginal<typeof EntitySignatureModule>()
+  return {
+    ...actual,
+    computeSignature: vi.fn<typeof actual.computeSignature>(actual.computeSignature),
+  }
+})
 
 // Resolved through the registry rather than imported directly, so these cases
 // also prove each language is reachable the way the differ reaches it.
@@ -17,6 +30,14 @@ function parserFor(id: string): Promise<Parser> {
 const tsxParser = await parserFor('tsx')
 const markdownParser = await parserFor('markdown')
 const jsonParser = await parserFor('json')
+
+function extractWithinLimits(params: ExtractEntitiesParams): readonly CodeEntity[] {
+  const extraction = extractEntities(params)
+  if (extraction.tooLarge) {
+    throw new Error('The source is too large to extract.')
+  }
+  return extraction.entities
+}
 
 interface ExtractionCase {
   readonly language: string
@@ -235,7 +256,7 @@ jobs:
 ]
 
 test.each(CASES)('extracts entities from $language', async ({language, source, expected}) => {
-  const entities = extractEntities({source, parser: await parserFor(language)})
+  const entities = extractWithinLimits({source, parser: await parserFor(language)})
 
   expect(entities.map((entity) => `${entity.kind} ${entity.qualifiedName}`)).toEqual(expected)
 })
@@ -243,7 +264,7 @@ test.each(CASES)('extracts entities from $language', async ({language, source, e
 test('reports 1-based line ranges spanning the whole entity', () => {
   const source = 'const a = 1\nfunction greet() {\n  return 1\n}\n'
 
-  const entities = extractEntities({source, parser: tsxParser})
+  const entities = extractWithinLimits({source, parser: tsxParser})
 
   expect(entities.find((entity) => entity.name === 'greet')?.range).toEqual({
     startLine: 2,
@@ -254,7 +275,7 @@ test('reports 1-based line ranges spanning the whole entity', () => {
 test('disambiguates same-named siblings with an ordinal suffix', () => {
   const source = '# Notes\n\n## Notes\n'
 
-  const entities = extractEntities({source, parser: markdownParser})
+  const entities = extractWithinLimits({source, parser: markdownParser})
 
   expect(entities.map((entity) => entity.qualifiedName)).toEqual(['Notes', 'Notes#2'])
 })
@@ -262,7 +283,7 @@ test('disambiguates same-named siblings with an ordinal suffix', () => {
 test('ignores locals declared inside a function body', () => {
   const source = 'export function outer() {\n  const hidden = 1\n  return hidden\n}\n'
 
-  const entities = extractEntities({source, parser: tsxParser})
+  const entities = extractWithinLimits({source, parser: tsxParser})
 
   expect(entities.map((entity) => entity.name)).toEqual(['outer'])
 })
@@ -270,7 +291,7 @@ test('ignores locals declared inside a function body', () => {
 test('reports a module-level call once, without the locals in its callback', () => {
   const source = "register('event', () => {\n  const hidden = 1\n  use(hidden)\n})\n"
 
-  const entities = extractEntities({source, parser: tsxParser})
+  const entities = extractWithinLimits({source, parser: tsxParser})
 
   expect(entities.map((entity) => `${entity.kind} ${entity.qualifiedName}`)).toEqual([
     "call register('event')",
@@ -289,7 +310,7 @@ test('labels calls by callee path and first literal argument', () => {
     '',
   ].join('\n')
 
-  const entities = extractEntities({source, parser: tsxParser})
+  const entities = extractWithinLimits({source, parser: tsxParser})
 
   expect(entities.map((entity) => `${entity.kind} ${entity.qualifiedName}`)).toEqual([
     "call test('adds numbers')",
@@ -308,7 +329,7 @@ test('treats nested and non-statement calls as part of their enclosing entity', 
     '',
   ].join('\n')
 
-  const entities = extractEntities({source, parser: tsxParser})
+  const entities = extractWithinLimits({source, parser: tsxParser})
 
   expect(entities.map((entity) => `${entity.kind} ${entity.qualifiedName}`)).toEqual([
     "call describe('math')",
@@ -319,7 +340,7 @@ test('treats nested and non-statement calls as part of their enclosing entity', 
 test('parses a file with syntax errors instead of throwing', () => {
   const source = 'export function broken( {\n  return\n'
 
-  const entities = extractEntities({source, parser: tsxParser})
+  const entities = extractWithinLimits({source, parser: tsxParser})
 
   expect(entities.map((entity) => entity.name)).toContain('broken')
 })
@@ -327,7 +348,7 @@ test('parses a file with syntax errors instead of throwing', () => {
 test('fingerprints the elements of an array-valued property', () => {
   const source = '{"words": ["alpha", "beta"], "limit": 3}'
 
-  const entities = extractEntities({source, parser: jsonParser})
+  const entities = extractWithinLimits({source, parser: jsonParser})
 
   const words = entities.find((entity) => entity.qualifiedName === 'words')
   expect(words?.elements?.map((element) => element.preview)).toEqual(['"alpha"', '"beta"'])
@@ -338,8 +359,62 @@ test('fingerprints the elements of an array-valued property', () => {
 test('marks array elements that contain entities of their own', () => {
   const source = '{"defs": [{"name": "dns"}, "plain"]}'
 
-  const entities = extractEntities({source, parser: jsonParser})
+  const entities = extractWithinLimits({source, parser: jsonParser})
 
   const defs = entities.find((entity) => entity.qualifiedName === 'defs')
   expect(defs?.elements?.map((element) => element.hasEntities)).toEqual([true, false])
+})
+
+test.each([
+  {count: 2000, tooLarge: false},
+  {count: 2001, tooLarge: true},
+])('$count entities are too large: $tooLarge', ({count, tooLarge}) => {
+  const keys = Array.from({length: count}, (_, index) => `"k${index}": 0`)
+
+  const extraction = extractEntities({source: `{${keys.join(', ')}}`, parser: jsonParser})
+
+  expect(extraction.tooLarge).toBe(tooLarge)
+})
+
+test.each([
+  {lengths: [2000, 2000, 2000, 2000, 2000], tooLarge: false},
+  {lengths: [2000, 2000, 2000, 2000, 2000, 1], tooLarge: true},
+  {lengths: [2001, 2001, 2001, 2001, 2001, 2001], tooLarge: false},
+])('arrays of $lengths elements are too large: $tooLarge', ({lengths, tooLarge}) => {
+  const properties = lengths.map(
+    (length, index) => `"a${index}": [${Array.from({length}, () => '0').join(', ')}]`,
+  )
+
+  const extraction = extractEntities({source: `{${properties.join(', ')}}`, parser: jsonParser})
+
+  expect(extraction.tooLarge).toBe(tooLarge)
+})
+
+// The entity spans the quoted key, `: `, and the value, and its qualified name is
+// the key. So the total is exactly 2,000,000 characters with 10, and one more with 100.
+test.each([
+  {value: '10', tooLarge: false},
+  {value: '100', tooLarge: true},
+])('a long key with the value $value is too large: $tooLarge', ({value, tooLarge}) => {
+  const source = `{"${'k'.repeat(999_997)}": ${value}}`
+
+  expect(extractEntities({source, parser: jsonParser}).tooLarge).toBe(tooLarge)
+})
+
+test('counts qualified names toward the character limit', () => {
+  const key = 'k'.repeat(600_000)
+
+  const oneChild = extractEntities({source: `{"${key}": {"a": 0}}`, parser: jsonParser})
+  const twoChildren = extractEntities({source: `{"${key}": {"a": 0, "b": 0}}`, parser: jsonParser})
+
+  expect(oneChild.tooLarge).toBe(false)
+  expect(twoChildren.tooLarge).toBe(true)
+})
+
+test('reports a small file of deeply nested entities as too large without hashing', () => {
+  vi.mocked(computeSignature).mockClear()
+  const source = `${'namespace n { '.repeat(200)}${'x;\n'.repeat(5000)}${'}'.repeat(200)}\n`
+
+  expect(extractEntities({source, parser: tsxParser})).toEqual({tooLarge: true})
+  expect(computeSignature).not.toHaveBeenCalled()
 })

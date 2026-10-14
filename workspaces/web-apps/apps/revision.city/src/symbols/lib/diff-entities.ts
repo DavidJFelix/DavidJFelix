@@ -3,11 +3,6 @@ import {extractEntities} from './extract-entities'
 import {detectLanguage} from './language-registry'
 import {matchEntities} from './match-entities'
 
-// A generated file (a lockfile, a bundled asset) can hold tens of thousands of
-// nodes. Parsing is fine; reporting every one is not, so oversized files are
-// reported as unsupported rather than silently truncated.
-const MAX_ENTITIES_PER_FILE = 2000
-
 // Report order: the buckets a reviewer scans first, and within a bucket the
 // order the symbols appear in the new file.
 const CHANGE_TYPE_ORDER: Record<EntityChange['type'], number> = {
@@ -24,9 +19,9 @@ export interface DiffEntitiesParams {
   newSource: string
 }
 
-// Entity-level diff of one file. Returns an empty change list (with the language
-// still named) when the file parses but nothing semantic moved -- a formatting
-// pass, or a change confined to statements inside a body.
+// Entity-level diff of one file. If no entity changed, for example after a
+// formatting pass or a comment edit, the change list is empty and the language
+// is still named. A side too large to extract also gives the empty list.
 export async function diffEntities({
   path,
   oldSource,
@@ -38,14 +33,17 @@ export async function diffEntities({
   }
 
   const parser = await language.loadParser()
-  const oldEntities = extractEntities({source: oldSource, parser})
-  const newEntities = extractEntities({source: newSource, parser})
+  const oldExtraction = extractEntities({source: oldSource, parser})
+  const newExtraction = extractEntities({source: newSource, parser})
 
-  if (oldEntities.length > MAX_ENTITIES_PER_FILE || newEntities.length > MAX_ENTITIES_PER_FILE) {
+  if (oldExtraction.tooLarge || newExtraction.tooLarge) {
     return {path, language: language.id, changes: [], summary: createSummary([])}
   }
 
-  const changes = matchEntities({oldEntities, newEntities}).toSorted(compareChanges)
+  const changes = matchEntities({
+    oldEntities: oldExtraction.entities,
+    newEntities: newExtraction.entities,
+  }).toSorted(compareChanges)
   return {path, language: language.id, changes, summary: createSummary(changes)}
 }
 

@@ -1,4 +1,4 @@
-import type {CodeEntity, EntityChange, EntitySpan, SequenceDetail} from './entity'
+import type {CodeEntity, EntityChange, EntityKind, EntitySpan, SequenceDetail} from './entity'
 import {tokenSimilarity} from './entity-signature'
 import {alignByHash, diffSequenceElements} from './sequence-alignment'
 
@@ -9,6 +9,13 @@ const RENAME_SIMILARITY_THRESHOLD = 0.8
 // The fuzzy phase is quadratic, so it is skipped on files that churn wholesale.
 // Such a diff is a rewrite; naming which function became which adds nothing.
 const MAX_FUZZY_CANDIDATES = 200
+
+// A comparison in the fuzzy phase reads the tokens of both entities, and a nested
+// entity holds the tokens of each entity inside it. Without this limit, two 11 KB
+// files of 200 nested namespaces make the phase read 624 million tokens in 10 s.
+// In 4,365 real diffs from this repository, the count is at most 153,910. A
+// renamed 92 KB class with 150 edited methods counts 7.7 million.
+const MAX_FUZZY_TOKEN_READS = 20_000_000
 
 // Short entities share a node skeleton with every other entity of their shape --
 // every one-line getter hashes alike -- so structural matching is reserved for
@@ -270,7 +277,11 @@ function matchByStructure({unmatchedOld, unmatchedNew, changes}: MatchPhaseParam
 // Last resort: an entity that was renamed *and* edited. Each new entity takes
 // its single best-scoring partner, so one old entity cannot be claimed twice.
 function matchByTokens({unmatchedOld, unmatchedNew, changes}: MatchPhaseParams): void {
-  if (unmatchedOld.size > MAX_FUZZY_CANDIDATES || unmatchedNew.size > MAX_FUZZY_CANDIDATES) {
+  if (
+    unmatchedOld.size > MAX_FUZZY_CANDIDATES ||
+    unmatchedNew.size > MAX_FUZZY_CANDIDATES ||
+    countWorstCaseFuzzyTokenReads({unmatchedOld, unmatchedNew}) > MAX_FUZZY_TOKEN_READS
+  ) {
     return
   }
 
@@ -304,6 +315,45 @@ function matchByTokens({unmatchedOld, unmatchedNew, changes}: MatchPhaseParams):
       }),
     )
   }
+}
+
+interface CountWorstCaseFuzzyTokenReadsParams {
+  unmatchedOld: ReadonlySet<CodeEntity>
+  unmatchedNew: ReadonlySet<CodeEntity>
+}
+
+// The fuzzy phase compares each new entity with each old entity of the same kind.
+function countWorstCaseFuzzyTokenReads({
+  unmatchedOld,
+  unmatchedNew,
+}: CountWorstCaseFuzzyTokenReadsParams): number {
+  const oldTotals = totalTokensByKind(unmatchedOld)
+  const newTotals = totalTokensByKind(unmatchedNew)
+  let reads = 0
+  for (const [kind, old] of oldTotals) {
+    const next = newTotals.get(kind)
+    if (next !== undefined) {
+      reads += next.entities * old.tokens + old.entities * next.tokens
+    }
+  }
+  return reads
+}
+
+interface TokenTotal {
+  readonly entities: number
+  readonly tokens: number
+}
+
+function totalTokensByKind(entities: ReadonlySet<CodeEntity>): Map<EntityKind, TokenTotal> {
+  const totals = new Map<EntityKind, TokenTotal>()
+  for (const entity of entities) {
+    const total = totals.get(entity.kind) ?? {entities: 0, tokens: 0}
+    totals.set(entity.kind, {
+      entities: total.entities + 1,
+      tokens: total.tokens + entity.tokens.length,
+    })
+  }
+  return totals
 }
 
 interface CreateChangeParams {

@@ -80,7 +80,11 @@ test('reviewPullRequest reports a chunk the model answered badly and does not sa
 
   expect(review.findings).toEqual([])
   expect(review.failures).toEqual([
-    {path: 'a.ts', reviewerId: 'security', error: 'Error: Model response has no JSON object'},
+    {
+      path: 'a.ts',
+      reviewerId: 'security',
+      error: 'No JSON object. The answer has 8 characters: "not json".',
+    },
   ])
   // OpenRouter still bills a bad answer.
   expect(review.usage).toEqual(usage)
@@ -94,6 +98,32 @@ test('reviewPullRequest reports a chunk the model answered badly and does not sa
     reviewers: REVIEWERS.slice(0, 1),
   })
   expect(chat).toHaveBeenCalledTimes(1)
+})
+
+test.each([
+  {
+    name: 'the JSON error and both ends of an answer that is cut off',
+    answer:
+      '{"findings": [{"severity": "medium", "title": "Bug", "body": "Breaks", "label": 2}, {"severity": "high", "title": "Cut',
+    error: String.raw`SyntaxError: Unterminated string in JSON at position 118 (line 1 column 119). The answer has 118 characters. It starts with "{\"findings\": [{\"severity\": \"medium\", \"ti" and ends with ": 2}, {\"severity\": \"high\", \"title\": \"Cut".`,
+  },
+  {
+    name: 'both ends of a JSON answer with no findings list',
+    answer:
+      '{"name": "read_file", "arguments": {"path": "workspaces/web-apps/apps/revision.city/src/index.ts"}}',
+    error: String.raw`No findings list. The answer has 99 characters. It starts with "{\"name\": \"read_file\", \"arguments\": {\"pat" and ends with "-apps/apps/revision.city/src/index.ts\"}}".`,
+  },
+])('reviewPullRequest reports $name', async ({answer, error}) => {
+  const review = await reviewPullRequest({
+    files: files(5),
+    model: 'vendor/model',
+    store: createMemoryChunkReviewStore(),
+    chat: answering(answer),
+    scope: 'test',
+    reviewers: REVIEWERS.slice(0, 1),
+  })
+
+  expect(review.failures).toEqual([{path: 'a.ts', reviewerId: 'security', error}])
 })
 
 test('reviewPullRequest reads the answer after other JSON that the model quotes', async () => {

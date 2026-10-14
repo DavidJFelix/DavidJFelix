@@ -253,6 +253,33 @@ export function extractJson<Value>(text: string, schema: z.ZodType<Value>): Valu
   throw results[0]?.error ?? new Error('Model response has no JSON object')
 }
 
+// This function gives the parse error of the first top-level object that is not
+// valid JSON, to say why `extractJson` found no answer. An object that does not
+// close runs to the end of the text, so a cut-off answer gives an error such as
+// "Unterminated string". The position in the error counts from the start of the
+// object.
+export function findJsonSyntaxError(text: string): string | undefined {
+  let start = text.indexOf('{')
+  while (start !== -1) {
+    const end = closingBraceIndex(text, start) ?? text.length - 1
+    const error = jsonParseError(text.slice(start, end + 1))
+    if (error !== undefined) {
+      return error
+    }
+    start = text.indexOf('{', end + 1)
+  }
+  return undefined
+}
+
+function jsonParseError(text: string): string | undefined {
+  try {
+    JSON.parse(text)
+    return undefined
+  } catch (error) {
+    return String(error)
+  }
+}
+
 interface ParsedJsonObject {
   value: unknown
   nested: boolean

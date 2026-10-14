@@ -194,9 +194,10 @@ its secrets exist (#302). Next: encode the repo's own standards as custom Warden
 
 ### [revision.city Reviews](./projects/revision-city-reviews/plan.md)
 
-Turn revision.city into a standalone GitHub App reviewer that replaces Warden. The plan: a webhook
-starts each review, a Cloudflare Workflow runs it, and D1 saves each chunk's result. OpenRouter
-serves the models. The review engine is built; next is the webhook and Workflow wiring.
+Turn revision.city into a standalone GitHub App reviewer that replaces Warden. A webhook starts each
+review, a Cloudflare Workflow runs it, and D1 saves each chunk's result. OpenRouter serves the
+models. The review engine and the GitHub App wiring are built, and the one-time setup in #790 is
+done. Next: a comparison with Warden on a few pull requests.
 
 **Status**: Active
 

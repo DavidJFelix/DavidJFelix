@@ -7,9 +7,9 @@ import {
 } from './review-chunks'
 import {MAX_OUTPUT_CHARS, type NotReviewedFile, oneLine} from './review-markdown'
 
-// Workflows keep at most 1 MiB for each step result, and the selection is a step
-// result. The files to review get at most this many bytes, and the rest is for
-// the `notReviewed` list.
+// Workflows keep at most 1 MiB for each step result, and the selection is part of
+// a step result. The files to review get at most this many bytes. The rest is for
+// the `notReviewed` list and the reviewers' file list (`MAX_FILE_LIST_CHARS`).
 const MAX_REVIEWED_BYTES = 700_000
 // V8's serialization adds about 30 bytes to each file object, and the status
 // adds up to 9. The rest is a margin.

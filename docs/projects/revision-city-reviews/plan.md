@@ -12,7 +12,8 @@ replaces Warden in this repository. This project started as part of
   product.
 - **Re-runs cost only what changed.** The app saves the model's answer for each chunk review. A
   re-run after a push pays only for a chunk review that has no saved answer, or whose tools read a
-  path that changed.
+  path that changed. A push that adds or removes a file changes the file list in every prompt, so
+  each chunk review pays again.
 - **OpenRouter for models.** The model is an operator secret (`REVIEW_MODEL`), not a repository
   setting.
 - **Works for any installation, runs only here for now.** Code takes the installation and repository
@@ -37,9 +38,10 @@ replaces Warden in this repository. This project started as part of
   API, so the Worker needs no container. `read_definition` uses the Lezer entity extractor of the
   Symbols tab, not a code index.
 - **Saved results** in D1 (`chunk_reviews`, a drizzle schema with its migrations in `drizzle/`),
-  keyed by a SHA-256 of the scope, model, reviewer, system prompt, and rendered chunk. The GitHub
-  App uses the installation as the scope. A saved result records each path that its tools read, with
-  the path's object id. A run uses the result again only while each of those paths keeps its id.
+  keyed by a SHA-256 of the scope, model, reviewer, system prompt, and user prompt (the file list,
+  then the rendered chunk). The GitHub App uses the installation as the scope. A saved result
+  records each path that its tools read, with the path's object id. A run uses the result again only
+  while each of those paths keeps its id.
 - **Runner: Cloudflare Workflows.** The webhook route (`/api/github/webhook`) verifies the signature
   and the allowlist, starts a Workflow instance, and returns 202 inside GitHub's 10-second window.
   The instance creates a `Revision City` check run and lists the files. It reviews the chunks in

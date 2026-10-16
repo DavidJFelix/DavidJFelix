@@ -65,6 +65,57 @@ test('reviewPullRequest answers a re-run from saved results without calling the 
   expect(review.findings.map((finding) => finding.endLine)).toEqual(REVIEWERS.map(() => 41))
 })
 
+test('reviewPullRequest sends the list of changed files before the chunk', async () => {
+  const chat = answering('{"findings": []}')
+
+  await reviewPullRequest({
+    files: [
+      ...files(5),
+      {path: 'bun.lock', status: 'modified', patch: '@@ -1,1 +1,1 @@\n-a\n+b'},
+      {path: 'old.ts', status: 'removed'},
+    ],
+    reviewers: REVIEWERS.slice(0, 1),
+    model: 'vendor/model',
+    store: createMemoryChunkReviewStore(),
+    chat,
+    scope: 'test',
+  })
+
+  expect(chat).toHaveBeenCalledTimes(1)
+  expect(chat.mock.calls[0][0].messages[1]).toEqual({
+    role: 'user',
+    content: [
+      'Files that the pull request changes:',
+      '- a.ts (modified)',
+      '- bun.lock (modified)',
+      '- old.ts (removed)',
+      '',
+      'File: a.ts',
+      '',
+      '    1   ctx',
+      '    2 + added',
+    ].join('\n'),
+  })
+})
+
+test('reviewPullRequest reviews each chunk again when a push adds a file', async () => {
+  const store = createMemoryChunkReviewStore()
+  const chat = answering('{"findings": []}')
+  await reviewPullRequest({files: files(5), model: 'vendor/model', store, scope: 'test', chat})
+  chat.mockClear()
+
+  const review = await reviewPullRequest({
+    files: [...files(5), {path: 'b.md', status: 'added', patch: '@@ -0,0 +1,1 @@\n+b'}],
+    model: 'vendor/model',
+    store,
+    scope: 'test',
+    chat,
+  })
+
+  expect(review.cachedCount).toBe(0)
+  expect(chat).toHaveBeenCalledTimes(2 * REVIEWERS.length)
+})
+
 test('reviewPullRequest reports a chunk the model answered badly and does not save it', async () => {
   const store = createMemoryChunkReviewStore()
   const chat = answering('not json')
@@ -419,6 +470,7 @@ test.each(
       scope: 'test',
       store: createMemoryChunkReviewStore(),
       chat,
+      fileList: '',
     })
 
     expect(outcome).toMatchObject({findings: [], error: String(error), retryable})

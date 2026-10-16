@@ -15,8 +15,7 @@ const chunkReviewResultSchema = z.object({
 
 export type ChunkReviewResult = z.infer<typeof chunkReviewResultSchema>
 
-// Saved model answers, keyed by the scope, chunk text, model, reviewer, and
-// system prompt.
+// Saved model answers, keyed by the scope, model, reviewer, and both prompts.
 export interface ChunkReviewStore {
   get: (key: string) => Promise<ChunkReviewResult | undefined>
   put: (key: string, result: ChunkReviewResult) => Promise<void>
@@ -30,7 +29,7 @@ export interface ChunkReviewKeyParams {
   model: string
   reviewerId: string
   systemPrompt: string
-  chunkText: string
+  prompt: string
 }
 
 // Increment to ignore every saved result, for example after a change to the
@@ -42,9 +41,9 @@ export function chunkReviewKey({
   model,
   reviewerId,
   systemPrompt,
-  chunkText,
+  prompt,
 }: ChunkReviewKeyParams): Promise<string> {
-  return sha256Hex(JSON.stringify([KEY_VERSION, scope, model, reviewerId, systemPrompt, chunkText]))
+  return sha256Hex(JSON.stringify([KEY_VERSION, scope, model, reviewerId, systemPrompt, prompt]))
 }
 
 export function createSqliteChunkReviewStore(

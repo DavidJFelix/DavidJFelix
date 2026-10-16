@@ -4,6 +4,7 @@ import {type GitHubRequest, getPullRequest, listPullRequestFiles} from './github
 import type {Chat} from './openrouter'
 import {completeCheckRun, createCheckRun, postReview, removeLabel} from './publish-review'
 import {loadRepositorySnapshot} from './repository-snapshot'
+import {renderFileList} from './review-chunks'
 import {
   type CheckRunOutput,
   formatCheckRunOutput,
@@ -98,9 +99,10 @@ export async function runReview({
   const complete = (conclusion: 'success' | 'failure' | 'neutral', output: CheckRunOutput) =>
     completeCheckRun({request, repository, checkRunId, conclusion, output})
   try {
-    const selection = await step('list files', async () =>
-      selectReviewFiles(await listPullRequestFiles(pull)),
-    )
+    const selection = await step('select files', async () => {
+      const files = await listPullRequestFiles(pull)
+      return {...selectReviewFiles(files), fileList: renderFileList(files)}
+    })
     const planned = planChunkReviews({files: selection.files})
     const units = planned.slice(0, MAX_REVIEWED_CHUNKS * REVIEWERS.length)
     const notReviewed = [
@@ -129,6 +131,7 @@ export async function runReview({
             scope: `installation:${installationId}`,
             store,
             chat,
+            fileList: selection.fileList,
             headSnapshot: await loadSnapshot(),
           })
           // The store keeps each answer that parsed, so a new attempt pays again

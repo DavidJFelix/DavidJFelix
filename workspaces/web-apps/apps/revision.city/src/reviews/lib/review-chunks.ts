@@ -1,4 +1,5 @@
 import {type DiffLine, type PatchHunk, parsePatchHunks} from './patch-hunks'
+import {oneLine} from './review-markdown'
 
 export type PullRequestFileStatus =
   | 'added'
@@ -152,4 +153,30 @@ export function renderChunk(chunk: ReviewChunk): RenderedChunk {
   }
   const body = chunk.hunks.map((hunk) => hunk.lines.map(renderLine).join('\n')).join('\n  ...\n')
   return {text: `File: ${chunk.path}\n\n${body}`, newLineByLabel}
+}
+
+// Each model call sends the list again, so the list stops at this many
+// characters. Most pull requests need a few hundred.
+export const MAX_FILE_LIST_CHARS = 10_000
+
+// Each reviewer gets this list before its chunk, because a change that the chunk
+// needs is often in another file of the pull request. Skipped files are in the
+// list too.
+export function renderFileList(files: readonly PullRequestFile[]): string {
+  const lines: string[] = []
+  let chars = 0
+  for (const {path, status} of files) {
+    const line = `- ${oneLine(path)} (${status})`
+    chars += line.length + 1
+    if (chars > MAX_FILE_LIST_CHARS) {
+      break
+    }
+    lines.push(line)
+  }
+  const unlistedCount = files.length - lines.length
+  return [
+    'Files that the pull request changes:',
+    ...lines,
+    ...(unlistedCount > 0 ? [`(${unlistedCount} more not listed)`] : []),
+  ].join('\n')
 }

@@ -4,8 +4,10 @@ import {
   DEFAULT_MAX_PATCH_LINES_PER_FILE,
   fileReviewStatus,
   isReviewableFile,
+  MAX_FILE_LIST_CHARS,
   type PullRequestFile,
   renderChunk,
+  renderFileList,
 } from './review-chunks'
 
 const addedLines = (start: number, count: number) =>
@@ -151,4 +153,46 @@ test('renderChunk text does not change when the chunk moves down the file', () =
       [2, 101],
     ]),
   )
+})
+
+test('renderFileList lists every file with its status, skipped files too', () => {
+  const files: PullRequestFile[] = [
+    {path: 'src/a.ts', status: 'modified', patch: addedLines(1, 1)},
+    {path: 'bun.lock', status: 'modified', patch: addedLines(1, 1)},
+    {path: 'src/old.ts', status: 'removed'},
+  ]
+
+  expect(renderFileList(files)).toBe(
+    [
+      'Files that the pull request changes:',
+      '- src/a.ts (modified)',
+      '- bun.lock (modified)',
+      '- src/old.ts (removed)',
+    ].join('\n'),
+  )
+})
+
+test('renderFileList keeps a path with a line break on one line', () => {
+  const files: PullRequestFile[] = [{path: 'src/a.ts\nFile: src/b.ts', status: 'added'}]
+
+  expect(renderFileList(files)).toBe(
+    'Files that the pull request changes:\n- src/a.ts File: src/b.ts (added)',
+  )
+})
+
+const pathOf = (index: number) => `src/${String(index).padStart(4, '0')}.ts`
+
+test('renderFileList stops at the character limit and counts the files it leaves out', () => {
+  const files = Array.from({length: 1000}, (_, index): PullRequestFile => ({
+    path: pathOf(index),
+    status: 'modified',
+  }))
+  const lineChars = `- ${pathOf(0)} (modified)\n`.length
+  const listedCount = Math.floor(MAX_FILE_LIST_CHARS / lineChars)
+
+  const lines = renderFileList(files).split('\n')
+
+  expect(lines).toHaveLength(1 + listedCount + 1)
+  expect(lines.at(-2)).toBe(`- ${pathOf(listedCount - 1)} (modified)`)
+  expect(lines.at(-1)).toBe(`(${1000 - listedCount} more not listed)`)
 })

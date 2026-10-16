@@ -72,7 +72,7 @@ const pullReads = (...answers: object[]) => {
 const answering = (findings: object[]) =>
   vi.fn<Chat>(async () => ({content: JSON.stringify({findings}), toolCalls: [], usage}))
 
-const highFinding = {severity: 'high', title: 'Bug', body: 'Breaks', label: 2}
+const highFinding = {severity: 'high', title: 'Bug', body: 'Breaks', checked: true, label: 2}
 
 function recordingStep() {
   const names: string[] = []
@@ -148,6 +148,23 @@ test('runReview passes the check and posts nothing when there are no findings', 
     conclusion: 'success',
     output: {title: 'No findings'},
   })
+})
+
+test('runReview does not post a finding that the reviewer did not check', async () => {
+  const github = fakeGitHub()
+  const chat = answering([{...highFinding, checked: false}])
+
+  await runReview(runParams({request: github.request, chat}))
+
+  expect(github.sent(REVIEWS)).toEqual([])
+  expect(github.sent(CHECK_RUN)[0].body).toMatchObject({
+    conclusion: 'success',
+    output: {title: '1 unchecked finding'},
+  })
+  // Every reviewer flagged the same line, so the check run lists it once.
+  expect(checkRunText(github.sent(CHECK_RUN)[0].body)).toBe(
+    ['### Not checked, so not posted', '', '- **high** `src/a.ts:2` (security): Bug'].join('\n'),
+  )
 })
 
 test('runReview reuses saved chunk reviews in the same installation', async () => {

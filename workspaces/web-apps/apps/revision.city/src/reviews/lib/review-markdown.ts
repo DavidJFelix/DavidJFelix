@@ -141,6 +141,9 @@ export function formatCheckRunOutput({
 }: FormatCheckRunOutputParams): CheckRunOutput {
   const counts = [
     ...(outcome.reported.length > 0 ? [plural(outcome.reported.length, 'finding')] : []),
+    ...(outcome.unchecked.length > 0
+      ? [plural(outcome.unchecked.length, 'unchecked finding')]
+      : []),
     ...(review.failures.length > 0 ? [plural(review.failures.length, 'failed chunk review')] : []),
   ]
   const sections = [
@@ -156,13 +159,14 @@ export function formatCheckRunOutput({
       'Not reviewed',
       notReviewed.map(({path, reason}) => `- ${codeSpan(oneLine(path))}: ${reason}`),
     ),
+    section('Not checked, so not posted', outcome.unchecked.map(findingLine)),
   ].filter((text) => text !== '')
   return {
     title: counts.length > 0 ? counts.join(', ') : 'No findings',
     summary: [
       `${plural(review.chunkReviewCount, 'chunk review')}, ${review.cachedCount} from saved results, cost $${review.usage.costUsd.toFixed(4)}.`,
       `${plural(postedCount, 'new finding')} posted.`,
-      'This check fails on a finding at high or above, or on a failed chunk review.',
+      'This check fails on a checked finding at high or above, or on a failed chunk review.',
     ].join(' '),
     ...(sections.length > 0 ? {text: clip(neutralizeMarkdown(sections.join('\n\n')))} : {}),
   }

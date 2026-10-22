@@ -41,7 +41,7 @@
     "@lezer/json": "1.0.3",
     "@lezer/lezer": "1.1.3",
     "@lezer/lr": "1.4.11",
-    "@lezer/markdown": "1.8.0",
+    "@lezer/markdown": "1.8.1",
     "@lezer/php": "1.0.6",
     "@lezer/python": "1.1.19",
     "@lezer/rust": "1.0.3",

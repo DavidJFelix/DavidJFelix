@@ -27,7 +27,8 @@ replaces Warden in this repository. This project started as part of
   1. Split each file's patch into chunks of up to 200 diff lines.
   2. Run three reviewers (security, correctness, comments) on each chunk.
   3. Map findings back to new-file lines. When findings end on the same line, keep the most severe.
-  4. Report `medium` and above. Fail on `high` and above, or when a chunk review fails.
+  4. Report checked findings at `medium` and above. Fail on a checked finding at `high` and above,
+     or when a chunk review fails.
 - **Chunk-local line labels.** The prompt numbers lines from 1 inside the chunk, not by file line. A
   chunk that only moves in the file, for example after a rebase, keeps its text and its saved
   result. A push that grows or shrinks a hunk above it in the same file can still move the chunk

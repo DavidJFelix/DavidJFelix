@@ -1,5 +1,12 @@
 import {expect, test} from 'vitest'
-import {anchorFindings, decideOutcome, type Finding, isAtLeast, type ModelFinding} from './findings'
+import {
+  anchorFindings,
+  decideOutcome,
+  type Finding,
+  isAtLeast,
+  type ModelFinding,
+  modelFindingSchema,
+} from './findings'
 import {chunkPullRequestFiles, renderChunk} from './review-chunks'
 
 const [chunk] = chunkPullRequestFiles([
@@ -11,6 +18,7 @@ const modelFinding = (overrides: Partial<ModelFinding>): ModelFinding => ({
   severity: 'high',
   title: 'Problem',
   body: 'Details',
+  checked: true,
   label: 1,
   ...overrides,
 })
@@ -21,6 +29,7 @@ const finding = (overrides: Partial<Finding>): Finding => ({
   severity: 'high',
   title: 'Problem',
   body: 'Details',
+  checked: true,
   startLine: 1,
   endLine: 1,
   ...overrides,
@@ -48,10 +57,30 @@ test('anchorFindings maps a label to its new-file line', () => {
     severity: 'high',
     title: 'Problem',
     body: 'Details',
+    checked: true,
     startLine: 21,
     endLine: 21,
     suggestion: 'fixed',
   })
+})
+
+test.each([
+  {name: 'true', checked: true, expected: true},
+  {name: 'false', checked: false, expected: false},
+  {name: 'no value', checked: undefined, expected: false},
+  {name: 'a string', checked: 'yes', expected: false},
+])('a finding counts as checked only when the model says true: $name', ({checked, expected}) => {
+  const parsed = modelFindingSchema.parse({
+    severity: 'high',
+    title: 'Problem',
+    body: 'Details',
+    label: 1,
+    checked,
+  })
+
+  const [anchored] = anchorFindings({reviewerId: 'security', chunk, rendered, findings: [parsed]})
+
+  expect(anchored.checked).toBe(expected)
 })
 
 test('anchorFindings turns a valid end label into a line range and keeps its suggestion', () => {
@@ -142,6 +171,28 @@ test('decideOutcome keeps a finding inside the range of a more severe finding', 
   ])
 
   expect(outcome.reported.map((item) => item.reviewerId)).toEqual(['comments', 'correctness'])
+})
+
+test('decideOutcome lists unchecked findings apart, and they do not fail the review', () => {
+  const outcome = decideOutcome([
+    finding({severity: 'critical', checked: false, startLine: 1, endLine: 1}),
+    finding({severity: 'medium', startLine: 2, endLine: 2}),
+    finding({severity: 'low', checked: false, startLine: 3, endLine: 3}),
+  ])
+
+  expect(outcome.reported.map((item) => item.severity)).toEqual(['medium'])
+  expect(outcome.unchecked.map((item) => item.severity)).toEqual(['critical'])
+  expect(outcome.failed).toBe(false)
+})
+
+test('decideOutcome reports a checked finding on the line of a more severe unchecked one', () => {
+  const outcome = decideOutcome([
+    finding({reviewerId: 'security', severity: 'critical', checked: false}),
+    finding({reviewerId: 'correctness', severity: 'medium'}),
+  ])
+
+  expect(outcome.reported.map((item) => item.reviewerId)).toEqual(['correctness'])
+  expect(outcome.unchecked.map((item) => item.reviewerId)).toEqual(['security'])
 })
 
 test('decideOutcome keeps findings on the same line of different files', () => {

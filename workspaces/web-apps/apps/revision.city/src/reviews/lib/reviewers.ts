@@ -26,12 +26,13 @@ Severity:
 - info: worth knowing, not a defect.
 
 Answer with JSON only, in this shape:
-{"findings": [{"severity": "high", "title": "...", "body": "...", "label": 12, "endLabel": 14, "suggestion": "..."}]}
+{"findings": [{"severity": "high", "title": "...", "body": "...", "checked": true, "label": 12, "endLabel": 14, "suggestion": "..."}]}
 
 - "label" is the number printed on the line the problem is on. Use a numbered line; when the problem is a removed line, use the nearest numbered line.
 - "endLabel" is optional: the number of the last line, when the problem spans several lines.
 - "title" is one short sentence that states the problem.
 - "body" says what goes wrong, for which input or state, and how to fix it, in a few sentences.
+- "checked" is true only when the diff piece, or a file that you read, shows that the problem is real. It is false when you must read more code to be sure that the problem is real.
 - "suggestion" is optional: replacement text for the lines from "label" to "endLabel", exactly as it should appear in the file, without diff markers. An empty string deletes those lines, so leave "suggestion" out when you have no replacement. Give it only when the fix is local and certain.`
 
 export const REVIEWERS: readonly Reviewer[] = [

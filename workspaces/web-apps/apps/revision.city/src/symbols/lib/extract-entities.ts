@@ -4,9 +4,24 @@ import type {CodeEntity, EntityKind, EntitySpan, EntitySpec, SequenceElement} fr
 import {anonymousScopeProp, entityProp} from './entity'
 import {computeSignature} from './entity-signature'
 
+// A generated file, such as a lockfile or a bundled asset, can hold tens of
+// thousands of entities. Parsing it is fine; reporting each entity is not.
+const MAX_ENTITIES_PER_FILE = 2000
+
+// A signature reads all the text of its entity, including each nested entity.
+// A qualified name repeats the names of its containers. This limit on the total
+// length of entity text and qualified names stops a small, deeply nested file
+// from using hundreds of MB.
+const MAX_ENTITY_CHARACTERS_PER_FILE = 2_000_000
+
 // Fingerprinting is linear but not free; a generated array past this size gets
 // no element fingerprints and its property falls back to a bare `modified`.
 const MAX_SEQUENCE_ELEMENTS = 2000
+
+// The extractor keeps an object for each fingerprinted element and compares the
+// element with each entity. This limit stops a file of many arrays from using
+// seconds of CPU and hundreds of MB.
+const MAX_FINGERPRINTED_ELEMENTS_PER_FILE = 10_000
 
 // Sequence-edit previews are one-line labels, not content.
 const PREVIEW_LENGTH = 48
@@ -34,11 +49,19 @@ export interface ExtractEntitiesParams {
   parser: Parser
 }
 
+export type EntityExtraction =
+  | {readonly tooLarge: true}
+  | {readonly tooLarge: false; readonly entities: readonly CodeEntity[]}
+
 // Walks a parsed tree once, emitting an entity for every node whose type carries
 // an `entityProp`. Because the spec lives on the node type, a tree stitched from
 // several grammars (script tags, template blocks) needs no special handling.
-export function extractEntities({source, parser}: ExtractEntitiesParams): readonly CodeEntity[] {
+// For a file over a `_PER_FILE` limit, the result is `{tooLarge: true}`.
+export function extractEntities({source, parser}: ExtractEntitiesParams): EntityExtraction {
   const found = collectEntityNodes({source, parser})
+  if (found === undefined) {
+    return {tooLarge: true}
+  }
   const emitted = new Set(found.map((entity) => nodeKey(entity.node)))
   // Only nodes that survived `accept` and `scope` count as nested entities --
   // a skipped local must still contribute to its enclosing function's content.
@@ -46,9 +69,12 @@ export function extractEntities({source, parser}: ExtractEntitiesParams): readon
   const lineStarts = createLineStarts(source)
   const entitySpans = found.map((entity) => ({from: entity.node.from, to: entity.node.to}))
 
-  return found.map(({kind, name, qualifiedName, node}) => {
+  const entities = found.map(({kind, name, qualifiedName, node, sequence}) => {
     const signature = computeSignature({node, source, isNestedEntity})
-    const elements = fingerprintSequence({node, source, lineStarts, entitySpans})
+    const elements =
+      sequence === undefined
+        ? undefined
+        : fingerprintSequence({sequence, source, lineStarts, entitySpans})
     return {
       kind,
       name,
@@ -62,10 +88,11 @@ export function extractEntities({source, parser}: ExtractEntitiesParams): readon
       ...(elements === undefined ? {} : {elements}),
     }
   })
+  return {tooLarge: false, entities}
 }
 
 interface FingerprintSequenceParams {
-  node: SyntaxNode
+  sequence: readonly SyntaxNode[]
   source: string
   lineStarts: readonly number[]
   entitySpans: readonly EntitySpan[]
@@ -75,17 +102,12 @@ interface FingerprintSequenceParams {
 // content -- an element is matched across revisions as a whole, unlike entities,
 // whose nested changes are attributed to the nested entity itself.
 function fingerprintSequence({
-  node,
+  sequence,
   source,
   lineStarts,
   entitySpans,
-}: FingerprintSequenceParams): readonly SequenceElement[] | undefined {
-  const spec = node.type.prop(entityProp)
-  const elements = spec?.resolveSequence?.({node, source})
-  if (elements === undefined || elements.length > MAX_SEQUENCE_ELEMENTS) {
-    return undefined
-  }
-  return elements.map((element) => ({
+}: FingerprintSequenceParams): readonly SequenceElement[] {
+  return sequence.map((element) => ({
     hash: computeSignature({node: element, source, isNestedEntity: () => false}).contentHash,
     preview: createPreview(source.slice(element.from, element.to)),
     range: {startLine: lineAt(lineStarts, element.from), endLine: lineAt(lineStarts, element.to)},
@@ -106,6 +128,7 @@ interface FoundEntity {
   readonly name: string
   readonly qualifiedName: string
   readonly node: SyntaxNode
+  readonly sequence?: readonly SyntaxNode[]
 }
 
 interface EntityFrame {
@@ -116,7 +139,10 @@ interface EntityFrame {
   readonly container: boolean
 }
 
-function collectEntityNodes({source, parser}: ExtractEntitiesParams): readonly FoundEntity[] {
+function collectEntityNodes({
+  source,
+  parser,
+}: ExtractEntitiesParams): readonly FoundEntity[] | undefined {
   const tree = parser.parse(source)
   const found: FoundEntity[] = []
   const open: EntityFrame[] = []
@@ -125,9 +151,15 @@ function collectEntityNodes({source, parser}: ExtractEntitiesParams): readonly F
   // executable scope without contributing an entity frame, so they get their
   // own depth counter.
   let anonymousScopes = 0
+  let entityCharacters = 0
+  let fingerprintedElements = 0
+  let tooLarge = false
 
   tree.iterate({
     enter(ref) {
+      if (tooLarge) {
+        return false
+      }
       if (ref.type.prop(anonymousScopeProp) === true) {
         anonymousScopes += 1
       }
@@ -152,12 +184,24 @@ function collectEntityNodes({source, parser}: ExtractEntitiesParams): readonly F
       }
 
       const kind = spec.resolveKind?.({node, source}) ?? spec.kind
-      found.push({
-        kind,
-        name,
-        qualifiedName: disambiguate({kind, path: joinPath(open, name), counts: nameCounts}),
-        node,
-      })
+      const qualifiedName = disambiguate({kind, path: joinPath(open, name), counts: nameCounts})
+      entityCharacters += node.to - node.from + qualifiedName.length
+      if (
+        found.length === MAX_ENTITIES_PER_FILE ||
+        entityCharacters > MAX_ENTITY_CHARACTERS_PER_FILE
+      ) {
+        tooLarge = true
+        return false
+      }
+      const elements = spec.resolveSequence?.({node, source})
+      const sequence =
+        elements === undefined || elements.length > MAX_SEQUENCE_ELEMENTS ? undefined : elements
+      fingerprintedElements += sequence?.length ?? 0
+      if (fingerprintedElements > MAX_FINGERPRINTED_ELEMENTS_PER_FILE) {
+        tooLarge = true
+        return false
+      }
+      found.push({kind, name, qualifiedName, node, sequence})
       open.push({name, kind, from: node.from, to: node.to, container: spec.container === true})
       return true
     },
@@ -172,7 +216,7 @@ function collectEntityNodes({source, parser}: ExtractEntitiesParams): readonly F
     },
   })
 
-  return found
+  return tooLarge ? undefined : found
 }
 
 // Type is part of the key because a wrapper and its child can share a span.

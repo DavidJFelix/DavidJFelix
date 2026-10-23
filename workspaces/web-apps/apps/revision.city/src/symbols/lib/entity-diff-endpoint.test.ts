@@ -5,10 +5,12 @@ import {handleEntityDiffRequest} from './entity-diff-endpoint'
 
 const ORIGIN = 'https://revision.city'
 
+const ALLOW_ALL: RateLimit = {limit: () => Promise.resolve({success: true})}
+
 function createRequest(body: unknown): Request {
   return new Request(`${ORIGIN}/api/diffs/entity-diff`, {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
+    headers: {'Content-Type': 'application/json', 'CF-Connecting-IP': '203.0.113.7'},
     body: typeof body === 'string' ? body : JSON.stringify(body),
   })
 }
@@ -31,9 +33,24 @@ test.each([
   ],
   ['a file with no name', {path: 'o/r/pull/1', files: [{itemId: 'i', type: 'change'}]}],
 ])('rejects %s', async (_case, body) => {
-  const response = await handleEntityDiffRequest(createRequest(body))
+  const response = await handleEntityDiffRequest(createRequest(body), {rateLimiter: ALLOW_ALL})
 
   expect(response.status).toBe(400)
+})
+
+test('answers 429 before it reads the body when the client IP is over the limit', async () => {
+  const keys: string[] = []
+  const rateLimiter: RateLimit = {
+    limit: ({key}) => {
+      keys.push(key)
+      return Promise.resolve({success: false})
+    },
+  }
+
+  const response = await handleEntityDiffRequest(createRequest('not json'), {rateLimiter})
+
+  expect(response.status).toBe(429)
+  expect(keys).toEqual(['203.0.113.7'])
 })
 
 test('rejects a batch larger than one request should carry', async () => {
@@ -43,7 +60,9 @@ test('rejects a batch larger than one request should carry', async () => {
     type: 'change',
   }))
 
-  const response = await handleEntityDiffRequest(createRequest({path: 'o/r/pull/1', files}))
+  const response = await handleEntityDiffRequest(createRequest({path: 'o/r/pull/1', files}), {
+    rateLimiter: ALLOW_ALL,
+  })
 
   expect(response.status).toBe(400)
   await expect(response.json()).resolves.toMatchObject({
@@ -57,6 +76,7 @@ test('streams newline-delimited results', async () => {
       path: 'o/r/pull/1',
       files: [{itemId: 'item-1', name: 'src/moved.ts', type: 'rename-pure'}],
     }),
+    {rateLimiter: ALLOW_ALL},
   )
 
   expect(response.status).toBe(200)
@@ -74,6 +94,7 @@ test('answers a pure rename without contacting GitHub', async () => {
       path: 'o/r/pull/1',
       files: [{itemId: 'item-1', name: 'src/moved.ts', type: 'rename-pure'}],
     }),
+    {rateLimiter: ALLOW_ALL},
   )
 
   const [result] = await readLines(response)
@@ -87,6 +108,7 @@ test('reads a public diff without a signed-in session', async () => {
       path: 'o/r/pull/1',
       files: [{itemId: 'item-1', name: 'src/a.ts', type: 'change'}],
     }),
+    {rateLimiter: ALLOW_ALL},
   )
 
   expect(response.status).not.toBe(401)
@@ -98,6 +120,7 @@ test('keeps entity diffs out of shared caches', async () => {
       path: 'o/r/pull/1',
       files: [{itemId: 'item-1', name: 'src/moved.ts', type: 'rename-pure'}],
     }),
+    {rateLimiter: ALLOW_ALL},
   )
 
   expect(response.headers.get('Cache-Control')).toContain('private')

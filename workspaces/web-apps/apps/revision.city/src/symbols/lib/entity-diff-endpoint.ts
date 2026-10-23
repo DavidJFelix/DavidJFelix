@@ -37,11 +37,25 @@ export interface EntityDiffResult {
   error?: string
 }
 
+export interface HandleEntityDiffRequestParams {
+  rateLimiter: RateLimit
+}
+
 // Streams one newline-delimited JSON result per file, in completion order, so
 // the viewer can render each file's symbols the moment it is ready instead of
 // waiting for the slowest one. Signing in is not required -- a public repo reads
 // fine unauthenticated, the same way the viewer already loads its patch.
-export async function handleEntityDiffRequest(request: Request): Promise<Response> {
+export async function handleEntityDiffRequest(
+  request: Request,
+  {rateLimiter}: HandleEntityDiffRequestParams,
+): Promise<Response> {
+  // A crafted file can use the whole CPU limit of the request, and anyone can
+  // call this route. So the limit counts the requests of each client IP.
+  const {success} = await rateLimiter.limit({key: request.headers.get('CF-Connecting-IP') ?? ''})
+  if (!success) {
+    return createErrorResponse('Too many requests. Wait a few seconds, then try again.', 429)
+  }
+
   let body: unknown
   try {
     body = await request.json()

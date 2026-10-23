@@ -184,10 +184,12 @@ function repeatToken(token: string, count: number): string[] {
   return Array.from({length: count}, () => token)
 }
 
-// 100 old functions and 1 new function of 100,000 tokens: the fuzzy phase reads
-// 1 x 10,000,000 old tokens and 100 x 100,000 new tokens, 20,000,000 in total.
-// Only the first old function is similar to the new one, so the phase finds a
-// rename only if it runs.
+// The test has 100 old functions and 1 new function, each of 100,000 tokens.
+// The fuzzy phase makes 100 comparisons. Together they read the 10,000,000 old
+// tokens once and the 100,000 new tokens 100 times: 20,000,000 reads. One extra
+// token in the first old function makes the total 20,000,001. Only the first
+// old function is similar to the new one, so the phase finds a rename only if
+// it runs.
 test.each([
   {reads: '20,000,000', extraTokens: 0, runs: true},
   {reads: '20,000,001', extraTokens: 1, runs: false},
@@ -214,8 +216,9 @@ test.each([
   expect(changes.some((change) => change.type === 'renamed')).toBe(runs)
 })
 
-// Counted over all kinds together, the 199 deleted classes would make the reads
-// 1 x 100,199 old tokens and 200 x 100,000 new tokens, over the limit.
+// If the phase counted all kinds together, it would read the 100,199 old tokens
+// once and the 100,000 new tokens 200 times. That is 20,100,199 reads, over the
+// limit.
 test('the fuzzy phase counts only the reads between entities of the same kind', () => {
   const oldFunction = createEntity({
     name: 'old',

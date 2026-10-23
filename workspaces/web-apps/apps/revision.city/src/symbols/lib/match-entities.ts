@@ -10,11 +10,12 @@ const RENAME_SIMILARITY_THRESHOLD = 0.8
 // Such a diff is a rewrite; naming which function became which adds nothing.
 const MAX_FUZZY_CANDIDATES = 200
 
-// A comparison in the fuzzy phase reads the tokens of both entities, and a nested
+// A comparison in the fuzzy phase reads the tokens of both entities. A nested
 // entity holds the tokens of each entity inside it. Without this limit, two 11 KB
-// files of 200 nested namespaces make the phase read 624 million tokens in 10 s.
-// In 4,365 real diffs from this repository, the count is at most 153,910. A
-// renamed 92 KB class with 150 edited methods counts 7.7 million.
+// files of 200 nested namespaces make the phase read 624 million tokens. The
+// phase alone then takes 10 s, and the whole entity diff takes 11 s. In 4,365
+// real diffs from this repository, the count is at most 153,910. A renamed 92 KB
+// class with 150 edited methods counts 7.7 million.
 const MAX_FUZZY_TOKEN_READS = 20_000_000
 
 // Short entities share a node skeleton with every other entity of their shape --

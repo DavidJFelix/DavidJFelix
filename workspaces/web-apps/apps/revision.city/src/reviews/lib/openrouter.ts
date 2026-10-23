@@ -259,16 +259,28 @@ export function extractJson<Value>(text: string, schema: z.ZodType<Value>): Valu
 // "Unterminated string". The position in the error counts from the start of the
 // object.
 export function findJsonSyntaxError(text: string): string | undefined {
-  let start = text.indexOf('{')
-  while (start !== -1) {
+  let start = jsonObjectStart(text, 0)
+  while (start !== undefined) {
     const end = closingBraceIndex(text, start) ?? text.length - 1
     const error = jsonParseError(text.slice(start, end + 1))
     if (error !== undefined) {
       return error
     }
-    start = text.indexOf('{', end + 1)
+    start = jsonObjectStart(text, end + 1)
   }
   return undefined
+}
+
+export function hasJsonObjectStart(text: string): boolean {
+  return jsonObjectStart(text, 0) !== undefined
+}
+
+// A JSON object starts with a brace, then optional white space, then a quote or a
+// closing brace. So a brace in prose, such as `{x}`, does not start one.
+function jsonObjectStart(text: string, from: number): number | undefined {
+  const pattern = /\{\s*["}]/g
+  pattern.lastIndex = from
+  return pattern.exec(text)?.index
 }
 
 function jsonParseError(text: string): string | undefined {

@@ -12,6 +12,7 @@ import {
   type CompletionUsage,
   extractJson,
   findJsonSyntaxError,
+  hasJsonObjectStart,
   NO_USAGE,
   OpenRouterError,
 } from './openrouter'
@@ -148,7 +149,7 @@ function parseModelAnswer(text: string): ParsedModelAnswer {
 const ANSWER_END_CHARS = 40
 
 function describeUnreadableAnswer(text: string): string {
-  const reason = text.includes('{')
+  const reason = hasJsonObjectStart(text)
     ? (findJsonSyntaxError(text) ?? 'No findings list')
     : 'No JSON object'
   const excerpt =

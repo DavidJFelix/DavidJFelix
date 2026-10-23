@@ -113,6 +113,16 @@ test.each([
       '{"name": "read_file", "arguments": {"path": "workspaces/web-apps/apps/revision.city/src/index.ts"}}',
     error: String.raw`No findings list. The answer has 99 characters. It starts with "{\"name\": \"read_file\", \"arguments\": {\"pat" and ends with "-apps/apps/revision.city/src/index.ts\"}}".`,
   },
+  {
+    name: 'a missing findings list when a brace in prose comes before the JSON',
+    answer: 'Use {x}. {"name": "read_file"}',
+    error: String.raw`No findings list. The answer has 30 characters: "Use {x}. {\"name\": \"read_file\"}".`,
+  },
+  {
+    name: 'no JSON object when the only braces are in prose',
+    answer: 'No problems in {x}.',
+    error: 'No JSON object. The answer has 19 characters: "No problems in {x}.".',
+  },
 ])('reviewPullRequest reports $name', async ({answer, error}) => {
   const review = await reviewPullRequest({
     files: files(5),

@@ -266,6 +266,11 @@ test.each<{name: string; text: string; expected: string | undefined}>([
   },
   {name: 'no error for text with no object', text: 'no findings', expected: undefined},
   {
+    name: 'no error for braces in prose before a valid object',
+    text: 'Use {x} or { y }. {"findings": []}',
+    expected: undefined,
+  },
+  {
     name: 'the error of a cut-off object, at a position in that object',
     text: '```json\n{"findings": [{"label": 2}, {"title": "Cut',
     expected: 'SyntaxError: Unterminated string in JSON at position 42 (line 1 column 43)',

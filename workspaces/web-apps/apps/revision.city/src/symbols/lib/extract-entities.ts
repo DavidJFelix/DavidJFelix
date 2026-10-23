@@ -8,10 +8,10 @@ import {computeSignature} from './entity-signature'
 // thousands of entities. Parsing it is fine; reporting each entity is not.
 const MAX_ENTITIES_PER_FILE = 2000
 
-// A signature reads all the text of its entity, including each nested entity,
-// and a qualified name repeats the names of its containers. This limit on the
-// total length of entity text and qualified names stops a small, deeply nested
-// file from using hundreds of MB.
+// A signature reads all the text of its entity, including each nested entity.
+// A qualified name repeats the names of its containers. This limit on the total
+// length of entity text and qualified names stops a small, deeply nested file
+// from using hundreds of MB.
 const MAX_ENTITY_CHARACTERS_PER_FILE = 2_000_000
 
 // Fingerprinting is linear but not free; a generated array past this size gets
@@ -56,6 +56,7 @@ export type EntityExtraction =
 // Walks a parsed tree once, emitting an entity for every node whose type carries
 // an `entityProp`. Because the spec lives on the node type, a tree stitched from
 // several grammars (script tags, template blocks) needs no special handling.
+// For a file over a `_PER_FILE` limit, the result is `{tooLarge: true}`.
 export function extractEntities({source, parser}: ExtractEntitiesParams): EntityExtraction {
   const found = collectEntityNodes({source, parser})
   if (found === undefined) {

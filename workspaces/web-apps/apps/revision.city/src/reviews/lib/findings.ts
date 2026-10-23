@@ -12,6 +12,9 @@ export const modelFindingSchema = z.object({
   severity: z.enum(SEVERITIES),
   title: z.string().min(1),
   body: z.string().min(1),
+  // A malformed finding fails the chunk review, so a missing value or one that
+  // is not a boolean becomes false.
+  checked: z.boolean().catch(false),
   label: z.int().positive(),
   endLabel: z.int().positive().nullish(),
   suggestion: z.string().nullish(),
@@ -29,6 +32,8 @@ export interface Finding {
   severity: Severity
   title: string
   body: string
+  // The reviewer says that the code it saw shows the problem is real.
+  checked: boolean
   startLine: number
   endLine: number
   suggestion?: string
@@ -81,6 +86,7 @@ export function anchorFindings({
           severity: finding.severity,
           title: clip(finding.title, MAX_TITLE_LENGTH),
           body: clip(finding.body, MAX_BODY_LENGTH),
+          checked: finding.checked,
           startLine,
           endLine: endLine ?? startLine,
           // A suggestion replaces the whole range that the model gave, so it does
@@ -145,6 +151,9 @@ export function dedupeFindings(findings: readonly Finding[]): Finding[] {
 
 export interface ReviewOutcome {
   reported: Finding[]
+  // The findings at or above the report severity whose `checked` is false. The
+  // review does not post them.
+  unchecked: Finding[]
   failed: boolean
 }
 
@@ -153,16 +162,19 @@ export interface DecideOutcomeOptions {
 }
 
 // A review with a failed chunk is incomplete, so it fails even when no finding
-// reaches the fail severity.
+// reaches the fail severity. A finding that the reviewer did not check cannot
+// fail the review, and it cannot hide a checked finding on the same line.
 export function decideOutcome(
   findings: readonly Finding[],
   {failedChunkReviewCount = 0}: DecideOutcomeOptions = {},
 ): ReviewOutcome {
-  const reported = dedupeFindings(findings).filter((finding) =>
+  const atReportSeverity = findings.filter((finding) =>
     isAtLeast({severity: finding.severity, threshold: REPORT_SEVERITY}),
   )
+  const reported = dedupeFindings(atReportSeverity.filter((finding) => finding.checked))
   return {
     reported,
+    unchecked: dedupeFindings(atReportSeverity.filter((finding) => !finding.checked)),
     failed:
       failedChunkReviewCount > 0 ||
       reported.some((finding) => isAtLeast({severity: finding.severity, threshold: FAIL_SEVERITY})),

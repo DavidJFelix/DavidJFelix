@@ -7,8 +7,8 @@
   "dependencies": {
     "new-component": "7.1.0",
     "process": "0.11.10",
-    "react": "19.3.0",
-    "react-dom": "19.3.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
     "react-feather": "2.0.10"
   },
   "devDependencies": {
@@ -35,7 +35,7 @@
   "staticFiles": {
     "staticPath": "assets"
   },
-  "packageManager": "pnpm@12.11.2",
+  "packageManager": "pnpm@12.14.0",
   "engines": {
     "node": ">=22"
   }

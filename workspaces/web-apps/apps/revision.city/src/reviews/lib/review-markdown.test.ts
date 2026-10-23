@@ -18,6 +18,7 @@ const finding: Finding = {
   severity: 'high',
   title: 'Token leaks',
   body: 'The token reaches the log.',
+  checked: true,
   startLine: 4,
   endLine: 4,
 }
@@ -154,7 +155,7 @@ const review: PullRequestReview = {
 test('formatCheckRunOutput reports a clean review without a list', () => {
   expect(
     formatCheckRunOutput({
-      outcome: {reported: [], failed: false},
+      outcome: {reported: [], unchecked: [], failed: false},
       review,
       notReviewed: [],
       postedCount: 0,
@@ -163,13 +164,13 @@ test('formatCheckRunOutput reports a clean review without a list', () => {
     title: 'No findings',
     summary:
       '3 chunk reviews, 1 from saved results, cost $0.0123. 0 new findings posted. ' +
-      'This check fails on a finding at high or above, or on a failed chunk review.',
+      'This check fails on a checked finding at high or above, or on a failed chunk review.',
   })
 })
 
 test('formatCheckRunOutput lists findings, failures, and files that were not reviewed', () => {
   const output = formatCheckRunOutput({
-    outcome: {reported: [finding], failed: true},
+    outcome: {reported: [finding], unchecked: [], failed: true},
     review: {
       ...review,
       chunkReviewCount: 1,
@@ -199,9 +200,35 @@ test('formatCheckRunOutput lists findings, failures, and files that were not rev
   )
 })
 
+test('formatCheckRunOutput lists unchecked findings last and counts them in the title', () => {
+  const output = formatCheckRunOutput({
+    outcome: {reported: [], unchecked: [{...finding, checked: false}], failed: false},
+    review,
+    notReviewed: [{path: 'image.png', reason: 'GitHub shows no text diff'}],
+    postedCount: 0,
+  })
+
+  expect(output.title).toBe('1 unchecked finding')
+  expect(output.text).toBe(
+    [
+      '### Not reviewed',
+      '',
+      '- `image.png`: GitHub shows no text diff',
+      '',
+      '### Not checked, so not posted',
+      '',
+      '- **high** `src/a.ts:4` (security): Token leaks',
+    ].join('\n'),
+  )
+})
+
 test('formatCheckRunOutput keeps each path with backticks inside its code span', () => {
   const output = formatCheckRunOutput({
-    outcome: {reported: [{...finding, path: 'a`[x](https://example.com)`.ts'}], failed: true},
+    outcome: {
+      reported: [{...finding, path: 'a`[x](https://example.com)`.ts'}],
+      unchecked: [],
+      failed: true,
+    },
     review: {...review, failures: [{path: '``b', reviewerId: 'comments', error: 'Error'}]},
     notReviewed: [{path: 'c `', reason: 'GitHub shows no text diff'}],
     postedCount: 0,
@@ -214,7 +241,7 @@ test('formatCheckRunOutput keeps each path with backticks inside its code span',
 
 test('formatCheckRunOutput cuts a list longer than a check run can show', () => {
   const output = formatCheckRunOutput({
-    outcome: {reported: [], failed: false},
+    outcome: {reported: [], unchecked: [], failed: false},
     review,
     notReviewed: Array.from({length: 3000}, (_, index) => ({
       path: `generated/file-${index}.json`,

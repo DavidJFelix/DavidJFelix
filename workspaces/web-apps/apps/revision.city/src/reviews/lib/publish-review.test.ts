@@ -30,6 +30,7 @@ const finding = (changes: Partial<Finding> = {}): Finding => ({
   severity: 'high',
   title: 'Token leaks',
   body: 'The token reaches the log.',
+  checked: true,
   startLine: 4,
   endLine: 4,
   ...changes,

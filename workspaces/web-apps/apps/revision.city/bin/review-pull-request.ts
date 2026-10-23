@@ -71,6 +71,7 @@ for (const file of files) {
 }
 console.log(
   `\n${outcome.failed ? 'FAIL' : 'PASS'}: ${outcome.reported.length} reported, ` +
+    `${outcome.unchecked.length} not checked, ` +
     `${review.chunkReviewCount} chunk reviews, ${review.failures.length} failed, ` +
     `$${review.usage.costUsd.toFixed(4)}`,
 )

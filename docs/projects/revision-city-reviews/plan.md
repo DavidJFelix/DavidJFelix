@@ -38,11 +38,11 @@ replaces Warden in this repository. This project started as part of
   request's head commit, for up to 4 rounds in each chunk review. The tools read through the GitHub
   API, so the Worker needs no container. `read_definition` uses the Lezer entity extractor of the
   Symbols tab, not a code index.
-- **Saved results** in D1 (`chunk_reviews`, a drizzle schema with its migrations in `drizzle/`),
-  keyed by a SHA-256 of the scope, model, reviewer, system prompt, and user prompt (the file list,
-  then the rendered chunk). The GitHub App uses the installation as the scope. A saved result
-  records each path that its tools read, with the path's object id. A run uses the result again only
-  while each of those paths keeps its id.
+- **Saved results** in D1 (`chunk_reviews`, a drizzle schema with its migrations in `drizzle/`). The
+  key is a SHA-256 of the scope, model, reviewer, system prompt, and user prompt. The user prompt is
+  the file list, then the rendered chunk. The GitHub App uses the installation as the scope. A saved
+  result records each path that its tools read, with the path's object id. A run uses the result
+  again only while each of those paths keeps its id.
 - **Runner: Cloudflare Workflows.** The webhook route (`/api/github/webhook`) verifies the signature
   and the allowlist, starts a Workflow instance, and returns 202 inside GitHub's 10-second window.
   The instance creates a `Revision City` check run and lists the files. It reviews the chunks in

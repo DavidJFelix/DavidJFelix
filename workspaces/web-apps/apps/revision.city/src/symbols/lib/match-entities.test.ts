@@ -180,6 +180,73 @@ test('reports entities present on only one side', () => {
   ])
 })
 
+function repeatToken(token: string, count: number): string[] {
+  return Array.from({length: count}, () => token)
+}
+
+// The test has 100 old functions and 1 new function, each of 100,000 tokens.
+// The fuzzy phase makes 100 comparisons. Together they read the 10,000,000 old
+// tokens once and the 100,000 new tokens 100 times: 20,000,000 reads. One extra
+// token in the first old function makes the total 20,000,001. Only the first
+// old function is similar to the new one, so the phase finds a rename only if
+// it runs.
+test.each([
+  {reads: '20,000,000', extraTokens: 0, runs: true},
+  {reads: '20,000,001', extraTokens: 1, runs: false},
+])('the fuzzy phase runs at $reads token reads: $runs', ({extraTokens, runs}) => {
+  const otherTokens = repeatToken('other', 100_000)
+  const oldEntities = Array.from({length: 100}, (_, index) =>
+    createEntity({
+      name: `old${index}`,
+      structuralHash: `old${index}`,
+      tokens:
+        index === 0
+          ? [...repeatToken('shared', 100_000), ...repeatToken('extra', extraTokens)]
+          : otherTokens,
+    }),
+  )
+  const newEntity = createEntity({
+    name: 'new',
+    structuralHash: 'new',
+    tokens: repeatToken('shared', 100_000),
+  })
+
+  const changes = matchEntities({oldEntities, newEntities: [newEntity]})
+
+  expect(changes.some((change) => change.type === 'renamed')).toBe(runs)
+})
+
+// If the phase counted all kinds together, it would read the 100,199 old tokens
+// once and the 100,000 new tokens 200 times. That is 20,100,199 reads, over the
+// limit.
+test('the fuzzy phase counts only the reads between entities of the same kind', () => {
+  const oldFunction = createEntity({
+    name: 'old',
+    structuralHash: 'old',
+    tokens: repeatToken('shared', 100_000),
+  })
+  const deletedClasses = Array.from({length: 199}, (_, index) =>
+    createEntity({
+      name: `Deleted${index}`,
+      kind: 'class',
+      structuralHash: `deleted${index}`,
+      tokens: ['class'],
+    }),
+  )
+  const newFunction = createEntity({
+    name: 'new',
+    structuralHash: 'new',
+    tokens: repeatToken('shared', 100_000),
+  })
+
+  const changes = matchEntities({
+    oldEntities: [oldFunction, ...deletedClasses],
+    newEntities: [newFunction],
+  })
+
+  expect(changes).toContainEqual(expect.objectContaining({type: 'renamed', name: 'new'}))
+})
+
 // A property occurrence sharing its key with siblings, the way objects in a
 // JSON array all carry `name`. Ordinal suffixes follow document order.
 function createOccurrence(hash: string, ordinal: number): CodeEntity {

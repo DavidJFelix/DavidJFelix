@@ -253,22 +253,25 @@ export function extractJson<Value>(text: string, schema: z.ZodType<Value>): Valu
   throw results[0]?.error ?? new Error('Model response has no JSON object')
 }
 
-// Returns the parse error of the first top-level object that is not valid JSON,
-// to show why `extractJson` found no answer. An object that does not
-// close runs to the end of the text, so a cut-off answer gives an error such as
-// "Unterminated string". The position in the error counts from the start of the
-// object.
+// Returns the parse error of the longest top-level object that is not valid JSON,
+// to show why `extractJson` found no answer. The answer is most likely the longest
+// object, so an invalid example in the prose does not hide the error of the
+// answer. An object that does not close runs to the end of the text, so a cut-off
+// answer gives an error such as "Unterminated string". The position in the error
+// counts from the start of the object.
 export function findJsonSyntaxError(text: string): string | undefined {
+  let longest: {error: string; length: number} | undefined
   let start = jsonObjectStart(text, 0)
   while (start !== undefined) {
     const end = closingBraceIndex(text, start) ?? text.length - 1
+    const length = end + 1 - start
     const error = jsonParseError(text.slice(start, end + 1))
-    if (error !== undefined) {
-      return error
+    if (error !== undefined && length > (longest?.length ?? 0)) {
+      longest = {error, length}
     }
     start = jsonObjectStart(text, end + 1)
   }
-  return undefined
+  return longest?.error
 }
 
 export function hasJsonObjectStart(text: string): boolean {

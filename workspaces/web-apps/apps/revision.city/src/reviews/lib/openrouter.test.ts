@@ -276,9 +276,14 @@ test.each<{name: string; text: string; expected: string | undefined}>([
     expected: 'SyntaxError: Unterminated string in JSON at position 42 (line 1 column 43)',
   },
   {
-    name: 'the error of the first object that is not valid JSON',
+    name: 'the error of the longest invalid object, not of a shorter one after it',
     text: 'The file has {"type": "module"}. {"findings": [{"body": "Use \\s+"}]} {"b": 1',
     expected: 'SyntaxError: Bad escaped character in JSON at position 29 (line 1 column 30)',
+  },
+  {
+    name: 'the error of the longest invalid object, not of a shorter example before it',
+    text: 'Answer in the form {"findings": [...]}. {"findings": [{"title": "Cut',
+    expected: 'SyntaxError: Unterminated string in JSON at position 28 (line 1 column 29)',
   },
 ])('findJsonSyntaxError gives $name', ({text, expected}) => {
   expect(findJsonSyntaxError(text)).toBe(expected)

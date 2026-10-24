@@ -272,6 +272,33 @@ test('reports 1-based line ranges spanning the whole entity', () => {
   })
 })
 
+test.each([
+  {heading: '# Title #   ', name: 'Title'},
+  {heading: '## Title##', name: 'Title##'},
+  {heading: '# a ## b ##', name: 'a ## b'},
+  {heading: '### foo \\###', name: 'foo \\###'},
+])('names the heading "$heading" as "$name"', ({heading, name}) => {
+  const entities = extractEntities({source: `${heading}\n`, parser: markdownParser})
+
+  expect(entities.map((entity) => entity.name)).toEqual([name])
+})
+
+test('names a heading with a long run of spaces before the test times out', () => {
+  const name = `a${' '.repeat(4000)}b`
+
+  const entities = extractEntities({source: `# ${name}\n`, parser: markdownParser})
+
+  expect(entities.map((entity) => entity.name)).toEqual([name])
+})
+
+test('parses a long run of spaces in a paragraph before the test times out', () => {
+  const source = `# Title\n\na${' '.repeat(100_000)}b\n`
+
+  const entities = extractEntities({source, parser: markdownParser})
+
+  expect(entities.map((entity) => entity.name)).toEqual(['Title'])
+})
+
 test('disambiguates same-named siblings with an ordinal suffix', () => {
   const source = '# Notes\n\n## Notes\n'
 

@@ -23,6 +23,7 @@ import {
   type PullRequestFile,
   type ReviewChunk,
   renderChunk,
+  renderFileList,
 } from './review-chunks'
 import {createReviewTools} from './review-tools'
 import {buildSystemPrompt, REVIEWERS, type Reviewer} from './reviewers'
@@ -33,6 +34,7 @@ export interface ChunkReviewContext {
   scope: string
   store: ChunkReviewStore
   chat: Chat
+  fileList: string
   // With it, reviewers get tools that read files outside the chunk.
   headSnapshot?: RepositorySnapshot
 }
@@ -61,9 +63,11 @@ export async function reviewChunk({
   scope,
   store,
   chat,
+  fileList,
   headSnapshot,
 }: ReviewChunkParams): Promise<ChunkReviewOutcome> {
   const rendered = renderChunk(chunk)
+  const prompt = `${fileList}\n\n${rendered.text}`
   const tools = headSnapshot === undefined ? undefined : createReviewTools(headSnapshot)
   const system = buildSystemPrompt({reviewer, withTools: tools !== undefined})
   const key = await chunkReviewKey({
@@ -71,7 +75,7 @@ export async function reviewChunk({
     model,
     reviewerId: reviewer.id,
     systemPrompt: system,
-    chunkText: rendered.text,
+    prompt,
   })
   const anchor = (findings: readonly ModelFinding[]) =>
     anchorFindings({reviewerId: reviewer.id, chunk, rendered, findings})
@@ -81,7 +85,7 @@ export async function reviewChunk({
   if (saved && readsStillMatch(saved.reads, headSnapshot)) {
     return {findings: anchor(saved.findings), cached: true, usage: NO_USAGE}
   }
-  const result = await runToolLoop({chat, model, system, prompt: rendered.text, tools})
+  const result = await runToolLoop({chat, model, system, prompt, tools})
   // reviewChunk saves only an answer that fully parses, so the next run asks
   // again after a failure. It still returns the usage of each model call before
   // the failure, because the provider bills those calls.
@@ -240,7 +244,8 @@ export function summarizeChunkReviews({
   }
 }
 
-export interface ReviewPullRequestParams extends ChunkReviewContext, PlanChunkReviewsParams {
+export interface ReviewPullRequestParams
+  extends Omit<ChunkReviewContext, 'fileList'>, PlanChunkReviewsParams {
   concurrency?: number
 }
 
@@ -254,7 +259,7 @@ export async function reviewPullRequest({
   ...context
 }: ReviewPullRequestParams): Promise<PullRequestReview> {
   const units = planChunkReviews({files, reviewers, maxLinesPerChunk, maxPatchLinesPerFile})
-  const outcomes = await reviewChunks({units, ...context})
+  const outcomes = await reviewChunks({units, fileList: renderFileList(files), ...context})
   return summarizeChunkReviews({units, outcomes})
 }
 

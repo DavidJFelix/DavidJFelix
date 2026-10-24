@@ -12,7 +12,7 @@ const keyParams = {
   model: 'vendor/model',
   reviewerId: 'security',
   systemPrompt: 'p',
-  chunkText: 't',
+  prompt: 't',
 }
 const result = {
   findings: [],
@@ -27,7 +27,7 @@ test('chunkReviewKey is a stable hex digest of its inputs', async () => {
   expect(await chunkReviewKey({...keyParams})).toBe(key)
 })
 
-test.each(['scope', 'model', 'reviewerId', 'systemPrompt', 'chunkText'] as const)(
+test.each(['scope', 'model', 'reviewerId', 'systemPrompt', 'prompt'] as const)(
   'chunkReviewKey changes when %s changes',
   async (field) => {
     expect(await chunkReviewKey({...keyParams, [field]: 'other'})).not.toBe(

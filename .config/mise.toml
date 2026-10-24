@@ -10,11 +10,11 @@ node = "26"
 # because CI's `mise install` runs at the repo root and does not read app-level
 # mise.toml [tools]. Node stays the toolchain runtime for vitest, Playwright,
 # wrangler, and the framework CLIs.
-bun = "1.4.3"
+bun = "1.4.4"
 actionlint = "1"
 ghalint = "1"
-zizmor = "1.30.1"
-pinact = "5.0.0"
+zizmor = "1.31.1"
+pinact = "5.0.1"
 depot = { version = "latest" }
 # worktrunk (`wt`): git-worktree manager backing the one-workspace-per-agent
 # flow. Landing rule: push + PR from the workspace; `wt merge` is not the flow.

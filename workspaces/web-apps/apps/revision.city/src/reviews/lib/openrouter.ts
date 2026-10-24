@@ -253,6 +253,48 @@ export function extractJson<Value>(text: string, schema: z.ZodType<Value>): Valu
   throw results[0]?.error ?? new Error('Model response has no JSON object')
 }
 
+// Returns the parse error of the longest top-level object that is not valid JSON,
+// to show why `extractJson` found no answer. The answer is most likely the longest
+// object, so an invalid example in the prose does not hide the error of the
+// answer. An object that does not close runs to the end of the text, so a cut-off
+// answer gives an error such as "Unterminated string". The position in the error
+// counts from the start of the object.
+export function findJsonSyntaxError(text: string): string | undefined {
+  let longest: {error: string; length: number} | undefined
+  let start = jsonObjectStart(text, 0)
+  while (start !== undefined) {
+    const end = closingBraceIndex(text, start) ?? text.length - 1
+    const length = end + 1 - start
+    const error = jsonParseError(text.slice(start, end + 1))
+    if (error !== undefined && length > (longest?.length ?? 0)) {
+      longest = {error, length}
+    }
+    start = jsonObjectStart(text, end + 1)
+  }
+  return longest?.error
+}
+
+export function hasJsonObjectStart(text: string): boolean {
+  return jsonObjectStart(text, 0) !== undefined
+}
+
+// A JSON object starts with a brace, then optional white space, then a quote or a
+// closing brace. So a brace in prose, such as `{x}`, does not start one.
+function jsonObjectStart(text: string, from: number): number | undefined {
+  const pattern = /\{\s*["}]/g
+  pattern.lastIndex = from
+  return pattern.exec(text)?.index
+}
+
+function jsonParseError(text: string): string | undefined {
+  try {
+    JSON.parse(text)
+    return undefined
+  } catch (error) {
+    return String(error)
+  }
+}
+
 interface ParsedJsonObject {
   value: unknown
   nested: boolean

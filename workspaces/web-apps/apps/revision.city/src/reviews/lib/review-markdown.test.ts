@@ -191,7 +191,7 @@ test('formatCheckRunOutput lists findings, failures, and files that were not rev
       '',
       '### Failed chunk reviews',
       '',
-      '- `src/b.ts` (comments): Error: bad answer',
+      '- `src/b.ts` (comments): `Error: bad answer`',
       '',
       '### Not reviewed',
       '',

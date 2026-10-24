@@ -6,6 +6,7 @@ import {
   createOpenRouterChat,
   extractJson,
   type Fetch,
+  findJsonSyntaxError,
   OpenRouterError,
 } from './openrouter'
 
@@ -255,4 +256,35 @@ test('extractJson throws the schema error of the first object when no object mat
   expect(() => extractJson('{"type": "module"} {"findings": "none"}', answerSchema)).toThrow(
     'expected array, received undefined',
   )
+})
+
+test.each<{name: string; text: string; expected: string | undefined}>([
+  {
+    name: 'no error for valid objects in prose and a fence',
+    text: 'Here:\n```json\n{"type": "module"}\n```\nThen {"findings": []}.',
+    expected: undefined,
+  },
+  {name: 'no error for text with no object', text: 'no findings', expected: undefined},
+  {
+    name: 'no error for braces in prose before a valid object',
+    text: 'Use {x} or { y }. {"findings": []}',
+    expected: undefined,
+  },
+  {
+    name: 'the error of a cut-off object, at a position in that object',
+    text: '```json\n{"findings": [{"label": 2}, {"title": "Cut',
+    expected: 'SyntaxError: Unterminated string in JSON at position 42 (line 1 column 43)',
+  },
+  {
+    name: 'the error of the longest invalid object, not of a shorter one after it',
+    text: 'The file has {"type": "module"}. {"findings": [{"body": "Use \\s+"}]} {"b": 1',
+    expected: 'SyntaxError: Bad escaped character in JSON at position 29 (line 1 column 30)',
+  },
+  {
+    name: 'the error of the longest invalid object, not of a shorter example before it',
+    text: 'Answer in the form {"findings": [...]}. {"findings": [{"title": "Cut',
+    expected: 'SyntaxError: Unterminated string in JSON at position 28 (line 1 column 29)',
+  },
+])('findJsonSyntaxError gives $name', ({text, expected}) => {
+  expect(findJsonSyntaxError(text)).toBe(expected)
 })

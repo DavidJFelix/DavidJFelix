@@ -33,9 +33,9 @@
     "@vitest/coverage-v8": "catalog:",
     "jsdom": "catalog:",
     "oxlint-tsgolint": "catalog:",
-    "react": "19.3.0",
+    "react": "19.3.1",
     "typescript": "7.0.2",
     "vitest": "catalog:",
-    "zod": "4.6.5"
+    "zod": "4.6.7"
   }
 }

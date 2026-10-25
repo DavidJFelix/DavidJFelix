@@ -58,7 +58,7 @@ export async function streamEntityDiffs({
   signal,
   sourcePath,
 }: StreamEntityDiffsParams): Promise<void> {
-  const response = await postBatch({
+  const response = await postBatchWithRetry({
     body: JSON.stringify({path: sourcePath, files}),
     delaysMs: rateLimitDelaysMs,
     endpoint,
@@ -96,7 +96,7 @@ export async function streamEntityDiffs({
   emitLine(buffer, onResult)
 }
 
-interface PostBatchParams {
+interface PostBatchWithRetryParams {
   body: string
   delaysMs: readonly number[]
   endpoint: string
@@ -104,15 +104,14 @@ interface PostBatchParams {
   signal?: AbortSignal
 }
 
-// After a 429, waits and sends the batch again, so a viewer over the route's
-// limit reads its files later instead of losing them.
-async function postBatch({
+// A viewer over the route's limit reads its files later instead of losing them.
+async function postBatchWithRetry({
   body,
   delaysMs,
   endpoint,
   fetcher,
   signal,
-}: PostBatchParams): Promise<Response> {
+}: PostBatchWithRetryParams): Promise<Response> {
   const response = await fetcher(endpoint, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
@@ -124,7 +123,7 @@ async function postBatch({
     return response
   }
   await new Promise((resolve) => setTimeout(resolve, delayMs))
-  return postBatch({body, delaysMs: laterDelaysMs, endpoint, fetcher, signal})
+  return postBatchWithRetry({body, delaysMs: laterDelaysMs, endpoint, fetcher, signal})
 }
 
 function emitLine(line: string, onResult: (result: EntityDiffStreamResult) => void): void {

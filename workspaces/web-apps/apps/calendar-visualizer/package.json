@@ -21,7 +21,7 @@
     "test:e2e:update": "playwright test --update-snapshots"
   },
   "dependencies": {
-    "@astrojs/cloudflare": "14.4.1",
+    "@astrojs/cloudflare": "14.4.2",
     "@astrojs/react": "^7.0.0",
     "@davidjfelix/og": "workspace:*",
     "@davidjfelix/theme": "workspace:*",
@@ -37,7 +37,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@astrojs/check": "0.9.11",
+    "@astrojs/check": "0.9.12",
     "@pandacss/dev": "catalog:",
     "@pandacss/preset-base": "catalog:",
     "@pandacss/preset-panda": "catalog:",

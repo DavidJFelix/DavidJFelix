@@ -38,19 +38,42 @@ test.each([
   expect(response.status).toBe(400)
 })
 
-test('answers 429 before it reads the body when the client IP is over the limit', async () => {
-  const keys: string[] = []
-  const rateLimiter: RateLimit = {
+function createRefusingLimiter(keys: string[]): RateLimit {
+  return {
     limit: ({key}) => {
       keys.push(key)
       return Promise.resolve({success: false})
     },
   }
+}
 
-  const response = await handleEntityDiffRequest(createRequest('not json'), {rateLimiter})
+test('answers 429 before it reads the body when the client IP is over the limit', async () => {
+  const keys: string[] = []
+
+  const response = await handleEntityDiffRequest(createRequest('not json'), {
+    rateLimiter: createRefusingLimiter(keys),
+  })
 
   expect(response.status).toBe(429)
   expect(keys).toEqual(['203.0.113.7'])
+})
+
+test.each([
+  ['a full address', '2001:db8:1:2:3:4:5:6', '2001:db8:1:2::/64'],
+  ['an address with a zero run inside the /64', '2001:db8::5:6', '2001:db8:0:0::/64'],
+  ['an address with a zero run after the /64', '2001:db8:1:2::6', '2001:db8:1:2::/64'],
+  ['the loopback address', '::1', '0:0:0:0::/64'],
+])('counts an IPv6 client by its /64 for %s', async (_case, clientIp, key) => {
+  const keys: string[] = []
+  const request = new Request(`${ORIGIN}/api/diffs/entity-diff`, {
+    method: 'POST',
+    headers: {'CF-Connecting-IP': clientIp},
+    body: 'not json',
+  })
+
+  await handleEntityDiffRequest(request, {rateLimiter: createRefusingLimiter(keys)})
+
+  expect(keys).toEqual([key])
 })
 
 test('rejects a batch larger than one request should carry', async () => {

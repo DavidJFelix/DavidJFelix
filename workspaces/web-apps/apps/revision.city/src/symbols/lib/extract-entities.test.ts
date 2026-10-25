@@ -278,7 +278,7 @@ test.each([
   {heading: '# a ## b ##', name: 'a ## b'},
   {heading: '### foo \\###', name: 'foo \\###'},
 ])('names the heading "$heading" as "$name"', ({heading, name}) => {
-  const entities = extractEntities({source: `${heading}\n`, parser: markdownParser})
+  const entities = extractWithinLimits({source: `${heading}\n`, parser: markdownParser})
 
   expect(entities.map((entity) => entity.name)).toEqual([name])
 })
@@ -286,7 +286,7 @@ test.each([
 test('names a heading with a long run of spaces before the test times out', () => {
   const name = `a${' '.repeat(4000)}b`
 
-  const entities = extractEntities({source: `# ${name}\n`, parser: markdownParser})
+  const entities = extractWithinLimits({source: `# ${name}\n`, parser: markdownParser})
 
   expect(entities.map((entity) => entity.name)).toEqual([name])
 })
@@ -294,7 +294,7 @@ test('names a heading with a long run of spaces before the test times out', () =
 test('parses a long run of spaces in a paragraph before the test times out', () => {
   const source = `# Title\n\na${' '.repeat(100_000)}b\n`
 
-  const entities = extractEntities({source, parser: markdownParser})
+  const entities = extractWithinLimits({source, parser: markdownParser})
 
   expect(entities.map((entity) => entity.name)).toEqual(['Title'])
 })

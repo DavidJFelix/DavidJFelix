@@ -5,12 +5,7 @@
 // are available for fast mode switches; `themeType` only selects the active
 // branch for CSS/color-scheme. When diffs accepts resolved objects, this is the
 // only mapping that changes.
-import {
-  registerCustomTheme,
-  type ThemeRegistrationResolved,
-  type ThemesType,
-  type ThemeTypes,
-} from '@pierre/diffs'
+import {registerCustomTheme, type ThemesType, type ThemeTypes} from '@pierre/diffs'
 import type {ThemeLike} from '@pierre/theming'
 
 import {
@@ -59,7 +54,7 @@ function nameForDiffThemeValue(value: DiffThemeValue): string {
   const name = requireThemeValueName(value)
   if (!seededDiffThemeNames.has(name)) {
     seededDiffThemeNames.add(name)
-    registerCustomTheme(name, () => Promise.resolve(value as ThemeRegistrationResolved))
+    registerCustomTheme(name, () => Promise.resolve(value))
   }
   return name
 }

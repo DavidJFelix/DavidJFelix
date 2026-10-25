@@ -7,11 +7,10 @@ import {
   type DiffIndicators,
   type DiffLineAnnotation,
   type FileDiffContentsLoader,
-  type LineAnnotation,
   type SelectedLineRange,
   type ThemeTypes,
 } from '@pierre/diffs'
-import {useStableCallback} from '@pierre/diffs/react'
+import {type CodeViewAnnotationArgs, useStableCallback} from '@pierre/diffs/react'
 import {IconChevronSm} from '@pierre/icons'
 import {memo, type RefObject, useMemo, useRef, useState} from 'react'
 
@@ -364,10 +363,7 @@ export const DiffsViewer = memo(function DiffsViewer({
   })
 
   const renderCommentAnnotation = useStableCallback(
-    (
-      annotation: DiffLineAnnotation<CommentMetadata> | LineAnnotation<CommentMetadata>,
-      item: CodeViewItem<CommentMetadata>,
-    ) => {
+    (...[annotation, , item]: CodeViewAnnotationArgs<CommentMetadata>) => {
       if (!('side' in annotation) || item.type !== 'diff') {
         return null
       }

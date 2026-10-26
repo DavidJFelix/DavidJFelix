@@ -14,7 +14,7 @@ bun = "1.4.4"
 actionlint = "1"
 ghalint = "1"
 zizmor = "1.31.1"
-pinact = "5.0.1"
+pinact = "5.0.2"
 depot = { version = "latest" }
 # worktrunk (`wt`): git-worktree manager backing the one-workspace-per-agent
 # flow. Landing rule: push + PR from the workspace; `wt merge` is not the flow.

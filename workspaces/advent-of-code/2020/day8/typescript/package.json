@@ -4,7 +4,7 @@
   "main": "./dist/index.js",
   "license": "(MIT OR Apache-2.0)",
   "devDependencies": {
-    "@types/lodash": "4.17.26",
+    "@types/lodash": "4.17.27",
     "@types/node": "24.19.2",
     "prettier": "3.9.10",
     "typescript": "7.0.2"

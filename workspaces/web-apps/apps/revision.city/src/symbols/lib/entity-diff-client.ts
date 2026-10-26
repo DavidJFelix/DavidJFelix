@@ -105,7 +105,8 @@ interface PostBatchWithRetryParams {
   signal?: AbortSignal
 }
 
-// A viewer over the route's limit reads its files later instead of losing them.
+// A viewer over the zone's rate limit (#871) reads its files later instead of
+// losing them.
 async function postBatchWithRetry({
   body,
   delaysMs,

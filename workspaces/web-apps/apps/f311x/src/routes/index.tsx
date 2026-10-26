@@ -21,8 +21,10 @@ const AGENT_ENDPOINT = '/agents/chat-agent/default'
 type ChatMessagePart = {type: string; text?: string}
 
 function ChatPage() {
+  const [threadId] = useState(() => crypto.randomUUID())
   const chat = useChat({
     connection: fetchServerSentEvents(AGENT_ENDPOINT),
+    threadId,
   })
   const [draft, setDraft] = useState('')
 

@@ -38,7 +38,7 @@ async function answer(request: Request): Promise<Response> {
     }),
     messages,
     systemPrompts: [SYSTEM_PROMPT],
-    threadId,
+    threadId: threadId ?? crypto.randomUUID(),
     runId,
     abortController,
   })

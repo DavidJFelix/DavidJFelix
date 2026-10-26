@@ -27,11 +27,17 @@ export interface StreamEntityDiffsParams {
   fetcher?: EntityDiffFetch
   files: readonly EntityDiffRequest[]
   onResult: (result: EntityDiffStreamResult) => void
+  // One wait per retry after a 429, so the length sets the retry count.
+  rateLimitDelaysMs?: readonly number[]
   signal?: AbortSignal
   sourcePath: string
 }
 
 const DEFAULT_ENDPOINT = '/api/diffs/entity-diff'
+
+// The route lets each client send 20 requests in 10 seconds (wrangler.toml), so
+// 10 seconds after a 429 the client can send again.
+const DEFAULT_RATE_LIMIT_DELAYS_MS = [10_000, 10_000, 10_000]
 
 // A worker request has a bounded subrequest budget and each file costs up to two
 // blob fetches, so a caller sends its file list in batches. Declared here rather
@@ -48,13 +54,15 @@ export async function streamEntityDiffs({
   fetcher = fetch,
   files,
   onResult,
+  rateLimitDelaysMs = DEFAULT_RATE_LIMIT_DELAYS_MS,
   signal,
   sourcePath,
 }: StreamEntityDiffsParams): Promise<void> {
-  const response = await fetcher(endpoint, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
+  const response = await postBatchWithRetry({
     body: JSON.stringify({path: sourcePath, files}),
+    delaysMs: rateLimitDelaysMs,
+    endpoint,
+    fetcher,
     signal,
   })
 
@@ -86,6 +94,36 @@ export async function streamEntityDiffs({
     }
   }
   emitLine(buffer, onResult)
+}
+
+interface PostBatchWithRetryParams {
+  body: string
+  delaysMs: readonly number[]
+  endpoint: string
+  fetcher: EntityDiffFetch
+  signal?: AbortSignal
+}
+
+// A viewer over the route's limit reads its files later instead of losing them.
+async function postBatchWithRetry({
+  body,
+  delaysMs,
+  endpoint,
+  fetcher,
+  signal,
+}: PostBatchWithRetryParams): Promise<Response> {
+  const response = await fetcher(endpoint, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body,
+    signal,
+  })
+  const [delayMs, ...laterDelaysMs] = delaysMs
+  if (response.status !== 429 || delayMs === undefined) {
+    return response
+  }
+  await new Promise((resolve) => setTimeout(resolve, delayMs))
+  return postBatchWithRetry({body, delaysMs: laterDelaysMs, endpoint, fetcher, signal})
 }
 
 function emitLine(line: string, onResult: (result: EntityDiffStreamResult) => void): void {

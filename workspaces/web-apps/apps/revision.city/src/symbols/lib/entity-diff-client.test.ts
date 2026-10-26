@@ -134,3 +134,42 @@ test('falls back to the status when the body carries no message', async () => {
     streamEntityDiffs({fetcher, files: FILES, onResult: () => {}, sourcePath: 'o/r/pull/1'}),
   ).rejects.toThrow('Symbol lookup failed (502).')
 })
+
+function createRateLimitedResponse(): Response {
+  return new Response(JSON.stringify({error: 'Too many requests.'}), {status: 429})
+}
+
+test('sends the batch again after a 429', async () => {
+  const line = JSON.stringify({itemId: 'item-1', name: 'src/a.ts', diff: createDiff('src/a.ts')})
+  const fetcher = vi
+    .fn<FetchLike>()
+    .mockResolvedValueOnce(createRateLimitedResponse())
+    .mockResolvedValueOnce(new Response(`${line}\n`))
+  const results: EntityDiffStreamResult[] = []
+
+  await streamEntityDiffs({
+    fetcher,
+    files: FILES,
+    onResult: (result) => results.push(result),
+    rateLimitDelaysMs: [0],
+    sourcePath: 'o/r/pull/1',
+  })
+
+  expect(fetcher).toHaveBeenCalledTimes(2)
+  expect(results.map((result) => result.itemId)).toEqual(['item-1'])
+})
+
+test('surfaces the 429 when the retries run out', async () => {
+  const fetcher = vi.fn<FetchLike>(async () => createRateLimitedResponse())
+
+  await expect(
+    streamEntityDiffs({
+      fetcher,
+      files: FILES,
+      onResult: () => {},
+      rateLimitDelaysMs: [0, 0],
+      sourcePath: 'o/r/pull/1',
+    }),
+  ).rejects.toThrow('Too many requests.')
+  expect(fetcher).toHaveBeenCalledTimes(3)
+})

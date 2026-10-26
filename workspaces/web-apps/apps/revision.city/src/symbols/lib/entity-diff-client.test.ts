@@ -136,7 +136,10 @@ test('falls back to the status when the body carries no message', async () => {
 })
 
 function createRateLimitedResponse(): Response {
-  return new Response(JSON.stringify({error: 'Too many requests.'}), {status: 429})
+  return new Response('<!DOCTYPE html><title>Error 1015: You are being rate limited</title>', {
+    status: 429,
+    headers: {'Content-Type': 'text/html'},
+  })
 }
 
 test('sends the batch again after a 429', async () => {
@@ -170,6 +173,6 @@ test('surfaces the 429 when the retries run out', async () => {
       rateLimitDelaysMs: [0, 0],
       sourcePath: 'o/r/pull/1',
     }),
-  ).rejects.toThrow('Too many requests.')
+  ).rejects.toThrow('Symbol lookup failed (429).')
   expect(fetcher).toHaveBeenCalledTimes(3)
 })

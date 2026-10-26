@@ -51,20 +51,6 @@ database_name = "revision-city"
 database_id = "e62e3ce1-5045-4b3f-a557-b05a13b0095f"
 migrations_dir = "drizzle"
 
-# The entity diff route (src/routes/api/diffs/entity-diff.ts) parses pull
-# request files for anyone, signed in or not. A crafted file can use the whole
-# CPU limit of a request. So each client can send only 20 requests in 10
-# seconds, and the route counts an IPv6 client by its /64. On a pull request
-# with more than 400 files, the viewer can go over the limit. Then it waits 10
-# seconds and sends the batch again. Each Cloudflare location keeps its own
-# count. The dev environment below uses the same namespace, so the two workers
-# share one count.
-# cSpell:words ratelimits
-[[ratelimits]]
-name = "ENTITY_DIFF_RATE_LIMITER"
-namespace_id = "1001"
-simple = { limit = 20, period = 10 }
-
 # The deployed version's id, read by the share-card routes (src/routes/og) to
 # key their edge cache: a rendered card lives at the edge for its whole cache
 # life, and without the version in the key a deploy would keep serving the
@@ -106,13 +92,6 @@ preview_urls = true
 
 [env.dev.version_metadata]
 binding = "CF_VERSION_METADATA"
-
-# Environments do not inherit bindings, so the dev worker and its previews
-# declare the entity diff limit again, in the same namespace as production.
-[[env.dev.ratelimits]]
-name = "ENTITY_DIFF_RATE_LIMITER"
-namespace_id = "1001"
-simple = { limit = 20, period = 10 }
 
 [env.dev.vars]
 # Where a per-PR preview (an uploaded version of this same worker) proxies

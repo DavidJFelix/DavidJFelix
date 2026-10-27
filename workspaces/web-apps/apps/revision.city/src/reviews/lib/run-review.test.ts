@@ -6,6 +6,7 @@ import type {GitHubRequest} from './github-api'
 import {type Chat, OpenRouterError} from './openrouter'
 import {REVIEWERS} from './reviewers'
 import {type RunReviewParams, type RunStep, runReview} from './run-review'
+import type {LogWideEvent, WideEvent} from './wide-event'
 
 const headSha = 'a'.repeat(40)
 const usage = {promptTokens: 10, completionTokens: 5, costUsd: 0.01}
@@ -106,6 +107,7 @@ function runParams(changes: Partial<RunReviewParams> = {}): RunReviewParams {
     chat: answering([]),
     store: createMemoryChunkReviewStore(),
     model: 'vendor/model',
+    log: () => {},
     ...changes,
   }
 }
@@ -429,4 +431,60 @@ test('runReview loads the head tree again after a failed load', async () => {
 
   expect(treeReads).toBe(2)
   expect(github.sent(CHECK_RUN)[0].body).toMatchObject({conclusion: 'success'})
+})
+
+function recordingLog() {
+  const events: WideEvent[] = []
+  const log: LogWideEvent = (event) => {
+    events.push(event)
+  }
+  const named = (name: string) => events.filter(({event}) => event === name)
+  return {log, named}
+}
+
+test('runReview logs one run event with the outcome, counts, and usage of the review', async () => {
+  const {log, named} = recordingLog()
+
+  await runReview(runParams({chat: answering([highFinding]), log}))
+
+  expect(named('review run')).toEqual([
+    expect.objectContaining({
+      repository: 'acme/repo',
+      installationId: 5,
+      pullNumber: 7,
+      headSha,
+      model: 'vendor/model',
+      outcome: 'failure',
+      chunkReviewCount: REVIEWERS.length,
+      cachedCount: 0,
+      failedChunkReviewCount: 0,
+      reportedCount: 1,
+      postedCount: 1,
+      promptTokens: usage.promptTokens * REVIEWERS.length,
+      costUsd: expect.closeTo(usage.costUsd * REVIEWERS.length),
+    }),
+  ])
+  expect(named('model call')).toHaveLength(REVIEWERS.length)
+  expect(named('model call')[0]).toMatchObject({pullNumber: 7, headSha, outcome: 'success'})
+})
+
+test.each<{outcome: string; routes: Record<string, Route>}>([
+  {
+    outcome: 'skipped',
+    routes: {[PULL]: () => ({state: 'closed', head: {sha: headSha}})},
+  },
+  {
+    outcome: 'error',
+    routes: {
+      [FILES]: () => {
+        throw new Error('GitHub is down')
+      },
+    },
+  },
+])('runReview logs a run event with the $outcome outcome', async ({outcome, routes}) => {
+  const {log, named} = recordingLog()
+
+  await runReview(runParams({request: fakeGitHub(routes).request, log})).catch(() => {})
+
+  expect(named('review run')).toEqual([expect.objectContaining({outcome})])
 })

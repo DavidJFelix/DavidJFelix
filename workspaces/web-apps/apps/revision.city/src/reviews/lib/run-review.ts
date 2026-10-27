@@ -21,6 +21,7 @@ import {
 import {REVIEWERS} from './reviewers'
 import {OVER_LIMIT_REASON, selectReviewFiles} from './select-review-files'
 import type {ReviewRunParams} from './webhook'
+import {type LogWideEvent, logWideEvent, type WideEventFields, withChatEvents} from './wide-event'
 
 export interface StepAttempt {
   isLastAttempt: boolean
@@ -55,6 +56,7 @@ export interface RunReviewParams extends ReviewRunParams {
   chat: Chat
   store: ChunkReviewStore
   model: string
+  log?: LogWideEvent
 }
 
 export async function runReview({
@@ -66,11 +68,13 @@ export async function runReview({
   label,
   step,
   request,
-  chat,
+  chat: baseChat,
   store,
   model,
+  log = logWideEvent,
 }: RunReviewParams): Promise<void> {
   const repository = {owner, name}
+  const runFields = {repository: `${owner}/${name}`, installationId, pullNumber, model}
   const pull = {request, repository, pullNumber}
   const openHeadSha = async () => {
     const state = await getPullRequest(pull)
@@ -92,9 +96,16 @@ export async function runReview({
       : null
   })
   if (started === null) {
+    log({event: 'review run', ...runFields, outcome: 'skipped'})
     return
   }
   const {headSha, checkRunId} = started
+  // The Workflow runs this function again after each restart, but a finished
+  // step does not run again. Each call is after the last step of its path, so
+  // the run event is logged once.
+  const logRun = (fields: WideEventFields) =>
+    log({event: 'review run', ...runFields, headSha, ...fields})
+  const chat = withChatEvents({chat: baseChat, log, fields: {...runFields, headSha}})
   const isCurrentHead = async () => (await openHeadSha()) === headSha
   const complete = (conclusion: 'success' | 'failure' | 'neutral', output: CheckRunOutput) =>
     completeCheckRun({request, repository, checkRunId, conclusion, output})
@@ -148,6 +159,7 @@ export async function runReview({
     const completed = batchOutcomes.filter((outcomes) => outcomes !== null)
     if (completed.length < batches.length) {
       await step('complete check run', () => complete('neutral', SUPERSEDED_OUTPUT))
+      logRun({outcome: 'superseded'})
       return
     }
     const review = summarizeChunkReviews({units, outcomes: completed.flat()})
@@ -163,6 +175,19 @@ export async function runReview({
             formatCheckRunOutput({outcome, review, notReviewed, postedCount}),
           ),
     )
+    logRun({
+      outcome: postedCount === null ? 'superseded' : outcome.failed ? 'failure' : 'success',
+      chunkReviewCount: review.chunkReviewCount,
+      cachedCount: review.cachedCount,
+      failedChunkReviewCount: review.failures.length,
+      reportedCount: outcome.reported.length,
+      uncheckedCount: outcome.unchecked.length,
+      postedCount: postedCount ?? undefined,
+      notReviewedCount: notReviewed.length,
+      promptTokens: review.usage.promptTokens,
+      completionTokens: review.usage.completionTokens,
+      costUsd: review.usage.costUsd,
+    })
   } catch (error) {
     await step('report failure', () =>
       complete('failure', {
@@ -170,6 +195,7 @@ export async function runReview({
         summary: neutralizeMarkdown(String(error).slice(0, 1000)),
       }),
     )
+    logRun({outcome: 'error', error: String(error)})
     throw error
   }
 }

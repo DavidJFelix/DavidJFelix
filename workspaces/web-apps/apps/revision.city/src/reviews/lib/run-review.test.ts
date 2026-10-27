@@ -265,7 +265,7 @@ test('runReview fails the check run and throws when a step after the start fails
     'GitHub is down',
   )
 
-  expect(names).toEqual(['start', 'select files', 'report failure'])
+  expect(names).toEqual(['start', 'select files', 'log failure', 'report failure'])
   expect(github.sent(CHECK_RUN)[0].body).toMatchObject({
     conclusion: 'failure',
     output: {title: 'The review failed', summary: 'Error: GitHub is down for @​someone'},

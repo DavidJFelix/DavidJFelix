@@ -80,8 +80,14 @@ export async function runReview({
     const state = await getPullRequest(pull)
     return state.open ? state.headSha : undefined
   }
-  const logError = (error: unknown) =>
-    log({event: 'review run', ...runFields, outcome: 'error', error: String(error)})
+  // The Workflow runs this function again after each restart, but a finished
+  // step does not run again. An error event is logged in its own step, and the
+  // other run events are logged after the last step, so each is logged once.
+  const logError = (fields: WideEventFields, error: unknown) =>
+    step('log failure', async () => {
+      log({event: 'review run', ...fields, outcome: 'error', error: String(error)})
+      return null
+    })
   const started = await step('start', async () => {
     if (label !== undefined) {
       // The label only asks for a review. A failed removal does not stop it.
@@ -96,8 +102,8 @@ export async function runReview({
     return headSha !== undefined && headSha === currentSha
       ? {headSha, checkRunId: await createCheckRun({request, repository, headSha})}
       : null
-  }).catch((error: unknown) => {
-    logError(error)
+  }).catch(async (error: unknown) => {
+    await logError(runFields, error)
     throw error
   })
   if (started === null) {
@@ -105,9 +111,6 @@ export async function runReview({
     return
   }
   const {headSha, checkRunId} = started
-  // The Workflow runs this function again after each restart, but a finished
-  // step does not run again. Each call is after the last step of its path, so
-  // the run event is logged once.
   const logRun = (fields: WideEventFields) =>
     log({event: 'review run', ...runFields, headSha, ...fields})
   const chat = withChatEvents({chat: baseChat, log, fields: {...runFields, headSha}})
@@ -191,8 +194,9 @@ export async function runReview({
       notReviewedCount: notReviewed.length,
     })
   } catch (error) {
-    // Logged before the step, because the step also fails when GitHub is down.
-    logRun({outcome: 'error', error: String(error)})
+    // Logged before the failure report, because the report also fails when
+    // GitHub is down.
+    await logError({...runFields, headSha}, error)
     await step('report failure', () =>
       complete('failure', {
         title: 'The review failed',

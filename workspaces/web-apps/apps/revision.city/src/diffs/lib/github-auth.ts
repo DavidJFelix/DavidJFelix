@@ -424,11 +424,18 @@ async function requestGitHubTokenGrant(
       body: new URLSearchParams(body),
     })
     if (!response.ok) {
+      logGitHubAuthFailure({step: grantStep(body), status: response.status})
       return undefined
     }
 
     const data: unknown = await response.json()
     if (!isRecord(data) || typeof data.access_token !== 'string' || data.access_token === '') {
+      logGitHubAuthFailure({
+        step: grantStep(body),
+        status: response.status,
+        error: isRecord(data) ? readOptionalString(data.error) : undefined,
+        errorDescription: isRecord(data) ? readOptionalString(data.error_description) : undefined,
+      })
       return undefined
     }
 
@@ -439,9 +446,14 @@ async function requestGitHubTokenGrant(
       refreshToken: typeof data.refresh_token === 'string' ? data.refresh_token : undefined,
       refreshTokenExpiresAt: readExpiry(now, data.refresh_token_expires_in),
     }
-  } catch {
+  } catch (error) {
+    logGitHubAuthFailure({step: grantStep(body), error: String(error)})
     return undefined
   }
+}
+
+function grantStep(body: Record<string, string>): GitHubAuthStep {
+  return body.grant_type === 'refresh_token' ? 'token refresh' : 'code exchange'
 }
 
 async function fetchGitHubUser(
@@ -458,20 +470,40 @@ async function fetchGitHubUser(
       },
     })
     if (!response.ok) {
+      logGitHubAuthFailure({step: 'user lookup', status: response.status})
       return undefined
     }
 
     const data: unknown = await response.json()
     if (!isRecord(data) || typeof data.login !== 'string' || data.login === '') {
+      logGitHubAuthFailure({step: 'user lookup', status: response.status, error: 'no login'})
       return undefined
     }
     return {
       login: data.login,
       avatarUrl: typeof data.avatar_url === 'string' ? data.avatar_url : undefined,
     }
-  } catch {
+  } catch (error) {
+    logGitHubAuthFailure({step: 'user lookup', error: String(error)})
     return undefined
   }
+}
+
+type GitHubAuthStep = 'code exchange' | 'token refresh' | 'user lookup'
+
+interface GitHubAuthFailure {
+  step: GitHubAuthStep
+  status?: number
+  // GitHub's error name, such as bad_verification_code. Never the code or a token.
+  error?: string
+  errorDescription?: string
+}
+
+// The sign-in answers a failed GitHub call with a generic message, so the log
+// is the only place that keeps the cause. Workers Logs keeps each field of the
+// object separate.
+function logGitHubAuthFailure(failure: GitHubAuthFailure): void {
+  console.error({event: 'github auth failure', ...failure})
 }
 
 function readExpiry(now: number, expiresInSeconds: unknown): number | undefined {

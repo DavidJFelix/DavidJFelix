@@ -10,9 +10,9 @@ export interface ReportServerErrorResponseParams {
 
 // withSentry captures only thrown errors. A route that catches a failure and
 // answers 5xx, such as the GitHub sign-in callback, is otherwise invisible in
-// Sentry. The message has the path and not the query, so that one route and
-// status make one issue, and the query (an OAuth code, for example) stays out
-// of the title. The console breadcrumbs of the request go with the event.
+// Sentry. The message has the path and not the query. So one route and status
+// make one issue, and a query value such as an OAuth code stays out of the
+// title. The console breadcrumbs of the request go with the event.
 export function reportServerErrorResponse({
   request,
   response,

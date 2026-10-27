@@ -239,7 +239,21 @@ test('callback surfaces a token-exchange error response as a 502 and logs its ca
   consoleError.mockRestore()
 })
 
-test('callback logs the status when the user lookup fails', async () => {
+test('callback logs the error body of a failed code exchange status', async () => {
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+  const {callbackResponse} = await signIn(
+    stubGitHubFetch({token: {error: 'unverified_user_email'}, tokenStatus: 400}),
+  )
+
+  expect(callbackResponse.status).toBe(502)
+  expect(consoleError).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({step: 'code exchange', status: 400, error: 'unverified_user_email'}),
+  )
+  consoleError.mockRestore()
+})
+
+test('callback logs the status and message when the user lookup fails', async () => {
   const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
   const {callbackResponse} = await signIn(
     stubGitHubFetch({user: {message: 'Bad credentials'}, userStatus: 401}),
@@ -250,6 +264,7 @@ test('callback logs the status when the user lookup fails', async () => {
     event: 'github auth failure',
     step: 'user lookup',
     status: 401,
+    error: 'Bad credentials',
   })
   consoleError.mockRestore()
 })

@@ -423,13 +423,13 @@ async function requestGitHubTokenGrant(
       headers: {Accept: 'application/json', 'User-Agent': USER_AGENT},
       body: new URLSearchParams(body),
     })
-    if (!response.ok) {
-      logGitHubAuthFailure({step: grantStep(body), status: response.status})
-      return undefined
-    }
-
-    const data: unknown = await response.json()
-    if (!isRecord(data) || typeof data.access_token !== 'string' || data.access_token === '') {
+    const data = await readJSONBody(response)
+    if (
+      !response.ok ||
+      !isRecord(data) ||
+      typeof data.access_token !== 'string' ||
+      data.access_token === ''
+    ) {
       logGitHubAuthFailure({
         step: grantStep(body),
         status: response.status,
@@ -469,14 +469,13 @@ async function fetchGitHubUser(
         'X-GitHub-Api-Version': GITHUB_API_VERSION,
       },
     })
-    if (!response.ok) {
-      logGitHubAuthFailure({step: 'user lookup', status: response.status})
-      return undefined
-    }
-
-    const data: unknown = await response.json()
-    if (!isRecord(data) || typeof data.login !== 'string' || data.login === '') {
-      logGitHubAuthFailure({step: 'user lookup', status: response.status, error: 'no login'})
+    const data = await readJSONBody(response)
+    if (!response.ok || !isRecord(data) || typeof data.login !== 'string' || data.login === '') {
+      logGitHubAuthFailure({
+        step: 'user lookup',
+        status: response.status,
+        error: isRecord(data) ? (readOptionalString(data.message) ?? 'no login') : 'no login',
+      })
       return undefined
     }
     return {
@@ -489,12 +488,24 @@ async function fetchGitHubUser(
   }
 }
 
+// GitHub also puts the cause of a 4xx or 5xx in a JSON body, so the body is
+// read on every status. A body that is not JSON gives undefined.
+async function readJSONBody(response: Response): Promise<unknown> {
+  try {
+    const data: unknown = await response.json()
+    return data
+  } catch {
+    return undefined
+  }
+}
+
 type GitHubAuthStep = 'code exchange' | 'token refresh' | 'user lookup'
 
 interface GitHubAuthFailure {
   step: GitHubAuthStep
   status?: number
-  // GitHub's error name, such as bad_verification_code. Never the code or a token.
+  // GitHub's error name or message, such as bad_verification_code. Never the
+  // code or a token.
   error?: string
   errorDescription?: string
 }

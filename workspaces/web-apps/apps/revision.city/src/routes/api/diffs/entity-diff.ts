@@ -8,12 +8,7 @@ import {handleEntityDiffRequest} from '@/symbols/lib/entity-diff-endpoint'
 export const Route = createFileRoute('/api/diffs/entity-diff')({
   server: {
     handlers: {
-      POST: async ({request}) => {
-        // Dynamic import: `cloudflare:workers` only resolves in the workerd SSR
-        // environment.
-        const {env} = await import('cloudflare:workers')
-        return handleEntityDiffRequest(request, {rateLimiter: env.ENTITY_DIFF_RATE_LIMITER})
-      },
+      POST: ({request}) => handleEntityDiffRequest(request),
     },
   },
 })

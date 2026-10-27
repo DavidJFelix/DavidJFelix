@@ -35,8 +35,9 @@ export interface StreamEntityDiffsParams {
 
 const DEFAULT_ENDPOINT = '/api/diffs/entity-diff'
 
-// The route lets each client send 20 requests in 10 seconds (wrangler.toml), so
-// 10 seconds after a 429 the client can send again.
+// A 429 comes from the rate limiting rule on the revision.city zone (#871). It
+// blocks a client for 10 seconds once the client sends more than 20 requests in
+// 10 seconds. So 10 seconds after a 429 the client can send again.
 const DEFAULT_RATE_LIMIT_DELAYS_MS = [10_000, 10_000, 10_000]
 
 // A worker request has a bounded subrequest budget and each file costs up to two
@@ -104,7 +105,8 @@ interface PostBatchWithRetryParams {
   signal?: AbortSignal
 }
 
-// A viewer over the route's limit reads its files later instead of losing them.
+// A viewer over the zone's rate limit (#871) reads its files later instead of
+// losing them.
 async function postBatchWithRetry({
   body,
   delaysMs,

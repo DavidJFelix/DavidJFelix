@@ -37,27 +37,11 @@ export interface EntityDiffResult {
   error?: string
 }
 
-export interface HandleEntityDiffRequestParams {
-  rateLimiter: RateLimit
-}
-
 // Streams one newline-delimited JSON result per file, in completion order, so
 // the viewer can render each file's symbols the moment it is ready instead of
 // waiting for the slowest one. Signing in is not required -- a public repo reads
 // fine unauthenticated, the same way the viewer already loads its patch.
-export async function handleEntityDiffRequest(
-  request: Request,
-  {rateLimiter}: HandleEntityDiffRequestParams,
-): Promise<Response> {
-  // A crafted file can use the whole CPU limit of the request, and anyone can
-  // call this route. So the limit counts the requests of each client.
-  const {success} = await rateLimiter.limit({
-    key: rateLimitKey(request.headers.get('CF-Connecting-IP') ?? ''),
-  })
-  if (!success) {
-    return createErrorResponse('Too many requests. Wait a few seconds, then try again.', 429)
-  }
-
+export async function handleEntityDiffRequest(request: Request): Promise<Response> {
   let body: unknown
   try {
     body = await request.json()
@@ -213,22 +197,6 @@ function createEmptyEntityDiff(path: string): EntityDiff {
     changes: [],
     summary: {added: 0, deleted: 0, modified: 0, moved: 0, renamed: 0},
   }
-}
-
-// An IPv6 client usually holds a whole /64, and it can send each request from a
-// new address in it. So the key of an IPv6 address is its /64 prefix.
-function rateLimitKey(clientIp: string): string {
-  if (!clientIp.includes(':')) {
-    return clientIp
-  }
-  const [head = '', tail] = clientIp.split('::')
-  const headGroups = head === '' ? [] : head.split(':')
-  const tailGroups = tail === undefined || tail === '' ? [] : tail.split(':')
-  const zeroGroups = Array.from(
-    {length: tail === undefined ? 0 : 8 - headGroups.length - tailGroups.length},
-    () => '0',
-  )
-  return `${[...headGroups, ...zeroGroups, ...tailGroups].slice(0, 4).join(':')}::/64`
 }
 
 function createErrorResponse(error: string, status: number): Response {

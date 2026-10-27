@@ -1,11 +1,13 @@
-import {withSentry} from '@sentry/cloudflare'
+import {captureMessage, withSentry} from '@sentry/cloudflare'
 import handler from '@tanstack/react-start/server-entry'
+import {reportServerErrorResponse} from './observability/server-error-response'
 
 // The Workflow class must be a named export of the worker's main module.
 export {ReviewWorkflow} from './reviews/review-workflow'
 
 // Custom worker entry: wraps TanStack Start's generated handler so unhandled
-// errors in SSR and server routes are captured server-side. @sentry/cloudflare is
+// errors in SSR and server routes are captured server-side, and so are handled
+// failures that answer 5xx. @sentry/cloudflare is
 // workerd-native (no @sentry/node, so it sidesteps getsentry/sentry-javascript#20038);
 // the client SDK is wired separately in src/observability. The DSN is the same
 // VITE_PUBLIC_SENTRY_DSN inlined into the client build (no runtime var); no-op
@@ -18,8 +20,10 @@ export default withSentry(
     tracesSampleRate: 1,
   }),
   {
-    fetch(request) {
-      return handler.fetch(request)
+    async fetch(request) {
+      const response = await handler.fetch(request)
+      reportServerErrorResponse({request, response, captureMessage})
+      return response
     },
   },
 )

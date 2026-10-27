@@ -442,7 +442,7 @@ function recordingLog() {
   return {log, named}
 }
 
-test('runReview logs one run event with the outcome, counts, and usage of the review', async () => {
+test('runReview logs one run event with the outcome and counts of the review', async () => {
   const {log, named} = recordingLog()
 
   await runReview(runParams({chat: answering([highFinding]), log}))
@@ -460,20 +460,25 @@ test('runReview logs one run event with the outcome, counts, and usage of the re
       failedChunkReviewCount: 0,
       reportedCount: 1,
       postedCount: 1,
-      promptTokens: usage.promptTokens * REVIEWERS.length,
-      costUsd: expect.closeTo(usage.costUsd * REVIEWERS.length),
     }),
   ])
   expect(named('model call')).toHaveLength(REVIEWERS.length)
-  expect(named('model call')[0]).toMatchObject({pullNumber: 7, headSha, outcome: 'success'})
+  expect(named('model call')[0]).toMatchObject({
+    pullNumber: 7,
+    headSha,
+    outcome: 'success',
+    costUsd: usage.costUsd,
+  })
 })
 
-test.each<{outcome: string; routes: Record<string, Route>}>([
+test.each<{name: string; outcome: string; routes: Record<string, Route>}>([
   {
+    name: 'the pull request is closed',
     outcome: 'skipped',
     routes: {[PULL]: () => ({state: 'closed', head: {sha: headSha}})},
   },
   {
+    name: 'a step after the start fails',
     outcome: 'error',
     routes: {
       [FILES]: () => {
@@ -481,7 +486,28 @@ test.each<{outcome: string; routes: Record<string, Route>}>([
       },
     },
   },
-])('runReview logs a run event with the $outcome outcome', async ({outcome, routes}) => {
+  {
+    name: 'the failure report also fails',
+    outcome: 'error',
+    routes: {
+      [FILES]: () => {
+        throw new Error('GitHub is down')
+      },
+      [CHECK_RUN]: () => {
+        throw new Error('GitHub is down')
+      },
+    },
+  },
+  {
+    name: 'the start fails',
+    outcome: 'error',
+    routes: {
+      [CHECK_RUNS]: () => {
+        throw new Error('GitHub is down')
+      },
+    },
+  },
+])('runReview logs a run event with the $outcome outcome when $name', async ({outcome, routes}) => {
   const {log, named} = recordingLog()
 
   await runReview(runParams({request: fakeGitHub(routes).request, log})).catch(() => {})

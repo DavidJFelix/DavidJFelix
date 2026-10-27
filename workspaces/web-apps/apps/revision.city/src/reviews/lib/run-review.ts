@@ -80,6 +80,8 @@ export async function runReview({
     const state = await getPullRequest(pull)
     return state.open ? state.headSha : undefined
   }
+  const logError = (error: unknown) =>
+    log({event: 'review run', ...runFields, outcome: 'error', error: String(error)})
   const started = await step('start', async () => {
     if (label !== undefined) {
       // The label only asks for a review. A failed removal does not stop it.
@@ -94,6 +96,9 @@ export async function runReview({
     return headSha !== undefined && headSha === currentSha
       ? {headSha, checkRunId: await createCheckRun({request, repository, headSha})}
       : null
+  }).catch((error: unknown) => {
+    logError(error)
+    throw error
   })
   if (started === null) {
     log({event: 'review run', ...runFields, outcome: 'skipped'})
@@ -184,18 +189,16 @@ export async function runReview({
       uncheckedCount: outcome.unchecked.length,
       postedCount: postedCount ?? undefined,
       notReviewedCount: notReviewed.length,
-      promptTokens: review.usage.promptTokens,
-      completionTokens: review.usage.completionTokens,
-      costUsd: review.usage.costUsd,
     })
   } catch (error) {
+    // Logged before the step, because the step also fails when GitHub is down.
+    logRun({outcome: 'error', error: String(error)})
     await step('report failure', () =>
       complete('failure', {
         title: 'The review failed',
         summary: neutralizeMarkdown(String(error).slice(0, 1000)),
       }),
     )
-    logRun({outcome: 'error', error: String(error)})
     throw error
   }
 }

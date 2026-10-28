@@ -71,8 +71,16 @@ export async function runReview({
   chat: baseChat,
   store,
   model,
-  log = logWideEvent,
+  log: unsafeLog = logWideEvent,
 }: RunReviewParams): Promise<void> {
+  // Logging is best effort: a failed log must not change the review.
+  const log: LogWideEvent = (event) => {
+    try {
+      unsafeLog(event)
+    } catch {
+      // The review goes on without the event.
+    }
+  }
   const repository = {owner, name}
   const runFields = {repository: `${owner}/${name}`, installationId, pullNumber, model}
   const pull = {request, repository, pullNumber}
@@ -83,12 +91,13 @@ export async function runReview({
   // The Workflow runs this function again after each restart, but a finished
   // step does not run again, so a run event logged in a step is logged once.
   // Each outcome has its own step name, so a saved event of one outcome never
-  // hides an event of another.
+  // hides an event of another. A failed log step is ignored for the same reason
+  // as a failed log.
   const logRun = (outcome: string, fields: WideEventFields = {}) =>
     step(`log ${outcome} run`, async () => {
       log({event: 'review run', ...runFields, ...fields, outcome})
       return null
-    })
+    }).catch(() => null)
   const logError = (fields: WideEventFields, error: unknown) =>
     logRun('error', {...fields, error: String(error)})
   const started = await step('start', async () => {

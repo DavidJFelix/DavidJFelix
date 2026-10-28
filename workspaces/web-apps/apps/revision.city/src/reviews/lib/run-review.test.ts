@@ -153,6 +153,48 @@ test('runReview passes the check and posts nothing when there are no findings', 
   })
 })
 
+const failingLog: LogWideEvent = () => {
+  throw new Error('The log is down')
+}
+
+test.each<{name: string; routes: Record<string, Route>; conclusion: string}>([
+  {name: 'passes', routes: {}, conclusion: 'success'},
+  {
+    name: 'fails',
+    routes: {
+      [FILES]: () => {
+        throw new Error('GitHub is down')
+      },
+    },
+    conclusion: 'failure',
+  },
+])('runReview completes the check run once when the review $name and logging fails', async ({
+  routes,
+  conclusion,
+}) => {
+  const github = fakeGitHub(routes)
+
+  await runReview(runParams({request: github.request, log: failingLog})).catch(() => {})
+
+  expect(github.sent(CHECK_RUN)).toEqual([expect.objectContaining({body: expect.objectContaining({conclusion})})])
+})
+
+test('runReview completes the check run once when a log step fails', async () => {
+  const github = fakeGitHub()
+  const step: RunStep = async (name, run) => {
+    if (name.startsWith('log ')) {
+      throw new Error('The step failed')
+    }
+    return run({isLastAttempt: true})
+  }
+
+  await runReview(runParams({request: github.request, step}))
+
+  expect(github.sent(CHECK_RUN)).toEqual([
+    expect.objectContaining({body: expect.objectContaining({conclusion: 'success'})}),
+  ])
+})
+
 test('runReview does not post a finding that the reviewer did not check', async () => {
   const github = fakeGitHub()
   const chat = answering([{...highFinding, checked: false}])

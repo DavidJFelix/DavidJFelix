@@ -55,6 +55,7 @@ test('createOpenRouterChat sends the messages and returns the content with usage
     max_tokens: 16_000,
     reasoning: {effort: 'medium'},
     temperature: 1,
+    top_p: 0.95,
     usage: {include: true},
   })
 })

@@ -164,8 +164,10 @@ const MAX_ANSWER_TOKENS = 16_000
 
 // At temperature 0, a reasoning model can repeat the same reasoning until the
 // cap on each run of the same chunk. DeepSeek recommends 1.0 for its V4
-// models, because a lower temperature can collapse the reasoning.
+// models, with top_p 0.95, because a lower temperature can collapse the
+// reasoning.
 const TEMPERATURE = 1
+const TOP_P = 0.95
 
 function toRequestBody({model, messages, tools, toolChoice}: ChatRequest) {
   return {
@@ -188,6 +190,7 @@ function toRequestBody({model, messages, tools, toolChoice}: ChatRequest) {
     // keeps about half of the tokens for the answer.
     reasoning: {effort: 'medium'},
     temperature: TEMPERATURE,
+    top_p: TOP_P,
     // Asks OpenRouter to return the billed cost with the token counts.
     usage: {include: true},
   }

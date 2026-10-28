@@ -202,13 +202,42 @@ test('runToolLoop stops and keeps the billed usage when a tool fails', async () 
   expect(chat).toHaveBeenCalledTimes(1)
 })
 
-test('runToolLoop fails an empty answer with the finish reason and keeps its usage', async () => {
+test('runToolLoop runs a review again once when the token limit cuts the answer, and fails the second cut', async () => {
   const chat = vi.fn<Chat>(async () => ({...answer(''), finishReason: 'length'}))
 
   const result = await runToolLoop({...params, chat, tools: fakeTools()})
 
   expect(result).toEqual({
     error: new OpenRouterError('Empty answer: finish reason length, 5 output tokens', false),
+    usage: {promptTokens: 20, completionTokens: 10, costUsd: 0.02},
+    cutAtTokenLimit: true,
+  })
+  expect(chat).toHaveBeenCalledTimes(2)
+})
+
+test('runToolLoop returns the second answer after the token limit cuts the first, with the usage of both', async () => {
+  const chat = vi
+    .fn<Chat>()
+    .mockResolvedValueOnce({...answer(''), finishReason: 'length'})
+    .mockResolvedValueOnce(answer('{"findings": []}'))
+
+  const result = await runToolLoop({...params, chat, tools: fakeTools()})
+
+  expect(result).toEqual({
+    text: '{"findings": []}',
+    usage: {promptTokens: 20, completionTokens: 10, costUsd: 0.02},
+    reads: [],
+  })
+})
+
+test('runToolLoop does not run a review again after an empty answer that stopped for another reason', async () => {
+  const chat = vi.fn<Chat>(async () => ({...answer(''), finishReason: 'stop'}))
+
+  const result = await runToolLoop({...params, chat, tools: fakeTools()})
+
+  expect(result).toEqual({
+    error: new OpenRouterError('Empty answer: finish reason stop, 5 output tokens', false),
     usage,
   })
+  expect(chat).toHaveBeenCalledTimes(1)
 })

@@ -77,9 +77,7 @@ export async function runReview({
   const log: LogWideEvent = (event) => {
     try {
       unsafeLog(event)
-    } catch {
-      // The review goes on without the event.
-    }
+    } catch {}
   }
   const repository = {owner, name}
   const runFields = {repository: `${owner}/${name}`, installationId, pullNumber, model}
@@ -88,11 +86,7 @@ export async function runReview({
     const state = await getPullRequest(pull)
     return state.open ? state.headSha : undefined
   }
-  // The Workflow runs this function again after each restart, but a finished
-  // step does not run again, so a run event logged in a step is logged once.
-  // Each outcome has its own step name, so a saved event of one outcome never
-  // hides an event of another. A failed log step is ignored for the same reason
-  // as a failed log.
+  // A run event is logged in a step, so a restart does not log it again.
   const logRun = (outcome: string, fields: WideEventFields = {}) =>
     step(`log ${outcome} run`, async () => {
       log({event: 'review run', ...runFields, ...fields, outcome})

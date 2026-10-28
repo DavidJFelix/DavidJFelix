@@ -69,7 +69,6 @@ const pullReads = (...answers: object[]) => {
   return () => answers[Math.min(reads++, answers.length - 1)]
 }
 
-// Every reviewer reviews the one chunk of `src/a.ts` at the cost of `usage`.
 const COST_LINES = [
   '',
   '### Cost per chunk review',

@@ -12,7 +12,7 @@ const failing: Chat = async () => {
 test('withChatEvents logs the usage of a model call with the shared fields', async () => {
   const log = vi.fn<LogWideEvent>()
   const reply = {content: 'ok', toolCalls: [{id: '1', name: 'read_file', arguments: '{}'}], usage}
-  const chat = withChatEvents({chat: async () => reply, log, fields: {pullNumber: 7}})
+  const chat = withChatEvents({chat: async () => reply, log, sharedFields: {pullNumber: 7}})
 
   await expect(chat(request)).resolves.toBe(reply)
 
@@ -32,7 +32,7 @@ test('withChatEvents logs the usage of a model call with the shared fields', asy
 
 test('withChatEvents logs a failed model call and throws its error again', async () => {
   const log = vi.fn<LogWideEvent>()
-  const chat = withChatEvents({chat: failing, log, fields: {}})
+  const chat = withChatEvents({chat: failing, log, sharedFields: {}})
 
   await expect(chat(request)).rejects.toThrow('OpenRouter is down')
 

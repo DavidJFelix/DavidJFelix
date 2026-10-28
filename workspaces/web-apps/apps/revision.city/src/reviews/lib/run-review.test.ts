@@ -125,7 +125,7 @@ test('runReview reviews the head, posts the findings, and fails the check on a h
     'review 1 of 1',
     'post review',
     'complete check run',
-    'log run',
+    'log failure run',
   ])
   expect(chat).toHaveBeenCalledTimes(REVIEWERS.length)
   expect(github.sent(CHECK_RUNS)).toHaveLength(1)
@@ -228,7 +228,7 @@ test.each([
 
   await runReview(runParams({step, request: github.request}))
 
-  expect(names).toEqual(['start', 'log run'])
+  expect(names).toEqual(['start', 'log skipped run'])
   expect(github.sent(CHECK_RUNS)).toEqual([])
 })
 
@@ -266,7 +266,7 @@ test('runReview fails the check run and throws when a step after the start fails
     'GitHub is down',
   )
 
-  expect(names).toEqual(['start', 'select files', 'log run', 'report failure'])
+  expect(names).toEqual(['start', 'select files', 'log error run', 'report failure'])
   expect(github.sent(CHECK_RUN)[0].body).toMatchObject({
     conclusion: 'failure',
     output: {title: 'The review failed', summary: 'Error: GitHub is down for @​someone'},

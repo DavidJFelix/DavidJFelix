@@ -1,4 +1,12 @@
-import {addUsage, type Chat, type ChatMessage, type CompletionUsage, NO_USAGE} from './openrouter'
+import {
+  addUsage,
+  type Chat,
+  type ChatMessage,
+  type ChatReply,
+  type CompletionUsage,
+  NO_USAGE,
+  OpenRouterError,
+} from './openrouter'
 import type {FileRead} from './repository-snapshot'
 import {cutText, type ReviewTools, type ToolOutput} from './review-tools'
 
@@ -93,7 +101,11 @@ async function continueToolLoop(state: ToolLoopState): Promise<ToolLoopResult> {
     return {error: reply.error, usage: state.usage}
   }
   const usage = addUsage(state.usage, reply.usage)
-  if (tools === undefined || !mayCallTools || reply.toolCalls.length === 0) {
+  const isLastReply = tools === undefined || !mayCallTools || reply.toolCalls.length === 0
+  if (isLastReply && reply.content === '') {
+    return {error: describeEmptyAnswer(reply), usage}
+  }
+  if (isLastReply) {
     const reads = new Map(state.reads.map((read) => [read.path, read]))
     return {text: reply.content, usage, reads: [...reads.values()]}
   }
@@ -125,6 +137,19 @@ async function continueToolLoop(state: ToolLoopState): Promise<ToolLoopResult> {
     outputBudget: outputs.reduce((budget, output) => budget - output.content.length, outputBudget),
     reads: [...state.reads, ...outputs.flatMap((output) => (output.read ? [output.read] : []))],
   })
+}
+
+// The reason tells an output cut at the token limit from a model that called
+// tools when the tools were off. A retry would bill the same empty answer again.
+function describeEmptyAnswer({toolCalls, finishReason, usage}: ChatReply): OpenRouterError {
+  const reason =
+    toolCalls.length > 0
+      ? `tool calls after the tools were off: ${toolCalls.length}`
+      : `finish reason ${finishReason ?? 'not given'}`
+  return new OpenRouterError(
+    `Empty answer: ${reason}, ${usage.completionTokens} output tokens`,
+    false,
+  )
 }
 
 function toFailure(error: unknown): {error: unknown} {

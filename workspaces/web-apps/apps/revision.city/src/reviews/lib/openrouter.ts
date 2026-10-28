@@ -47,6 +47,8 @@ export interface ChatReply {
   content: string
   toolCalls: ToolCall[]
   usage: CompletionUsage
+  // Why the model stopped, such as "stop", "length", or "tool_calls".
+  finishReason?: string
 }
 
 export type Chat = (request: ChatRequest) => Promise<ChatReply>
@@ -80,6 +82,7 @@ const chatResponseSchema = z.object({
   choices: z
     .array(
       z.object({
+        finish_reason: z.string().nullish(),
         message: z.object({
           content: z.string().nullish(),
           tool_calls: z
@@ -134,8 +137,9 @@ export function createOpenRouterChat({
       )
     }
     const {choices, usage} = parsed.data
-    const {message} = choices[0]
+    const {message, finish_reason: finishReason} = choices[0]
     return {
+      ...(finishReason ? {finishReason} : {}),
       // A refusal or a reply with only tool calls can have no content. An empty
       // final answer keeps the billed usage and then fails to parse.
       content: message.content ?? '',

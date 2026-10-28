@@ -28,7 +28,7 @@ const sentBody = (fetchStub: ReturnType<typeof vi.fn<Fetch>>, call = 0): unknown
 test('createOpenRouterChat sends the messages and returns the content with usage', async () => {
   const fetchStub = vi.fn<Fetch>(async () =>
     Response.json({
-      choices: [{message: {content: '{"findings": []}'}}],
+      choices: [{finish_reason: 'stop', message: {content: '{"findings": []}'}}],
       usage: {prompt_tokens: 100, completion_tokens: 20, cost: 0.003},
     }),
   )
@@ -40,6 +40,7 @@ test('createOpenRouterChat sends the messages and returns the content with usage
     content: '{"findings": []}',
     toolCalls: [],
     usage: {promptTokens: 100, completionTokens: 20, costUsd: 0.003},
+    finishReason: 'stop',
   })
   const [url, init] = fetchStub.mock.calls[0]
   expect(url).toBe('https://openrouter.ai/api/v1/chat/completions')

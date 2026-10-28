@@ -1,5 +1,5 @@
 import {expect, test, vi} from 'vitest'
-import type {Chat, ChatReply, ToolCall} from './openrouter'
+import {type Chat, type ChatReply, OpenRouterError, type ToolCall} from './openrouter'
 import type {ReviewTools, ToolOutput} from './review-tools'
 import {MAX_TOOL_ROUNDS, runToolLoop} from './tool-loop'
 
@@ -89,8 +89,13 @@ test('runToolLoop asks for an answer without tools after the last tool round', a
     content:
       'The tools are off now. Write your answer as the JSON that the instructions give. Do not write a tool call. Leave out each finding that you could not check.',
   })
-  // The model kept calling tools, so its answer is empty and fails to parse later.
-  expect(result).toMatchObject({text: ''})
+  expect(result).toEqual({
+    error: new OpenRouterError(
+      'Empty answer: tool calls after the tools were off: 1, 5 output tokens',
+      false,
+    ),
+    usage: {promptTokens: 50, completionTokens: 25, costUsd: 0.05},
+  })
   expect(tools.run).toHaveBeenCalledTimes(MAX_TOOL_ROUNDS)
 })
 
@@ -195,4 +200,15 @@ test('runToolLoop stops and keeps the billed usage when a tool fails', async () 
 
   expect(result).toEqual({error: failure, usage})
   expect(chat).toHaveBeenCalledTimes(1)
+})
+
+test('runToolLoop fails an empty answer with the finish reason and keeps its usage', async () => {
+  const chat = vi.fn<Chat>(async () => ({...answer(''), finishReason: 'length'}))
+
+  const result = await runToolLoop({...params, chat, tools: fakeTools()})
+
+  expect(result).toEqual({
+    error: new OpenRouterError('Empty answer: finish reason length, 5 output tokens', false),
+    usage,
+  })
 })

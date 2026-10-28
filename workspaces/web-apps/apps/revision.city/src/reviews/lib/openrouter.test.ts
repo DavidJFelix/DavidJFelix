@@ -53,6 +53,7 @@ test('createOpenRouterChat sends the messages and returns the content with usage
     ],
     response_format: {type: 'json_object'},
     max_tokens: 32_000,
+    reasoning: {effort: 'medium'},
     temperature: 0,
     usage: {include: true},
   })

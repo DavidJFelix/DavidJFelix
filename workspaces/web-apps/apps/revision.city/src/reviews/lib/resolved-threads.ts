@@ -1,5 +1,12 @@
 import {z} from 'zod'
-import {GitHubApiError, getPullRequest, type PullRequestParams, repositoryPath} from './github-api'
+import {
+  GitHubApiError,
+  type GitHubRepository,
+  type GitHubRequest,
+  getPullRequest,
+  type PullRequestParams,
+  repositoryPath,
+} from './github-api'
 import {APP_SLUG, CHECK_RUN_NAME, completeCheckRun} from './publish-review'
 import type {CheckRunOutput} from './review-markdown'
 
@@ -155,11 +162,13 @@ async function listAppThreadsFrom({
   ]
 }
 
-interface CanPushParams extends PullRequestParams {
+export interface CanPushParams {
+  request: GitHubRequest
+  repository: GitHubRepository
   login: string
 }
 
-async function canPush({request, repository, login}: CanPushParams): Promise<boolean> {
+export async function canPush({request, repository, login}: CanPushParams): Promise<boolean> {
   if (login === '') {
     return false
   }

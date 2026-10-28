@@ -1,13 +1,21 @@
 import {createFileRoute} from '@tanstack/react-router'
+import {dismissCheckRun} from '@/reviews/lib/dismiss-check-run'
 import {createGitHubRequest} from '@/reviews/lib/github-api'
-import {createInstallationTokenSource} from '@/reviews/lib/github-app-auth'
+import {
+  type CreateInstallationTokenSourceParams,
+  createInstallationTokenSource,
+} from '@/reviews/lib/github-app-auth'
 import {syncCheckRunWithThreads} from '@/reviews/lib/resolved-threads'
-import {handleReviewWebhook, type ThreadSyncParams} from '@/reviews/lib/webhook'
+import {handleReviewWebhook} from '@/reviews/lib/webhook'
+
+const installationRequest = (params: CreateInstallationTokenSourceParams) =>
+  createGitHubRequest({token: createInstallationTokenSource(params)})
 
 // The GitHub App's webhook. A signed pull request event from an allowed
 // repository can start a review (src/reviews/review-workflow.ts).
 // `decideReviewRun` holds the trigger rules. A resolved or reopened thread of
-// the app makes the check run agree with the threads again. Runs in the worker.
+// the app makes the check run agree with the threads again, and the dismiss
+// button passes a failed check run. Runs in the worker.
 export const Route = createFileRoute('/api/github/webhook')({
   server: {
     handlers: {
@@ -23,24 +31,18 @@ export const Route = createFileRoute('/api/github/webhook')({
           workflow: env.REVIEW_WORKFLOW,
           ...(clientId && privateKey
             ? {
-                syncCheckRun: ({
-                  installationId,
-                  repositoryId,
-                  owner,
-                  name,
-                  pullNumber,
-                }: ThreadSyncParams) =>
+                syncCheckRun: ({owner, name, pullNumber, ...installation}) =>
                   syncCheckRunWithThreads({
-                    request: createGitHubRequest({
-                      token: createInstallationTokenSource({
-                        clientId,
-                        privateKey,
-                        installationId,
-                        repositoryId,
-                      }),
-                    }),
+                    request: installationRequest({clientId, privateKey, ...installation}),
                     repository: {owner, name},
                     pullNumber,
+                  }),
+                dismissCheckRun: ({owner, name, checkRunId, login, ...installation}) =>
+                  dismissCheckRun({
+                    request: installationRequest({clientId, privateKey, ...installation}),
+                    repository: {owner, name},
+                    checkRunId,
+                    login,
                   }),
               }
             : {}),

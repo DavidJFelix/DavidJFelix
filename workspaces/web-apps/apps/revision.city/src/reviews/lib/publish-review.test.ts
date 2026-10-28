@@ -68,9 +68,28 @@ test('completeCheckRun sets the conclusion and the output', async () => {
         status: 'completed',
         conclusion: 'success',
         output: {title: 'No findings', summary: 'Clean'},
+        actions: [],
       },
     },
   ])
+})
+
+test('completeCheckRun adds the dismiss button to a failed check run', async () => {
+  const github = fakeGitHub()
+
+  await completeCheckRun({
+    request: github.request,
+    repository,
+    checkRunId: 31,
+    conclusion: 'failure',
+    output: {title: '1 finding', summary: 'Cost'},
+    externalId: 'resolvable-findings',
+  })
+
+  expect(github.calls[0].body).toMatchObject({
+    actions: [{label: 'Dismiss findings', identifier: 'dismiss'}],
+    external_id: 'resolvable-findings',
+  })
 })
 
 test('removeLabel removes the label from the pull request', async () => {

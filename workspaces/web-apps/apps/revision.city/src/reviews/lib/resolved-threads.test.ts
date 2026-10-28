@@ -203,6 +203,7 @@ test('syncCheckRunWithThreads passes a failed check when every thread is resolve
     status: 'completed',
     conclusion: 'success',
     external_id: 'resolvable-findings',
+    actions: [],
     output: {
       title: 'Resolved: 1 finding',
       summary:

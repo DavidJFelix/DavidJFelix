@@ -55,6 +55,14 @@ export async function createCheckRun({
   return checkRun.id
 }
 
+// A failed check run shows this button. A user who can push clicks it to pass
+// the check without a new review (src/reviews/lib/dismiss-check-run.ts).
+export const DISMISS_ACTION = {
+  label: 'Dismiss findings',
+  description: 'Pass this check without a new review',
+  identifier: 'dismiss',
+}
+
 export interface CompleteCheckRunParams {
   request: GitHubRequest
   repository: GitHubRepository
@@ -79,6 +87,8 @@ export async function completeCheckRun({
       status: 'completed',
       conclusion,
       output,
+      // An empty list removes the button from a check run that passes now.
+      actions: conclusion === 'failure' ? [DISMISS_ACTION] : [],
       ...(externalId === undefined ? {} : {external_id: externalId}),
     },
     schema: ignoredResponse,

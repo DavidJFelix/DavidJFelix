@@ -4,6 +4,7 @@
 import {createHmac} from 'node:crypto'
 import {expect, test, vi} from 'vitest'
 import {
+  decideDismiss,
   decideReviewRun,
   decideThreadSync,
   type HandleReviewWebhookParams,
@@ -347,4 +348,74 @@ test.each([
   {name: 'a payload of another shape', payload: {action: 'resolved'}},
 ])('decideThreadSync ignores $name', ({event = 'pull_request_review_thread', payload}) => {
   expect(decideThreadSync({event, payload})).toMatchObject({sync: false})
+})
+
+const checkRunEvent = {
+  action: 'requested_action',
+  installation: {id: 5},
+  repository: pullRequestEvent.repository,
+  check_run: {id: 31, app: {slug: 'revisioncity'}},
+  requested_action: {identifier: 'dismiss'},
+  sender: {login: 'DavidJFelix'},
+}
+
+test('handleReviewWebhook dismisses the check run when its button is clicked', async () => {
+  const dismissCheckRun = vi.fn<NonNullable<HandleReviewWebhookParams['dismissCheckRun']>>(
+    async () => 'dismissed',
+  )
+
+  const response = await handleReviewWebhook({
+    request: webhookRequest({payload: checkRunEvent, event: 'check_run'}),
+    secret,
+    workflow: fakeWorkflow(),
+    dismissCheckRun,
+  })
+
+  expect(response.status).toBe(200)
+  expect(await response.json()).toEqual({status: 'dismissed'})
+  expect(dismissCheckRun).toHaveBeenCalledWith({
+    installationId: 5,
+    repositoryId: 9,
+    owner: 'DavidJFelix',
+    name: 'DavidJFelix',
+    checkRunId: 31,
+    login: 'DavidJFelix',
+  })
+})
+
+test.each([
+  {name: 'without the app key', payload: checkRunEvent, withDismiss: false},
+  {name: 'for another check run action', payload: {...checkRunEvent, action: 'completed'}},
+])('handleReviewWebhook ignores a check run event $name', async ({payload, withDismiss = true}) => {
+  const dismissCheckRun = vi.fn<NonNullable<HandleReviewWebhookParams['dismissCheckRun']>>(
+    async () => 'dismissed',
+  )
+
+  const response = await handleReviewWebhook({
+    request: webhookRequest({payload, event: 'check_run'}),
+    secret,
+    workflow: fakeWorkflow(),
+    ...(withDismiss ? {dismissCheckRun} : {}),
+  })
+
+  expect(response.status).toBe(202)
+  expect(await response.json()).toMatchObject({status: 'ignored'})
+  expect(dismissCheckRun).not.toHaveBeenCalled()
+})
+
+test.each([
+  {name: 'another event', event: 'check_suite', payload: checkRunEvent},
+  {name: 'another button', payload: {...checkRunEvent, requested_action: {identifier: 'other'}}},
+  {name: 'no button', payload: {...checkRunEvent, requested_action: undefined}},
+  {
+    name: 'a check run of another app',
+    payload: {...checkRunEvent, check_run: {id: 31, app: {slug: 'other-app'}}},
+  },
+  {
+    name: 'a repository that is not allowed',
+    payload: {...checkRunEvent, repository: {...checkRunEvent.repository, full_name: 'acme/repo'}},
+  },
+  {name: 'a payload of another shape', payload: {action: 'requested_action'}},
+])('decideDismiss ignores $name', ({event = 'check_run', payload}) => {
+  expect(decideDismiss({event, payload})).toMatchObject({dismiss: false})
 })

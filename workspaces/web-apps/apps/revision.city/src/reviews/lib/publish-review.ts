@@ -19,8 +19,11 @@ import {
 
 export const CHECK_RUN_NAME = 'Revision City'
 
-// The login on the app's own comments. One app serves every installation.
-const APP_BOT_LOGIN = 'revisioncity[bot]'
+// One app serves every installation.
+export const APP_SLUG = 'revisioncity'
+
+// The login on the app's own comments in the REST API.
+export const APP_BOT_LOGIN = `${APP_SLUG}[bot]`
 
 // A review with more comments is hard to read. `postReview` does not post the
 // rest, so the check run must list every finding.
@@ -58,6 +61,7 @@ export interface CompleteCheckRunParams {
   checkRunId: number
   conclusion: 'success' | 'failure' | 'neutral'
   output: CheckRunOutput
+  externalId?: string
 }
 
 export async function completeCheckRun({
@@ -66,11 +70,17 @@ export async function completeCheckRun({
   checkRunId,
   conclusion,
   output,
+  externalId,
 }: CompleteCheckRunParams): Promise<void> {
   await request({
     method: 'PATCH',
     path: `${repositoryPath(repository)}/check-runs/${checkRunId}`,
-    body: {status: 'completed', conclusion, output},
+    body: {
+      status: 'completed',
+      conclusion,
+      output,
+      ...(externalId === undefined ? {} : {external_id: externalId}),
+    },
     schema: ignoredResponse,
   })
 }
@@ -105,16 +115,22 @@ export interface PostReviewParams extends PullRequestParams {
   findings: readonly Finding[]
 }
 
+export interface PostedReview {
+  count: number
+  // False when GitHub refused the inline comments, so the findings have no
+  // threads.
+  inline: boolean
+}
+
 // Posts the findings that an earlier run did not post on the same line, at
-// most `MAX_COMMENTS_PER_REVIEW` and most severe first. Returns how many it
-// posted.
+// most `MAX_COMMENTS_PER_REVIEW` and most severe first.
 export async function postReview({
   request,
   repository,
   pullNumber,
   headSha,
   findings,
-}: PostReviewParams): Promise<number> {
+}: PostReviewParams): Promise<PostedReview> {
   const pullPath = `${repositoryPath(repository)}/pulls/${pullNumber}`
   const comments = await listAllPages({
     request,
@@ -143,7 +159,7 @@ export async function postReview({
     )
     .slice(0, MAX_COMMENTS_PER_REVIEW)
   if (fresh.length === 0) {
-    return 0
+    return {count: 0, inline: true}
   }
   const freshFindings = fresh.map(({finding}) => finding)
   const review = {commit_id: headSha, event: 'COMMENT'}
@@ -179,8 +195,9 @@ export async function postReview({
       body: {...review, body: formatReviewBody({findings: freshFindings, inlineAccepted: false})},
       schema: ignoredResponse,
     })
+    return {count: fresh.length, inline: false}
   }
-  return fresh.length
+  return {count: fresh.length, inline: true}
 }
 
 interface CommentKeyParams {

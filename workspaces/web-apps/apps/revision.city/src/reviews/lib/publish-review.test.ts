@@ -99,7 +99,7 @@ test('postReview posts each new finding as an inline comment on the head', async
     findings: [single, range],
   })
 
-  expect(posted).toBe(2)
+  expect(posted).toEqual({count: 2, inline: true})
   const [, review] = github.calls
   expect(review).toMatchObject({
     method: 'POST',
@@ -145,7 +145,7 @@ test('postReview skips findings that the app already posted on the same line', a
     findings: [posted, moved],
   })
 
-  expect(count).toBe(1)
+  expect(count).toEqual({count: 1, inline: true})
   expect(github.calls[1].body).toMatchObject({comments: [{line: 6}]})
 })
 
@@ -164,7 +164,7 @@ test('postReview posts nothing when every finding is already posted', async () =
       headSha: 'abc',
       findings: [posted],
     }),
-  ).toBe(0)
+  ).toEqual({count: 0, inline: true})
   expect(github.calls.map(({path}) => path)).toEqual([COMMENTS_PATH])
 })
 
@@ -185,7 +185,7 @@ test('postReview posts the 50 most severe findings in one review', async () => {
       headSha: 'abc',
       findings,
     }),
-  ).toBe(50)
+  ).toEqual({count: 50, inline: true})
   const {comments} = z
     .object({comments: z.array(z.object({line: z.number()}))})
     .parse(github.calls[1].body)
@@ -212,7 +212,7 @@ test('postReview lists the findings in the review body when GitHub refuses the c
     findings: [finding()],
   })
 
-  expect(count).toBe(1)
+  expect(count).toEqual({count: 1, inline: false})
   expect(github.calls[2]).toEqual({
     method: 'POST',
     path: REVIEWS_PATH,

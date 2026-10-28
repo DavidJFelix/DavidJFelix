@@ -1,8 +1,9 @@
+// cSpell:ignore revisioncity -- the GitHub App's slug
 import {serialize} from 'node:v8'
 import {expect, test, vi} from 'vitest'
 import {z} from 'zod'
 import {createMemoryChunkReviewStore} from './chunk-review-store'
-import type {GitHubRequest} from './github-api'
+import {GitHubApiError, type GitHubRequest} from './github-api'
 import {type Chat, OpenRouterError} from './openrouter'
 import {REVIEWERS} from './reviewers'
 import {type RunReviewParams, type RunStep, runReview} from './run-review'
@@ -27,6 +28,10 @@ const TREE = `GET /repos/acme/repo/git/trees/${headSha}?recursive=1`
 const COMMENTS = 'GET /repos/acme/repo/pulls/7/comments?per_page=100&page=1'
 const REVIEWS = 'POST /repos/acme/repo/pulls/7/reviews'
 const LABEL = 'DELETE /repos/acme/repo/issues/7/labels/Revision%20City'
+const GRAPHQL = 'POST /graphql'
+const checkRunList = (sha: string) =>
+  `GET /repos/acme/repo/commits/${sha}/check-runs?check_name=Revision%20City&filter=latest`
+const PERMISSION = 'GET /repos/acme/repo/collaborators/maintainer/permission'
 
 const movedSha = 'b'.repeat(40)
 const openPull = {state: 'open', head: {sha: headSha}}
@@ -36,9 +41,55 @@ const changedFile = (filename: string, patch?: string) => ({filename, status: 'm
 
 const SMALL_PATCH = '@@ -1,1 +1,2 @@\n ctx\n+added'
 
-// Answers each request from its route, and records it.
+const threadsAnswer = (...threads: {isResolved: boolean}[]) => ({
+  data: {
+    repository: {
+      pullRequest: {
+        reviewThreads: {
+          pageInfo: {hasNextPage: false, endCursor: null},
+          nodes: threads.map(({isResolved}) => ({
+            isResolved,
+            isOutdated: false,
+            resolvedBy: isResolved ? {login: 'maintainer'} : null,
+            comments: {nodes: [{author: {login: 'revisioncity'}}]},
+          })),
+        },
+      },
+    },
+  },
+})
+
+// Answers each request from its route, and records it. The check run list
+// shows the last update of check run 31, and the app has one open thread.
 function fakeGitHub(routes: Record<string, Route> = {}) {
+  const calls: RecordedRequest[] = []
+  const lastCheckRun = () =>
+    z
+      .object({
+        conclusion: z.string(),
+        external_id: z.string().optional(),
+        output: z.object({title: z.string(), summary: z.string()}),
+      })
+      .parse(calls.findLast(({method, path}) => `${method} ${path}` === CHECK_RUN)?.body)
+  const listedCheckRun = () => {
+    const {conclusion, external_id: externalId, output} = lastCheckRun()
+    return {
+      check_runs: [
+        {
+          id: 31,
+          status: 'completed',
+          conclusion,
+          external_id: externalId ?? null,
+          app: {slug: 'revisioncity'},
+          output: {...output, text: null},
+        },
+      ],
+    }
+  }
   const allRoutes: Record<string, Route> = {
+    ...Object.fromEntries([headSha, movedSha].map((sha) => [checkRunList(sha), listedCheckRun])),
+    [GRAPHQL]: () => threadsAnswer({isResolved: false}),
+    [PERMISSION]: () => ({permission: 'admin'}),
     [PULL]: () => openPull,
     [FILES]: () => [changedFile('src/a.ts', SMALL_PATCH)],
     [CHECK_RUNS]: () => ({id: 31}),
@@ -49,7 +100,6 @@ function fakeGitHub(routes: Record<string, Route> = {}) {
     [LABEL]: () => [],
     ...routes,
   }
-  const calls: RecordedRequest[] = []
   const request: GitHubRequest = async ({method = 'GET', path, body, schema}) => {
     const call = {method, path, ...(body === undefined ? {} : {body})}
     calls.push(call)
@@ -136,6 +186,68 @@ test('runReview reviews the head, posts the findings, and fails the check on a h
     conclusion: 'failure',
     output: {title: '1 finding'},
   })
+})
+
+// The comments of a first run, as GitHub lists them on the next run.
+async function postedComments() {
+  const github = fakeGitHub()
+  await runReview(runParams({request: github.request, chat: answering([highFinding])}))
+  return z
+    .object({comments: z.array(z.object({body: z.string(), path: z.string(), line: z.number()}))})
+    .parse(github.sent(REVIEWS)[0].body)
+    .comments.map(({body, path, line}) => ({body, path, line, user: {login: 'revisioncity[bot]'}}))
+}
+
+test.each([
+  {
+    name: 'passes when its thread is resolved',
+    isResolved: true,
+    conclusion: 'success',
+    title: 'Resolved: 1 finding',
+  },
+  {
+    name: 'fails when its thread is open',
+    isResolved: false,
+    conclusion: 'failure',
+    title: '1 finding',
+  },
+])(
+  'runReview with a high finding that an earlier run posted $name',
+  async ({isResolved, conclusion, title}) => {
+    const comments = await postedComments()
+    const github = fakeGitHub({
+      [COMMENTS]: () => comments,
+      [GRAPHQL]: () => threadsAnswer({isResolved}),
+    })
+
+    await runReview(runParams({request: github.request, chat: answering([highFinding])}))
+
+    expect(github.sent(REVIEWS)).toEqual([])
+    expect(github.sent(CHECK_RUN).at(-1)?.body).toMatchObject({
+      conclusion,
+      output: {title},
+      external_id: 'resolvable-findings',
+    })
+  },
+)
+
+test('runReview keeps the check red when GitHub refuses the inline comments', async () => {
+  let reviews = 0
+  const github = fakeGitHub({
+    [REVIEWS]: () => {
+      reviews += 1
+      if (reviews === 1) {
+        throw new GitHubApiError(422, 'Unprocessable')
+      }
+      return {id: 1}
+    },
+  })
+
+  await runReview(runParams({request: github.request, chat: answering([highFinding])}))
+
+  expect(github.sent(CHECK_RUN)).toHaveLength(1)
+  expect(github.sent(CHECK_RUN)[0].body).not.toHaveProperty('external_id')
+  expect(github.sent(GRAPHQL)).toEqual([])
 })
 
 test('runReview passes the check and posts nothing when there are no findings', async () => {

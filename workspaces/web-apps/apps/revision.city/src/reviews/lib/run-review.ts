@@ -4,6 +4,7 @@ import {type GitHubRequest, getPullRequest, listPullRequestFiles} from './github
 import type {Chat} from './openrouter'
 import {completeCheckRun, createCheckRun, postReview, removeLabel} from './publish-review'
 import {loadRepositorySnapshot} from './repository-snapshot'
+import {countOpenAppThreads, RESOLVABLE_EXTERNAL_ID, resolvedOutput} from './resolved-threads'
 import {renderFileList} from './review-chunks'
 import {
   type CheckRunOutput,
@@ -155,14 +156,26 @@ export async function runReview({
     const postedCount = await step('post review', async () =>
       (await isCurrentHead()) ? postReview({...pull, headSha, findings: outcome.reported}) : null,
     )
-    await step('complete check run', () =>
-      postedCount === null
-        ? complete('neutral', SUPERSEDED_OUTPUT)
-        : complete(
-            outcome.failed ? 'failure' : 'success',
-            formatCheckRunOutput({outcome, review, notReviewed, postedCount}),
-          ),
-    )
+    await step('complete check run', async () => {
+      if (postedCount === null) {
+        return complete('neutral', SUPERSEDED_OUTPUT)
+      }
+      const output = formatCheckRunOutput({outcome, review, notReviewed, postedCount})
+      if (!outcome.failed || review.failures.length > 0) {
+        return complete(outcome.failed ? 'failure' : 'success', output)
+      }
+      // The findings that fail the check can all be on lines where an earlier
+      // run posted them, in threads that are already resolved.
+      const resolved = postedCount === 0 && (await countOpenAppThreads(pull)) === 0
+      return completeCheckRun({
+        request,
+        repository,
+        checkRunId,
+        conclusion: resolved ? 'success' : 'failure',
+        output: resolved ? resolvedOutput(output) : output,
+        externalId: RESOLVABLE_EXTERNAL_ID,
+      })
+    })
   } catch (error) {
     await step('report failure', () =>
       complete('failure', {

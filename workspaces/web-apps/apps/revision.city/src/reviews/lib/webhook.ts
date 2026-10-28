@@ -1,4 +1,6 @@
 import {z} from 'zod'
+import {APP_BOT_LOGIN} from './publish-review'
+import type {SyncResult} from './resolved-threads'
 
 // Until billing exists, only these repositories get reviews.
 const ALLOWED_REPOSITORIES = new Set(['davidjfelix/davidjfelix'])
@@ -26,15 +28,17 @@ export interface ReviewRunParams {
   label?: string
 }
 
+const repositorySchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  full_name: z.string(),
+  owner: z.object({login: z.string()}),
+})
+
 const pullRequestEventSchema = z.object({
   action: z.string(),
   installation: z.object({id: z.number()}),
-  repository: z.object({
-    id: z.number(),
-    name: z.string(),
-    full_name: z.string(),
-    owner: z.object({login: z.string()}),
-  }),
+  repository: repositorySchema,
   pull_request: z.object({
     number: z.number(),
     state: z.string(),
@@ -103,6 +107,60 @@ export function decideReviewRun({event, payload}: DecideReviewRunParams): Review
   }
 }
 
+// The pull request whose check run must agree with its threads again.
+export interface ThreadSyncParams {
+  installationId: number
+  repositoryId: number
+  owner: string
+  name: string
+  pullNumber: number
+}
+
+export type ThreadSyncDecision =
+  | {sync: false; reason: string}
+  | {sync: true; params: ThreadSyncParams}
+
+const reviewThreadEventSchema = z.object({
+  action: z.string(),
+  installation: z.object({id: z.number()}),
+  repository: repositorySchema,
+  pull_request: z.object({number: z.number()}),
+  thread: z.object({
+    comments: z.array(z.object({user: z.object({login: z.string()}).nullable()})),
+  }),
+})
+
+const THREAD_ACTIONS = new Set(['resolved', 'unresolved'])
+
+// Resolving or opening again a thread that the app started can change the
+// result of the check run (src/reviews/lib/resolved-threads.ts).
+export function decideThreadSync({event, payload}: DecideReviewRunParams): ThreadSyncDecision {
+  const parsed = reviewThreadEventSchema.safeParse(payload)
+  if (event !== 'pull_request_review_thread' || !parsed.success) {
+    return {sync: false, reason: 'The payload is not a review thread event'}
+  }
+  const {action, installation, repository, pull_request: pull, thread} = parsed.data
+  if (!ALLOWED_REPOSITORIES.has(repository.full_name.toLowerCase())) {
+    return {sync: false, reason: `${repository.full_name} is not allowed`}
+  }
+  if (!THREAD_ACTIONS.has(action)) {
+    return {sync: false, reason: `The ${action} action does not change the check`}
+  }
+  if (thread.comments[0]?.user?.login !== APP_BOT_LOGIN) {
+    return {sync: false, reason: 'The app did not start the thread'}
+  }
+  return {
+    sync: true,
+    params: {
+      installationId: installation.id,
+      repositoryId: repository.id,
+      owner: repository.owner.login,
+      name: repository.name,
+      pullNumber: pull.number,
+    },
+  }
+}
+
 type EventPullRequest = z.infer<typeof pullRequestEventSchema>['pull_request']
 
 function automaticSkipReason(action: string, pull: EventPullRequest): string | undefined {
@@ -132,12 +190,15 @@ export interface HandleReviewWebhookParams {
   // Both are absent on deployments without reviews, such as previews.
   secret: string | undefined
   workflow: ReviewWorkflowBinding | undefined
+  // Absent on deployments without the app's private key.
+  syncCheckRun?: (params: ThreadSyncParams) => Promise<SyncResult>
 }
 
 export async function handleReviewWebhook({
   request,
   secret,
   workflow,
+  syncCheckRun,
 }: HandleReviewWebhookParams): Promise<Response> {
   if (!secret || !workflow) {
     return Response.json({error: 'Reviews are not set up on this deployment'}, {status: 503})
@@ -147,10 +208,17 @@ export async function handleReviewWebhook({
   if (!(await verifyWebhookSignature({secret, body, signature}))) {
     return Response.json({error: 'The signature does not match the body'}, {status: 401})
   }
-  const decision = decideReviewRun({
-    event: request.headers.get('x-github-event'),
-    payload: parseJson(body),
-  })
+  const event = request.headers.get('x-github-event')
+  const payload = parseJson(body)
+  if (event === 'pull_request_review_thread') {
+    const sync = decideThreadSync({event, payload})
+    if (!sync.sync || !syncCheckRun) {
+      const reason = sync.sync ? 'Threads are not set up on this deployment' : sync.reason
+      return Response.json({status: 'ignored', reason}, {status: 202})
+    }
+    return Response.json({status: await syncCheckRun(sync.params)}, {status: 200})
+  }
+  const decision = decideReviewRun({event, payload})
   if (!decision.start) {
     return Response.json({status: 'ignored', reason: decision.reason}, {status: 202})
   }

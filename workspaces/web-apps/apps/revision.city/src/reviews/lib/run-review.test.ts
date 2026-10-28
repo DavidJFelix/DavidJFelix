@@ -1,3 +1,4 @@
+// cSpell:ignore revisioncity -- the GitHub App's slug
 import {serialize} from 'node:v8'
 import {expect, test, vi} from 'vitest'
 import {z} from 'zod'
@@ -27,6 +28,7 @@ const TREE = `GET /repos/acme/repo/git/trees/${headSha}?recursive=1`
 const COMMENTS = 'GET /repos/acme/repo/pulls/7/comments?per_page=100&page=1'
 const REVIEWS = 'POST /repos/acme/repo/pulls/7/reviews'
 const LABEL = 'DELETE /repos/acme/repo/issues/7/labels/Revision%20City'
+const GRAPHQL = 'POST /graphql'
 
 const movedSha = 'b'.repeat(40)
 const openPull = {state: 'open', head: {sha: headSha}}
@@ -137,6 +139,66 @@ test('runReview reviews the head, posts the findings, and fails the check on a h
     output: {title: '1 finding'},
   })
 })
+
+const threadsAnswer = (...threads: {isResolved: boolean}[]) => ({
+  data: {
+    repository: {
+      pullRequest: {
+        reviewThreads: {
+          pageInfo: {hasNextPage: false, endCursor: null},
+          nodes: threads.map(({isResolved}) => ({
+            isResolved,
+            isOutdated: false,
+            comments: {nodes: [{author: {login: 'revisioncity'}}]},
+          })),
+        },
+      },
+    },
+  },
+})
+
+// The comments of a first run, as GitHub lists them on the next run.
+async function postedComments() {
+  const github = fakeGitHub()
+  await runReview(runParams({request: github.request, chat: answering([highFinding])}))
+  return z
+    .object({comments: z.array(z.object({body: z.string(), path: z.string(), line: z.number()}))})
+    .parse(github.sent(REVIEWS)[0].body)
+    .comments.map(({body, path, line}) => ({body, path, line, user: {login: 'revisioncity[bot]'}}))
+}
+
+test.each([
+  {
+    name: 'passes when its thread is resolved',
+    isResolved: true,
+    conclusion: 'success',
+    title: 'Resolved: 1 finding',
+  },
+  {
+    name: 'fails when its thread is open',
+    isResolved: false,
+    conclusion: 'failure',
+    title: '1 finding',
+  },
+])(
+  'runReview with a high finding that an earlier run posted $name',
+  async ({isResolved, conclusion, title}) => {
+    const comments = await postedComments()
+    const github = fakeGitHub({
+      [COMMENTS]: () => comments,
+      [GRAPHQL]: () => threadsAnswer({isResolved}),
+    })
+
+    await runReview(runParams({request: github.request, chat: answering([highFinding])}))
+
+    expect(github.sent(REVIEWS)).toEqual([])
+    expect(github.sent(CHECK_RUN)[0].body).toMatchObject({
+      conclusion,
+      output: {title},
+      external_id: 'resolvable-findings',
+    })
+  },
+)
 
 test('runReview passes the check and posts nothing when there are no findings', async () => {
   const github = fakeGitHub()

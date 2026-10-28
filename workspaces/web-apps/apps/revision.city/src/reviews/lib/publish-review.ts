@@ -19,8 +19,11 @@ import {
 
 export const CHECK_RUN_NAME = 'Revision City'
 
-// The login on the app's own comments. One app serves every installation.
-const APP_BOT_LOGIN = 'revisioncity[bot]'
+// One app serves every installation.
+export const APP_SLUG = 'revisioncity'
+
+// The login on the app's own comments in the REST API.
+export const APP_BOT_LOGIN = `${APP_SLUG}[bot]`
 
 // A review with more comments is hard to read. `postReview` does not post the
 // rest, so the check run must list every finding.
@@ -58,6 +61,7 @@ export interface CompleteCheckRunParams {
   checkRunId: number
   conclusion: 'success' | 'failure' | 'neutral'
   output: CheckRunOutput
+  externalId?: string
 }
 
 export async function completeCheckRun({
@@ -66,11 +70,17 @@ export async function completeCheckRun({
   checkRunId,
   conclusion,
   output,
+  externalId,
 }: CompleteCheckRunParams): Promise<void> {
   await request({
     method: 'PATCH',
     path: `${repositoryPath(repository)}/check-runs/${checkRunId}`,
-    body: {status: 'completed', conclusion, output},
+    body: {
+      status: 'completed',
+      conclusion,
+      output,
+      ...(externalId === undefined ? {} : {external_id: externalId}),
+    },
     schema: ignoredResponse,
   })
 }

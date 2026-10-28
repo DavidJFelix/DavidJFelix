@@ -64,6 +64,13 @@ replaces Warden in this repository. This project started as part of
 - **Posted comments.** Each comment starts with a fingerprint, and a run does not post a finding
   again on a line where the app already posted it. The finding's body goes last, so a code block
   that it leaves open cannot take in the suggestion.
+- **Clearing the check.** A check run that failed only on findings gets the external id
+  `resolvable-findings`. When every Revision City thread on lines that the head still has is
+  resolved, the check run passes, with `Resolved:` before its title. A thread that opens again fails
+  it again. The app gets these changes from the `pull_request_review_thread` event, so its webhook
+  must subscribe to "Pull request review thread". A review whose findings are all in resolved
+  threads from an earlier run also passes. A failed chunk review has no thread, so it keeps the
+  check red.
 - **Limits.** For each pull request, at most 150 chunks and 700,000 bytes of paths and patches get a
   review. A file whose diff is longer than 1,500 lines gets no review. One review posts at most 50
   new comments. The check run lists every finding, and it cuts its text at 65,000 characters, below

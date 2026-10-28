@@ -69,6 +69,16 @@ const pullReads = (...answers: object[]) => {
   return () => answers[Math.min(reads++, answers.length - 1)]
 }
 
+// Every reviewer reviews the one chunk of `src/a.ts` at the cost of `usage`.
+const COST_LINES = [
+  '',
+  '### Cost per chunk review',
+  '',
+  ...REVIEWERS.map(
+    (reviewer) => `- $0.0100 \`src/a.ts\` (${reviewer.id}): 10 prompt tokens, 5 completion tokens`,
+  ),
+]
+
 const answering = (findings: object[]) =>
   vi.fn<Chat>(async () => ({content: JSON.stringify({findings}), toolCalls: [], usage}))
 
@@ -163,7 +173,12 @@ test('runReview does not post a finding that the reviewer did not check', async 
   })
   // Every reviewer flagged the same line, so the check run lists it once.
   expect(checkRunText(github.sent(CHECK_RUN)[0].body)).toBe(
-    ['### Not checked, so not posted', '', '- **high** `src/a.ts:2` (security): Bug'].join('\n'),
+    [
+      '### Not checked, so not posted',
+      '',
+      '- **high** `src/a.ts:2` (security): Bug',
+      ...COST_LINES,
+    ].join('\n'),
   )
 })
 
@@ -337,6 +352,7 @@ test('runReview lists the files that it left out, but not the files that it skip
       '- `image.png`: GitHub shows no text diff',
       '- `generated.ts`: the diff is longer than 1500 lines',
       '- `wide.ts`: over the review size limit',
+      ...COST_LINES,
     ].join('\n'),
   )
 })

@@ -128,6 +128,32 @@ test('countOpenAppThreads counts a thread as open when its resolver cannot push'
   expect(github.sent(PERMISSION('author'))).toHaveLength(1)
 })
 
+test('countOpenAppThreads stops at 30 pages and counts one more open thread', async () => {
+  const github = fakeGitHub({[GRAPHQL]: () => threadsPage([], 'next')})
+
+  expect(await countOpenAppThreads(pull(github.request))).toBe(1)
+  expect(github.sent(GRAPHQL)).toHaveLength(30)
+})
+
+test('countOpenAppThreads counts a resolved thread without a resolver as open', async () => {
+  const github = fakeGitHub({
+    [GRAPHQL]: () => threadsPage([{...thread({isResolved: true}), resolvedBy: null}]),
+  })
+
+  expect(await countOpenAppThreads(pull(github.request))).toBe(1)
+})
+
+test('countOpenAppThreads throws when GitHub cannot answer for a resolver', async () => {
+  const github = fakeGitHub({
+    [GRAPHQL]: () => threadsPage([thread({isResolved: true})]),
+    [PERMISSION('maintainer')]: () => {
+      throw new GitHubApiError(500, 'Server Error')
+    },
+  })
+
+  await expect(countOpenAppThreads(pull(github.request))).rejects.toThrow('Server Error')
+})
+
 interface CheckRunParams {
   conclusion?: string
   status?: string

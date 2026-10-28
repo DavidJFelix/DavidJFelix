@@ -302,6 +302,28 @@ test('handleReviewWebhook ignores a thread event on a deployment without the app
   expect(await response.json()).toMatchObject({status: 'ignored'})
 })
 
+test('handleReviewWebhook ignores a thread that the app did not start', async () => {
+  const syncCheckRun = vi.fn<NonNullable<HandleReviewWebhookParams['syncCheckRun']>>(
+    async () => 'resolved',
+  )
+
+  const response = await handleReviewWebhook({
+    request: webhookRequest({
+      payload: {...threadEvent, thread: {comments: [{user: {login: 'DavidJFelix'}}]}},
+      event: 'pull_request_review_thread',
+    }),
+    secret,
+    workflow: fakeWorkflow(),
+    syncCheckRun,
+  })
+
+  expect(await response.json()).toEqual({
+    status: 'ignored',
+    reason: 'The app did not start the thread',
+  })
+  expect(syncCheckRun).not.toHaveBeenCalled()
+})
+
 test('decideThreadSync syncs on an unresolved thread of the app', () => {
   expect(
     decideThreadSync({

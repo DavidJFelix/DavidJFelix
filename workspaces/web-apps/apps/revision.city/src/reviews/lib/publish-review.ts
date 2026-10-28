@@ -87,7 +87,7 @@ export async function completeCheckRun({
       status: 'completed',
       conclusion,
       output,
-      // An empty list removes the button from a check run that passes now.
+      // An empty list removes the button from a check run that did not fail.
       actions: conclusion === 'failure' ? [DISMISS_ACTION] : [],
       ...(externalId === undefined ? {} : {external_id: externalId}),
     },

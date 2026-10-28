@@ -21,8 +21,7 @@ export interface DismissCheckRunParams {
   request: GitHubRequest
   repository: GitHubRepository
   checkRunId: number
-  // The user who clicked the button.
-  login: string
+  clickedBy: string
 }
 
 export type DismissResult = 'dismissed' | 'refused' | 'unchanged'
@@ -32,9 +31,9 @@ export async function dismissCheckRun({
   request,
   repository,
   checkRunId,
-  login,
+  clickedBy,
 }: DismissCheckRunParams): Promise<DismissResult> {
-  if (!(await canPush({request, repository, login}))) {
+  if (!(await canPush({request, repository, login: clickedBy}))) {
     return 'refused'
   }
   const checkRun = await request({
@@ -54,7 +53,7 @@ export async function dismissCheckRun({
       title: `Dismissed: ${title ?? ''}`,
       // A login has only letters, digits, and hyphens, so it cannot add a
       // mention or markup.
-      summary: `${login} dismissed the findings, so this check passes. ${summary ?? ''}`,
+      summary: `${clickedBy} dismissed the findings, so this check passes. ${summary ?? ''}`,
       ...(text === null ? {} : {text}),
     },
     externalId: DISMISSED_EXTERNAL_ID,

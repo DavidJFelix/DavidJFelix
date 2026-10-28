@@ -57,7 +57,7 @@ test('dismissCheckRun passes a failed check run for a user who can push', async 
       request: github.request,
       repository,
       checkRunId: 31,
-      login: 'maintainer',
+      clickedBy: 'maintainer',
     }),
   ).toBe('dismissed')
   expect(github.patches()[0].body).toEqual({
@@ -79,7 +79,12 @@ test.each(['author', 'stranger'])(
     const github = fakeGitHub()
 
     expect(
-      await dismissCheckRun({request: github.request, repository, checkRunId: 31, login}),
+      await dismissCheckRun({
+        request: github.request,
+        repository,
+        checkRunId: 31,
+        clickedBy: login,
+      }),
     ).toBe('refused')
     expect(github.patches()).toEqual([])
   },
@@ -96,7 +101,7 @@ test.each([
       request: github.request,
       repository,
       checkRunId: 31,
-      login: 'maintainer',
+      clickedBy: 'maintainer',
     }),
   ).toBe('unchanged')
   expect(github.patches()).toEqual([])

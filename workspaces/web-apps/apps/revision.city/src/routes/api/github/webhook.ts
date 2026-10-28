@@ -42,7 +42,7 @@ export const Route = createFileRoute('/api/github/webhook')({
                     request: installationRequest({clientId, privateKey, ...installation}),
                     repository: {owner, name},
                     checkRunId,
-                    login,
+                    clickedBy: login,
                   }),
               }
             : {}),

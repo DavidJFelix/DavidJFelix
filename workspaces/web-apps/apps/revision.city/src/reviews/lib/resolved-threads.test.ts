@@ -183,14 +183,22 @@ interface SyncSetupParams {
   run?: object
   threads?: object[]
   state?: string
+  // The external id when the sync reads the check run again.
+  currentExternalId?: string
 }
 
-function syncSetup({run = checkRun(), threads = [], state = 'open'}: SyncSetupParams = {}) {
+function syncSetup({
+  run = checkRun(),
+  threads = [],
+  state = 'open',
+  currentExternalId = 'resolvable-findings',
+}: SyncSetupParams = {}) {
   return fakeGitHub({
     ...permissions,
     [PULL]: () => ({state, head: {sha: headSha}}),
     [CHECK_RUNS]: () => ({check_runs: [run]}),
     [GRAPHQL]: () => threadsPage(threads),
+    'GET /repos/acme/repo/check-runs/31': () => ({external_id: currentExternalId}),
     [CHECK_RUN]: () => ({}),
   })
 }
@@ -238,6 +246,10 @@ test.each([
   {name: 'a thread is still open', setup: {threads: [thread()]}},
   {name: 'the check already passes', setup: {run: checkRun({conclusion: 'success'})}},
   {name: 'the pull request is closed', setup: {state: 'closed'}},
+  {
+    name: 'a user dismissed the check while the threads were counted',
+    setup: {currentExternalId: 'dismissed'},
+  },
 ])('syncCheckRunWithThreads changes nothing when $name', async ({setup}) => {
   const github = syncSetup(setup)
 

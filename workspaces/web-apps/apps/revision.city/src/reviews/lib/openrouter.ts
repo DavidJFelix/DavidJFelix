@@ -155,7 +155,7 @@ export function createOpenRouterChat({
 
 // A findings answer is a few thousand tokens, and the reasoning tokens of a
 // reasoning model also count. The cap stops a model that repeats itself
-// before it runs up a large bill for an answer that cannot parse.
+// before the answer, which cannot parse, costs a lot.
 const MAX_ANSWER_TOKENS = 32_000
 
 function toRequestBody({model, messages, tools, toolChoice}: ChatRequest) {

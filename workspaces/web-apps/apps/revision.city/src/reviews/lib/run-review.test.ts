@@ -168,16 +168,18 @@ test.each<{name: string; routes: Record<string, Route>; conclusion: string}>([
     },
     conclusion: 'failure',
   },
-])('runReview completes the check run once when the review $name and logging fails', async ({
-  routes,
-  conclusion,
-}) => {
-  const github = fakeGitHub(routes)
+])(
+  'runReview completes the check run once when the review $name and logging fails',
+  async ({routes, conclusion}) => {
+    const github = fakeGitHub(routes)
 
-  await runReview(runParams({request: github.request, log: failingLog})).catch(() => {})
+    await runReview(runParams({request: github.request, log: failingLog})).catch(() => {})
 
-  expect(github.sent(CHECK_RUN)).toEqual([expect.objectContaining({body: expect.objectContaining({conclusion})})])
-})
+    expect(github.sent(CHECK_RUN)).toEqual([
+      expect.objectContaining({body: expect.objectContaining({conclusion})}),
+    ])
+  },
+)
 
 test('runReview completes the check run once when a log step fails', async () => {
   const github = fakeGitHub()

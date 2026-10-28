@@ -51,6 +51,7 @@ test('createOpenRouterChat sends the messages and returns the content with usage
       {role: 'user', content: 'prompt text'},
     ],
     response_format: {type: 'json_object'},
+    max_tokens: 32_000,
     temperature: 0,
     usage: {include: true},
   })
@@ -101,6 +102,7 @@ test('createOpenRouterChat sends tools and tool messages, and returns tool calls
     ],
     tools: [{type: 'function', function: tool}],
     tool_choice: 'none',
+    response_format: {type: 'json_object'},
   })
 })
 
@@ -111,6 +113,8 @@ test('createOpenRouterChat lets the model choose tools when no choice is given',
   await chat({...request, tools: []})
 
   expect(sentBody(fetchStub)).toMatchObject({tools: [], tool_choice: 'auto'})
+  // JSON mode would make some models write their tool calls as text.
+  expect(sentBody(fetchStub)).not.toHaveProperty('response_format')
 })
 
 test('createOpenRouterChat reports zero usage when the response has none', async () => {

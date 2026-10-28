@@ -178,6 +178,10 @@ function toRequestBody({model, messages, tools, toolChoice}: ChatRequest) {
       ? {response_format: {type: 'json_object'}}
       : {}),
     max_tokens: MAX_ANSWER_TOKENS,
+    // Without a reasoning budget, a reasoning model can use all of
+    // MAX_ANSWER_TOKENS to reason and return an empty answer. Medium effort
+    // keeps about half of the tokens for the answer.
+    reasoning: {effort: 'medium'},
     temperature: 0,
     // Asks OpenRouter to return the billed cost with the token counts.
     usage: {include: true},

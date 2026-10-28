@@ -190,7 +190,7 @@ export interface HandleReviewWebhookParams {
   // Both are absent on deployments without reviews, such as previews.
   secret: string | undefined
   workflow: ReviewWorkflowBinding | undefined
-  // Absent on deployments without the app's private key.
+  // Absent on deployments without the app's client id or private key.
   syncCheckRun?: (params: ThreadSyncParams) => Promise<SyncResult>
 }
 

@@ -1,7 +1,7 @@
 // cSpell:ignore revisioncity -- the GitHub App's slug
 import {expect, test} from 'vitest'
 import {z} from 'zod'
-import type {GitHubRequest} from './github-api'
+import {GitHubApiError, type GitHubRequest} from './github-api'
 import {countOpenAppThreads, syncCheckRunWithThreads} from './resolved-threads'
 
 const repository = {owner: 'acme', name: 'repo'}
@@ -38,14 +38,31 @@ function fakeGitHub(routes: Record<string, Route>) {
 interface ThreadParams {
   isResolved?: boolean
   isOutdated?: boolean
+  resolver?: string
   author?: {login?: string} | null
 }
 
 const thread = ({
   isResolved = false,
   isOutdated = false,
+  resolver = 'maintainer',
   author = {login: 'revisioncity'},
-}: ThreadParams = {}) => ({isResolved, isOutdated, comments: {nodes: [{author}]}})
+}: ThreadParams = {}) => ({
+  isResolved,
+  isOutdated,
+  resolvedBy: isResolved ? {login: resolver} : null,
+  comments: {nodes: [{author}]},
+})
+
+const PERMISSION = (login: string) => `GET /repos/acme/repo/collaborators/${login}/permission`
+
+const permissions = {
+  [PERMISSION('maintainer')]: () => ({permission: 'write'}),
+  [PERMISSION('author')]: () => ({permission: 'read'}),
+  [PERMISSION('stranger')]: () => {
+    throw new GitHubApiError(404, 'Not Found')
+  },
+}
 
 const threadsPage = (nodes: object[], endCursor: string | null = null) => ({
   data: {
@@ -61,6 +78,7 @@ const pull = (request: GitHubRequest) => ({request, repository, pullNumber: 7})
 
 test('countOpenAppThreads counts only open threads that the app started on current lines', async () => {
   const github = fakeGitHub({
+    ...permissions,
     [GRAPHQL]: () =>
       threadsPage([
         thread(),
@@ -81,6 +99,7 @@ test('countOpenAppThreads counts only open threads that the app started on curre
 
 test('countOpenAppThreads reads every page', async () => {
   const github = fakeGitHub({
+    ...permissions,
     [GRAPHQL]: ({body}) =>
       z.object({variables: z.object({after: z.string().nullable()})}).parse(body).variables
         .after === null
@@ -90,6 +109,23 @@ test('countOpenAppThreads reads every page', async () => {
 
   expect(await countOpenAppThreads(pull(github.request))).toBe(2)
   expect(github.sent(GRAPHQL)).toHaveLength(2)
+})
+
+test('countOpenAppThreads counts a thread as open when its resolver cannot push', async () => {
+  const github = fakeGitHub({
+    ...permissions,
+    [GRAPHQL]: () =>
+      threadsPage([
+        thread({isResolved: true, resolver: 'maintainer'}),
+        thread({isResolved: true, resolver: 'author'}),
+        thread({isResolved: true, resolver: 'stranger'}),
+        thread({isResolved: true, resolver: 'author'}),
+      ]),
+  })
+
+  expect(await countOpenAppThreads(pull(github.request))).toBe(3)
+  // One permission read for each resolver.
+  expect(github.sent(PERMISSION('author'))).toHaveLength(1)
 })
 
 interface CheckRunParams {
@@ -125,6 +161,7 @@ interface SyncSetupParams {
 
 function syncSetup({run = checkRun(), threads = [], state = 'open'}: SyncSetupParams = {}) {
   return fakeGitHub({
+    ...permissions,
     [PULL]: () => ({state, head: {sha: headSha}}),
     [CHECK_RUNS]: () => ({check_runs: [run]}),
     [GRAPHQL]: () => threadsPage(threads),

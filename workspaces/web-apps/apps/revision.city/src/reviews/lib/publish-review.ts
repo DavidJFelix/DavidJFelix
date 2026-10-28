@@ -115,16 +115,22 @@ export interface PostReviewParams extends PullRequestParams {
   findings: readonly Finding[]
 }
 
+export interface PostedReview {
+  count: number
+  // False when GitHub refused the inline comments, so the findings have no
+  // threads.
+  inline: boolean
+}
+
 // Posts the findings that an earlier run did not post on the same line, at
-// most `MAX_COMMENTS_PER_REVIEW` and most severe first. Returns how many it
-// posted.
+// most `MAX_COMMENTS_PER_REVIEW` and most severe first.
 export async function postReview({
   request,
   repository,
   pullNumber,
   headSha,
   findings,
-}: PostReviewParams): Promise<number> {
+}: PostReviewParams): Promise<PostedReview> {
   const pullPath = `${repositoryPath(repository)}/pulls/${pullNumber}`
   const comments = await listAllPages({
     request,
@@ -153,7 +159,7 @@ export async function postReview({
     )
     .slice(0, MAX_COMMENTS_PER_REVIEW)
   if (fresh.length === 0) {
-    return 0
+    return {count: 0, inline: true}
   }
   const freshFindings = fresh.map(({finding}) => finding)
   const review = {commit_id: headSha, event: 'COMMENT'}
@@ -189,8 +195,9 @@ export async function postReview({
       body: {...review, body: formatReviewBody({findings: freshFindings, inlineAccepted: false})},
       schema: ignoredResponse,
     })
+    return {count: fresh.length, inline: false}
   }
-  return fresh.length
+  return {count: fresh.length, inline: true}
 }
 
 interface CommentKeyParams {

@@ -153,6 +153,11 @@ export function createOpenRouterChat({
   }
 }
 
+// A findings answer is a few thousand tokens, and the reasoning tokens of a
+// reasoning model also count. The cap stops a model that repeats itself
+// before the answer, which cannot parse, costs a lot.
+const MAX_ANSWER_TOKENS = 32_000
+
 function toRequestBody({model, messages, tools, toolChoice}: ChatRequest) {
   return {
     model,
@@ -163,7 +168,12 @@ function toRequestBody({model, messages, tools, toolChoice}: ChatRequest) {
           tools: tools.map((tool) => ({type: 'function', function: tool})),
           tool_choice: toolChoice ?? 'auto',
         }),
-    response_format: {type: 'json_object'},
+    // JSON mode while tools are on makes some models write a tool call as
+    // JSON text instead of calling the tool.
+    ...(tools === undefined || toolChoice === 'none'
+      ? {response_format: {type: 'json_object'}}
+      : {}),
+    max_tokens: MAX_ANSWER_TOKENS,
     temperature: 0,
     // Asks OpenRouter to return the billed cost with the token counts.
     usage: {include: true},

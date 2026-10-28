@@ -11,6 +11,9 @@ const MAX_TOOL_OUTPUT_CHARS = 48_000
 const CUT_NOTE =
   '\n(Cut: the tool output limit for this review is used up. Answer with what you have.)'
 
+const ANSWER_NOW_NOTE =
+  'The tools are off now. Write your answer as the JSON that the instructions give. Do not write a tool call. Leave out each finding that you could not check.'
+
 const NOT_RUN: ToolOutput = {content: 'Not run: too many tool calls in one turn.'}
 
 export interface RunToolLoopParams {
@@ -76,10 +79,15 @@ async function continueToolLoop(state: ToolLoopState): Promise<ToolLoopResult> {
   const mayCallTools = round < MAX_TOOL_ROUNDS && outputBudget > 0
   const reply = await chat({
     model,
-    messages,
     ...(tools === undefined
-      ? {}
-      : {tools: tools.definitions, toolChoice: mayCallTools ? 'auto' : 'none'}),
+      ? {messages}
+      : mayCallTools
+        ? {messages, tools: tools.definitions, toolChoice: 'auto'}
+        : {
+            messages: [...messages, {role: 'user', content: ANSWER_NOW_NOTE}],
+            tools: tools.definitions,
+            toolChoice: 'none',
+          }),
   }).catch(toFailure)
   if ('error' in reply) {
     return {error: reply.error, usage: state.usage}

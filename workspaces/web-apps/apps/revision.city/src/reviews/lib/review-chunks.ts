@@ -164,20 +164,32 @@ export interface RenderPullRequestDescriptionParams {
   description: string
 }
 
+// The description is the author's text. These lines mark where it starts and
+// ends, and the system prompt names them.
+export const DESCRIPTION_START = '<<<description'
+export const DESCRIPTION_END = 'description>>>'
+
 // Each reviewer gets the title and description before its chunk, because they
 // tell what the author wants the change to do.
 export function renderPullRequestDescription({
   title,
   description,
 }: RenderPullRequestDescriptionParams): string {
-  const text = description.trim()
+  // Without the markers, the author's text cannot end the description early.
+  const text = withoutMarkers(description).trim()
   const shown = text.slice(0, MAX_DESCRIPTION_CHARS)
   const cut =
     text.length > shown.length ? `\n(${text.length - shown.length} more characters not shown)` : ''
   return [
-    `Pull request title: ${oneLine(title)}`,
-    text === '' ? 'Pull request description: none' : `Pull request description:\n${shown}${cut}`,
+    `Pull request title: ${oneLine(withoutMarkers(title))}`,
+    text === ''
+      ? 'Pull request description: none'
+      : `Pull request description:\n${DESCRIPTION_START}\n${shown}\n${DESCRIPTION_END}${cut}`,
   ].join('\n\n')
+}
+
+function withoutMarkers(text: string): string {
+  return text.replaceAll(DESCRIPTION_START, '').replaceAll(DESCRIPTION_END, '')
 }
 
 // Each model call sends the list again, so the list stops at this many

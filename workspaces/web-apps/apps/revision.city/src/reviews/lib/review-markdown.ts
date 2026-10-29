@@ -1,5 +1,5 @@
 import type {Finding, ReviewOutcome} from './findings'
-import type {PullRequestReview} from './review-pull-request'
+import type {ChunkReviewCost, PullRequestReview} from './review-pull-request'
 import {sha256Hex} from './sha256'
 
 const ZERO_WIDTH_SPACE = '\u200B'
@@ -161,6 +161,11 @@ export function formatCheckRunOutput({
       notReviewed.map(({path, reason}) => `- ${codeSpan(oneLine(path))}: ${reason}`),
     ),
     section('Not checked, so not posted', outcome.unchecked.map(findingLine)),
+    // Last, so that a cut removes the cheapest chunk reviews first.
+    section(
+      'Cost per chunk review',
+      review.costs.toSorted((a, b) => b.usage.costUsd - a.usage.costUsd).map(costLine),
+    ),
   ].filter((text) => text !== '')
   return {
     title: counts.length > 0 ? counts.join(', ') : 'No findings',
@@ -171,6 +176,14 @@ export function formatCheckRunOutput({
     ].join(' '),
     ...(sections.length > 0 ? {text: clip(neutralizeMarkdown(sections.join('\n\n')))} : {}),
   }
+}
+
+function costLine({path, part, reviewerId, cached, usage}: ChunkReviewCost): string {
+  const chunk = `${codeSpan(oneLine(path))}${part === undefined ? '' : ` part ${part}`} (${reviewerId})`
+  const detail = cached
+    ? 'saved result'
+    : `${usage.promptTokens} prompt tokens, ${usage.completionTokens} completion tokens`
+  return `- $${usage.costUsd.toFixed(4)} ${chunk}: ${detail}`
 }
 
 function section(heading: string, lines: readonly string[]): string {

@@ -524,3 +524,29 @@ test('summarizeChunkReviews throws when the outcomes do not match the units', ()
     'Expected 2 chunk review outcomes, got 0',
   )
 })
+
+test('summarizeChunkReviews gives the cost of each chunk review and numbers the parts of a file', () => {
+  const twoChunks: PullRequestFile = {
+    path: 'big.ts',
+    status: 'modified',
+    patch: '@@ -1,1 +1,2 @@\n ctx\n+one\n@@ -50,1 +51,2 @@\n ctx\n+two',
+  }
+  const units = planChunkReviews({
+    files: [twoChunks, ...files(5)],
+    reviewers: REVIEWERS.slice(0, 1),
+    maxLinesPerChunk: 2,
+  })
+  const outcomes = [
+    {findings: [], cached: false, usage},
+    {findings: [], cached: true, usage: {promptTokens: 0, completionTokens: 0, costUsd: 0}},
+    {findings: [], cached: false, usage},
+  ]
+
+  const review = summarizeChunkReviews({units, outcomes})
+
+  expect(review.costs).toEqual([
+    {path: 'big.ts', part: 1, reviewerId: REVIEWERS[0].id, cached: false, usage},
+    {path: 'big.ts', part: 2, reviewerId: REVIEWERS[0].id, cached: true, usage: outcomes[1].usage},
+    {path: 'a.ts', reviewerId: REVIEWERS[0].id, cached: false, usage},
+  ])
+})

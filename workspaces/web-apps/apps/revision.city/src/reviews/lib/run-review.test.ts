@@ -7,6 +7,7 @@ import {GitHubApiError, type GitHubRequest} from './github-api'
 import {type Chat, OpenRouterError} from './openrouter'
 import {REVIEWERS} from './reviewers'
 import {type RunReviewParams, type RunStep, runReview} from './run-review'
+import type {LogWideEvent, WideEvent} from './wide-event'
 
 const headSha = 'a'.repeat(40)
 const usage = {promptTokens: 10, completionTokens: 5, costUsd: 0.01}
@@ -168,6 +169,7 @@ function runParams(changes: Partial<RunReviewParams> = {}): RunReviewParams {
     chat: answering([]),
     store: createMemoryChunkReviewStore(),
     model: 'vendor/model',
+    log: () => {},
     ...changes,
   }
 }
@@ -185,6 +187,7 @@ test('runReview reviews the head, posts the findings, and fails the check on a h
     'review 1 of 1',
     'post review',
     'complete check run',
+    'log failure run',
   ])
   expect(chat).toHaveBeenCalledTimes(REVIEWERS.length)
   expect(github.sent(CHECK_RUNS)).toHaveLength(1)
@@ -254,7 +257,7 @@ test('runReview keeps the failed check run when the sync with the threads fails'
 
   await runReview(runParams({step, request: github.request, chat: answering([highFinding])}))
 
-  expect(names.at(-1)).toBe('complete check run')
+  expect(names.slice(-2)).toEqual(['complete check run', 'log failure run'])
   expect(github.sent(CHECK_RUN)).toHaveLength(1)
   expect(warn).toHaveBeenCalledWith('Could not sync the check run with the threads', {
     error: 'Error: GitHub is down',
@@ -291,6 +294,50 @@ test('runReview passes the check and posts nothing when there are no findings', 
     conclusion: 'success',
     output: {title: 'No findings'},
   })
+})
+
+const failingLog: LogWideEvent = () => {
+  throw new Error('The log is down')
+}
+
+test.each<{name: string; routes: Record<string, Route>; conclusion: string}>([
+  {name: 'passes', routes: {}, conclusion: 'success'},
+  {
+    name: 'fails',
+    routes: {
+      [FILES]: () => {
+        throw new Error('GitHub is down')
+      },
+    },
+    conclusion: 'failure',
+  },
+])(
+  'runReview completes the check run once when the review $name and logging fails',
+  async ({routes, conclusion}) => {
+    const github = fakeGitHub(routes)
+
+    await runReview(runParams({request: github.request, log: failingLog})).catch(() => {})
+
+    expect(github.sent(CHECK_RUN)).toEqual([
+      expect.objectContaining({body: expect.objectContaining({conclusion})}),
+    ])
+  },
+)
+
+test('runReview completes the check run once when a log step fails', async () => {
+  const github = fakeGitHub()
+  const step: RunStep = async (name, run) => {
+    if (name.startsWith('log ')) {
+      throw new Error('The step failed')
+    }
+    return run({isLastAttempt: true})
+  }
+
+  await runReview(runParams({request: github.request, step}))
+
+  expect(github.sent(CHECK_RUN)).toEqual([
+    expect.objectContaining({body: expect.objectContaining({conclusion: 'success'})}),
+  ])
 })
 
 test('runReview does not post a finding that the reviewer did not check', async () => {
@@ -373,7 +420,7 @@ test.each([
 
   await runReview(runParams({step, request: github.request}))
 
-  expect(names).toEqual(['start'])
+  expect(names).toEqual(['start', 'log skipped run'])
   expect(github.sent(CHECK_RUNS)).toEqual([])
 })
 
@@ -411,7 +458,7 @@ test('runReview fails the check run and throws when a step after the start fails
     'GitHub is down',
   )
 
-  expect(names).toEqual(['start', 'select files', 'report failure'])
+  expect(names).toEqual(['start', 'select files', 'log error run', 'report failure'])
   expect(github.sent(CHECK_RUN)[0].body).toMatchObject({
     conclusion: 'failure',
     output: {title: 'The review failed', summary: 'Error: GitHub is down for @​someone'},
@@ -578,4 +625,86 @@ test('runReview loads the head tree again after a failed load', async () => {
 
   expect(treeReads).toBe(2)
   expect(github.sent(CHECK_RUN)[0].body).toMatchObject({conclusion: 'success'})
+})
+
+function recordingLog() {
+  const events: WideEvent[] = []
+  const log: LogWideEvent = (event) => {
+    events.push(event)
+  }
+  const named = (name: string) => events.filter(({event}) => event === name)
+  return {log, named}
+}
+
+test('runReview logs one run event with the outcome and counts of the review', async () => {
+  const {log, named} = recordingLog()
+
+  await runReview(runParams({chat: answering([highFinding]), log}))
+
+  expect(named('review run')).toEqual([
+    expect.objectContaining({
+      repository: 'acme/repo',
+      installationId: 5,
+      pullNumber: 7,
+      headSha,
+      model: 'vendor/model',
+      outcome: 'failure',
+      chunkReviewCount: REVIEWERS.length,
+      cachedCount: 0,
+      failedChunkReviewCount: 0,
+      reportedCount: 1,
+      postedCount: 1,
+    }),
+  ])
+  expect(named('model call')).toHaveLength(REVIEWERS.length)
+  expect(named('model call')[0]).toMatchObject({
+    pullNumber: 7,
+    headSha,
+    outcome: 'success',
+    costUsd: usage.costUsd,
+  })
+})
+
+test.each<{name: string; outcome: string; routes: Record<string, Route>}>([
+  {
+    name: 'the pull request is closed',
+    outcome: 'skipped',
+    routes: {[PULL]: () => ({state: 'closed', head: {sha: headSha}})},
+  },
+  {
+    name: 'a step after the start fails',
+    outcome: 'error',
+    routes: {
+      [FILES]: () => {
+        throw new Error('GitHub is down')
+      },
+    },
+  },
+  {
+    name: 'the failure report also fails',
+    outcome: 'error',
+    routes: {
+      [FILES]: () => {
+        throw new Error('GitHub is down')
+      },
+      [CHECK_RUN]: () => {
+        throw new Error('GitHub is down')
+      },
+    },
+  },
+  {
+    name: 'the start fails',
+    outcome: 'error',
+    routes: {
+      [CHECK_RUNS]: () => {
+        throw new Error('GitHub is down')
+      },
+    },
+  },
+])('runReview logs a run event with the $outcome outcome when $name', async ({outcome, routes}) => {
+  const {log, named} = recordingLog()
+
+  await runReview(runParams({request: fakeGitHub(routes).request, log})).catch(() => {})
+
+  expect(named('review run')).toEqual([expect.objectContaining({outcome})])
 })

@@ -22,6 +22,7 @@ import {
 import {REVIEWERS} from './reviewers'
 import {OVER_LIMIT_REASON, selectReviewFiles} from './select-review-files'
 import type {ReviewRunParams} from './webhook'
+import {type LogWideEvent, logWideEvent, type WideEventFields, withChatEvents} from './wide-event'
 
 export interface StepAttempt {
   isLastAttempt: boolean
@@ -56,6 +57,7 @@ export interface RunReviewParams extends ReviewRunParams {
   chat: Chat
   store: ChunkReviewStore
   model: string
+  log?: LogWideEvent
 }
 
 export async function runReview({
@@ -67,16 +69,32 @@ export async function runReview({
   label,
   step,
   request,
-  chat,
+  chat: baseChat,
   store,
   model,
+  log: unsafeLog = logWideEvent,
 }: RunReviewParams): Promise<void> {
+  // Logging is best effort: a failed log must not change the review.
+  const log: LogWideEvent = (event) => {
+    try {
+      unsafeLog(event)
+    } catch {}
+  }
   const repository = {owner, name}
+  const runFields = {repository: `${owner}/${name}`, installationId, pullNumber, model}
   const pull = {request, repository, pullNumber}
   const openHeadSha = async () => {
     const state = await getPullRequest(pull)
     return state.open ? state.headSha : undefined
   }
+  // A run event is logged in a step, so a restart does not log it again.
+  const logRun = (outcome: string, fields: WideEventFields = {}) =>
+    step(`log ${outcome} run`, async () => {
+      log({event: 'review run', ...runFields, ...fields, outcome})
+      return null
+    }).catch(() => null)
+  const logError = (fields: WideEventFields, error: unknown) =>
+    logRun('error', {...fields, error: String(error)})
   const started = await step('start', async () => {
     if (label !== undefined) {
       // The label only asks for a review. A failed removal does not stop it.
@@ -91,11 +109,16 @@ export async function runReview({
     return headSha !== undefined && headSha === currentSha
       ? {headSha, checkRunId: await createCheckRun({request, repository, headSha})}
       : null
+  }).catch(async (error: unknown) => {
+    await logError({}, error)
+    throw error
   })
   if (started === null) {
+    await logRun('skipped')
     return
   }
   const {headSha, checkRunId} = started
+  const chat = withChatEvents({chat: baseChat, log, sharedFields: {...runFields, headSha}})
   const isCurrentHead = async () => (await openHeadSha()) === headSha
   const complete = (conclusion: 'success' | 'failure' | 'neutral', output: CheckRunOutput) =>
     completeCheckRun({request, repository, checkRunId, conclusion, output})
@@ -149,6 +172,7 @@ export async function runReview({
     const completed = batchOutcomes.filter((outcomes) => outcomes !== null)
     if (completed.length < batches.length) {
       await step('complete check run', () => complete('neutral', SUPERSEDED_OUTPUT))
+      await logRun('superseded', {headSha})
       return
     }
     const review = summarizeChunkReviews({units, outcomes: completed.flat()})
@@ -181,7 +205,20 @@ export async function runReview({
         })
       }
     })
+    await logRun(posted === null ? 'superseded' : outcome.failed ? 'failure' : 'success', {
+      headSha,
+      chunkReviewCount: review.chunkReviewCount,
+      cachedCount: review.cachedCount,
+      failedChunkReviewCount: review.failures.length,
+      reportedCount: outcome.reported.length,
+      uncheckedCount: outcome.unchecked.length,
+      postedCount: posted?.count,
+      notReviewedCount: notReviewed.length,
+    })
   } catch (error) {
+    // Logged before the failure report, because the report also fails when
+    // GitHub is down.
+    await logError({headSha}, error)
     await step('report failure', () =>
       complete('failure', {
         title: 'The review failed',

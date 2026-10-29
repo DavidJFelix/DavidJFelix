@@ -45,11 +45,24 @@ interface ToolLoopAnswer {
 interface ToolLoopFailure {
   error: unknown
   usage: CompletionUsage
+  // The reasoning used up the output token limit before the answer.
+  cutAtTokenLimit?: true
 }
 
 export type ToolLoopResult = ToolLoopAnswer | ToolLoopFailure
 
-export function runToolLoop({
+// At temperature 1, a second run of a review that the token limit cut short
+// reasons differently, so it often finishes. A third run is not worth its cost.
+export async function runToolLoop(params: RunToolLoopParams): Promise<ToolLoopResult> {
+  const first = await startToolLoop(params)
+  if (!('cutAtTokenLimit' in first)) {
+    return first
+  }
+  const second = await startToolLoop(params)
+  return {...second, usage: addUsage(first.usage, second.usage)}
+}
+
+function startToolLoop({
   chat,
   model,
   system,
@@ -103,7 +116,8 @@ async function continueToolLoop(state: ToolLoopState): Promise<ToolLoopResult> {
   const usage = addUsage(state.usage, reply.usage)
   const isLastReply = tools === undefined || !mayCallTools || reply.toolCalls.length === 0
   if (isLastReply && reply.content === '') {
-    return {error: describeEmptyAnswer(reply), usage}
+    const cutAtTokenLimit = reply.toolCalls.length === 0 && reply.finishReason === 'length'
+    return {error: describeEmptyAnswer(reply), usage, ...(cutAtTokenLimit ? {cutAtTokenLimit} : {})}
   }
   if (isLastReply) {
     const reads = new Map(state.reads.map((read) => [read.path, read]))
@@ -140,7 +154,8 @@ async function continueToolLoop(state: ToolLoopState): Promise<ToolLoopResult> {
 }
 
 // The reason tells an output cut at the token limit from a model that called
-// tools when the tools were off. A retry would bill the same empty answer again.
+// tools when the tools were off. The error is not temporary, so a step retry
+// does not bill each empty answer again; runToolLoop runs a cut review once more.
 function describeEmptyAnswer({toolCalls, finishReason, usage}: ChatReply): OpenRouterError {
   const reason =
     toolCalls.length > 0

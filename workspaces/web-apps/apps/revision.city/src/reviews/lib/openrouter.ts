@@ -31,9 +31,17 @@ export interface ToolCall {
   arguments: string
 }
 
+// The reasoning of a reply, as OpenRouter returned it. With tools, a reasoning
+// model such as DeepSeek V4 expects to get its earlier reasoning back in each
+// later request. Without it, the model loses the thread between tool rounds.
+export interface Reasoning {
+  text?: string
+  details?: readonly unknown[]
+}
+
 export type ChatMessage =
   | {role: 'system' | 'user'; content: string}
-  | {role: 'assistant'; content: string; toolCalls: readonly ToolCall[]}
+  | {role: 'assistant'; content: string; toolCalls: readonly ToolCall[]; reasoning?: Reasoning}
   | {role: 'tool'; toolCallId: string; content: string}
 
 export interface ChatRequest {
@@ -47,6 +55,7 @@ export interface ChatReply {
   content: string
   toolCalls: ToolCall[]
   usage: CompletionUsage
+  reasoning?: Reasoning
   // Why the model stopped, such as "stop", "length", or "tool_calls".
   finishReason?: string
 }
@@ -85,6 +94,8 @@ const chatResponseSchema = z.object({
         finish_reason: z.string().nullish(),
         message: z.object({
           content: z.string().nullish(),
+          reasoning: z.string().nullish(),
+          reasoning_details: z.array(z.unknown()).nullish(),
           tool_calls: z
             .array(
               z.object({
@@ -138,8 +149,13 @@ export function createOpenRouterChat({
     }
     const {choices, usage} = parsed.data
     const {message, finish_reason: finishReason} = choices[0]
+    const reasoning = {
+      ...(message.reasoning ? {text: message.reasoning} : {}),
+      ...(message.reasoning_details?.length ? {details: message.reasoning_details} : {}),
+    }
     return {
       ...(finishReason ? {finishReason} : {}),
+      ...(Object.keys(reasoning).length > 0 ? {reasoning} : {}),
       // A refusal or a reply with only tool calls can have no content. An empty
       // final answer keeps the billed usage and then fails to parse.
       content: message.content ?? '',
@@ -208,6 +224,8 @@ function toWireMessage(message: ChatMessage) {
           type: 'function',
           function: {name: call.name, arguments: call.arguments},
         })),
+        ...(message.reasoning?.text ? {reasoning: message.reasoning.text} : {}),
+        ...(message.reasoning?.details ? {reasoning_details: message.reasoning.details} : {}),
       }
     case 'tool':
       return {role: 'tool', tool_call_id: message.toolCallId, content: message.content}

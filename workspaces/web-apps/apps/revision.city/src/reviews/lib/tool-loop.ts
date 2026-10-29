@@ -139,7 +139,12 @@ async function continueToolLoop(state: ToolLoopState): Promise<ToolLoopResult> {
     ...state,
     messages: [
       ...messages,
-      {role: 'assistant', content: reply.content, toolCalls: reply.toolCalls},
+      {
+        role: 'assistant',
+        content: reply.content,
+        toolCalls: reply.toolCalls,
+        ...(reply.reasoning ? {reasoning: reply.reasoning} : {}),
+      },
       ...reply.toolCalls.map((call, index): ChatMessage => ({
         role: 'tool',
         toolCallId: call.id,

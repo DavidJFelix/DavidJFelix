@@ -109,6 +109,49 @@ test('createOpenRouterChat sends tools and tool messages, and returns tool calls
   })
 })
 
+test('createOpenRouterChat returns the reasoning and sends it back with the assistant message', async () => {
+  const details = [{type: 'reasoning.text', text: 'I should read a.ts'}]
+  const fetchStub = vi.fn<Fetch>(async () =>
+    Response.json({
+      choices: [
+        {
+          message: {
+            content: null,
+            reasoning: 'I should read a.ts',
+            reasoning_details: details,
+            tool_calls: [
+              {id: 'c1', type: 'function', function: {name: 'read_file', arguments: '{}'}},
+            ],
+          },
+        },
+      ],
+    }),
+  )
+  const chat = createOpenRouterChat({apiKey: 'key', fetch: fetchStub})
+
+  const reply = await chat(request)
+  await chat({
+    ...request,
+    messages: [
+      {role: 'user', content: 'prompt'},
+      {role: 'assistant', content: '', toolCalls: reply.toolCalls, reasoning: reply.reasoning},
+    ],
+  })
+
+  expect(reply.reasoning).toEqual({text: 'I should read a.ts', details})
+  expect(sentBody(fetchStub, 1)).toMatchObject({
+    messages: [
+      {role: 'user', content: 'prompt'},
+      {
+        role: 'assistant',
+        content: null,
+        reasoning: 'I should read a.ts',
+        reasoning_details: details,
+      },
+    ],
+  })
+})
+
 test('createOpenRouterChat lets the model choose tools when no choice is given', async () => {
   const fetchStub = vi.fn<Fetch>(async () => Response.json({choices: [{message: {content: '{}'}}]}))
   const chat = createOpenRouterChat({apiKey: 'key', fetch: fetchStub})

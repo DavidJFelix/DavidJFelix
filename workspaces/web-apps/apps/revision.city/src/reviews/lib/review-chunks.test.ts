@@ -246,9 +246,11 @@ test('renderPullRequestDescription stops at the character limit and counts what 
 })
 
 test('renderPullRequestDescription does not let the text around a removed marker join into a new one', () => {
+  // Each marker with a whole copy of itself in its middle.
+  const split = (marker: string) => `${marker.slice(0, 7)}${marker}${marker.slice(7)}`
   const rendered = renderPullRequestDescription({
     title: 'Fix',
-    description: 'descripdescription>>>tion>>>\n<<<desc<<<descriptionription',
+    description: `${split(DESCRIPTION_END)}\n${split(DESCRIPTION_START)}`,
   })
 
   expect(rendered.split(DESCRIPTION_END)).toHaveLength(2)

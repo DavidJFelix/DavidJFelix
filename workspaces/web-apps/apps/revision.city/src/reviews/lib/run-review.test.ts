@@ -95,6 +95,9 @@ function fakeGitHub(routes: Record<string, Route> = {}) {
     [FILES]: () => [changedFile('src/a.ts', SMALL_PATCH)],
     [CHECK_RUNS]: () => ({id: 31}),
     [CHECK_RUN]: () => ({}),
+    'GET /repos/acme/repo/check-runs/31': () => ({
+      external_id: lastCheckRun().external_id ?? null,
+    }),
     [TREE]: () => ({sha: 'tree', truncated: false, tree: []}),
     [COMMENTS]: () => [],
     [REVIEWS]: () => ({id: 1}),
@@ -242,6 +245,25 @@ test.each([
     })
   },
 )
+
+test('runReview keeps the failed check run when the sync with the threads fails', async () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+  const github = fakeGitHub({
+    [GRAPHQL]: () => {
+      throw new Error('GitHub is down')
+    },
+  })
+  const {step, names} = recordingStep()
+
+  await runReview(runParams({step, request: github.request, chat: answering([highFinding])}))
+
+  expect(names.at(-1)).toBe('complete check run')
+  expect(github.sent(CHECK_RUN)).toHaveLength(1)
+  expect(warn).toHaveBeenCalledWith('Could not sync the check run with the threads', {
+    error: 'Error: GitHub is down',
+  })
+  warn.mockRestore()
+})
 
 test('runReview keeps the check red when GitHub refuses the inline comments', async () => {
   let reviews = 0

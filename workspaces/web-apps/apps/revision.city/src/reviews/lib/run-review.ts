@@ -197,8 +197,12 @@ export async function runReview({
         output,
         ...(resolvable ? {externalId: RESOLVABLE_EXTERNAL_ID} : {}),
       })
+      // A failed sync must not run the step again: a new attempt would fail
+      // the check run again, also after a click on the dismiss button.
       if (resolvable) {
-        await syncCheckRunWithThreads(pull)
+        await syncCheckRunWithThreads(pull).catch((error: unknown) => {
+          console.warn('Could not sync the check run with the threads', {error: String(error)})
+        })
       }
     })
     await logRun(posted === null ? 'superseded' : outcome.failed ? 'failure' : 'success', {

@@ -1,5 +1,6 @@
 import {z} from 'zod'
-import {APP_BOT_LOGIN} from './publish-review'
+import type {DismissResult} from './dismiss-check-run'
+import {APP_BOT_LOGIN, APP_SLUG, DISMISS_ACTION} from './publish-review'
 import type {SyncResult} from './resolved-threads'
 
 // Until billing exists, only these repositories get reviews.
@@ -161,6 +162,66 @@ export function decideThreadSync({event, payload}: DecideReviewRunParams): Threa
   }
 }
 
+// The check run that a user asked to dismiss.
+export interface DismissParams {
+  installationId: number
+  repositoryId: number
+  owner: string
+  name: string
+  checkRunId: number
+  login: string
+}
+
+export type DismissDecision =
+  | {dismiss: false; reason: string}
+  | {dismiss: true; params: DismissParams}
+
+const checkRunEventSchema = z.object({
+  action: z.string(),
+  installation: z.object({id: z.number()}),
+  repository: repositorySchema,
+  check_run: z.object({id: z.number(), app: z.object({slug: z.string()}).nullable()}),
+  requested_action: z.object({identifier: z.string()}).optional(),
+  sender: z.object({login: z.string()}),
+})
+
+// A click on the button of a failed check run (`DISMISS_ACTION`).
+export function decideDismiss({event, payload}: DecideReviewRunParams): DismissDecision {
+  const parsed = checkRunEventSchema.safeParse(payload)
+  if (event !== 'check_run' || !parsed.success) {
+    return {dismiss: false, reason: 'The payload is not a check run event'}
+  }
+  const {
+    action,
+    installation,
+    repository,
+    check_run: checkRun,
+    requested_action: requested,
+    sender,
+  } = parsed.data
+  if (!ALLOWED_REPOSITORIES.has(repository.full_name.toLowerCase())) {
+    return {dismiss: false, reason: `${repository.full_name} is not allowed`}
+  }
+  if (
+    action !== 'requested_action' ||
+    requested?.identifier !== DISMISS_ACTION.identifier ||
+    checkRun.app?.slug !== APP_SLUG
+  ) {
+    return {dismiss: false, reason: 'The event does not ask to dismiss a check run of the app'}
+  }
+  return {
+    dismiss: true,
+    params: {
+      installationId: installation.id,
+      repositoryId: repository.id,
+      owner: repository.owner.login,
+      name: repository.name,
+      checkRunId: checkRun.id,
+      login: sender.login,
+    },
+  }
+}
+
 type EventPullRequest = z.infer<typeof pullRequestEventSchema>['pull_request']
 
 function automaticSkipReason(action: string, pull: EventPullRequest): string | undefined {
@@ -190,8 +251,9 @@ export interface HandleReviewWebhookParams {
   // Both are absent on deployments without reviews, such as previews.
   secret: string | undefined
   workflow: ReviewWorkflowBinding | undefined
-  // Absent on deployments without the app's client id or private key.
+  // Both are absent on deployments without the app's client id or private key.
   syncCheckRun?: (params: ThreadSyncParams) => Promise<SyncResult>
+  dismissCheckRun?: (params: DismissParams) => Promise<DismissResult>
 }
 
 export async function handleReviewWebhook({
@@ -199,6 +261,7 @@ export async function handleReviewWebhook({
   secret,
   workflow,
   syncCheckRun,
+  dismissCheckRun,
 }: HandleReviewWebhookParams): Promise<Response> {
   if (!secret || !workflow) {
     return Response.json({error: 'Reviews are not set up on this deployment'}, {status: 503})
@@ -217,6 +280,16 @@ export async function handleReviewWebhook({
       return Response.json({status: 'ignored', reason}, {status: 202})
     }
     return Response.json({status: await syncCheckRun(sync.params)}, {status: 200})
+  }
+  if (event === 'check_run') {
+    const dismiss = decideDismiss({event, payload})
+    if (!dismiss.dismiss || !dismissCheckRun) {
+      const reason = dismiss.dismiss
+        ? 'Dismissing is not set up on this deployment'
+        : dismiss.reason
+      return Response.json({status: 'ignored', reason}, {status: 202})
+    }
+    return Response.json({status: await dismissCheckRun(dismiss.params)}, {status: 200})
   }
   const decision = decideReviewRun({event, payload})
   if (!decision.start) {

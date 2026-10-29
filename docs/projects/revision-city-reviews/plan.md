@@ -70,7 +70,11 @@ replaces Warden in this repository. This project started as part of
   that opens again fails it again. The app gets these changes from the `pull_request_review_thread`
   event, so its webhook must subscribe to "Pull request review thread". A review whose findings are
   all in resolved threads from an earlier run also passes. A failed chunk review has no thread, so
-  it keeps the check red.
+  it keeps the check red. A failed check run also shows a `Dismiss findings` button. When a user who
+  can push clicks it, the app gets a `check_run` event with the `requested_action` action, and the
+  check run passes, with `Dismissed:` before its title and the external id `dismissed`. Resolved
+  threads no longer change a dismissed check run. The webhook must subscribe to "Check run" for the
+  button.
 - **Limits.** For each pull request, at most 150 chunks and 700,000 bytes of paths and patches get a
   review. A file whose diff is longer than 1,500 lines gets no review. One review posts at most 50
   new comments. The check run lists every finding, and it cuts its text at 65,000 characters, below

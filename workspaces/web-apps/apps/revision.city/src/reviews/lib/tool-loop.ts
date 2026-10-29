@@ -1,4 +1,12 @@
-import {addUsage, type Chat, type ChatMessage, type CompletionUsage, NO_USAGE} from './openrouter'
+import {
+  addUsage,
+  type Chat,
+  type ChatMessage,
+  type ChatReply,
+  type CompletionUsage,
+  NO_USAGE,
+  OpenRouterError,
+} from './openrouter'
 import type {FileRead} from './repository-snapshot'
 import {cutText, type ReviewTools, type ToolOutput} from './review-tools'
 
@@ -10,6 +18,9 @@ const MAX_TOOL_OUTPUT_CHARS = 48_000
 
 const CUT_NOTE =
   '\n(Cut: the tool output limit for this review is used up. Answer with what you have.)'
+
+const ANSWER_NOW_NOTE =
+  'The tools are off now. Write your answer as the JSON that the instructions give. Do not write a tool call. Leave out each finding that you could not check.'
 
 const NOT_RUN: ToolOutput = {content: 'Not run: too many tool calls in one turn.'}
 
@@ -34,11 +45,24 @@ interface ToolLoopAnswer {
 interface ToolLoopFailure {
   error: unknown
   usage: CompletionUsage
+  // The reasoning used up the output token limit before the answer.
+  cutAtTokenLimit?: true
 }
 
 export type ToolLoopResult = ToolLoopAnswer | ToolLoopFailure
 
-export function runToolLoop({
+// At temperature 1, a second run of a review that the token limit cut short
+// reasons differently, so it often finishes. A third run is not worth its cost.
+export async function runToolLoop(params: RunToolLoopParams): Promise<ToolLoopResult> {
+  const first = await startToolLoop(params)
+  if (!('cutAtTokenLimit' in first)) {
+    return first
+  }
+  const second = await startToolLoop(params)
+  return {...second, usage: addUsage(first.usage, second.usage)}
+}
+
+function startToolLoop({
   chat,
   model,
   system,
@@ -76,16 +100,26 @@ async function continueToolLoop(state: ToolLoopState): Promise<ToolLoopResult> {
   const mayCallTools = round < MAX_TOOL_ROUNDS && outputBudget > 0
   const reply = await chat({
     model,
-    messages,
     ...(tools === undefined
-      ? {}
-      : {tools: tools.definitions, toolChoice: mayCallTools ? 'auto' : 'none'}),
+      ? {messages}
+      : mayCallTools
+        ? {messages, tools: tools.definitions, toolChoice: 'auto'}
+        : {
+            messages: [...messages, {role: 'user', content: ANSWER_NOW_NOTE}],
+            tools: tools.definitions,
+            toolChoice: 'none',
+          }),
   }).catch(toFailure)
   if ('error' in reply) {
     return {error: reply.error, usage: state.usage}
   }
   const usage = addUsage(state.usage, reply.usage)
-  if (tools === undefined || !mayCallTools || reply.toolCalls.length === 0) {
+  const isLastReply = tools === undefined || !mayCallTools || reply.toolCalls.length === 0
+  if (isLastReply && reply.content === '') {
+    const cutAtTokenLimit = reply.toolCalls.length === 0 && reply.finishReason === 'length'
+    return {error: describeEmptyAnswer(reply), usage, ...(cutAtTokenLimit ? {cutAtTokenLimit} : {})}
+  }
+  if (isLastReply) {
     const reads = new Map(state.reads.map((read) => [read.path, read]))
     return {text: reply.content, usage, reads: [...reads.values()]}
   }
@@ -117,6 +151,20 @@ async function continueToolLoop(state: ToolLoopState): Promise<ToolLoopResult> {
     outputBudget: outputs.reduce((budget, output) => budget - output.content.length, outputBudget),
     reads: [...state.reads, ...outputs.flatMap((output) => (output.read ? [output.read] : []))],
   })
+}
+
+// The reason tells an output cut at the token limit from a model that called
+// tools when the tools were off. The error is not temporary, so a step retry
+// does not bill each empty answer again; runToolLoop runs a cut review once more.
+function describeEmptyAnswer({toolCalls, finishReason, usage}: ChatReply): OpenRouterError {
+  const reason =
+    toolCalls.length > 0
+      ? `tool calls after the tools were off: ${toolCalls.length}`
+      : `finish reason ${finishReason ?? 'not given'}`
+  return new OpenRouterError(
+    `Empty answer: ${reason}, ${usage.completionTokens} output tokens`,
+    false,
+  )
 }
 
 function toFailure(error: unknown): {error: unknown} {

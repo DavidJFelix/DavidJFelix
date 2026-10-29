@@ -22,7 +22,9 @@ type FetchLike = (...args: Parameters<typeof fetch>) => ReturnType<typeof fetch>
 const jsonResponse = (body: unknown, status = 200): Response => Response.json(body, {status})
 
 // Stands in for GitHub's token + user endpoints during the callback flow.
-const stubGitHubFetch = (overrides: {token?: unknown; user?: unknown; tokenStatus?: number} = {}) =>
+const stubGitHubFetch = (
+  overrides: {token?: unknown; user?: unknown; tokenStatus?: number; userStatus?: number} = {},
+) =>
   vi.fn<FetchLike>(async (input) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
     if (url.startsWith('https://github.com/login/oauth/access_token')) {
@@ -34,6 +36,7 @@ const stubGitHubFetch = (overrides: {token?: unknown; user?: unknown; tokenStatu
     if (url.startsWith('https://api.github.com/user')) {
       return jsonResponse(
         overrides.user ?? {login: 'test-user', avatar_url: 'https://a.test/i.png'},
+        overrides.userStatus ?? 200,
       )
     }
     throw new Error(`Unexpected fetch: ${url}`)
@@ -213,11 +216,57 @@ test('callback with a GitHub error param returns to the diff signed out', async 
   expect(getSetCookies(response).some((c) => c.startsWith('diffs-github-auth='))).toBe(false)
 })
 
-test('callback surfaces a token-exchange error response as a 502', async () => {
+test('callback surfaces a token-exchange error response as a 502 and logs its cause', async () => {
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+
   const {callbackResponse} = await signIn(
-    stubGitHubFetch({token: {error: 'bad_verification_code'}}),
+    stubGitHubFetch({
+      token: {
+        error: 'bad_verification_code',
+        error_description: 'The code passed is incorrect or expired.',
+      },
+    }),
   )
+
   expect(callbackResponse.status).toBe(502)
+  expect(consoleError).toHaveBeenCalledExactlyOnceWith({
+    event: 'github auth failure',
+    step: 'code exchange',
+    status: 200,
+    error: 'bad_verification_code',
+    errorDescription: 'The code passed is incorrect or expired.',
+  })
+  consoleError.mockRestore()
+})
+
+test('callback logs the error body of a failed code exchange status', async () => {
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+  const {callbackResponse} = await signIn(
+    stubGitHubFetch({token: {error: 'unverified_user_email'}, tokenStatus: 400}),
+  )
+
+  expect(callbackResponse.status).toBe(502)
+  expect(consoleError).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({step: 'code exchange', status: 400, error: 'unverified_user_email'}),
+  )
+  consoleError.mockRestore()
+})
+
+test('callback logs the status and message when the user lookup fails', async () => {
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+  const {callbackResponse} = await signIn(
+    stubGitHubFetch({user: {message: 'Bad credentials'}, userStatus: 401}),
+  )
+
+  expect(callbackResponse.status).toBe(502)
+  expect(consoleError).toHaveBeenCalledExactlyOnceWith({
+    event: 'github auth failure',
+    step: 'user lookup',
+    status: 401,
+    error: 'Bad credentials',
+  })
+  consoleError.mockRestore()
 })
 
 test('session reports the signed-in login without exposing the token', async () => {

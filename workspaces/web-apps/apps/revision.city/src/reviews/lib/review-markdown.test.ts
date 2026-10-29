@@ -150,6 +150,7 @@ const review: PullRequestReview = {
   chunkReviewCount: 3,
   cachedCount: 1,
   usage: {promptTokens: 10, completionTokens: 5, costUsd: 0.0123},
+  costs: [],
 }
 
 test('formatCheckRunOutput reports a clean review without a list', () => {
@@ -253,5 +254,51 @@ test('formatCheckRunOutput cuts a list longer than a check run can show', () => 
   expect(output.text?.length).toBeLessThanOrEqual(65_000)
   expect(output.text?.endsWith('\n\n(Cut: the list is longer than a check run can show.)')).toBe(
     true,
+  )
+})
+
+test('formatCheckRunOutput lists the cost of each chunk review last, most expensive first', () => {
+  const output = formatCheckRunOutput({
+    outcome: {reported: [], unchecked: [], failed: false},
+    review: {
+      ...review,
+      costs: [
+        {
+          path: 'src/a.ts',
+          reviewerId: 'security',
+          cached: true,
+          usage: {promptTokens: 0, completionTokens: 0, costUsd: 0},
+        },
+        {
+          path: 'src/b.ts',
+          part: 2,
+          reviewerId: 'comments',
+          cached: false,
+          usage: {promptTokens: 1200, completionTokens: 300, costUsd: 0.0081},
+        },
+        {
+          path: 'src/@c.ts',
+          reviewerId: 'security',
+          cached: false,
+          usage: {promptTokens: 4000, completionTokens: 90, costUsd: 0.0042},
+        },
+      ],
+    },
+    notReviewed: [{path: 'image.png', reason: 'GitHub shows no text diff'}],
+    postedCount: 0,
+  })
+
+  expect(output.text).toBe(
+    [
+      '### Not reviewed',
+      '',
+      '- `image.png`: GitHub shows no text diff',
+      '',
+      '### Cost per chunk review',
+      '',
+      '- $0.0081 `src/b.ts` part 2 (comments): 1200 prompt tokens, 300 completion tokens',
+      `- $0.0042 \`src/@${ZERO_WIDTH_SPACE}c.ts\` (security): 4000 prompt tokens, 90 completion tokens`,
+      '- $0.0000 `src/a.ts` (security): saved result',
+    ].join('\n'),
   )
 })

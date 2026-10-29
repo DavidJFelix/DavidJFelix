@@ -4,6 +4,7 @@ import {type GitHubRequest, getPullRequest, listPullRequestFiles} from './github
 import type {Chat} from './openrouter'
 import {completeCheckRun, createCheckRun, postReview, removeLabel} from './publish-review'
 import {loadRepositorySnapshot} from './repository-snapshot'
+import {RESOLVABLE_EXTERNAL_ID, syncCheckRunWithThreads} from './resolved-threads'
 import {renderFileList} from './review-chunks'
 import {
   type CheckRunOutput,
@@ -176,25 +177,38 @@ export async function runReview({
     }
     const review = summarizeChunkReviews({units, outcomes: completed.flat()})
     const outcome = decideOutcome(review.findings, {failedChunkReviewCount: review.failures.length})
-    const postedCount = await step('post review', async () =>
+    const posted = await step('post review', async () =>
       (await isCurrentHead()) ? postReview({...pull, headSha, findings: outcome.reported}) : null,
     )
-    await step('complete check run', () =>
-      postedCount === null
-        ? complete('neutral', SUPERSEDED_OUTPUT)
-        : complete(
-            outcome.failed ? 'failure' : 'success',
-            formatCheckRunOutput({outcome, review, notReviewed, postedCount}),
-          ),
-    )
-    await logRun(postedCount === null ? 'superseded' : outcome.failed ? 'failure' : 'success', {
+    await step('complete check run', async () => {
+      if (posted === null) {
+        return complete('neutral', SUPERSEDED_OUTPUT)
+      }
+      const output = formatCheckRunOutput({outcome, review, notReviewed, postedCount: posted.count})
+      // Resolved threads can clear a check that failed only on findings in
+      // threads. The findings can all be in threads that a maintainer resolved
+      // before this run, and a thread can be resolved during the run.
+      const resolvable = outcome.failed && review.failures.length === 0 && posted.inline
+      await completeCheckRun({
+        request,
+        repository,
+        checkRunId,
+        conclusion: outcome.failed ? 'failure' : 'success',
+        output,
+        ...(resolvable ? {externalId: RESOLVABLE_EXTERNAL_ID} : {}),
+      })
+      if (resolvable) {
+        await syncCheckRunWithThreads(pull)
+      }
+    })
+    await logRun(posted === null ? 'superseded' : outcome.failed ? 'failure' : 'success', {
       headSha,
       chunkReviewCount: review.chunkReviewCount,
       cachedCount: review.cachedCount,
       failedChunkReviewCount: review.failures.length,
       reportedCount: outcome.reported.length,
       uncheckedCount: outcome.unchecked.length,
-      postedCount: postedCount ?? undefined,
+      postedCount: posted?.count,
       notReviewedCount: notReviewed.length,
     })
   } catch (error) {

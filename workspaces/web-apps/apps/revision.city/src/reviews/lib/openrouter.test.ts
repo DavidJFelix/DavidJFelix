@@ -28,7 +28,7 @@ const sentBody = (fetchStub: ReturnType<typeof vi.fn<Fetch>>, call = 0): unknown
 test('createOpenRouterChat sends the messages and returns the content with usage', async () => {
   const fetchStub = vi.fn<Fetch>(async () =>
     Response.json({
-      choices: [{message: {content: '{"findings": []}'}}],
+      choices: [{finish_reason: 'stop', message: {content: '{"findings": []}'}}],
       usage: {prompt_tokens: 100, completion_tokens: 20, cost: 0.003},
     }),
   )
@@ -40,6 +40,7 @@ test('createOpenRouterChat sends the messages and returns the content with usage
     content: '{"findings": []}',
     toolCalls: [],
     usage: {promptTokens: 100, completionTokens: 20, costUsd: 0.003},
+    finishReason: 'stop',
   })
   const [url, init] = fetchStub.mock.calls[0]
   expect(url).toBe('https://openrouter.ai/api/v1/chat/completions')
@@ -51,7 +52,10 @@ test('createOpenRouterChat sends the messages and returns the content with usage
       {role: 'user', content: 'prompt text'},
     ],
     response_format: {type: 'json_object'},
-    temperature: 0,
+    max_tokens: 16_000,
+    reasoning: {effort: 'medium'},
+    temperature: 1,
+    top_p: 0.95,
     usage: {include: true},
   })
 })
@@ -101,6 +105,7 @@ test('createOpenRouterChat sends tools and tool messages, and returns tool calls
     ],
     tools: [{type: 'function', function: tool}],
     tool_choice: 'none',
+    response_format: {type: 'json_object'},
   })
 })
 
@@ -111,6 +116,8 @@ test('createOpenRouterChat lets the model choose tools when no choice is given',
   await chat({...request, tools: []})
 
   expect(sentBody(fetchStub)).toMatchObject({tools: [], tool_choice: 'auto'})
+  // JSON mode would make some models write their tool calls as text.
+  expect(sentBody(fetchStub)).not.toHaveProperty('response_format')
 })
 
 test('createOpenRouterChat reports zero usage when the response has none', async () => {

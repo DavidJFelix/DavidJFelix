@@ -47,6 +47,8 @@ export interface ChatReply {
   content: string
   toolCalls: ToolCall[]
   usage: CompletionUsage
+  // Why the model stopped, such as "stop", "length", or "tool_calls".
+  finishReason?: string
 }
 
 export type Chat = (request: ChatRequest) => Promise<ChatReply>
@@ -80,6 +82,7 @@ const chatResponseSchema = z.object({
   choices: z
     .array(
       z.object({
+        finish_reason: z.string().nullish(),
         message: z.object({
           content: z.string().nullish(),
           tool_calls: z
@@ -134,8 +137,9 @@ export function createOpenRouterChat({
       )
     }
     const {choices, usage} = parsed.data
-    const {message} = choices[0]
+    const {message, finish_reason: finishReason} = choices[0]
     return {
+      ...(finishReason ? {finishReason} : {}),
       // A refusal or a reply with only tool calls can have no content. An empty
       // final answer keeps the billed usage and then fails to parse.
       content: message.content ?? '',
@@ -153,6 +157,18 @@ export function createOpenRouterChat({
   }
 }
 
+// A findings answer is a few thousand tokens, and the reasoning tokens of a
+// reasoning model also count. The cap stops a model that repeats itself
+// before the answer, which cannot parse, costs a lot.
+const MAX_ANSWER_TOKENS = 16_000
+
+// At temperature 0, a reasoning model can repeat the same reasoning until the
+// cap on each run of the same chunk. DeepSeek recommends 1.0 for its V4
+// models, with top_p 0.95, because a lower temperature can collapse the
+// reasoning.
+const TEMPERATURE = 1
+const TOP_P = 0.95
+
 function toRequestBody({model, messages, tools, toolChoice}: ChatRequest) {
   return {
     model,
@@ -163,8 +179,18 @@ function toRequestBody({model, messages, tools, toolChoice}: ChatRequest) {
           tools: tools.map((tool) => ({type: 'function', function: tool})),
           tool_choice: toolChoice ?? 'auto',
         }),
-    response_format: {type: 'json_object'},
-    temperature: 0,
+    // JSON mode while tools are on makes some models write a tool call as
+    // JSON text instead of calling the tool.
+    ...(tools === undefined || toolChoice === 'none'
+      ? {response_format: {type: 'json_object'}}
+      : {}),
+    max_tokens: MAX_ANSWER_TOKENS,
+    // Without a reasoning budget, a reasoning model can use all of
+    // MAX_ANSWER_TOKENS to reason and return an empty answer. Medium effort
+    // keeps about half of the tokens for the answer.
+    reasoning: {effort: 'medium'},
+    temperature: TEMPERATURE,
+    top_p: TOP_P,
     // Asks OpenRouter to return the billed cost with the token counts.
     usage: {include: true},
   }

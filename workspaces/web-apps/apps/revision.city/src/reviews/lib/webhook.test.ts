@@ -1,8 +1,15 @@
 // @vitest-environment node
+// cSpell:ignore revisioncity -- the GitHub App's slug
 
 import {createHmac} from 'node:crypto'
 import {expect, test, vi} from 'vitest'
-import {decideReviewRun, handleReviewWebhook, type ReviewWorkflowBinding} from './webhook'
+import {
+  decideReviewRun,
+  decideThreadSync,
+  type HandleReviewWebhookParams,
+  handleReviewWebhook,
+  type ReviewWorkflowBinding,
+} from './webhook'
 
 const secret = 'webhook-secret'
 const headSha = 'e39a9f6002585daebc8265b3d94e094471f4a3d9'
@@ -249,4 +256,95 @@ test('decideReviewRun starts a review for the label, also on a draft that a bot 
       label: 'revision city',
     },
   })
+})
+
+const threadEvent = {
+  action: 'resolved',
+  installation: {id: 5},
+  repository: pullRequestEvent.repository,
+  pull_request: {number: 769},
+  thread: {comments: [{user: {login: 'revisioncity[bot]'}}, {user: {login: 'DavidJFelix'}}]},
+}
+
+test('handleReviewWebhook syncs the check run when a thread of the app is resolved', async () => {
+  const workflow = fakeWorkflow()
+  const syncCheckRun = vi.fn<NonNullable<HandleReviewWebhookParams['syncCheckRun']>>(
+    async () => 'resolved',
+  )
+
+  const response = await handleReviewWebhook({
+    request: webhookRequest({payload: threadEvent, event: 'pull_request_review_thread'}),
+    secret,
+    workflow,
+    syncCheckRun,
+  })
+
+  expect(response.status).toBe(200)
+  expect(await response.json()).toEqual({status: 'resolved'})
+  expect(syncCheckRun).toHaveBeenCalledWith({
+    installationId: 5,
+    repositoryId: 9,
+    owner: 'DavidJFelix',
+    name: 'DavidJFelix',
+    pullNumber: 769,
+  })
+  expect(workflow.create).not.toHaveBeenCalled()
+})
+
+test('handleReviewWebhook ignores a thread event on a deployment without the app key', async () => {
+  const response = await handleReviewWebhook({
+    request: webhookRequest({payload: threadEvent, event: 'pull_request_review_thread'}),
+    secret,
+    workflow: fakeWorkflow(),
+  })
+
+  expect(response.status).toBe(202)
+  expect(await response.json()).toMatchObject({status: 'ignored'})
+})
+
+test('handleReviewWebhook ignores a thread that the app did not start', async () => {
+  const syncCheckRun = vi.fn<NonNullable<HandleReviewWebhookParams['syncCheckRun']>>(
+    async () => 'resolved',
+  )
+
+  const response = await handleReviewWebhook({
+    request: webhookRequest({
+      payload: {...threadEvent, thread: {comments: [{user: {login: 'DavidJFelix'}}]}},
+      event: 'pull_request_review_thread',
+    }),
+    secret,
+    workflow: fakeWorkflow(),
+    syncCheckRun,
+  })
+
+  expect(await response.json()).toEqual({
+    status: 'ignored',
+    reason: 'The app did not start the thread',
+  })
+  expect(syncCheckRun).not.toHaveBeenCalled()
+})
+
+test('decideThreadSync syncs on an unresolved thread of the app', () => {
+  expect(
+    decideThreadSync({
+      event: 'pull_request_review_thread',
+      payload: {...threadEvent, action: 'unresolved'},
+    }),
+  ).toMatchObject({sync: true})
+})
+
+test.each([
+  {name: 'another event', event: 'pull_request', payload: threadEvent},
+  {name: 'another action', payload: {...threadEvent, action: 'created'}},
+  {
+    name: 'a thread that someone else started',
+    payload: {...threadEvent, thread: {comments: [{user: {login: 'DavidJFelix'}}]}},
+  },
+  {
+    name: 'a repository that is not allowed',
+    payload: {...threadEvent, repository: {...threadEvent.repository, full_name: 'acme/repo'}},
+  },
+  {name: 'a payload of another shape', payload: {action: 'resolved'}},
+])('decideThreadSync ignores $name', ({event = 'pull_request_review_thread', payload}) => {
+  expect(decideThreadSync({event, payload})).toMatchObject({sync: false})
 })

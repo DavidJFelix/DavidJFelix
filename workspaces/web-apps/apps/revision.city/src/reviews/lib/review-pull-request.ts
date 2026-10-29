@@ -210,12 +210,23 @@ export interface FailedChunkReview {
   error: string
 }
 
+export interface ChunkReviewCost {
+  path: string
+  // Set only when the file has more than one chunk. Counts from 1.
+  part?: number
+  reviewerId: string
+  cached: boolean
+  usage: CompletionUsage
+}
+
 export interface PullRequestReview {
   findings: Finding[]
   failures: FailedChunkReview[]
   chunkReviewCount: number
   cachedCount: number
   usage: CompletionUsage
+  // One entry per chunk review, in the order of the units.
+  costs: ChunkReviewCost[]
 }
 
 export interface SummarizeChunkReviewsParams {
@@ -241,7 +252,22 @@ export function summarizeChunkReviews({
     chunkReviewCount: units.length,
     cachedCount: outcomes.filter((outcome) => outcome.cached).length,
     usage: outcomes.map((outcome) => outcome.usage).reduce(addUsage, NO_USAGE),
+    costs: chunkReviewCosts({units, outcomes}),
   }
+}
+
+function chunkReviewCosts({units, outcomes}: SummarizeChunkReviewsParams): ChunkReviewCost[] {
+  const chunks = [...new Set(units.map(({chunk}) => chunk))]
+  return units.map(({chunk, reviewer}, index) => {
+    const fileChunks = chunks.filter(({path}) => path === chunk.path)
+    return {
+      path: chunk.path,
+      ...(fileChunks.length > 1 ? {part: fileChunks.indexOf(chunk) + 1} : {}),
+      reviewerId: reviewer.id,
+      cached: outcomes[index].cached,
+      usage: outcomes[index].usage,
+    }
+  })
 }
 
 export interface ReviewPullRequestParams

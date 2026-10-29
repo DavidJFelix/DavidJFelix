@@ -1,4 +1,4 @@
-import {encodeURLSegment} from './github-diff-source'
+import {decodeRange, encodeURLSegment} from './github-diff-source'
 import {isNullish} from './nullish'
 
 export const CODEBERG_HOST = 'codeberg.org'
@@ -40,7 +40,7 @@ export function parseCodebergDiffSource(path: string): CodebergDiffSource | unde
   if (!isNullish(compareMatch)) {
     return {
       kind: 'compare',
-      range: compareMatch[3],
+      range: decodeRange(compareMatch[3]),
       repo: {owner: compareMatch[1], repo: compareMatch[2]},
     }
   }

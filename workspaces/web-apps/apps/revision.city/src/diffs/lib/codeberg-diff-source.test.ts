@@ -34,6 +34,11 @@ test.each([
     path: '/acme/widgets/compare/v1.0...v2.0',
     source: {kind: 'compare', range: 'v1.0...v2.0', repo: REPO},
   },
+  {
+    name: 'a percent-encoded compare range',
+    path: '/acme/widgets/compare/main...feature%2Fx',
+    source: {kind: 'compare', range: 'main...feature/x', repo: REPO},
+  },
 ])('parses $name', ({path, source}) => {
   expect(parseCodebergDiffSource(path)).toEqual(source)
 })

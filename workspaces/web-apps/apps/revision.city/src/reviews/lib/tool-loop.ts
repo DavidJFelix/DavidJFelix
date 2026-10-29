@@ -105,7 +105,7 @@ async function continueToolLoop(state: ToolLoopState): Promise<ToolLoopResult> {
       : mayCallTools
         ? {messages, tools: tools.definitions, toolChoice: 'auto'}
         : {
-            messages: [...messages, {role: 'user', content: ANSWER_NOW_NOTE}],
+            messages: withAnswerNowNote(messages),
             tools: tools.definitions,
             toolChoice: 'none',
           }),
@@ -165,6 +165,16 @@ function describeEmptyAnswer({toolCalls, finishReason, usage}: ChatReply): OpenR
     `Empty answer: ${reason}, ${usage.completionTokens} output tokens`,
     false,
   )
+}
+
+// A user message after the tool results made a model write that message back
+// as its JSON answer. The note goes at the end of the last tool result instead.
+function withAnswerNowNote(messages: readonly ChatMessage[]): ChatMessage[] {
+  const last = messages.at(-1)
+  if (last?.role !== 'tool') {
+    return [...messages, {role: 'user', content: ANSWER_NOW_NOTE}]
+  }
+  return [...messages.slice(0, -1), {...last, content: `${last.content}\n\n${ANSWER_NOW_NOTE}`}]
 }
 
 function toFailure(error: unknown): {error: unknown} {

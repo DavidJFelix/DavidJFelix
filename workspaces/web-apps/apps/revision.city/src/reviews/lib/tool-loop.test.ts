@@ -27,6 +27,9 @@ function readOutput(call: ToolCall): ToolOutput {
 
 const params = {model: 'vendor/model', system: 'system', prompt: 'chunk'}
 
+const ANSWER_NOW_NOTE =
+  'The tools are off now. Write your answer as the JSON that the instructions give. Do not write a tool call. Leave out each finding that you could not check.'
+
 test('runToolLoop makes one call without tools', async () => {
   const chat = vi.fn<Chat>(async () => answer('{"findings": []}'))
 
@@ -76,7 +79,7 @@ test('runToolLoop runs the tool calls, sends the results back, and records each 
   ])
 })
 
-test('runToolLoop asks for an answer without tools after the last tool round', async () => {
+test('runToolLoop asks for an answer without tools at the end of the last tool result', async () => {
   const chat = vi.fn<Chat>(async () => callTools(readCall('1', 'a.ts')))
   const tools = fakeTools()
 
@@ -85,9 +88,9 @@ test('runToolLoop asks for an answer without tools after the last tool round', a
   expect(chat).toHaveBeenCalledTimes(MAX_TOOL_ROUNDS + 1)
   expect(chat.mock.calls.at(-1)?.[0].toolChoice).toBe('none')
   expect(chat.mock.calls.at(-1)?.[0].messages.at(-1)).toEqual({
-    role: 'user',
-    content:
-      'The tools are off now. Write your answer as the JSON that the instructions give. Do not write a tool call. Leave out each finding that you could not check.',
+    role: 'tool',
+    toolCallId: '1',
+    content: `text of a.ts\n\n${ANSWER_NOW_NOTE}`,
   })
   expect(result).toEqual({
     error: new OpenRouterError(
@@ -126,14 +129,12 @@ test('runToolLoop cuts tool output past its budget and then asks for an answer',
 
   const result = await runToolLoop({...params, chat, tools})
 
-  const [, second] = chat.mock.calls[1][0].messages.slice(-3, -1)
-  expect(second).toEqual({
+  expect(chat.mock.calls[1][0].messages.at(-1)).toEqual({
     role: 'tool',
     toolCallId: '2',
-    content: `${'x'.repeat(18_000)}\n(Cut: the tool output limit for this review is used up. Answer with what you have.)`,
+    content: `${'x'.repeat(18_000)}\n(Cut: the tool output limit for this review is used up. Answer with what you have.)\n\n${ANSWER_NOW_NOTE}`,
   })
   expect(chat.mock.calls[1][0].toolChoice).toBe('none')
-  expect(chat.mock.calls[1][0].messages.at(-1)?.role).toBe('user')
   // A cut read still counts: the answer may depend on the part the model saw.
   expect(result).toMatchObject({reads: [{path: 'a.ts'}, {path: 'b.ts'}]})
 })
@@ -150,8 +151,8 @@ test('runToolLoop does not cut tool output between the halves of a surrogate pai
 
   await runToolLoop({...params, chat, tools})
 
-  expect(chat.mock.calls[1][0].messages.at(-2)?.content).toBe(
-    '\u{1f600}\n(Cut: the tool output limit for this review is used up. Answer with what you have.)',
+  expect(chat.mock.calls[1][0].messages.at(-1)?.content).toBe(
+    `\u{1f600}\n(Cut: the tool output limit for this review is used up. Answer with what you have.)\n\n${ANSWER_NOW_NOTE}`,
   )
 })
 
@@ -164,8 +165,8 @@ test('runToolLoop gives no output to calls after the budget is used up', async (
 
   await runToolLoop({...params, chat, tools})
 
-  expect(chat.mock.calls[1][0].messages.at(-2)?.content).toBe(
-    '\n(Cut: the tool output limit for this review is used up. Answer with what you have.)',
+  expect(chat.mock.calls[1][0].messages.at(-1)?.content).toBe(
+    `\n(Cut: the tool output limit for this review is used up. Answer with what you have.)\n\n${ANSWER_NOW_NOTE}`,
   )
 })
 

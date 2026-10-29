@@ -257,7 +257,7 @@ test('runReview keeps the failed check run when the sync with the threads fails'
 
   await runReview(runParams({step, request: github.request, chat: answering([highFinding])}))
 
-  expect(names.at(-1)).toBe('complete check run')
+  expect(names.slice(-2)).toEqual(['complete check run', 'log failure run'])
   expect(github.sent(CHECK_RUN)).toHaveLength(1)
   expect(warn).toHaveBeenCalledWith('Could not sync the check run with the threads', {
     error: 'Error: GitHub is down',

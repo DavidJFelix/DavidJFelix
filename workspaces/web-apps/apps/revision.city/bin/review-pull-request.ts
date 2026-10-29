@@ -15,11 +15,12 @@ import {decideOutcome} from '../src/reviews/lib/findings'
 import {
   createGitHubRequest,
   getPullRequest,
+  getPullRequestDescription,
   listPullRequestFiles,
 } from '../src/reviews/lib/github-api'
 import {createOpenRouterChat} from '../src/reviews/lib/openrouter'
 import {loadRepositorySnapshot} from '../src/reviews/lib/repository-snapshot'
-import {fileReviewStatus} from '../src/reviews/lib/review-chunks'
+import {fileReviewStatus, renderPullRequestDescription} from '../src/reviews/lib/review-chunks'
 import {reviewPullRequest} from '../src/reviews/lib/review-pull-request'
 
 const reference = /^([\w.-]+)\/([\w.-]+)#(\d+)$/.exec(process.argv[2] ?? '')
@@ -48,6 +49,9 @@ const review = await reviewPullRequest({
   scope: 'local',
   store: createMemoryChunkReviewStore(),
   chat: createOpenRouterChat({apiKey: OPENROUTER_API_KEY}),
+  description: renderPullRequestDescription(
+    await getPullRequestDescription({request, repository, pullNumber}),
+  ),
   headSnapshot: snapshot,
 })
 const outcome = decideOutcome(review.findings, {failedChunkReviewCount: review.failures.length})

@@ -155,6 +155,31 @@ export function renderChunk(chunk: ReviewChunk): RenderedChunk {
   return {text: `File: ${chunk.path}\n\n${body}`, newLineByLabel}
 }
 
+// Each model call sends the description again, so it stops at this many
+// characters.
+export const MAX_DESCRIPTION_CHARS = 4_000
+
+export interface RenderPullRequestDescriptionParams {
+  title: string
+  description: string
+}
+
+// Each reviewer gets the title and description before its chunk, because they
+// tell what the author wants the change to do.
+export function renderPullRequestDescription({
+  title,
+  description,
+}: RenderPullRequestDescriptionParams): string {
+  const text = description.trim()
+  const shown = text.slice(0, MAX_DESCRIPTION_CHARS)
+  const cut =
+    text.length > shown.length ? `\n(${text.length - shown.length} more characters not shown)` : ''
+  return [
+    `Pull request title: ${oneLine(title)}`,
+    text === '' ? 'Pull request description: none' : `Pull request description:\n${shown}${cut}`,
+  ].join('\n\n')
+}
+
 // Each model call sends the list again, so the list stops at this many
 // characters. Most pull requests need a few hundred.
 export const MAX_FILE_LIST_CHARS = 10_000

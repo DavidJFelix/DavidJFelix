@@ -34,6 +34,8 @@ export interface ChunkReviewContext {
   scope: string
   store: ChunkReviewStore
   chat: Chat
+  // From renderPullRequestDescription.
+  description: string
   fileList: string
   // With it, reviewers get tools that read files outside the chunk.
   headSnapshot?: RepositorySnapshot
@@ -63,11 +65,12 @@ export async function reviewChunk({
   scope,
   store,
   chat,
+  description,
   fileList,
   headSnapshot,
 }: ReviewChunkParams): Promise<ChunkReviewOutcome> {
   const rendered = renderChunk(chunk)
-  const prompt = `${fileList}\n\n${rendered.text}`
+  const prompt = `${description}\n\n${fileList}\n\n${rendered.text}`
   const tools = headSnapshot === undefined ? undefined : createReviewTools(headSnapshot)
   const system = buildSystemPrompt({reviewer, withTools: tools !== undefined})
   const key = await chunkReviewKey({

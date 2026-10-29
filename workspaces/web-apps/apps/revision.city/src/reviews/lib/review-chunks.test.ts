@@ -4,10 +4,12 @@ import {
   DEFAULT_MAX_PATCH_LINES_PER_FILE,
   fileReviewStatus,
   isReviewableFile,
+  MAX_DESCRIPTION_CHARS,
   MAX_FILE_LIST_CHARS,
   type PullRequestFile,
   renderChunk,
   renderFileList,
+  renderPullRequestDescription,
 } from './review-chunks'
 
 const addedLines = (start: number, count: number) =>
@@ -195,4 +197,25 @@ test('renderFileList stops at the character limit and counts the files it leaves
   expect(lines).toHaveLength(1 + listedCount + 1)
   expect(lines.at(-2)).toBe(`- ${pathOf(listedCount - 1)} (modified)`)
   expect(lines.at(-1)).toBe(`(${1000 - listedCount} more not listed)`)
+})
+
+test('renderPullRequestDescription gives the title and the description', () => {
+  expect(
+    renderPullRequestDescription({title: 'Add a\nwidget', description: '\nAdds a widget.\n'}),
+  ).toBe('Pull request title: Add a widget\n\nPull request description:\nAdds a widget.')
+})
+
+test('renderPullRequestDescription says when there is no description', () => {
+  expect(renderPullRequestDescription({title: 'Add a widget', description: ' \n'})).toBe(
+    'Pull request title: Add a widget\n\nPull request description: none',
+  )
+})
+
+test('renderPullRequestDescription stops at the character limit and counts what it leaves out', () => {
+  const description = 'a'.repeat(MAX_DESCRIPTION_CHARS + 25)
+
+  const lines = renderPullRequestDescription({title: 'Long', description}).split('\n')
+
+  expect(lines.at(-2)).toBe('a'.repeat(MAX_DESCRIPTION_CHARS))
+  expect(lines.at(-1)).toBe('(25 more characters not shown)')
 })

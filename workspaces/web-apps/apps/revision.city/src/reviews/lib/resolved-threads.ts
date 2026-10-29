@@ -1,5 +1,12 @@
 import {z} from 'zod'
-import {GitHubApiError, getPullRequest, type PullRequestParams, repositoryPath} from './github-api'
+import {
+  GitHubApiError,
+  type GitHubRepository,
+  type GitHubRequest,
+  getPullRequest,
+  type PullRequestParams,
+  repositoryPath,
+} from './github-api'
 import {APP_SLUG, CHECK_RUN_NAME, completeCheckRun} from './publish-review'
 import type {CheckRunOutput} from './review-markdown'
 
@@ -155,11 +162,13 @@ async function listAppThreadsFrom({
   ]
 }
 
-interface CanPushParams extends PullRequestParams {
+export interface CanPushParams {
+  request: GitHubRequest
+  repository: GitHubRepository
   login: string
 }
 
-async function canPush({request, repository, login}: CanPushParams): Promise<boolean> {
+export async function canPush({request, repository, login}: CanPushParams): Promise<boolean> {
   if (login === '') {
     return false
   }
@@ -230,13 +239,24 @@ export async function syncCheckRunWithThreads(pull: PullRequestParams): Promise<
       output: nextOutput,
       externalId: RESOLVABLE_EXTERNAL_ID,
     })
-  if (resolved && checkRun.conclusion === 'failure') {
+  const shouldResolve = resolved && checkRun.conclusion === 'failure'
+  const shouldReopen = !resolved && checkRun.conclusion === 'success'
+  if (!shouldResolve && !shouldReopen) {
+    return 'unchanged'
+  }
+  // Counting the threads takes time. A click on the dismiss button in that
+  // time changes the external id, and the dismissal must stay.
+  const current = await request({
+    path: `${repositoryPath(repository)}/check-runs/${checkRun.id}`,
+    schema: z.object({external_id: z.string().nullable()}),
+  })
+  if (current.external_id !== RESOLVABLE_EXTERNAL_ID) {
+    return 'unchanged'
+  }
+  if (shouldResolve) {
     await complete('success', resolvedOutput(output))
     return 'resolved'
   }
-  if (!resolved && checkRun.conclusion === 'success') {
-    await complete('failure', reopenedOutput(output))
-    return 'reopened'
-  }
-  return 'unchanged'
+  await complete('failure', reopenedOutput(output))
+  return 'reopened'
 }

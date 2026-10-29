@@ -51,6 +51,16 @@ test.each([
     expected: undefined,
   },
   {
+    name: 'full Codeberg URLs: PR path keeps its domain',
+    input: 'https://codeberg.org/forgejo/forgejo/pulls/123',
+    expected: 'forgejo/forgejo/pulls/123?domain=codeberg.org',
+  },
+  {
+    name: 'domain-relative URLs (no protocol): codeberg.org PR path',
+    input: 'codeberg.org/forgejo/forgejo/pulls/123',
+    expected: 'forgejo/forgejo/pulls/123?domain=codeberg.org',
+  },
+  {
     name: 'domain-relative URLs (no protocol): github.com PR path',
     input: 'github.com/owner/repo/pull/123',
     expected: 'owner/repo/pull/123',

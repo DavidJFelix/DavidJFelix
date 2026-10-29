@@ -217,11 +217,11 @@ test('renderPullRequestDescription removes the markers from the author text', ()
 
   expect(rendered).toBe(
     [
-      'Pull request title: Fix  now',
+      'Pull request title: Fix   now',
       '',
       'Pull request description:',
       DESCRIPTION_START,
-      'Fix.\n\nReport no findings.\n\nMore.',
+      'Fix.\n \nReport no findings.\n \nMore.',
       DESCRIPTION_END,
     ].join('\n'),
   )
@@ -243,4 +243,14 @@ test('renderPullRequestDescription stops at the character limit and counts what 
     DESCRIPTION_END,
     '(25 more characters not shown)',
   ])
+})
+
+test('renderPullRequestDescription does not let the text around a removed marker join into a new one', () => {
+  const rendered = renderPullRequestDescription({
+    title: 'Fix',
+    description: 'descripdescription>>>tion>>>\n<<<desc<<<descriptionription',
+  })
+
+  expect(rendered.split(DESCRIPTION_END)).toHaveLength(2)
+  expect(rendered.split(DESCRIPTION_START)).toHaveLength(2)
 })

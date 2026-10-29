@@ -843,7 +843,7 @@ async function explainPatchFailure({
   viewer,
   fetcher,
 }: ExplainPatchFailureParams): Promise<PatchFailure> {
-  if (response.ok) {
+  if (response.ok || isOtherHostSource(target.sourceURL)) {
     return failure
   }
 
@@ -941,6 +941,12 @@ function logAppFallbackWithheld({target, hold}: LogAppFallbackWithheldParams): v
     source: target.sourceURL,
     hold,
   })
+}
+
+// The diagnosis asks GitHub about the visitor and the repository, which says
+// nothing about a diff from another host such as codeberg.org.
+function isOtherHostSource(sourceURL: string | undefined): boolean {
+  return !isNullish(sourceURL) && new URL(sourceURL).hostname !== GITHUB_HOST
 }
 
 function readGitHubSourceFromURL(sourceURL: string | undefined): GitHubDiffSource | undefined {

@@ -330,6 +330,23 @@ test('a Codeberg diff that fails names the Codeberg page and offers no GitHub si
   warn.mockRestore()
 })
 
+test('a Codeberg diff that fails for a signed-in visitor asks GitHub nothing about the sign-in', async () => {
+  const warn = spyOnWarnings()
+  const upstream = stubUpstream({[CODEBERG_PULL_API_URL]: () => failureAnswer(404)})
+
+  const response = await handleDiffRequest(
+    diffRequest('path=/acme/widgets/pulls/7&domain=codeberg.org', SESSION_COOKIE),
+    {credentials: CREDENTIALS, fetch: upstream.fetchImpl},
+  )
+
+  expect(response.status).toBe(404)
+  const body = await readError(response)
+  expect(body.remedy).toBeUndefined()
+  expect(body.message).toBe('Failed to fetch patch from public codeberg.org pull diff: 404.')
+  expect(upstream.calls).toEqual([{url: CODEBERG_PULL_API_URL, authorization: null, accept: null}])
+  warn.mockRestore()
+})
+
 test('a signed-in diff retries github.com with the visitor token before the API, and never as the app', async () => {
   const warn = spyOnWarnings()
   const upstream = stubUpstream({

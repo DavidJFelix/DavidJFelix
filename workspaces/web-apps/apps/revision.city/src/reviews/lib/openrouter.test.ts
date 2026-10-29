@@ -142,7 +142,12 @@ test('createOpenRouterChat returns the reasoning and sends it back with the assi
   expect(sentBody(fetchStub, 1)).toMatchObject({
     messages: [
       {role: 'user', content: 'prompt'},
-      {role: 'assistant', content: null, reasoning: 'I should read a.ts', reasoning_details: details},
+      {
+        role: 'assistant',
+        content: null,
+        reasoning: 'I should read a.ts',
+        reasoning_details: details,
+      },
     ],
   })
 })

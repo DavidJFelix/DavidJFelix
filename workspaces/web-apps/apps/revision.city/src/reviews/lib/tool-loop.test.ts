@@ -79,6 +79,23 @@ test('runToolLoop runs the tool calls, sends the results back, and records each 
   ])
 })
 
+test('runToolLoop sends the reasoning of a tool call reply back in the next request', async () => {
+  const reasoning = {text: 'I should read a.ts'}
+  const chat = vi
+    .fn<Chat>()
+    .mockResolvedValueOnce({...callTools(readCall('1', 'a.ts')), reasoning})
+    .mockResolvedValueOnce(answer('{"findings": []}'))
+
+  await runToolLoop({...params, chat, tools: fakeTools()})
+
+  expect(chat.mock.calls[1][0].messages.at(-2)).toEqual({
+    role: 'assistant',
+    content: '',
+    toolCalls: [readCall('1', 'a.ts')],
+    reasoning,
+  })
+})
+
 test('runToolLoop asks for an answer without tools at the end of the last tool result', async () => {
   const chat = vi.fn<Chat>(async () => callTools(readCall('1', 'a.ts')))
   const tools = fakeTools()

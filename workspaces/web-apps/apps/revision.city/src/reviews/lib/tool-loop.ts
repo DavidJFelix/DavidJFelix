@@ -168,13 +168,14 @@ function describeEmptyAnswer({toolCalls, finishReason, usage}: ChatReply): OpenR
 }
 
 // A user message after the tool results made a model write that message back
-// as its JSON answer. The note goes at the end of the last tool result instead.
+// as its JSON answer. The note goes at the end of the last message, which is a
+// tool result, instead.
 function withAnswerNowNote(messages: readonly ChatMessage[]): ChatMessage[] {
-  const last = messages.at(-1)
-  if (last?.role !== 'tool') {
-    return [...messages, {role: 'user', content: ANSWER_NOW_NOTE}]
-  }
-  return [...messages.slice(0, -1), {...last, content: `${last.content}\n\n${ANSWER_NOW_NOTE}`}]
+  return messages.map((message, index) =>
+    index === messages.length - 1
+      ? {...message, content: `${message.content}\n\n${ANSWER_NOW_NOTE}`}
+      : message,
+  )
 }
 
 function toFailure(error: unknown): {error: unknown} {

@@ -5,17 +5,18 @@ import type {
   FileDiffMetadata,
 } from '@pierre/diffs'
 
+import {parseCodebergDiffSource} from './codeberg-diff-source'
 import {parseGitHubDiffSource} from './github-diff-source'
 import {isNullish} from './nullish'
 
-type GitHubFileLoaderFetch = (
+type DiffFileLoaderFetch = (
   input: Parameters<typeof fetch>[0],
   init?: Parameters<typeof fetch>[1],
 ) => ReturnType<typeof fetch>
 
-interface GitHubDiffFileLoaderOptions {
+interface DiffFileLoaderOptions {
   endpoint?: string
-  fetch?: GitHubFileLoaderFetch
+  fetch?: DiffFileLoaderFetch
 }
 
 interface LoadedDiffFilesResponse {
@@ -28,23 +29,54 @@ interface LoadedDiffFilesResponse {
 // reads GitHub auth from the session cookie that rides along on the request.
 export function createGitHubDiffFileLoader(
   path: string,
-  options: GitHubDiffFileLoaderOptions = {},
+  options: DiffFileLoaderOptions = {},
 ): FileDiffContentsLoader | undefined {
   if (isNullish(parseGitHubDiffSource(path))) {
     return undefined
   }
+  return createDiffFileLoader({
+    endpoint: options.endpoint ?? '/api/diffs/github-diff-file',
+    fetcher: options.fetch ?? fetch,
+    path,
+  })
+}
 
-  const endpoint = options.endpoint ?? '/api/diffs/github-diff-file'
-  const fetcher = options.fetch ?? fetch
+// Creates a Diffs `loadDiffFiles` callback for Codeberg pull requests and
+// commits. A compare gets none, because the server cannot find the merge base
+// of a compare range.
+export function createCodebergDiffFileLoader(
+  path: string,
+  options: DiffFileLoaderOptions = {},
+): FileDiffContentsLoader | undefined {
+  const source = parseCodebergDiffSource(path)
+  if (isNullish(source) || source.kind === 'compare') {
+    return undefined
+  }
+  return createDiffFileLoader({
+    endpoint: options.endpoint ?? '/api/diffs/codeberg-diff-file',
+    fetcher: options.fetch ?? fetch,
+    path,
+  })
+}
+
+interface CreateDiffFileLoaderParams {
+  endpoint: string
+  fetcher: DiffFileLoaderFetch
+  path: string
+}
+
+function createDiffFileLoader({
+  endpoint,
+  fetcher,
+  path,
+}: CreateDiffFileLoaderParams): FileDiffContentsLoader {
   const loadedFilesCache = new Map<string, Promise<FileDiffLoadedFiles>>()
 
   return (fileDiff) => {
     switch (fileDiff.type) {
       case 'new':
       case 'deleted':
-        return Promise.reject(
-          new Error(`Diffs GitHub file loader cannot hydrate ${fileDiff.type} diffs.`),
-        )
+        return Promise.reject(new Error(`Diffs file loader cannot hydrate ${fileDiff.type} diffs.`))
       case 'change':
       case 'rename-changed':
       case 'rename-pure': {
@@ -84,7 +116,7 @@ interface FetchLoadedDiffFilesParams {
   type: string
   name: string
   prevName: string | undefined
-  fetcher: GitHubFileLoaderFetch
+  fetcher: DiffFileLoaderFetch
 }
 
 async function fetchLoadedDiffFiles({
@@ -102,8 +134,8 @@ async function fetchLoadedDiffFiles({
     const detail = await readLoaderErrorDetail(response)
     throw new Error(
       detail.length > 0
-        ? `Diffs GitHub file loader failed (${response.status}): ${detail}`
-        : `Diffs GitHub file loader failed (${response.status}).`,
+        ? `Diffs file loader failed (${response.status}): ${detail}`
+        : `Diffs file loader failed (${response.status}).`,
     )
   }
 
@@ -151,7 +183,7 @@ async function readLoaderErrorDetail(response: Response): Promise<string> {
 
 function normalizeLoadedDiffFiles(data: unknown, type: string): FileDiffLoadedFiles {
   if (!isRecord(data)) {
-    throw new Error('Diffs GitHub file loader returned an invalid response.')
+    throw new Error('Diffs file loader returned an invalid response.')
   }
 
   const files: LoadedDiffFilesResponse = {
@@ -161,13 +193,13 @@ function normalizeLoadedDiffFiles(data: unknown, type: string): FileDiffLoadedFi
 
   if (type === 'rename-pure') {
     if (files.oldFile !== null || files.newFile === null) {
-      throw new Error('Diffs GitHub file loader returned an invalid pure rename response.')
+      throw new Error('Diffs file loader returned an invalid pure rename response.')
     }
     return {oldFile: null, newFile: files.newFile}
   }
 
   if (files.oldFile === null || files.newFile === null) {
-    throw new Error('Diffs GitHub file loader returned an invalid changed-file response.')
+    throw new Error('Diffs file loader returned an invalid changed-file response.')
   }
   return {oldFile: files.oldFile, newFile: files.newFile}
 }
@@ -177,12 +209,12 @@ function normalizeFileContents(value: unknown): FileContents | null {
     return null
   }
   if (!isRecord(value)) {
-    throw new Error('Diffs GitHub file loader returned an invalid file.')
+    throw new Error('Diffs file loader returned an invalid file.')
   }
 
   const {cacheKey, contents, name} = value
   if (typeof name !== 'string' || typeof contents !== 'string') {
-    throw new TypeError('Diffs GitHub file loader returned an invalid file.')
+    throw new TypeError('Diffs file loader returned an invalid file.')
   }
 
   return {

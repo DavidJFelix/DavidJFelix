@@ -12,8 +12,9 @@ replaces Warden in this repository. This project started as part of
   product.
 - **Re-runs cost only what changed.** The app saves the model's answer for each chunk review. A
   re-run after a push pays only for a chunk review that has no saved answer, or whose tools read a
-  path that changed. A push that adds or removes a file changes the file list in every prompt, and
-  an edit to the title or description changes them too, so each chunk review pays again.
+  path that changed. A push that adds or removes a file changes the file list in every prompt, so
+  each chunk review pays again. An edit to the title or description starts no review, but it changes
+  every prompt, so the next review pays again for each chunk review.
 - **OpenRouter for models.** The model is an operator secret (`REVIEW_MODEL`), not a repository
   setting.
 - **Works for any installation, runs only here for now.** Code takes the installation and repository
@@ -58,10 +59,11 @@ replaces Warden in this repository. This project started as part of
   Adding the `Revision City` label starts a review of any open pull request, at its current head.
   The review removes the label, so adding it again starts another review.
 - **Untrusted text.** The pull request's author can steer the reviewers, so the prompts treat the
-  diff and the files as text to review. In posted text, a zero-width space goes after `@`, `#`,
-  `GH-`, `<`, and the `&` of an entity. So model text and file paths cannot mention users, reference
-  issues, or add HTML. Links to github.com go through redirect.github.com, so they do not show in
-  the timeline of the linked issue. The check run is not a security gate by itself.
+  title, the description, the diff, and the files as text to review. In posted text, a zero-width
+  space goes after `@`, `#`, `GH-`, `<`, and the `&` of an entity. So model text and file paths
+  cannot mention users, reference issues, or add HTML. Links to github.com go through
+  redirect.github.com, so they do not show in the timeline of the linked issue. The check run is not
+  a security gate by itself.
 - **Posted comments.** Each comment starts with a fingerprint, and a run does not post a finding
   again on a line where the app already posted it. The finding's body goes last, so a code block
   that it leaves open cannot take in the suggestion.

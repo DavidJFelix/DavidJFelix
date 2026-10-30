@@ -1,7 +1,7 @@
 // cSpell:ignore pierrecomputer asdfadfadsf -- upstream fixture slugs and garbage-input case
 import {expect, test} from 'vitest'
 
-import {getPatchViewerHref} from './get-patch-viewer-href'
+import {getPatchViewerHref, toPatchViewerLocation} from './get-patch-viewer-href'
 
 // Every case is the same shape (an input string in, an href or undefined out),
 // so the whole suite is one case table. Case names fold in the original
@@ -132,4 +132,26 @@ test.each([
   },
 ])('getPatchViewerHref: $name', ({input, expected}) => {
   expect(getPatchViewerHref(input)).toBe(expected)
+})
+
+test.each([
+  {
+    name: 'a GitHub URL has no domain',
+    input: 'https://github.com/owner/repo/pull/123',
+    expected: {splat: 'owner/repo/pull/123'},
+  },
+  {
+    name: 'a Codeberg URL keeps its domain out of the splat',
+    input: 'https://codeberg.org/forgejo/forgejo/pulls/15078',
+    expected: {domain: 'codeberg.org', splat: 'forgejo/forgejo/pulls/15078'},
+  },
+  {
+    name: 'a Tangled URL keeps its domain out of the splat',
+    input: 'https://tangled.org/acme/widgets/pulls/7',
+    expected: {domain: 'tangled.org', splat: 'acme/widgets/pulls/7'},
+  },
+])('toPatchViewerLocation: $name', ({input, expected}) => {
+  const href = getPatchViewerHref(input)
+  if (href === undefined) throw new Error(`no href for ${input}`)
+  expect(toPatchViewerLocation(href)).toEqual(expected)
 })

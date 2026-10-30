@@ -25,8 +25,9 @@ const CHANGE_TYPES: readonly ChangeTypes[] = [
 // output.
 const MAX_CONCURRENT_READS = 4
 
-// Entity diffs are immutable per revision pair, but the content behind them came
-// from the caller's own credentials.
+// Entity diffs are immutable per revision pair, but a GitHub read can use the
+// caller's own credentials. A Codeberg read is public and uses the same header,
+// so that one policy covers every response.
 const CACHE_CONTROL = 'private, no-store'
 
 export interface EntityDiffFileRequest {

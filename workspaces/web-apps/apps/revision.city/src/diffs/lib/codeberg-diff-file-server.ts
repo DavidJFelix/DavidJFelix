@@ -71,7 +71,7 @@ export function createCodebergFileReader(
       throw new Error('Unsupported Codeberg file path.')
     }
 
-    // A failed lookup is not kept, so the next read of the batch tries again.
+    // The reader does not keep a failed lookup, so the next read tries again.
     refsPromise ??= resolveCodebergDiffRefs(source, fetcher).catch((error: unknown) => {
       refsPromise = undefined
       throw error

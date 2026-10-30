@@ -108,8 +108,8 @@ export const DiffsSidebar = memo(function DiffsSidebar({
 }: DiffsSidebarProps) {
   const [activeTab, setActiveTab] = useState<SidebarTab>('files')
   // Opening the tab is what starts the work: an unopened symbols tab costs no
-  // requests. Once opened it stays enabled so results survive tab
-  // switches, and streamed files are picked up as they arrive.
+  // requests. Once opened it stays enabled so results survive tab switches.
+  // Reads wait until the patch stops streaming, then cover every file.
   const [symbolsRequested, setSymbolsRequested] = useState(false)
   const entityDiffs = useEntityDiffs({
     domain,

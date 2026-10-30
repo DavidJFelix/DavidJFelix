@@ -14,7 +14,11 @@ import {
 } from 'react'
 
 import {css} from 'styled-system/css'
-import {createGitHubDiffFileLoader} from '@/diffs/lib/github-diff-file-loader'
+import {CODEBERG_HOST} from '@/diffs/lib/codeberg-diff-source'
+import {
+  createCodebergDiffFileLoader,
+  createGitHubDiffFileLoader,
+} from '@/diffs/lib/diff-file-loader'
 import {isNullish} from '@/diffs/lib/nullish'
 import {removeSavedCommentSidebarEntry} from '@/diffs/lib/remove-saved-comment-sidebar-entry'
 import type {DarkThemeName, LightThemeName} from '@/diffs/lib/theme-names'
@@ -119,13 +123,14 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const viewerRef = useRef<DiffsViewerHandle | null>(null)
-  const loadDiffFiles = useMemo(
-    () =>
-      isNullish(domain) && githubSession.status === 'authenticated'
-        ? createGitHubDiffFileLoader(path)
-        : undefined,
-    [domain, githubSession.status, path],
-  )
+  const loadDiffFiles = useMemo(() => {
+    if (domain === CODEBERG_HOST) {
+      return createCodebergDiffFileLoader(path)
+    }
+    return isNullish(domain) && githubSession.status === 'authenticated'
+      ? createGitHubDiffFileLoader(path)
+      : undefined
+  }, [domain, githubSession.status, path])
   const handlePatchLoadStart = useCallback(() => {
     setFileTreeOverlayOpen(false)
   }, [])

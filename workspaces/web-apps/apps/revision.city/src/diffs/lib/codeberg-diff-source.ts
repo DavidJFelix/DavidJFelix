@@ -2,7 +2,7 @@ import {decodeRange, encodeURLSegment} from './github-diff-source'
 import {isNullish} from './nullish'
 
 export const CODEBERG_HOST = 'codeberg.org'
-const CODEBERG_API_ROOT = `https://${CODEBERG_HOST}/api/v1`
+export const CODEBERG_API_ROOT = `https://${CODEBERG_HOST}/api/v1`
 
 export interface CodebergRepo {
   owner: string

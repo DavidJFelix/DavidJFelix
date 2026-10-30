@@ -16,6 +16,7 @@ import { Route as DiagSplatRouteImport } from './routes/diag/$'
 import { Route as DiffsIndexRouteImport } from './routes/diffs/index'
 import { Route as DiffsSplatRouteImport } from './routes/diffs/$'
 import { Route as OgDefaultDotpngRouteImport } from './routes/og/default[.]png'
+import { Route as ApiDiffsCodebergDiffFileRouteImport } from './routes/api/diffs/codeberg-diff-file'
 import { Route as ApiDiffsDiffRouteImport } from './routes/api/diffs/diff'
 import { Route as ApiDiffsEntityDiffRouteImport } from './routes/api/diffs/entity-diff'
 import { Route as ApiDiffsGithubDiffFileRouteImport } from './routes/api/diffs/github-diff-file'
@@ -64,6 +65,12 @@ const OgDefaultDotpngRoute = OgDefaultDotpngRouteImport.update({
   path: '/og/default.png',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiDiffsCodebergDiffFileRoute =
+  ApiDiffsCodebergDiffFileRouteImport.update({
+    id: '/api/diffs/codeberg-diff-file',
+    path: '/api/diffs/codeberg-diff-file',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiDiffsDiffRoute = ApiDiffsDiffRouteImport.update({
   id: '/api/diffs/diff',
   path: '/api/diffs/diff',
@@ -134,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/diffs/$': typeof DiffsSplatRoute
   '/og/default.png': typeof OgDefaultDotpngRoute
   '/diffs/': typeof DiffsIndexRoute
+  '/api/diffs/codeberg-diff-file': typeof ApiDiffsCodebergDiffFileRoute
   '/api/diffs/diff': typeof ApiDiffsDiffRoute
   '/api/diffs/entity-diff': typeof ApiDiffsEntityDiffRoute
   '/api/diffs/github-diff-file': typeof ApiDiffsGithubDiffFileRoute
@@ -154,6 +162,7 @@ export interface FileRoutesByTo {
   '/diffs/$': typeof DiffsSplatRoute
   '/og/default.png': typeof OgDefaultDotpngRoute
   '/diffs': typeof DiffsIndexRoute
+  '/api/diffs/codeberg-diff-file': typeof ApiDiffsCodebergDiffFileRoute
   '/api/diffs/diff': typeof ApiDiffsDiffRoute
   '/api/diffs/entity-diff': typeof ApiDiffsEntityDiffRoute
   '/api/diffs/github-diff-file': typeof ApiDiffsGithubDiffFileRoute
@@ -176,6 +185,7 @@ export interface FileRoutesById {
   '/diffs/$': typeof DiffsSplatRoute
   '/og/default.png': typeof OgDefaultDotpngRoute
   '/diffs/': typeof DiffsIndexRoute
+  '/api/diffs/codeberg-diff-file': typeof ApiDiffsCodebergDiffFileRoute
   '/api/diffs/diff': typeof ApiDiffsDiffRoute
   '/api/diffs/entity-diff': typeof ApiDiffsEntityDiffRoute
   '/api/diffs/github-diff-file': typeof ApiDiffsGithubDiffFileRoute
@@ -199,6 +209,7 @@ export interface FileRouteTypes {
     | '/diffs/$'
     | '/og/default.png'
     | '/diffs/'
+    | '/api/diffs/codeberg-diff-file'
     | '/api/diffs/diff'
     | '/api/diffs/entity-diff'
     | '/api/diffs/github-diff-file'
@@ -219,6 +230,7 @@ export interface FileRouteTypes {
     | '/diffs/$'
     | '/og/default.png'
     | '/diffs'
+    | '/api/diffs/codeberg-diff-file'
     | '/api/diffs/diff'
     | '/api/diffs/entity-diff'
     | '/api/diffs/github-diff-file'
@@ -240,6 +252,7 @@ export interface FileRouteTypes {
     | '/diffs/$'
     | '/og/default.png'
     | '/diffs/'
+    | '/api/diffs/codeberg-diff-file'
     | '/api/diffs/diff'
     | '/api/diffs/entity-diff'
     | '/api/diffs/github-diff-file'
@@ -260,6 +273,7 @@ export interface RootRouteChildren {
   BugsRoute: typeof BugsRoute
   DiagSplatRoute: typeof DiagSplatRoute
   OgDefaultDotpngRoute: typeof OgDefaultDotpngRoute
+  ApiDiffsCodebergDiffFileRoute: typeof ApiDiffsCodebergDiffFileRoute
   ApiDiffsDiffRoute: typeof ApiDiffsDiffRoute
   ApiDiffsEntityDiffRoute: typeof ApiDiffsEntityDiffRoute
   ApiDiffsGithubDiffFileRoute: typeof ApiDiffsGithubDiffFileRoute
@@ -323,6 +337,13 @@ declare module '@tanstack/react-router' {
       path: '/og/default.png'
       fullPath: '/og/default.png'
       preLoaderRoute: typeof OgDefaultDotpngRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/diffs/codeberg-diff-file': {
+      id: '/api/diffs/codeberg-diff-file'
+      path: '/api/diffs/codeberg-diff-file'
+      fullPath: '/api/diffs/codeberg-diff-file'
+      preLoaderRoute: typeof ApiDiffsCodebergDiffFileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/diffs/diff': {
@@ -432,6 +453,7 @@ const rootRouteChildren: RootRouteChildren = {
   BugsRoute: BugsRoute,
   DiagSplatRoute: DiagSplatRoute,
   OgDefaultDotpngRoute: OgDefaultDotpngRoute,
+  ApiDiffsCodebergDiffFileRoute: ApiDiffsCodebergDiffFileRoute,
   ApiDiffsDiffRoute: ApiDiffsDiffRoute,
   ApiDiffsEntityDiffRoute: ApiDiffsEntityDiffRoute,
   ApiDiffsGithubDiffFileRoute: ApiDiffsGithubDiffFileRoute,

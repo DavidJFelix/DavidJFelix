@@ -18,6 +18,7 @@ export interface EntityDiffEntry {
 }
 
 export interface UseEntityDiffsParams {
+  domain?: string
   // Gates the whole thing: nothing is requested until the symbols tab is opened,
   // so viewing a diff without opening the tab costs nothing.
   enabled: boolean
@@ -32,6 +33,7 @@ export interface EntityDiffsState {
 }
 
 export function useEntityDiffs({
+  domain,
   enabled,
   requests,
   sourcePath,
@@ -40,11 +42,12 @@ export function useEntityDiffs({
   // Results survive tab switches and streamed additions to the file list; the
   // key pins a result to one revision pair so it can never be shown for another.
   const cacheRef = useRef(new Map<string, EntityDiffEntry>())
-  const previousSourceRef = useRef(sourcePath)
+  const sourceKey = `${domain ?? ''}\0${sourcePath}`
+  const previousSourceRef = useRef(sourceKey)
 
   useEffect(() => {
-    if (previousSourceRef.current !== sourcePath) {
-      previousSourceRef.current = sourcePath
+    if (previousSourceRef.current !== sourceKey) {
+      previousSourceRef.current = sourceKey
       cacheRef.current = new Map()
     }
 
@@ -78,7 +81,7 @@ export function useEntityDiffs({
       publish()
 
       // Batched rather than sent whole: one worker request has a bounded
-      // subrequest budget, and each file costs up to two GitHub reads.
+      // subrequest budget, and each file costs up to two file reads.
       for (let index = 0; index < outstanding.length; index += MAX_FILES_PER_REQUEST) {
         if (cancelled) {
           return
@@ -95,6 +98,7 @@ export function useEntityDiffs({
 
         try {
           await streamEntityDiffs({
+            domain,
             files: batch,
             signal: controller.signal,
             sourcePath,
@@ -143,7 +147,7 @@ export function useEntityDiffs({
       cancelled = true
       controller.abort()
     }
-  }, [enabled, requests, sourcePath])
+  }, [domain, enabled, requests, sourceKey, sourcePath])
 
   return {
     entries,

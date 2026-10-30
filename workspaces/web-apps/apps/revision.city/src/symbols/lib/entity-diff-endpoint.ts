@@ -1,5 +1,10 @@
-import type {ChangeTypes} from '@pierre/diffs'
+import type {ChangeTypes, FileContents} from '@pierre/diffs'
 
+import {
+  type CodebergDiffFileServerOptions,
+  createCodebergFileReader,
+} from '@/diffs/lib/codeberg-diff-file-server'
+import {CODEBERG_HOST, canReadCodebergFiles} from '@/diffs/lib/codeberg-diff-source'
 import {resolveGitHubAuth, withSetCookieHeaders} from '@/diffs/lib/github-auth'
 import {loadGitHubDiffFiles} from '@/diffs/lib/github-diff-file-server'
 import {isNullish} from '@/diffs/lib/nullish'
@@ -15,8 +20,9 @@ const CHANGE_TYPES: readonly ChangeTypes[] = [
   'rename-pure',
 ]
 
-// How many files are read from GitHub at a time within one request. Results are
-// streamed as each lands, so this bounds concurrency without delaying output.
+// How many files are read from GitHub or Codeberg at a time within one request.
+// Results are streamed as each lands, so this bounds concurrency without delaying
+// output.
 const MAX_CONCURRENT_READS = 4
 
 // Entity diffs are immutable per revision pair, but the content behind them came
@@ -37,11 +43,26 @@ export interface EntityDiffResult {
   error?: string
 }
 
+export interface EntityDiffEndpointOptions {
+  fetch?: CodebergDiffFileServerOptions['fetch']
+}
+
+interface DiffFiles {
+  oldFile: FileContents | null
+  newFile: FileContents | null
+}
+
+type ReadDiffFiles = (file: Omit<EntityDiffFileRequest, 'itemId'>) => Promise<DiffFiles>
+
 // Streams one newline-delimited JSON result per file, in completion order, so
 // the viewer can render each file's symbols the moment it is ready instead of
 // waiting for the slowest one. Signing in is not required -- a public repo reads
-// fine unauthenticated, the same way the viewer already loads its patch.
-export async function handleEntityDiffRequest(request: Request): Promise<Response> {
+// fine unauthenticated, the same way the viewer already loads its patch. A body
+// with `domain: 'codeberg.org'` reads from Codeberg, which has no sign-in yet.
+export async function handleEntityDiffRequest(
+  request: Request,
+  options: EntityDiffEndpointOptions = {},
+): Promise<Response> {
   let body: unknown
   try {
     body = await request.json()
@@ -57,39 +78,52 @@ export async function handleEntityDiffRequest(request: Request): Promise<Respons
     return createErrorResponse(`At most ${MAX_FILES_PER_REQUEST} files per request.`, 400)
   }
 
+  if (parsed.domain === CODEBERG_HOST) {
+    if (!canReadCodebergFiles(parsed.path)) {
+      return createErrorResponse('Symbols need a Codeberg pull request or commit.', 400)
+    }
+    const readFiles = createCodebergFileReader(parsed.path, options)
+    return createStreamResponse(createResultStream({files: parsed.files, readFiles}))
+  }
+  if (!isNullish(parsed.domain)) {
+    return createErrorResponse('Symbols read from GitHub and Codeberg only.', 400)
+  }
+
   const auth = await resolveGitHubAuth(request)
   const token = auth.session?.accessToken
   const credentials = isNullish(token)
     ? ({tokenSource: 'anonymous'} as const)
     : ({token, tokenSource: 'request'} as const)
+  const readFiles: ReadDiffFiles = (file) =>
+    loadGitHubDiffFiles(
+      {...file, path: parsed.path},
+      {...credentials, fetch: options.fetch, hydrateSingleSided: true},
+    )
 
-  const stream = createResultStream({files: parsed.files, path: parsed.path, credentials})
   return withSetCookieHeaders(
-    new Response(stream, {
-      headers: {
-        'Content-Type': 'application/x-ndjson; charset=utf-8',
-        'Cache-Control': CACHE_CONTROL,
-        Vary: 'Cookie',
-      },
-    }),
+    createStreamResponse(createResultStream({files: parsed.files, readFiles})),
     auth.setCookieHeaders,
   )
 }
 
-type Credentials =
-  | {readonly tokenSource: 'anonymous'}
-  | {readonly token: string; readonly tokenSource: 'request'}
+function createStreamResponse(stream: ReadableStream<Uint8Array>): Response {
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'application/x-ndjson; charset=utf-8',
+      'Cache-Control': CACHE_CONTROL,
+      Vary: 'Cookie',
+    },
+  })
+}
 
 interface CreateResultStreamParams {
-  credentials: Credentials
   files: readonly EntityDiffFileRequest[]
-  path: string
+  readFiles: ReadDiffFiles
 }
 
 function createResultStream({
-  credentials,
   files,
-  path,
+  readFiles,
 }: CreateResultStreamParams): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder()
   const queue = [...files]
@@ -102,7 +136,7 @@ function createResultStream({
           if (file === undefined) {
             return
           }
-          const result = await computeResult({file, path, credentials})
+          const result = await computeResult({file, readFiles})
           controller.enqueue(encoder.encode(`${JSON.stringify(result)}\n`))
         }
       }
@@ -116,29 +150,25 @@ function createResultStream({
 }
 
 interface ComputeResultParams {
-  credentials: Credentials
   file: EntityDiffFileRequest
-  path: string
+  readFiles: ReadDiffFiles
 }
 
 // One file never fails the batch: a read that throws is reported on its own line
 // so the other files still arrive.
-async function computeResult({
-  credentials,
-  file,
-  path,
-}: ComputeResultParams): Promise<EntityDiffResult> {
+async function computeResult({file, readFiles}: ComputeResultParams): Promise<EntityDiffResult> {
   // A pure rename moves a file without touching its contents, so both sides hold
-  // the same entities. Answer without spending a GitHub request.
+  // the same entities. Answer without a request to GitHub or Codeberg.
   if (file.type === 'rename-pure') {
     return {itemId: file.itemId, name: file.name, diff: createEmptyEntityDiff(file.name)}
   }
 
   try {
-    const {oldFile, newFile} = await loadGitHubDiffFiles(
-      {name: file.name, path, prevName: file.prevName, type: file.type},
-      {...credentials, hydrateSingleSided: true},
-    )
+    const {oldFile, newFile} = await readFiles({
+      name: file.name,
+      prevName: file.prevName,
+      type: file.type,
+    })
     return {
       itemId: file.itemId,
       name: file.name,
@@ -158,6 +188,7 @@ async function computeResult({
 }
 
 interface ParsedRequestBody {
+  domain?: string
   files: readonly EntityDiffFileRequest[]
   path: string
 }
@@ -166,12 +197,20 @@ function parseRequestBody(body: unknown): ParsedRequestBody | undefined {
   if (!isRecord(body) || typeof body.path !== 'string' || !Array.isArray(body.files)) {
     return undefined
   }
+  if (!isNullish(body.domain) && typeof body.domain !== 'string') {
+    return undefined
+  }
 
   const files = body.files.flatMap((file) => {
     const parsed = parseFileRequest(file)
     return parsed === undefined ? [] : [parsed]
   })
-  return files.length === body.files.length ? {files, path: body.path} : undefined
+  if (files.length !== body.files.length) {
+    return undefined
+  }
+  return isNullish(body.domain)
+    ? {files, path: body.path}
+    : {domain: body.domain, files, path: body.path}
 }
 
 function parseFileRequest(value: unknown): EntityDiffFileRequest | undefined {

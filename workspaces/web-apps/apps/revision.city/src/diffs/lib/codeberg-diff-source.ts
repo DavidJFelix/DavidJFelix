@@ -26,6 +26,13 @@ export function hasDotSegment(path: string): boolean {
   return path.split('/').some((segment) => segment === '.' || segment === '..')
 }
 
+// The server can read both revisions of a file for a pull request or a commit.
+// It cannot for a compare, because the API gives no merge base for a range.
+export function canReadCodebergFiles(path: string): boolean {
+  const source = parseCodebergDiffSource(path)
+  return !isNullish(source) && source.kind !== 'compare'
+}
+
 export function parseCodebergDiffSource(path: string): CodebergDiffSource | undefined {
   const normalizedPath = path.replace(/\/+$/, '')
   if (hasDotSegment(normalizedPath)) {

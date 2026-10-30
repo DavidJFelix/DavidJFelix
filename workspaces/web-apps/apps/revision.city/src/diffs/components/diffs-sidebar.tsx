@@ -71,6 +71,7 @@ interface DiffsSidebarProps {
   className?: string
   commentSections: readonly DiffsSavedCommentItem[]
   diffStats: DiffsStatsData | null
+  domain?: string
   entityDiffRequests: readonly EntityDiffRequest[]
   mobileOverlayOpen?: boolean
   onMobileClose: () => void
@@ -90,6 +91,7 @@ export const DiffsSidebar = memo(function DiffsSidebar({
   className,
   commentSections,
   diffStats,
+  domain,
   entityDiffRequests,
   mobileOverlayOpen = false,
   onMobileClose,
@@ -106,10 +108,11 @@ export const DiffsSidebar = memo(function DiffsSidebar({
 }: DiffsSidebarProps) {
   const [activeTab, setActiveTab] = useState<SidebarTab>('files')
   // Opening the tab is what starts the work: an unopened symbols tab costs no
-  // GitHub requests. Once opened it stays enabled so results survive tab
+  // requests. Once opened it stays enabled so results survive tab
   // switches, and streamed files are picked up as they arrive.
   const [symbolsRequested, setSymbolsRequested] = useState(false)
   const entityDiffs = useEntityDiffs({
+    domain,
     enabled: symbolsRequested && symbolsAvailable && !streaming,
     requests: entityDiffRequests,
     sourcePath,

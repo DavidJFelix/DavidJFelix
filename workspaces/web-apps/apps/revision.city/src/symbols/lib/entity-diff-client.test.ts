@@ -62,6 +62,25 @@ test('posts the batch of files to the route', async () => {
   expect(JSON.parse(String(init?.body))).toEqual({path: 'o/r/pull/1', files: FILES})
 })
 
+test('names the forge of a diff that is not on GitHub', async () => {
+  const fetcher = stubStream([])
+
+  await streamEntityDiffs({
+    domain: 'codeberg.org',
+    fetcher,
+    files: FILES,
+    onResult: () => {},
+    sourcePath: '/acme/widgets/pulls/7',
+  })
+
+  const body = fetcher.mock.calls[0]?.[1]?.body
+  expect(typeof body === 'string' ? JSON.parse(body) : undefined).toEqual({
+    domain: 'codeberg.org',
+    path: '/acme/widgets/pulls/7',
+    files: FILES,
+  })
+})
+
 test('reports each file as its line arrives', async () => {
   const fetcher = stubStream([
     `${JSON.stringify({itemId: 'item-1', name: 'src/a.ts', diff: createDiff('src/a.ts')})}\n`,

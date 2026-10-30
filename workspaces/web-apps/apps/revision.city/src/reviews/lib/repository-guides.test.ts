@@ -3,6 +3,7 @@ import {
   GUIDE_FILE_NAME,
   guidePaths,
   MAX_GUIDE_CHARS,
+  MAX_TOTAL_GUIDE_CHARS,
   readGuides,
   selectGuides,
 } from './repository-guides'
@@ -48,6 +49,24 @@ test('readGuides reads each guide that applies to a path once', async () => {
   const guides = await readGuides({snapshot, paths: ['src/a.ts', 'src/b.ts', 'c.ts']})
 
   expect(guides).toEqual({'AGENTS.md': 'Use bun.', 'src/AGENTS.md': 'Test each export.'})
+})
+
+test('readGuides keeps the root guide and stops at the total character limit', async () => {
+  const fullGuides = Math.floor(MAX_TOTAL_GUIDE_CHARS / MAX_GUIDE_CHARS)
+  const folders = Array.from({length: fullGuides + 1}, (_, index) => `f${index}`)
+  const snapshot = fakeSnapshot({
+    'AGENTS.md': 'Root.',
+    ...Object.fromEntries(
+      folders.map((folder) => [`${folder}/AGENTS.md`, 'a'.repeat(MAX_GUIDE_CHARS)]),
+    ),
+  })
+
+  const guides = await readGuides({snapshot, paths: folders.map((folder) => `${folder}/a.ts`)})
+
+  expect(Object.keys(guides)).toEqual([
+    'AGENTS.md',
+    ...folders.slice(0, fullGuides).map((folder) => `${folder}/AGENTS.md`),
+  ])
 })
 
 test('readGuides does not take a folder named like a guide', async () => {

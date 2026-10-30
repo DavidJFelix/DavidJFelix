@@ -7,6 +7,11 @@ export const GUIDE_FILE_NAME = 'AGENTS.md'
 // characters. The root guide of this repository has about 10,000.
 export const MAX_GUIDE_CHARS = 12_000
 
+// The guides are part of the same Workflow step result as the selected files,
+// and Cloudflare keeps at most 1 MiB for each step result. V8 stores at most 2
+// bytes for each character, so the guides use at most 200,000 bytes.
+export const MAX_TOTAL_GUIDE_CHARS = 100_000
+
 export interface Guide {
   path: string
   text: string
@@ -33,7 +38,7 @@ export interface ReadGuidesParams {
 }
 
 // Returns the guide text by guide path, for each guide that applies to one of
-// the paths.
+// the paths. The root guide comes first, so the total limit never leaves it out.
 export async function readGuides({
   snapshot,
   paths,
@@ -46,10 +51,16 @@ export async function readGuides({
   const guides = await Promise.all(
     [...guidePathSet].map(async (path) => {
       const sha = snapshot.entries.get(path)?.sha ?? ''
-      return [path, capGuide(new TextDecoder().decode(await snapshot.readBlob(sha)))]
+      return [path, capGuide(new TextDecoder().decode(await snapshot.readBlob(sha)))] as const
     }),
   )
-  return Object.fromEntries(guides)
+  let totalChars = 0
+  return Object.fromEntries(
+    guides.filter(([, text]) => {
+      totalChars += text.length
+      return totalChars <= MAX_TOTAL_GUIDE_CHARS
+    }),
+  )
 }
 
 function capGuide(rawText: string): string {

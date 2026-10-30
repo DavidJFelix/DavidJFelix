@@ -1,7 +1,7 @@
 import {
   CODEBERG_HOST,
+  createCodebergPageURL,
   createCodebergPatchURL,
-  createCodebergSourceURL,
   parseCodebergDiffSource,
 } from './codeberg-diff-source'
 import type {GitHubAccessRemedy} from './github-access-remedy'
@@ -307,7 +307,7 @@ function resolveCodebergPatchRequest(path: string): ResolvedPatchRequest | undef
   return {
     label: `public codeberg.org ${source.kind} diff`,
     patchURL: createCodebergPatchURL(source),
-    sourceURL: createCodebergSourceURL(source),
+    sourceURL: createCodebergPageURL(source),
   }
 }
 
@@ -831,11 +831,12 @@ interface ExplainPatchFailureParams {
   fetcher: DiffFetch
 }
 
-// Turns the last attempt's failure into something the visitor can act on. A
-// diagnosed access failure replaces the transport-level message wholesale: it
-// names the actual obstacle and carries the step out of it, where
-// "authenticated pull metadata: 404 Not Found" only names the attempt. Asked
-// once, of the final attempt, since the answer for an earlier one is discarded.
+// Turns the last attempt's failure on a github.com source into something the
+// visitor can act on. A diagnosed access failure replaces the transport-level
+// message wholesale: it names the actual obstacle and carries the step out of
+// it, where "authenticated pull metadata: 404 Not Found" only names the
+// attempt. Asked once, of the final attempt, since the answer for an earlier
+// one is discarded.
 async function explainPatchFailure({
   failure,
   response,

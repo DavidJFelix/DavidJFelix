@@ -1,8 +1,8 @@
 import {expect, test} from 'vitest'
 
 import {
+  createCodebergPageURL,
   createCodebergPatchURL,
-  createCodebergSourceURL,
   parseCodebergDiffSource,
 } from './codeberg-diff-source'
 
@@ -71,5 +71,5 @@ test.each([
   const source = parseCodebergDiffSource(path)
   if (source === undefined) throw new Error(`no source for ${path}`)
   expect(createCodebergPatchURL(source)).toBe(patchURL)
-  expect(createCodebergSourceURL(source)).toBe(sourceURL)
+  expect(createCodebergPageURL(source)).toBe(sourceURL)
 })

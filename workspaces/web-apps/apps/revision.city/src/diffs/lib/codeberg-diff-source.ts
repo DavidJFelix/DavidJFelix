@@ -62,8 +62,7 @@ export function createCodebergPatchURL(source: CodebergDiffSource): string {
   }
 }
 
-// The page on Codeberg that a person opens to see the same change.
-export function createCodebergSourceURL(source: CodebergDiffSource): string {
+export function createCodebergPageURL(source: CodebergDiffSource): string {
   const repoPath = `https://${CODEBERG_HOST}/${encodeURLSegment(source.repo.owner)}/${encodeURLSegment(source.repo.repo)}`
   switch (source.kind) {
     case 'pull':

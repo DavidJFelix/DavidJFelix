@@ -175,8 +175,10 @@ export function createOpenRouterChat({
 
 // A findings answer is a few thousand tokens, and the reasoning tokens of a
 // reasoning model also count. The cap stops a model that repeats itself
-// before the answer, which cannot parse, costs a lot.
-const MAX_ANSWER_TOKENS = 16_000
+// before the answer, which cannot parse, costs a lot. At 16,000, 14 of 141
+// DeepSeek answers were cut (2026-10-29). The answers that finished spread
+// evenly up to 16,000, so the cap, not a loop, cut most of them.
+const MAX_ANSWER_TOKENS = 32_000
 
 // At temperature 0, a reasoning model can repeat the same reasoning until the
 // cap on each run of the same chunk. DeepSeek recommends 1.0 for its V4
@@ -203,7 +205,7 @@ function toRequestBody({model, messages, tools, toolChoice}: ChatRequest) {
     max_tokens: MAX_ANSWER_TOKENS,
     // Without a reasoning budget, a reasoning model can use all of
     // MAX_ANSWER_TOKENS to reason and return an empty answer. Medium effort
-    // keeps about half of the tokens for the answer.
+    // asks for less reasoning, but DeepSeek can still reason up to the cap.
     reasoning: {effort: 'medium'},
     temperature: TEMPERATURE,
     top_p: TOP_P,

@@ -1,3 +1,9 @@
+import {
+  CODEBERG_HOST,
+  createCodebergPageURL,
+  createCodebergPatchURL,
+  parseCodebergDiffSource,
+} from './codeberg-diff-source'
 import type {GitHubAccessRemedy} from './github-access-remedy'
 import {
   type AppBudgetHold,
@@ -166,8 +172,8 @@ async function createDiffResponse({
   try {
     // The client normally sends only the GitHub-relative path, but GitHub also
     // exposes raw PR diffs through patch-diff.githubusercontent.com. Tangled
-    // paths use an explicit domain query parameter and are normalized to their
-    // patch endpoint.
+    // and Codeberg paths use an explicit domain query parameter and are
+    // normalized to their patch endpoint.
     const patchRequest = resolvePatchRequest({path, domain, url, apiAuth})
     if (isNullish(patchRequest)) {
       return createErrorResponse({message: 'Invalid GitHub patch URL format', status: 400})
@@ -218,7 +224,8 @@ interface ResolvePatchRequestParams {
 
 // Resolves the accepted URL shapes to the exact upstream URL to fetch. Most
 // callers send a GitHub-relative path, but this also permits GitHub's raw PR
-// diff host and Tangled patch URLs without becoming a general URL fetcher.
+// diff host, Tangled patch URLs, and Codeberg diff URLs without becoming a
+// general URL fetcher.
 function resolvePatchRequest({
   path,
   domain,
@@ -234,8 +241,7 @@ function resolvePatchRequest({
   }
 
   if (!isNullish(domain)) {
-    const patchURL = resolveDomainPatchURL(domain, path)
-    return isNullish(patchURL) ? undefined : {patchURL}
+    return resolveDomainPatchRequest(domain, path)
   }
 
   return resolvePatchURLInput(path, apiAuth)
@@ -279,8 +285,30 @@ function resolvePatchURLInput(
       : {...publicRequest, fallbacks: resolveGitHubFallbacks(gitHubPath, apiAuth)}
   }
 
-  const domainPatchURL = resolveDomainPatchURL(parsedURL.hostname, parsedURL.pathname)
-  return isNullish(domainPatchURL) ? undefined : {patchURL: domainPatchURL}
+  return resolveDomainPatchRequest(parsedURL.hostname, parsedURL.pathname)
+}
+
+function resolveDomainPatchRequest(domain: string, path: string): ResolvedPatchRequest | undefined {
+  if (domain === CODEBERG_HOST) {
+    return resolveCodebergPatchRequest(path)
+  }
+
+  const patchURL = resolveDomainPatchURL(domain, path)
+  return isNullish(patchURL) ? undefined : {patchURL}
+}
+
+function resolveCodebergPatchRequest(path: string): ResolvedPatchRequest | undefined {
+  const pathWithLeadingSlash = path.startsWith('/') ? path : `/${path}`
+  const source = parseCodebergDiffSource(pathWithLeadingSlash)
+  if (isNullish(source)) {
+    return undefined
+  }
+
+  return {
+    label: `public codeberg.org ${source.kind} diff`,
+    patchURL: createCodebergPatchURL(source),
+    sourceURL: createCodebergPageURL(source),
+  }
 }
 
 function resolveGitHubPatchRequest(
@@ -803,11 +831,12 @@ interface ExplainPatchFailureParams {
   fetcher: DiffFetch
 }
 
-// Turns the last attempt's failure into something the visitor can act on. A
-// diagnosed access failure replaces the transport-level message wholesale: it
-// names the actual obstacle and carries the step out of it, where
-// "authenticated pull metadata: 404 Not Found" only names the attempt. Asked
-// once, of the final attempt, since the answer for an earlier one is discarded.
+// Turns the last attempt's failure on a github.com source into something the
+// visitor can act on. A diagnosed access failure replaces the transport-level
+// message wholesale: it names the actual obstacle and carries the step out of
+// it, where "authenticated pull metadata: 404 Not Found" only names the
+// attempt. Asked once, of the final attempt, since the answer for an earlier
+// one is discarded.
 async function explainPatchFailure({
   failure,
   response,
@@ -815,7 +844,7 @@ async function explainPatchFailure({
   viewer,
   fetcher,
 }: ExplainPatchFailureParams): Promise<PatchFailure> {
-  if (response.ok) {
+  if (response.ok || isOtherHostSource(target.sourceURL)) {
     return failure
   }
 
@@ -913,6 +942,12 @@ function logAppFallbackWithheld({target, hold}: LogAppFallbackWithheldParams): v
     source: target.sourceURL,
     hold,
   })
+}
+
+// The diagnosis asks GitHub about the visitor and the repository, which says
+// nothing about a diff from another host such as codeberg.org.
+function isOtherHostSource(sourceURL: string | undefined): boolean {
+  return !isNullish(sourceURL) && new URL(sourceURL).hostname !== GITHUB_HOST
 }
 
 function readGitHubSourceFromURL(sourceURL: string | undefined): GitHubDiffSource | undefined {

@@ -22,6 +22,7 @@ const COMPARE_API_URL = 'https://api.github.com/repos/acme/widgets/compare/base0
 const PUBLIC_COMMIT_URL = 'https://github.com/acme/widgets/commit/83fea5e.diff'
 const COMMIT_API_URL = 'https://api.github.com/repos/acme/widgets/commits/83fea5e'
 const TANGLED_PATCH_URL = 'https://tangled.org/acme/widgets/pulls/7.patch'
+const CODEBERG_PULL_API_URL = 'https://codeberg.org/api/v1/repos/acme/widgets/pulls/7.diff'
 const REJECTED_KEY = 'https://revision.city/.cache/github/credentials-rejected'
 const RATE_LIMITED_KEY = 'https://revision.city/.cache/github/rate-limited'
 const RESERVED_KEY = 'https://revision.city/.cache/github/budget-reserved'
@@ -273,6 +274,76 @@ test('a non-GitHub patch that fails gets no sign-in, since signing in cannot rea
   expect(body.remedy).toBeUndefined()
   expect(body.message).toBe('Failed to fetch patch from upstream: 503.')
   expect(upstream.calls).toHaveLength(1)
+  warn.mockRestore()
+})
+
+test.each([
+  {name: 'a domain and path', search: 'path=/acme/widgets/pulls/7/files&domain=codeberg.org'},
+  {
+    name: 'a full URL',
+    search: `url=${encodeURIComponent('https://codeberg.org/acme/widgets/pulls/7')}`,
+  },
+])(
+  'a Codeberg pull request from $name is fetched from the Codeberg API with no credentials',
+  async ({search}) => {
+    const upstream = stubUpstream({[CODEBERG_PULL_API_URL]: () => diffAnswer()})
+
+    const response = await handleDiffRequest(diffRequest(search, SESSION_COOKIE), {
+      credentials: CREDENTIALS,
+      fetch: upstream.fetchImpl,
+    })
+
+    expect(response.status).toBe(200)
+    expect(await response.text()).toBe(DIFF)
+    expect(upstream.calls).toEqual([
+      {url: CODEBERG_PULL_API_URL, authorization: null, accept: null},
+    ])
+  },
+)
+
+test('a Codeberg path that is not a diff is rejected without a fetch', async () => {
+  const upstream = stubUpstream({})
+
+  const response = await handleDiffRequest(
+    diffRequest('path=/acme/widgets/issues/7&domain=codeberg.org'),
+    {credentials: CREDENTIALS, fetch: upstream.fetchImpl},
+  )
+
+  expect(response.status).toBe(400)
+  expect(upstream.calls).toHaveLength(0)
+})
+
+test('a Codeberg diff that fails names the Codeberg page and offers no GitHub sign-in', async () => {
+  const warn = spyOnWarnings()
+  const upstream = stubUpstream({[CODEBERG_PULL_API_URL]: () => failureAnswer(404)})
+
+  const response = await handleDiffRequest(
+    diffRequest('path=/acme/widgets/pulls/7&domain=codeberg.org'),
+    {credentials: CREDENTIALS, fetch: upstream.fetchImpl},
+  )
+
+  expect(response.status).toBe(404)
+  const body = await readError(response)
+  expect(body.remedy).toBeUndefined()
+  expect(body.message).toBe('Failed to fetch patch from public codeberg.org pull diff: 404.')
+  expect(response.headers.get('X-Patch-Source')).toBe('https://codeberg.org/acme/widgets/pulls/7')
+  warn.mockRestore()
+})
+
+test('a Codeberg diff that fails for a signed-in visitor asks GitHub nothing about the sign-in', async () => {
+  const warn = spyOnWarnings()
+  const upstream = stubUpstream({[CODEBERG_PULL_API_URL]: () => failureAnswer(404)})
+
+  const response = await handleDiffRequest(
+    diffRequest('path=/acme/widgets/pulls/7&domain=codeberg.org', SESSION_COOKIE),
+    {credentials: CREDENTIALS, fetch: upstream.fetchImpl},
+  )
+
+  expect(response.status).toBe(404)
+  const body = await readError(response)
+  expect(body.remedy).toBeUndefined()
+  expect(body.message).toBe('Failed to fetch patch from public codeberg.org pull diff: 404.')
+  expect(upstream.calls).toEqual([{url: CODEBERG_PULL_API_URL, authorization: null, accept: null}])
   warn.mockRestore()
 })
 

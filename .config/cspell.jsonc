@@ -225,6 +225,7 @@
     "anthropics", // the GitHub org behind the claude-code action
     "artipacked", // a zizmor audit rule name
     "atumsoft",
+    "codeberg", // the Forgejo-based code host whose diffs revision.city shows
     "codemode", // the @cloudflare/codemode npm package (a dep of the agents SDK)
     "consolas",
     "dall", // DALL-E

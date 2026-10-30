@@ -115,3 +115,16 @@ test.each([
   ).rejects.toThrow('Unsupported Codeberg diff path.')
   expect(fetcher).not.toHaveBeenCalled()
 })
+
+// `new URL` resolves dot segments, so `../../users/x` would read another API route.
+test.each([
+  {name: 'a name that climbs out of the repository', file: {name: '../../../../users/someone'}},
+  {name: 'a previous name with a dot segment', file: {name: 'src/a.ts', prevName: 'src/./a.ts'}},
+])('does not read $name', async ({file}) => {
+  const fetcher = stubCodeberg()
+
+  await expect(
+    loadCodebergDiffFiles({...file, path: COMMIT, type: 'rename-changed'}, {fetch: fetcher}),
+  ).rejects.toThrow('Unsupported Codeberg file path.')
+  expect(fetcher).not.toHaveBeenCalled()
+})

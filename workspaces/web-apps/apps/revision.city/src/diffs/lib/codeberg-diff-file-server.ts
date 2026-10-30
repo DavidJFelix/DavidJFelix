@@ -4,6 +4,7 @@ import {
   CODEBERG_API_ROOT,
   type CodebergDiffSource,
   type CodebergRepo,
+  hasDotSegment,
   parseCodebergDiffSource,
 } from './codeberg-diff-source'
 import {encodePath, encodeURLSegment} from './github-diff-source'
@@ -43,6 +44,9 @@ export async function loadCodebergDiffFiles(
   const source = parseCodebergDiffSource(request.path)
   if (isNullish(source) || source.kind === 'compare') {
     throw new Error('Unsupported Codeberg diff path.')
+  }
+  if (hasDotSegment(request.name) || hasDotSegment(request.prevName ?? '')) {
+    throw new Error('Unsupported Codeberg file path.')
   }
 
   const fetcher = options.fetch ?? fetch

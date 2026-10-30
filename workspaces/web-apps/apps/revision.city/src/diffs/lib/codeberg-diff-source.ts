@@ -20,8 +20,18 @@ const PULL_PATTERN = /^\/([^/]+)\/([^/]+)\/pulls\/(\d+)(?:\/files)?(?:\.(?:diff|
 const COMMIT_PATTERN = /^\/([^/]+)\/([^/]+)\/commit\/([0-9a-f]{4,64})(?:\.(?:diff|patch))?$/i
 const COMPARE_PATTERN = /^\/([^/]+)\/([^/]+)\/compare\/(.+?)(?:\.(?:diff|patch))?$/i
 
+// `new URL` resolves `.` and `..` segments, so a path with one can leave the
+// repository and reach another Codeberg API route.
+export function hasDotSegment(path: string): boolean {
+  return path.split('/').some((segment) => segment === '.' || segment === '..')
+}
+
 export function parseCodebergDiffSource(path: string): CodebergDiffSource | undefined {
   const normalizedPath = path.replace(/\/+$/, '')
+  if (hasDotSegment(normalizedPath)) {
+    return undefined
+  }
+
   const pullMatch = PULL_PATTERN.exec(normalizedPath)
   if (!isNullish(pullMatch)) {
     return {kind: 'pull', number: pullMatch[3], repo: {owner: pullMatch[1], repo: pullMatch[2]}}

@@ -47,6 +47,8 @@ test.each([
   {name: 'a GitHub-style pull path', path: '/acme/widgets/pull/7'},
   {name: 'a repository root', path: '/acme/widgets'},
   {name: 'an issue', path: '/acme/widgets/issues/7'},
+  {name: 'a dot-segment owner', path: '/../widgets/pulls/7'},
+  {name: 'a dot-segment repository', path: '/acme/./commit/83fea5e'},
 ])('does not parse $name', ({path}) => {
   expect(parseCodebergDiffSource(path)).toBeUndefined()
 })

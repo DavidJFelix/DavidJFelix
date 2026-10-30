@@ -593,3 +593,25 @@ test('summarizeChunkReviews gives the cost of each chunk review and numbers the 
     {path: 'a.ts', reviewerId: REVIEWERS[0].id, cached: false, usage},
   ])
 })
+
+test('reviewPullRequest tells the logs which reviewer and chunk each model call is for', async () => {
+  const chat = answering('{"findings": []}')
+
+  await reviewPullRequest({
+    files: files(5),
+    reviewers: REVIEWERS.slice(0, 1),
+    model: 'vendor/model',
+    description: DESCRIPTION,
+    store: createMemoryChunkReviewStore(),
+    chat,
+    scope: 'test',
+  })
+
+  expect(chat.mock.calls[0][0].eventFields).toEqual({
+    reviewer: REVIEWERS[0].id,
+    path: 'a.ts',
+    chunkLines: 2,
+    run: 1,
+    round: 0,
+  })
+})

@@ -3,6 +3,7 @@ import {
   type Chat,
   type ChatMessage,
   type ChatReply,
+  type ChatRequest,
   type CompletionUsage,
   NO_USAGE,
   OpenRouterError,
@@ -31,6 +32,7 @@ export interface RunToolLoopParams {
   prompt: string
   // Without tools, the model answers in one call.
   tools?: ReviewTools
+  eventFields?: ChatRequest['eventFields']
 }
 
 interface ToolLoopAnswer {
@@ -54,12 +56,16 @@ export type ToolLoopResult = ToolLoopAnswer | ToolLoopFailure
 // At temperature 1, a second run of a review that the token limit cut short
 // reasons differently, so it often finishes. A third run is not worth its cost.
 export async function runToolLoop(params: RunToolLoopParams): Promise<ToolLoopResult> {
-  const first = await startToolLoop(params)
+  const first = await startToolLoop({...params, run: 1})
   if (!('cutAtTokenLimit' in first)) {
     return first
   }
-  const second = await startToolLoop(params)
+  const second = await startToolLoop({...params, run: 2})
   return {...second, usage: addUsage(first.usage, second.usage)}
+}
+
+interface StartToolLoopParams extends RunToolLoopParams {
+  run: number
 }
 
 function startToolLoop({
@@ -68,11 +74,14 @@ function startToolLoop({
   system,
   prompt,
   tools,
-}: RunToolLoopParams): Promise<ToolLoopResult> {
+  eventFields,
+  run,
+}: StartToolLoopParams): Promise<ToolLoopResult> {
   return continueToolLoop({
     chat,
     model,
     tools,
+    eventFields: {...eventFields, run},
     messages: [
       {role: 'system', content: system},
       {role: 'user', content: prompt},
@@ -88,6 +97,7 @@ interface ToolLoopState {
   chat: Chat
   model: string
   tools?: ReviewTools
+  eventFields: NonNullable<ChatRequest['eventFields']>
   messages: readonly ChatMessage[]
   round: number
   usage: CompletionUsage
@@ -96,10 +106,11 @@ interface ToolLoopState {
 }
 
 async function continueToolLoop(state: ToolLoopState): Promise<ToolLoopResult> {
-  const {chat, model, tools, messages, round, outputBudget} = state
+  const {chat, model, tools, eventFields, messages, round, outputBudget} = state
   const mayCallTools = round < MAX_TOOL_ROUNDS && outputBudget > 0
   const reply = await chat({
     model,
+    eventFields: {...eventFields, round},
     ...(tools === undefined
       ? {messages}
       : mayCallTools

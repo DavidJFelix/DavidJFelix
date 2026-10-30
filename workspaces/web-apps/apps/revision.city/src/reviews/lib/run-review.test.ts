@@ -613,6 +613,25 @@ test('runReview gives each reviewer the root guide and the nearest guide from th
   ).toBe(true)
 })
 
+test('runReview reviews without guides when it cannot read them', async () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+  const github = fakeGitHub({
+    [BASE_TREE]: () => {
+      throw new Error('GitHub is down')
+    },
+  })
+  const chat = answering([])
+
+  await runReview(runParams({request: github.request, chat}))
+
+  expect(chat).toHaveBeenCalledTimes(REVIEWERS.length)
+  expect(String(chat.mock.calls[0][0].messages[0].content)).not.toContain('Guide:')
+  expect(warn).toHaveBeenCalledWith('Could not read the repository guides', {
+    error: 'Error: GitHub is down',
+  })
+  warn.mockRestore()
+})
+
 test('runReview reviews at most 150 chunks, in steps, and loads the head tree once', async () => {
   const files = Array.from({length: 151}, (_, index) => changedFile(`src/${index}.ts`, SMALL_PATCH))
   const github = fakeGitHub({

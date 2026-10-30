@@ -135,10 +135,13 @@ export async function runReview({
         getPullRequestDetails(pull),
       ])
       const selected = selectReviewFiles(files)
-      const guides = await readGuides({
-        snapshot: await loadRepositorySnapshot({request, repository, commitSha: details.baseSha}),
-        paths: selected.files.map(({path}) => path),
-      })
+      // The guides only add context. Without them the review still runs.
+      const guides = await loadRepositorySnapshot({request, repository, commitSha: details.baseSha})
+        .then((snapshot) => readGuides({snapshot, paths: selected.files.map(({path}) => path)}))
+        .catch((error: unknown) => {
+          console.warn('Could not read the repository guides', {error: String(error)})
+          return {}
+        })
       return {
         ...selected,
         description: renderPullRequestDescription(details),

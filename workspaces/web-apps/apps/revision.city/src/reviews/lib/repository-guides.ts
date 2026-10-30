@@ -9,8 +9,8 @@ export const MAX_GUIDE_CHARS = 12_000
 
 // The guides are part of the same Workflow step result as the selected files,
 // and Cloudflare keeps at most 1 MiB for each step result. V8 stores at most 2
-// bytes for each character, so the guides use at most 200,000 bytes.
-export const MAX_TOTAL_GUIDE_CHARS = 100_000
+// bytes for each character, so the guides use at most 100,000 bytes.
+export const MAX_TOTAL_GUIDE_CHARS = 50_000
 
 export interface Guide {
   path: string

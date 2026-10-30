@@ -5,7 +5,7 @@ import {type ReactNode, type SubmitEvent, useEffect, useRef, useState, useTransi
 import {createPortal} from 'react-dom'
 import {css, cx} from 'styled-system/css'
 import {Button} from '@/diffs/components/ui/button'
-import {getPatchViewerHref} from '@/diffs/lib/get-patch-viewer-href'
+import {getPatchViewerHref, toPatchViewerLocation} from '@/diffs/lib/get-patch-viewer-href'
 import {isNullish} from '@/diffs/lib/nullish'
 
 interface DiffUrlFormProps {
@@ -88,8 +88,13 @@ export function DiffUrlForm({
     }
     setValidationError(null)
     setURL(normalizedURL)
+    const {domain, splat} = toPatchViewerLocation(viewerHref)
     startTransition(() => {
-      void navigate({to: '/diffs/$', params: {_splat: viewerHref}})
+      void navigate({
+        to: '/diffs/$',
+        params: {_splat: splat},
+        search: isNullish(domain) ? {} : {domain},
+      })
     })
   })
 

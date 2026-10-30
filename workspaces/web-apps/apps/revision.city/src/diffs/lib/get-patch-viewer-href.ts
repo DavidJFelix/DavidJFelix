@@ -9,6 +9,20 @@ const GITHUB_SHORTHAND_PATTERN = /^([^/\s]+)\/([^/\s#]+)#(\d+)$/
 // segments contains a dot; a dot would indicate a domain like "github.com".
 const BARE_GITHUB_PATH_PATTERN = /^([^/\s.]+)\/([^/\s.]+)(\/[^\s]*)?$/
 
+export interface PatchViewerLocation {
+  domain?: string
+  splat: string
+}
+
+// The router encodes a `?` in the splat parameter as `%3F`, so the `domain`
+// query of an href must go to the router as a search parameter. Without this,
+// the viewer gets no domain and fetches the path from GitHub.
+export function toPatchViewerLocation(href: string): PatchViewerLocation {
+  const [splat = '', query] = href.split('?', 2)
+  const domain = new URLSearchParams(query).get('domain')
+  return isNullish(domain) ? {splat} : {domain, splat}
+}
+
 // Resolves a user-supplied string into a /diffs viewer href, or undefined if
 // the input can't be mapped to a supported diff URL. Accepts full URLs, URLs
 // without a protocol (e.g. "github.com/..."), bare "owner/repo/..." paths, and

@@ -256,3 +256,15 @@ test('renderPullRequestDescription does not let the text around a removed marker
   expect(rendered.split(DESCRIPTION_END)).toHaveLength(2)
   expect(rendered.split(DESCRIPTION_START)).toHaveLength(2)
 })
+
+test('renderPullRequestDescription does not cut a character in two at the limit', () => {
+  const description = `${'a'.repeat(MAX_DESCRIPTION_CHARS - 1)}\u{1F600}`
+
+  const lines = renderPullRequestDescription({title: 'Emoji', description}).split('\n')
+
+  expect(lines.slice(-3)).toEqual([
+    'a'.repeat(MAX_DESCRIPTION_CHARS - 1),
+    DESCRIPTION_END,
+    '(2 more characters not shown)',
+  ])
+})

@@ -1,5 +1,6 @@
 import {type DiffLine, type PatchHunk, parsePatchHunks} from './patch-hunks'
 import {oneLine} from './review-markdown'
+import {cutText} from './review-tools'
 
 export type PullRequestFileStatus =
   | 'added'
@@ -164,8 +165,7 @@ export interface RenderPullRequestDescriptionParams {
   description: string
 }
 
-// The description is the author's text. These lines mark where it starts and
-// ends, and the system prompt names them.
+// The system prompt names these lines.
 export const DESCRIPTION_START = '<<<description'
 export const DESCRIPTION_END = 'description>>>'
 
@@ -177,7 +177,7 @@ export function renderPullRequestDescription({
 }: RenderPullRequestDescriptionParams): string {
   // Without the markers, the author's text cannot end the description early.
   const text = withoutMarkers(description).trim()
-  const shown = text.slice(0, MAX_DESCRIPTION_CHARS)
+  const shown = cutText(text, MAX_DESCRIPTION_CHARS)
   const cut =
     text.length > shown.length ? `\n(${text.length - shown.length} more characters not shown)` : ''
   return [

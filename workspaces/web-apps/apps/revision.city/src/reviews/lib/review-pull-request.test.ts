@@ -12,6 +12,8 @@ import {
 } from './review-pull-request'
 import {REVIEWERS} from './reviewers'
 
+const DESCRIPTION = 'Pull request title: Add a widget'
+
 const usage = {promptTokens: 10, completionTokens: 5, costUsd: 0.01}
 
 const files = (start: number): PullRequestFile[] => [
@@ -28,6 +30,7 @@ test('reviewPullRequest runs every reviewer on every chunk and anchors findings'
   const review = await reviewPullRequest({
     files: files(5),
     model: 'vendor/model',
+    description: DESCRIPTION,
     store: createMemoryChunkReviewStore(),
     chat,
     scope: 'test',
@@ -47,12 +50,20 @@ test('reviewPullRequest answers a re-run from saved results without calling the 
   const chat = answering(
     '{"findings": [{"severity": "high", "title": "Bug", "body": "Breaks", "label": 2}]}',
   )
-  await reviewPullRequest({files: files(5), model: 'vendor/model', store, scope: 'test', chat})
+  await reviewPullRequest({
+    files: files(5),
+    model: 'vendor/model',
+    description: DESCRIPTION,
+    store,
+    scope: 'test',
+    chat,
+  })
   chat.mockClear()
 
   const review = await reviewPullRequest({
     files: files(40),
     model: 'vendor/model',
+    description: DESCRIPTION,
     store,
     scope: 'test',
     chat,
@@ -76,6 +87,7 @@ test('reviewPullRequest sends the list of changed files before the chunk', async
     ],
     reviewers: REVIEWERS.slice(0, 1),
     model: 'vendor/model',
+    description: DESCRIPTION,
     store: createMemoryChunkReviewStore(),
     chat,
     scope: 'test',
@@ -85,6 +97,8 @@ test('reviewPullRequest sends the list of changed files before the chunk', async
   expect(chat.mock.calls[0][0].messages[1]).toEqual({
     role: 'user',
     content: [
+      'Pull request title: Add a widget',
+      '',
       'Files that the pull request changes:',
       '- a.ts (modified)',
       '- bun.lock (modified)',
@@ -101,12 +115,20 @@ test('reviewPullRequest sends the list of changed files before the chunk', async
 test('reviewPullRequest reviews each chunk again when a push adds a file', async () => {
   const store = createMemoryChunkReviewStore()
   const chat = answering('{"findings": []}')
-  await reviewPullRequest({files: files(5), model: 'vendor/model', store, scope: 'test', chat})
+  await reviewPullRequest({
+    files: files(5),
+    model: 'vendor/model',
+    description: DESCRIPTION,
+    store,
+    scope: 'test',
+    chat,
+  })
   chat.mockClear()
 
   const review = await reviewPullRequest({
     files: [...files(5), {path: 'b.md', status: 'added', patch: '@@ -0,0 +1,1 @@\n+b'}],
     model: 'vendor/model',
+    description: DESCRIPTION,
     store,
     scope: 'test',
     chat,
@@ -123,6 +145,7 @@ test('reviewPullRequest reports a chunk the model answered badly and does not sa
   const review = await reviewPullRequest({
     files: files(5),
     model: 'vendor/model',
+    description: DESCRIPTION,
     store,
     chat,
     scope: 'test',
@@ -143,6 +166,7 @@ test('reviewPullRequest reports a chunk the model answered badly and does not sa
   await reviewPullRequest({
     files: files(5),
     model: 'vendor/model',
+    description: DESCRIPTION,
     store,
     chat,
     scope: 'test',
@@ -178,6 +202,7 @@ test.each([
   const review = await reviewPullRequest({
     files: files(5),
     model: 'vendor/model',
+    description: DESCRIPTION,
     store: createMemoryChunkReviewStore(),
     chat: answering(answer),
     scope: 'test',
@@ -195,6 +220,7 @@ test('reviewPullRequest reads the answer after other JSON that the model quotes'
   const review = await reviewPullRequest({
     files: files(5),
     model: 'vendor/model',
+    description: DESCRIPTION,
     store: createMemoryChunkReviewStore(),
     chat,
     scope: 'test',
@@ -213,6 +239,7 @@ test('reviewPullRequest keeps the valid findings of an answer with a malformed o
   const options = {
     files: files(5),
     model: 'vendor/model',
+    description: DESCRIPTION,
     scope: 'test',
     store,
     reviewers: REVIEWERS.slice(0, 1),
@@ -238,6 +265,7 @@ test('reviewPullRequest reviews and reports findings when the store fails', asyn
   const review = await reviewPullRequest({
     files: files(5),
     model: 'vendor/model',
+    description: DESCRIPTION,
     store: {
       get: async () => Promise.reject(new Error('D1 read failed')),
       put: async () => Promise.reject(new Error('D1 write failed')),
@@ -262,6 +290,7 @@ test('reviewPullRequest reports a chunk whose model call failed', async () => {
   const review = await reviewPullRequest({
     files: files(5),
     model: 'vendor/model',
+    description: DESCRIPTION,
     store: createMemoryChunkReviewStore(),
     chat,
     scope: 'test',
@@ -280,6 +309,7 @@ test('reviewPullRequest makes no calls when no file is reviewable', async () => 
   const review = await reviewPullRequest({
     files: [{path: 'bun.lock', status: 'modified', patch: '@@ -1 +1 @@\n+a'}],
     model: 'vendor/model',
+    description: DESCRIPTION,
     store: createMemoryChunkReviewStore(),
     chat,
     scope: 'test',
@@ -295,6 +325,7 @@ test('reviewPullRequest does not review a file over the line limit the caller se
   const review = await reviewPullRequest({
     files: files(5),
     model: 'vendor/model',
+    description: DESCRIPTION,
     store: createMemoryChunkReviewStore(),
     chat,
     scope: 'test',
@@ -311,6 +342,7 @@ test('reviewPullRequest still reviews every chunk when concurrency is below one'
   const review = await reviewPullRequest({
     files: files(5),
     model: 'vendor/model',
+    description: DESCRIPTION,
     store: createMemoryChunkReviewStore(),
     chat,
     scope: 'test',
@@ -366,6 +398,7 @@ test('reviewPullRequest gives reviewers tools and re-reviews a chunk when a file
   const options = {
     files: files(5),
     model: 'vendor/model',
+    description: DESCRIPTION,
     scope: 'test',
     store,
     chat,
@@ -420,6 +453,7 @@ test('reviewPullRequest keeps the billed usage of a chunk review that fails afte
   const options = {
     files: files(5),
     model: 'vendor/model',
+    description: DESCRIPTION,
     store: createMemoryChunkReviewStore(),
     chat,
     scope: 'test',
@@ -449,6 +483,7 @@ test('reviewPullRequest reports a chunk review that throws and runs the other ch
   const review = await reviewPullRequest({
     files: files(5),
     model: 'vendor/model',
+    description: DESCRIPTION,
     store: createMemoryChunkReviewStore(),
     chat,
     scope: 'test',
@@ -466,7 +501,14 @@ test('reviewPullRequest reports a chunk review that throws and runs the other ch
 test('reviewPullRequest keys saved results by scope', async () => {
   const store = createMemoryChunkReviewStore()
   const chat = answering('{"findings": []}')
-  const options = {files: files(5), model: 'vendor/model', store, chat, reviewers: REVIEWERS}
+  const options = {
+    files: files(5),
+    model: 'vendor/model',
+    description: DESCRIPTION,
+    store,
+    chat,
+    reviewers: REVIEWERS,
+  }
 
   await reviewPullRequest({...options, scope: 'installation:1'})
   await reviewPullRequest({...options, scope: 'installation:2'})
@@ -507,6 +549,7 @@ test.each(
     const [outcome] = await reviewChunks({
       units: planChunkReviews({files: files(5), reviewers: REVIEWERS.slice(0, 1)}),
       model: 'vendor/model',
+      description: DESCRIPTION,
       scope: 'test',
       store: createMemoryChunkReviewStore(),
       chat,

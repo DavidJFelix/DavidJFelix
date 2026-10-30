@@ -1,5 +1,6 @@
 import {type DiffLine, type PatchHunk, parsePatchHunks} from './patch-hunks'
 import {oneLine} from './review-markdown'
+import {cutText} from './review-tools'
 
 export type PullRequestFileStatus =
   | 'added'
@@ -153,6 +154,44 @@ export function renderChunk(chunk: ReviewChunk): RenderedChunk {
   }
   const body = chunk.hunks.map((hunk) => hunk.lines.map(renderLine).join('\n')).join('\n  ...\n')
   return {text: `File: ${chunk.path}\n\n${body}`, newLineByLabel}
+}
+
+// Each model call sends the description again, so it stops at this many
+// characters.
+export const MAX_DESCRIPTION_CHARS = 4_000
+
+export interface RenderPullRequestDescriptionParams {
+  title: string
+  description: string
+}
+
+// The system prompt names these lines.
+export const DESCRIPTION_START = '<<<description'
+export const DESCRIPTION_END = 'description>>>'
+
+// Each reviewer gets the title and description before its chunk, because they
+// tell what the author wants the change to do.
+export function renderPullRequestDescription({
+  title,
+  description,
+}: RenderPullRequestDescriptionParams): string {
+  // Without the markers, the author's text cannot end the description early.
+  const text = withoutMarkers(description).trim()
+  const shown = cutText(text, MAX_DESCRIPTION_CHARS)
+  const cut =
+    text.length > shown.length ? `\n(${text.length - shown.length} more characters not shown)` : ''
+  return [
+    `Pull request title: ${oneLine(withoutMarkers(title))}`,
+    text === ''
+      ? 'Pull request description: none'
+      : `Pull request description:\n${DESCRIPTION_START}\n${shown}\n${DESCRIPTION_END}${cut}`,
+  ].join('\n\n')
+}
+
+// A space, not an empty string, takes the place of each marker: the markers
+// contain no space, so the text on the two sides cannot join into a new marker.
+function withoutMarkers(text: string): string {
+  return text.replaceAll(DESCRIPTION_START, ' ').replaceAll(DESCRIPTION_END, ' ')
 }
 
 // Each model call sends the list again, so the list stops at this many

@@ -4,6 +4,7 @@ import {
   createGitHubRequest,
   GitHubApiError,
   getPullRequest,
+  getPullRequestDescription,
   listAllPages,
   listPullRequestFiles,
   repositoryPath,
@@ -139,4 +140,17 @@ test('listPullRequestFiles renames filename to path', async () => {
   expect(fetchStub.mock.calls[0][0]).toBe(
     'https://api.github.com/repos/acme/repo/pulls/7/files?per_page=100&page=1',
   )
+})
+
+test('getPullRequestDescription returns the title and an empty description when there is none', async () => {
+  const fetchStub = vi.fn<Fetch>(async () => Response.json({title: 'Add a widget', body: null}))
+
+  const described = await getPullRequestDescription({
+    request: createGitHubRequest({fetch: fetchStub}),
+    repository,
+    pullNumber: 7,
+  })
+
+  expect(described).toEqual({title: 'Add a widget', description: ''})
+  expect(fetchStub.mock.calls[0][0]).toBe('https://api.github.com/repos/acme/repo/pulls/7')
 })

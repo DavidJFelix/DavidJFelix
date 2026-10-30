@@ -35,8 +35,13 @@ const checkRunList = (sha: string) =>
 const PERMISSION = 'GET /repos/acme/repo/collaborators/maintainer/permission'
 
 const movedSha = 'b'.repeat(40)
-const openPull = {state: 'open', head: {sha: headSha}}
-const movedPull = {state: 'open', head: {sha: movedSha}}
+const openPull = {
+  state: 'open',
+  head: {sha: headSha},
+  title: 'Add a widget',
+  body: 'Adds the widget that the settings page shows.',
+}
+const movedPull = {...openPull, head: {sha: movedSha}}
 
 const changedFile = (filename: string, patch?: string) => ({filename, status: 'modified', patch})
 
@@ -183,7 +188,7 @@ test('runReview reviews the head, posts the findings, and fails the check on a h
 
   expect(names).toEqual([
     'start',
-    'select files',
+    'read pull request',
     'review 1 of 1',
     'post review',
     'complete check run',
@@ -438,7 +443,7 @@ test('runReview stops reviewing and marks the check neutral when the head moves'
 })
 
 test('runReview posts nothing when the head moves before the review is posted', async () => {
-  const github = fakeGitHub({[PULL]: pullReads(openPull, openPull, movedPull)})
+  const github = fakeGitHub({[PULL]: pullReads(openPull, openPull, openPull, movedPull)})
 
   await runReview(runParams({request: github.request, chat: answering([highFinding])}))
 
@@ -458,7 +463,7 @@ test('runReview fails the check run and throws when a step after the start fails
     'GitHub is down',
   )
 
-  expect(names).toEqual(['start', 'select files', 'log error run', 'report failure'])
+  expect(names).toEqual(['start', 'read pull request', 'log error run', 'report failure'])
   expect(github.sent(CHECK_RUN)[0].body).toMatchObject({
     conclusion: 'failure',
     output: {title: 'The review failed', summary: 'Error: GitHub is down for @​someone'},
@@ -537,7 +542,7 @@ test('runReview lists the files that it left out, but not the files that it skip
   )
 })
 
-test('runReview gives each reviewer the list of every file that the pull request changes', async () => {
+test('runReview gives each reviewer the title, the description, and every file that the pull request changes', async () => {
   const github = fakeGitHub({
     [FILES]: () => [
       changedFile('src/a.ts', SMALL_PATCH),
@@ -553,6 +558,13 @@ test('runReview gives each reviewer the list of every file that the pull request
   expect(chat.mock.calls[0][0].messages[1]).toEqual({
     role: 'user',
     content: [
+      'Pull request title: Add a widget',
+      '',
+      'Pull request description:',
+      '<<<description',
+      'Adds the widget that the settings page shows.',
+      'description>>>',
+      '',
       'Files that the pull request changes:',
       '- src/a.ts (modified)',
       '- image.png (modified)',

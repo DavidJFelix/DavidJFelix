@@ -1,11 +1,16 @@
 import type {ChunkReviewStore} from './chunk-review-store'
 import {decideOutcome, isAtLeast, REPORT_SEVERITY} from './findings'
-import {type GitHubRequest, getPullRequest, listPullRequestFiles} from './github-api'
+import {
+  type GitHubRequest,
+  getPullRequest,
+  getPullRequestDescription,
+  listPullRequestFiles,
+} from './github-api'
 import type {Chat} from './openrouter'
 import {completeCheckRun, createCheckRun, postReview, removeLabel} from './publish-review'
 import {loadRepositorySnapshot} from './repository-snapshot'
 import {RESOLVABLE_EXTERNAL_ID, syncCheckRunWithThreads} from './resolved-threads'
-import {renderFileList} from './review-chunks'
+import {renderFileList, renderPullRequestDescription} from './review-chunks'
 import {
   type CheckRunOutput,
   formatCheckRunOutput,
@@ -123,9 +128,16 @@ export async function runReview({
   const complete = (conclusion: 'success' | 'failure' | 'neutral', output: CheckRunOutput) =>
     completeCheckRun({request, repository, checkRunId, conclusion, output})
   try {
-    const selection = await step('select files', async () => {
-      const files = await listPullRequestFiles(pull)
-      return {...selectReviewFiles(files), fileList: renderFileList(files)}
+    const selection = await step('read pull request', async () => {
+      const [files, described] = await Promise.all([
+        listPullRequestFiles(pull),
+        getPullRequestDescription(pull),
+      ])
+      return {
+        ...selectReviewFiles(files),
+        description: renderPullRequestDescription(described),
+        fileList: renderFileList(files),
+      }
     })
     const planned = planChunkReviews({files: selection.files})
     const units = planned.slice(0, MAX_REVIEWED_CHUNKS * REVIEWERS.length)
@@ -155,6 +167,7 @@ export async function runReview({
             scope: `installation:${installationId}`,
             store,
             chat,
+            description: selection.description,
             fileList: selection.fileList,
             headSnapshot: await loadSnapshot(),
           })

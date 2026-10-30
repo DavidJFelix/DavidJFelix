@@ -16,6 +16,7 @@ import {
   NO_USAGE,
   OpenRouterError,
 } from './openrouter'
+import {selectGuides} from './repository-guides'
 import {type RepositorySnapshot, readsStillMatch} from './repository-snapshot'
 import {
   type ChunkPullRequestFilesOptions,
@@ -37,6 +38,8 @@ export interface ChunkReviewContext {
   // From renderPullRequestDescription.
   description: string
   fileList: string
+  // From readGuides. Each chunk gets the guides that apply to its file.
+  guides?: Readonly<Record<string, string>>
   // With it, reviewers get tools that read files outside the chunk.
   headSnapshot?: RepositorySnapshot
 }
@@ -67,12 +70,17 @@ export async function reviewChunk({
   chat,
   description,
   fileList,
+  guides = {},
   headSnapshot,
 }: ReviewChunkParams): Promise<ChunkReviewOutcome> {
   const rendered = renderChunk(chunk)
   const prompt = `${description}\n\n${fileList}\n\n${rendered.text}`
   const tools = headSnapshot === undefined ? undefined : createReviewTools(headSnapshot)
-  const system = buildSystemPrompt({reviewer, withTools: tools !== undefined})
+  const system = buildSystemPrompt({
+    reviewer,
+    withTools: tools !== undefined,
+    guides: selectGuides({guides, path: chunk.path}),
+  })
   const key = await chunkReviewKey({
     scope,
     model,

@@ -128,27 +128,30 @@ export async function getPullRequest({
   return {open: pull.state === 'open', headSha: pull.head.sha}
 }
 
-const pullRequestDescriptionSchema = z.object({
+const pullRequestDetailsSchema = z.object({
   title: z.string(),
   body: z.string().nullable(),
+  base: z.object({sha: z.string()}),
 })
 
-export interface PullRequestDescription {
+export interface PullRequestDetails {
   title: string
   // Empty when the pull request has no description.
   description: string
+  // The current commit of the base branch.
+  baseSha: string
 }
 
-export async function getPullRequestDescription({
+export async function getPullRequestDetails({
   request,
   repository,
   pullNumber,
-}: PullRequestParams): Promise<PullRequestDescription> {
+}: PullRequestParams): Promise<PullRequestDetails> {
   const pull = await request({
     path: `${repositoryPath(repository)}/pulls/${pullNumber}`,
-    schema: pullRequestDescriptionSchema,
+    schema: pullRequestDetailsSchema,
   })
-  return {title: pull.title, description: pull.body ?? ''}
+  return {title: pull.title, description: pull.body ?? '', baseSha: pull.base.sha}
 }
 
 const pullRequestFileSchema = z.object({

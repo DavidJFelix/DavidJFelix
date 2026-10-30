@@ -14,7 +14,8 @@ replaces Warden in this repository. This project started as part of
   re-run after a push pays only for a chunk review that has no saved answer, or whose tools read a
   path that changed. A push that adds or removes a file changes the file list in every prompt, so
   each chunk review pays again. An edit to the title or description starts no review, but it changes
-  every prompt, so the next review pays again for each chunk review.
+  every prompt, so the next review pays again for each chunk review. A change to an `AGENTS.md` file
+  on the base branch makes each chunk review under that file pay again.
 - **OpenRouter for models.** The model is an operator secret (`REVIEW_MODEL`), not a repository
   setting.
 - **Works for any installation, runs only here for now.** Code takes the installation and repository
@@ -39,6 +40,9 @@ replaces Warden in this repository. This project started as part of
   request's head commit, for up to 4 rounds in each chunk review. The tools read through the GitHub
   API, so the Worker needs no container. `read_definition` uses the Lezer entity extractor of the
   Symbols tab, not a code index.
+- **Agent guides.** The system prompt of each chunk review has the root `AGENTS.md` and the
+  `AGENTS.md` nearest to the chunk's file, at most 12,000 characters each. They are read at the base
+  commit, so a pull request cannot change the rules that review it.
 - **Saved results** in D1 (`chunk_reviews`, a drizzle schema with its migrations in `drizzle/`). The
   key is a SHA-256 of the scope, model, reviewer, system prompt, and user prompt. The user prompt is
   the pull request's title and description (at most 4,000 characters), the file list, then the

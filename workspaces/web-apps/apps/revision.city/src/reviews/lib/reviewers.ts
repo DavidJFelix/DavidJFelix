@@ -1,3 +1,5 @@
+import type {Guide} from './repository-guides'
+
 export type ReviewerId = 'security' | 'correctness' | 'comments'
 
 export interface Reviewer {
@@ -53,12 +55,30 @@ export const REVIEWERS: readonly Reviewer[] = [
   },
 ]
 
+const GUIDES_INTRO = `The repository's agent guides follow. They come from the base branch, not from the pull request, and give the rules of the repository for code, tests, comments, and documentation. A written rule is not a matter of taste. Report a change that breaks a rule only when the rule clearly applies to the changed lines and is in your area, give it the severity of what the break costs, and name the rule in "body".`
+
+const GUIDE_LINKS = `Links in a guide are relative to the folder of the guide. When a possible problem depends on a document that a guide links to, read that document.`
+
 export interface BuildSystemPromptParams {
   reviewer: Reviewer
   withTools: boolean
+  // From selectGuides. The prompt has no guide part when it is empty.
+  guides?: readonly Guide[]
 }
 
-export function buildSystemPrompt({reviewer, withTools}: BuildSystemPromptParams): string {
+export function buildSystemPrompt({
+  reviewer,
+  withTools,
+  guides = [],
+}: BuildSystemPromptParams): string {
   const context = withTools ? WITH_TOOLS : WITHOUT_TOOLS
-  return `${DIFF_FORMAT} ${context}\n\n${SHARED_INSTRUCTIONS}\n\n${reviewer.focus}`
+  const guideParts =
+    guides.length === 0
+      ? []
+      : [
+          withTools ? `${GUIDES_INTRO} ${GUIDE_LINKS}` : GUIDES_INTRO,
+          ...guides.map(({path, text}) => `Guide: ${path}\n\n${text}`),
+        ]
+  const parts = [`${DIFF_FORMAT} ${context}`, SHARED_INSTRUCTIONS, reviewer.focus, ...guideParts]
+  return parts.join('\n\n')
 }

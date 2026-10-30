@@ -71,7 +71,11 @@ export function createCodebergFileReader(
       throw new Error('Unsupported Codeberg file path.')
     }
 
-    refsPromise ??= resolveCodebergDiffRefs(source, fetcher)
+    // A failed lookup is not kept, so the next read of the batch tries again.
+    refsPromise ??= resolveCodebergDiffRefs(source, fetcher).catch((error: unknown) => {
+      refsPromise = undefined
+      throw error
+    })
     const refs = await refsPromise
     const readNewFile = () =>
       fetchCodebergFile({repo: source.repo, ref: refs.newRef, path: file.name, fetcher})

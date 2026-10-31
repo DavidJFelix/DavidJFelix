@@ -49,6 +49,9 @@ export interface ChatRequest {
   messages: readonly ChatMessage[]
   tools?: readonly ToolDefinition[]
   toolChoice?: 'auto' | 'none'
+  // Fields that tell which review asked for the call. Only the logs use them;
+  // they are not sent to the model.
+  eventFields?: Readonly<Record<string, string | number | boolean>>
 }
 
 export interface ChatReply {
@@ -58,6 +61,10 @@ export interface ChatReply {
   reasoning?: Reasoning
   // Why the model stopped, such as "stop", "length", or "tool_calls".
   finishReason?: string
+  // The part of the completion tokens that the model used to reason.
+  reasoningTokens?: number
+  // The upstream provider that OpenRouter sent the request to.
+  provider?: string
 }
 
 export type Chat = (request: ChatRequest) => Promise<ChatReply>
@@ -88,6 +95,7 @@ const DEFAULT_RETRY_DELAYS_MS = [2000, 8000]
 const RETRYABLE_STATUSES = new Set([408, 429, 500, 502, 503, 504])
 
 const chatResponseSchema = z.object({
+  provider: z.string().nullish(),
   choices: z
     .array(
       z.object({
@@ -113,6 +121,7 @@ const chatResponseSchema = z.object({
       prompt_tokens: z.number(),
       completion_tokens: z.number(),
       cost: z.number().optional(),
+      completion_tokens_details: z.object({reasoning_tokens: z.number().nullish()}).nullish(),
     })
     .optional(),
 })
@@ -147,14 +156,17 @@ export function createOpenRouterChat({
         false,
       )
     }
-    const {choices, usage} = parsed.data
+    const {choices, usage, provider} = parsed.data
     const {message, finish_reason: finishReason} = choices[0]
+    const reasoningTokens = usage?.completion_tokens_details?.reasoning_tokens
     const reasoning = {
       ...(message.reasoning ? {text: message.reasoning} : {}),
       ...(message.reasoning_details?.length ? {details: message.reasoning_details} : {}),
     }
     return {
       ...(finishReason ? {finishReason} : {}),
+      ...(typeof reasoningTokens === 'number' ? {reasoningTokens} : {}),
+      ...(provider ? {provider} : {}),
       ...(Object.keys(reasoning).length > 0 ? {reasoning} : {}),
       // A refusal or a reply with only tool calls can have no content. An empty
       // final answer keeps the billed usage and then fails to parse.
@@ -178,7 +190,7 @@ export function createOpenRouterChat({
 // before the answer, which cannot parse, costs a lot. At 16,000, 14 of 141
 // DeepSeek answers were cut (2026-10-29). The answers that finished spread
 // evenly up to 16,000, so the cap, not a loop, cut most of them.
-const MAX_ANSWER_TOKENS = 32_000
+export const MAX_ANSWER_TOKENS = 32_000
 
 // At temperature 0, a reasoning model can repeat the same reasoning until the
 // cap on each run of the same chunk. DeepSeek recommends 1.0 for its V4
@@ -186,6 +198,8 @@ const MAX_ANSWER_TOKENS = 32_000
 // reasoning.
 const TEMPERATURE = 1
 const TOP_P = 0.95
+
+export const REASONING_EFFORT = 'medium'
 
 function toRequestBody({model, messages, tools, toolChoice}: ChatRequest) {
   return {
@@ -206,7 +220,7 @@ function toRequestBody({model, messages, tools, toolChoice}: ChatRequest) {
     // Without a reasoning budget, a reasoning model can use all of
     // MAX_ANSWER_TOKENS to reason and return an empty answer. Medium effort
     // asks for less reasoning, but DeepSeek can still reason up to the cap.
-    reasoning: {effort: 'medium'},
+    reasoning: {effort: REASONING_EFFORT},
     temperature: TEMPERATURE,
     top_p: TOP_P,
     // Asks OpenRouter to return the billed cost with the token counts.

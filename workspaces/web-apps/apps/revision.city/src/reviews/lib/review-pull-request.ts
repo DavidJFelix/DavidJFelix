@@ -88,7 +88,18 @@ export async function reviewChunk({
   if (saved && readsStillMatch(saved.reads, headSnapshot)) {
     return {findings: anchor(saved.findings), cached: true, usage: NO_USAGE}
   }
-  const result = await runToolLoop({chat, model, system, prompt, tools})
+  const result = await runToolLoop({
+    chat,
+    model,
+    system,
+    prompt,
+    tools,
+    eventFields: {
+      reviewer: reviewer.id,
+      path: chunk.path,
+      chunkLines: chunk.hunks.reduce((total, hunk) => total + hunk.lines.length, 0),
+    },
+  })
   // reviewChunk saves only an answer that fully parses, so the next run asks
   // again after a failure. It still returns the usage of each model call before
   // the failure, because the provider bills those calls.

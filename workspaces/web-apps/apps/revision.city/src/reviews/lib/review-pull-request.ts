@@ -38,7 +38,7 @@ export interface ChunkReviewContext {
   // From renderPullRequestDescription.
   description: string
   fileList: string
-  // From readGuides. Each chunk gets the guides that apply to its file.
+  // From readBaseGuides. Each chunk gets the guides that apply to its file.
   guides?: Readonly<Record<string, string>>
   // With it, reviewers get tools that read files outside the chunk.
   headSnapshot?: RepositorySnapshot

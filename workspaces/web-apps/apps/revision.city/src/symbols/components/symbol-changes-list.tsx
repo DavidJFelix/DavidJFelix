@@ -18,8 +18,8 @@ interface SymbolChangesListProps {
   entries: readonly EntityDiffEntry[]
   onSelectItem?: (itemId: string) => void
   onSelectSymbol?: (selection: SymbolSelection) => void
-  // False for diff sources this cannot read at all -- the alternate-domain
-  // hosts, which are not GitHub.
+  // False for diff sources this cannot read at all: a Codeberg compare, and the
+  // hosts that are not GitHub or Codeberg.
   supported: boolean
 }
 
@@ -31,9 +31,9 @@ export const SymbolChangesList = memo(function SymbolChangesList({
 }: SymbolChangesListProps) {
   if (!supported) {
     return (
-      <EmptyState title="Symbols are GitHub-only">
-        Reading a diff by symbol needs both revisions of each file, which this viewer can only fetch
-        from GitHub.
+      <EmptyState title="No symbols for this diff">
+        Reading a diff by symbol needs both revisions of each file. This viewer can read them for
+        GitHub diffs, and for Codeberg pull requests and commits.
       </EmptyState>
     )
   }

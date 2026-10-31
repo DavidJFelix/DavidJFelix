@@ -9,7 +9,7 @@
     ],
     "catalog": {
       "@cloudflare/vite-plugin": "1.65.0",
-      "@cloudflare/workers-types": "5.20261023.1",
+      "@cloudflare/workers-types": "5.20261028.1",
       "@pandacss/dev": "2.4.0",
       "@pandacss/preset-base": "2.4.0",
       "@pandacss/preset-panda": "2.4.0",
@@ -36,7 +36,7 @@
       "svelte-check": "4.7.7",
       "vite": "8.3.5",
       "vitest": "5.0.5",
-      "wrangler": "4.152.0"
+      "wrangler": "4.154.0"
     }
   },
   "overrides": {

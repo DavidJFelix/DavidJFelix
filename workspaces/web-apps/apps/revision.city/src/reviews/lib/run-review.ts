@@ -8,7 +8,7 @@ import {
 } from './github-api'
 import type {Chat} from './openrouter'
 import {completeCheckRun, createCheckRun, postReview, removeLabel} from './publish-review'
-import {readGuides} from './repository-guides'
+import {readBaseGuides} from './repository-guides'
 import {loadRepositorySnapshot} from './repository-snapshot'
 import {RESOLVABLE_EXTERNAL_ID, syncCheckRunWithThreads} from './resolved-threads'
 import {renderFileList, renderPullRequestDescription} from './review-chunks'
@@ -135,13 +135,14 @@ export async function runReview({
         getPullRequestDetails(pull),
       ])
       const selected = selectReviewFiles(files)
-      // The guides only add context. Without them the review still runs.
-      const guides = await loadRepositorySnapshot({request, repository, commitSha: details.baseSha})
-        .then((snapshot) => readGuides({snapshot, paths: selected.files.map(({path}) => path)}))
-        .catch((error: unknown) => {
-          console.warn('Could not read the repository guides', {error: String(error)})
-          return {}
-        })
+      const guides = details.baseIsDefaultBranch
+        ? await readBaseGuides({
+            request,
+            repository,
+            baseSha: details.baseSha,
+            paths: selected.files.map(({path}) => path),
+          })
+        : {}
       return {
         ...selected,
         description: renderPullRequestDescription(details),

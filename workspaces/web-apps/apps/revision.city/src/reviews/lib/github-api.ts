@@ -131,7 +131,11 @@ export async function getPullRequest({
 const pullRequestDetailsSchema = z.object({
   title: z.string(),
   body: z.string().nullable(),
-  base: z.object({sha: z.string()}),
+  base: z.object({
+    sha: z.string(),
+    ref: z.string(),
+    repo: z.object({default_branch: z.string()}),
+  }),
 })
 
 export interface PullRequestDetails {
@@ -140,6 +144,9 @@ export interface PullRequestDetails {
   description: string
   // The current commit of the base branch.
   baseSha: string
+  // Anyone who can push a branch can make it the base, so only the default
+  // branch has the maintainers' rules.
+  baseIsDefaultBranch: boolean
 }
 
 export async function getPullRequestDetails({
@@ -151,7 +158,12 @@ export async function getPullRequestDetails({
     path: `${repositoryPath(repository)}/pulls/${pullNumber}`,
     schema: pullRequestDetailsSchema,
   })
-  return {title: pull.title, description: pull.body ?? '', baseSha: pull.base.sha}
+  return {
+    title: pull.title,
+    description: pull.body ?? '',
+    baseSha: pull.base.sha,
+    baseIsDefaultBranch: pull.base.ref === pull.base.repo.default_branch,
+  }
 }
 
 const pullRequestFileSchema = z.object({

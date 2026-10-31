@@ -144,7 +144,11 @@ test('listPullRequestFiles renames filename to path', async () => {
 
 test('getPullRequestDetails returns the title, an empty description when there is none, and the base', async () => {
   const fetchStub = vi.fn<Fetch>(async () =>
-    Response.json({title: 'Add a widget', body: null, base: {sha: 'base'}}),
+    Response.json({
+      title: 'Add a widget',
+      body: null,
+      base: {sha: 'base', ref: 'release', repo: {default_branch: 'main'}},
+    }),
   )
 
   const details = await getPullRequestDetails({
@@ -153,6 +157,11 @@ test('getPullRequestDetails returns the title, an empty description when there i
     pullNumber: 7,
   })
 
-  expect(details).toEqual({title: 'Add a widget', description: '', baseSha: 'base'})
+  expect(details).toEqual({
+    title: 'Add a widget',
+    description: '',
+    baseSha: 'base',
+    baseIsDefaultBranch: false,
+  })
   expect(fetchStub.mock.calls[0][0]).toBe('https://api.github.com/repos/acme/repo/pulls/7')
 })

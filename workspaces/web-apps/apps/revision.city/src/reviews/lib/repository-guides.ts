@@ -1,4 +1,5 @@
-import type {RepositorySnapshot} from './repository-snapshot'
+import type {GitHubRepository, GitHubRequest} from './github-api'
+import {loadRepositorySnapshot, type RepositorySnapshot} from './repository-snapshot'
 import {cutText} from './review-tools'
 
 export const GUIDE_FILE_NAME = 'AGENTS.md'
@@ -61,6 +62,28 @@ export async function readGuides({
       return totalChars <= MAX_TOTAL_GUIDE_CHARS
     }),
   )
+}
+
+export interface ReadBaseGuidesParams {
+  request: GitHubRequest
+  repository: GitHubRepository
+  baseSha: string
+  paths: readonly string[]
+}
+
+// The guides only add context. Without them the review still runs.
+export async function readBaseGuides({
+  request,
+  repository,
+  baseSha,
+  paths,
+}: ReadBaseGuidesParams): Promise<Record<string, string>> {
+  return loadRepositorySnapshot({request, repository, commitSha: baseSha})
+    .then((snapshot) => readGuides({snapshot, paths}))
+    .catch((error: unknown) => {
+      console.warn('Could not read the repository guides', {error: String(error)})
+      return {}
+    })
 }
 
 function capGuide(rawText: string): string {

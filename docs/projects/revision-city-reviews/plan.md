@@ -43,9 +43,10 @@ replaces Warden in this repository. This project started as part of
 - **Agent guides.** The system prompt of each chunk review has the root `AGENTS.md` and the
   `AGENTS.md` nearest to the chunk's file. Each guide stops at 12,000 characters, and all of them
   together at 50,000, so the step result stays under 1 MiB. The guides are read at the base commit,
-  so a pull request cannot change the rules that review it. When they cannot be read, the review
-  runs without them. A document that a guide links to is read at the head, so the prompt calls it
-  author text.
+  so a pull request cannot change the rules that review it. A pull request whose base is not the
+  default branch gets no guides, because anyone who can push a branch can make it the base. When
+  they cannot be read, the review runs without them. A document that a guide links to is read at the
+  head, so the prompt calls it author text.
 - **Saved results** in D1 (`chunk_reviews`, a drizzle schema with its migrations in `drizzle/`). The
   key is a SHA-256 of the scope, model, reviewer, system prompt, and user prompt. The user prompt is
   the pull request's title and description (at most 4,000 characters), the file list, then the

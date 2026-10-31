@@ -19,7 +19,7 @@ import {
   listPullRequestFiles,
 } from '../src/reviews/lib/github-api'
 import {createOpenRouterChat} from '../src/reviews/lib/openrouter'
-import {readGuides} from '../src/reviews/lib/repository-guides'
+import {readBaseGuides} from '../src/reviews/lib/repository-guides'
 import {loadRepositorySnapshot} from '../src/reviews/lib/repository-snapshot'
 import {fileReviewStatus, renderPullRequestDescription} from '../src/reviews/lib/review-chunks'
 import {reviewPullRequest} from '../src/reviews/lib/review-pull-request'
@@ -52,10 +52,14 @@ const review = await reviewPullRequest({
   store: createMemoryChunkReviewStore(),
   chat: createOpenRouterChat({apiKey: OPENROUTER_API_KEY}),
   description: renderPullRequestDescription(details),
-  guides: await readGuides({
-    snapshot: await loadRepositorySnapshot({request, repository, commitSha: details.baseSha}),
-    paths: files.map(({path}) => path),
-  }),
+  guides: details.baseIsDefaultBranch
+    ? await readBaseGuides({
+        request,
+        repository,
+        baseSha: details.baseSha,
+        paths: files.map(({path}) => path),
+      })
+    : {},
   headSnapshot: snapshot,
 })
 const outcome = decideOutcome(review.findings, {failedChunkReviewCount: review.failures.length})

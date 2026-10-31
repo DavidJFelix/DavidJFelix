@@ -40,7 +40,7 @@ const movedSha = 'b'.repeat(40)
 const openPull = {
   state: 'open',
   head: {sha: headSha},
-  base: {sha: baseSha},
+  base: {sha: baseSha, ref: 'main', repo: {default_branch: 'main'}},
   title: 'Add a widget',
   body: 'Adds the widget that the settings page shows.',
 }
@@ -611,6 +611,19 @@ test('runReview gives each reviewer the root guide and the nearest guide from th
   expect(
     system.endsWith('Guide: AGENTS.md\n\nUse bun.\n\nGuide: src/AGENTS.md\n\nTest each export.'),
   ).toBe(true)
+})
+
+test('runReview gives no guides when the pull request targets another branch', async () => {
+  const github = fakeGitHub({
+    [PULL]: () => ({...openPull, base: {...openPull.base, ref: 'release'}}),
+  })
+  const chat = answering([])
+
+  await runReview(runParams({request: github.request, chat}))
+
+  expect(chat).toHaveBeenCalledTimes(REVIEWERS.length)
+  expect(String(chat.mock.calls[0][0].messages[0].content)).not.toContain('Guide:')
+  expect(github.sent(BASE_TREE)).toHaveLength(0)
 })
 
 test('runReview reviews without guides when it cannot read them', async () => {

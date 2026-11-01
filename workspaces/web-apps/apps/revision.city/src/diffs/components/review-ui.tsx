@@ -14,7 +14,7 @@ import {
 } from 'react'
 
 import {css} from 'styled-system/css'
-import {CODEBERG_HOST} from '@/diffs/lib/codeberg-diff-source'
+import {CODEBERG_HOST, canReadCodebergFiles} from '@/diffs/lib/codeberg-diff-source'
 import {
   createCodebergDiffFileLoader,
   createGitHubDiffFileLoader,
@@ -315,6 +315,7 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
             className={css({gridArea: {base: 'viewer', md: 'tree'}})}
             commentSections={commentSections}
             diffStats={diffStats}
+            domain={domain}
             entityDiffRequests={entityDiffRequests}
             mobileOverlayOpen={fileTreeOverlayOpen}
             onMobileClose={handleCloseFileTreeOverlay}
@@ -324,7 +325,9 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
             source={treeSource}
             sourcePath={path}
             streaming={loadState === 'streaming'}
-            symbolsAvailable={isNullish(domain)}
+            symbolsAvailable={
+              isNullish(domain) || (domain === CODEBERG_HOST && canReadCodebergFiles(path))
+            }
             themeCycle={themeCycle}
             viewerRef={viewerRef}
             onSelectItem={handleSelectTreeItem}

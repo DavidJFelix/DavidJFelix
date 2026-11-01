@@ -34,39 +34,71 @@ interface CodebergDiffRefs {
 
 type CodebergRefSource = Exclude<CodebergDiffSource, {kind: 'compare'}>
 
+interface CodebergDiffFiles {
+  oldFile: FileContents | null
+  newFile: FileContents | null
+}
+
+export type CodebergFileReader = (
+  file: Omit<CodebergDiffFileRequest, 'path'>,
+) => Promise<CodebergDiffFiles>
+
 // Reads the revisions of one file that a public Codeberg pull request or commit
 // changes, with no credentials. This does not read a compare, because the API
 // gives no merge base for a compare range.
-export async function loadCodebergDiffFiles(
+export function loadCodebergDiffFiles(
   request: CodebergDiffFileRequest,
   options: CodebergDiffFileServerOptions = {},
-): Promise<{oldFile: FileContents | null; newFile: FileContents | null}> {
-  const source = parseCodebergDiffSource(request.path)
-  if (isNullish(source) || source.kind === 'compare') {
-    throw new Error('Unsupported Codeberg diff path.')
-  }
-  if (hasDotSegment(request.name) || hasDotSegment(request.prevName ?? '')) {
-    throw new Error('Unsupported Codeberg file path.')
-  }
+): Promise<CodebergDiffFiles> {
+  return createCodebergFileReader(request.path, options)(request)
+}
 
+// Reads files of one Codeberg diff. The reader looks up the diff's revisions on
+// its first read only, so a batch of files costs one lookup.
+export function createCodebergFileReader(
+  path: string,
+  options: CodebergDiffFileServerOptions = {},
+): CodebergFileReader {
+  const source = parseCodebergDiffSource(path)
   const fetcher = options.fetch ?? fetch
-  const refs = await resolveCodebergDiffRefs(source, fetcher)
-  const readNewFile = () =>
-    fetchCodebergFile({repo: source.repo, ref: refs.newRef, path: request.name, fetcher})
-  const readOldFile = (path: string) =>
-    fetchCodebergFile({repo: source.repo, ref: requireOldRef(refs, path), path, fetcher})
+  let refsPromise: Promise<CodebergDiffRefs> | undefined
 
-  if (request.type === 'new' || request.type === 'rename-pure') {
-    return {oldFile: null, newFile: await readNewFile()}
+  return async (file) => {
+    if (isNullish(source) || source.kind === 'compare') {
+      throw new Error('Unsupported Codeberg diff path.')
+    }
+    if (hasDotSegment(file.name) || hasDotSegment(file.prevName ?? '')) {
+      throw new Error('Unsupported Codeberg file path.')
+    }
+
+    // The reader does not keep a failed lookup, so the next read tries again.
+    refsPromise ??= resolveCodebergDiffRefs(source, fetcher).catch((error: unknown) => {
+      refsPromise = undefined
+      throw error
+    })
+    const refs = await refsPromise
+    const readNewFile = () =>
+      fetchCodebergFile({repo: source.repo, ref: refs.newRef, path: file.name, fetcher})
+    const readOldFile = (oldPath: string) =>
+      fetchCodebergFile({
+        repo: source.repo,
+        ref: requireOldRef(refs, oldPath),
+        path: oldPath,
+        fetcher,
+      })
+
+    if (file.type === 'new' || file.type === 'rename-pure') {
+      return {oldFile: null, newFile: await readNewFile()}
+    }
+    if (file.type === 'deleted') {
+      return {oldFile: await readOldFile(file.name), newFile: null}
+    }
+    const [oldFile, newFile] = await Promise.all([
+      readOldFile(file.prevName ?? file.name),
+      readNewFile(),
+    ])
+    return {oldFile, newFile}
   }
-  if (request.type === 'deleted') {
-    return {oldFile: await readOldFile(request.name), newFile: null}
-  }
-  const [oldFile, newFile] = await Promise.all([
-    readOldFile(request.prevName ?? request.name),
-    readNewFile(),
-  ])
-  return {oldFile, newFile}
 }
 
 function resolveCodebergDiffRefs(
@@ -79,8 +111,8 @@ function resolveCodebergDiffRefs(
 }
 
 // The `.diff` of a pull request starts at the merge base. This reads both sides
-// from the base repository, because Forgejo keeps the head commit of each pull
-// request there, also for a pull request from a fork.
+// from the base repository. Forgejo keeps the head commit of each pull request
+// there, also for a pull request from a fork.
 async function resolveCodebergPullRefs(
   source: Extract<CodebergDiffSource, {kind: 'pull'}>,
   fetcher: CodebergServerFetch,

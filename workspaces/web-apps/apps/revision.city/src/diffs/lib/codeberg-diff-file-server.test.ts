@@ -1,6 +1,6 @@
 import {expect, test, vi} from 'vitest'
 
-import {loadCodebergDiffFiles} from './codeberg-diff-file-server'
+import {createCodebergFileReader, loadCodebergDiffFiles} from './codeberg-diff-file-server'
 
 // fetch by call signature only: lib.dom types `typeof fetch` with a required
 // static `preconnect`, which a stub cannot (and need not) satisfy.
@@ -41,6 +41,35 @@ test('reads a changed pull request file at the merge base and the head', async (
 
   expect(oldFile?.contents).toBe('merge-base-sha:src/a.ts')
   expect(newFile?.contents).toBe('head-sha:src/a.ts')
+})
+
+test('a reader looks up the revisions once for all its files', async () => {
+  const fetcher = stubCodeberg()
+  const readFiles = createCodebergFileReader(PULL, {fetch: fetcher})
+
+  await Promise.all([
+    readFiles({name: 'src/a.ts', type: 'change'}),
+    readFiles({name: 'src/b.ts', type: 'change'}),
+    readFiles({name: 'src/c.ts', type: 'new'}),
+  ])
+
+  const lookups = fetcher.mock.calls.filter(([input]) => input === `${API}/pulls/7`)
+  expect(lookups).toHaveLength(1)
+})
+
+test('a reader looks up the revisions again after a failed lookup', async () => {
+  const codeberg = stubCodeberg()
+  let calls = 0
+  const fetcher: FetchLike = async (input, init) => {
+    calls += 1
+    return calls === 1 ? new Response('', {status: 503}) : codeberg(input, init)
+  }
+  const readFiles = createCodebergFileReader(PULL, {fetch: fetcher})
+
+  await expect(readFiles({name: 'src/a.ts', type: 'change'})).rejects.toThrow('(503)')
+  const {newFile} = await readFiles({name: 'src/b.ts', type: 'change'})
+
+  expect(newFile?.contents).toBe('head-sha:src/b.ts')
 })
 
 test('reads a renamed file at its old path on the old side', async () => {

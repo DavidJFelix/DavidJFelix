@@ -23,6 +23,8 @@ type EntityDiffFetch = (
 ) => ReturnType<typeof fetch>
 
 export interface StreamEntityDiffsParams {
+  // The host of a diff that is not on GitHub, such as `codeberg.org`.
+  domain?: string
   endpoint?: string
   fetcher?: EntityDiffFetch
   files: readonly EntityDiffRequest[]
@@ -51,6 +53,7 @@ export const MAX_FILES_PER_REQUEST = 20
 // Talks only to the same-origin route; GitHub auth, when there is any, rides
 // along on the session cookie and never reaches the browser.
 export async function streamEntityDiffs({
+  domain,
   endpoint = DEFAULT_ENDPOINT,
   fetcher = fetch,
   files,
@@ -60,7 +63,7 @@ export async function streamEntityDiffs({
   sourcePath,
 }: StreamEntityDiffsParams): Promise<void> {
   const response = await postBatchWithRetry({
-    body: JSON.stringify({path: sourcePath, files}),
+    body: JSON.stringify({domain, path: sourcePath, files}),
     delaysMs: rateLimitDelaysMs,
     endpoint,
     fetcher,

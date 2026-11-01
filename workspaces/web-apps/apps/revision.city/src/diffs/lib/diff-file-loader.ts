@@ -5,7 +5,7 @@ import type {
   FileDiffMetadata,
 } from '@pierre/diffs'
 
-import {parseCodebergDiffSource} from './codeberg-diff-source'
+import {canReadCodebergFiles} from './codeberg-diff-source'
 import {parseGitHubDiffSource} from './github-diff-source'
 import {isNullish} from './nullish'
 
@@ -48,8 +48,7 @@ export function createCodebergDiffFileLoader(
   path: string,
   options: DiffFileLoaderOptions = {},
 ): FileDiffContentsLoader | undefined {
-  const source = parseCodebergDiffSource(path)
-  if (isNullish(source) || source.kind === 'compare') {
+  if (!canReadCodebergFiles(path)) {
     return undefined
   }
   return createDiffFileLoader({

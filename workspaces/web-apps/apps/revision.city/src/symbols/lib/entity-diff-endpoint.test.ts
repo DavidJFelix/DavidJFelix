@@ -1,15 +1,38 @@
-import {expect, test} from 'vitest'
+import {expect, test, vi} from 'vitest'
 
 import {MAX_FILES_PER_REQUEST} from './entity-diff-client'
 import {handleEntityDiffRequest} from './entity-diff-endpoint'
 
 const ORIGIN = 'https://revision.city'
+const CODEBERG_PULL = '/acme/widgets/pulls/7'
+const CODEBERG_PULL_API = 'https://codeberg.org/api/v1/repos/acme/widgets/pulls/7'
+
+// fetch by call signature only: lib.dom types `typeof fetch` with a required
+// static `preconnect`, which a stub cannot (and need not) satisfy.
+type FetchLike = (...args: Parameters<typeof fetch>) => ReturnType<typeof fetch>
 
 function createRequest(body: unknown): Request {
   return new Request(`${ORIGIN}/api/diffs/entity-diff`, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: typeof body === 'string' ? body : JSON.stringify(body),
+  })
+}
+
+function toHref(input: Parameters<FetchLike>[0]): string {
+  return typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
+}
+
+// Answers the lookup of one Codeberg pull request and the reads of its files.
+// The merge base and the head have a different body of `greet`.
+function stubCodeberg() {
+  return vi.fn<FetchLike>(async (input) => {
+    const url = new URL(toHref(input))
+    if (url.href === CODEBERG_PULL_API) {
+      return Response.json({merge_base: 'base-sha', head: {sha: 'head-sha'}})
+    }
+    const value = url.searchParams.get('ref') === 'base-sha' ? 1 : 2
+    return new Response(`export function greet() {\n  return ${value}\n}\n`)
   })
 }
 
@@ -30,6 +53,12 @@ test.each([
     {path: 'o/r/pull/1', files: [{itemId: 'i', name: 'a.ts', type: 'exploded'}]},
   ],
   ['a file with no name', {path: 'o/r/pull/1', files: [{itemId: 'i', type: 'change'}]}],
+  ['a domain that is not a string', {domain: 1, path: 'o/r/pull/1', files: []}],
+  ['a domain with no symbol support', {domain: 'tangled.org', path: 'o/r/pulls/1', files: []}],
+  [
+    'a Codeberg compare, which has no merge base to read',
+    {domain: 'codeberg.org', path: '/acme/widgets/compare/main...dev', files: []},
+  ],
 ])('rejects %s', async (_case, body) => {
   const response = await handleEntityDiffRequest(createRequest(body))
 
@@ -102,4 +131,35 @@ test('keeps entity diffs out of shared caches', async () => {
 
   expect(response.headers.get('Cache-Control')).toContain('private')
   expect(response.headers.get('Vary')).toBe('Cookie')
+})
+
+test('reads a Codeberg diff from Codeberg with one lookup for the batch', async () => {
+  const fetcher = stubCodeberg()
+
+  const response = await handleEntityDiffRequest(
+    createRequest({
+      domain: 'codeberg.org',
+      path: CODEBERG_PULL,
+      files: [
+        {itemId: 'item-1', name: 'src/a.ts', type: 'change'},
+        {itemId: 'item-2', name: 'src/b.ts', type: 'change'},
+      ],
+    }),
+    {fetch: fetcher},
+  )
+
+  const results = await readLines(response)
+  expect(results).toHaveLength(2)
+  expect(results).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        itemId: 'item-1',
+        diff: expect.objectContaining({
+          changes: [expect.objectContaining({type: 'modified', name: 'greet'})],
+        }),
+      }),
+    ]),
+  )
+  const lookups = fetcher.mock.calls.filter(([input]) => toHref(input) === CODEBERG_PULL_API)
+  expect(lookups).toHaveLength(1)
 })

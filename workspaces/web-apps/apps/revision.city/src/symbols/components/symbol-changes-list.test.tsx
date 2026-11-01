@@ -149,7 +149,7 @@ test('shows what a renamed symbol used to be called', () => {
 test('explains itself on a diff source it cannot read', () => {
   const harness = renderList({entries: [], supported: false})
 
-  expect(harness.container.textContent).toContain('Symbols are GitHub-only')
+  expect(harness.container.textContent).toContain('No symbols for this diff')
   harness.unmount()
 })
 

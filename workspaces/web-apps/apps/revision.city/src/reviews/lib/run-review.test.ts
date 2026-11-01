@@ -10,6 +10,7 @@ import {type RunReviewParams, type RunStep, runReview} from './run-review'
 import type {LogWideEvent, WideEvent} from './wide-event'
 
 const headSha = 'a'.repeat(40)
+const baseSha = 'c'.repeat(40)
 const usage = {promptTokens: 10, completionTokens: 5, costUsd: 0.01}
 
 interface RecordedRequest {
@@ -26,6 +27,7 @@ const FILES_PAGE_2 = 'GET /repos/acme/repo/pulls/7/files?per_page=100&page=2'
 const CHECK_RUNS = 'POST /repos/acme/repo/check-runs'
 const CHECK_RUN = 'PATCH /repos/acme/repo/check-runs/31'
 const TREE = `GET /repos/acme/repo/git/trees/${headSha}?recursive=1`
+const BASE_TREE = `GET /repos/acme/repo/git/trees/${baseSha}?recursive=1`
 const COMMENTS = 'GET /repos/acme/repo/pulls/7/comments?per_page=100&page=1'
 const REVIEWS = 'POST /repos/acme/repo/pulls/7/reviews'
 const LABEL = 'DELETE /repos/acme/repo/issues/7/labels/Revision%20City'
@@ -38,6 +40,7 @@ const movedSha = 'b'.repeat(40)
 const openPull = {
   state: 'open',
   head: {sha: headSha},
+  base: {sha: baseSha, ref: 'main', repo: {default_branch: 'main'}},
   title: 'Add a widget',
   body: 'Adds the widget that the settings page shows.',
 }
@@ -104,6 +107,7 @@ function fakeGitHub(routes: Record<string, Route> = {}) {
       external_id: lastCheckRun().external_id ?? null,
     }),
     [TREE]: () => ({sha: 'tree', truncated: false, tree: []}),
+    [BASE_TREE]: () => ({sha: 'base-tree', truncated: false, tree: []}),
     [COMMENTS]: () => [],
     [REVIEWS]: () => ({id: 1}),
     [LABEL]: () => [],
@@ -188,7 +192,7 @@ test('runReview reviews the head, posts the findings, and fails the check on a h
 
   expect(names).toEqual([
     'start',
-    'read pull request',
+    'read pull request and guides',
     'review 1 of 1',
     'post review',
     'complete check run',
@@ -463,7 +467,12 @@ test('runReview fails the check run and throws when a step after the start fails
     'GitHub is down',
   )
 
-  expect(names).toEqual(['start', 'read pull request', 'log error run', 'report failure'])
+  expect(names).toEqual([
+    'start',
+    'read pull request and guides',
+    'log error run',
+    'report failure',
+  ])
   expect(github.sent(CHECK_RUN)[0].body).toMatchObject({
     conclusion: 'failure',
     output: {title: 'The review failed', summary: 'Error: GitHub is down for @​someone'},
@@ -576,6 +585,64 @@ test('runReview gives each reviewer the title, the description, and every file t
       '    2 + added',
     ].join('\n'),
   })
+})
+
+test('runReview gives each reviewer the root guide and the nearest guide from the base commit', async () => {
+  const blob = (text: string) => ({content: btoa(text), encoding: 'base64'})
+  const github = fakeGitHub({
+    [BASE_TREE]: () => ({
+      sha: 'base-tree',
+      truncated: false,
+      tree: [
+        {path: 'AGENTS.md', type: 'blob', sha: 'root-guide'},
+        {path: 'src/AGENTS.md', type: 'blob', sha: 'src-guide'},
+        {path: 'docs/AGENTS.md', type: 'blob', sha: 'docs-guide'},
+      ],
+    }),
+    'GET /repos/acme/repo/git/blobs/root-guide': () => blob('Use bun.\n'),
+    'GET /repos/acme/repo/git/blobs/src-guide': () => blob('Test each export.'),
+  })
+  const chat = answering([])
+
+  await runReview(runParams({request: github.request, chat}))
+
+  const system = String(chat.mock.calls[0][0].messages[0].content)
+  expect(system).toContain('They come from the base branch')
+  expect(
+    system.endsWith('Guide: AGENTS.md\n\nUse bun.\n\nGuide: src/AGENTS.md\n\nTest each export.'),
+  ).toBe(true)
+})
+
+test('runReview gives no guides when the pull request targets another branch', async () => {
+  const github = fakeGitHub({
+    [PULL]: () => ({...openPull, base: {...openPull.base, ref: 'release'}}),
+  })
+  const chat = answering([])
+
+  await runReview(runParams({request: github.request, chat}))
+
+  expect(chat).toHaveBeenCalledTimes(REVIEWERS.length)
+  expect(String(chat.mock.calls[0][0].messages[0].content)).not.toContain('Guide:')
+  expect(github.sent(BASE_TREE)).toHaveLength(0)
+})
+
+test('runReview reviews without guides when it cannot read them', async () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+  const github = fakeGitHub({
+    [BASE_TREE]: () => {
+      throw new Error('GitHub is down')
+    },
+  })
+  const chat = answering([])
+
+  await runReview(runParams({request: github.request, chat}))
+
+  expect(chat).toHaveBeenCalledTimes(REVIEWERS.length)
+  expect(String(chat.mock.calls[0][0].messages[0].content)).not.toContain('Guide:')
+  expect(warn).toHaveBeenCalledWith('Could not read the repository guides', {
+    error: 'Error: GitHub is down',
+  })
+  warn.mockRestore()
 })
 
 test('runReview reviews at most 150 chunks, in steps, and loads the head tree once', async () => {

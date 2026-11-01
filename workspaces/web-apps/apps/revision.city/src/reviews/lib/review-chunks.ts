@@ -188,7 +188,7 @@ export function renderPullRequestDescription({
   ].join('\n\n')
 }
 
-// A space, not an empty string, takes the place of each marker: the markers
+// A space, not an empty string, takes the place of each marker. The markers
 // contain no space, so the text on the two sides cannot join into a new marker.
 function withoutMarkers(text: string): string {
   return text.replaceAll(DESCRIPTION_START, ' ').replaceAll(DESCRIPTION_END, ' ')

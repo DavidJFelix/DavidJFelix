@@ -15,10 +15,11 @@ import {decideOutcome} from '../src/reviews/lib/findings'
 import {
   createGitHubRequest,
   getPullRequest,
-  getPullRequestDescription,
+  getPullRequestDetails,
   listPullRequestFiles,
 } from '../src/reviews/lib/github-api'
 import {createOpenRouterChat} from '../src/reviews/lib/openrouter'
+import {readBaseGuides} from '../src/reviews/lib/repository-guides'
 import {loadRepositorySnapshot} from '../src/reviews/lib/repository-snapshot'
 import {fileReviewStatus, renderPullRequestDescription} from '../src/reviews/lib/review-chunks'
 import {reviewPullRequest} from '../src/reviews/lib/review-pull-request'
@@ -38,6 +39,7 @@ const pullNumber = Number(pullNumberText)
 const request = createGitHubRequest({token: GITHUB_TOKEN ? async () => GITHUB_TOKEN : undefined})
 const pull = await getPullRequest({request, repository, pullNumber})
 const files = await listPullRequestFiles({request, repository, pullNumber})
+const details = await getPullRequestDetails({request, repository, pullNumber})
 const snapshot = await loadRepositorySnapshot({request, repository, commitSha: pull.headSha})
 if (!snapshot) {
   console.error('The repository tree is too large to load, so the reviewers run without tools.')
@@ -49,9 +51,15 @@ const review = await reviewPullRequest({
   scope: 'local',
   store: createMemoryChunkReviewStore(),
   chat: createOpenRouterChat({apiKey: OPENROUTER_API_KEY}),
-  description: renderPullRequestDescription(
-    await getPullRequestDescription({request, repository, pullNumber}),
-  ),
+  description: renderPullRequestDescription(details),
+  guides: details.baseIsDefaultBranch
+    ? await readBaseGuides({
+        request,
+        repository,
+        baseSha: details.baseSha,
+        paths: files.map(({path}) => path),
+      })
+    : {},
   headSnapshot: snapshot,
 })
 const outcome = decideOutcome(review.findings, {failedChunkReviewCount: review.failures.length})

@@ -3,11 +3,12 @@ import {decideOutcome, isAtLeast, REPORT_SEVERITY} from './findings'
 import {
   type GitHubRequest,
   getPullRequest,
-  getPullRequestDescription,
+  getPullRequestDetails,
   listPullRequestFiles,
 } from './github-api'
 import type {Chat} from './openrouter'
 import {completeCheckRun, createCheckRun, postReview, removeLabel} from './publish-review'
+import {readBaseGuides} from './repository-guides'
 import {loadRepositorySnapshot} from './repository-snapshot'
 import {RESOLVABLE_EXTERNAL_ID, syncCheckRunWithThreads} from './resolved-threads'
 import {renderFileList, renderPullRequestDescription} from './review-chunks'
@@ -128,15 +129,25 @@ export async function runReview({
   const complete = (conclusion: 'success' | 'failure' | 'neutral', output: CheckRunOutput) =>
     completeCheckRun({request, repository, checkRunId, conclusion, output})
   try {
-    const selection = await step('read pull request', async () => {
-      const [files, described] = await Promise.all([
+    const selection = await step('read pull request and guides', async () => {
+      const [files, details] = await Promise.all([
         listPullRequestFiles(pull),
-        getPullRequestDescription(pull),
+        getPullRequestDetails(pull),
       ])
+      const selected = selectReviewFiles(files)
+      const guides = details.baseIsDefaultBranch
+        ? await readBaseGuides({
+            request,
+            repository,
+            baseSha: details.baseSha,
+            paths: selected.files.map(({path}) => path),
+          })
+        : {}
       return {
-        ...selectReviewFiles(files),
-        description: renderPullRequestDescription(described),
+        ...selected,
+        description: renderPullRequestDescription(details),
         fileList: renderFileList(files),
+        guides,
       }
     })
     const planned = planChunkReviews({files: selection.files})
@@ -169,6 +180,7 @@ export async function runReview({
             chat,
             description: selection.description,
             fileList: selection.fileList,
+            guides: selection.guides,
             headSnapshot: await loadSnapshot(),
           })
           // The store keeps each answer that parsed, so a new attempt pays again

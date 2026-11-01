@@ -116,9 +116,11 @@ export async function reviewChunk({
     }
   }
   const answer = parseModelAnswer(result.text)
+  // The check does not run on an answer with a malformed finding, so its valid
+  // findings are not checked and the review does not post them.
   if (answer.error !== undefined) {
     return {
-      findings: anchor(answer.findings),
+      findings: anchor(answer.findings.map((finding) => ({...finding, checked: false}))),
       cached: false,
       usage: result.usage,
       error: answer.error,

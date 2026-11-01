@@ -282,7 +282,7 @@ test('reviewPullRequest reads the answer after other JSON that the model quotes'
   expect(review.findings.map((finding) => finding.endLine)).toEqual([6])
 })
 
-test('reviewPullRequest keeps the valid findings of an answer with a malformed one', async () => {
+test('reviewPullRequest keeps the valid findings of an answer with a malformed one, not checked', async () => {
   const store = createMemoryChunkReviewStore()
   const chat = answering(
     '{"findings": [{"severity": "high", "title": "Bug", "body": "Breaks", "label": 2}, {"severity": "high", "title": "", "body": "No title", "label": 0}]}',
@@ -298,7 +298,7 @@ test('reviewPullRequest keeps the valid findings of an answer with a malformed o
 
   const review = await reviewPullRequest({...options, chat})
 
-  expect(review.findings.map((finding) => finding.endLine)).toEqual([6])
+  expect(review.findings.map(({endLine, checked}) => [endLine, checked])).toEqual([[6, false]])
   expect(review.failures).toEqual([
     {path: 'a.ts', reviewerId: 'security', error: 'Malformed findings in the answer: 1'},
   ])

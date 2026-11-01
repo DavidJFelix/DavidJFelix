@@ -338,3 +338,27 @@ test.each<{name: string; text: string; expected: string | undefined}>([
 ])('findJsonSyntaxError gives $name', ({text, expected}) => {
   expect(findJsonSyntaxError(text)).toBe(expected)
 })
+
+test('createOpenRouterChat returns the reasoning tokens and the provider, and does not send the event fields', async () => {
+  const fetchStub = vi.fn<Fetch>(async () =>
+    Response.json({
+      provider: 'DeepSeek',
+      choices: [{finish_reason: 'length', message: {content: ''}}],
+      usage: {
+        prompt_tokens: 100,
+        completion_tokens: 32_000,
+        completion_tokens_details: {reasoning_tokens: 31_990},
+      },
+    }),
+  )
+  const chat = createOpenRouterChat({apiKey: 'key', fetch: fetchStub})
+
+  const reply = await chat({...request, eventFields: {reviewer: 'security'}})
+
+  expect(reply).toMatchObject({
+    finishReason: 'length',
+    reasoningTokens: 31_990,
+    provider: 'DeepSeek',
+  })
+  expect(sentBody(fetchStub)).not.toHaveProperty('eventFields')
+})

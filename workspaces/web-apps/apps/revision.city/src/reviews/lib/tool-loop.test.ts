@@ -38,6 +38,7 @@ test('runToolLoop makes one call without tools', async () => {
   expect(result).toEqual({text: '{"findings": []}', usage, reads: []})
   expect(chat).toHaveBeenCalledWith({
     model: 'vendor/model',
+    eventFields: {run: 1, round: 0},
     messages: [
       {role: 'system', content: 'system'},
       {role: 'user', content: 'chunk'},
@@ -258,4 +259,20 @@ test('runToolLoop does not run a review again after an empty answer that stopped
     usage,
   })
   expect(chat).toHaveBeenCalledTimes(1)
+})
+
+test('runToolLoop tells the logs the run and the round of each model call', async () => {
+  const chat = vi
+    .fn<Chat>()
+    .mockResolvedValueOnce(callTools(readCall('1', 'a.ts')))
+    .mockResolvedValueOnce({...answer(''), finishReason: 'length'})
+    .mockResolvedValueOnce(answer('{"findings": []}'))
+
+  await runToolLoop({...params, chat, tools: fakeTools(), eventFields: {reviewer: 'security'}})
+
+  expect(chat.mock.calls.map(([request]) => request.eventFields)).toEqual([
+    {reviewer: 'security', run: 1, round: 0},
+    {reviewer: 'security', run: 1, round: 1},
+    {reviewer: 'security', run: 2, round: 0},
+  ])
 })

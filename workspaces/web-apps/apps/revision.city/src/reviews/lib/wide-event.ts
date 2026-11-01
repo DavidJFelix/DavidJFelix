@@ -1,4 +1,4 @@
-import type {Chat} from './openrouter'
+import {type Chat, MAX_ANSWER_TOKENS, REASONING_EFFORT} from './openrouter'
 
 export type WideEventValue = string | number | boolean | undefined
 
@@ -21,6 +21,10 @@ export interface WithChatEventsParams {
   sharedFields: WideEventFields
 }
 
+// Enough of the reasoning to tell a model that repeats itself from a model
+// that still reasons about the change.
+const REASONING_TAIL_CHARS = 2000
+
 // Logs one event for each model call, also for a call that fails.
 export function withChatEvents({chat, log, sharedFields}: WithChatEventsParams): Chat {
   return async (request) => {
@@ -30,19 +34,33 @@ export function withChatEvents({chat, log, sharedFields}: WithChatEventsParams):
     const base = {
       event: 'model call',
       ...sharedFields,
+      ...request.eventFields,
       model: request.model,
       messageCount: request.messages.length,
+      promptChars: request.messages.reduce((total, message) => total + message.content.length, 0),
+      toolChoice: request.tools === undefined ? 'no tools' : (request.toolChoice ?? 'auto'),
+      maxTokens: MAX_ANSWER_TOKENS,
+      reasoningEffort: REASONING_EFFORT,
     }
     try {
       const reply = await chat(request)
+      const reasoning = reply.reasoning?.text ?? ''
       log({
         ...base,
         outcome: 'success',
         durationMs: Date.now() - startedAt,
+        provider: reply.provider,
+        finishReason: reply.finishReason,
         toolCallCount: reply.toolCalls.length,
         promptTokens: reply.usage.promptTokens,
         completionTokens: reply.usage.completionTokens,
+        reasoningTokens: reply.reasoningTokens,
+        reasoningChars: reasoning.length,
+        answerChars: reply.content.length,
         costUsd: reply.usage.costUsd,
+        // Only a cut reply keeps a part of its reasoning, so the logs stay small.
+        reasoningTail:
+          reply.finishReason === 'length' ? reasoning.slice(-REASONING_TAIL_CHARS) : undefined,
       })
       return reply
     } catch (error) {

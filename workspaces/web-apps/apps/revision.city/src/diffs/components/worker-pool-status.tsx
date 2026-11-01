@@ -5,7 +5,6 @@ import {
   IconCircleFill,
   IconEye,
   IconEyeSlash,
-  IconInfoFill,
   IconRepeat,
   IconSquircleLgFill,
   IconTriangleFill,
@@ -269,42 +268,6 @@ function StatsDisplay({expanded, onToggle, stats, themeCycle, viewerRef}: StatsD
           <StatItem label="Diff Cache" value={stats.diffCacheSize} />
         </div>
       )}
-      <StatusRow icon={IconInfoFill}>
-        <div className={css({color: 'diffs.muted.foreground/75'})}>
-          Powered by{' '}
-          <a
-            href="https://diffs.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={cx(
-              'inline-link',
-              css({
-                color: 'diffs.muted.foreground',
-                _hover: {color: 'diffs.foreground'},
-                textDecorationLine: 'none',
-              }),
-            )}
-          >
-            Diffs
-          </a>{' '}
-          and{' '}
-          <a
-            href="https://trees.software"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={cx(
-              'inline-link',
-              css({
-                color: 'diffs.muted.foreground',
-                _hover: {color: 'diffs.foreground'},
-                textDecorationLine: 'none',
-              }),
-            )}
-          >
-            Trees
-          </a>
-        </div>
-      </StatusRow>
     </div>
   )
 }

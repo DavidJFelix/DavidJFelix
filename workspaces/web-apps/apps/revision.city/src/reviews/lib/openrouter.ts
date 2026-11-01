@@ -80,6 +80,12 @@ export class OpenRouterError extends Error {
   }
 }
 
+// An OpenRouter error that is not temporary, such as a bad key, happens again on
+// a new attempt.
+export function isRetryable(error: unknown): boolean {
+  return !(error instanceof OpenRouterError) || error.temporary
+}
+
 export interface CreateOpenRouterChatParams {
   apiKey: string
   fetch?: Fetch

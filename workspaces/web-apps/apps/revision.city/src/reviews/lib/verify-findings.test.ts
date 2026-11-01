@@ -35,7 +35,6 @@ test('verifyFindings adds the proof to a confirmed finding', async () => {
     findings: [finding({body: 'Breaks\n\nProof: a.ts line 2 drops the value.'})],
     usage,
     reads: [],
-    failed: false,
   })
   const [{messages}] = chat.mock.calls[0]
   expect(messages[0].content).toContain('You see only the diff piece.')
@@ -50,7 +49,7 @@ test('verifyFindings marks a rejected finding as not checked', async () => {
   const verified = await verify([finding()], chat)
 
   expect(verified.findings).toEqual([finding({checked: false})])
-  expect(verified.failed).toBe(false)
+  expect(verified.error).toBeUndefined()
 })
 
 test('verifyFindings checks only the findings that the review would post', async () => {
@@ -64,7 +63,6 @@ test('verifyFindings checks only the findings that the review would post', async
     findings,
     usage: {promptTokens: 0, completionTokens: 0, costUsd: 0},
     reads: [],
-    failed: false,
   })
 })
 
@@ -87,16 +85,19 @@ test('verifyFindings fails and does not post a finding whose check does not pars
   const verified = await verify([finding()], answering('{"name": "read_file"}'))
 
   expect(verified.findings).toEqual([finding({checked: false})])
-  expect(verified.failed).toBe(true)
+  expect(verified).toMatchObject({error: 'Finding check 1 did not parse', retryable: false})
 })
 
 test('verifyFindings fails and does not post a finding whose check call fails', async () => {
   const chat = vi.fn<Chat>(async () => {
-    throw new OpenRouterError('OpenRouter returned 400: refused', false)
+    throw new OpenRouterError('OpenRouter returned 503: busy', true)
   })
 
   const verified = await verify([finding()], chat)
 
   expect(verified.findings).toEqual([finding({checked: false})])
-  expect(verified.failed).toBe(true)
+  expect(verified).toMatchObject({
+    error: 'Finding check 1 failed: Error: OpenRouter returned 503: busy',
+    retryable: true,
+  })
 })

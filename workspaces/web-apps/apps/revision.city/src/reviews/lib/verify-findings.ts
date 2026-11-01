@@ -1,6 +1,13 @@
 import {z} from 'zod'
 import {isAtLeast, type ModelFinding, REPORT_SEVERITY} from './findings'
-import {addUsage, type Chat, type CompletionUsage, extractJson, NO_USAGE} from './openrouter'
+import {
+  addUsage,
+  type Chat,
+  type CompletionUsage,
+  extractJson,
+  isRetryable,
+  NO_USAGE,
+} from './openrouter'
 import type {FileRead} from './repository-snapshot'
 import type {ReviewTools} from './review-tools'
 import {runToolLoop} from './tool-loop'
@@ -42,9 +49,12 @@ export interface VerifiedFindings {
   findings: ModelFinding[]
   usage: CompletionUsage
   reads: FileRead[]
-  // A check that failed or did not parse. Its finding is not posted, and the
-  // caller does not save the result, so the next run checks it again.
-  failed: boolean
+  // Set when a check failed or did not parse. The review does not post its
+  // finding, and the caller reports the chunk review as failed and does not save
+  // it, so the next run checks it again.
+  error?: string
+  // True when a new attempt of the failed check can succeed.
+  retryable?: boolean
 }
 
 // Checks each finding that the review would post. A confirmed finding gets its
@@ -77,20 +87,28 @@ export async function verifyFindings({
     const check = checks[index]
     if (check === undefined) {
       // The limit left this finding without a check, so the review does not post it.
-      return {finding: wouldPost(finding) ? reject(finding) : finding, failed: false}
+      return {finding: wouldPost(finding) ? reject(finding) : finding}
     }
     if ('error' in check) {
-      return {finding: reject(finding), failed: true}
+      return {
+        finding: reject(finding),
+        failure: {
+          error: `Finding check ${index + 1} failed: ${String(check.error)}`,
+          retryable: isRetryable(check.error),
+        },
+      }
     }
     const answer = parseVerifyAnswer(check.text)
     if (answer === undefined) {
-      return {finding: reject(finding), failed: true}
+      return {
+        finding: reject(finding),
+        failure: {error: `Finding check ${index + 1} did not parse`, retryable: false},
+      }
     }
     return {
       finding: answer.confirmed
         ? {...finding, body: `${finding.body}\n\nProof: ${answer.proof}`}
         : reject(finding),
-      failed: false,
     }
   })
   const answers = checks.filter((check) => check !== undefined)
@@ -98,7 +116,7 @@ export async function verifyFindings({
     findings: verified.map(({finding}) => finding),
     usage: answers.reduce((total, check) => addUsage(total, check.usage), NO_USAGE),
     reads: answers.flatMap((check) => ('reads' in check ? check.reads : [])),
-    failed: verified.some(({failed}) => failed),
+    ...verified.find((item) => item.failure !== undefined)?.failure,
   }
 }
 

@@ -70,7 +70,7 @@ test('reviewChunks saves a finding that its check rejects as not checked', async
   expect(second.cachedCount).toBe(1)
 })
 
-test('reviewChunks does not save a chunk review whose check fails', async () => {
+test('reviewChunks reports and does not save a chunk review whose check fails', async () => {
   const store = createMemoryChunkReviewStore()
   const chat = answering(
     '{"findings": [{"severity": "high", "title": "Bug", "body": "Breaks", "checked": true, "label": 2}]}',
@@ -90,7 +90,9 @@ test('reviewChunks does not save a chunk review whose check fails', async () => 
   await review()
 
   expect(first.findings.map(({checked}) => checked)).toEqual([false])
-  expect(first.failures).toEqual([])
+  expect(first.failures).toEqual([
+    {path: 'a.ts', reviewerId: REVIEWERS[0].id, error: 'Finding check 1 did not parse'},
+  ])
   expect(chat).toHaveBeenCalledTimes(4)
 })
 

@@ -13,8 +13,8 @@ import {
   extractJson,
   findJsonSyntaxError,
   hasJsonObjectStart,
+  isRetryable,
   NO_USAGE,
-  OpenRouterError,
 } from './openrouter'
 import {selectGuides} from './repository-guides'
 import {type RepositorySnapshot, readsStillMatch} from './repository-snapshot'
@@ -103,9 +103,9 @@ export async function reviewChunk({
     chunkLines: chunk.hunks.reduce((total, hunk) => total + hunk.lines.length, 0),
   }
   const result = await runToolLoop({chat, model, system, prompt, tools, eventFields})
-  // reviewChunk saves only an answer that fully parses, so the next run asks
-  // again after a failure. It still returns the usage of each model call before
-  // the failure, because the provider bills those calls.
+  // reviewChunk saves only an answer that fully parses and whose checks did not
+  // fail, so the next run asks again after a failure. It still returns the usage
+  // of each model call before the failure, because the provider bills those calls.
   if ('error' in result) {
     return {
       findings: [],
@@ -133,17 +133,18 @@ export async function reviewChunk({
     eventFields,
   })
   const usage = addUsage(result.usage, verified.usage)
-  if (!verified.failed) {
-    const reads = [...result.reads, ...verified.reads]
-    await store.put(key, {findings: verified.findings, usage, reads}).catch(warnStoreFailure)
+  if (verified.error !== undefined) {
+    return {
+      findings: anchor(verified.findings),
+      cached: false,
+      usage,
+      error: verified.error,
+      retryable: verified.retryable,
+    }
   }
+  const reads = [...result.reads, ...verified.reads]
+  await store.put(key, {findings: verified.findings, usage, reads}).catch(warnStoreFailure)
   return {findings: anchor(verified.findings), cached: false, usage}
-}
-
-// An OpenRouter error that is not temporary, such as a bad key, happens again on
-// a new attempt.
-function isRetryable(error: unknown): boolean {
-  return !(error instanceof OpenRouterError) || error.temporary
 }
 
 const STORE_FAILURE_LOG_MESSAGE = 'Chunk review store failed; the review continues without it'

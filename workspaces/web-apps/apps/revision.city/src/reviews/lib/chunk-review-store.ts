@@ -34,7 +34,7 @@ export interface ChunkReviewKeyParams {
 
 // Increment to ignore every saved result, for example after a change to the
 // OpenRouter request settings or to how answers are parsed.
-const KEY_VERSION = 1
+const KEY_VERSION = 2
 
 export function chunkReviewKey({
   scope,

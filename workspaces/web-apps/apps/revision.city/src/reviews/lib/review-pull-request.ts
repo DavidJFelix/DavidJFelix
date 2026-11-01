@@ -29,6 +29,7 @@ import {
 import {createReviewTools} from './review-tools'
 import {buildSystemPrompt, REVIEWERS, type Reviewer} from './reviewers'
 import {runToolLoop} from './tool-loop'
+import {verifyFindings} from './verify-findings'
 
 export interface ChunkReviewContext {
   model: string
@@ -96,18 +97,12 @@ export async function reviewChunk({
   if (saved && readsStillMatch(saved.reads, headSnapshot)) {
     return {findings: anchor(saved.findings), cached: true, usage: NO_USAGE}
   }
-  const result = await runToolLoop({
-    chat,
-    model,
-    system,
-    prompt,
-    tools,
-    eventFields: {
-      reviewer: reviewer.id,
-      path: chunk.path,
-      chunkLines: chunk.hunks.reduce((total, hunk) => total + hunk.lines.length, 0),
-    },
-  })
+  const eventFields = {
+    reviewer: reviewer.id,
+    path: chunk.path,
+    chunkLines: chunk.hunks.reduce((total, hunk) => total + hunk.lines.length, 0),
+  }
+  const result = await runToolLoop({chat, model, system, prompt, tools, eventFields})
   // reviewChunk saves only an answer that fully parses, so the next run asks
   // again after a failure. It still returns the usage of each model call before
   // the failure, because the provider bills those calls.
@@ -129,10 +124,20 @@ export async function reviewChunk({
       error: answer.error,
     }
   }
-  await store
-    .put(key, {findings: answer.findings, usage: result.usage, reads: result.reads})
-    .catch(warnStoreFailure)
-  return {findings: anchor(answer.findings), cached: false, usage: result.usage}
+  const verified = await verifyFindings({
+    findings: answer.findings,
+    prompt,
+    chat,
+    model,
+    tools,
+    eventFields,
+  })
+  const usage = addUsage(result.usage, verified.usage)
+  if (!verified.failed) {
+    const reads = [...result.reads, ...verified.reads]
+    await store.put(key, {findings: verified.findings, usage, reads}).catch(warnStoreFailure)
+  }
+  return {findings: anchor(verified.findings), cached: false, usage}
 }
 
 // An OpenRouter error that is not temporary, such as a bad key, happens again on

@@ -45,6 +45,55 @@ test('reviewPullRequest runs every reviewer on every chunk and anchors findings'
   expect(review.usage.costUsd).toBeCloseTo(0.01 * REVIEWERS.length)
 })
 
+test('reviewChunks saves a finding that its check rejects as not checked', async () => {
+  const store = createMemoryChunkReviewStore()
+  const chat = answering(
+    '{"findings": [{"severity": "high", "title": "Bug", "body": "Breaks", "checked": true, "label": 2}], "confirmed": false, "proof": "Line 1 handles it."}',
+  )
+  const review = () =>
+    reviewPullRequest({
+      files: files(5),
+      reviewers: [REVIEWERS[0]],
+      model: 'vendor/model',
+      description: DESCRIPTION,
+      store,
+      chat,
+      scope: 'test',
+    })
+
+  const first = await review()
+  const second = await review()
+
+  expect(chat).toHaveBeenCalledTimes(2)
+  expect(first.findings.map(({checked}) => checked)).toEqual([false])
+  expect(second.findings.map(({checked}) => checked)).toEqual([false])
+  expect(second.cachedCount).toBe(1)
+})
+
+test('reviewChunks does not save a chunk review whose check fails', async () => {
+  const store = createMemoryChunkReviewStore()
+  const chat = answering(
+    '{"findings": [{"severity": "high", "title": "Bug", "body": "Breaks", "checked": true, "label": 2}]}',
+  )
+  const review = () =>
+    reviewPullRequest({
+      files: files(5),
+      reviewers: [REVIEWERS[0]],
+      model: 'vendor/model',
+      description: DESCRIPTION,
+      store,
+      chat,
+      scope: 'test',
+    })
+
+  const first = await review()
+  await review()
+
+  expect(first.findings.map(({checked}) => checked)).toEqual([false])
+  expect(first.failures).toEqual([])
+  expect(chat).toHaveBeenCalledTimes(4)
+})
+
 test('reviewPullRequest answers a re-run from saved results without calling the model', async () => {
   const store = createMemoryChunkReviewStore()
   const chat = answering(

@@ -26,7 +26,7 @@ const VERIFY_WITH_TOOLS = `The tools read files of the repository at the pull re
 
 const VERIFY_WITHOUT_TOOLS = `You see only the diff piece. When the finding depends on code that you cannot see, "confirmed" is false.`
 
-const verifyAnswerSchema = z.object({confirmed: z.boolean(), proof: z.string()})
+const verifyAnswerSchema = z.object({confirmed: z.boolean(), proof: z.string().trim().min(1)})
 
 // Each finding gets its own tool loop, so one chunk review checks at most this
 // many. The reviewer's limits keep the list short; this bounds the cost when
@@ -116,8 +116,21 @@ export async function verifyFindings({
     findings: verified.map(({finding}) => finding),
     usage: answers.reduce((total, check) => addUsage(total, check.usage), NO_USAGE),
     reads: answers.flatMap((check) => ('reads' in check ? check.reads : [])),
-    ...verified.find((item) => item.failure !== undefined)?.failure,
+    ...firstFailure(verified.flatMap(({failure}) => (failure === undefined ? [] : [failure]))),
   }
+}
+
+interface CheckFailure {
+  error: string
+  retryable: boolean
+}
+
+// One retryable failure makes the chunk review retryable, so a failure that
+// cannot succeed again does not stop the retry of one that can.
+function firstFailure(failures: readonly CheckFailure[]): CheckFailure | undefined {
+  return failures.length === 0
+    ? undefined
+    : {error: failures[0].error, retryable: failures.some(({retryable}) => retryable)}
 }
 
 function wouldPost(finding: ModelFinding): boolean {

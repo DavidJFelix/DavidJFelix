@@ -31,8 +31,8 @@ replaces Warden in this repository. This project started as part of
   2. Run three reviewers (security, correctness, comments) on each chunk.
   3. Check each finding that would post with a second tool loop, at most 5 for each chunk review.
      The check must quote the lines that show the problem. A finding that it rejects is not checked,
-     so it is not posted. When a check fails or does not parse, its finding is not posted and the
-     chunk review is not saved, so the next run checks it again.
+     so it is not posted. When a check fails or does not parse, the review does not post its
+     finding. The chunk review is not saved, so the next run checks it again.
   4. Map findings back to new-file lines. When findings end on the same line, keep the most severe.
   5. Report checked findings at `medium` and above. Fail on a checked finding at `high` and above,
      or when a chunk review fails.

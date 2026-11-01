@@ -101,3 +101,25 @@ test('verifyFindings fails and does not post a finding whose check call fails', 
     retryable: true,
   })
 })
+
+test('verifyFindings fails and does not post a finding whose check gives no proof', async () => {
+  const verified = await verify([finding()], answering('{"confirmed": true, "proof": " "}'))
+
+  expect(verified.findings).toEqual([finding({checked: false})])
+  expect(verified).toMatchObject({error: 'Finding check 1 did not parse', retryable: false})
+})
+
+test('verifyFindings is retryable when any failed check is retryable', async () => {
+  let calls = 0
+  const chat = vi.fn<Chat>(async () => {
+    calls += 1
+    if (calls === 1) {
+      return {content: 'No JSON', toolCalls: [], usage}
+    }
+    throw new OpenRouterError('OpenRouter returned 503: busy', true)
+  })
+
+  const verified = await verify([finding({label: 1}), finding({label: 2})], chat)
+
+  expect(verified).toMatchObject({error: 'Finding check 1 did not parse', retryable: true})
+})

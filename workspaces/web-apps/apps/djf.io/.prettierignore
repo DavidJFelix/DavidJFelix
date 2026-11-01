@@ -1,3 +1,4 @@
-# Blog posts are authored with semantic line breaks (one sentence per line).
+# Blog posts and drafts are authored with semantic line breaks (one sentence per line).
 # Don't let proseWrap rewrap them; prettier covers only doc-style md here.
 src/content/
+src/drafts/

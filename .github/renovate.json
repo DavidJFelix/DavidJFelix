@@ -27,6 +27,15 @@
       "datasourceTemplate": "npm",
       "versioningTemplate": "npm",
       "depTypeTemplate": "catalog"
+    },
+    {
+      "description": "each biome.json and biome.jsonc names a schema version in its $schema URL. Biome prints a schema-mismatch notice on every run when that version is not the CLI version. This manager reads the URL as an @biomejs/biome dependency, so the biome packages group moves the URLs in the same PR as the CLI pins",
+      "customType": "regex",
+      "managerFilePatterns": ["/(^|/)biome\\.jsonc?$/"],
+      "matchStrings": ["\"https://biomejs\\.dev/schemas/(?<currentValue>[^/\"]+)/schema\\.json\""],
+      "depNameTemplate": "@biomejs/biome",
+      "datasourceTemplate": "npm",
+      "versioningTemplate": "npm"
     }
   ],
   "packageRules": [

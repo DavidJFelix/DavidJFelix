@@ -11,8 +11,8 @@
 // (src/alchemy/vectorize/) since v2 doesn't yet ship a first-party
 // Vectorize provider.
 
+import * as Cloudflare from '@alchemy.run/cloudflare'
 import * as Alchemy from 'alchemy'
-import * as Cloudflare from 'alchemy/Cloudflare'
 import * as Effect from 'effect/Effect'
 
 // const UploadsBucket = Cloudflare.R2Bucket('Uploads')

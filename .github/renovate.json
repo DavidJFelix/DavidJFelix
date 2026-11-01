@@ -199,9 +199,20 @@
       "groupName": "testing library packages"
     },
     {
-      "description": "alchemy, the @distilled.cloud provider packages, and effect with its @effect scope must move together: alchemy pins an exact effect release candidate as its peer range, the workspace overrides pin effect to that same version so exactly one copy lands in the tree, and each side alone breaks the other (alchemy beta.78 needed effect rc.115's PascalCase Config constructors while the pinned rc.112 only had the lowercase ones, and the reverse held for the effect bump), so group every update type into a single PR",
-      "matchPackageNames": ["alchemy", "@distilled.cloud/**", "effect", "@effect/**"],
+      "description": "alchemy, its @alchemy.run provider packages, the @distilled.cloud packages, and effect with its @effect scope move together. alchemy 2.0.0-beta.84 moved the Cloudflare and GitHub providers into @alchemy.run/cloudflare and @alchemy.run/github. Each of these declares the exact alchemy version of its release as a peer dependency. The workspace overrides pin effect to the version that f311x uses, so the tree has one effect copy. An update on one side alone can break the other. For example, alchemy beta.78 needed the PascalCase Config constructors of effect rc.115, but the pinned rc.112 had only lowercase ones. Group every update type into a single PR",
+      "matchPackageNames": [
+        "alchemy",
+        "@alchemy.run/**",
+        "@distilled.cloud/**",
+        "effect",
+        "@effect/**"
+      ],
       "groupName": "alchemy packages"
+    },
+    {
+      "description": "effect 4.1 removed the top-level effect/Crypto module. alchemy 2.0.0-beta.84 still imports it from Stack, Util/PlatformServices, and Auth/OAuthFlow, so `alchemy deploy` cannot load the f311x stacks on effect 4.1. tsc does not report the error, because skipLibCheck hides the missing module. Hold effect and @effect below 4.1 until an alchemy release supports effect 4.1",
+      "matchPackageNames": ["effect", "@effect/**"],
+      "allowedVersions": "<4.1.0"
     },
     {
       "description": "the @earendil-works pi packages (pi-coding-agent in the repo-root package.json; pi-ai left with Flue in 2026-08) come from one org and share the pi runtime, so group every update type into a single PR",

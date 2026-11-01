@@ -35,10 +35,6 @@ const addedBadgeClass = css(diffLineBadge, {
   _dark: {bg: '[rgb(7 196 128 / 0.1)]', color: '[#07c480]'},
 })
 
-function Divider() {
-  return <hr className={css({my: '8', maxW: '[80px]', opacity: '0.5'})} />
-}
-
 const EXAMPLE_URLS = [
   'oven-sh/bun/pull/30412',
   'nodejs/node/pull/59805',
@@ -209,46 +205,6 @@ function DiffsHomePage() {
             lines with a delayed first byte.
           </p>
         </div>
-      </section>
-      <section
-        id="home-more"
-        className={css({
-          w: '2xl',
-          maxW: 'screen',
-          '& > * + *': {mt: '4'},
-          px: '5',
-          pb: '8',
-        })}
-      >
-        <Divider />
-        <p
-          className={css({
-            color: 'diffs.muted.foreground',
-            fontSize: 'sm',
-            lineHeight: '[1.25rem]',
-            textWrap: '[pretty]',
-          })}
-        >
-          Powered by Pierre&apos;s open source{' '}
-          <a
-            href="https://trees.software/docs#react-api-filetree"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-link"
-          >
-            FileTree
-          </a>{' '}
-          and{' '}
-          <a
-            href="https://diffs.com/docs#codeview"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-link"
-          >
-            CodeView
-          </a>{' '}
-          components.
-        </p>
       </section>
     </div>
   )

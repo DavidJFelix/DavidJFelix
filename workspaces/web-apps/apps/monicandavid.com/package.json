@@ -29,7 +29,7 @@
     "test:e2e:update": "playwright test --update-snapshots"
   },
   "dependencies": {
-    "@ark-ui/svelte": "^5.22.1",
+    "@ark-ui/svelte": "5.24.3",
     "@davidjfelix/og": "workspace:*",
     "@sentry/browser": "^11.0.0",
     "drizzle-orm": "0.45.4",

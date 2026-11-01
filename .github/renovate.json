@@ -66,6 +66,11 @@
       "allowedVersions": "<0.33.0"
     },
     {
+      "description": "@ark-ui/svelte 5.25.0 ships its dist with the $lib/... imports of its source. The 5.24.3 dist uses relative paths. SvelteKit 3 removed $lib, so the alchemy-state-viewer build fails with module_removed_lib. svelte-check also loses the prop types of the components. Hold @ark-ui/svelte below 5.25.0 until a release uses relative imports again. alchemy-state-viewer and monicandavid.com pin it exactly, so lock file maintenance cannot move it past 5.24.3",
+      "matchPackageNames": ["@ark-ui/svelte"],
+      "allowedVersions": "<5.25.0"
+    },
+    {
       "description": "the bun manager supersedes npm for every package.json at or below a bun.lock (the repo root and the web-apps workspace), and the catalog custom manager reads the web-apps workspaces.catalog, so the npm rule above reaches only the pnpm exercise trees; batch these patch/minor updates into a separate weekly PR, so a web-app breakage does not hold back the exercise bumps. The named groups below override this groupName for their packages, so keep this rule above them",
       "matchUpdateTypes": ["patch", "minor"],
       "matchManagers": ["bun", "custom.jsonata"],

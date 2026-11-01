@@ -1,5 +1,5 @@
 import {z} from 'zod'
-import {isAtLeast, type ModelFinding, REPORT_SEVERITY} from './findings'
+import {bySeverity, isAtLeast, type ModelFinding, REPORT_SEVERITY} from './findings'
 import {
   addUsage,
   type Chat,
@@ -29,8 +29,8 @@ const VERIFY_WITHOUT_TOOLS = `You see only the diff piece. When the finding depe
 const verifyAnswerSchema = z.object({confirmed: z.boolean(), proof: z.string().trim().min(1)})
 
 // Each finding gets its own tool loop, so one chunk review checks at most this
-// many. The reviewer's limits keep the list short; this bounds the cost when
-// they do not.
+// many, the most severe first. The reviewer's limits keep the list short; this
+// bounds the cost when they do not.
 export const MAX_VERIFIED_FINDINGS = 5
 
 export interface VerifyFindingsParams {
@@ -67,7 +67,9 @@ export async function verifyFindings({
   tools,
   eventFields = {},
 }: VerifyFindingsParams): Promise<VerifiedFindings> {
-  const toCheck = new Set(findings.filter(wouldPost).slice(0, MAX_VERIFIED_FINDINGS))
+  const toCheck = new Set(
+    findings.filter(wouldPost).toSorted(bySeverity).slice(0, MAX_VERIFIED_FINDINGS),
+  )
   const system = `${VERIFY_INSTRUCTIONS}\n\n${tools === undefined ? VERIFY_WITHOUT_TOOLS : VERIFY_WITH_TOOLS}`
   const checks = await Promise.all(
     findings.map(async (finding, index) =>

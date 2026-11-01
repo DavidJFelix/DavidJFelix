@@ -116,18 +116,10 @@ export async function reviewChunk({
     }
   }
   const answer = parseModelAnswer(result.text)
-  // The check does not run on an answer with a malformed finding, so its valid
-  // findings are not checked and the review does not post them.
-  if (answer.error !== undefined) {
-    return {
-      findings: anchor(answer.findings.map((finding) => ({...finding, checked: false}))),
-      cached: false,
-      usage: result.usage,
-      error: answer.error,
-    }
-  }
+  // A finding whose label is not in the chunk cannot post, so it is not checked.
+  // The valid findings of an answer with a malformed one are checked too.
   const verified = await verifyFindings({
-    findings: answer.findings,
+    findings: answer.findings.filter(({label}) => rendered.newLineByLabel.has(label)),
     prompt,
     chat,
     model,
@@ -135,13 +127,14 @@ export async function reviewChunk({
     eventFields,
   })
   const usage = addUsage(result.usage, verified.usage)
-  if (verified.error !== undefined) {
+  const error = answer.error ?? verified.error
+  if (error !== undefined) {
     return {
       findings: anchor(verified.findings),
       cached: false,
       usage,
-      error: verified.error,
-      retryable: verified.retryable,
+      error,
+      ...(answer.error === undefined ? {retryable: verified.retryable} : {}),
     }
   }
   const reads = [...result.reads, ...verified.reads]

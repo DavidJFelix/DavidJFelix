@@ -80,8 +80,8 @@ export class OpenRouterError extends Error {
   }
 }
 
-// An OpenRouter error that is not temporary, such as a bad key, happens again on
-// a new attempt.
+// An OpenRouter error that is not temporary, such as a bad key, happens again
+// when the step tries again.
 export function isRetryable(error: unknown): boolean {
   return !(error instanceof OpenRouterError) || error.temporary
 }

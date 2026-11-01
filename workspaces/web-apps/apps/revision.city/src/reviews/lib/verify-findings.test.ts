@@ -123,3 +123,21 @@ test('verifyFindings is retryable when any failed check is retryable', async () 
 
   expect(verified).toMatchObject({error: 'Finding check 1 did not parse', retryable: true})
 })
+
+test('verifyFindings checks the most severe findings within the limit', async () => {
+  const chat = answering('{"confirmed": true, "proof": "Yes."}')
+  const findings = [
+    ...Array.from({length: MAX_VERIFIED_FINDINGS}, (_, index) =>
+      finding({severity: 'medium', label: index + 1}),
+    ),
+    finding({severity: 'critical', label: 9}),
+  ]
+
+  const verified = await verify(findings, chat)
+
+  expect(verified.findings.map(({checked}) => checked)).toEqual([
+    ...Array.from({length: MAX_VERIFIED_FINDINGS - 1}, () => true),
+    false,
+    true,
+  ])
+})

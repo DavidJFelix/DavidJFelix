@@ -298,7 +298,7 @@ test('runReview adds the run to the summary comment', async () => {
   await runReview(runParams({request: github.request, chat: answering([highFinding])}))
 
   const {body} = z.object({body: z.string()}).parse(github.sent(NEW_ISSUE_COMMENT)[0].body)
-  expect(body).toContain(`<!-- revision-city:run ${headSha} `)
+  expect(body).toContain(`<!-- revision-city:run 31 ${headSha} `)
   expect(body).toContain('### `aaaaaaa`: 1 finding, cost $')
   expect(body).toContain('### Findings')
 })

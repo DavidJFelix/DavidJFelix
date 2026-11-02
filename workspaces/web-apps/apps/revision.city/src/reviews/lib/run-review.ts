@@ -240,7 +240,12 @@ export async function runReview({
           notReviewed,
           postedCount: posted.count,
         })
-        const section = formatRunSection({headSha, costUsd: review.usage.costUsd, output})
+        const section = formatRunSection({
+          checkRunId,
+          headSha,
+          costUsd: review.usage.costUsd,
+          output,
+        })
         await updateSummaryComment({...pull, section}).catch((error: unknown) => {
           if (!isLastAttempt) {
             throw error

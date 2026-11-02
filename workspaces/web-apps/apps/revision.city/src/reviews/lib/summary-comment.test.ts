@@ -11,16 +11,18 @@ import {
   updateSummaryComment,
 } from './summary-comment'
 
-const ZERO_WIDTH_SPACE = '​'
+const ZERO_WIDTH_SPACE = '\u200B'
 const firstSha = 'a'.repeat(40)
 const secondSha = 'b'.repeat(40)
 
 const firstRun = formatRunSection({
+  checkRunId: 31,
   headSha: firstSha,
   costUsd: 0.12345,
   output: {title: '1 finding', summary: 'unused', text: '### Findings\n\n- one'},
 })
 const secondRun = formatRunSection({
+  checkRunId: 32,
   headSha: secondSha,
   costUsd: 0.01,
   output: {title: 'No findings', summary: 'unused'},
@@ -34,7 +36,7 @@ test('formatSummaryComment shows each run under a running total', () => {
       '',
       '2 runs on this pull request, total cost $0.1335.',
       '',
-      `<!-- revision-city:run ${firstSha} 0.1235 -->`,
+      `<!-- revision-city:run 31 ${firstSha} 0.1235 -->`,
       '### `aaaaaaa`: 1 finding, cost $0.1235',
       '',
       '<details>',
@@ -45,7 +47,7 @@ test('formatSummaryComment shows each run under a running total', () => {
       '',
       '</details>',
       '',
-      `<!-- revision-city:run ${secondSha} 0.0100 -->`,
+      `<!-- revision-city:run 32 ${secondSha} 0.0100 -->`,
       '### `bbbbbbb`: No findings, cost $0.0100',
     ].join('\n'),
   )
@@ -60,12 +62,13 @@ test('readRunSections reads back the runs of a summary comment', () => {
 
 test('readRunSections does not read a marker that neutralized text holds', () => {
   const forged = formatRunSection({
+    checkRunId: 31,
     headSha: firstSha,
     costUsd: 0,
     output: {
       title: 'No findings',
       summary: 'unused',
-      text: `<${ZERO_WIDTH_SPACE}!-- revision-city:run ${secondSha} 9.0000 -->`,
+      text: `<${ZERO_WIDTH_SPACE}!-- revision-city:run 32 ${secondSha} 9.0000 -->`,
     },
   })
 
@@ -74,6 +77,7 @@ test('readRunSections does not read a marker that neutralized text holds', () =>
 
 test('formatSummaryComment cuts the details of the oldest runs first', () => {
   const longRun = formatRunSection({
+    checkRunId: 31,
     headSha: firstSha,
     costUsd: 1,
     output: {title: '1 finding', summary: 'unused', text: 'x'.repeat(MAX_COMMENT_CHARS / 2)},
@@ -154,4 +158,14 @@ test('updateSummaryComment adds the run to the comment of the app', async () => 
       body: formatSummaryComment([firstRun, secondRun]),
     },
   ])
+})
+
+test('updateSummaryComment does not add a run that the comment has already', async () => {
+  const github = fakeGitHub([
+    {id: 3, body: formatSummaryComment([firstRun, secondRun]), user: {login: APP_BOT_LOGIN}},
+  ])
+
+  await updateSummaryComment({...pull, request: github.request, section: secondRun})
+
+  expect(github.writes()).toEqual([])
 })

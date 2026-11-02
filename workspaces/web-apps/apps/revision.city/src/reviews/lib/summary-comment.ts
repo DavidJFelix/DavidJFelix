@@ -7,10 +7,10 @@ import type {CheckRunOutput} from './review-markdown'
 // comment again and edits it.
 export const SUMMARY_MARKER = '<!-- revision-city:summary -->'
 
-// Each run section starts with a marker line that holds the head and the cost
-// of the run. `neutralizeMarkdown` puts a zero-width space after each "<" in
+// Each run section starts with a marker line that holds the check run id, the
+// head, and the cost of the run. `neutralizeMarkdown` puts a zero-width space after each "<" in
 // model text and file paths, so they cannot add a marker.
-const RUN_MARKER = /^<!-- revision-city:run ([0-9a-f]{40}) (\d+\.\d{4}) -->$/gm
+const RUN_MARKER = /^<!-- revision-city:run (\d+) ([0-9a-f]{40}) (\d+\.\d{4}) -->$/gm
 
 // GitHub accepts at most 65,536 characters in a comment.
 export const MAX_COMMENT_CHARS = 65_000
@@ -21,6 +21,8 @@ const CUT_NOTE = '(Details cut: the comment is longer than GitHub accepts.)'
 const MAX_COMMENT_PAGES = 30
 
 export interface RunSection {
+  // The id of the run's check run. A rerun on the same head has a new one.
+  checkRunId: number
   headSha: string
   costUsd: number
   // The marker line and the heading. A cut keeps them.
@@ -30,18 +32,25 @@ export interface RunSection {
 }
 
 export interface FormatRunSectionParams {
+  checkRunId: number
   headSha: string
   costUsd: number
   output: CheckRunOutput
 }
 
-export function formatRunSection({headSha, costUsd, output}: FormatRunSectionParams): RunSection {
+export function formatRunSection({
+  checkRunId,
+  headSha,
+  costUsd,
+  output,
+}: FormatRunSectionParams): RunSection {
   const cost = costUsd.toFixed(4)
   return {
+    checkRunId,
     headSha,
     costUsd: Number(cost),
     head: [
-      `<!-- revision-city:run ${headSha} ${cost} -->`,
+      `<!-- revision-city:run ${checkRunId} ${headSha} ${cost} -->`,
       `### \`${headSha.slice(0, 7)}\`: ${output.title}, cost $${cost}`,
     ].join('\n'),
     details: output.text === undefined ? '' : `<details>\n\n${output.text}\n\n</details>`,
@@ -55,8 +64,9 @@ export function readRunSections(body: string): RunSection[] {
   return markers.map((marker, index) => {
     const lines = body.slice(marker.index, markers[index + 1]?.index).split('\n')
     return {
-      headSha: marker[1],
-      costUsd: Number(marker[2]),
+      checkRunId: Number(marker[1]),
+      headSha: marker[2],
+      costUsd: Number(marker[3]),
       head: lines.slice(0, 2).join('\n'),
       details: lines.slice(2).join('\n').trim(),
     }
@@ -105,7 +115,9 @@ export interface UpdateSummaryCommentParams extends PullRequestParams {
 }
 
 // Adds the run to the app's summary comment, or posts the comment when the
-// pull request has none yet.
+// pull request has none yet. When the comment has the run already, it does not
+// change the comment, so a retry after a lost response does not add the run
+// again.
 export async function updateSummaryComment({
   request,
   repository,
@@ -131,10 +143,14 @@ export async function updateSummaryComment({
     })
     return
   }
+  const sections = readRunSections(existing.body ?? '')
+  if (sections.some(({checkRunId}) => checkRunId === section.checkRunId)) {
+    return
+  }
   await request({
     method: 'PATCH',
     path: `${repositoryPath(repository)}/issues/comments/${existing.id}`,
-    body: {body: formatSummaryComment([...readRunSections(existing.body ?? ''), section])},
+    body: {body: formatSummaryComment([...sections, section])},
     schema: ignoredResponse,
   })
 }

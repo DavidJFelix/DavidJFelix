@@ -336,3 +336,33 @@ test('runToolLoop takes the text answer when submit_answer has empty arguments',
 
   expect(result).toMatchObject({text: '{"findings": []}'})
 })
+
+test('runToolLoop runs a review again when the token limit cuts a submit_answer call', async () => {
+  const chat = vi
+    .fn<Chat>()
+    .mockResolvedValueOnce({
+      ...callTools(submitAnswer('1', '{"findings": [{"sev')),
+      finishReason: 'length',
+    })
+    .mockResolvedValueOnce(callTools(submitAnswer('2', '{"findings": []}')))
+
+  const result = await runToolLoop({...params, chat, tools: fakeTools()})
+
+  expect(chat).toHaveBeenCalledTimes(2)
+  expect(result).toMatchObject({text: '{"findings": []}'})
+})
+
+test('runToolLoop fails a cut submit_answer call on the second run as cut', async () => {
+  const chat = vi.fn<Chat>(async () => ({
+    ...callTools(submitAnswer('1', '{"findings": [')),
+    finishReason: 'length',
+  }))
+
+  const result = await runToolLoop({...params, chat, tools: fakeTools()})
+
+  expect(result).toEqual({
+    error: new OpenRouterError('Answer cut at the output token limit: 5 output tokens', false),
+    usage: {promptTokens: 20, completionTokens: 10, costUsd: 0.02},
+    cutAtTokenLimit: true,
+  })
+})

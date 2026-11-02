@@ -143,9 +143,14 @@ async function continueToolLoop(state: ToolLoopState): Promise<ToolLoopResult> {
   // A provider that does not support a required tool call can still answer in
   // text, and a submit_answer call with empty arguments does not hide that text.
   const text = submitted?.arguments || reply.content
+  // A last reply that stopped at the token limit counts as cut: a submit_answer
+  // call cut there has arguments that do not parse.
+  if (isLastReply && reply.finishReason === 'length') {
+    const error = text === '' ? describeEmptyAnswer(reply) : describeCutAnswer(reply)
+    return {error, usage, cutAtTokenLimit: true}
+  }
   if (isLastReply && text === '') {
-    const cutAtTokenLimit = reply.toolCalls.length === 0 && reply.finishReason === 'length'
-    return {error: describeEmptyAnswer(reply), usage, ...(cutAtTokenLimit ? {cutAtTokenLimit} : {})}
+    return {error: describeEmptyAnswer(reply), usage}
   }
   if (isLastReply) {
     const reads = new Map(state.reads.map((read) => [read.path, read]))
@@ -196,6 +201,13 @@ function describeEmptyAnswer({toolCalls, finishReason, usage}: ChatReply): OpenR
       : `finish reason ${finishReason ?? 'not given'}`
   return new OpenRouterError(
     `Empty answer: ${reason}, ${usage.completionTokens} output tokens`,
+    false,
+  )
+}
+
+function describeCutAnswer({usage}: ChatReply): OpenRouterError {
+  return new OpenRouterError(
+    `Answer cut at the output token limit: ${usage.completionTokens} output tokens`,
     false,
   )
 }

@@ -1,3 +1,4 @@
+import {z} from 'zod'
 import {type ChunkReviewStore, chunkReviewKey} from './chunk-review-store'
 import {
   anchorFindings,
@@ -155,19 +156,58 @@ interface ParsedModelAnswer {
 }
 
 function parseModelAnswer(text: string): ParsedModelAnswer {
-  try {
-    const answer = extractJson(text, modelAnswerSchema)
-    const findings = answer.findings.flatMap((item) => {
-      const parsed = modelFindingSchema.safeParse(item)
-      return parsed.success ? [parsed.data] : []
-    })
-    const malformedCount = answer.findings.length - findings.length
-    return malformedCount > 0
-      ? {findings, error: `Malformed findings in the answer: ${malformedCount}`}
-      : {findings}
-  } catch {
+  const items = readFindingItems(text)
+  if (items === undefined) {
     return {findings: [], error: describeUnreadableAnswer(text)}
   }
+  const findings = items.flatMap((item) => {
+    const parsed = modelFindingSchema.safeParse(item)
+    return parsed.success ? [parsed.data] : []
+  })
+  const malformedCount = items.length - findings.length
+  return malformedCount > 0
+    ? {findings, error: `Malformed findings in the answer: ${malformedCount}`}
+    : {findings}
+}
+
+// A model can answer with one finding and no findings list around it. That
+// finding counts as a list of one. An answer that the token limit cut can hold
+// a complete finding before the cut, so a cut answer does not count.
+function readFindingItems(text: string): unknown[] | undefined {
+  const answer = tryExtractJson(text, modelAnswerSchema)
+  if (answer !== undefined) {
+    return answer.findings
+  }
+  const finding =
+    findJsonSyntaxError(text) === undefined ? tryExtractJson(text, modelFindingSchema) : undefined
+  return finding === undefined ? undefined : [finding]
+}
+
+function tryExtractJson<Value>(text: string, schema: z.ZodType<Value>): Value | undefined {
+  try {
+    return extractJson(text, schema)
+  } catch {
+    return undefined
+  }
+}
+
+// Keys of a tool call or a chat message that a model wrote as text instead of
+// its answer.
+const TOOL_CALL_KEYS = new Set(['name', 'arguments', 'path', 'query', 'role', 'tool'])
+
+const toolCallTextSchema = z
+  .looseObject({})
+  .refine((object) => Object.keys(object).some((key) => TOOL_CALL_KEYS.has(key)))
+
+const emptyObjectSchema = z.strictObject({})
+
+function describeMissingFindingsList(text: string): string {
+  if (tryExtractJson(text, toolCallTextSchema) !== undefined) {
+    return 'No findings list: the answer is a tool call or a message written as text'
+  }
+  return tryExtractJson(text, emptyObjectSchema) === undefined
+    ? 'No findings list'
+    : 'No findings list: the answer is an empty object'
 }
 
 // The check run shows the first `MAX_FAILURE_CHARS` characters of each failure, so
@@ -177,7 +217,7 @@ const ANSWER_END_CHARS = 40
 
 function describeUnreadableAnswer(text: string): string {
   const reason = hasJsonObjectStart(text)
-    ? (findJsonSyntaxError(text) ?? 'No findings list')
+    ? (findJsonSyntaxError(text) ?? describeMissingFindingsList(text))
     : 'No JSON object'
   const excerpt =
     text.length <= 2 * ANSWER_END_CHARS

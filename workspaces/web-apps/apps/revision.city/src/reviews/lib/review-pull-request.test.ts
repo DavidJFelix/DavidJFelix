@@ -237,12 +237,22 @@ test.each([
     name: 'both ends of a JSON answer with no findings list',
     answer:
       '{"name": "read_file", "arguments": {"path": "workspaces/web-apps/apps/revision.city/src/index.ts"}}',
-    error: String.raw`No findings list. The answer has 99 characters. It starts with "{\"name\": \"read_file\", \"arguments\": {\"pat" and ends with "-apps/apps/revision.city/src/index.ts\"}}".`,
+    error: String.raw`No findings list: the answer is a tool call or a message written as text. The answer has 99 characters. It starts with "{\"name\": \"read_file\", \"arguments\": {\"pat" and ends with "-apps/apps/revision.city/src/index.ts\"}}".`,
   },
   {
     name: 'a missing findings list when a brace in prose comes before the JSON',
     answer: 'Use {x}. {"name": "read_file"}',
-    error: String.raw`No findings list. The answer has 30 characters: "Use {x}. {\"name\": \"read_file\"}".`,
+    error: String.raw`No findings list: the answer is a tool call or a message written as text. The answer has 30 characters: "Use {x}. {\"name\": \"read_file\"}".`,
+  },
+  {
+    name: 'an empty object as the answer',
+    answer: '\n\n  {}',
+    error: String.raw`No findings list: the answer is an empty object. The answer has 6 characters: "\n\n  {}".`,
+  },
+  {
+    name: 'a JSON answer with no findings list and no tool call keys',
+    answer: '{"result": "fine"}',
+    error: String.raw`No findings list. The answer has 18 characters: "{\"result\": \"fine\"}".`,
   },
   {
     name: 'no JSON object when the only braces are in prose',
@@ -686,4 +696,23 @@ test('reviewPullRequest tells the logs which reviewer and chunk each model call 
     run: 1,
     round: 0,
   })
+})
+
+test('reviewPullRequest takes one finding without a findings list as a list of one', async () => {
+  const chat = answering(
+    '\n\n  {"severity": "low", "title": "Bug", "body": "Breaks", "checked": true, "label": 2}',
+  )
+
+  const review = await reviewPullRequest({
+    files: files(5),
+    reviewers: REVIEWERS.slice(0, 1),
+    model: 'vendor/model',
+    description: DESCRIPTION,
+    store: createMemoryChunkReviewStore(),
+    chat,
+    scope: 'test',
+  })
+
+  expect(review.findings.map(({title, endLine}) => [title, endLine])).toEqual([['Bug', 6]])
+  expect(review.failures).toEqual([])
 })

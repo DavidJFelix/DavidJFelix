@@ -127,10 +127,11 @@ comment silently. Edge cases recognized so far:
 
 ## Review
 
-Warden runs `comment-review` (`.agents/skills/comment-review/SKILL.md`) on every non-draft PR
-alongside its built-in skills, and findings follow the sections of this guide. The skill is
-harness-neutral. It lives in `.agents/skills/` like every other skill, so any agent can run it on a
-diff before the PR does. Its rules are this guide's; when the two disagree, fix the guide first.
+Warden runs `comment-review` (`.agents/skills/comment-review/SKILL.md`) on each PR that gets the
+`Warden` label, alongside its built-in skills, and findings follow the sections of this guide. The
+skill is harness-neutral. It lives in `.agents/skills/` like every other skill, so any agent can run
+it on a diff before the PR does. Its rules are this guide's; when the two disagree, fix the guide
+first.
 
 Before each push that adds or edits a comment or Markdown prose, run the skill over the branch diff.
 Fix its findings before you push. Two findings recur, and you can find both yourself:

@@ -14,8 +14,8 @@ the other tool steps back. No two tools should post competing findings on the sa
 
 - Warden landed 2026-06-30 (`warden.toml`, `.depot/workflows/ci-warden.yml`, CLI pinned via mise —
   see the [changelog](../../changelog/2026-06.md)). It runs the built-in `security-review` and
-  `code-review` skills on every non-draft PR (always-on again since 2026-09-19; label-gated from
-  2026-07-05 while the model of the day made per-push reviews expensive).
+  `code-review` skills on each PR that gets the `Warden` label (label-only since 2026-11-02, now
+  that revision.city reviews each push; label-gated from 2026-07-05 and always-on from 2026-09-19).
 - The 2026-06 Depot migration deleted the old `bot-claude-code-review.yml` auto-reviewer, so the
   **automated PR-review slot has been empty since**. Warden refills it — it is a replacement, not a
   duplicate.
@@ -63,14 +63,15 @@ not file removal.
    per-push reviews cost too much on the model of the day; back to always-on 2026-09-19 (every
    non-draft PR, `[defaults.agent] effort = "high"`) now that `WARDEN_MODEL` points at a model cheap
    enough that per-push spend is negligible. PRs from the repo's GitHub App (`djf-renovate[bot]`:
-   Renovate bumps and the changelog roll-up) are excluded by the job guard, since `warden.toml`
-   cannot filter on author. The `Warden` label stays as the re-run / draft / bot-PR opt-in lever.
-   The warden action cannot review a PR from `workflow_dispatch` — it routes dispatch events to
-   schedule-type sweeps — so `ci-warden.yml`'s dispatch job runs the CLI instead, reviewing any
-   branch into the job log rather than onto a PR. Remaining: calibrate `failOn` / `reportOn`; decide
-   where CodeRabbit fits: it currently reviews every PR in parallel with Warden — under evaluation;
-   the thesis says one of them must end up owning posted findings. Confirm no other stale review
-   automation remains. Capture the outcome in the changelog and delete this project directory.
+   Renovate bumps and the changelog roll-up) were excluded by the job guard, since `warden.toml`
+   cannot filter on author. Label-only again from 2026-11-02: revision.city reviews each push, and
+   the `Warden` label is the only way to start a Warden review. The warden action cannot review a PR
+   from `workflow_dispatch` — it routes dispatch events to schedule-type sweeps — so
+   `ci-warden.yml`'s dispatch job runs the CLI instead, reviewing any branch into the job log rather
+   than onto a PR. Remaining: calibrate `failOn` / `reportOn`; decide where CodeRabbit fits: it
+   currently reviews every PR in parallel with Warden — under evaluation; the thesis says one of
+   them must end up owning posted findings. Confirm no other stale review automation remains.
+   Capture the outcome in the changelog and delete this project directory.
 
 ## Non-goals
 

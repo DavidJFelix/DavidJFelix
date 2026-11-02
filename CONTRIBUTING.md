@@ -14,8 +14,8 @@ rules live in [AGENTS.md](AGENTS.md); the detailed style guides live in
    directly)
 5. Before each push that adds or edits a comment or Markdown prose, run the `comment-review` skill
    over the branch diff. The changelog fragment is Markdown prose too. Fix the findings before you
-   push. Warden runs the same skill on each push to a non-draft PR, so each finding it posts costs a
-   review round
+   push. Warden runs the same skill when a PR gets the `Warden` label, so each finding it posts
+   costs a review round
 6. If you touched `.config/mise.toml`, run `mise install` and commit the resulting
    `.config/mise.lock` change in the same PR; if you touched the repo-root `package.json`, run
    `bun install` there and commit the resulting `bun.lock`. CI fails on a stale lockfile either way
@@ -77,19 +77,18 @@ checklist -- whenever you add or touch one.
 [Warden](https://warden.sentry.dev/guide) is the canonical automated reviewer: it runs its built-in
 `security-review` and `code-review` skills plus the repo's own `comment-review` skill
 (`.agents/skills/comment-review/`, the rules of
-[comment-style.md](docs/contributing/comment-style.md)) on every non-draft PR
+[comment-style.md](docs/contributing/comment-style.md)) on each PR that gets the `Warden` label
 (`.depot/workflows/ci-warden.yml`) and owns the inline findings posted to the PR. Everything else
 complements it -- nothing else should post competing PR comments. The
 [review-consolidation](docs/projects/review-consolidation/plan.md) project tracks the direction
 (Warden is the path forward; other tools complement, not compete).
 
-- **Warden (CI gate, always-on).** Every non-draft PR is reviewed on open and on each push; drafts
-  wait until marked ready, and PRs opened by the repo's GitHub App (Renovate bumps, the changelog
-  roll-up) are skipped. Add the `Warden` label to re-run a review on the current head (remove and
-  re-add to re-run again) or to opt a draft or bot PR in. It is the single source of posted inline
-  review comments, and findings at `failOn` severity fail the check. To review a branch without a
-  PR, dispatch `ci-warden.yml` on it (CLI-based; findings land in the job log, not on a PR). Also
-  runs locally: `warden <ref>` with `WARDEN_MODEL` and `WARDEN_OPENROUTER_API_KEY` exported.
+- **Warden (CI gate, on demand).** Nothing runs on open or on push. Add the `Warden` label to a PR,
+  draft or bot PR included, to review its current head; remove and re-add the label to run again. It
+  is the single source of posted inline review comments, and findings at `failOn` severity fail the
+  check. To review a branch without a PR, dispatch `ci-warden.yml` on it (CLI-based; findings land
+  in the job log, not on a PR). Also runs locally: `warden <ref>` with `WARDEN_MODEL` and
+  `WARDEN_OPENROUTER_API_KEY` exported.
 - **Built-in `/code-review` and `/security-review` (local).** Run on-demand before you push, as an
   inner-loop sanity pass. Do **not** pass `--comment` -- Warden owns posted comments, and
   double-posting the same diff is noise and double model spend.

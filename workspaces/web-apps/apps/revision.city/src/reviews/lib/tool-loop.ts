@@ -7,6 +7,8 @@ import {
   type CompletionUsage,
   NO_USAGE,
   OpenRouterError,
+  type ToolCall,
+  type ToolDefinition,
 } from './openrouter'
 import type {FileRead} from './repository-snapshot'
 import {cutText, type ReviewTools, type ToolOutput} from './review-tools'
@@ -21,7 +23,17 @@ const CUT_NOTE =
   '\n(Cut: the tool output limit for this review is used up. Answer with what you have.)'
 
 const ANSWER_NOW_NOTE =
-  'The tools are off now. Write your answer as the JSON that the instructions give. Do not write a tool call. Leave out each finding that you could not check.'
+  'The other tools are off now. Call submit_answer with the JSON answer that the instructions give. Leave out each finding that you could not check.'
+
+// When the tools went off, a model that still wanted to read files wrote its
+// tool calls as text, which does not parse as an answer. With the answer as a
+// tool call, the last round can make the model call this tool and nothing else.
+export const SUBMIT_ANSWER_TOOL: ToolDefinition = {
+  name: 'submit_answer',
+  description:
+    'Submits your answer. The arguments are the JSON answer that the instructions give. Call it once, when you are done.',
+  parameters: {type: 'object', additionalProperties: true},
+}
 
 const NOT_RUN: ToolOutput = {content: 'Not run: too many tool calls in one turn.'}
 
@@ -114,25 +126,30 @@ async function continueToolLoop(state: ToolLoopState): Promise<ToolLoopResult> {
     ...(tools === undefined
       ? {messages}
       : mayCallTools
-        ? {messages, tools: tools.definitions, toolChoice: 'auto'}
+        ? {messages, tools: [...tools.definitions, SUBMIT_ANSWER_TOOL], toolChoice: 'auto'}
         : {
             messages: withAnswerNowNote(messages),
-            tools: tools.definitions,
-            toolChoice: 'none',
+            tools: [SUBMIT_ANSWER_TOOL],
+            toolChoice: 'required',
           }),
   }).catch(toFailure)
   if ('error' in reply) {
     return {error: reply.error, usage: state.usage}
   }
   const usage = addUsage(state.usage, reply.usage)
-  const isLastReply = tools === undefined || !mayCallTools || reply.toolCalls.length === 0
-  if (isLastReply && reply.content === '') {
+  const submitted = reply.toolCalls.find(isSubmitAnswer)
+  const isLastReply =
+    tools === undefined || !mayCallTools || reply.toolCalls.length === 0 || submitted !== undefined
+  // A provider that does not support a required tool call can still answer in
+  // text, and a submit_answer call with empty arguments does not hide that text.
+  const text = submitted?.arguments || reply.content
+  if (isLastReply && text === '') {
     const cutAtTokenLimit = reply.toolCalls.length === 0 && reply.finishReason === 'length'
     return {error: describeEmptyAnswer(reply), usage, ...(cutAtTokenLimit ? {cutAtTokenLimit} : {})}
   }
   if (isLastReply) {
     const reads = new Map(state.reads.map((read) => [read.path, read]))
-    return {text: reply.content, usage, reads: [...reads.values()]}
+    return {text, usage, reads: [...reads.values()]}
   }
   const outputs = await Promise.all(
     reply.toolCalls.map((call, index) =>
@@ -192,6 +209,10 @@ function withAnswerNowNote(messages: readonly ChatMessage[]): ChatMessage[] {
       ? {...message, content: `${message.content}\n\n${ANSWER_NOW_NOTE}`}
       : message,
   )
+}
+
+function isSubmitAnswer(call: ToolCall): boolean {
+  return call.name === SUBMIT_ANSWER_TOOL.name
 }
 
 function toFailure(error: unknown): {error: unknown} {

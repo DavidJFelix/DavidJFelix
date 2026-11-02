@@ -48,7 +48,8 @@ export interface ChatRequest {
   model: string
   messages: readonly ChatMessage[]
   tools?: readonly ToolDefinition[]
-  toolChoice?: 'auto' | 'none'
+  // 'required' makes the model call one of the tools instead of writing text.
+  toolChoice?: 'auto' | 'none' | 'required'
   // Fields that tell which review asked for the call. Only the logs use them;
   // they are not sent to the model.
   eventFields?: Readonly<Record<string, string | number | boolean>>

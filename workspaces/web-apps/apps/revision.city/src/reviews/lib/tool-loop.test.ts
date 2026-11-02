@@ -1,7 +1,7 @@
 import {expect, test, vi} from 'vitest'
 import {type Chat, type ChatReply, OpenRouterError, type ToolCall} from './openrouter'
 import type {ReviewTools, ToolOutput} from './review-tools'
-import {MAX_TOOL_ROUNDS, runToolLoop} from './tool-loop'
+import {MAX_TOOL_ROUNDS, runToolLoop, SUBMIT_ANSWER_TOOL} from './tool-loop'
 
 const usage = {promptTokens: 10, completionTokens: 5, costUsd: 0.01}
 
@@ -28,7 +28,13 @@ function readOutput(call: ToolCall): ToolOutput {
 const params = {model: 'vendor/model', system: 'system', prompt: 'chunk'}
 
 const ANSWER_NOW_NOTE =
-  'The tools are off now. Write your answer as the JSON that the instructions give. Do not write a tool call. Leave out each finding that you could not check.'
+  'The other tools are off now. Call submit_answer with the JSON answer that the instructions give. Leave out each finding that you could not check.'
+
+const submitAnswer = (id: string, answerJson: string): ToolCall => ({
+  id,
+  name: SUBMIT_ANSWER_TOOL.name,
+  arguments: answerJson,
+})
 
 test('runToolLoop makes one call without tools', async () => {
   const chat = vi.fn<Chat>(async () => answer('{"findings": []}'))
@@ -66,7 +72,7 @@ test('runToolLoop runs the tool calls, sends the results back, and records each 
   })
   const lastRequest = chat.mock.calls[2][0]
   expect(lastRequest.toolChoice).toBe('auto')
-  expect(lastRequest.tools).toBe(tools.definitions)
+  expect(lastRequest.tools).toEqual([...tools.definitions, SUBMIT_ANSWER_TOOL])
   expect(lastRequest.messages.slice(2)).toEqual([
     {
       role: 'assistant',
@@ -104,7 +110,8 @@ test('runToolLoop asks for an answer without tools at the end of the last tool r
   const result = await runToolLoop({...params, chat, tools})
 
   expect(chat).toHaveBeenCalledTimes(MAX_TOOL_ROUNDS + 1)
-  expect(chat.mock.calls.at(-1)?.[0].toolChoice).toBe('none')
+  expect(chat.mock.calls.at(-1)?.[0].toolChoice).toBe('required')
+  expect(chat.mock.calls.at(-1)?.[0].tools).toEqual([SUBMIT_ANSWER_TOOL])
   expect(chat.mock.calls.at(-1)?.[0].messages.at(-1)).toEqual({
     role: 'tool',
     toolCallId: '1',
@@ -152,7 +159,7 @@ test('runToolLoop cuts tool output past its budget and then asks for an answer',
     toolCallId: '2',
     content: `${'x'.repeat(18_000)}\n(Cut: the tool output limit for this review is used up. Answer with what you have.)\n\n${ANSWER_NOW_NOTE}`,
   })
-  expect(chat.mock.calls[1][0].toolChoice).toBe('none')
+  expect(chat.mock.calls[1][0].toolChoice).toBe('required')
   // A cut read still counts: the answer may depend on the part the model saw.
   expect(result).toMatchObject({reads: [{path: 'a.ts'}, {path: 'b.ts'}]})
 })
@@ -275,4 +282,57 @@ test('runToolLoop tells the logs the run and the round of each model call', asyn
     {reviewer: 'security', run: 1, round: 1},
     {reviewer: 'security', run: 2, round: 0},
   ])
+})
+
+test('runToolLoop takes the arguments of a submit_answer call as the answer', async () => {
+  const chat = vi
+    .fn<Chat>()
+    .mockResolvedValueOnce(callTools(readCall('1', 'a.ts')))
+    .mockResolvedValueOnce(callTools(readCall('2', 'b.ts'), submitAnswer('3', '{"findings": []}')))
+  const tools = fakeTools()
+
+  const result = await runToolLoop({...params, chat, tools})
+
+  expect(result).toEqual({
+    text: '{"findings": []}',
+    usage: {promptTokens: 20, completionTokens: 10, costUsd: 0.02},
+    reads: [{path: 'a.ts', sha: 'sha-a.ts'}],
+  })
+  expect(tools.run).toHaveBeenCalledTimes(1)
+})
+
+test('runToolLoop takes a submit_answer call on the last round as the answer', async () => {
+  const chat = vi.fn<Chat>(async (request) =>
+    request.toolChoice === 'required'
+      ? callTools(submitAnswer('9', '{"findings": []}'))
+      : callTools(readCall('1', 'a.ts')),
+  )
+
+  const result = await runToolLoop({...params, chat, tools: fakeTools()})
+
+  expect(chat).toHaveBeenCalledTimes(MAX_TOOL_ROUNDS + 1)
+  expect(result).toMatchObject({text: '{"findings": []}'})
+})
+
+test('runToolLoop takes a text answer on the last round when the provider does not force the tool call', async () => {
+  const chat = vi.fn<Chat>(async (request) =>
+    request.toolChoice === 'required'
+      ? answer('{"findings": []}')
+      : callTools(readCall('1', 'a.ts')),
+  )
+
+  const result = await runToolLoop({...params, chat, tools: fakeTools()})
+
+  expect(result).toMatchObject({text: '{"findings": []}'})
+})
+
+test('runToolLoop takes the text answer when submit_answer has empty arguments', async () => {
+  const chat = vi.fn<Chat>(async () => ({
+    ...answer('{"findings": []}'),
+    toolCalls: [submitAnswer('1', '')],
+  }))
+
+  const result = await runToolLoop({...params, chat, tools: fakeTools()})
+
+  expect(result).toMatchObject({text: '{"findings": []}'})
 })

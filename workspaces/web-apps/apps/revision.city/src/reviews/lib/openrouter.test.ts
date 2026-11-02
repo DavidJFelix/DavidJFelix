@@ -163,6 +163,16 @@ test('createOpenRouterChat lets the model choose tools when no choice is given',
   expect(sentBody(fetchStub)).not.toHaveProperty('response_format')
 })
 
+test('createOpenRouterChat sends a required tool choice without JSON mode', async () => {
+  const fetchStub = vi.fn<Fetch>(async () => Response.json({choices: [{message: {content: '{}'}}]}))
+  const chat = createOpenRouterChat({apiKey: 'key', fetch: fetchStub})
+
+  await chat({...request, tools: [], toolChoice: 'required'})
+
+  expect(sentBody(fetchStub)).toMatchObject({tool_choice: 'required'})
+  expect(sentBody(fetchStub)).not.toHaveProperty('response_format')
+})
+
 test('createOpenRouterChat reports zero usage when the response has none', async () => {
   const chat = createOpenRouterChat({
     apiKey: 'key',

@@ -487,6 +487,7 @@ test('reviewPullRequest gives reviewers tools and re-reviews a chunk when a file
     'read_file',
     'list_directory',
     'read_definition',
+    'submit_answer',
   ])
   expect(request.messages[0].content).toContain('the tools read files of the repository')
   expect(chat.mock.calls[1][0].messages.at(-1)).toEqual({

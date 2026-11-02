@@ -325,3 +325,14 @@ test('runToolLoop takes a text answer on the last round when the provider does n
 
   expect(result).toMatchObject({text: '{"findings": []}'})
 })
+
+test('runToolLoop takes the text answer when submit_answer has empty arguments', async () => {
+  const chat = vi.fn<Chat>(async () => ({
+    ...answer('{"findings": []}'),
+    toolCalls: [submitAnswer('1', '')],
+  }))
+
+  const result = await runToolLoop({...params, chat, tools: fakeTools()})
+
+  expect(result).toMatchObject({text: '{"findings": []}'})
+})

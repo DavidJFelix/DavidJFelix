@@ -140,8 +140,9 @@ async function continueToolLoop(state: ToolLoopState): Promise<ToolLoopResult> {
   const submitted = reply.toolCalls.find(isSubmitAnswer)
   const isLastReply =
     tools === undefined || !mayCallTools || reply.toolCalls.length === 0 || submitted !== undefined
-  // A provider that does not support a required tool call can still answer in text.
-  const text = submitted?.arguments ?? reply.content
+  // A provider that does not support a required tool call can still answer in
+  // text, and a submit_answer call with empty arguments does not hide that text.
+  const text = submitted?.arguments || reply.content
   if (isLastReply && text === '') {
     const cutAtTokenLimit = reply.toolCalls.length === 0 && reply.finishReason === 'length'
     return {error: describeEmptyAnswer(reply), usage, ...(cutAtTokenLimit ? {cutAtTokenLimit} : {})}

@@ -136,9 +136,10 @@ const COST_LINES = [
   '',
   '### Cost per chunk review',
   '',
-  ...REVIEWERS.map(
-    (reviewer) => `- $0.0100 \`src/a.ts\` (${reviewer.id}): 10 prompt tokens, 5 completion tokens`,
-  ),
+  '| Cost | Chunk | Reviewer | Prompt tokens | Completion tokens |',
+  '| ---: | --- | --- | ---: | ---: |',
+  `| **$${(0.01 * REVIEWERS.length).toFixed(4)}** | **Total** | | **${10 * REVIEWERS.length}** | **${5 * REVIEWERS.length}** |`,
+  ...REVIEWERS.map((reviewer) => `| $0.0100 | \`src/a.ts\` | ${reviewer.id} | 10 | 5 |`),
 ]
 
 // The same answer serves the chunk review and the check of each finding.

@@ -257,14 +257,15 @@ test('formatCheckRunOutput cuts a list longer than a check run can show', () => 
   )
 })
 
-test('formatCheckRunOutput lists the cost of each chunk review last, most expensive first', () => {
+test('formatCheckRunOutput puts the cost of each chunk review last in a table, total first', () => {
   const output = formatCheckRunOutput({
     outcome: {reported: [], unchecked: [], failed: false},
     review: {
       ...review,
+      usage: {promptTokens: 5200, completionTokens: 390, costUsd: 0.0123},
       costs: [
         {
-          path: 'src/a.ts',
+          path: 'a|b.ts',
           reviewerId: 'security',
           cached: true,
           usage: {promptTokens: 0, completionTokens: 0, costUsd: 0},
@@ -296,9 +297,12 @@ test('formatCheckRunOutput lists the cost of each chunk review last, most expens
       '',
       '### Cost per chunk review',
       '',
-      '- $0.0081 `src/b.ts` part 2 (comments): 1200 prompt tokens, 300 completion tokens',
-      `- $0.0042 \`src/@${ZERO_WIDTH_SPACE}c.ts\` (security): 4000 prompt tokens, 90 completion tokens`,
-      '- $0.0000 `src/a.ts` (security): saved result',
+      '| Cost | Chunk | Reviewer | Prompt tokens | Completion tokens |',
+      '| ---: | --- | --- | ---: | ---: |',
+      '| **$0.0123** | **Total** | | **5,200** | **390** |',
+      '| $0.0081 | `src/b.ts` part 2 | comments | 1,200 | 300 |',
+      `| $0.0042 | \`src/@${ZERO_WIDTH_SPACE}c.ts\` | security | 4,000 | 90 |`,
+      '| $0.0000 | `a\\|b.ts` | security | saved result |  |',
     ].join('\n'),
   )
 })

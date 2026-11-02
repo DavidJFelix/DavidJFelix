@@ -8,6 +8,13 @@
       "when": 1791660743124,
       "tag": "0000_chunk-reviews",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1793645688359,
+      "tag": "0001_summary-comment-locks",
+      "breakpoints": true
     }
   ]
 }

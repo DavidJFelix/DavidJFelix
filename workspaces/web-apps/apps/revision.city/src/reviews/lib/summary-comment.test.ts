@@ -10,6 +10,7 @@ import {
   SUMMARY_MARKER,
   updateSummaryComment,
 } from './summary-comment'
+import {createMemorySummaryCommentLock} from './summary-comment-lock'
 
 const ZERO_WIDTH_SPACE = '\u200B'
 const firstSha = 'a'.repeat(40)
@@ -126,6 +127,7 @@ function fakeGitHub(comments: unknown[]) {
 }
 
 const pull = {repository: {owner: 'acme', name: 'repo'}, pullNumber: 7}
+const unlocked = () => ({lock: createMemorySummaryCommentLock()})
 
 test('updateSummaryComment posts the comment when the pull request has none', async () => {
   const github = fakeGitHub([
@@ -133,7 +135,7 @@ test('updateSummaryComment posts the comment when the pull request has none', as
     {id: 2, body: `${SUMMARY_MARKER} copied by a person`, user: {login: 'someone'}},
   ])
 
-  await updateSummaryComment({...pull, request: github.request, section: firstRun})
+  await updateSummaryComment({...pull, ...unlocked(), request: github.request, section: firstRun})
 
   expect(github.writes()).toEqual([
     {
@@ -149,7 +151,7 @@ test('updateSummaryComment adds the run to the comment of the app', async () => 
     {id: 3, body: formatSummaryComment([firstRun]), user: {login: APP_BOT_LOGIN}},
   ])
 
-  await updateSummaryComment({...pull, request: github.request, section: secondRun})
+  await updateSummaryComment({...pull, ...unlocked(), request: github.request, section: secondRun})
 
   expect(github.writes()).toEqual([
     {
@@ -165,7 +167,30 @@ test('updateSummaryComment does not add a run that the comment has already', asy
     {id: 3, body: formatSummaryComment([firstRun, secondRun]), user: {login: APP_BOT_LOGIN}},
   ])
 
-  await updateSummaryComment({...pull, request: github.request, section: secondRun})
+  await updateSummaryComment({...pull, ...unlocked(), request: github.request, section: secondRun})
 
   expect(github.writes()).toEqual([])
+})
+
+test('updateSummaryComment throws and writes nothing while another run holds the lock', async () => {
+  const github = fakeGitHub([])
+  const lock = createMemorySummaryCommentLock()
+  await lock.acquire({pullRequest: 'acme/repo#7', holder: 'check-run:30'})
+
+  await expect(
+    updateSummaryComment({...pull, lock, request: github.request, section: firstRun}),
+  ).rejects.toThrow('Another run is editing the summary comment')
+  expect(github.writes()).toEqual([])
+})
+
+test('updateSummaryComment releases the lock after a failed write', async () => {
+  const lock = createMemorySummaryCommentLock()
+  const request: GitHubRequest = async () => {
+    throw new Error('GitHub is down')
+  }
+
+  await expect(updateSummaryComment({...pull, lock, request, section: firstRun})).rejects.toThrow(
+    'GitHub is down',
+  )
+  expect(await lock.acquire({pullRequest: 'acme/repo#7', holder: 'check-run:30'})).toBe(true)
 })

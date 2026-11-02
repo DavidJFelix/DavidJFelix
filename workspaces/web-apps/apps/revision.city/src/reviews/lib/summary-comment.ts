@@ -2,6 +2,7 @@ import {z} from 'zod'
 import {listAllPages, type PullRequestParams, repositoryPath} from './github-api'
 import {APP_BOT_LOGIN} from './publish-review'
 import type {CheckRunOutput} from './review-markdown'
+import type {SummaryCommentLock} from './summary-comment-lock'
 
 // The app's summary comment starts with this marker, so a run finds the
 // comment again and edits it.
@@ -112,18 +113,39 @@ const ignoredResponse = z.unknown()
 
 export interface UpdateSummaryCommentParams extends PullRequestParams {
   section: RunSection
+  lock: SummaryCommentLock
 }
 
 // Adds the run to the app's summary comment, or posts the comment when the
-// pull request has none yet. When the comment has the run already, it does not
-// change the comment, so a retry after a lost response does not add the run
-// again.
+// pull request has none yet. The lock keeps two runs from editing the comment
+// at the same time. When it is held, this throws, so that the step tries again
+// later. When the comment has the run already, it does not change the comment,
+// so a retry after a lost response does not add the run again.
 export async function updateSummaryComment({
+  lock,
+  ...params
+}: UpdateSummaryCommentParams): Promise<void> {
+  const lockParams = {
+    pullRequest: `${params.repository.owner}/${params.repository.name}#${params.pullNumber}`,
+    holder: `check-run:${params.section.checkRunId}`,
+  }
+  if (!(await lock.acquire(lockParams))) {
+    throw new Error('Another run is editing the summary comment')
+  }
+  try {
+    await writeSummaryComment(params)
+  } finally {
+    // A failed release only delays the next run until the lease expires.
+    await lock.release(lockParams).catch(() => undefined)
+  }
+}
+
+async function writeSummaryComment({
   request,
   repository,
   pullNumber,
   section,
-}: UpdateSummaryCommentParams): Promise<void> {
+}: Omit<UpdateSummaryCommentParams, 'lock'>): Promise<void> {
   const issuePath = `${repositoryPath(repository)}/issues/${pullNumber}/comments`
   const comments = await listAllPages({
     request,

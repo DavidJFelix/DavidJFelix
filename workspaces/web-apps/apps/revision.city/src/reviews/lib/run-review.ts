@@ -28,6 +28,7 @@ import {
 import {REVIEWERS} from './reviewers'
 import {OVER_LIMIT_REASON, selectReviewFiles} from './select-review-files'
 import {formatRunSection, updateSummaryComment} from './summary-comment'
+import type {SummaryCommentLock} from './summary-comment-lock'
 import type {ReviewRunParams} from './webhook'
 import {type LogWideEvent, logWideEvent, type WideEventFields, withChatEvents} from './wide-event'
 
@@ -63,6 +64,7 @@ export interface RunReviewParams extends ReviewRunParams {
   request: GitHubRequest
   chat: Chat
   store: ChunkReviewStore
+  summaryCommentLock: SummaryCommentLock
   model: string
   log?: LogWideEvent
 }
@@ -78,6 +80,7 @@ export async function runReview({
   request,
   chat: baseChat,
   store,
+  summaryCommentLock,
   model,
   log: unsafeLog = logWideEvent,
 }: RunReviewParams): Promise<void> {
@@ -246,12 +249,14 @@ export async function runReview({
           costUsd: review.usage.costUsd,
           output,
         })
-        await updateSummaryComment({...pull, section}).catch((error: unknown) => {
-          if (!isLastAttempt) {
-            throw error
-          }
-          console.warn('Could not update the summary comment', {error: String(error)})
-        })
+        await updateSummaryComment({...pull, section, lock: summaryCommentLock}).catch(
+          (error: unknown) => {
+            if (!isLastAttempt) {
+              throw error
+            }
+            console.warn('Could not update the summary comment', {error: String(error)})
+          },
+        )
         return null
       })
     }

@@ -7,6 +7,7 @@ import {GitHubApiError, type GitHubRequest} from './github-api'
 import {type Chat, OpenRouterError} from './openrouter'
 import {REVIEWERS} from './reviewers'
 import {type RunReviewParams, type RunStep, runReview} from './run-review'
+import {createMemorySummaryCommentLock} from './summary-comment-lock'
 import type {LogWideEvent, WideEvent} from './wide-event'
 
 const headSha = 'a'.repeat(40)
@@ -190,6 +191,7 @@ function runParams(changes: Partial<RunReviewParams> = {}): RunReviewParams {
     request: fakeGitHub().request,
     chat: answering([]),
     store: createMemoryChunkReviewStore(),
+    summaryCommentLock: createMemorySummaryCommentLock(),
     model: 'vendor/model',
     log: () => {},
     ...changes,
@@ -319,6 +321,21 @@ test('runReview retries the summary comment, then only warns', async () => {
   ])
   expect(warn).toHaveBeenCalledWith('Could not update the summary comment', {
     error: 'Error: GitHub is down',
+  })
+  warn.mockRestore()
+})
+
+test('runReview waits for a run that holds the summary comment lock, then only warns', async () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+  const github = fakeGitHub()
+  const summaryCommentLock = createMemorySummaryCommentLock()
+  await summaryCommentLock.acquire({pullRequest: 'acme/repo#7', holder: 'check-run:30'})
+
+  await runReview(runParams({request: github.request, step: retryingStep, summaryCommentLock}))
+
+  expect(github.sent(ISSUE_COMMENTS)).toEqual([])
+  expect(warn).toHaveBeenCalledWith('Could not update the summary comment', {
+    error: 'Error: Another run is editing the summary comment',
   })
   warn.mockRestore()
 })

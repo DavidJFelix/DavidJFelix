@@ -5,4 +5,6 @@ comment in place. A section shows the commit, the findings, and the cost table o
 of the comment shows the number of runs and their total cost. When the comment gets too long for
 GitHub, the oldest runs lose their details first and keep their heading and cost. A failed comment
 update only logs a warning and does not fail the review. Each section holds the id of its check run,
-so a retry after a lost response does not add the run again.
+so a retry after a lost response does not add the run again. A lock in D1 (the
+`summary_comment_locks` table, with a 60-second lease) lets one run at a time edit the comment.
+While another run holds it, the step tries again later.

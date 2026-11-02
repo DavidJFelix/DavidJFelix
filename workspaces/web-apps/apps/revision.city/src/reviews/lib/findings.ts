@@ -108,7 +108,7 @@ function clip(text: string, maxLength: number): string {
   return text.length <= maxLength ? text : `${text.slice(0, maxLength - 3)}...`
 }
 
-function bySeverity(a: Finding, b: Finding): number {
+export function bySeverity(a: {severity: Severity}, b: {severity: Severity}): number {
   return SEVERITIES.indexOf(a.severity) - SEVERITIES.indexOf(b.severity)
 }
 

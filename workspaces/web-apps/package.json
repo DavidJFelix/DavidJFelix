@@ -42,6 +42,7 @@
   "overrides": {
     "rolldown": "1.2.15",
     "@effect/platform-node-shared": "4.0.6",
+    "@effect/sql-d1": "4.0.6",
     "effect": "4.0.6"
   },
   "trustedDependencies": [

@@ -45,6 +45,57 @@ test('reviewPullRequest runs every reviewer on every chunk and anchors findings'
   expect(review.usage.costUsd).toBeCloseTo(0.01 * REVIEWERS.length)
 })
 
+test('reviewChunks saves a finding that its check rejects as not checked', async () => {
+  const store = createMemoryChunkReviewStore()
+  const chat = answering(
+    '{"findings": [{"severity": "high", "title": "Bug", "body": "Breaks", "checked": true, "label": 2}], "confirmed": false, "proof": "Line 1 handles it."}',
+  )
+  const review = () =>
+    reviewPullRequest({
+      files: files(5),
+      reviewers: [REVIEWERS[0]],
+      model: 'vendor/model',
+      description: DESCRIPTION,
+      store,
+      chat,
+      scope: 'test',
+    })
+
+  const first = await review()
+  const second = await review()
+
+  expect(chat).toHaveBeenCalledTimes(2)
+  expect(first.findings.map(({checked}) => checked)).toEqual([false])
+  expect(second.findings.map(({checked}) => checked)).toEqual([false])
+  expect(second.cachedCount).toBe(1)
+})
+
+test('reviewChunks reports and does not save a chunk review whose check fails', async () => {
+  const store = createMemoryChunkReviewStore()
+  const chat = answering(
+    '{"findings": [{"severity": "high", "title": "Bug", "body": "Breaks", "checked": true, "label": 2}]}',
+  )
+  const review = () =>
+    reviewPullRequest({
+      files: files(5),
+      reviewers: [REVIEWERS[0]],
+      model: 'vendor/model',
+      description: DESCRIPTION,
+      store,
+      chat,
+      scope: 'test',
+    })
+
+  const first = await review()
+  await review()
+
+  expect(first.findings.map(({checked}) => checked)).toEqual([false])
+  expect(first.failures).toEqual([
+    {path: 'a.ts', reviewerId: REVIEWERS[0].id, error: 'Finding check 1 did not parse'},
+  ])
+  expect(chat).toHaveBeenCalledTimes(4)
+})
+
 test('reviewPullRequest answers a re-run from saved results without calling the model', async () => {
   const store = createMemoryChunkReviewStore()
   const chat = answering(
@@ -231,10 +282,10 @@ test('reviewPullRequest reads the answer after other JSON that the model quotes'
   expect(review.findings.map((finding) => finding.endLine)).toEqual([6])
 })
 
-test('reviewPullRequest keeps the valid findings of an answer with a malformed one', async () => {
+test('reviewPullRequest checks the valid findings of an answer with a malformed one', async () => {
   const store = createMemoryChunkReviewStore()
   const chat = answering(
-    '{"findings": [{"severity": "high", "title": "Bug", "body": "Breaks", "label": 2}, {"severity": "high", "title": "", "body": "No title", "label": 0}]}',
+    '{"findings": [{"severity": "high", "title": "Bug", "body": "Breaks", "checked": true, "label": 2}, {"severity": "high", "title": "", "body": "No title", "label": 0}], "confirmed": true, "proof": "Line 2 adds it."}',
   )
   const options = {
     files: files(5),
@@ -247,13 +298,33 @@ test('reviewPullRequest keeps the valid findings of an answer with a malformed o
 
   const review = await reviewPullRequest({...options, chat})
 
-  expect(review.findings.map((finding) => finding.endLine)).toEqual([6])
+  expect(review.findings.map(({endLine, checked}) => [endLine, checked])).toEqual([[6, true]])
   expect(review.failures).toEqual([
     {path: 'a.ts', reviewerId: 'security', error: 'Malformed findings in the answer: 1'},
   ])
   chat.mockClear()
   await reviewPullRequest({...options, chat})
+  expect(chat).toHaveBeenCalledTimes(2)
+})
+
+test('reviewChunks does not check a finding whose label is not in the chunk', async () => {
+  const chat = answering(
+    '{"findings": [{"severity": "high", "title": "Bug", "body": "Breaks", "checked": true, "label": 9}]}',
+  )
+
+  const review = await reviewPullRequest({
+    files: files(5),
+    reviewers: [REVIEWERS[0]],
+    model: 'vendor/model',
+    description: DESCRIPTION,
+    store: createMemoryChunkReviewStore(),
+    chat,
+    scope: 'test',
+  })
+
   expect(chat).toHaveBeenCalledTimes(1)
+  expect(review.findings).toEqual([])
+  expect(review.failures).toEqual([])
 })
 
 test('reviewPullRequest reviews and reports findings when the store fails', async () => {

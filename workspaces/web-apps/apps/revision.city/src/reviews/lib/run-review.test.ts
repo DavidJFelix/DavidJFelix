@@ -141,10 +141,18 @@ const COST_LINES = [
   ),
 ]
 
+// The same answer serves the chunk review and the check of each finding.
 const answering = (findings: object[]) =>
-  vi.fn<Chat>(async () => ({content: JSON.stringify({findings}), toolCalls: [], usage}))
+  vi.fn<Chat>(async () => ({
+    content: JSON.stringify({findings, confirmed: true, proof: 'Line 2 adds it.'}),
+    toolCalls: [],
+    usage,
+  }))
 
 const highFinding = {severity: 'high', title: 'Bug', body: 'Breaks', checked: true, label: 2}
+
+// Each reviewer reports the finding, and a second call checks it.
+const CALLS_WITH_CHECKED_FINDING = 2 * REVIEWERS.length
 
 function recordingStep() {
   const names: string[] = []
@@ -198,7 +206,7 @@ test('runReview reviews the head, posts the findings, and fails the check on a h
     'complete check run',
     'log failure run',
   ])
-  expect(chat).toHaveBeenCalledTimes(REVIEWERS.length)
+  expect(chat).toHaveBeenCalledTimes(CALLS_WITH_CHECKED_FINDING)
   expect(github.sent(CHECK_RUNS)).toHaveLength(1)
   // Every reviewer flagged the same line, so one comment is posted.
   expect(github.sent(REVIEWS)[0].body).toMatchObject({
@@ -381,7 +389,7 @@ test('runReview reuses saved chunk reviews in the same installation', async () =
   expect(chat).not.toHaveBeenCalled()
 
   await runReview(runParams({store, chat, installationId: 6}))
-  expect(chat).toHaveBeenCalledTimes(REVIEWERS.length)
+  expect(chat).toHaveBeenCalledTimes(CALLS_WITH_CHECKED_FINDING)
 })
 
 test('runReview reviews the current head when a label asked for the review', async () => {
@@ -735,7 +743,7 @@ test('runReview logs one run event with the outcome and counts of the review', a
       postedCount: 1,
     }),
   ])
-  expect(named('model call')).toHaveLength(REVIEWERS.length)
+  expect(named('model call')).toHaveLength(CALLS_WITH_CHECKED_FINDING)
   expect(named('model call')[0]).toMatchObject({
     pullNumber: 7,
     headSha,

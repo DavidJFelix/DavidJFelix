@@ -1,0 +1,9 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.6.4/schema.json",
+  "extends": ["../../web-apps/biome.jsonc"],
+  // The web-apps config leaves JS, CSS, and JSON to oxfmt. This project does
+  // not use oxfmt, so Biome formats those files here.
+  "formatter": {
+    "includes": ["**/*.js", "**/*.jsx", "**/*.css", "**/*.json", "**/*.jsonc"]
+  }
+}

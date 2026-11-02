@@ -162,10 +162,7 @@ export function formatCheckRunOutput({
     ),
     section('Not checked, so not posted', outcome.unchecked.map(findingLine)),
     // Last, so that a cut removes the cheapest chunk reviews first.
-    section(
-      'Cost per chunk review',
-      review.costs.toSorted((a, b) => b.usage.costUsd - a.usage.costUsd).map(costLine),
-    ),
+    section('Cost per chunk review', costTable(review)),
   ].filter((text) => text !== '')
   return {
     title: counts.length > 0 ? counts.join(', ') : 'No findings',
@@ -178,12 +175,38 @@ export function formatCheckRunOutput({
   }
 }
 
-function costLine({path, part, reviewerId, cached, usage}: ChunkReviewCost): string {
-  const chunk = `${codeSpan(oneLine(path))}${part === undefined ? '' : ` part ${part}`} (${reviewerId})`
-  const detail = cached
-    ? 'saved result'
-    : `${usage.promptTokens} prompt tokens, ${usage.completionTokens} completion tokens`
-  return `- $${usage.costUsd.toFixed(4)} ${chunk}: ${detail}`
+// The total row goes first, so that a cut removes the cheapest chunk reviews
+// and keeps the total.
+function costTable({usage, costs}: PullRequestReview): string[] {
+  if (costs.length === 0) {
+    return []
+  }
+  return [
+    '| Cost | Chunk | Reviewer | Prompt tokens | Completion tokens |',
+    '| ---: | --- | --- | ---: | ---: |',
+    `| **$${usage.costUsd.toFixed(4)}** | **Total** | | **${tokenCount(usage.promptTokens)}** | **${tokenCount(usage.completionTokens)}** |`,
+    ...costs.toSorted((a, b) => b.usage.costUsd - a.usage.costUsd).map(costRow),
+  ]
+}
+
+function costRow({path, part, reviewerId, cached, usage}: ChunkReviewCost): string {
+  const chunk = `${escapeTableText(oneLine(path))}${part === undefined ? '' : ` part ${part}`}`
+  const tokens = cached
+    ? ['saved result', '']
+    : [tokenCount(usage.promptTokens), tokenCount(usage.completionTokens)]
+  return `| $${usage.costUsd.toFixed(4)} | ${chunk} | ${reviewerId} | ${tokens.join(' | ')} |`
+}
+
+// GitHub ends a table cell at each "|" that a backslash does not escape, also
+// in a code span. A code span cannot escape a backslash, so the path "a\|b"
+// escapes to "a\\|b", and its "|" still ends the cell. Plain text with a
+// backslash before each punctuation character shows the text as it is.
+function escapeTableText(text: string): string {
+  return text.replaceAll(/[!-/:-@[-`{-~]/g, '\\$&')
+}
+
+function tokenCount(count: number): string {
+  return count.toLocaleString('en-US')
 }
 
 function section(heading: string, lines: readonly string[]): string {

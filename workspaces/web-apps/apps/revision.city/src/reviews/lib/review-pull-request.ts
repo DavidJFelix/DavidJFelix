@@ -13,8 +13,8 @@ import {
   extractJson,
   findJsonSyntaxError,
   hasJsonObjectStart,
+  isRetryable,
   NO_USAGE,
-  OpenRouterError,
 } from './openrouter'
 import {selectGuides} from './repository-guides'
 import {type RepositorySnapshot, readsStillMatch} from './repository-snapshot'
@@ -29,6 +29,7 @@ import {
 import {createReviewTools} from './review-tools'
 import {buildSystemPrompt, REVIEWERS, type Reviewer} from './reviewers'
 import {runToolLoop} from './tool-loop'
+import {verifyFindings} from './verify-findings'
 
 export interface ChunkReviewContext {
   model: string
@@ -96,21 +97,15 @@ export async function reviewChunk({
   if (saved && readsStillMatch(saved.reads, headSnapshot)) {
     return {findings: anchor(saved.findings), cached: true, usage: NO_USAGE}
   }
-  const result = await runToolLoop({
-    chat,
-    model,
-    system,
-    prompt,
-    tools,
-    eventFields: {
-      reviewer: reviewer.id,
-      path: chunk.path,
-      chunkLines: chunk.hunks.reduce((total, hunk) => total + hunk.lines.length, 0),
-    },
-  })
-  // reviewChunk saves only an answer that fully parses, so the next run asks
-  // again after a failure. It still returns the usage of each model call before
-  // the failure, because the provider bills those calls.
+  const eventFields = {
+    reviewer: reviewer.id,
+    path: chunk.path,
+    chunkLines: chunk.hunks.reduce((total, hunk) => total + hunk.lines.length, 0),
+  }
+  const result = await runToolLoop({chat, model, system, prompt, tools, eventFields})
+  // reviewChunk saves only an answer that fully parses and whose checks did not
+  // fail, so the next run asks again after a failure. It still returns the usage
+  // of each model call before the failure, because the provider bills those calls.
   if ('error' in result) {
     return {
       findings: [],
@@ -121,24 +116,30 @@ export async function reviewChunk({
     }
   }
   const answer = parseModelAnswer(result.text)
-  if (answer.error !== undefined) {
+  // A finding whose label is not in the chunk cannot post, so it is not checked.
+  // The valid findings of an answer with a malformed one are checked too.
+  const verified = await verifyFindings({
+    findings: answer.findings.filter(({label}) => rendered.newLineByLabel.has(label)),
+    prompt,
+    chat,
+    model,
+    tools,
+    eventFields,
+  })
+  const usage = addUsage(result.usage, verified.usage)
+  const error = answer.error ?? verified.error
+  if (error !== undefined) {
     return {
-      findings: anchor(answer.findings),
+      findings: anchor(verified.findings),
       cached: false,
-      usage: result.usage,
-      error: answer.error,
+      usage,
+      error,
+      ...(answer.error === undefined ? {retryable: verified.retryable} : {}),
     }
   }
-  await store
-    .put(key, {findings: answer.findings, usage: result.usage, reads: result.reads})
-    .catch(warnStoreFailure)
-  return {findings: anchor(answer.findings), cached: false, usage: result.usage}
-}
-
-// An OpenRouter error that is not temporary, such as a bad key, happens again on
-// a new attempt.
-function isRetryable(error: unknown): boolean {
-  return !(error instanceof OpenRouterError) || error.temporary
+  const reads = [...result.reads, ...verified.reads]
+  await store.put(key, {findings: verified.findings, usage, reads}).catch(warnStoreFailure)
+  return {findings: anchor(verified.findings), cached: false, usage}
 }
 
 const STORE_FAILURE_LOG_MESSAGE = 'Chunk review store failed; the review continues without it'

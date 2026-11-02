@@ -29,8 +29,12 @@ replaces Warden in this repository. This project started as part of
 - **Engine** (`src/reviews/lib/`):
   1. Split each file's patch into chunks of up to 200 diff lines.
   2. Run three reviewers (security, correctness, comments) on each chunk.
-  3. Map findings back to new-file lines. When findings end on the same line, keep the most severe.
-  4. Report checked findings at `medium` and above. Fail on a checked finding at `high` and above,
+  3. Check each finding that would post with a second tool loop, at most 5 for each chunk review.
+     The check must quote the lines that show the problem. A finding that it rejects is not checked,
+     so it is not posted. When a check fails or does not parse, the review does not post its
+     finding. The chunk review is not saved, so the next run checks it again.
+  4. Map findings back to new-file lines. When findings end on the same line, keep the most severe.
+  5. Report checked findings at `medium` and above. Fail on a checked finding at `high` and above,
      or when a chunk review fails.
 - **Chunk-local line labels.** The prompt numbers lines from 1 inside the chunk, not by file line. A
   chunk that only moves in the file, for example after a rebase, keeps its text and its saved

@@ -123,145 +123,145 @@ checksum = "sha256:0f20ce6674d4f2dbcc8c5d59fdf99f7ba45f8c3b367e0f5781cbfa30a1c78
 url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.4/bun-windows-x64-baseline.zip"
 
 [[tools.depot]]
-version = "2.103.6"
+version = "2.103.5"
 backend = "github:depot/cli"
 specifiers = ["latest"]
 
 [tools.depot."platforms.linux-arm64"]
-checksum = "sha256:e4543caff6738533100ef4cc1b35296416f0978f194a08388f0814d045e2c86f"
+checksum = "sha256:2836be7c83850ad3994a32523da199c71c6b22272c28dc8042417fe17762b022"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.6/depot_2.103.6_linux_arm64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/699501365"
+url = "https://github.com/depot/cli/releases/download/v2.103.5/depot_2.103.5_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/689587002"
 
 [tools.depot."platforms.linux-arm64-musl"]
-checksum = "sha256:e4543caff6738533100ef4cc1b35296416f0978f194a08388f0814d045e2c86f"
+checksum = "sha256:2836be7c83850ad3994a32523da199c71c6b22272c28dc8042417fe17762b022"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.6/depot_2.103.6_linux_arm64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/699501365"
+url = "https://github.com/depot/cli/releases/download/v2.103.5/depot_2.103.5_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/689587002"
 
 [tools.depot."platforms.linux-x64"]
-checksum = "sha256:c0d40389a010b79c9401ee304803a19c2d643ff58bf4d80aed0e03964f5d177c"
+checksum = "sha256:b27eb35198152c73d60ac1bc9bae3d6dce8c27c400d15072be62a7047a3d118f"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.6/depot_2.103.6_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/699501358"
+url = "https://github.com/depot/cli/releases/download/v2.103.5/depot_2.103.5_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/689587001"
 
 [tools.depot."platforms.linux-x64-baseline"]
-checksum = "sha256:c0d40389a010b79c9401ee304803a19c2d643ff58bf4d80aed0e03964f5d177c"
+checksum = "sha256:b27eb35198152c73d60ac1bc9bae3d6dce8c27c400d15072be62a7047a3d118f"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.6/depot_2.103.6_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/699501358"
+url = "https://github.com/depot/cli/releases/download/v2.103.5/depot_2.103.5_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/689587001"
 
 [tools.depot."platforms.linux-x64-musl"]
-checksum = "sha256:c0d40389a010b79c9401ee304803a19c2d643ff58bf4d80aed0e03964f5d177c"
+checksum = "sha256:b27eb35198152c73d60ac1bc9bae3d6dce8c27c400d15072be62a7047a3d118f"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.6/depot_2.103.6_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/699501358"
+url = "https://github.com/depot/cli/releases/download/v2.103.5/depot_2.103.5_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/689587001"
 
 [tools.depot."platforms.linux-x64-musl-baseline"]
-checksum = "sha256:c0d40389a010b79c9401ee304803a19c2d643ff58bf4d80aed0e03964f5d177c"
+checksum = "sha256:b27eb35198152c73d60ac1bc9bae3d6dce8c27c400d15072be62a7047a3d118f"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.6/depot_2.103.6_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/699501358"
+url = "https://github.com/depot/cli/releases/download/v2.103.5/depot_2.103.5_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/689587001"
 
 [tools.depot."platforms.macos-arm64"]
-checksum = "sha256:3d988b2e8d2b95dad9330e33f9da6162c609b77c170fc8e2c27c8fb8324dccc4"
+checksum = "sha256:7d873d7bab1b58e1b66f290394c371ed0477698706db610e05092708a4469dcd"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.6/depot_2.103.6_darwin_arm64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/699501360"
+url = "https://github.com/depot/cli/releases/download/v2.103.5/depot_2.103.5_darwin_arm64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/689587000"
 
 [tools.depot."platforms.macos-x64"]
-checksum = "sha256:c94ea27190511a748d33defa7c3dbce25e4f2753fa5552e173c02a49312831e8"
+checksum = "sha256:e285995231bf6ca22fba2923b3220ed97194ac415ffc39bf0fa74d3f5624dbc8"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.6/depot_2.103.6_darwin_amd64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/699501364"
+url = "https://github.com/depot/cli/releases/download/v2.103.5/depot_2.103.5_darwin_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/689586994"
 
 [tools.depot."platforms.macos-x64-baseline"]
-checksum = "sha256:c94ea27190511a748d33defa7c3dbce25e4f2753fa5552e173c02a49312831e8"
+checksum = "sha256:e285995231bf6ca22fba2923b3220ed97194ac415ffc39bf0fa74d3f5624dbc8"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.6/depot_2.103.6_darwin_amd64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/699501364"
+url = "https://github.com/depot/cli/releases/download/v2.103.5/depot_2.103.5_darwin_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/689586994"
 
 [tools.depot."platforms.windows-x64"]
-checksum = "sha256:2c72e9a3a228aac1f0aeff8129ab9d23afdc2ebd4740a6716c250bc51ea9c7d4"
+checksum = "sha256:d6f9b75e605e4408e6ef4cd55fb89188e476e5f1aa6e66b3624e557f5dd52169"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.6/depot_2.103.6_windows_amd64.zip"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/699501361"
+url = "https://github.com/depot/cli/releases/download/v2.103.5/depot_2.103.5_windows_amd64.zip"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/689586995"
 
 [tools.depot."platforms.windows-x64-baseline"]
-checksum = "sha256:2c72e9a3a228aac1f0aeff8129ab9d23afdc2ebd4740a6716c250bc51ea9c7d4"
+checksum = "sha256:d6f9b75e605e4408e6ef4cd55fb89188e476e5f1aa6e66b3624e557f5dd52169"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.6/depot_2.103.6_windows_amd64.zip"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/699501361"
+url = "https://github.com/depot/cli/releases/download/v2.103.5/depot_2.103.5_windows_amd64.zip"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/689586995"
 
 [[tools.ghalint]]
-version = "1.5.7"
+version = "1.6.0"
 backend = "aqua:suzuki-shunsuke/ghalint"
 specifiers = ["1"]
 
 [tools.ghalint."platforms.linux-arm64"]
-checksum = "sha256:0123356892fb6e62ed0c7deba7b06e57af29a7447d41e51d0d71f8fcb3ecbbea"
-url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.5.7/ghalint_1.5.7_linux_arm64.tar.gz"
-url_api = "https://api.github.com/repos/suzuki-shunsuke/ghalint/releases/assets/676756686"
+checksum = "sha256:f9d8e20a75c934d21ee6ab1967eb79fa125237ef5633c6bfd03b27999c6a6cda"
+url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.6.0/ghalint_1.6.0_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/suzuki-shunsuke/ghalint/releases/assets/694554152"
 provenance = "cosign"
 
 [tools.ghalint."platforms.linux-arm64-musl"]
-checksum = "sha256:0123356892fb6e62ed0c7deba7b06e57af29a7447d41e51d0d71f8fcb3ecbbea"
-url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.5.7/ghalint_1.5.7_linux_arm64.tar.gz"
-url_api = "https://api.github.com/repos/suzuki-shunsuke/ghalint/releases/assets/676756686"
+checksum = "sha256:f9d8e20a75c934d21ee6ab1967eb79fa125237ef5633c6bfd03b27999c6a6cda"
+url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.6.0/ghalint_1.6.0_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/suzuki-shunsuke/ghalint/releases/assets/694554152"
 provenance = "cosign"
 
 [tools.ghalint."platforms.linux-x64"]
-checksum = "sha256:b8eaba77baea50540caf43e81ea32049ca07fecba267a84c78a27ce5a86631a3"
-url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.5.7/ghalint_1.5.7_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/suzuki-shunsuke/ghalint/releases/assets/676756679"
+checksum = "sha256:eda1af79c1a4a31c2de5831cd1333ad582fa6fa72015f8e9c1c4525d550c1d35"
+url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.6.0/ghalint_1.6.0_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/suzuki-shunsuke/ghalint/releases/assets/694554144"
 provenance = "cosign"
 
 [tools.ghalint."platforms.linux-x64-baseline"]
-checksum = "sha256:b8eaba77baea50540caf43e81ea32049ca07fecba267a84c78a27ce5a86631a3"
-url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.5.7/ghalint_1.5.7_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/suzuki-shunsuke/ghalint/releases/assets/676756679"
+checksum = "sha256:eda1af79c1a4a31c2de5831cd1333ad582fa6fa72015f8e9c1c4525d550c1d35"
+url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.6.0/ghalint_1.6.0_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/suzuki-shunsuke/ghalint/releases/assets/694554144"
 provenance = "cosign"
 
 [tools.ghalint."platforms.linux-x64-musl"]
-checksum = "sha256:b8eaba77baea50540caf43e81ea32049ca07fecba267a84c78a27ce5a86631a3"
-url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.5.7/ghalint_1.5.7_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/suzuki-shunsuke/ghalint/releases/assets/676756679"
+checksum = "sha256:eda1af79c1a4a31c2de5831cd1333ad582fa6fa72015f8e9c1c4525d550c1d35"
+url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.6.0/ghalint_1.6.0_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/suzuki-shunsuke/ghalint/releases/assets/694554144"
 provenance = "cosign"
 
 [tools.ghalint."platforms.linux-x64-musl-baseline"]
-checksum = "sha256:b8eaba77baea50540caf43e81ea32049ca07fecba267a84c78a27ce5a86631a3"
-url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.5.7/ghalint_1.5.7_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/suzuki-shunsuke/ghalint/releases/assets/676756679"
+checksum = "sha256:eda1af79c1a4a31c2de5831cd1333ad582fa6fa72015f8e9c1c4525d550c1d35"
+url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.6.0/ghalint_1.6.0_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/suzuki-shunsuke/ghalint/releases/assets/694554144"
 provenance = "cosign"
 
 [tools.ghalint."platforms.macos-arm64"]
-checksum = "sha256:c3abc5c3a8eedafbeb3d3d2d27a2757876fd5d4937c7306a3932906d578f968a"
-url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.5.7/ghalint_1.5.7_darwin_arm64.tar.gz"
-url_api = "https://api.github.com/repos/suzuki-shunsuke/ghalint/releases/assets/676756660"
+checksum = "sha256:427acb85cb6cdda8828bf46643825b47cb46e6d2d5d3fa4f60b7bdfee194d2c7"
+url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.6.0/ghalint_1.6.0_darwin_arm64.tar.gz"
+url_api = "https://api.github.com/repos/suzuki-shunsuke/ghalint/releases/assets/694554130"
 provenance = "cosign"
 
 [tools.ghalint."platforms.macos-x64"]
-checksum = "sha256:b5644bc3a78fddc662fdb16767cd4a6d6e4066ab1714f71bfff61b911b7837b7"
-url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.5.7/ghalint_1.5.7_darwin_amd64.tar.gz"
-url_api = "https://api.github.com/repos/suzuki-shunsuke/ghalint/releases/assets/676756664"
+checksum = "sha256:0b5ceda34753d74b6fd024ba6306fa332cd03c855801430bd7cbd44a94692252"
+url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.6.0/ghalint_1.6.0_darwin_amd64.tar.gz"
+url_api = "https://api.github.com/repos/suzuki-shunsuke/ghalint/releases/assets/694554125"
 provenance = "cosign"
 
 [tools.ghalint."platforms.macos-x64-baseline"]
-checksum = "sha256:b5644bc3a78fddc662fdb16767cd4a6d6e4066ab1714f71bfff61b911b7837b7"
-url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.5.7/ghalint_1.5.7_darwin_amd64.tar.gz"
-url_api = "https://api.github.com/repos/suzuki-shunsuke/ghalint/releases/assets/676756664"
+checksum = "sha256:0b5ceda34753d74b6fd024ba6306fa332cd03c855801430bd7cbd44a94692252"
+url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.6.0/ghalint_1.6.0_darwin_amd64.tar.gz"
+url_api = "https://api.github.com/repos/suzuki-shunsuke/ghalint/releases/assets/694554125"
 provenance = "cosign"
 
 [tools.ghalint."platforms.windows-x64"]
-checksum = "sha256:b9be347bc179de6a8c7c8d4a57ab4cf32701a73d1459a5a27457deb60a4d7cfc"
-url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.5.7/ghalint_1.5.7_windows_amd64.zip"
-url_api = "https://api.github.com/repos/suzuki-shunsuke/ghalint/releases/assets/676756694"
+checksum = "sha256:9119faab7bad322f1fe3895da456846d780e84cc5e98405493b8e86ae03f215f"
+url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.6.0/ghalint_1.6.0_windows_amd64.zip"
+url_api = "https://api.github.com/repos/suzuki-shunsuke/ghalint/releases/assets/694554169"
 provenance = "cosign"
 
 [tools.ghalint."platforms.windows-x64-baseline"]
-checksum = "sha256:b9be347bc179de6a8c7c8d4a57ab4cf32701a73d1459a5a27457deb60a4d7cfc"
-url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.5.7/ghalint_1.5.7_windows_amd64.zip"
-url_api = "https://api.github.com/repos/suzuki-shunsuke/ghalint/releases/assets/676756694"
+checksum = "sha256:9119faab7bad322f1fe3895da456846d780e84cc5e98405493b8e86ae03f215f"
+url = "https://github.com/suzuki-shunsuke/ghalint/releases/download/v1.6.0/ghalint_1.6.0_windows_amd64.zip"
+url_api = "https://api.github.com/repos/suzuki-shunsuke/ghalint/releases/assets/694554169"
 provenance = "cosign"
 
 [[tools.node]]

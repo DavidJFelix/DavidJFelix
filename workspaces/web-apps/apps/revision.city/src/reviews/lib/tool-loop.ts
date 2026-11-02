@@ -143,8 +143,8 @@ async function continueToolLoop(state: ToolLoopState): Promise<ToolLoopResult> {
   // A provider that does not support a required tool call can still answer in
   // text, and a submit_answer call with empty arguments does not hide that text.
   const text = submitted?.arguments || reply.content
-  // A submit_answer call that the token limit cuts has arguments that do not
-  // parse, so it is cut like an empty answer.
+  // A last reply that stopped at the token limit counts as cut: a submit_answer
+  // call cut there has arguments that do not parse.
   if (isLastReply && reply.finishReason === 'length') {
     const error = text === '' ? describeEmptyAnswer(reply) : describeCutAnswer(reply)
     return {error, usage, cutAtTokenLimit: true}

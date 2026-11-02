@@ -32,6 +32,8 @@ const COMMENTS = 'GET /repos/acme/repo/pulls/7/comments?per_page=100&page=1'
 const REVIEWS = 'POST /repos/acme/repo/pulls/7/reviews'
 const LABEL = 'DELETE /repos/acme/repo/issues/7/labels/Revision%20City'
 const GRAPHQL = 'POST /graphql'
+const ISSUE_COMMENTS = 'GET /repos/acme/repo/issues/7/comments?per_page=100&page=1'
+const NEW_ISSUE_COMMENT = 'POST /repos/acme/repo/issues/7/comments'
 const checkRunList = (sha: string) =>
   `GET /repos/acme/repo/commits/${sha}/check-runs?check_name=Revision%20City&filter=latest`
 const PERMISSION = 'GET /repos/acme/repo/collaborators/maintainer/permission'
@@ -111,6 +113,8 @@ function fakeGitHub(routes: Record<string, Route> = {}) {
     [COMMENTS]: () => [],
     [REVIEWS]: () => ({id: 1}),
     [LABEL]: () => [],
+    [ISSUE_COMMENTS]: () => [],
+    [NEW_ISSUE_COMMENT]: () => ({}),
     ...routes,
   }
   const request: GitHubRequest = async ({method = 'GET', path, body, schema}) => {
@@ -205,6 +209,7 @@ test('runReview reviews the head, posts the findings, and fails the check on a h
     'review 1 of 1',
     'post review',
     'complete check run',
+    'update summary comment',
     'log failure run',
   ])
   expect(chat).toHaveBeenCalledTimes(CALLS_WITH_CHECKED_FINDING)
@@ -275,9 +280,44 @@ test('runReview keeps the failed check run when the sync with the threads fails'
 
   await runReview(runParams({step, request: github.request, chat: answering([highFinding])}))
 
-  expect(names.slice(-2)).toEqual(['complete check run', 'log failure run'])
+  expect(names.slice(-3)).toEqual([
+    'complete check run',
+    'update summary comment',
+    'log failure run',
+  ])
   expect(github.sent(CHECK_RUN)).toHaveLength(1)
   expect(warn).toHaveBeenCalledWith('Could not sync the check run with the threads', {
+    error: 'Error: GitHub is down',
+  })
+  warn.mockRestore()
+})
+
+test('runReview adds the run to the summary comment', async () => {
+  const github = fakeGitHub()
+
+  await runReview(runParams({request: github.request, chat: answering([highFinding])}))
+
+  const {body} = z.object({body: z.string()}).parse(github.sent(NEW_ISSUE_COMMENT)[0].body)
+  expect(body).toContain(`<!-- revision-city:run ${headSha} `)
+  expect(body).toContain('### `aaaaaaa`: 1 finding, cost $')
+  expect(body).toContain('### Findings')
+})
+
+test('runReview retries the summary comment, then only warns', async () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+  const github = fakeGitHub({
+    [NEW_ISSUE_COMMENT]: () => {
+      throw new Error('GitHub is down')
+    },
+  })
+
+  await runReview(runParams({request: github.request, step: retryingStep}))
+
+  expect(github.sent(NEW_ISSUE_COMMENT)).toHaveLength(2)
+  expect(github.sent(CHECK_RUN)).toEqual([
+    expect.objectContaining({body: expect.objectContaining({conclusion: 'success'})}),
+  ])
+  expect(warn).toHaveBeenCalledWith('Could not update the summary comment', {
     error: 'Error: GitHub is down',
   })
   warn.mockRestore()

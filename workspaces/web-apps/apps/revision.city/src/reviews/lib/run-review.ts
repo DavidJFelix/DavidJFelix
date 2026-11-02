@@ -27,6 +27,7 @@ import {
 } from './review-pull-request'
 import {REVIEWERS} from './reviewers'
 import {OVER_LIMIT_REASON, selectReviewFiles} from './select-review-files'
+import {formatRunSection, updateSummaryComment} from './summary-comment'
 import type {ReviewRunParams} from './webhook'
 import {type LogWideEvent, logWideEvent, type WideEventFields, withChatEvents} from './wide-event'
 
@@ -230,6 +231,25 @@ export async function runReview({
         })
       }
     })
+    if (posted !== null) {
+      // A failed comment must not fail the review, so the last attempt only warns.
+      await step('update summary comment', async ({isLastAttempt}) => {
+        const output = formatCheckRunOutput({
+          outcome,
+          review,
+          notReviewed,
+          postedCount: posted.count,
+        })
+        const section = formatRunSection({headSha, costUsd: review.usage.costUsd, output})
+        await updateSummaryComment({...pull, section}).catch((error: unknown) => {
+          if (!isLastAttempt) {
+            throw error
+          }
+          console.warn('Could not update the summary comment', {error: String(error)})
+        })
+        return null
+      })
+    }
     await logRun(posted === null ? 'superseded' : outcome.failed ? 'failure' : 'success', {
       headSha,
       chunkReviewCount: review.chunkReviewCount,

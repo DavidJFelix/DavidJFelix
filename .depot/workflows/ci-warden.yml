@@ -1,19 +1,15 @@
-# Warden — AI code review on every ready PR, plus a dispatch path for branches.
+# Warden -- AI code review on demand, plus a dispatch path for branches.
 #
 # Adapted from `warden init`'s generated .github/workflows/warden.yml to this
 # repo's conventions (Depot runners, pinned SHAs, persist-credentials off).
 #
-# Always-on for non-draft PRs (review job): the getsentry/warden action
-# reviews the PR's head on open, reopen, ready-for-review, and every push,
-# posting inline comments + a check. Drafts are skipped until marked ready,
-# and PRs opened by the repo's GitHub App (Renovate bumps, the changelog
-# roll-up) are skipped outright. The "Warden" label is the manual lever:
-# adding it re-runs a review on the current head (remove and re-add to re-run
-# again) and opts a draft or a bot PR in.
-# warden.toml's triggers mirror the same filter. This was label-only from
-# 2026-07-05 (per-push spend on the model of the day added up); it went back
-# to always-on 2026-09-19 once WARDEN_MODEL pointed at a model cheap enough
-# that per-push reviews at high effort are a rounding error.
+# Label-only (review job): adding the "Warden" label to a PR makes the
+# getsentry/warden action review its current head, posting inline comments +
+# a check. Remove and re-add the label to re-run. Drafts and bot PRs run the
+# same way. No push, open, or other label starts a review.
+# warden.toml's triggers mirror the same filter. History: label-only from
+# 2026-07-05 (per-push spend), always-on from 2026-09-19 (a cheap model), and
+# label-only again from 2026-11-02, since revision.city now reviews each push.
 #
 # Second lever, its own job:
 #   - workflow_dispatch on any branch (dispatch-review job): the action cannot
@@ -38,9 +34,9 @@
 name: CI Warden
 on:
   pull_request:
-    # `labeled` stays so adding the "Warden" label re-runs the review; the
-    # job-level guard below decides which label counts.
-    types: [opened, synchronize, reopened, ready_for_review, labeled]
+    # Only the label lever; the job-level guard below decides which label
+    # counts.
+    types: [labeled]
   workflow_dispatch:
     inputs:
       base:
@@ -51,26 +47,12 @@ on:
 jobs:
   review:
     name: warden
-    # Job-level copy of warden.toml's trigger filter, so skipped events never
+    # Job-level copy of warden.toml's trigger filter, so other labels never
     # allocate a runner (the toml filter would only no-op after checkout +
-    # mise): non-draft PRs run on every non-label event; on a `labeled` event
-    # only the "Warden" label runs, and it runs for drafts too (the opt-in).
-    # Bot PRs are excluded from the automatic path: Renovate's dependency PRs
-    # and the weekly changelog roll-up are both opened by the repo's GitHub App
-    # (login `djf-renovate[bot]`), and reviewing a lockfile bump or a folded
-    # changelog is spend without signal. warden.toml cannot filter on author,
-    # so this guard is the only place that rule lives. The label path still
-    # applies, so adding "Warden" reviews a bot PR when one deserves it.
+    # mise).
     if: >-
       github.event_name == 'pull_request' &&
-      (
-        (github.event.action == 'labeled' && github.event.label.name == 'Warden') ||
-        (
-          github.event.action != 'labeled' &&
-          !github.event.pull_request.draft &&
-          github.event.pull_request.user.login != 'djf-renovate[bot]'
-        )
-      )
+      github.event.label.name == 'Warden'
     runs-on: depot-ubuntu-latest # was: ubuntu-latest. Mapped standard GitHub runner to Depot equivalent.
     timeout-minutes: 30
     # contents: write is required for resolving review threads via GraphQL.

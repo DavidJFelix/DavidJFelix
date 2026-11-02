@@ -194,3 +194,17 @@ test('updateSummaryComment releases the lock after a failed write', async () => 
   )
   expect(await lock.acquire({pullRequest: 'acme/repo#7', holder: 'check-run:30'})).toBe(true)
 })
+
+test('updateSummaryComment ignores a failed release, because the lease expires', async () => {
+  const github = fakeGitHub([])
+  const lock = {
+    acquire: async () => true,
+    release: async () => {
+      throw new Error('D1 is down')
+    },
+  }
+
+  await updateSummaryComment({...pull, lock, request: github.request, section: firstRun})
+
+  expect(github.writes()).toHaveLength(1)
+})

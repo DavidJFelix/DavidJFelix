@@ -190,12 +190,19 @@ function costTable({usage, costs}: PullRequestReview): string[] {
 }
 
 function costRow({path, part, reviewerId, cached, usage}: ChunkReviewCost): string {
-  // A "|" ends a table cell even in a code span, unless a backslash is before it.
-  const chunk = `${codeSpan(oneLine(path)).replaceAll('|', '\\|')}${part === undefined ? '' : ` part ${part}`}`
+  const chunk = `${escapeTableText(oneLine(path))}${part === undefined ? '' : ` part ${part}`}`
   const tokens = cached
     ? ['saved result', '']
     : [tokenCount(usage.promptTokens), tokenCount(usage.completionTokens)]
   return `| $${usage.costUsd.toFixed(4)} | ${chunk} | ${reviewerId} | ${tokens.join(' | ')} |`
+}
+
+// GitHub ends a table cell at each "|" that a backslash does not escape, also
+// in a code span. A code span cannot escape a backslash, so the path "a\|b"
+// escapes to "a\\|b", and its "|" still ends the cell. Plain text with a
+// backslash before each punctuation character shows the text as it is.
+function escapeTableText(text: string): string {
+  return text.replaceAll(/[!-/:-@[-`{-~]/g, '\\$&')
 }
 
 function tokenCount(count: number): string {

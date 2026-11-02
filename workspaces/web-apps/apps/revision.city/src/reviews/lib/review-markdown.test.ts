@@ -265,7 +265,7 @@ test('formatCheckRunOutput puts the cost of each chunk review last in a table, t
       usage: {promptTokens: 5200, completionTokens: 390, costUsd: 0.0123},
       costs: [
         {
-          path: 'a|b.ts',
+          path: 'a\\|b.ts',
           reviewerId: 'security',
           cached: true,
           usage: {promptTokens: 0, completionTokens: 0, costUsd: 0},
@@ -300,9 +300,9 @@ test('formatCheckRunOutput puts the cost of each chunk review last in a table, t
       '| Cost | Chunk | Reviewer | Prompt tokens | Completion tokens |',
       '| ---: | --- | --- | ---: | ---: |',
       '| **$0.0123** | **Total** | | **5,200** | **390** |',
-      '| $0.0081 | `src/b.ts` part 2 | comments | 1,200 | 300 |',
-      `| $0.0042 | \`src/@${ZERO_WIDTH_SPACE}c.ts\` | security | 4,000 | 90 |`,
-      '| $0.0000 | `a\\|b.ts` | security | saved result |  |',
+      '| $0.0081 | src\\/b\\.ts part 2 | comments | 1,200 | 300 |',
+      `| $0.0042 | src\\/\\@${ZERO_WIDTH_SPACE}c\\.ts | security | 4,000 | 90 |`,
+      '| $0.0000 | a\\\\\\|b\\.ts | security | saved result |  |',
     ].join('\n'),
   )
 })

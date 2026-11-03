@@ -1,7 +1,7 @@
 ---
 title: Coder, Programmer, Developer, or Engineer?
 author: DavidJFelix
-description: Naming is always the hardest part. A reflection on what a career in software means now and in a future with AI.
+description: A reflection on what a career in software means now, and in a future with AI.
 date: 2026-11-01
 tags:
   - career
@@ -14,7 +14,7 @@ aiAssistants:
   - name: Anthropic Claude
     details: Proofreading for typos, grammar, and frontmatter.
 hero:
-  tagline: Coder, Programmer, Developer, or Engineer
+  tagline: Naming is always the hardest part.
 ---
 
 Note: This is a weird post about semantics, don't take it too seriously.
@@ -108,7 +108,7 @@ Humility helps prevent the engineer's folly of ignoring what the moment needs, i
 I believe that over-engineering stems from pride.
 Maybe it comes from thinking one is above the concerns of the business, ignoring the non-technical problems in front of them.
 Perhaps it comes from feeling that those problems aren't their concern, or that their importance is gauged by how many terabytes they can process or how many servers they manage.
-An engineer's job is to fix the problem, but I'd contend that it's also to build something that can last.
+An engineer's job is to fix the problem, but I'd contend it's also to build something that can last.
 I believe an engineer who focuses only on the technical aspects of endurance is myopic.
 Building to last means building something that is comprehensible and maintainable, not something that resists deletion or destruction.
 The value of software is in the problems it solves, not the cost to replace it.
@@ -124,7 +124,7 @@ I don't know what to think about the future for programmers, because I'm not a p
 For engineers, though, I see purpose and a future in SaaS that allows customers to outsource expertise and maintenance.
 An LLM can help a developer quickly duplicate a SaaS service, but without continual prompting and focus, it won't maintain or support that system.
 I strongly believe that software engineers have plenty of room to provide valuable SaaS services in an era where technical challenges are very quickly solved, but gone are the days of rent-seeking on clever ideas.
-Now it's about building systems that last and allowing customers to outsource the one thing that AI is constantly aiming to improve - human trust.
+Now it's about building systems that last and allowing customers to outsource the one thing that AI is constantly aiming to improve, human trust.
 
 ---
 

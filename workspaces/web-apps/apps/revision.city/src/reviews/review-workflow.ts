@@ -11,6 +11,7 @@ import {createGitHubRequest} from './lib/github-api'
 import {createInstallationTokenSource} from './lib/github-app-auth'
 import {createOpenRouterChat} from './lib/openrouter'
 import {runReview} from './lib/run-review'
+import {createSqliteSummaryCommentLock} from './lib/summary-comment-lock'
 import type {ReviewRunParams} from './lib/webhook'
 
 const reviewWorkflowEnvSchema = z.object({
@@ -34,6 +35,7 @@ export class ReviewWorkflow extends WorkflowEntrypoint<Env, ReviewRunParams> {
   async run(event: Readonly<WorkflowEvent<ReviewRunParams>>, step: WorkflowStep): Promise<void> {
     const env = reviewWorkflowEnvSchema.parse(this.env)
     const {payload} = event
+    const db = drizzle(env.DB)
     await runReview({
       ...payload,
       step: (name, run) =>
@@ -50,7 +52,8 @@ export class ReviewWorkflow extends WorkflowEntrypoint<Env, ReviewRunParams> {
         }),
       }),
       chat: createOpenRouterChat({apiKey: env.OPENROUTER_API_KEY}),
-      store: createSqliteChunkReviewStore(drizzle(env.DB)),
+      store: createSqliteChunkReviewStore(db),
+      summaryCommentLock: createSqliteSummaryCommentLock(db),
       model: env.REVIEW_MODEL,
     })
   }

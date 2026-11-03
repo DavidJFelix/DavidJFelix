@@ -123,75 +123,75 @@ checksum = "sha256:0f20ce6674d4f2dbcc8c5d59fdf99f7ba45f8c3b367e0f5781cbfa30a1c78
 url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.4/bun-windows-x64-baseline.zip"
 
 [[tools.depot]]
-version = "2.103.7"
+version = "2.103.6"
 backend = "github:depot/cli"
 specifiers = ["latest"]
 
 [tools.depot."platforms.linux-arm64"]
-checksum = "sha256:2eb9aa624bc3c2047f85750d5cba906b12fed1e4fab49af9f15245307c50e8c3"
+checksum = "sha256:e4543caff6738533100ef4cc1b35296416f0978f194a08388f0814d045e2c86f"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.7/depot_2.103.7_linux_arm64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/705812086"
+url = "https://github.com/depot/cli/releases/download/v2.103.6/depot_2.103.6_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/699501365"
 
 [tools.depot."platforms.linux-arm64-musl"]
-checksum = "sha256:2eb9aa624bc3c2047f85750d5cba906b12fed1e4fab49af9f15245307c50e8c3"
+checksum = "sha256:e4543caff6738533100ef4cc1b35296416f0978f194a08388f0814d045e2c86f"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.7/depot_2.103.7_linux_arm64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/705812086"
+url = "https://github.com/depot/cli/releases/download/v2.103.6/depot_2.103.6_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/699501365"
 
 [tools.depot."platforms.linux-x64"]
-checksum = "sha256:66b4068e5143c8b12c1a8b7100f0e40ebd3e72f32d1b3a15bd9caba4be192a7e"
+checksum = "sha256:c0d40389a010b79c9401ee304803a19c2d643ff58bf4d80aed0e03964f5d177c"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.7/depot_2.103.7_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/705812084"
+url = "https://github.com/depot/cli/releases/download/v2.103.6/depot_2.103.6_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/699501358"
 
 [tools.depot."platforms.linux-x64-baseline"]
-checksum = "sha256:66b4068e5143c8b12c1a8b7100f0e40ebd3e72f32d1b3a15bd9caba4be192a7e"
+checksum = "sha256:c0d40389a010b79c9401ee304803a19c2d643ff58bf4d80aed0e03964f5d177c"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.7/depot_2.103.7_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/705812084"
+url = "https://github.com/depot/cli/releases/download/v2.103.6/depot_2.103.6_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/699501358"
 
 [tools.depot."platforms.linux-x64-musl"]
-checksum = "sha256:66b4068e5143c8b12c1a8b7100f0e40ebd3e72f32d1b3a15bd9caba4be192a7e"
+checksum = "sha256:c0d40389a010b79c9401ee304803a19c2d643ff58bf4d80aed0e03964f5d177c"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.7/depot_2.103.7_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/705812084"
+url = "https://github.com/depot/cli/releases/download/v2.103.6/depot_2.103.6_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/699501358"
 
 [tools.depot."platforms.linux-x64-musl-baseline"]
-checksum = "sha256:66b4068e5143c8b12c1a8b7100f0e40ebd3e72f32d1b3a15bd9caba4be192a7e"
+checksum = "sha256:c0d40389a010b79c9401ee304803a19c2d643ff58bf4d80aed0e03964f5d177c"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.7/depot_2.103.7_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/705812084"
+url = "https://github.com/depot/cli/releases/download/v2.103.6/depot_2.103.6_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/699501358"
 
 [tools.depot."platforms.macos-arm64"]
-checksum = "sha256:46c50908d025e2f962730efb5fc0f5d223637073e9d28d3a6ca4b1ce3f528e8c"
+checksum = "sha256:3d988b2e8d2b95dad9330e33f9da6162c609b77c170fc8e2c27c8fb8324dccc4"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.7/depot_2.103.7_darwin_arm64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/705812094"
+url = "https://github.com/depot/cli/releases/download/v2.103.6/depot_2.103.6_darwin_arm64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/699501360"
 
 [tools.depot."platforms.macos-x64"]
-checksum = "sha256:dbefb8b8dead66d0f1eaca24a887282af528730b1a1a4b1deba8672dd8d739b1"
+checksum = "sha256:c94ea27190511a748d33defa7c3dbce25e4f2753fa5552e173c02a49312831e8"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.7/depot_2.103.7_darwin_amd64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/705812096"
+url = "https://github.com/depot/cli/releases/download/v2.103.6/depot_2.103.6_darwin_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/699501364"
 
 [tools.depot."platforms.macos-x64-baseline"]
-checksum = "sha256:dbefb8b8dead66d0f1eaca24a887282af528730b1a1a4b1deba8672dd8d739b1"
+checksum = "sha256:c94ea27190511a748d33defa7c3dbce25e4f2753fa5552e173c02a49312831e8"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.7/depot_2.103.7_darwin_amd64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/705812096"
+url = "https://github.com/depot/cli/releases/download/v2.103.6/depot_2.103.6_darwin_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/699501364"
 
 [tools.depot."platforms.windows-x64"]
-checksum = "sha256:df84455c3109059c50c8e50cbd72df3e28bf27b94d00c8ec8fdc7a3344d926cb"
+checksum = "sha256:2c72e9a3a228aac1f0aeff8129ab9d23afdc2ebd4740a6716c250bc51ea9c7d4"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.7/depot_2.103.7_windows_amd64.zip"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/705812085"
+url = "https://github.com/depot/cli/releases/download/v2.103.6/depot_2.103.6_windows_amd64.zip"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/699501361"
 
 [tools.depot."platforms.windows-x64-baseline"]
-checksum = "sha256:df84455c3109059c50c8e50cbd72df3e28bf27b94d00c8ec8fdc7a3344d926cb"
+checksum = "sha256:2c72e9a3a228aac1f0aeff8129ab9d23afdc2ebd4740a6716c250bc51ea9c7d4"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.7/depot_2.103.7_windows_amd64.zip"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/705812085"
+url = "https://github.com/depot/cli/releases/download/v2.103.6/depot_2.103.6_windows_amd64.zip"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/699501361"
 
 [[tools.ghalint]]
 version = "1.6.0"

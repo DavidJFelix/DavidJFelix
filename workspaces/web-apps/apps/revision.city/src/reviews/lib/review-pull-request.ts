@@ -201,7 +201,15 @@ const toolCallTextSchema = z
 
 const emptyObjectSchema = z.strictObject({})
 
+const findingsTextSchema = z.union([
+  z.object({findings: z.string()}),
+  z.object({finding: z.string()}),
+])
+
 function describeMissingFindingsList(text: string): string {
+  if (tryExtractJson(text, findingsTextSchema) !== undefined) {
+    return 'No findings list: the findings are a string that is not a JSON array'
+  }
   if (tryExtractJson(text, toolCallTextSchema) !== undefined) {
     return 'No findings list: the answer is a tool call or a message written as text'
   }

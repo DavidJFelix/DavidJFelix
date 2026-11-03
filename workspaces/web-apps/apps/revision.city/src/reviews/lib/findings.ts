@@ -22,9 +22,34 @@ export const modelFindingSchema = z.object({
 
 export type ModelFinding = z.infer<typeof modelFindingSchema>
 
-// Findings stay unknown here, so that each one is checked on its own and one
-// malformed finding does not hide the valid ones.
-export const modelAnswerSchema = z.object({findings: z.array(z.unknown())})
+// The items stay unknown here, so that the caller can check each finding on its
+// own. Then one malformed finding does not hide the valid ones.
+const findingItemsSchema = z.preprocess(parseJsonText, z.array(z.unknown()))
+
+// A review model can send the list as JSON text, under the key `finding`, or
+// under the key `answer`. These answers also count as a findings list.
+const findingListSchema = z.union([
+  z.object({findings: findingItemsSchema}),
+  z.object({finding: findingItemsSchema}).transform(({finding}) => ({findings: finding})),
+])
+
+export const modelAnswerSchema = z.union([
+  findingListSchema,
+  z
+    .object({answer: z.preprocess(parseJsonText, findingListSchema)})
+    .transform(({answer}) => answer),
+])
+
+function parseJsonText(value: unknown): unknown {
+  if (typeof value !== 'string') {
+    return value
+  }
+  try {
+    return JSON.parse(value)
+  } catch {
+    return value
+  }
+}
 
 export interface Finding {
   reviewerId: string

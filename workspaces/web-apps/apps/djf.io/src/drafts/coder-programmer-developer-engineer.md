@@ -144,4 +144,6 @@ I don't correct speakers, but if I hear somebody say "dev" that I don't think re
 
 [^4]: Or "back-end engineer", "front-end engineer", "full stack engineer", "platform engineer", etc.
 
-[^5]: cite this
+[^5]: The idea that software developers will be out of work within a few years.
+Tech leaders have predicted [the end of the profession](https://www.itpro.com/software/development/a-sign-of-things-to-come-in-software-development-mark-zuckerberg-says-ai-will-be-doing-the-work-of-mid-level-engineers-this-year-and-hes-not-the-only-big-tech-exec-predicting-the-end-of-the-profession) for a while, and [Anthropic's CEO said in early 2026](https://www.entrepreneur.com/business-news/ai-ceo-says-software-engineers-could-be-replaced-in-months/502087) that AI could do most of an engineer's job within a year.
+Investors bought into a version of it too, when software stocks crashed in the ["SaaSpocalypse"](https://www.bloomberg.com/news/articles/2026-02-04/what-s-behind-the-saaspocalypse-plunge-in-software-stocks).

@@ -10,10 +10,16 @@ import type {Chat} from './openrouter'
 import {completeCheckRun, createCheckRun, postReview, removeLabel} from './publish-review'
 import {readBaseGuides} from './repository-guides'
 import {loadRepositorySnapshot} from './repository-snapshot'
-import {RESOLVABLE_EXTERNAL_ID, syncCheckRunWithThreads} from './resolved-threads'
+import {
+  listResolvedFingerprints,
+  RESOLVABLE_EXTERNAL_ID,
+  syncCheckRunWithThreads,
+} from './resolved-threads'
 import {renderFileList, renderPullRequestDescription} from './review-chunks'
 import {
   type CheckRunOutput,
+  findingSummary,
+  fingerprintFinding,
   formatCheckRunOutput,
   type NotReviewedFile,
   neutralizeMarkdown,
@@ -237,26 +243,47 @@ export async function runReview({
     if (posted !== null) {
       // A failed comment must not fail the review, so the last attempt only warns.
       await step('update summary comment', async ({isLastAttempt}) => {
-        const output = formatCheckRunOutput({
-          outcome,
-          review,
-          notReviewed,
-          postedCount: posted.count,
+        const write = async () => {
+          const {title} = formatCheckRunOutput({
+            outcome,
+            review,
+            notReviewed,
+            postedCount: posted.count,
+          })
+          // The section lists the findings itself, so its details leave them out.
+          const {text: details} = formatCheckRunOutput({
+            outcome: {...outcome, reported: []},
+            review,
+            notReviewed,
+            postedCount: posted.count,
+          })
+          const findings = await Promise.all(
+            outcome.reported.map(async (finding) => ({
+              fingerprint: await fingerprintFinding(finding),
+              text: neutralizeMarkdown(findingSummary(finding)),
+            })),
+          )
+          const section = formatRunSection({
+            checkRunId,
+            headSha,
+            costUsd: review.usage.costUsd,
+            title,
+            findings,
+            ...(details === undefined ? {} : {details}),
+          })
+          await updateSummaryComment({
+            ...pull,
+            section,
+            resolvedFingerprints: await listResolvedFingerprints(pull),
+            lock: summaryCommentLock,
+          })
+        }
+        await write().catch((error: unknown) => {
+          if (!isLastAttempt) {
+            throw error
+          }
+          console.warn('Could not update the summary comment', {error: String(error)})
         })
-        const section = formatRunSection({
-          checkRunId,
-          headSha,
-          costUsd: review.usage.costUsd,
-          output,
-        })
-        await updateSummaryComment({...pull, section, lock: summaryCommentLock}).catch(
-          (error: unknown) => {
-            if (!isLastAttempt) {
-              throw error
-            }
-            console.warn('Could not update the summary comment', {error: String(error)})
-          },
-        )
         return null
       })
     }

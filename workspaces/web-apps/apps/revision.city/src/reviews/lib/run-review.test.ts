@@ -302,7 +302,40 @@ test('runReview adds the run to the summary comment', async () => {
   const {body} = z.object({body: z.string()}).parse(github.sent(NEW_ISSUE_COMMENT)[0].body)
   expect(body).toContain(`<!-- revision-city:run 31 ${headSha} `)
   expect(body).toContain('### `aaaaaaa`: 1 finding, cost $')
-  expect(body).toContain('### Findings')
+  expect(body).toMatch(
+    /^- \*\*high\*\* `src\/a\.ts:2` \(security\): Bug <!-- revision-city:finding [0-9a-f]{16} -->$/m,
+  )
+  expect(body).not.toContain('### Findings')
+})
+
+test('runReview shows a finding as resolved in the summary comment when its thread is', async () => {
+  const [posted] = await postedComments()
+  const github = fakeGitHub({
+    [GRAPHQL]: () => ({
+      data: {
+        repository: {
+          pullRequest: {
+            reviewThreads: {
+              pageInfo: {hasNextPage: false, endCursor: null},
+              nodes: [
+                {
+                  isResolved: true,
+                  isOutdated: true,
+                  resolvedBy: {login: 'maintainer'},
+                  comments: {nodes: [{body: posted.body, author: {login: 'revisioncity'}}]},
+                },
+              ],
+            },
+          },
+        },
+      },
+    }),
+  })
+
+  await runReview(runParams({request: github.request, chat: answering([highFinding])}))
+
+  const {body} = z.object({body: z.string()}).parse(github.sent(NEW_ISSUE_COMMENT)[0].body)
+  expect(body).toContain('- ~~**high** `src/a.ts:2` (security): Bug~~ (resolved) <!-- ')
 })
 
 test('runReview retries the summary comment, then only warns', async () => {
@@ -356,7 +389,8 @@ test('runReview keeps the check red when GitHub refuses the inline comments', as
 
   expect(github.sent(CHECK_RUN)).toHaveLength(1)
   expect(github.sent(CHECK_RUN)[0].body).not.toHaveProperty('external_id')
-  expect(github.sent(GRAPHQL)).toEqual([])
+  // No sync with the threads, which would list the check runs of the head.
+  expect(github.sent(checkRunList(headSha))).toEqual([])
 })
 
 test('runReview passes the check and posts nothing when there are no findings', async () => {

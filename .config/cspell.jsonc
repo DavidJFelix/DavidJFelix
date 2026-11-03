@@ -254,6 +254,7 @@
     "miniflare",
     "modelcontextprotocol", // the @modelcontextprotocol npm scope (Model Context Protocol SDK)
     "msgpackr",
+    "NCEES", // US engineering licensure body that ran the software PE exam
     "Neue", // Helvetica Neue, in font stacks
     "nuxtjs", // the @nuxtjs npm scope (color-mode module)
     "openclaw",

@@ -68,19 +68,20 @@ I often call myself a software developer and am happy with this name in countrie
 I love learning from great software developers.
 Thought leaders who write about team dynamics, legacy code, software maintenance, and domain-driven design are, by my definition, "software developers".
 
-Software developers involve themselves in the business;
+Software developers are a business reality in the face of engineering purity.
+They involve themselves in the business;
 they discover work and translate business goals into software solutions.
 Good developers understand how to build incrementally and start with value first.
 Sometimes technical merits lose to efficiency and good developers can juggle the cost of fast wins.
 Something I've come to respect immensely among my peers is that great developers understand product and start with problems before offering solutions.
-Software developers are a business reality in the face of engineering purity.
 Software development does not require professional accreditation and often benefits from a balance of technical and interpersonal skills.
 
 By my archetypal definition, programmers don't concern themselves with how the business operates, just what is asked of them.
 Likewise, the business does not normally ask programmers for their opinion on value or feasibility, it's a purely operational exchange: the business needs this, the programmer builds this.
 On the other side, engineers are thoughtful builders who aim for technical merit and longevity.
 In the middle, developers balance these by learning what the business wants, building something that works, proving it can stand, and only then making sure it can last.
-This isn't a slight at developers, but rather a recognition that the reality is that many systems made quickly last longer than expected, accomplish business goals adequately and provide immense return on investment with significantly lower cost than something "well engineered" or "built to last".
+This isn't a slight at developers, but a recognition that many systems made quickly last longer than expected;
+they accomplish business goals adequately and provide immense return on investment at significantly lower cost than something "well engineered" or "built to last".
 
 I tend to think of software creation like construction.
 Suppose the business belief is that people want housing in an area;
@@ -90,7 +91,8 @@ Builders often get lost in building.
 Instead of a high-rise, why not build a house? If demand is large you can always build another house or a high-rise elsewhere, or even tear down the house and build something larger and more suitable.
 Not everything needs to be overbuilt and a good developer is pragmatic.
 
-Even though I feel compelled by the software developer's pragmatism and I think overbuilding is an all-too-common mistake, I tend to call myself a "software engineer" and encourage those who otherwise consider themselves "software developers" to also call themselves "software engineers".
+I call myself an engineer.
+Even though I feel compelled by the software developer's pragmatism and I think overbuilding is an all-too-common mistake, I encourage those who otherwise consider themselves "software developers" to also call themselves "software engineers".
 One of the major reasons I push for this moniker is pride.
 I take pride in the craft and pride in my hard-earned knowledge.
 I believe others should too.
@@ -118,7 +120,8 @@ Part of the beauty of software has been that anyone can become a good software d
 I believe the developers who will find homes are those who find affinity to the product and business.
 Those who may be displaced are engineers who love building, programmers who build to the spec, and developers who care about implementation more than the product and business.
 
-I don't know what to think about the future for programmers, because I'm not a professional programmer, but for engineers, I see purpose and a future in SaaS that allows developers to outsource expertise and maintenance.
+I don't know what to think about the future for programmers, because I'm not a professional programmer.
+For engineers, though, I see purpose and a future in SaaS that allows customers to outsource expertise and maintenance.
 An LLM can help a developer quickly duplicate a SaaS service, but without continual prompting and focus, it won't maintain or support that system.
 I strongly believe that software engineers have plenty of room to provide valuable SaaS services in an era where technical challenges are very quickly solved, but gone are the days of rent-seeking on clever ideas.
 Now it's about building systems that last and allowing customers to outsource the one thing that AI is constantly aiming to improve - human trust.

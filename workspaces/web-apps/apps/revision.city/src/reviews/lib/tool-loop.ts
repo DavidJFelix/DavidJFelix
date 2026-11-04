@@ -59,41 +59,23 @@ interface ToolLoopAnswer {
 interface ToolLoopFailure {
   error: unknown
   usage: CompletionUsage
-  // The reasoning used up the output token limit before the answer.
-  cutAtTokenLimit?: true
 }
 
 export type ToolLoopResult = ToolLoopAnswer | ToolLoopFailure
 
-// At temperature 1, a second run of a review that the token limit cut short
-// reasons differently, so it often finishes. A third run is not worth its cost.
-export async function runToolLoop(params: RunToolLoopParams): Promise<ToolLoopResult> {
-  const first = await startToolLoop({...params, run: 1})
-  if (!('cutAtTokenLimit' in first)) {
-    return first
-  }
-  const second = await startToolLoop({...params, run: 2})
-  return {...second, usage: addUsage(first.usage, second.usage)}
-}
-
-interface StartToolLoopParams extends RunToolLoopParams {
-  run: number
-}
-
-function startToolLoop({
+export function runToolLoop({
   chat,
   model,
   system,
   prompt,
   tools,
-  eventFields,
-  run,
-}: StartToolLoopParams): Promise<ToolLoopResult> {
+  eventFields = {},
+}: RunToolLoopParams): Promise<ToolLoopResult> {
   return continueToolLoop({
     chat,
     model,
     tools,
-    eventFields: {...eventFields, run},
+    eventFields,
     messages: [
       {role: 'system', content: system},
       {role: 'user', content: prompt},
@@ -127,11 +109,7 @@ async function continueToolLoop(state: ToolLoopState): Promise<ToolLoopResult> {
       ? {messages}
       : mayCallTools
         ? {messages, tools: [...tools.definitions, SUBMIT_ANSWER_TOOL], toolChoice: 'auto'}
-        : {
-            messages: withAnswerNowNote(messages),
-            tools: [SUBMIT_ANSWER_TOOL],
-            toolChoice: 'required',
-          }),
+        : answerNowRequest(messages)),
   }).catch(toFailure)
   if ('error' in reply) {
     return {error: reply.error, usage: state.usage}
@@ -140,21 +118,13 @@ async function continueToolLoop(state: ToolLoopState): Promise<ToolLoopResult> {
   const submitted = reply.toolCalls.find(isSubmitAnswer)
   const isLastReply =
     tools === undefined || !mayCallTools || reply.toolCalls.length === 0 || submitted !== undefined
-  // A provider that does not support a required tool call can still answer in
-  // text, and a submit_answer call with empty arguments does not hide that text.
-  const text = submitted?.arguments || reply.content
   // A last reply that stopped at the token limit counts as cut: a submit_answer
   // call cut there has arguments that do not parse.
   if (isLastReply && reply.finishReason === 'length') {
-    const error = text === '' ? describeEmptyAnswer(reply) : describeCutAnswer(reply)
-    return {error, usage, cutAtTokenLimit: true}
-  }
-  if (isLastReply && text === '') {
-    return {error: describeEmptyAnswer(reply), usage}
+    return answerWithoutReasoning({...state, usage})
   }
   if (isLastReply) {
-    const reads = new Map(state.reads.map((read) => [read.path, read]))
-    return {text, usage, reads: [...reads.values()]}
+    return toAnswer({reply, usage, reads: state.reads})
   }
   const outputs = await Promise.all(
     reply.toolCalls.map((call, index) =>
@@ -191,9 +161,61 @@ async function continueToolLoop(state: ToolLoopState): Promise<ToolLoopResult> {
   })
 }
 
+// A reasoning model can use all of the output token limit to reason, and a
+// second run of the review often did the same. This call asks for the answer
+// without reasoning, from the files that the model read before the cut. An
+// answer without reasoning is short, so it costs less than a second run.
+async function answerWithoutReasoning(state: ToolLoopState): Promise<ToolLoopResult> {
+  const {chat, model, tools, eventFields, messages, round, reads} = state
+  const reply = await chat({
+    model,
+    eventFields: {...eventFields, round},
+    reasoning: 'off',
+    ...(tools === undefined ? {messages} : answerNowRequest(messages)),
+  }).catch(toFailure)
+  if ('error' in reply) {
+    return {error: reply.error, usage: state.usage}
+  }
+  const usage = addUsage(state.usage, reply.usage)
+  if (reply.finishReason === 'length') {
+    const error = answerText(reply) === '' ? describeEmptyAnswer(reply) : describeCutAnswer(reply)
+    return {error, usage}
+  }
+  return toAnswer({reply, usage, reads})
+}
+
+interface ToAnswerParams {
+  reply: ChatReply
+  usage: CompletionUsage
+  reads: readonly FileRead[]
+}
+
+function toAnswer({reply, usage, reads}: ToAnswerParams): ToolLoopResult {
+  const text = answerText(reply)
+  if (text === '') {
+    return {error: describeEmptyAnswer(reply), usage}
+  }
+  const uniqueReads = new Map(reads.map((read) => [read.path, read]))
+  return {text, usage, reads: [...uniqueReads.values()]}
+}
+
+// A provider that does not support a required tool call can still answer in
+// text, and a submit_answer call with empty arguments does not hide that text.
+function answerText(reply: ChatReply): string {
+  return reply.toolCalls.find(isSubmitAnswer)?.arguments || reply.content
+}
+
+function answerNowRequest(messages: readonly ChatMessage[]): Omit<ChatRequest, 'model'> {
+  return {
+    messages: withAnswerNowNote(messages),
+    tools: [SUBMIT_ANSWER_TOOL],
+    toolChoice: 'required',
+  }
+}
+
 // The reason tells an output cut at the token limit from a model that called
 // tools when the tools were off. The error is not temporary, so a step retry
-// does not bill each empty answer again; runToolLoop runs a cut review once more.
+// does not bill each empty answer again.
 function describeEmptyAnswer({toolCalls, finishReason, usage}: ChatReply): OpenRouterError {
   const reason =
     toolCalls.length > 0

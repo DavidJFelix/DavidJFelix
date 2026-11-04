@@ -60,6 +60,17 @@ test('createOpenRouterChat sends the messages and returns the content with usage
   })
 })
 
+test('createOpenRouterChat asks for no reasoning when the request turns it off', async () => {
+  const fetchStub = vi.fn<Fetch>(async () =>
+    Response.json({choices: [{message: {content: '{"findings": []}'}}]}),
+  )
+  const chat = createOpenRouterChat({apiKey: 'key', fetch: fetchStub})
+
+  await chat({...request, reasoning: 'off'})
+
+  expect(sentBody(fetchStub)).toMatchObject({reasoning: {effort: 'none'}})
+})
+
 test('createOpenRouterChat sends tools and tool messages, and returns tool calls', async () => {
   const fetchStub = vi.fn<Fetch>(async () =>
     Response.json({

@@ -44,7 +44,7 @@ test('runToolLoop makes one call without tools', async () => {
   expect(result).toEqual({text: '{"findings": []}', usage, reads: []})
   expect(chat).toHaveBeenCalledWith({
     model: 'vendor/model',
-    eventFields: {run: 1, round: 0},
+    eventFields: {round: 0},
     messages: [
       {role: 'system', content: 'system'},
       {role: 'user', content: 'chunk'},
@@ -228,7 +228,7 @@ test('runToolLoop stops and keeps the billed usage when a tool fails', async () 
   expect(chat).toHaveBeenCalledTimes(1)
 })
 
-test('runToolLoop runs a review again once when the token limit cuts the answer, and fails the second cut', async () => {
+test('runToolLoop fails when the token limit also cuts the answer without reasoning', async () => {
   const chat = vi.fn<Chat>(async () => ({...answer(''), finishReason: 'length'}))
 
   const result = await runToolLoop({...params, chat, tools: fakeTools()})
@@ -236,27 +236,77 @@ test('runToolLoop runs a review again once when the token limit cuts the answer,
   expect(result).toEqual({
     error: new OpenRouterError('Empty answer: finish reason length, 5 output tokens', false),
     usage: {promptTokens: 20, completionTokens: 10, costUsd: 0.02},
-    cutAtTokenLimit: true,
   })
   expect(chat).toHaveBeenCalledTimes(2)
 })
 
-test('runToolLoop returns the second answer after the token limit cuts the first, with the usage of both', async () => {
+test('runToolLoop asks for the answer without reasoning after the token limit cuts a reply, with the files read so far', async () => {
   const chat = vi
     .fn<Chat>()
+    .mockResolvedValueOnce(callTools(readCall('1', 'a.ts')))
     .mockResolvedValueOnce({...answer(''), finishReason: 'length'})
-    .mockResolvedValueOnce(answer('{"findings": []}'))
+    .mockResolvedValueOnce(callTools(submitAnswer('2', '{"findings": []}')))
 
   const result = await runToolLoop({...params, chat, tools: fakeTools()})
 
   expect(result).toEqual({
     text: '{"findings": []}',
-    usage: {promptTokens: 20, completionTokens: 10, costUsd: 0.02},
-    reads: [],
+    usage: {promptTokens: 30, completionTokens: 15, costUsd: 0.03},
+    reads: [{path: 'a.ts', sha: 'sha-a.ts'}],
+  })
+  const [cut, withoutReasoning] = chat.mock.calls.slice(1).map(([request]) => request)
+  expect(withoutReasoning).toEqual({
+    model: 'vendor/model',
+    eventFields: {round: 1},
+    reasoning: 'off',
+    messages: [
+      ...cut.messages.slice(0, -1),
+      {role: 'tool', toolCallId: '1', content: `text of a.ts\n\n${ANSWER_NOW_NOTE}`},
+    ],
+    tools: [SUBMIT_ANSWER_TOOL],
+    toolChoice: 'required',
   })
 })
 
-test('runToolLoop does not run a review again after an empty answer that stopped for another reason', async () => {
+test('runToolLoop asks for the answer without reasoning and without tools when the review has no tools', async () => {
+  const chat = vi
+    .fn<Chat>()
+    .mockResolvedValueOnce({...answer(''), finishReason: 'length'})
+    .mockResolvedValueOnce(answer('{"findings": []}'))
+
+  const result = await runToolLoop({...params, chat})
+
+  expect(result).toMatchObject({text: '{"findings": []}'})
+  expect(chat.mock.calls[1][0]).toEqual({...chat.mock.calls[0][0], reasoning: 'off'})
+})
+
+test('runToolLoop keeps the billed usage when the call without reasoning fails', async () => {
+  const failure = new Error('OpenRouter returned 400')
+  const chat = vi
+    .fn<Chat>()
+    .mockResolvedValueOnce({...answer(''), finishReason: 'length'})
+    .mockRejectedValueOnce(failure)
+
+  const result = await runToolLoop({...params, chat, tools: fakeTools()})
+
+  expect(result).toEqual({error: failure, usage})
+})
+
+test('runToolLoop fails an empty answer without reasoning', async () => {
+  const chat = vi
+    .fn<Chat>()
+    .mockResolvedValueOnce({...answer(''), finishReason: 'length'})
+    .mockResolvedValueOnce({...answer(''), finishReason: 'stop'})
+
+  const result = await runToolLoop({...params, chat, tools: fakeTools()})
+
+  expect(result).toEqual({
+    error: new OpenRouterError('Empty answer: finish reason stop, 5 output tokens', false),
+    usage: {promptTokens: 20, completionTokens: 10, costUsd: 0.02},
+  })
+})
+
+test('runToolLoop does not ask again after an empty answer that stopped for another reason', async () => {
   const chat = vi.fn<Chat>(async () => ({...answer(''), finishReason: 'stop'}))
 
   const result = await runToolLoop({...params, chat, tools: fakeTools()})
@@ -268,7 +318,7 @@ test('runToolLoop does not run a review again after an empty answer that stopped
   expect(chat).toHaveBeenCalledTimes(1)
 })
 
-test('runToolLoop tells the logs the run and the round of each model call', async () => {
+test('runToolLoop tells the logs the round of each model call', async () => {
   const chat = vi
     .fn<Chat>()
     .mockResolvedValueOnce(callTools(readCall('1', 'a.ts')))
@@ -278,9 +328,9 @@ test('runToolLoop tells the logs the run and the round of each model call', asyn
   await runToolLoop({...params, chat, tools: fakeTools(), eventFields: {reviewer: 'security'}})
 
   expect(chat.mock.calls.map(([request]) => request.eventFields)).toEqual([
-    {reviewer: 'security', run: 1, round: 0},
-    {reviewer: 'security', run: 1, round: 1},
-    {reviewer: 'security', run: 2, round: 0},
+    {reviewer: 'security', round: 0},
+    {reviewer: 'security', round: 1},
+    {reviewer: 'security', round: 1},
   ])
 })
 
@@ -337,7 +387,7 @@ test('runToolLoop takes the text answer when submit_answer has empty arguments',
   expect(result).toMatchObject({text: '{"findings": []}'})
 })
 
-test('runToolLoop runs a review again when the token limit cuts a submit_answer call', async () => {
+test('runToolLoop asks again without reasoning when the token limit cuts a submit_answer call', async () => {
   const chat = vi
     .fn<Chat>()
     .mockResolvedValueOnce({
@@ -349,10 +399,11 @@ test('runToolLoop runs a review again when the token limit cuts a submit_answer 
   const result = await runToolLoop({...params, chat, tools: fakeTools()})
 
   expect(chat).toHaveBeenCalledTimes(2)
+  expect(chat.mock.calls[1][0].reasoning).toBe('off')
   expect(result).toMatchObject({text: '{"findings": []}'})
 })
 
-test('runToolLoop fails a cut submit_answer call on the second run as cut', async () => {
+test('runToolLoop fails a submit_answer call that the token limit also cuts without reasoning', async () => {
   const chat = vi.fn<Chat>(async () => ({
     ...callTools(submitAnswer('1', '{"findings": [')),
     finishReason: 'length',
@@ -363,6 +414,5 @@ test('runToolLoop fails a cut submit_answer call on the second run as cut', asyn
   expect(result).toEqual({
     error: new OpenRouterError('Answer cut at the output token limit: 5 output tokens', false),
     usage: {promptTokens: 20, completionTokens: 10, costUsd: 0.02},
-    cutAtTokenLimit: true,
   })
 })

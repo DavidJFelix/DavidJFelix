@@ -50,6 +50,8 @@ export interface ChatRequest {
   tools?: readonly ToolDefinition[]
   // 'required' makes the model call one of the tools instead of writing text.
   toolChoice?: 'auto' | 'none' | 'required'
+  // 'off' asks the model to answer without reasoning.
+  reasoning?: 'off'
   // Fields that tell which review asked for the call. Only the logs use them;
   // they are not sent to the model.
   eventFields?: Readonly<Record<string, string | number | boolean>>
@@ -208,7 +210,12 @@ const TOP_P = 0.95
 
 export const REASONING_EFFORT = 'medium'
 
-function toRequestBody({model, messages, tools, toolChoice}: ChatRequest) {
+export function reasoningEffort({reasoning}: ChatRequest): string {
+  return reasoning === 'off' ? 'none' : REASONING_EFFORT
+}
+
+function toRequestBody(request: ChatRequest) {
+  const {model, messages, tools, toolChoice} = request
   return {
     model,
     messages: messages.map(toWireMessage),
@@ -227,7 +234,9 @@ function toRequestBody({model, messages, tools, toolChoice}: ChatRequest) {
     // Without a reasoning budget, a reasoning model can use all of
     // MAX_ANSWER_TOKENS to reason and return an empty answer. Medium effort
     // asks for less reasoning, but DeepSeek can still reason up to the cap.
-    reasoning: {effort: REASONING_EFFORT},
+    // A request with reasoning 'off' sends effort 'none', for an answer
+    // without reasoning after such a cut.
+    reasoning: {effort: reasoningEffort(request)},
     temperature: TEMPERATURE,
     top_p: TOP_P,
     // Asks OpenRouter to return the billed cost with the token counts.

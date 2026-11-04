@@ -1,4 +1,4 @@
-import {type Chat, MAX_ANSWER_TOKENS, REASONING_EFFORT} from './openrouter'
+import {type Chat, MAX_ANSWER_TOKENS, reasoningEffort} from './openrouter'
 
 export type WideEventValue = string | number | boolean | undefined
 
@@ -40,7 +40,7 @@ export function withChatEvents({chat, log, sharedFields}: WithChatEventsParams):
       promptChars: request.messages.reduce((total, message) => total + message.content.length, 0),
       toolChoice: request.tools === undefined ? 'no tools' : (request.toolChoice ?? 'auto'),
       maxTokens: MAX_ANSWER_TOKENS,
-      reasoningEffort: REASONING_EFFORT,
+      reasoningEffort: reasoningEffort(request),
     }
     try {
       const reply = await chat(request)

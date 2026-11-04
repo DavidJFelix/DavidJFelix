@@ -693,7 +693,6 @@ test('reviewPullRequest tells the logs which reviewer and chunk each model call 
     reviewer: REVIEWERS[0].id,
     path: 'a.ts',
     chunkLines: 2,
-    run: 1,
     round: 0,
   })
 })

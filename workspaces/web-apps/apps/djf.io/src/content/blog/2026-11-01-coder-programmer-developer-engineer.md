@@ -48,7 +48,8 @@ To me, "coder" is different.
 Depending on context, "coder" is nearly a pejorative for software developers.
 When spoken by somebody who does not program, the word conveys the notion that the role is transcription and that the only barrier is knowledge of the language.
 Even "translation" says more;
-it conveys that the work isn't just converting words, but rather, it's adapting to differences in grammar, culture, and colloquialism, and interpreting the meaning of one language to convey it in another.
+it conveys that the work goes beyond converting words;
+it's adapting to differences in grammar, culture, and colloquialism, and interpreting the meaning of one language to convey it in another.
 As a champion for software's low barrier to entry, I insist that the language and the "[en]coding" are not the barrier.
 If anything, the work is decoding ideas into process and data, not encoding that process into a programming language.
 

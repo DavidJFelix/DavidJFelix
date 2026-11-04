@@ -19,10 +19,9 @@ hero:
 
 Note: This is a weird post about semantics, don't take it too seriously.
 
-Coder, programmer, developer, and software engineer all seemingly describe similar roles but have different connotations to me.
-It barely matters, but the intricacies of language and semantics fascinate me, which is why I reflect on it.
-This post aims to form a taxonomy of the semantic meaning of different terms.
-This is in no way a universal truth, but rather my subjective observation about the career I've found myself in.
+People often use the terms "coder", "programmer", "developer", and "software engineer" interchangeably, but each one means something different to me.
+Semantics like this aren't that deep, but as I reflect on my own career, I keep returning to the words we use to describe the job.
+I don't believe my classification of these words is a universal truth, but rather a subjective observation about the career I've found myself in.
 Ongoing improvements to AI workflows have made me question that career.
 What is my role? How do I describe myself? What is my goal in this career? Does AI impact that goal?
 

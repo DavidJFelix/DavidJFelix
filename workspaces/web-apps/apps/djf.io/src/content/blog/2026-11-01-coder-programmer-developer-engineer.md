@@ -19,7 +19,7 @@ hero:
 
 Note: This is a weird post about semantics, don't take it too seriously.
 
-People often use the terms "coder", "programmer", "developer", and "software engineer" interchangeably, but each one means something different to me.
+People often use the terms "coder," "programmer," "developer," and "software engineer" interchangeably, but each one means something different to me.
 Semantics like this aren't that deep, but as I reflect on my own career, I keep returning to the words we use to describe the job.
 I don't believe my classification of these words is a universal truth, but rather a subjective observation about the career I've found myself in.
 Ongoing improvements to AI workflows have made me question that career.
@@ -43,7 +43,7 @@ There's something really inspiring and beautiful about a skill that you can lear
 
 I am not a coder.
 Programmers will often say "I love to code" or "I love coding," as slang for programming.
-I think the term is fine in this context because it serves to clarify what you mean by "programming"[^2].
+I think the term is fine in this context because it serves to clarify what you mean by "programming."[^2]
 To me, "coder" is different.
 Depending on context, "coder" is nearly a pejorative for software developers.
 When spoken by somebody who does not program, the word conveys the notion that the role is transcription and that the only barrier is knowledge of the language.
@@ -57,7 +57,7 @@ I am often a programmer, but not professionally.
 I genuinely like solving problems and finding clever solutions or learning about data structures.
 I've learned many programming languages to understand designs, organization, structures, and theory better.
 I read about frameworks and follow thought-leaders in the industry.
-Programming is something one does, but professionally, I rarely think you should call yourself a programmer.
+Programming is something one does, but professionally, I rarely think you should call yourself a "programmer."
 Some genuinely do show up to work and write a ton of code for well-specified business needs and almost exclusively program.
 Earlier in my career as an individual contributor, I might have said that this is an ideal state.
 I now feel that the reality is that this is an idealistic state and can only exist because realists create it for programmers.
@@ -68,11 +68,11 @@ When the machine is well oiled, everything feels good, but when a problem arises
 
 I like developers.
 Software development is a noble craft and good developers are often hard to find and also critical to the success of business goals in software.
-I am fiercely defensive of good software developers and do not stand for non-technical people calling them "coders".
-Only other developers and some project managers or product owners can call them "devs"[^3].
-I often call myself a software developer and am happy with this name in countries or at companies where "engineer" is considered professionally guarded.
+I am fiercely defensive of good software developers and do not stand for non-technical people calling them "coders."
+Only other developers and some project managers or product owners can call them "devs."[^3]
+I often call myself a "software developer" and am happy with this name in countries or at companies where "engineer" is considered professionally guarded.
 I love learning from great software developers.
-Thought leaders who write about team dynamics, legacy code, software maintenance, and domain-driven design are, by my definition, "software developers".
+Thought leaders who write about team dynamics, legacy code, software maintenance, and domain-driven design are, by my definition, "software developers."
 
 Software developers are a business reality in the face of engineering purity.
 They involve themselves in the business;
@@ -87,7 +87,7 @@ Likewise, the business does not normally ask programmers for their opinion on va
 On the other side, engineers are thoughtful builders who aim for technical merit and longevity.
 In the middle, developers balance these by learning what the business wants, building something that works, proving it can stand, and only then making sure it can last.
 This isn't a slight at developers, but a recognition that many systems made quickly last longer than expected;
-they accomplish business goals adequately and provide immense return on investment at significantly lower cost than something "well engineered" or "built to last".
+they accomplish business goals adequately and provide immense return on investment at significantly lower cost than something "well engineered" or "built to last."
 
 I tend to think of software creation like construction.
 Suppose the business belief is that people want housing in an area;
@@ -97,8 +97,8 @@ Builders often get lost in building.
 Instead of a high-rise, why not build a house? If demand is large you can always build another house or a high-rise elsewhere, or even tear down the house and build something larger and more suitable.
 Not everything needs to be overbuilt and a good developer is pragmatic.
 
-I call myself an engineer.
-Even though I feel compelled by the software developer's pragmatism and I think overbuilding is an all-too-common mistake, I encourage those who otherwise consider themselves "software developers" to also call themselves "software engineers".
+I call myself an "engineer."
+Even though I feel compelled by the software developer's pragmatism and I think overbuilding is an all-too-common mistake, I encourage those who otherwise consider themselves "software developers" to also call themselves "software engineers."
 One of the major reasons I push for this moniker is pride.
 I take pride in the craft and pride in my hard-earned knowledge.
 I believe others should too.
@@ -121,7 +121,7 @@ The value of software is in the problems it solves, not the cost to replace it.
 
 This whole discussion about semantics of the name of a role that writes code at a company can feel like wasted energy.
 In a world where AI capabilities are growing and technologists are constantly foretelling the end of SaaS or layoffs coming to software development, I believe it is more important than ever to define one's purpose and role.
-What do you do for work? What value do you provide for the company? Do you care about this industry or is it just a job? I don't particularly believe in "AI doomerism"[^5], but rather a gradual change or displacement (not replacement) of roles.
+What do you do for work? What value do you provide for the company? Do you care about this industry or is it just a job? I don't particularly believe in "AI doomerism,"[^5] but rather a gradual change or displacement (not replacement) of roles.
 Part of the beauty of software has been that anyone can become a good software developer - with AI that's becoming more true than ever.
 I believe the developers who will find homes are those who find affinity to the product and business.
 Those who may be displaced are engineers who love building, programmers who build to the spec, and developers who care about implementation more than the product and business.
@@ -134,8 +134,8 @@ Now it's about building systems that last and allowing customers to outsource th
 
 ---
 
-[^1]: A few European countries and Canada have restrictions against calling yourself an engineer without professional accreditation.
-In the US, this pretty much only applies to civil engineers or people calling themselves "Professional Engineers".
+[^1]: A few European countries and Canada have restrictions against calling yourself an "engineer" without professional accreditation.
+In the US, this pretty much only applies to civil engineers or people calling themselves "Professional Engineers."
 There was a PE exam for software, but NCEES discontinued it in 2019 due to low enrollment.
 Some adjacent exams still exist, but I'd suggest not taking them for software unless a job you want explicitly asks for it.
 
@@ -148,7 +148,7 @@ I think the people I'm okay with saying it must be familiar with the effort that
 The further from the role the speaker is, the more that this feels dismissive of the work.
 I don't correct speakers, but if I hear somebody say "dev" that I don't think respects that process, I'll make a point of saying "software developers" (or "engineers") back.
 
-[^4]: Or "back-end engineer", "front-end engineer", "full stack engineer", "platform engineer", etc.
+[^4]: Or "back-end engineer," "front-end engineer," "full stack engineer," "platform engineer," etc.
 
 [^5]: The idea that software developers will be out of work within a few years.
 Tech leaders have predicted [the end of the profession](https://www.itpro.com/software/development/a-sign-of-things-to-come-in-software-development-mark-zuckerberg-says-ai-will-be-doing-the-work-of-mid-level-engineers-this-year-and-hes-not-the-only-big-tech-exec-predicting-the-end-of-the-profession) for a while, and [Anthropic's CEO said in early 2026](https://www.entrepreneur.com/business-news/ai-ceo-says-software-engineers-could-be-replaced-in-months/502087) that AI could do most of an engineer's job within a year.

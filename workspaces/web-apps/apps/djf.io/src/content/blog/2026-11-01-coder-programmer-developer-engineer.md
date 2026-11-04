@@ -61,15 +61,16 @@ Programming is something one does, but professionally, I rarely think you should
 Some genuinely do show up to work and write a ton of code for well-specified business needs and almost exclusively program.
 Earlier in my career as an individual contributor, I might have said that this is an ideal state.
 I now feel that the reality is that this is an idealistic state and can only exist because realists create it for programmers.
-I rarely find that programming is the bulk of the work and I know many developers and engineers who program infrequently and are still successful and talented at their job.
-Many intelligent engineers, including past versions of me, aim to find roles like this, but I believe now more than ever these are the spaces where burnout and disillusionment with the career fester as product skills, interpersonal skills, business involvement, and EQ languish.
+I rarely find that programming is the bulk of the work that needs to be done when creating software and I know many developers and engineers who program infrequently and are successful and talented at their jobs.
+Many intelligent engineers, including past versions of myself, aim to find roles like this.
+However, I believe now more than ever these are the spaces where burnout and disillusionment with one's career fester as product skills, interpersonal skills, business involvement, and one's EQ[^3] languish.
 Programming to spec makes you into a tool for the business to use.
 When the machine is well oiled, everything feels good, but when a problem arises, tools are expendable.
 
 I like developers.
 Software development is a noble craft and good developers are often hard to find and also critical to the success of business goals in software.
 I am fiercely defensive of good software developers and do not stand for non-technical people calling them "coders".
-Only other developers and some project managers or product owners can call them "devs"[^3].
+Only other developers and some project managers or product owners can call them "devs"[^4].
 I often call myself a "software developer" and am happy with this name in countries or at companies where "engineer" is considered professionally guarded.
 I love learning from great software developers.
 Thought leaders who write about team dynamics, legacy code, software maintenance, and domain-driven design are, by my definition, "software developers".
@@ -106,7 +107,7 @@ I'm proud of my degree in computer engineering, even if I acknowledge that it do
 I'm proud of the role I take in understanding what software needs to be built and then building something that can achieve that.
 As I alluded to earlier, I strongly believe that what I call this role and what I allow others to call this role conveys respect for the work.
 If you don't think highly of yourself and respect yourself, why should others?
-In my experience, this differential in respect is visible in posted salaries: the US "software engineering"[^4] postings I've seen tend to list $10k-$15k more per year.
+In my experience, this differential in respect is visible in posted salaries: the US "software engineering"[^5] postings I've seen tend to list $10k-$15k more per year.
 A lot of this boils down to expectations and responsibilities of the role, but I contend that those extend deeper to respect for the work being done.
 
 Despite being proud and holding myself with an air of self-respect, it's important to remain humble - anyone can become a software engineer, after all.
@@ -121,7 +122,7 @@ The value of software is in the problems it solves, not the cost to replace it.
 
 This whole discussion about semantics of the name of a role that writes code at a company can feel like wasted energy.
 In a world where AI capabilities are growing and technologists are constantly foretelling the end of SaaS or layoffs coming to software development, I believe it is more important than ever to define one's purpose and role.
-What do you do for work? What value do you provide for the company? Do you care about this industry or is it just a job? I don't particularly believe in "AI doomerism"[^5], but rather a gradual change or displacement (not replacement) of roles.
+What do you do for work? What value do you provide for the company? Do you care about this industry or is it just a job? I don't particularly believe in "AI doomerism"[^6], but rather a gradual change or displacement (not replacement) of roles.
 Part of the beauty of software has been that anyone can become a good software developer - with AI that's becoming more true than ever.
 I believe the developers who will find homes are those who find affinity to the product and business.
 Those who may be displaced are engineers who love building, programmers who build to the spec, and developers who care about implementation more than the product and business.
@@ -141,15 +142,17 @@ Some adjacent exams still exist, but I'd suggest not taking them for software un
 
 [^2]: As opposed to, say, a scheduler like radio programming or broadcast programming.
 
-[^3]: This is a soft line.
+[^3]: Short for "emotional quotient", a measure of [emotional intelligence](https://en.wikipedia.org/wiki/Emotional_intelligence), which is the ability to recognize, understand, and manage your own emotions and the emotions of others.
+
+[^4]: This is a soft line.
 I think "dev" is familiar and removes the actual process that is performed by the job from the name.
 It doesn't acknowledge that they are developers and that this is a process.
 I think the people I'm okay with saying it must be familiar with the effort that goes into software development.
 The further from the role the speaker is, the more that this feels dismissive of the work.
 I don't correct speakers, but if I hear somebody say "dev" that I don't think respects that process, I'll make a point of saying "software developers" (or "engineers") back.
 
-[^4]: Or "back-end engineer", "front-end engineer", "full stack engineer", "platform engineer", etc.
+[^5]: Or "back-end engineer", "front-end engineer", "full stack engineer", "platform engineer", etc.
 
-[^5]: The idea that software developers will be out of work within a few years.
+[^6]: The idea that software developers will be out of work within a few years.
 Tech leaders have predicted [the end of the profession](https://www.itpro.com/software/development/a-sign-of-things-to-come-in-software-development-mark-zuckerberg-says-ai-will-be-doing-the-work-of-mid-level-engineers-this-year-and-hes-not-the-only-big-tech-exec-predicting-the-end-of-the-profession) for a while, and [Anthropic's CEO said in early 2026](https://www.entrepreneur.com/business-news/ai-ceo-says-software-engineers-could-be-replaced-in-months/502087) that AI could do most of an engineer's job within a year.
 Investors bought into a version of it too, when software stocks crashed in the ["SaaSpocalypse"](https://www.bloomberg.com/news/articles/2026-02-04/what-s-behind-the-saaspocalypse-plunge-in-software-stocks).

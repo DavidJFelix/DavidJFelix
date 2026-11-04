@@ -42,12 +42,14 @@ There's something really inspiring and beautiful about a skill that you can lear
 ## Identity and purpose
 
 I am not a coder.
-Programmers will often say "I love to code" or "I love coding".
-As slang for programming, I think the term is fine because it serves to clarify what you mean by "programming"[^2], but "coder" is different.
-To me, this is nearly a pejorative, depending on context.
+Programmers will often say "I love to code" or "I love coding," as slang for programming.
+I think the term is fine in this context because it serves to clarify what you mean by "programming"[^2].
+To me, "coder" is different.
+Depending on context, "coder" is nearly a pejorative for software developers.
 When spoken by somebody who does not program, this conveys the notion that the role is transcription and that the only barrier is knowledge of the language.
-Even translation between natural languages has a richer description: the work isn't just converting words, it's adapting to differences in grammar, culture, and colloquialism, and trying to interpret the meaning of one language and convey it in another.
-I applaud software's low barrier to entry and must insist that the language and the "coding" are not the barrier.
+Even translation between natural languages carries a richer description;
+at least "translation" conveys that the work isn't just converting words, but rather, it's adapting to differences in grammar, culture, and colloquialism, and trying to interpret the meaning of one language and convey it in another.
+As a champion for software's low barrier to entry, I insist that the language and the "[en]coding" are not the barrier.
 If anything, the work is decoding ideas into process and data, not encoding that process into a programming language.
 
 I am often a programmer, but not professionally.

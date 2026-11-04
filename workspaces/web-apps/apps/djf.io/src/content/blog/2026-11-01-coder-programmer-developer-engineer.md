@@ -25,6 +25,8 @@ I don't believe my classification of these words is a universal truth, but rathe
 Ongoing improvements to AI workflows have made me question that career.
 What is my role? How do I describe myself? What is my goal in this career? Does AI impact that goal?
 
+## Carving the path
+
 I'm sure many tech-adjacent people can relate to the way relatives talk about your job or present you with computers broken in other-worldly ways.
 I very dearly recall insisting that my mother stop saying that I "work in IT" and beginning to draw my semantic line in the sand.
 My bachelor's degree says "Computer Engineering" and I call myself a "software engineer" and aside from places where it's illegal to do so[^1], I suggest that anyone in a job like mine do the same, regardless of degree or accreditation.
@@ -36,6 +38,8 @@ It's a path with few true barriers to entry and hundreds of inroads.
 There are chat communities, message boards, tutorials, learning paths, video series, free curricula, code bootcamps, and paths through associate's degrees up to PhDs.
 Often, the most enthusiastic software engineers I've met come from code bootcamps or are self-taught.
 There's something really inspiring and beautiful about a skill that you can learn by reading and practice with a few hundred dollars' worth of personal electronics, yet that has the depth to study for years.
+
+## Identity and purpose
 
 I am not a coder.
 Programmers will often say "I love to code" or "I love coding".

@@ -234,6 +234,8 @@ function toRequestBody(request: ChatRequest) {
     // Without a reasoning budget, a reasoning model can use all of
     // MAX_ANSWER_TOKENS to reason and return an empty answer. Medium effort
     // asks for less reasoning, but DeepSeek can still reason up to the cap.
+    // A request with reasoning 'off' sends effort 'none', for an answer
+    // without reasoning after such a cut.
     reasoning: {effort: reasoningEffort(request)},
     temperature: TEMPERATURE,
     top_p: TOP_P,

@@ -1,7 +1,6 @@
 import {z} from 'zod'
 import {listAllPages, type PullRequestParams, repositoryPath} from './github-api'
 import {APP_BOT_LOGIN} from './publish-review'
-import type {CheckRunOutput} from './review-markdown'
 import type {SummaryCommentLock} from './summary-comment-lock'
 
 // The app's summary comment starts with this marker, so a run finds the
@@ -13,6 +12,11 @@ export const SUMMARY_MARKER = '<!-- revision-city:summary -->'
 // model text and file paths, so they cannot add a marker.
 const RUN_MARKER = /^<!-- revision-city:run (\d+) ([0-9a-f]{40}) (\d+\.\d{4}) -->$/gm
 
+// A finding line ends with a marker that holds the fingerprint of the
+// finding, so that a later edit can show it as resolved or open.
+const FINDING_LINE =
+  /^- (?:~~(.*)~~ \(resolved\)|(.*)) <!-- revision-city:finding ([0-9a-f]{16}) -->$/
+
 // GitHub accepts at most 65,536 characters in a comment.
 export const MAX_COMMENT_CHARS = 65_000
 const CUT_NOTE = '(Details cut: the comment is longer than GitHub accepts.)'
@@ -21,6 +25,12 @@ const CUT_NOTE = '(Details cut: the comment is longer than GitHub accepts.)'
 // second summary comment.
 const MAX_COMMENT_PAGES = 30
 
+export interface SectionFinding {
+  fingerprint: string
+  // The neutralized summary line of the finding, without its status.
+  text: string
+}
+
 export interface RunSection {
   // The id of the run's check run. A rerun on the same head has a new one.
   checkRunId: number
@@ -28,7 +38,9 @@ export interface RunSection {
   costUsd: number
   // The marker line and the heading. A cut keeps them.
   head: string
-  // The text after the heading, as the comment shows it.
+  // The reported findings of the run. A cut keeps them too.
+  findings: SectionFinding[]
+  // The text after the findings, as the comment shows it.
   details: string
 }
 
@@ -36,14 +48,19 @@ export interface FormatRunSectionParams {
   checkRunId: number
   headSha: string
   costUsd: number
-  output: CheckRunOutput
+  title: string
+  findings: SectionFinding[]
+  // The check run text without its findings, already neutralized.
+  details?: string
 }
 
 export function formatRunSection({
   checkRunId,
   headSha,
   costUsd,
-  output,
+  title,
+  findings,
+  details,
 }: FormatRunSectionParams): RunSection {
   const cost = costUsd.toFixed(4)
   return {
@@ -52,9 +69,10 @@ export function formatRunSection({
     costUsd: Number(cost),
     head: [
       `<!-- revision-city:run ${checkRunId} ${headSha} ${cost} -->`,
-      `### \`${headSha.slice(0, 7)}\`: ${output.title}, cost $${cost}`,
+      `### \`${headSha.slice(0, 7)}\`: ${title}, cost $${cost}`,
     ].join('\n'),
-    details: output.text === undefined ? '' : `<details>\n\n${output.text}\n\n</details>`,
+    findings,
+    details: details === undefined ? '' : `<details>\n\n${details}\n\n</details>`,
   }
 }
 
@@ -64,19 +82,31 @@ export function readRunSections(body: string): RunSection[] {
   const markers = Array.from(body.matchAll(RUN_MARKER))
   return markers.map((marker, index) => {
     const lines = body.slice(marker.index, markers[index + 1]?.index).split('\n')
+    const rest = lines.slice(2)
     return {
       checkRunId: Number(marker[1]),
       headSha: marker[2],
       costUsd: Number(marker[3]),
       head: lines.slice(0, 2).join('\n'),
-      details: lines.slice(2).join('\n').trim(),
+      findings: rest.flatMap((line): SectionFinding[] => {
+        const match = FINDING_LINE.exec(line)
+        return match === null ? [] : [{fingerprint: match[3], text: match[1] ?? match[2]}]
+      }),
+      details: rest
+        .filter((line) => !FINDING_LINE.test(line))
+        .join('\n')
+        .trim(),
     }
   })
 }
 
-// The newest run goes last. When the comment is too long, older runs lose
-// their details first, and keep their heading and cost.
-export function formatSummaryComment(sections: readonly RunSection[]): string {
+// The newest run goes last. A finding whose fingerprint is in `resolved` shows
+// as resolved. When the comment is too long, older runs lose their details
+// first, and keep their heading, cost, and findings.
+export function formatSummaryComment(
+  sections: readonly RunSection[],
+  resolved: ReadonlySet<string> = new Set(),
+): string {
   const total = sections.reduce((sum, {costUsd}) => sum + costUsd, 0)
   const header = [
     SUMMARY_MARKER,
@@ -87,12 +117,14 @@ export function formatSummaryComment(sections: readonly RunSection[]): string {
   const render = (cutCount: number) =>
     [
       header,
-      ...sections.map(({head, details}, index) =>
-        index < cutCount
-          ? `${head}\n\n${CUT_NOTE}`
-          : details === ''
-            ? head
-            : `${head}\n\n${details}`,
+      ...sections.map(({head, findings, details}, index) =>
+        [
+          head,
+          ...(findings.length === 0
+            ? []
+            : [findings.map((finding) => findingLine(finding, resolved)).join('\n')]),
+          ...(index < cutCount ? [CUT_NOTE] : details === '' ? [] : [details]),
+        ].join('\n\n'),
       ),
     ].join('\n\n')
   const fitting = Array.from({length: sections.length + 1}, (_, cutCount) => cutCount).find(
@@ -101,6 +133,11 @@ export function formatSummaryComment(sections: readonly RunSection[]): string {
   return fitting === undefined
     ? render(sections.length).slice(0, MAX_COMMENT_CHARS)
     : render(fitting)
+}
+
+function findingLine({fingerprint, text}: SectionFinding, resolved: ReadonlySet<string>): string {
+  const shown = resolved.has(fingerprint) ? `~~${text}~~ (resolved)` : text
+  return `- ${shown} <!-- revision-city:finding ${fingerprint} -->`
 }
 
 const issueCommentSchema = z.object({
@@ -113,6 +150,8 @@ const ignoredResponse = z.unknown()
 
 export interface UpdateSummaryCommentParams extends PullRequestParams {
   section: RunSection
+  // The fingerprints of the findings to show as resolved, in every run.
+  resolvedFingerprints: readonly string[]
   lock: SummaryCommentLock
 }
 
@@ -145,7 +184,9 @@ async function writeSummaryComment({
   repository,
   pullNumber,
   section,
+  resolvedFingerprints,
 }: Omit<UpdateSummaryCommentParams, 'lock'>): Promise<void> {
+  const resolved = new Set(resolvedFingerprints)
   const issuePath = `${repositoryPath(repository)}/issues/${pullNumber}/comments`
   const comments = await listAllPages({
     request,
@@ -160,7 +201,7 @@ async function writeSummaryComment({
     await request({
       method: 'POST',
       path: issuePath,
-      body: {body: formatSummaryComment([section])},
+      body: {body: formatSummaryComment([section], resolved)},
       schema: ignoredResponse,
     })
     return
@@ -172,7 +213,7 @@ async function writeSummaryComment({
   await request({
     method: 'PATCH',
     path: `${repositoryPath(repository)}/issues/comments/${existing.id}`,
-    body: {body: formatSummaryComment([...sections, section])},
+    body: {body: formatSummaryComment([...sections, section], resolved)},
     schema: ignoredResponse,
   })
 }

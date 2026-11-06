@@ -85,12 +85,18 @@ function longestBacktickRun(text: string): number {
   return Math.max(0, ...Array.from(text.matchAll(/`+/g), ([run]) => run.length))
 }
 
-function findingLine(finding: Finding): string {
+// One line: severity, place, reviewer, and title. The model text in it is not
+// neutralized.
+export function findingSummary(finding: Finding): string {
   const lines =
     finding.startLine === finding.endLine
       ? `${finding.endLine}`
       : `${finding.startLine}-${finding.endLine}`
-  return `- **${finding.severity}** ${codeSpan(`${oneLine(finding.path)}:${lines}`)} (${finding.reviewerId}): ${oneLine(finding.title)}`
+  return `**${finding.severity}** ${codeSpan(`${oneLine(finding.path)}:${lines}`)} (${finding.reviewerId}): ${oneLine(finding.title)}`
+}
+
+function findingLine(finding: Finding): string {
+  return `- ${findingSummary(finding)}`
 }
 
 export interface FormatReviewBodyParams {

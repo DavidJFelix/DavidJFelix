@@ -2,7 +2,11 @@
 import {expect, test} from 'vitest'
 import {z} from 'zod'
 import {GitHubApiError, type GitHubRequest} from './github-api'
-import {countOpenAppThreads, syncCheckRunWithThreads} from './resolved-threads'
+import {
+  countOpenAppThreads,
+  listResolvedFingerprints,
+  syncCheckRunWithThreads,
+} from './resolved-threads'
 
 const repository = {owner: 'acme', name: 'repo'}
 const headSha = 'a'.repeat(40)
@@ -255,4 +259,29 @@ test.each([
 
   expect(await syncCheckRunWithThreads(pull(github.request))).toBe('unchanged')
   expect(github.sent(CHECK_RUN)).toEqual([])
+})
+
+test('listResolvedFingerprints lists a finding only when a user who can push resolved all its threads', async () => {
+  const withBody = (fingerprint: string, params: ThreadParams) => ({
+    ...thread(params),
+    comments: {
+      nodes: [
+        {body: `<!-- revision-city:${fingerprint} -->\n\nBody`, author: {login: 'revisioncity'}},
+      ],
+    },
+  })
+  const github = fakeGitHub({
+    ...permissions,
+    [GRAPHQL]: () =>
+      threadsPage([
+        withBody('aaaaaaaaaaaaaaaa', {isResolved: true}),
+        withBody('aaaaaaaaaaaaaaaa', {isResolved: true, isOutdated: true}),
+        withBody('bbbbbbbbbbbbbbbb', {isResolved: true}),
+        withBody('bbbbbbbbbbbbbbbb', {}),
+        withBody('cccccccccccccccc', {isResolved: true, resolver: 'author'}),
+        thread({isResolved: true}),
+      ]),
+  })
+
+  expect(await listResolvedFingerprints(pull(github.request))).toEqual(['aaaaaaaaaaaaaaaa'])
 })

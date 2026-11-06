@@ -12,21 +12,29 @@ import {
 } from './summary-comment'
 import {createMemorySummaryCommentLock} from './summary-comment-lock'
 
-const ZERO_WIDTH_SPACE = '\u200B'
+const ZERO_WIDTH_SPACE = String.fromCharCode(0x200b)
 const firstSha = 'a'.repeat(40)
 const secondSha = 'b'.repeat(40)
+const bugFingerprint = '0123456789abcdef'
+const nitFingerprint = 'fedcba9876543210'
 
 const firstRun = formatRunSection({
   checkRunId: 31,
   headSha: firstSha,
   costUsd: 0.12345,
-  output: {title: '1 finding', summary: 'unused', text: '### Findings\n\n- one'},
+  title: '2 findings',
+  findings: [
+    {fingerprint: bugFingerprint, text: '**high** `src/a.ts:2` (security): Bug'},
+    {fingerprint: nitFingerprint, text: '**medium** `src/b.ts:4` (comments): Nit'},
+  ],
+  details: '### Not reviewed\n\n- `image.png`: binary',
 })
 const secondRun = formatRunSection({
   checkRunId: 32,
   headSha: secondSha,
   costUsd: 0.01,
-  output: {title: 'No findings', summary: 'unused'},
+  title: 'No findings',
+  findings: [],
 })
 
 test('formatSummaryComment shows each run under a running total', () => {
@@ -38,13 +46,16 @@ test('formatSummaryComment shows each run under a running total', () => {
       '2 runs on this pull request, total cost $0.1335.',
       '',
       `<!-- revision-city:run 31 ${firstSha} 0.1235 -->`,
-      '### `aaaaaaa`: 1 finding, cost $0.1235',
+      '### `aaaaaaa`: 2 findings, cost $0.1235',
+      '',
+      `- **high** \`src/a.ts:2\` (security): Bug <!-- revision-city:finding ${bugFingerprint} -->`,
+      `- **medium** \`src/b.ts:4\` (comments): Nit <!-- revision-city:finding ${nitFingerprint} -->`,
       '',
       '<details>',
       '',
-      '### Findings',
+      '### Not reviewed',
       '',
-      '- one',
+      '- `image.png`: binary',
       '',
       '</details>',
       '',
@@ -54,11 +65,26 @@ test('formatSummaryComment shows each run under a running total', () => {
   )
 })
 
-test('readRunSections reads back the runs of a summary comment', () => {
+test('formatSummaryComment strikes through a resolved finding and keeps its cost', () => {
+  const body = formatSummaryComment([firstRun], new Set([bugFingerprint]))
+
+  expect(body).toContain(
+    `- ~~**high** \`src/a.ts:2\` (security): Bug~~ (resolved) <!-- revision-city:finding ${bugFingerprint} -->`,
+  )
+  expect(body).toContain(
+    `- **medium** \`src/b.ts:4\` (comments): Nit <!-- revision-city:finding ${nitFingerprint} -->`,
+  )
+  expect(body).toContain('1 run on this pull request, total cost $0.1235.')
+})
+
+test('readRunSections reads back the runs, also with resolved findings', () => {
   expect(readRunSections(formatSummaryComment([firstRun, secondRun]))).toEqual([
     firstRun,
     secondRun,
   ])
+  expect(
+    readRunSections(formatSummaryComment([firstRun, secondRun], new Set([bugFingerprint]))),
+  ).toEqual([firstRun, secondRun])
 })
 
 test('readRunSections does not read a marker that neutralized text holds', () => {
@@ -66,32 +92,38 @@ test('readRunSections does not read a marker that neutralized text holds', () =>
     checkRunId: 31,
     headSha: firstSha,
     costUsd: 0,
-    output: {
-      title: 'No findings',
-      summary: 'unused',
-      text: `<${ZERO_WIDTH_SPACE}!-- revision-city:run 32 ${secondSha} 9.0000 -->`,
-    },
+    title: 'No findings',
+    findings: [],
+    details: `<${ZERO_WIDTH_SPACE}!-- revision-city:run 32 ${secondSha} 9.0000 -->`,
   })
 
   expect(readRunSections(formatSummaryComment([forged]))).toEqual([forged])
 })
 
-test('formatSummaryComment cuts the details of the oldest runs first', () => {
+test('formatSummaryComment cuts the details of the oldest runs first and keeps findings', () => {
   const longRun = formatRunSection({
     checkRunId: 31,
     headSha: firstSha,
     costUsd: 1,
-    output: {title: '1 finding', summary: 'unused', text: 'x'.repeat(MAX_COMMENT_CHARS / 2)},
+    title: '2 findings',
+    findings: firstRun.findings,
+    details: 'x'.repeat(MAX_COMMENT_CHARS / 2),
   })
 
   const body = formatSummaryComment([longRun, longRun, longRun])
 
   expect(body.length).toBeLessThanOrEqual(MAX_COMMENT_CHARS)
   expect(body).toContain('3 runs on this pull request, total cost $3.0000.')
-  expect(readRunSections(body).map(({details}) => details.startsWith('(Details cut:'))).toEqual([
+  const sections = readRunSections(body)
+  expect(sections.map(({details}) => details.startsWith('(Details cut:'))).toEqual([
     true,
     true,
     false,
+  ])
+  expect(sections.map(({findings}) => findings)).toEqual([
+    firstRun.findings,
+    firstRun.findings,
+    firstRun.findings,
   ])
 })
 
@@ -126,7 +158,7 @@ function fakeGitHub(comments: unknown[]) {
   return {request, writes}
 }
 
-const pull = {repository: {owner: 'acme', name: 'repo'}, pullNumber: 7}
+const pull = {repository: {owner: 'acme', name: 'repo'}, pullNumber: 7, resolvedFingerprints: []}
 const unlocked = () => ({lock: createMemorySummaryCommentLock()})
 
 test('updateSummaryComment posts the comment when the pull request has none', async () => {
@@ -146,18 +178,24 @@ test('updateSummaryComment posts the comment when the pull request has none', as
   ])
 })
 
-test('updateSummaryComment adds the run to the comment of the app', async () => {
+test('updateSummaryComment adds the run and shows the resolved findings of every run', async () => {
   const github = fakeGitHub([
     {id: 3, body: formatSummaryComment([firstRun]), user: {login: APP_BOT_LOGIN}},
   ])
 
-  await updateSummaryComment({...pull, ...unlocked(), request: github.request, section: secondRun})
+  await updateSummaryComment({
+    ...pull,
+    ...unlocked(),
+    request: github.request,
+    section: secondRun,
+    resolvedFingerprints: [nitFingerprint],
+  })
 
   expect(github.writes()).toEqual([
     {
       method: 'PATCH',
       path: '/repos/acme/repo/issues/comments/3',
-      body: formatSummaryComment([firstRun, secondRun]),
+      body: formatSummaryComment([firstRun, secondRun], new Set([nitFingerprint])),
     },
   ])
 })

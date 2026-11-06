@@ -8,7 +8,7 @@ import {
   repositoryPath,
 } from './github-api'
 import {APP_SLUG, CHECK_RUN_NAME, completeCheckRun} from './publish-review'
-import type {CheckRunOutput} from './review-markdown'
+import {type CheckRunOutput, readFingerprint} from './review-markdown'
 
 // A check run that failed only on findings has this external id. When every
 // thread that the app started on lines that the head still has is resolved, the
@@ -49,7 +49,7 @@ const THREADS_QUERY = `query ($owner: String!, $name: String!, $number: Int!, $a
           isResolved
           isOutdated
           resolvedBy { login }
-          comments(first: 1) { nodes { author { ... on Bot { login } } } }
+          comments(first: 1) { nodes { body author { ... on Bot { login } } } }
         }
       }
     }
@@ -70,6 +70,7 @@ const threadsPageSchema = z.object({
               comments: z.object({
                 nodes: z.array(
                   z.object({
+                    body: z.string().optional(),
                     author: z.object({login: z.string().optional()}).nullable(),
                   }),
                 ),
@@ -93,12 +94,17 @@ const TRUSTED_PERMISSIONS = new Set(['admin', 'write'])
 interface AppThread {
   // The login of the user who resolved the thread, or null when it is open.
   resolvedBy: string | null
+  isOutdated: boolean
+  // The fingerprint of the finding in the first comment, when it has one.
+  fingerprint?: string
 }
 
-// Counts the open threads that the app started on lines that the head still
-// has. An outdated thread is about code that a push changed, and a review of
-// the new code posts the finding again when it is still there.
-export async function countOpenAppThreads(pull: PullRequestParams): Promise<number> {
+interface ResolvedThread extends AppThread {
+  // True when a user who can push resolved the thread.
+  isResolved: boolean
+}
+
+async function listResolvedAppThreads(pull: PullRequestParams): Promise<ResolvedThread[]> {
   const threads = await listAppThreadsFrom({...pull, after: null, page: 1})
   const resolvers = [...new Set(threads.flatMap(({resolvedBy}) => resolvedBy ?? []))]
   const trusted = new Set(
@@ -108,7 +114,36 @@ export async function countOpenAppThreads(pull: PullRequestParams): Promise<numb
       )
     ).flat(),
   )
-  return threads.filter(({resolvedBy}) => resolvedBy === null || !trusted.has(resolvedBy)).length
+  return threads.map((thread) => ({
+    ...thread,
+    isResolved: thread.resolvedBy !== null && trusted.has(thread.resolvedBy),
+  }))
+}
+
+// Counts the open threads that the app started on lines that the head still
+// has. An outdated thread is about code that a push changed, and a review of
+// the new code posts the finding again when it is still there.
+export async function countOpenAppThreads(pull: PullRequestParams): Promise<number> {
+  const threads = await listResolvedAppThreads(pull)
+  return threads.filter(({isOutdated, isResolved}) => !isOutdated && !isResolved).length
+}
+
+// The fingerprints of the findings whose app threads are all resolved, also
+// outdated threads. A finding can have a thread on each line that a run posted
+// it on.
+export async function listResolvedFingerprints(pull: PullRequestParams): Promise<string[]> {
+  const resolvedByFingerprint = new Map<string, boolean>()
+  for (const {fingerprint, isResolved} of await listResolvedAppThreads(pull)) {
+    if (fingerprint !== undefined) {
+      resolvedByFingerprint.set(
+        fingerprint,
+        (resolvedByFingerprint.get(fingerprint) ?? true) && isResolved,
+      )
+    }
+  }
+  return [...resolvedByFingerprint].flatMap(([fingerprint, resolved]) =>
+    resolved ? [fingerprint] : [],
+  )
 }
 
 interface ThreadPageParams extends PullRequestParams {
@@ -137,18 +172,21 @@ async function listAppThreadsFrom({
   // GitHub App without the "[bot]" suffix. A resolved thread without a
   // resolver counts as open.
   const threads = nodes
-    .filter(
-      ({isOutdated, comments}) => !isOutdated && comments.nodes[0]?.author?.login === APP_SLUG,
-    )
-    .map(({isResolved, resolvedBy}) => ({
-      resolvedBy: isResolved ? (resolvedBy?.login ?? '') : null,
-    }))
+    .filter(({comments}) => comments.nodes[0]?.author?.login === APP_SLUG)
+    .map(({isResolved, isOutdated, resolvedBy, comments}): AppThread => {
+      const fingerprint = readFingerprint(comments.nodes[0]?.body ?? '')
+      return {
+        resolvedBy: isResolved ? (resolvedBy?.login ?? '') : null,
+        isOutdated,
+        ...(fingerprint === undefined ? {} : {fingerprint}),
+      }
+    })
   if (!pageInfo.hasNextPage) {
     return threads
   }
   // At the page limit, add one open thread, so that the check stays red.
   if (page >= MAX_THREAD_PAGES) {
-    return [...threads, {resolvedBy: null}]
+    return [...threads, {resolvedBy: null, isOutdated: false}]
   }
   return [
     ...threads,

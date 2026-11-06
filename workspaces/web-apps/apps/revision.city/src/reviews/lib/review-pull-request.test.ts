@@ -715,3 +715,71 @@ test('reviewPullRequest takes one finding without a findings list as a list of o
   expect(review.findings.map(({title, endLine}) => [title, endLine])).toEqual([['Bug', 6]])
   expect(review.failures).toEqual([])
 })
+
+const LOW_FINDING = {severity: 'low', title: 'Bug', body: 'Breaks', checked: true, label: 2}
+
+const reviewWithOneReviewer = (chat: Chat) =>
+  reviewPullRequest({
+    files: files(5),
+    reviewers: REVIEWERS.slice(0, 1),
+    model: 'vendor/model',
+    description: DESCRIPTION,
+    store: createMemoryChunkReviewStore(),
+    chat,
+    scope: 'test',
+  })
+
+test.each([
+  {name: 'a findings list sent as JSON text', answer: {findings: JSON.stringify([LOW_FINDING])}},
+  {name: 'a findings list under the key finding', answer: {finding: [LOW_FINDING]}},
+  {name: 'a findings list under an answer key', answer: {answer: {findings: [LOW_FINDING]}}},
+  {
+    name: 'a findings list as JSON text under an answer key as JSON text',
+    answer: {answer: JSON.stringify({findings: JSON.stringify([LOW_FINDING])})},
+  },
+])('reviewPullRequest reads $name', async ({answer}) => {
+  const review = await reviewWithOneReviewer(answering(JSON.stringify(answer)))
+
+  expect(review.findings.map(({title, endLine}) => [title, endLine])).toEqual([['Bug', 6]])
+  expect(review.failures).toEqual([])
+})
+
+test('reviewPullRequest reads an empty list under the key finding', async () => {
+  const review = await reviewWithOneReviewer(answering('{"finding": []}'))
+
+  expect(review.findings).toEqual([])
+  expect(review.failures).toEqual([])
+})
+
+test('reviewPullRequest reads a submit_answer call whose findings list is JSON text', async () => {
+  const chat = vi.fn<Chat>(async () => ({
+    content: '',
+    toolCalls: [
+      {
+        id: '1',
+        name: 'submit_answer',
+        arguments: JSON.stringify({findings: JSON.stringify([LOW_FINDING])}),
+      },
+    ],
+    usage,
+  }))
+
+  const review = await reviewWithOneReviewer(chat)
+
+  expect(review.findings.map(({title, endLine}) => [title, endLine])).toEqual([['Bug', 6]])
+  expect(review.failures).toEqual([])
+})
+
+test.each([
+  {name: 'text that is not JSON', answer: {findings: 'none'}},
+  {name: 'JSON text that is cut', answer: {findings: JSON.stringify([LOW_FINDING]).slice(0, 20)}},
+  {name: 'JSON text that is not an array', answer: {findings: JSON.stringify(LOW_FINDING)}},
+  {name: 'text under the key finding', answer: {finding: 'none'}},
+])('reviewPullRequest reports a findings list sent as $name', async ({answer}) => {
+  const review = await reviewWithOneReviewer(answering(JSON.stringify(answer)))
+
+  expect(review.findings).toEqual([])
+  expect(review.failures.map(({error}) => error.split('. The answer has')[0])).toEqual([
+    'No findings list: the findings are a string that is not a JSON array',
+  ])
+})

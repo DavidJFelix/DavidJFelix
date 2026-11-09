@@ -659,19 +659,20 @@ export function encodeCookiePayload(payload: Record<string, unknown>): string {
   return encodeURIComponent(JSON.stringify(payload))
 }
 
-// Only same-site absolute paths are allowed as post-auth destinations, so the
-// flow cannot be used as an open redirect.
+const RETURN_PATH_BASE = new URL('https://return-path.invalid')
+
+// The browser resolves the Location header with the URL rules. This parses the
+// value with the same rules and sends only the parsed path, so the redirect
+// after sign-in or sign-out stays on this site.
 export function sanitizeReturnPath(value: string | null): string {
-  if (
-    isNullish(value) ||
-    !value.startsWith('/') ||
-    value.startsWith('//') ||
-    value.includes('\\') ||
-    /[\n\r]/u.test(value)
-  ) {
+  if (isNullish(value) || !value.startsWith('/')) {
     return DEFAULT_RETURN_PATH
   }
-  return value
+  const resolved = URL.parse(value, RETURN_PATH_BASE)
+  if (resolved?.origin !== RETURN_PATH_BASE.origin) {
+    return DEFAULT_RETURN_PATH
+  }
+  return `${resolved.pathname}${resolved.search}${resolved.hash}`
 }
 
 export function isSecureRequest(url: URL): boolean {

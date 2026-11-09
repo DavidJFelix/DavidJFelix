@@ -366,11 +366,36 @@ test('resolveGitHubAuth ignores a malformed cookie', async () => {
 })
 
 test('unsafe returnTo values fall back to /diffs', () => {
-  for (const returnTo of ['https://evil.test/x', '//evil.test/x', 'diffs', '/a\\b']) {
+  const unsafe = [
+    'https://evil.test/x',
+    '//evil.test/x',
+    'diffs',
+    '/\\evil.test/x',
+    '/\t/evil.test/x',
+    '/\n/evil.test/x',
+    '/\r/evil.test/x',
+    '//[',
+  ]
+  for (const returnTo of unsafe) {
     const response = handleGitHubLogoutRequest(
       new Request(`${ORIGIN}/api/auth/github/logout?returnTo=${encodeURIComponent(returnTo)}`),
     )
     expect(response.headers.get('location')).toBe('/diffs')
+  }
+})
+
+test('safe returnTo values redirect to their normalized same-site path', () => {
+  const cases = [
+    ['/diffs/o/r/pull/1?tab=files#top', '/diffs/o/r/pull/1?tab=files#top'],
+    ['/a\\b', '/a/b'],
+    ['/a/../b', '/b'],
+    ['/a\tb', '/ab'],
+  ]
+  for (const [returnTo, location] of cases) {
+    const response = handleGitHubLogoutRequest(
+      new Request(`${ORIGIN}/api/auth/github/logout?returnTo=${encodeURIComponent(returnTo)}`),
+    )
+    expect(response.headers.get('location')).toBe(location)
   }
 })
 

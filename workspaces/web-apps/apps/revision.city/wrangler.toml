@@ -97,9 +97,10 @@ binding = "CF_VERSION_METADATA"
 [env.dev.vars]
 # Where a per-PR preview (an uploaded version of this same worker) proxies
 # sign-in. Previews share this worker's GitHub App secrets, so only the
-# authorization code ever crosses origins. Production has no value here and
-# never proxies. The stable host itself is not a preview hostname, so it runs
-# the ordinary flow despite carrying the variable.
+# authorization code ever crosses origins. Only this stable host runs sign-in
+# for previews, and only for pr-<N> previews of this worker on this subdomain.
+# Production has no value here, so it never proxies or runs sign-in for
+# previews.
 PREVIEW_AUTH_PROXY_URL = "https://revision-city-dev.nullserve.workers.dev"
 
 # Same export as production. `observability` is inheritable,

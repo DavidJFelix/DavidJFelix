@@ -4,18 +4,18 @@ A centralized version-control service that manages reviews and diffs.
 
 ## Status
 
-**Live** (2026-11-09). revision.city serves a landing page, a diff viewer with symbol tracking
-under `/diffs`, and automated pull request reviews through its GitHub App. The reviews have their
-own plan: [revision-city-reviews](../revision-city-reviews/plan.md).
+**Live** (2026-11-09). revision.city serves a landing page, a diff viewer with symbol tracking under
+`/diffs`, and automated pull request reviews through its GitHub App. The reviews have their own
+plan: [revision-city-reviews](../revision-city-reviews/plan.md).
 
 ## Vision
 
 A centralized home for version control focused on the _review_ experience — managing reviews and
 diffs as first-class objects.
 
-> **Open question — MVP shape (deferred 2026-06-29).** The product shape is _not_ yet captured
-> here. It is a nuanced vision David will articulate himself, in his own words; it does not reduce
-> to a multiple-choice pick, so this plan deliberately does not propose or pin a direction.
+> **Open question — MVP shape (deferred 2026-06-29).** The product shape is _not_ yet captured here.
+> It is a nuanced vision David will articulate himself, in his own words; it does not reduce to a
+> multiple-choice pick, so this plan deliberately does not propose or pin a direction.
 
 ## Current state (2026-08-04)
 

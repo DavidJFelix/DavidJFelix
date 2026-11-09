@@ -317,11 +317,10 @@ export function snapshotDiffsData(accumulator: DiffsDataAccumulator): LoadedDiff
 // Converts raw patch text into the exact state slices consumed by the diff
 // viewer, sidebar tree, stats panel, and comment index in one linear pass.
 export function buildDiffsData(patchContent: string, githubPath: string): LoadedDiffsData {
-  const parsedPatches = parsePatchFiles(
-    patchContent,
+  const parsedPatches = parsePatchFiles(patchContent, {
     // Use the url as a cache key
-    encodeURIComponent(githubPath),
-  )
+    cacheKeyPrefix: encodeURIComponent(githubPath),
+  })
 
   const accumulator = createDiffsDataAccumulator()
   const shouldPrefixTreePaths = parsedPatches.length > 1

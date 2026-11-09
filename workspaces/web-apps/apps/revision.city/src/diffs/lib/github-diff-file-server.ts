@@ -17,6 +17,13 @@ const GITHUB_RAW_MEDIA_TYPE = 'application/vnd.github.raw'
 const REF_CACHE_TTL_MS = 5 * 60 * 1000
 const FILE_CACHE_TTL_MS = 30 * 60 * 1000
 
+// The caches live as long as the isolate, which many requests share. These
+// limits keep their memory small: the oldest entry goes first, and a large file
+// is read but not kept.
+const MAX_CACHED_REFS = 500
+const MAX_CACHED_FILES = 64
+const MAX_CACHED_FILE_CHARACTERS = 256_000
+
 type GitHubServerFetch = (
   input: Parameters<typeof fetch>[0],
   init?: Parameters<typeof fetch>[1],
@@ -223,6 +230,7 @@ function resolveCachedGitHubDiffRefs(
     cache: refsCache,
     cacheKey,
     ttlMs: REF_CACHE_TTL_MS,
+    maxEntries: MAX_CACHED_REFS,
     create: () => resolveGitHubDiffRefs(source, fetcher, options),
   })
 }
@@ -246,6 +254,8 @@ function loadCachedGitHubFile({
     cache: fileCache,
     cacheKey,
     ttlMs: FILE_CACHE_TTL_MS,
+    maxEntries: MAX_CACHED_FILES,
+    keep: (file) => file.contents.length <= MAX_CACHED_FILE_CHARACTERS,
     create: () => fetchGitHubFile({repoRef, path: normalizedPath, fetcher, options}),
   })
 }
@@ -276,6 +286,9 @@ interface GetCachedPromiseParams<T> {
   cache: Map<string, CacheEntry<T>>
   cacheKey: string
   ttlMs: number
+  maxEntries: number
+  // A value that fails this check is returned but not kept.
+  keep?: (value: T) => boolean
   create: () => Promise<T>
 }
 
@@ -283,6 +296,8 @@ function getCachedPromise<T>({
   cache,
   cacheKey,
   ttlMs,
+  maxEntries,
+  keep,
   create,
 }: GetCachedPromiseParams<T>): Promise<T> {
   const now = Date.now()
@@ -291,13 +306,32 @@ function getCachedPromise<T>({
     return cached.promise
   }
 
-  const promise = create().catch((error: unknown) => {
-    const current = cache.get(cacheKey)
-    if (current?.promise === promise) {
+  const forget = () => {
+    if (cache.get(cacheKey)?.promise === promise) {
       cache.delete(cacheKey)
     }
-    throw error
-  })
+  }
+  const promise = create().then(
+    (value) => {
+      if (keep !== undefined && !keep(value)) {
+        forget()
+      }
+      return value
+    },
+    (error: unknown) => {
+      forget()
+      throw error
+    },
+  )
+  // A Map keeps insertion order, so the first key is the oldest entry. An
+  // expired entry is deleted first, so that its new entry goes to the end.
+  cache.delete(cacheKey)
+  for (const oldestKey of cache.keys()) {
+    if (cache.size < maxEntries) {
+      break
+    }
+    cache.delete(oldestKey)
+  }
   cache.set(cacheKey, {expiresAt: now + ttlMs, promise})
   return promise
 }

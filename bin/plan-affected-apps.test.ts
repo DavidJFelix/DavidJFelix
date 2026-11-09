@@ -16,6 +16,7 @@ const target = (overrides: Partial<WebAppTarget> = {}): WebAppTarget => ({
   deploy: 'wrangler',
   envSuffix: 'EXAMPLE_COM',
   devEnv: '',
+  d1Database: '',
   ...overrides,
 })
 
@@ -47,6 +48,18 @@ test('deploys an app with a dev environment as both workers', () => {
     {...(targets[0] as WebAppTarget), cloudflareEnv: ''},
     {...(targets[0] as WebAppTarget), worker: 'example-com-dev', cloudflareEnv: 'dev'},
   ])
+})
+
+test('keeps the D1 database on the production entry only', () => {
+  // The deploy applies migrations for the entry's database. The dev worker
+  // binds no D1, so its entry must not apply production's migrations again.
+  const targets = [target({devEnv: 'dev', d1Database: 'example-com'})]
+
+  expect(
+    planAffected({affectedPaths: ['apps/example.com'], kind: 'deploy', targets}).map(
+      (entry) => entry.d1Database,
+    ),
+  ).toEqual(['example-com', ''])
 })
 
 test('skips apps that opt out of the shared matrix for that kind', () => {
@@ -115,4 +128,25 @@ test('registry covers every app in the workspace', async () => {
     .map((entry) => entry.name)
 
   expect(dirs.toSorted()).toEqual(WEB_APP_TARGETS.map((app) => app.dir).toSorted())
+})
+
+test('registry names the D1 database of every app with migrations', async () => {
+  // An app that adds `migrations_dir` without a registry entry would deploy
+  // with its migrations unapplied, which is the gap this field closes.
+  type WranglerToml = {
+    readonly d1_databases?: readonly {
+      readonly database_name: string
+      readonly migrations_dir?: string
+    }[]
+  }
+  for (const app of WEB_APP_TARGETS) {
+    const file = Bun.file(
+      new URL(`../workspaces/web-apps/apps/${app.dir}/wrangler.toml`, import.meta.url),
+    )
+    const config = (await file.exists()) ? (Bun.TOML.parse(await file.text()) as WranglerToml) : {}
+    const migrated = (config.d1_databases ?? []).filter((database) => database.migrations_dir)
+    expect(migrated.map((database) => database.database_name)).toEqual(
+      app.d1Database ? [app.d1Database] : [],
+    )
+  }
 })

@@ -32,9 +32,9 @@ routes = [
 # Pull request reviews (src/reviews). GitHub sends the app's webhooks to
 # /api/github/webhook, which starts one ReviewWorkflow instance for each review.
 # D1 keeps each chunk review. A saved review stays valid while the chunk and the
-# files that its reviewer read do not change. The one-time setup in #790 creates
-# the database and applies the drizzle/ migrations with
-# `wrangler d1 migrations apply revision-city --remote`. The reviews read five
+# files that its reviewer read do not change. The one-time setup in #790 created
+# the database. The production deploy applies pending drizzle/ migrations
+# before `wrangler deploy` (cd-deploy-web-apps.yml). The reviews read five
 # secrets: GITHUB_APP_CLIENT_ID (above), GITHUB_APP_PRIVATE_KEY,
 # GITHUB_WEBHOOK_SECRET, OPENROUTER_API_KEY, and REVIEW_MODEL (an OpenRouter
 # model slug that supports tool calls). Environments do not inherit bindings, so

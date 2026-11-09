@@ -45,6 +45,11 @@ export type WebAppTarget = {
   // to wrangler as `--env`; for a build that already resolved it into a
   // redirected config (the Cloudflare vite plugin) wrangler accepts the match.
   readonly devEnv: string
+  // `database_name` of the production D1 database whose wrangler.toml entry
+  // sets `migrations_dir`, '' for apps with no D1. The deploy applies its
+  // pending migrations before `wrangler deploy`. Dev workers bind no D1, so
+  // their matrix entries carry ''.
+  readonly d1Database: string
 }
 
 // What the matrix jobs actually consume: a target plus the CLOUDFLARE_ENV its
@@ -70,6 +75,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     deploy: 'wrangler',
     envSuffix: 'ALCHEMY_STATE_VIEWER',
     devEnv: '',
+    d1Database: '',
   },
   {
     dir: 'calendar-visualizer',
@@ -80,6 +86,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     deploy: 'wrangler',
     envSuffix: 'CALENDAR_VISUALIZER',
     devEnv: '',
+    d1Database: '',
   },
   {
     dir: 'davidjfelix.com',
@@ -90,6 +97,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     deploy: 'wrangler',
     envSuffix: 'DAVIDJFELIX_COM',
     devEnv: '',
+    d1Database: '',
   },
   {
     dir: 'djf.io',
@@ -100,6 +108,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     deploy: 'wrangler',
     envSuffix: 'DJF_IO',
     devEnv: '',
+    d1Database: '',
   },
   {
     dir: 'f311x',
@@ -110,6 +119,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     deploy: 'none',
     envSuffix: 'F311X',
     devEnv: '',
+    d1Database: '',
   },
   {
     dir: 'forzamonica.com',
@@ -120,6 +130,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     deploy: 'wrangler',
     envSuffix: 'FORZAMONICA_COM',
     devEnv: '',
+    d1Database: '',
   },
   {
     dir: 'monicandavid.com',
@@ -130,6 +141,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     deploy: 'wrangler',
     envSuffix: 'MONICANDAVID_COM',
     devEnv: 'dev',
+    d1Database: 'monicandavid-com',
   },
   {
     dir: 'onvibes.org',
@@ -140,6 +152,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     deploy: 'wrangler',
     envSuffix: 'ONVIBES_ORG',
     devEnv: '',
+    d1Database: '',
   },
   {
     dir: 'pkg.dog',
@@ -150,6 +163,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     deploy: 'wrangler',
     envSuffix: 'PKG_DOG',
     devEnv: '',
+    d1Database: '',
   },
   {
     dir: 'ravrun',
@@ -160,6 +174,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     deploy: 'wrangler',
     envSuffix: 'RAVRUN',
     devEnv: '',
+    d1Database: '',
   },
   {
     dir: 'revision.city',
@@ -170,6 +185,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     deploy: 'wrangler',
     envSuffix: 'REVISION_CITY',
     devEnv: 'dev',
+    d1Database: 'revision-city',
   },
   {
     dir: 'startchi.com',
@@ -180,6 +196,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     deploy: 'wrangler',
     envSuffix: 'STARTCHI_COM',
     devEnv: '',
+    d1Database: '',
   },
 ]
 
@@ -204,6 +221,7 @@ export const planAffected = ({
         ...target,
         worker: `${target.worker}-${target.devEnv}`,
         cloudflareEnv: target.devEnv,
+        d1Database: '',
       }
       // A preview is a version of the dev worker only -- it must share the dev
       // GitHub App, never production's. A deploy ships both workers so the dev

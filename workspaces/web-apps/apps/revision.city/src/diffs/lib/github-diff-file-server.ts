@@ -8,6 +8,7 @@ import {
   parseGitHubDiffSource,
 } from './github-diff-source'
 import {isNullish} from './nullish'
+import {readLimitedText} from './read-limited-text'
 
 const GITHUB_API_ROOT = 'https://api.github.com'
 const GITHUB_RAW_ROOT = 'https://raw.githubusercontent.com'
@@ -50,6 +51,9 @@ interface GitHubDiffFileServerOptions {
   // placeholder. The viewer never needs them -- the patch already carries every
   // line -- but a consumer that parses the file does.
   hydrateSingleSided?: boolean
+  // A file over this size fails with an error that `isFileTooLargeError`
+  // recognizes. With no limit, the whole file is read.
+  maxFileBytes?: number
 }
 
 interface CacheEntry<T> {
@@ -237,7 +241,7 @@ function loadCachedGitHubFile({
   options,
 }: LoadCachedGitHubFileParams): Promise<FileContents> {
   const normalizedPath = path.replace(/^\/+/, '')
-  const cacheKey = `${repoRef.owner}/${repoRef.repo}\0${repoRef.ref}\0${normalizedPath}`
+  const cacheKey = `${repoRef.owner}/${repoRef.repo}\0${repoRef.ref}\0${normalizedPath}\0${options.maxFileBytes ?? ''}`
   return getCachedPromise({
     cache: fileCache,
     cacheKey,
@@ -531,7 +535,7 @@ async function fetchGitHubFile({
   const response = await fetchGitHubFileContents({repoRef, path, fetcher, options})
   return {
     name: path,
-    contents: await response.text(),
+    contents: await readLimitedText({response, maxBytes: options.maxFileBytes, fileName: path}),
     cacheKey: `github:${repoRef.owner}/${repoRef.repo}:${repoRef.ref}:${path}`,
   }
 }

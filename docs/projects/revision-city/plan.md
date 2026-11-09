@@ -4,18 +4,18 @@ A centralized version-control service that manages reviews and diffs.
 
 ## Status
 
-**Placeholder** (2026-06-19). Live at revision.city serving a single centered `<h1>`; TanStack
-Start + Panda/Ark scaffold. Near-term work is a basic layout + positioning, then scoping the MVP.
+**Live** (2026-11-09). revision.city serves a landing page, a diff viewer with symbol tracking
+under `/diffs`, and automated pull request reviews through its GitHub App. The reviews have their
+own plan: [revision-city-reviews](../revision-city-reviews/plan.md).
 
 ## Vision
 
 A centralized home for version control focused on the _review_ experience — managing reviews and
 diffs as first-class objects.
 
-> ⚠️ **Open question — MVP shape (deferred 2026-06-29).** The product shape is _not_ yet captured
+> **Open question — MVP shape (deferred 2026-06-29).** The product shape is _not_ yet captured
 > here. It is a nuanced vision David will articulate himself, in his own words; it does not reduce
-> to a multiple-choice pick, so this plan deliberately does not propose or pin a direction. Until
-> David writes it up, the MVP shape is the open, blocking question — nothing downstream is scoped.
+> to a multiple-choice pick, so this plan deliberately does not propose or pin a direction.
 
 ## Current state (2026-08-04)
 
@@ -32,7 +32,8 @@ diffs as first-class objects.
   at `/og/diffs/<path>.png` derived from the URL, plus the public pull request title, author, state,
   and counts where GitHub shows them to anyone. Private diffs unfurl with only what the link already
   says.
-- Reviews remain unscoped pending the MVP-shape doc (the Phase 2 gate below).
+- Automated pull request reviews are built and tracked in
+  [revision-city-reviews](../revision-city-reviews/plan.md).
 
 ## Stack
 
@@ -55,8 +56,7 @@ TanStack Start (React 19) + PandaCSS + Ark UI, Cloudflare Worker.
 
 - [ ] Build the smallest version of the shape David defines.
 
-> Note: this is a large idea; near-term is layout + clear positioning. No build starts until the MVP
-> shape is written down — and that shape is David's to articulate, not something this plan pins.
+> Note: the MVP shape is David's to articulate, not something this plan pins.
 
 ### Symbol tracking (diffs half — independent of the Phase 2 gate)
 
@@ -96,6 +96,6 @@ is wiring and reach.
 
 ## Related
 
-- App: [`apps/revision.city`](../../../apps/revision.city/)
+- App: [`workspaces/web-apps/apps/revision.city`](../../../workspaces/web-apps/apps/revision.city/)
 - Cross-cutting: Sentry + PostHog observability are live fleet-wide (projects closed 2026-07-30; see
   the [changelog](../../changelog/)).

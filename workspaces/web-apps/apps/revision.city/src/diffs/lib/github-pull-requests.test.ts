@@ -72,11 +72,12 @@ const searchErrorResponse = (options: GitHubStubOptions, status: number): Respon
 // Stands in for GitHub's search, org, subscription, and installation
 // endpoints. Search responses are keyed by the qualifier that follows the
 // shared base query.
+const inputHref = (input: Parameters<FetchLike>[0]): string =>
+  typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
+
 const stubGitHubFetch = (options: GitHubStubOptions = {}) =>
   vi.fn<FetchLike>(async (input) => {
-    const url = new URL(
-      typeof input === 'string' ? input : input instanceof URL ? input.href : input.url,
-    )
+    const url = new URL(inputHref(input))
     if (url.pathname === '/user/orgs') {
       return Response.json(options.orgs ?? [], {status: options.orgsStatus ?? 200})
     }
@@ -119,9 +120,7 @@ const stubGitHubFetch = (options: GitHubStubOptions = {}) =>
 // The search queries a stubbed fetch was asked, base query stripped.
 const searchedQualifiers = (fetchImpl: ReturnType<typeof stubGitHubFetch>): string[] =>
   fetchImpl.mock.calls
-    // BACKLOG(davidjfelix) dude?
-    // oxlint-disable-next-line typescript/no-base-to-string -- this is already fucked and in a test. who cares
-    .map((call) => new URL(String(call[0])))
+    .map(([input]) => new URL(inputHref(input)))
     .filter((url) => url.pathname === '/search/issues')
     .map((url) => (url.searchParams.get('q') ?? '').replace('is:pr is:open archived:false ', ''))
 

@@ -57,9 +57,8 @@ test('posts the batch of files to the route', async () => {
 
   const [, init] = fetcher.mock.calls[0] ?? []
   expect(init?.method).toBe('POST')
-  // BACKLOG(davidjfelix) dude?
-  // oxlint-disable-next-line typescript/no-base-to-string -- this is already fucked and in a test. who cares
-  expect(JSON.parse(String(init?.body))).toEqual({path: 'o/r/pull/1', files: FILES})
+  const body = typeof init?.body === 'string' ? init.body : ''
+  expect(JSON.parse(body)).toEqual({path: 'o/r/pull/1', files: FILES})
 })
 
 test('names the forge of a diff that is not on GitHub', async () => {

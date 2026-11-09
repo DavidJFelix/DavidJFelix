@@ -1,7 +1,11 @@
 // cSpell:ignore unstub -- vi.unstubAllEnvs
 import {expect, test, vi} from 'vitest'
 
-import {clearGitHubDiffFileServerCache, loadGitHubDiffFiles} from './github-diff-file-server'
+import {
+  clearGitHubDiffFileServerCache,
+  createGitHubFileReader,
+  loadGitHubDiffFiles,
+} from './github-diff-file-server'
 
 // fetch by call signature only: lib.dom types `typeof fetch` with a required
 // static `preconnect`, which a stub cannot (and need not) satisfy.
@@ -104,4 +108,55 @@ test('hydrates a deleted file from the base revision', async () => {
 
   expect(oldFile?.contents).toContain('greet')
   expect(newFile).toBeNull()
+})
+
+function toHref(input: Parameters<FetchLike>[0]): string {
+  return typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
+}
+
+test('a signed-in reader looks up the refs once for a batch of files', async () => {
+  clearGitHubDiffFileServerCache()
+  const fetcher = stubGitHub()
+  const readFiles = createGitHubFileReader(SOURCE, {
+    fetch: fetcher,
+    token: 'user-token',
+    tokenSource: 'request',
+  })
+
+  await Promise.all([
+    readFiles({name: 'src/a.ts', type: 'change'}),
+    readFiles({name: 'src/b.ts', type: 'change'}),
+  ])
+
+  const urls = fetcher.mock.calls.map(([input]) => toHref(input))
+  expect(urls.filter((url) => url.includes('/pulls/7'))).toHaveLength(1)
+  expect(urls.filter((url) => url.includes('/compare/'))).toHaveLength(1)
+})
+
+test('a reader does not keep a failed lookup, so the next read tries again', async () => {
+  clearGitHubDiffFileServerCache()
+  const working = stubGitHub()
+  let calls = 0
+  const fetcher = vi.fn<FetchLike>(async (input, init) => {
+    calls += 1
+    return calls === 1 ? new Response('unavailable', {status: 503}) : working(input, init)
+  })
+  const readFiles = createGitHubFileReader(SOURCE, {
+    fetch: fetcher,
+    token: 'user-token',
+    tokenSource: 'request',
+  })
+
+  await expect(readFiles({name: 'src/a.ts', type: 'change'})).rejects.toThrow('503')
+  const {newFile} = await readFiles({name: 'src/a.ts', type: 'change'})
+
+  expect(newFile?.contents).toContain('greet')
+})
+
+test('a reader rejects a path that is not a GitHub diff', async () => {
+  const readFiles = createGitHubFileReader('/owner/repo/issues/7', {tokenSource: 'anonymous'})
+
+  await expect(readFiles({name: 'src/a.ts', type: 'change'})).rejects.toThrow(
+    'Unsupported GitHub diff path.',
+  )
 })

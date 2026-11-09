@@ -60,23 +60,71 @@ interface CacheEntry<T> {
 const refsCache = new Map<string, CacheEntry<GitHubDiffRefs>>()
 const fileCache = new Map<string, CacheEntry<FileContents>>()
 
-export async function loadGitHubDiffFiles(
+type GitHubDiffFiles = {oldFile: FileContents | null; newFile: FileContents | null}
+
+type GitHubFileReader = (file: Omit<GitHubDiffFileRequest, 'path'>) => Promise<GitHubDiffFiles>
+
+export function loadGitHubDiffFiles(
   request: GitHubDiffFileRequest,
   options: GitHubDiffFileServerOptions = {},
-): Promise<{oldFile: FileContents | null; newFile: FileContents | null}> {
-  const source = parseGitHubDiffSource(request.path)
-  if (isNullish(source)) {
-    throw new Error('Unsupported GitHub diff path.')
-  }
+): Promise<GitHubDiffFiles> {
+  return createGitHubFileReader(request.path, options)(request)
+}
 
+// Reads files of one GitHub diff. The reader looks up the diff's refs on its
+// first read only, so a batch of files costs one lookup. A signed-in read skips
+// the shared cache, so without this each file looks up the refs again.
+export function createGitHubFileReader(
+  path: string,
+  options: GitHubDiffFileServerOptions = {},
+): GitHubFileReader {
+  const source = parseGitHubDiffSource(path)
   const fetcher = options.fetch ?? fetch
   const useSharedCache = options.tokenSource !== 'request'
+  let refsPromise: Promise<GitHubDiffRefs> | undefined
+
+  return async (file) => {
+    if (isNullish(source)) {
+      throw new Error('Unsupported GitHub diff path.')
+    }
+    // The reader does not keep a failed lookup, so the next read tries again.
+    const resolveRefs = () => {
+      refsPromise ??= resolveGitHubDiffRefsForRequest({
+        source,
+        fetcher,
+        options,
+        useSharedCache,
+      }).catch((error: unknown) => {
+        refsPromise = undefined
+        throw error
+      })
+      return refsPromise
+    }
+    return readGitHubDiffFiles({file, resolveRefs, fetcher, options, useSharedCache})
+  }
+}
+
+interface ReadGitHubDiffFilesParams {
+  file: Omit<GitHubDiffFileRequest, 'path'>
+  resolveRefs: () => Promise<GitHubDiffRefs>
+  fetcher: GitHubServerFetch
+  options: GitHubDiffFileServerOptions
+  useSharedCache: boolean
+}
+
+async function readGitHubDiffFiles({
+  file: request,
+  resolveRefs,
+  fetcher,
+  options,
+  useSharedCache,
+}: ReadGitHubDiffFilesParams): Promise<GitHubDiffFiles> {
   switch (request.type) {
     case 'new': {
       if (options.hydrateSingleSided !== true) {
         return {oldFile: null, newFile: createEmptyFallbackFile(request.name, 'new')}
       }
-      const refs = await resolveGitHubDiffRefsForRequest({source, fetcher, options, useSharedCache})
+      const refs = await resolveRefs()
       const newFile = await loadGitHubFileForRequest({
         repoRef: refs.newRef,
         path: request.name,
@@ -90,7 +138,7 @@ export async function loadGitHubDiffFiles(
       if (options.hydrateSingleSided !== true) {
         return {oldFile: createEmptyFallbackFile(request.name, 'deleted'), newFile: null}
       }
-      const refs = await resolveGitHubDiffRefsForRequest({source, fetcher, options, useSharedCache})
+      const refs = await resolveRefs()
       const oldFile = await loadGitHubFileForRequest({
         repoRef: requireOldRef(request.name, refs),
         path: request.name,
@@ -102,7 +150,7 @@ export async function loadGitHubDiffFiles(
     }
     case 'change':
     case 'rename-changed': {
-      const refs = await resolveGitHubDiffRefsForRequest({source, fetcher, options, useSharedCache})
+      const refs = await resolveRefs()
       const oldRef = requireOldRef(request.name, refs)
       const oldPath = request.prevName ?? request.name
       const [oldFile, newFile] = await Promise.all([
@@ -124,7 +172,7 @@ export async function loadGitHubDiffFiles(
       return {oldFile, newFile}
     }
     case 'rename-pure': {
-      const refs = await resolveGitHubDiffRefsForRequest({source, fetcher, options, useSharedCache})
+      const refs = await resolveRefs()
       const newFile = await loadGitHubFileForRequest({
         repoRef: refs.newRef,
         path: request.name,

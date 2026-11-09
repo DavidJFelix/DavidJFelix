@@ -6,11 +6,12 @@ import {
 } from '@/diffs/lib/codeberg-diff-file-server'
 import {CODEBERG_HOST, canReadCodebergFiles} from '@/diffs/lib/codeberg-diff-source'
 import {resolveGitHubAuth, withSetCookieHeaders} from '@/diffs/lib/github-auth'
-import {loadGitHubDiffFiles} from '@/diffs/lib/github-diff-file-server'
+import {createGitHubFileReader} from '@/diffs/lib/github-diff-file-server'
 import {isNullish} from '@/diffs/lib/nullish'
 import {diffEntities} from './diff-entities'
 import type {EntityDiff} from './entity'
 import {MAX_FILES_PER_REQUEST} from './entity-diff-client'
+import {detectLanguage} from './language-registry'
 
 const CHANGE_TYPES: readonly ChangeTypes[] = [
   'change',
@@ -95,11 +96,12 @@ export async function handleEntityDiffRequest(
   const credentials = isNullish(token)
     ? ({tokenSource: 'anonymous'} as const)
     : ({token, tokenSource: 'request'} as const)
-  const readFiles: ReadDiffFiles = (file) =>
-    loadGitHubDiffFiles(
-      {...file, path: parsed.path},
-      {...credentials, fetch: options.fetch, hydrateSingleSided: true},
-    )
+  // One reader per request, so one caller's refs never reach another request.
+  const readFiles: ReadDiffFiles = createGitHubFileReader(parsed.path, {
+    ...credentials,
+    fetch: options.fetch,
+    hydrateSingleSided: true,
+  })
 
   return withSetCookieHeaders(
     createStreamResponse(createResultStream({files: parsed.files, readFiles})),
@@ -161,6 +163,10 @@ async function computeResult({file, readFiles}: ComputeResultParams): Promise<En
   // A pure rename moves a file without touching its contents, so both sides hold
   // the same entities. Answer without a request to GitHub or Codeberg.
   if (file.type === 'rename-pure') {
+    return {itemId: file.itemId, name: file.name, diff: createEmptyEntityDiff(file.name)}
+  }
+  // A file with no grammar always gives an empty diff, so do not read it.
+  if (detectLanguage(file.name) === undefined) {
     return {itemId: file.itemId, name: file.name, diff: createEmptyEntityDiff(file.name)}
   }
 

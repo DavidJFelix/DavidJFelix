@@ -163,3 +163,20 @@ test('reads a Codeberg diff from Codeberg with one lookup for the batch', async 
   const lookups = fetcher.mock.calls.filter(([input]) => toHref(input) === CODEBERG_PULL_API)
   expect(lookups).toHaveLength(1)
 })
+
+test('answers a file with no grammar without reading it', async () => {
+  const fetcher = vi.fn<FetchLike>()
+
+  const response = await handleEntityDiffRequest(
+    createRequest({
+      path: 'o/r/pull/1',
+      files: [{itemId: 'item-1', name: 'assets/logo.png', type: 'change'}],
+    }),
+    {fetch: fetcher},
+  )
+
+  await expect(readLines(response)).resolves.toMatchObject([
+    {itemId: 'item-1', name: 'assets/logo.png', diff: {language: null, changes: []}},
+  ])
+  expect(fetcher).not.toHaveBeenCalled()
+})

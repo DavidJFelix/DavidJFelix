@@ -4,10 +4,9 @@ import {
   CODEBERG_API_ROOT,
   type CodebergDiffSource,
   type CodebergRepo,
-  hasDotSegment,
   parseCodebergDiffSource,
 } from './codeberg-diff-source'
-import {encodePath, encodeURLSegment} from './github-diff-source'
+import {encodePath, encodeURLSegment, hasDotSegment} from './github-diff-source'
 import {isNullish} from './nullish'
 import {readLimitedText} from './read-limited-text'
 

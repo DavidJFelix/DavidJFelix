@@ -1,4 +1,4 @@
-import {decodeRange, encodeURLSegment} from './github-diff-source'
+import {decodeRange, encodeURLSegment, hasDotSegment} from './github-diff-source'
 import {isNullish} from './nullish'
 
 export const CODEBERG_HOST = 'codeberg.org'
@@ -19,12 +19,6 @@ export type CodebergDiffSource =
 const PULL_PATTERN = /^\/([^/]+)\/([^/]+)\/pulls\/(\d+)(?:\/files)?(?:\.(?:diff|patch))?$/i
 const COMMIT_PATTERN = /^\/([^/]+)\/([^/]+)\/commit\/([0-9a-f]{4,64})(?:\.(?:diff|patch))?$/i
 const COMPARE_PATTERN = /^\/([^/]+)\/([^/]+)\/compare\/(.+?)(?:\.(?:diff|patch))?$/i
-
-// `new URL` resolves `.` and `..` segments, so a path with one can leave the
-// repository and reach another Codeberg API route.
-export function hasDotSegment(path: string): boolean {
-  return path.split('/').some((segment) => segment === '.' || segment === '..')
-}
 
 // The server can read both revisions of a file for a pull request or a commit.
 // It cannot for a compare, because the API gives no merge base for a range.

@@ -11,6 +11,10 @@ export type GitHubDiffSource =
 
 export function parseGitHubDiffSource(path: string): GitHubDiffSource | undefined {
   const normalizedPath = path.replace(/\/+$/, '')
+  if (hasDotSegment(normalizedPath)) {
+    return undefined
+  }
+
   const pullMatch = /^\/([^/]+)\/([^/]+)\/pull\/(\d+)(?:\.(?:diff|patch))?$/i.exec(normalizedPath)
   if (!isNullish(pullMatch)) {
     return {
@@ -54,6 +58,12 @@ export function decodeRange(range: string): string {
   } catch {
     return range
   }
+}
+
+// `new URL` resolves `.` and `..` segments, so a path with one can leave the
+// repository and reach another API route.
+export function hasDotSegment(path: string): boolean {
+  return path.split('/').some((segment) => segment === '.' || segment === '..')
 }
 
 export function encodeURLSegment(value: string): string {

@@ -5,6 +5,7 @@ import {
   encodeURLSegment,
   type GitHubDiffSource,
   type GitHubRepo,
+  hasDotSegment,
   parseGitHubDiffSource,
 } from './github-diff-source'
 import {isNullish} from './nullish'
@@ -97,6 +98,9 @@ export function createGitHubFileReader(
   return async (file) => {
     if (isNullish(source)) {
       throw new Error('Unsupported GitHub diff path.')
+    }
+    if (hasDotSegment(file.name) || hasDotSegment(file.prevName ?? '')) {
+      throw new Error('Unsupported GitHub file path.')
     }
     // The reader does not keep a failed lookup, so the next read tries again.
     const resolveRefs = () => {

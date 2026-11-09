@@ -212,3 +212,19 @@ test('the shared cache does not keep a large file', async () => {
 
   expect([...reads.values()]).toEqual([2])
 })
+
+// `new URL` resolves dot segments, so `../../users/x` would read another API route.
+test.each([
+  {name: 'a name that climbs out of the repository', file: {name: '../../../../users/someone'}},
+  {name: 'a previous name with a dot segment', file: {name: 'src/a.ts', prevName: 'src/./a.ts'}},
+])('does not read $name', async ({file}) => {
+  const fetcher = stubGitHub()
+
+  await expect(
+    loadGitHubDiffFiles(
+      {...file, path: SOURCE, type: 'rename-changed'},
+      {fetch: fetcher, token: 'visitor-token', tokenSource: 'request'},
+    ),
+  ).rejects.toThrow('Unsupported GitHub file path.')
+  expect(fetcher).not.toHaveBeenCalled()
+})

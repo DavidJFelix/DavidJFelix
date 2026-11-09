@@ -63,6 +63,8 @@ test.each([
   {name: 'a tree path', path: '/acme/widgets/tree/main'},
   {name: 'a pull request without a number', path: '/acme/widgets/pull/seven'},
   {name: 'a commit that is not a sha', path: '/acme/widgets/commit/zebra'},
+  {name: 'a dot-segment owner', path: '/../widgets/pull/7'},
+  {name: 'a dot-segment repository', path: '/acme/./commit/83fea5e'},
 ])('names no source for $name', ({path}) => {
   expect(parseGitHubDiffSource(path)).toBeUndefined()
 })

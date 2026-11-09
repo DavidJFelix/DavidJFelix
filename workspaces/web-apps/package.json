@@ -8,8 +8,8 @@
       "packages/*"
     ],
     "catalog": {
-      "@cloudflare/vite-plugin": "1.66.0",
-      "@cloudflare/workers-types": "5.20261031.1",
+      "@cloudflare/vite-plugin": "1.67.0",
+      "@cloudflare/workers-types": "5.20261106.1",
       "@pandacss/dev": "2.4.0",
       "@pandacss/preset-base": "2.4.0",
       "@pandacss/preset-panda": "2.4.0",
@@ -36,7 +36,7 @@
       "svelte-check": "4.7.7",
       "vite": "8.3.5",
       "vitest": "5.0.5",
-      "wrangler": "4.156.0"
+      "wrangler": "4.158.0"
     }
   },
   "overrides": {

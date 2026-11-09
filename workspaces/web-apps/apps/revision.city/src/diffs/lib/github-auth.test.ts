@@ -375,6 +375,8 @@ test('unsafe returnTo values fall back to /diffs', () => {
     '/\n/evil.test/x',
     '/\r/evil.test/x',
     '//[',
+    '/.//evil.test/x',
+    '/..//evil.test/x',
   ]
   for (const returnTo of unsafe) {
     const response = handleGitHubLogoutRequest(

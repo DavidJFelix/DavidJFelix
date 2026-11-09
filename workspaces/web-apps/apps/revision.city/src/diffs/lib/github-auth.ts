@@ -669,7 +669,7 @@ export function sanitizeReturnPath(value: string | null): string {
     return DEFAULT_RETURN_PATH
   }
   const resolved = URL.parse(value, RETURN_PATH_BASE)
-  if (resolved?.origin !== RETURN_PATH_BASE.origin) {
+  if (resolved?.origin !== RETURN_PATH_BASE.origin || resolved.pathname.startsWith('//')) {
     return DEFAULT_RETURN_PATH
   }
   return `${resolved.pathname}${resolved.search}${resolved.hash}`

@@ -219,6 +219,11 @@
       "allowedVersions": "<4.1.0"
     },
     {
+      "description": "vite 8.3 declares rolldown ~1.2, but the root rolldown override in workspaces/web-apps/package.json applies to vite too. With rolldown 1.3.0, the vite production build writes a dynamic import with a leaked placeholder hash after __vite__mapDeps(...). The client entry chunk then fails with a SyntaxError and the apps do not hydrate. Hold rolldown below the minor that vite declares, and raise this bound when a vite release accepts rolldown 1.3",
+      "matchPackageNames": ["rolldown"],
+      "allowedVersions": "<1.3.0"
+    },
+    {
       "description": "the @earendil-works pi packages (pi-coding-agent in the repo-root package.json; pi-ai left with Flue in 2026-08) come from one org and share the pi runtime, so group every update type into a single PR",
       "matchPackageNames": ["@earendil-works/**"],
       "groupName": "earendil pi packages"

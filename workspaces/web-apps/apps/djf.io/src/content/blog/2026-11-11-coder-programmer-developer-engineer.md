@@ -2,7 +2,7 @@
 title: Coder, Programmer, Developer, or Engineer?
 author: DavidJFelix
 description: A reflection on what a career in software means now, and in a future with AI.
-date: 2026-11-01
+date: 2026-11-11
 tags:
   - career
   - software-engineering

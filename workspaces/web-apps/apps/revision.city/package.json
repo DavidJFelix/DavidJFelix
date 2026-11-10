@@ -93,6 +93,7 @@
     "@vitejs/plugin-react": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "drizzle-kit": "0.31.11",
+    "fast-check": "4.10.2",
     "jsdom": "catalog:",
     "msw": "3.0.3",
     "oxlint-tsgolint": "catalog:",

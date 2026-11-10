@@ -101,6 +101,8 @@ Builders often get lost in building.
 Instead of a high-rise, why not build a house? If demand is large you can always build another house or a high-rise elsewhere, or even tear down the house and build something larger and more suitable.
 Not everything needs to be overbuilt and a good developer is pragmatic.
 
+## Fueling the engine
+
 I call myself an "engineer".
 Even though I feel compelled by the software developer's pragmatism and I think overbuilding is an all-too-common mistake, I encourage those who otherwise consider themselves "software developers" to also call themselves "software engineers".
 One of the major reasons I push for this moniker is pride.

@@ -1,7 +1,11 @@
 // cSpell:ignore unstub -- vi.unstubAllEnvs
 import {expect, test, vi} from 'vitest'
 
-import {clearGitHubDiffFileServerCache, loadGitHubDiffFiles} from './github-diff-file-server'
+import {
+  clearGitHubDiffFileServerCache,
+  createGitHubFileReader,
+  loadGitHubDiffFiles,
+} from './github-diff-file-server'
 
 // fetch by call signature only: lib.dom types `typeof fetch` with a required
 // static `preconnect`, which a stub cannot (and need not) satisfy.
@@ -104,4 +108,107 @@ test('hydrates a deleted file from the base revision', async () => {
 
   expect(oldFile?.contents).toContain('greet')
   expect(newFile).toBeNull()
+})
+
+function toHref(input: Parameters<FetchLike>[0]): string {
+  return typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
+}
+
+test('a signed-in reader looks up the refs once for a batch of files', async () => {
+  clearGitHubDiffFileServerCache()
+  const fetcher = stubGitHub()
+  const readFiles = createGitHubFileReader(SOURCE, {
+    fetch: fetcher,
+    token: 'user-token',
+    tokenSource: 'request',
+  })
+
+  await Promise.all([
+    readFiles({name: 'src/a.ts', type: 'change'}),
+    readFiles({name: 'src/b.ts', type: 'change'}),
+  ])
+
+  const urls = fetcher.mock.calls.map(([input]) => toHref(input))
+  expect(urls.filter((url) => url.includes('/pulls/7'))).toHaveLength(1)
+  expect(urls.filter((url) => url.includes('/compare/'))).toHaveLength(1)
+})
+
+test('a reader does not keep a failed lookup, so the next read tries again', async () => {
+  clearGitHubDiffFileServerCache()
+  const working = stubGitHub()
+  let calls = 0
+  const fetcher = vi.fn<FetchLike>(async (input, init) => {
+    calls += 1
+    return calls === 1 ? new Response('unavailable', {status: 503}) : working(input, init)
+  })
+  const readFiles = createGitHubFileReader(SOURCE, {
+    fetch: fetcher,
+    token: 'user-token',
+    tokenSource: 'request',
+  })
+
+  await expect(readFiles({name: 'src/a.ts', type: 'change'})).rejects.toThrow('503')
+  const {newFile} = await readFiles({name: 'src/a.ts', type: 'change'})
+
+  expect(newFile?.contents).toContain('greet')
+})
+
+test('a reader rejects a path that is not a GitHub diff', async () => {
+  const readFiles = createGitHubFileReader('/owner/repo/issues/7', {tokenSource: 'anonymous'})
+
+  await expect(readFiles({name: 'src/a.ts', type: 'change'})).rejects.toThrow(
+    'Unsupported GitHub diff path.',
+  )
+})
+
+// Counts the reads of each file path, and answers each file with `body`.
+function stubGitHubFiles(body: string) {
+  const reads = new Map<string, number>()
+  const fetcher = vi.fn<FetchLike>(async (input) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
+    if (url.includes('/pulls/7')) {
+      return Response.json({base: {sha: 'base-sha'}, head: {sha: 'head-sha'}})
+    }
+    if (url.includes('/compare/')) {
+      return Response.json({merge_base_commit: {sha: 'merge-base-sha'}})
+    }
+    reads.set(url, (reads.get(url) ?? 0) + 1)
+    return new Response(body)
+  })
+  return {fetcher, reads}
+}
+
+function readNewFile(name: string, fetcher: FetchLike) {
+  return loadGitHubDiffFiles(
+    {name, path: SOURCE, type: 'new'},
+    {fetch: fetcher, tokenSource: 'anonymous', hydrateSingleSided: true},
+  )
+}
+
+test('the shared cache keeps a recent file and drops the oldest past its size', async () => {
+  clearGitHubDiffFileServerCache()
+  const {fetcher, reads} = stubGitHubFiles('export const a = 1\n')
+
+  await readNewFile('src/first.ts', fetcher)
+  await readNewFile('src/first.ts', fetcher)
+  await Promise.all(
+    Array.from({length: 200}, (_, index) => readNewFile(`src/file-${index}.ts`, fetcher)),
+  )
+  await readNewFile('src/file-199.ts', fetcher)
+  await readNewFile('src/first.ts', fetcher)
+
+  const readsOf = (name: string) =>
+    [...reads].find(([url]) => url.endsWith(`/head-sha/${name}`))?.[1]
+  expect(readsOf('src/first.ts')).toBe(2)
+  expect(readsOf('src/file-199.ts')).toBe(1)
+})
+
+test('the shared cache does not keep a large file', async () => {
+  clearGitHubDiffFileServerCache()
+  const {fetcher, reads} = stubGitHubFiles('// x\n'.repeat(60_000))
+
+  await readNewFile('src/large.ts', fetcher)
+  await readNewFile('src/large.ts', fetcher)
+
+  expect([...reads.values()]).toEqual([2])
 })

@@ -43,7 +43,8 @@ const DEFAULT_ENDPOINT = '/api/diffs/entity-diff'
 const DEFAULT_RATE_LIMIT_DELAYS_MS = [10_000, 10_000, 10_000]
 
 // A worker request has a bounded subrequest budget and each file costs up to two
-// blob fetches, so a caller sends its file list in batches. Declared here rather
+// file reads (the refs lookup is once per request), so a caller sends its file
+// list in batches. Declared here rather
 // than in the endpoint so the browser can read it without pulling the server
 // module -- and with it every grammar -- into the client bundle.
 export const MAX_FILES_PER_REQUEST = 20

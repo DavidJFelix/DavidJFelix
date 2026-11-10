@@ -157,7 +157,14 @@ interface FileSectionProps {
   onSelectSymbol?: (selection: SymbolSelection) => void
 }
 
-function FileSection({entry, onSelectItem, onSelectSymbol}: FileSectionProps) {
+// Results stream in one file at a time. The memo stops each result from drawing
+// every earlier file again, but only while an unchanged file gets the same entry
+// object and the same callbacks.
+const FileSection = memo(function FileSection({
+  entry,
+  onSelectItem,
+  onSelectSymbol,
+}: FileSectionProps) {
   const changes = entry.diff?.changes ?? []
   return (
     <section>
@@ -205,7 +212,7 @@ function FileSection({entry, onSelectItem, onSelectSymbol}: FileSectionProps) {
       </div>
     </section>
   )
-}
+})
 
 interface SymbolRowProps {
   change: EntityChange

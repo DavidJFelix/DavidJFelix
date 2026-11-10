@@ -12,9 +12,12 @@ const GITHUB_HOST = /(?:(?<![\w.-])|(?<=_)(?=www))(?:www\\?\.)?github\\?\.com(?=
 
 // A zero-width space after "@", "#", "GH-", and "<" stops mentions, issue
 // references, and HTML. One after the "&" of an entity stops an entity that
-// decodes to one of those characters. The space is invisible, but it also goes
-// into code spans and code blocks, and code that a reader copies keeps it.
-const UNSAFE_MARKDOWN = /@(?=[a-z0-9])|#(?=\d)|GH\\?-(?=\d)|<(?=[a-z/!?])|&(?=#?[a-z0-9]+;)/gi
+// decodes to one of those characters. One after the "]" of "](" or "]:" stops
+// a link, an image, and a link definition, so that a link shows its address.
+// The space is invisible, but it also goes into code spans and code blocks,
+// and code that a reader copies keeps it.
+const UNSAFE_MARKDOWN =
+  /@(?=[a-z0-9])|#(?=\d)|GH\\?-(?=\d)|<(?=[a-z/!?])|&(?=#?[a-z0-9]+;)|\](?=[(:])/gi
 
 // GitHub shows a code block whose info string is "suggestion" as a change that
 // a reader can commit. The app adds a suggestion only after it checks the

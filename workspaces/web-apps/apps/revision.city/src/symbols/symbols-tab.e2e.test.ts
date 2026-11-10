@@ -140,3 +140,63 @@ test('a diff that cannot be read says why instead of showing nothing', async ({p
 
   await expect(page.getByText('Sign in with GitHub to raise the limit')).toBeVisible()
 })
+
+// More files than the largest first batch (CODE_VIEW_BATCH_COUNT_MAX, 96).
+const MANY_FILE_COUNT = 150
+
+function createFilePatch(index: number): string {
+  const path = `src/file-${index}.ts`
+  return [
+    `diff --git a/${path} b/${path}`,
+    'index 1111111..2222222 100644',
+    `--- a/${path}`,
+    `+++ b/${path}`,
+    '@@ -1 +1 @@',
+    `-export const value${index} = 1`,
+    `+export const value${index} = 2`,
+    '',
+  ].join('\n')
+}
+
+// `route.fulfill` sends the body at once, so the whole patch would land before
+// the viewer mounts. This stub sends one file at a time, as a slow GitHub
+// response does, so later batches reach the mounted viewer.
+async function streamPatchSlowly(page: Page): Promise<void> {
+  const files = Array.from({length: MANY_FILE_COUNT}, (_, index) => createFilePatch(index))
+  await page.addInitScript((patchFiles) => {
+    // A Proxy keeps the type of `fetch`, which a plain function does not match.
+    window.fetch = new Proxy(window.fetch, {
+      apply(realFetch, thisArg, args: Parameters<typeof fetch>) {
+        const [input] = args
+        const url = input instanceof Request ? input.url : String(input)
+        if (!url.includes('/api/diffs/diff?')) {
+          return Reflect.apply(realFetch, thisArg, args)
+        }
+        const encoder = new TextEncoder()
+        let fileIndex = 0
+        const body = new ReadableStream<Uint8Array>({
+          async pull(controller) {
+            if (fileIndex === patchFiles.length) {
+              controller.close()
+              return
+            }
+            controller.enqueue(encoder.encode(patchFiles[fileIndex++]))
+            await new Promise((resolve) => setTimeout(resolve, 20))
+          },
+        })
+        return Promise.resolve(new Response(body, {headers: {'content-type': 'text/plain'}}))
+      },
+    })
+  }, files)
+}
+
+test('the symbols tab lists every file of a diff streamed in several batches', async ({page}) => {
+  await stubDiffRoutes(page)
+  await streamPatchSlowly(page)
+  await page.goto(DIFF_PATH)
+
+  await page.getByRole('button', {name: 'Symbols'}).click()
+
+  const panel = page.getByRole('region', {name: 'Symbols'})
+  await expect(panel.getByText(`src/file-${MANY_FILE_COUNT - 1}.ts`, {exact: true})).toBeVisible()
+})

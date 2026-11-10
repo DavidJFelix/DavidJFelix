@@ -32,7 +32,7 @@ export function neutralizeMarkdown(text: string): string {
 }
 
 export function oneLine(text: string): string {
-  return text.replaceAll(/\s*[\r\n]\s*/g, ' ')
+  return text.replaceAll(/\s*[\r\n\u2028\u2029]\s*/g, ' ')
 }
 
 const FINGERPRINT_PATTERN = /^<!-- revision-city:([0-9a-f]{16}) -->/

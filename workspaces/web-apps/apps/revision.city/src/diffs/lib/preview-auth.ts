@@ -5,7 +5,8 @@ import {isNullish} from './nullish'
 // own GitHub App. GitHub Apps cannot register a wildcard callback URL, so a
 // preview cannot be the redirect target of the OAuth dance; it asks the dev
 // worker to run it and hand the authorization code back.
-const PREVIEW_HOST_PATTERN = /^pr-\d+-[a-z0-9-]+\.[a-z0-9-]+\.workers\.dev$/u
+const WORKERS_DEV_HOST_PATTERN = /^[a-z0-9-]+\.[a-z0-9-]+\.workers\.dev$/u
+const PREVIEW_PREFIX_PATTERN = /^pr-\d+-$/u
 
 // The only path a code is ever forwarded to. Fixed rather than caller-supplied:
 // the requested callback is validated against it, so a valid host cannot be used
@@ -23,39 +24,75 @@ export function readPreviewAuthConfig(): PreviewAuthConfig {
   return {proxyURL: process.env.PREVIEW_AUTH_PROXY_URL}
 }
 
-// True for a host that is a per-PR preview of a worker, and nothing else. This
-// is the allowlist deciding who an authorization code may be forwarded to, so it
-// matches the full hostname rather than a prefix or suffix.
-export function isPreviewHost(hostname: string): boolean {
-  return PREVIEW_HOST_PATTERN.test(hostname.toLowerCase())
+export interface IsPreviewHostParams {
+  hostname: string
+  // The dev worker's origin. Only previews of that worker count.
+  proxyURL: string | undefined
+}
+
+// True for a host that is a per-PR preview of the dev worker, and nothing else.
+// This is the allowlist deciding who an authorization code may be forwarded to,
+// so it matches the full hostname against the dev worker's own name and
+// workers.dev subdomain. The subdomain is pinned because each account has its
+// own.
+export function isPreviewHost({hostname, proxyURL}: IsPreviewHostParams): boolean {
+  const devHost = parseHostname(proxyURL)
+  if (isNullish(devHost) || !WORKERS_DEV_HOST_PATTERN.test(devHost)) {
+    return false
+  }
+  const host = hostname.toLowerCase()
+  if (!host.endsWith(devHost)) {
+    return false
+  }
+  return PREVIEW_PREFIX_PATTERN.test(host.slice(0, host.length - devHost.length))
 }
 
 // Validates a callback URL a preview asked the dev worker to send its code to.
-// Returns it only when it is the callback path on an https preview host, rebuilt
-// from the parsed parts so no query, port or credentials ride along.
-export function parseProxyCallbackURL(value: string | null | undefined): string | undefined {
-  if (isNullish(value) || value === '') {
-    return undefined
-  }
-
-  let url: URL
-  try {
-    url = new URL(value)
-  } catch {
-    return undefined
-  }
-
-  if (url.protocol !== 'https:' || !isPreviewHost(url.hostname) || url.pathname !== CALLBACK_PATH) {
+// Returns it only when it is the callback path on an https preview of the dev
+// worker, rebuilt from the parsed parts so no query, port or credentials ride
+// along.
+export function parseProxyCallbackURL(
+  value: string | null | undefined,
+  config: PreviewAuthConfig,
+): string | undefined {
+  const url = parseURL(value)
+  if (
+    isNullish(url) ||
+    url.protocol !== 'https:' ||
+    !isPreviewHost({hostname: url.hostname, proxyURL: config.proxyURL}) ||
+    url.pathname !== CALLBACK_PATH
+  ) {
     return undefined
   }
   return `https://${url.hostname}${CALLBACK_PATH}`
 }
 
-// True when this request is served by a per-PR preview that has a dev worker to
-// ask. Both halves matter: production must never proxy, and a preview with
-// nothing configured has nowhere to send anyone.
+// True when this request is served by a per-PR preview of the dev worker. A
+// preview with nothing configured has nowhere to send anyone.
 export function shouldProxySignIn(requestURL: URL, config = readPreviewAuthConfig()): boolean {
-  return isPreviewHost(requestURL.hostname) && !isNullish(config.proxyURL) && config.proxyURL !== ''
+  return isPreviewHost({hostname: requestURL.hostname, proxyURL: config.proxyURL})
+}
+
+// True only on the dev worker itself, the one deployment that runs the OAuth
+// dance for previews. Production has no proxy origin, so it never brokers.
+export function isSignInBroker(requestURL: URL, config: PreviewAuthConfig): boolean {
+  const proxyURL = parseURL(config.proxyURL)
+  return !isNullish(proxyURL) && proxyURL.origin === requestURL.origin
+}
+
+function parseURL(value: string | null | undefined): URL | undefined {
+  if (isNullish(value) || value === '') {
+    return undefined
+  }
+  try {
+    return new URL(value)
+  } catch {
+    return undefined
+  }
+}
+
+function parseHostname(value: string | undefined): string | undefined {
+  return parseURL(value)?.hostname.toLowerCase()
 }
 
 export interface ProxyState {

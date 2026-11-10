@@ -14,6 +14,10 @@ import {isPreviewHost} from './diffs/lib/preview-auth'
 // both values set (placeholders work -- nothing here exchanges a code); the
 // deployed preview inherits the worker's real secrets.
 
+// The dev worker that previews ask to run sign-in, as PREVIEW_AUTH_PROXY_URL in
+// wrangler.toml sets it.
+const DEV_WORKER_URL = 'https://revision-city-dev.nullserve.workers.dev'
+
 const SETUP_CALLBACK_PATH =
   '/api/auth/github/callback?code=e2e-unverified&installation_id=1&setup_action=install'
 
@@ -77,7 +81,12 @@ test('post-install callback starts a state-bound sign-in for a signed-out visito
   // wildcard callbacks), so its sign-in delegates to the dev worker, naming
   // this host's own callback as the code's destination. Everywhere else goes
   // straight to GitHub's authorize page.
-  if (isPreviewHost(new URL(baseURL ?? 'http://localhost').hostname)) {
+  if (
+    isPreviewHost({
+      hostname: new URL(baseURL ?? 'http://localhost').hostname,
+      proxyURL: DEV_WORKER_URL,
+    })
+  ) {
     expect(location).toContain('/api/auth/github/login?')
     expect(location).toContain(
       `proxyAuthTo=${encodeURIComponent(new URL('/api/auth/github/callback', baseURL).href)}`,

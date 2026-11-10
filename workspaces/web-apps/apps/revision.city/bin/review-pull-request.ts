@@ -58,6 +58,7 @@ const review = await reviewPullRequest({
         repository,
         baseSha: details.baseSha,
         paths: files.map(({path}) => path),
+        isLastAttempt: true,
       })
     : {},
   headSnapshot: snapshot,

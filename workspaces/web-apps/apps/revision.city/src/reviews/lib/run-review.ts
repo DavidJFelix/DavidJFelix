@@ -139,7 +139,7 @@ export async function runReview({
   const complete = (conclusion: 'success' | 'failure' | 'neutral', output: CheckRunOutput) =>
     completeCheckRun({request, repository, checkRunId, conclusion, output})
   try {
-    const selection = await step('read pull request and guides', async () => {
+    const selection = await step('read pull request and guides', async ({isLastAttempt}) => {
       const [files, details] = await Promise.all([
         listPullRequestFiles(pull),
         getPullRequestDetails(pull),
@@ -151,6 +151,7 @@ export async function runReview({
             repository,
             baseSha: details.baseSha,
             paths: selected.files.map(({path}) => path),
+            isLastAttempt,
           })
         : {}
       return {

@@ -38,7 +38,8 @@ binding = "ASSETS"
 # The D1 database behind src/lib/server/db/schema.ts. `migrations_dir` points
 # wrangler at the SQL files drizzle-kit writes (`mise run db:generate`), so
 # `wrangler d1 migrations apply monicandavid-com --remote` applies them
-# (`--local` for the database `wrangler dev` keeps under .wrangler/state).
+# (`--local` for the database `wrangler dev` keeps under .wrangler/state). The
+# production deploy runs the remote apply before `wrangler deploy`.
 # cSpell:ignore c9a92d20-9a49-4608-ae06-efc48d934cd3 -- the database id
 [[d1_databases]]
 binding = "DB"

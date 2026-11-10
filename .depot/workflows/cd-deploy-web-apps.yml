@@ -125,6 +125,21 @@ jobs:
           if [ -z "$CLOUDFLARE_ENV" ]; then unset CLOUDFLARE_ENV; fi
           bun bin/turbo-run.ts build --filter=./apps/${{ matrix.app.dir }}
 
+      # Apply pending D1 migrations before the new code goes live, so code that
+      # reads a new table never runs against a database without it. Only
+      # production entries name a database (bin/plan-affected-apps.ts,
+      # `d1Database`). `-c wrangler.toml` reads `migrations_dir` from the source
+      # config, not the build's redirected one. Wrangler answers its confirm
+      # prompt with yes in CI. A failed migration fails the job before deploy.
+      - name: d1 migrations apply
+        if: matrix.app.d1Database != ''
+        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4.1.3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: d1 migrations apply ${{ matrix.app.d1Database }} --remote -c wrangler.toml
+          workingDirectory: workspaces/web-apps/apps/${{ matrix.app.dir }}
+
       # A dev-worker entry hands its environment to wrangler as --env: an app
       # that deploys straight from its wrangler.toml (monicandavid.com) needs
       # it to target `[env.<dev>]`, and a build that already resolved the

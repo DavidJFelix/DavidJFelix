@@ -476,7 +476,10 @@ test('the dev worker stuffs state and keeps no cookie of its own', () => {
   login.searchParams.set('proxyAuthTo', PREVIEW_CALLBACK)
   login.searchParams.set('state', 'preview-csrf')
 
-  const response = handleGitHubLoginRequest(new Request(login), {credentials: CREDENTIALS})
+  const response = handleGitHubLoginRequest(new Request(login), {
+    credentials: CREDENTIALS,
+    previewConfig: PROXY_CONFIG,
+  })
 
   const authorize = new URL(response.headers.get('location') ?? '')
   expect(authorize.origin).toBe('https://github.com')
@@ -499,7 +502,10 @@ test.each([
   login.searchParams.set('proxyAuthTo', proxyAuthTo)
   login.searchParams.set('state', 'preview-csrf')
 
-  const response = handleGitHubLoginRequest(new Request(login), {credentials: CREDENTIALS})
+  const response = handleGitHubLoginRequest(new Request(login), {
+    credentials: CREDENTIALS,
+    previewConfig: PROXY_CONFIG,
+  })
 
   // Falls back to an ordinary sign-in here rather than carrying a target it
   // would later aim a live code at.
@@ -514,7 +520,7 @@ test('the dev worker hands the code back without exchanging it', async () => {
 
   const response = await handleGitHubOAuthCallbackRequest(
     new Request(`${DEV_WORKER}/api/auth/github/callback?code=the-code&state=${state}`),
-    {credentials: CREDENTIALS, fetch: fetchImpl},
+    {credentials: CREDENTIALS, fetch: fetchImpl, previewConfig: PROXY_CONFIG},
   )
 
   const location = new URL(response.headers.get('location') ?? '')
@@ -536,11 +542,72 @@ test('the dev worker refuses a target that is not a preview callback', async () 
 
   const response = await handleGitHubOAuthCallbackRequest(
     new Request(`${DEV_WORKER}/api/auth/github/callback?code=the-code&state=${state}`),
-    {credentials: CREDENTIALS, fetch: stubGitHubFetch()},
+    {credentials: CREDENTIALS, fetch: stubGitHubFetch(), previewConfig: PROXY_CONFIG},
   )
 
   expect(response.status).toBe(400)
   expect(response.headers.get('location')).toBe(null)
+})
+
+// A preview-shaped host on some other workers.dev subdomain, which this
+// account does not control.
+const FOREIGN_PREVIEW_CALLBACK =
+  'https://pr-40-revision-city-dev.other.workers.dev/api/auth/github/callback'
+
+test('the dev worker will not proxy to a preview on another subdomain', () => {
+  const login = new URL(`${DEV_WORKER}/api/auth/github/login`)
+  login.searchParams.set('proxyAuthTo', FOREIGN_PREVIEW_CALLBACK)
+  login.searchParams.set('state', 'preview-csrf')
+
+  const response = handleGitHubLoginRequest(new Request(login), {
+    credentials: CREDENTIALS,
+    previewConfig: PROXY_CONFIG,
+  })
+
+  const authorize = new URL(response.headers.get('location') ?? '')
+  expect(decodeProxyState(authorize.searchParams.get('state'))).toBeUndefined()
+})
+
+test('the dev worker refuses to hand a code to a preview on another subdomain', async () => {
+  const state = encodeProxyState({csrf: 'preview-csrf', proxyAuthTo: FOREIGN_PREVIEW_CALLBACK})
+
+  const response = await handleGitHubOAuthCallbackRequest(
+    new Request(`${DEV_WORKER}/api/auth/github/callback?code=the-code&state=${state}`),
+    {credentials: CREDENTIALS, fetch: stubGitHubFetch(), previewConfig: PROXY_CONFIG},
+  )
+
+  expect(response.status).toBe(400)
+  expect(response.headers.get('location')).toBe(null)
+})
+
+test('production runs an ordinary sign-in when asked to proxy', () => {
+  const login = new URL(`${ORIGIN}/api/auth/github/login`)
+  login.searchParams.set('proxyAuthTo', PREVIEW_CALLBACK)
+  login.searchParams.set('state', 'preview-csrf')
+
+  const response = handleGitHubLoginRequest(new Request(login), {
+    credentials: CREDENTIALS,
+    previewConfig: PROXY_CONFIG,
+  })
+
+  const authorize = new URL(response.headers.get('location') ?? '')
+  expect(authorize.origin).toBe('https://github.com')
+  expect(decodeProxyState(authorize.searchParams.get('state'))).toBeUndefined()
+  expect(getSetCookies(response)[0]).toContain('diffs-github-oauth-state')
+})
+
+test('production never forwards a code off the site', async () => {
+  const state = encodeProxyState({csrf: 'preview-csrf', proxyAuthTo: PREVIEW_CALLBACK})
+  const fetchImpl = stubGitHubFetch()
+
+  const response = await handleGitHubOAuthCallbackRequest(
+    new Request(`${ORIGIN}/api/auth/github/callback?code=the-code&state=${state}`),
+    {credentials: CREDENTIALS, fetch: fetchImpl},
+  )
+
+  expect(response.status).toBe(400)
+  expect(response.headers.get('location')).toBe(null)
+  expect(fetchImpl).not.toHaveBeenCalled()
 })
 
 test('the preview exchanges the code against the redirect_uri that authorized it', async () => {

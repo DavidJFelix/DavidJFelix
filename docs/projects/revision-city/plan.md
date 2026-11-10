@@ -36,7 +36,7 @@ diffs as first-class objects.
 
 ## Stack
 
-TanStack Start (React 19) + PandaCSS + Radix UI primitives, Cloudflare Worker.
+TanStack Start (React 19) + PandaCSS + Ark UI, Cloudflare Worker.
 
 ## Roadmap
 

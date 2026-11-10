@@ -180,3 +180,81 @@ test('answers a file with no grammar without reading it', async () => {
   ])
   expect(fetcher).not.toHaveBeenCalled()
 })
+
+// A body of 4 MB in chunks of 64 KB, with no Content-Length. `pulled` counts
+// the chunks that a reader asked for.
+function createLargeBody() {
+  const counter = {pulled: 0}
+  const body = new ReadableStream<Uint8Array>({
+    pull(controller) {
+      if (counter.pulled === 64) {
+        controller.close()
+        return
+      }
+      counter.pulled += 1
+      controller.enqueue(new TextEncoder().encode('// x\n'.repeat(13_107)))
+    },
+  })
+  return {body, counter}
+}
+
+test('stops reading a GitHub file past the size limit and gives an empty diff', async () => {
+  const large = createLargeBody()
+  const fetcher = vi.fn<FetchLike>(async (input) => {
+    const url = toHref(input)
+    if (url.includes('/pulls/')) {
+      return Response.json({base: {sha: 'base-sha'}, head: {sha: 'head-sha'}})
+    }
+    if (url.includes('/compare/')) {
+      return Response.json({merge_base_commit: {sha: 'merge-base-sha'}})
+    }
+    return url.includes('head-sha') ? new Response(large.body) : new Response('')
+  })
+
+  const response = await handleEntityDiffRequest(
+    createRequest({
+      path: '/acme/large/pull/1',
+      files: [{itemId: 'item-1', name: 'src/generated.ts', type: 'change'}],
+    }),
+    {fetch: fetcher},
+  )
+
+  await expect(readLines(response)).resolves.toEqual([
+    {
+      itemId: 'item-1',
+      name: 'src/generated.ts',
+      diff: {
+        path: 'src/generated.ts',
+        language: 'typescript',
+        changes: [],
+        summary: {added: 0, deleted: 0, modified: 0, moved: 0, renamed: 0},
+      },
+    },
+  ])
+  expect(large.counter.pulled).toBeLessThan(64)
+})
+
+test('refuses a Codeberg file by its Content-Length and gives an empty diff', async () => {
+  const large = createLargeBody()
+  const fetcher = vi.fn<FetchLike>(async (input) => {
+    const url = new URL(toHref(input))
+    if (url.href === CODEBERG_PULL_API) {
+      return Response.json({merge_base: 'base-sha', head: {sha: 'head-sha'}})
+    }
+    return new Response(large.body, {headers: {'Content-Length': String(4 * 1024 * 1024)}})
+  })
+
+  const response = await handleEntityDiffRequest(
+    createRequest({
+      domain: 'codeberg.org',
+      path: CODEBERG_PULL,
+      files: [{itemId: 'item-1', name: 'src/generated.ts', type: 'new'}],
+    }),
+    {fetch: fetcher},
+  )
+
+  await expect(readLines(response)).resolves.toMatchObject([
+    {itemId: 'item-1', diff: {language: 'typescript', changes: []}},
+  ])
+  expect(large.counter.pulled).toBeLessThanOrEqual(1)
+})

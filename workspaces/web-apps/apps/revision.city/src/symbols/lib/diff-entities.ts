@@ -37,7 +37,7 @@ export async function diffEntities({
   const newExtraction = extractEntities({source: newSource, parser})
 
   if (oldExtraction.tooLarge || newExtraction.tooLarge) {
-    return {path, language: language.id, changes: [], summary: createSummary([])}
+    return createTooLargeEntityDiff(path)
   }
 
   const changes = matchEntities({
@@ -45,6 +45,12 @@ export async function diffEntities({
     newEntities: newExtraction.entities,
   }).toSorted(compareChanges)
   return {path, language: language.id, changes, summary: createSummary(changes)}
+}
+
+// The result for a file too large to diff: the language is named and the
+// change list is empty.
+export function createTooLargeEntityDiff(path: string): EntityDiff {
+  return {path, language: detectLanguage(path)?.id ?? null, changes: [], summary: createSummary([])}
 }
 
 function compareChanges(left: EntityChange, right: EntityChange): number {

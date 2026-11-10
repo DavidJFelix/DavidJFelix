@@ -8,7 +8,8 @@ import {CODEBERG_HOST, canReadCodebergFiles} from '@/diffs/lib/codeberg-diff-sou
 import {resolveGitHubAuth, withSetCookieHeaders} from '@/diffs/lib/github-auth'
 import {createGitHubFileReader} from '@/diffs/lib/github-diff-file-server'
 import {isNullish} from '@/diffs/lib/nullish'
-import {diffEntities} from './diff-entities'
+import {isFileTooLargeError} from '@/diffs/lib/read-limited-text'
+import {createTooLargeEntityDiff, diffEntities} from './diff-entities'
 import type {EntityDiff} from './entity'
 import {MAX_FILES_PER_REQUEST} from './entity-diff-client'
 import {detectLanguage} from './language-registry'
@@ -25,6 +26,10 @@ const CHANGE_TYPES: readonly ChangeTypes[] = [
 // Results are streamed as each lands, so this bounds concurrency without delaying
 // output.
 const MAX_CONCURRENT_READS = 4
+
+// The route is public, so a diff can name a file of any size. A file over this
+// limit is not read to its end and gets an empty diff.
+const MAX_FILE_BYTES = 1_000_000
 
 // Entity diffs are immutable per revision pair, but a GitHub read can use the
 // caller's own credentials. A Codeberg read is public and uses the same header,
@@ -84,7 +89,10 @@ export async function handleEntityDiffRequest(
     if (!canReadCodebergFiles(parsed.path)) {
       return createErrorResponse('Symbols need a Codeberg pull request or commit.', 400)
     }
-    const readFiles = createCodebergFileReader(parsed.path, options)
+    const readFiles = createCodebergFileReader(parsed.path, {
+      fetch: options.fetch,
+      maxFileBytes: MAX_FILE_BYTES,
+    })
     return createStreamResponse(createResultStream({files: parsed.files, readFiles}))
   }
   if (!isNullish(parsed.domain)) {
@@ -101,6 +109,7 @@ export async function handleEntityDiffRequest(
     ...credentials,
     fetch: options.fetch,
     hydrateSingleSided: true,
+    maxFileBytes: MAX_FILE_BYTES,
   })
 
   return withSetCookieHeaders(
@@ -186,6 +195,9 @@ async function computeResult({file, readFiles}: ComputeResultParams): Promise<En
       }),
     }
   } catch (error) {
+    if (isFileTooLargeError(error)) {
+      return {itemId: file.itemId, name: file.name, diff: createTooLargeEntityDiff(file.name)}
+    }
     return {
       itemId: file.itemId,
       name: file.name,

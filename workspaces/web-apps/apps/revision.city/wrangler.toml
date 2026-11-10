@@ -45,6 +45,24 @@ name = "revision-city-review"
 binding = "REVIEW_WORKFLOW"
 class_name = "ReviewWorkflow"
 
+# Cloudflare lets a Workflow instance make 10,000 subrequests by default. Each
+# fetch and each D1 query counts, and after the limit each call fails. A review
+# run at its size limits needs more. The worst case of one run:
+# - `MAX_REVIEWED_CHUNKS` (150) x 3 reviewers gives 450 chunk reviews.
+# - A chunk review runs 1 review loop and `MAX_VERIFIED_FINDINGS` (5) check loops.
+# - A loop makes at most 6 model calls and `MAX_TOOL_ROUNDS` (4) x
+#   `MAX_TOOL_CALLS_PER_ROUND` (6) = 24 tool runs. A tool run reads at most 1 blob.
+# - The OpenRouter client sends a model call at most 3 times
+#   (`DEFAULT_RETRY_DELAYS_MS`).
+# - So one chunk review makes 6 x 6 x 3 = 108 OpenRouter requests, 6 x 24 = 144
+#   blob reads and 2 D1 queries: 254 subrequests.
+# 450 x 254 = 114,300, plus about 1,000 for the rest of the run. The remainder,
+# about 34,700, lets about 45 review steps (3 chunk reviews each) run again.
+# The limit applies to the whole Worker, and `[env.dev]` inherits it, so the
+# viewer routes get the same limit.
+[limits]
+subrequests = 150_000
+
 [[d1_databases]]
 binding = "DB"
 database_name = "revision-city"

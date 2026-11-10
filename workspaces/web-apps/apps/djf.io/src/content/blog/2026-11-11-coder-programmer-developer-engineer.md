@@ -39,7 +39,7 @@ There are chat communities, message boards, tutorials, learning paths, video ser
 Often, the most enthusiastic software engineers I've met come from code bootcamps or are self-taught.
 There's something really inspiring and beautiful about a skill that you can learn by reading and practice with a few hundred dollars' worth of personal electronics, yet that has the depth to study for years.
 
-## Identity and purpose
+## Codifying identity
 
 I am not a coder.
 Programmers will often say "I love to code" or "I love coding", as slang for programming.
@@ -67,6 +67,8 @@ Many intelligent engineers, including past versions of myself, aim to find roles
 However, I believe now more than ever these are the spaces where burnout and disillusionment with one's career fester as product skills, interpersonal skills, business involvement, and EQ[^3] languish.
 Programming to spec makes you into a tool for the business to use.
 When the machine is well oiled, everything feels good, but when a problem arises, tools are expendable.
+
+## Developing a focus
 
 I like developers.
 Software development is a noble craft and good developers are often hard to find and also critical to the success of business goals in software.

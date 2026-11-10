@@ -731,6 +731,10 @@ const reviewWithOneReviewer = (chat: Chat) =>
 
 test.each([
   {name: 'a findings list sent as JSON text', answer: {findings: JSON.stringify([LOW_FINDING])}},
+  {
+    name: 'a findings list as JSON text with stray closing braces after it',
+    answer: {findings: `${JSON.stringify([LOW_FINDING])}} }`},
+  },
   {name: 'a findings list under the key finding', answer: {finding: [LOW_FINDING]}},
   {name: 'a findings list under an answer key', answer: {answer: {findings: [LOW_FINDING]}}},
   {

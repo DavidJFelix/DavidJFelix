@@ -135,6 +135,7 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
     setFileTreeOverlayOpen(false)
   }, [])
   const {
+    allItems,
     applyCollapseModeToLoaded,
     commentFileByItemId,
     commentSections,
@@ -221,7 +222,7 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
   // viewer has nothing to diff against.
   const entityDiffRequests = useMemo<readonly EntityDiffRequest[]>(
     () =>
-      initialItems.flatMap((item) =>
+      allItems.flatMap((item) =>
         item.type === 'diff'
           ? [
               {
@@ -233,7 +234,7 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
             ]
           : [],
       ),
-    [initialItems],
+    [allItems],
   )
   const handleSelectSymbol = useCallback((selection: SymbolSelection) => {
     setFileTreeOverlayOpen(false)

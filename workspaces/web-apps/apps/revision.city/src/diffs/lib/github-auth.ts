@@ -3,6 +3,7 @@ import {isNullish} from './nullish'
 import {
   decodeProxyState,
   encodeProxyState,
+  isSignInBroker,
   type PreviewAuthConfig,
   parseProxyCallbackURL,
   readPreviewAuthConfig,
@@ -103,10 +104,13 @@ export function handleGitHubLoginRequest(
     ])
   }
 
-  // Running the dance for a preview: everything needed to finish rides in the
-  // `state` GitHub echoes back, so nothing is stored here. The requested
-  // callback is validated now and again on the way back.
-  const proxyAuthTo = parseProxyCallbackURL(requestURL.searchParams.get('proxyAuthTo'))
+  // Running the dance for a preview, on the dev worker only: everything needed
+  // to finish rides in the `state` GitHub echoes back, so nothing is stored
+  // here. The requested callback is validated now and again on the way back.
+  const isBroker = isSignInBroker(requestURL, previewConfig)
+  const proxyAuthTo = isBroker
+    ? parseProxyCallbackURL(requestURL.searchParams.get('proxyAuthTo'), previewConfig)
+    : undefined
   const proxyCSRF = requestURL.searchParams.get('state')
   const isProxying = !isNullish(proxyAuthTo) && !isNullish(proxyCSRF) && proxyCSRF !== ''
 
@@ -162,14 +166,16 @@ export async function handleGitHubOAuthCallbackRequest(
   const code = requestURL.searchParams.get('code')
   const state = requestURL.searchParams.get('state')
 
-  // Running the dance for a preview: hand the code to the callback it asked for
-  // and stop. Checked before the state cookie because there is deliberately no
-  // cookie here -- `state` carried everything across the round trip. The target
-  // is re-validated rather than trusted: it came back through GitHub, and the
-  // allowlist is what keeps a code from being aimed anywhere else.
-  const proxyState = decodeProxyState(state)
+  // Running the dance for a preview, on the dev worker only: hand the code to
+  // the callback it asked for and stop. Checked before the state cookie because
+  // there is deliberately no cookie here -- `state` carried everything across
+  // the round trip. The target is re-validated rather than trusted: it came back
+  // through GitHub, and the allowlist is what keeps a code from being aimed
+  // anywhere else.
+  const previewConfig = options.previewConfig ?? readPreviewAuthConfig()
+  const proxyState = isSignInBroker(requestURL, previewConfig) ? decodeProxyState(state) : undefined
   if (!isNullish(code) && !isNullish(proxyState)) {
-    const proxyAuthTo = parseProxyCallbackURL(proxyState.proxyAuthTo)
+    const proxyAuthTo = parseProxyCallbackURL(proxyState.proxyAuthTo, previewConfig)
     if (isNullish(proxyAuthTo)) {
       return createAuthTextResponse('Invalid sign-in target. Start the sign-in again.', 400, [
         clearStateCookie,

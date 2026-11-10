@@ -24,7 +24,7 @@ export type ModelFinding = z.infer<typeof modelFindingSchema>
 
 // The items stay unknown here, so that the caller can check each finding on its
 // own. Then one malformed finding does not hide the valid ones.
-const findingItemsSchema = z.preprocess(parseJsonText, z.array(z.unknown()))
+const findingItemsSchema = z.preprocess(parseJsonArrayText, z.array(z.unknown()))
 
 // A review model can send the list as JSON text, under the key `finding`, or
 // under the key `answer`. These answers also count as a findings list.
@@ -39,6 +39,21 @@ export const modelAnswerSchema = z.union([
     .object({answer: z.preprocess(parseJsonText, findingListSchema)})
     .transform(({answer}) => answer),
 ])
+
+// A model that sends the list as JSON text can close the text with the braces
+// of the object around it, for example `[{...}]}`. An array never ends with a
+// brace, so these braces are removed before the parse.
+function parseJsonArrayText(value: unknown): unknown {
+  return typeof value === 'string' ? parseJsonText(removeTrailingBraces(value)) : value
+}
+
+function removeTrailingBraces(text: string): string {
+  let end = text.length
+  while (end > 0 && /[\s}]/.test(text.charAt(end - 1))) {
+    end -= 1
+  }
+  return text.slice(0, end)
+}
 
 function parseJsonText(value: unknown): unknown {
   if (typeof value !== 'string') {

@@ -161,6 +161,28 @@ test('a reader rejects a path that is not a GitHub diff', async () => {
   )
 })
 
+// A dot segment that is percent-encoded in a compare range appears only after
+// the decode, so the reader must not fetch the route it resolves to.
+test.each([
+  {name: 'a range that decodes to a dot segment', path: '/owner/repo/compare/%2e%2e'},
+  {
+    name: 'a range with an encoded dot segment inside it',
+    path: '/owner/repo/compare/main%2F%2e%2e',
+  },
+])('a signed-in reader does not fetch $name', async ({path}) => {
+  const fetcher = stubGitHub()
+  const readFiles = createGitHubFileReader(path, {
+    fetch: fetcher,
+    token: 'visitor-token',
+    tokenSource: 'request',
+  })
+
+  await expect(readFiles({name: 'src/a.ts', type: 'change'})).rejects.toThrow(
+    'Unsupported GitHub diff path.',
+  )
+  expect(fetcher).not.toHaveBeenCalled()
+})
+
 // Counts the reads of each file path, and answers each file with `body`.
 function stubGitHubFiles(body: string) {
   const reads = new Map<string, number>()

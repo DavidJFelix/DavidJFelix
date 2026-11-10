@@ -39,11 +39,12 @@ export function parseGitHubDiffSource(path: string): GitHubDiffSource | undefine
     normalizedPath,
   )
   if (!isNullish(compareMatch)) {
-    return {
-      kind: 'compare',
-      range: decodeRange(compareMatch[3]),
-      repo: {owner: compareMatch[1], repo: compareMatch[2]},
+    // An encoded dot segment such as `%2e%2e` appears only after the decode.
+    const range = decodeRange(compareMatch[3])
+    if (hasDotSegment(range)) {
+      return undefined
     }
+    return {kind: 'compare', range, repo: {owner: compareMatch[1], repo: compareMatch[2]}}
   }
 
   return undefined

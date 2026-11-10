@@ -65,6 +65,9 @@ test.each([
   {name: 'a commit that is not a sha', path: '/acme/widgets/commit/zebra'},
   {name: 'a dot-segment owner', path: '/../widgets/pull/7'},
   {name: 'a dot-segment repository', path: '/acme/./commit/83fea5e'},
+  {name: 'a compare range that decodes to a dot segment', path: '/acme/widgets/compare/%2e%2e'},
+  {name: 'an upper-case encoded dot segment', path: '/acme/widgets/compare/%2E'},
+  {name: 'an encoded dot segment inside a range', path: '/acme/widgets/compare/main%2F%2e%2e%2Fx'},
 ])('names no source for $name', ({path}) => {
   expect(parseGitHubDiffSource(path)).toBeUndefined()
 })

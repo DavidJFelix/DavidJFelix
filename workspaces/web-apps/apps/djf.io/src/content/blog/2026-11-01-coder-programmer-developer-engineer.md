@@ -56,14 +56,15 @@ If anything, the work is decoding ideas into process and data, not encoding that
 I am often a programmer, but not professionally.
 I genuinely like solving problems and finding clever solutions or learning about data structures.
 I've learned many programming languages to understand designs, organization, structures, and theory better.
-I read about frameworks and follow thought-leaders in the industry.
+I read about frameworks and follow thought leaders in the industry.
 Programming is something one does, but professionally, I rarely think you should call yourself a "programmer".
 Some genuinely do show up to work and write a ton of code for well-specified business needs and almost exclusively program.
 Earlier in my career as an individual contributor, I might have said that this is an ideal state.
-I now feel that the reality is that this is an idealistic state and can only exist because realists create it for programmers.
-I rarely find that programming is the bulk of the work that needs to be done when creating software and I know many developers and engineers who program infrequently and are successful and talented at their jobs.
+I now feel this is an idealistic state that can only exist because realists create it for programmers.
+I rarely find that programming is the bulk of the work that needs to be done when creating software;
+I know many developers and engineers who program infrequently and are successful and talented at their jobs.
 Many intelligent engineers, including past versions of myself, aim to find roles like this.
-However, I believe now more than ever these are the spaces where burnout and disillusionment with one's career fester as product skills, interpersonal skills, business involvement, and one's EQ[^3] languish.
+However, I believe now more than ever these are the spaces where burnout and disillusionment with one's career fester as product skills, interpersonal skills, business involvement, and EQ[^3] languish.
 Programming to spec makes you into a tool for the business to use.
 When the machine is well oiled, everything feels good, but when a problem arises, tools are expendable.
 

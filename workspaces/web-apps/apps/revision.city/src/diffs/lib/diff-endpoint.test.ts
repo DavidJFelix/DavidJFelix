@@ -155,6 +155,19 @@ test('a signed-out commit falls back to the commit diff API as the app', async (
   warn.mockRestore()
 })
 
+test('a commit opened from the pull request changes tab is fetched as that commit', async () => {
+  const upstream = stubUpstream({[PUBLIC_COMMIT_URL]: () => diffAnswer()})
+
+  const response = await handleDiffRequest(
+    diffRequest('path=/acme/widgets/pull/7/changes/83fea5e'),
+    {credentials: CREDENTIALS, fetch: upstream.fetchImpl},
+  )
+
+  expect(response.status).toBe(200)
+  expect(await response.text()).toBe(DIFF)
+  expect(upstream.calls).toEqual([{url: PUBLIC_COMMIT_URL, authorization: null, accept: null}])
+})
+
 test('a signed-out 404 spends nothing on the app credentials and asks for a sign-in', async () => {
   const warn = spyOnWarnings()
   const upstream = stubUpstream({[PUBLIC_PULL_URL]: () => failureAnswer(404)})

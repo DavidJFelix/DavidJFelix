@@ -15,7 +15,8 @@ const CARD_TITLE_MAX_LENGTH = 90
 const SITE_SUFFIX = 'in the revision.city diff viewer.'
 // The parts of an emoji, sequences and flags included. The card font has no
 // glyph for them, so a title loses them and keeps its words.
-const EMOJI = /\p{Extended_Pictographic}|\p{Emoji_Modifier}|\p{Regional_Indicator}|‍|️/gu
+const EMOJI =
+  /\p{Extended_Pictographic}|\p{Emoji_Modifier}|\p{Regional_Indicator}|\p{Join_Control}|\p{Variation_Selector}/gu
 
 // The share card's own lines: the label is the big text, the description the
 // muted line under it, the author the footer byline.

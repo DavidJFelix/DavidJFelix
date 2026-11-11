@@ -82,6 +82,37 @@ namespace Utils {
     ],
   },
   {
+    language: 'typescript',
+    source: `declare function load(path: string): string
+export default defineConfig({server: {port: 3000}})
+`,
+    expected: ['function load', 'constant default'],
+  },
+  {
+    language: 'javascript',
+    source: `module.exports = {load}
+exports.load = function () {}
+Button.displayName = 'Button'
+this.ignored = 1
+list[0] = 1
+count = 1
+function setup() {
+  exports.inner = 1
+}
+export default function () {
+  const local = 1
+  return local
+}
+`,
+    expected: [
+      'constant module.exports',
+      'function exports.load',
+      'constant Button.displayName',
+      'function setup',
+      'function default',
+    ],
+  },
+  {
     language: 'python',
     source: `CONST = 3
 def greet(name):
@@ -313,6 +344,17 @@ test('ignores locals declared inside a function body', () => {
   const entities = extractWithinLimits({source, parser: tsxParser})
 
   expect(entities.map((entity) => entity.name)).toEqual(['outer'])
+})
+
+test('gives a named default export one entity, not a second default row', () => {
+  const source = 'export default class Widget {\n  render() {}\n}\n'
+
+  const entities = extractWithinLimits({source, parser: tsxParser})
+
+  expect(entities.map((entity) => `${entity.kind} ${entity.qualifiedName}`)).toEqual([
+    'class Widget',
+    'method Widget.render',
+  ])
 })
 
 test('reports a module-level call once, without the locals in its callback', () => {

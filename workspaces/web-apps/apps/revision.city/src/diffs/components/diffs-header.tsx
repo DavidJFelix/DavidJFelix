@@ -322,14 +322,14 @@ export const DiffsHeader = memo(function DiffsHeader({
                     e.preventDefault()
                   }}
                 >
-                  <label htmlFor="diffs-setting-backgrounds" className={SETTING_ROW_CLASS}>
-                    <span className={css({minW: '0', flex: '1'})}>Backgrounds</span>
-                    <Switch
-                      id="diffs-setting-backgrounds"
-                      checked={showBackgrounds}
-                      onCheckedChange={setShowBackgrounds}
-                    />
-                  </label>
+                  <Switch
+                    className={SETTING_ROW_CLASS}
+                    labelClassName={css({minW: '0', flex: '1'})}
+                    checked={showBackgrounds}
+                    onCheckedChange={setShowBackgrounds}
+                  >
+                    Backgrounds
+                  </Switch>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className={css({cursor: 'default', p: '0'})}
@@ -337,14 +337,14 @@ export const DiffsHeader = memo(function DiffsHeader({
                     e.preventDefault()
                   }}
                 >
-                  <label htmlFor="diffs-setting-line-numbers" className={SETTING_ROW_CLASS}>
-                    <span className={css({minW: '0', flex: '1'})}>Line numbers</span>
-                    <Switch
-                      id="diffs-setting-line-numbers"
-                      checked={lineNumbers}
-                      onCheckedChange={setLineNumbers}
-                    />
-                  </label>
+                  <Switch
+                    className={SETTING_ROW_CLASS}
+                    labelClassName={css({minW: '0', flex: '1'})}
+                    checked={lineNumbers}
+                    onCheckedChange={setLineNumbers}
+                  >
+                    Line numbers
+                  </Switch>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className={css({cursor: 'default', p: '0'})}
@@ -352,16 +352,16 @@ export const DiffsHeader = memo(function DiffsHeader({
                     e.preventDefault()
                   }}
                 >
-                  <label htmlFor="diffs-setting-word-wrap" className={SETTING_ROW_CLASS}>
-                    <span className={css({minW: '0', flex: '1'})}>Word wrap</span>
-                    <Switch
-                      id="diffs-setting-word-wrap"
-                      checked={overflow === 'wrap'}
-                      onCheckedChange={(checked) => {
-                        setOverflow(checked ? 'wrap' : 'scroll')
-                      }}
-                    />
-                  </label>
+                  <Switch
+                    className={SETTING_ROW_CLASS}
+                    labelClassName={css({minW: '0', flex: '1'})}
+                    checked={overflow === 'wrap'}
+                    onCheckedChange={(checked) => {
+                      setOverflow(checked ? 'wrap' : 'scroll')
+                    }}
+                  >
+                    Word wrap
+                  </Switch>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className={cx(css({w: 'full', px: '2'}), MENU_ITEM_FOCUS_TRANSPARENT_CLASS)}

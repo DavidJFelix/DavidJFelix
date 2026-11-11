@@ -313,6 +313,109 @@ test('a Codeberg path that is not a diff is rejected without a fetch', async () 
   expect(upstream.calls).toHaveLength(0)
 })
 
+const GITHUB_HOST = 'github.com'
+const TANGLED_HOST = 'tangled.org'
+const PULL_PATH = '/acme/widgets/pull/7'
+const TANGLED_PULL_PATH = '/acme/widgets/pulls/7'
+const ALLOWED_HOSTS = new Set([
+  GITHUB_HOST,
+  'api.github.com',
+  'patch-diff.githubusercontent.com',
+  TANGLED_HOST,
+  'codeberg.org',
+])
+
+const urlSearch = (url: string) => `url=${encodeURIComponent(url)}`
+const domainSearch = (domain: string) =>
+  `path=${TANGLED_PULL_PATH}&domain=${encodeURIComponent(domain)}`
+
+test.each([
+  {name: 'an unknown host', search: urlSearch(`https://example.com${PULL_PATH}`)},
+  {name: 'plain http', search: urlSearch(`http://${GITHUB_HOST}${PULL_PATH}`)},
+  {name: 'a port', search: urlSearch(`https://${GITHUB_HOST}:8443${PULL_PATH}`)},
+  {name: 'a user name', search: urlSearch(`https://reviewer@${GITHUB_HOST}${PULL_PATH}`)},
+  {name: 'a password', search: urlSearch(`https://:password@${GITHUB_HOST}${PULL_PATH}`)},
+  {name: 'a look-alike suffix host', search: urlSearch(`https://other-${GITHUB_HOST}${PULL_PATH}`)},
+  {
+    name: 'a look-alike prefix host',
+    search: urlSearch(`https://${GITHUB_HOST}.example.org${PULL_PATH}`),
+  },
+  {name: 'a trailing-dot host', search: urlSearch(`https://${GITHUB_HOST}.${PULL_PATH}`)},
+  {name: 'an off-pattern raw diff path', search: urlSearch(`${RAW_PULL_URL}/more`)},
+  {
+    name: 'a look-alike Tangled URL',
+    search: urlSearch(`https://other-${TANGLED_HOST}${TANGLED_PULL_PATH}`),
+  },
+  {name: 'an unknown domain', search: domainSearch('example.com')},
+  {name: 'a look-alike suffix domain', search: domainSearch(`other-${TANGLED_HOST}`)},
+  {name: 'a look-alike prefix domain', search: domainSearch(`${TANGLED_HOST}.example.org`)},
+  {name: 'a domain with a user name', search: domainSearch(`${TANGLED_HOST}@example.org`)},
+  {name: 'a relative path', search: `path=${PULL_PATH.slice(1)}`},
+  {name: 'the root path', search: 'path=/'},
+  {name: 'a path of only slashes', search: 'path=///'},
+  {name: 'no path or URL', search: ''},
+])('$name is rejected without a fetch', async ({search}) => {
+  const upstream = stubUpstream({})
+
+  const response = await handleDiffRequest(diffRequest(search), {
+    credentials: CREDENTIALS,
+    fetch: upstream.fetchImpl,
+  })
+
+  expect(response.status).toBe(400)
+  expect(upstream.calls).toHaveLength(0)
+})
+
+test.each([
+  {name: 'a path that starts with two slashes', search: `path=//example.com${PULL_PATH}`},
+  {name: 'a backslash path', search: `path=${encodeURIComponent(`/\\example.com${PULL_PATH}`)}`},
+  {name: 'a Tangled domain with a port', search: domainSearch(`${TANGLED_HOST}:8443`)},
+])('$name is fetched from an allowed host only', async ({search}) => {
+  const fetchedURLs: URL[] = []
+  const fetchImpl: FetchLike = async (input) => {
+    fetchedURLs.push(new URL(input instanceof Request ? input.url : input))
+    return diffAnswer()
+  }
+
+  await handleDiffRequest(diffRequest(search), {credentials: CREDENTIALS, fetch: fetchImpl})
+
+  expect(fetchedURLs).not.toHaveLength(0)
+  for (const {hostname, port, protocol} of fetchedURLs) {
+    expect({allowed: ALLOWED_HOSTS.has(hostname), port, protocol}).toEqual({
+      allowed: true,
+      port: '',
+      protocol: 'https:',
+    })
+  }
+})
+
+test.each<{name: string; headers: Record<string, string>; status: number; message: string}>([
+  {
+    name: 'a body that is not a diff',
+    headers: {'Content-Type': 'text/html'},
+    status: 415,
+    message: 'GitHub did not return a diff for this URL.',
+  },
+  {
+    name: 'an empty diff',
+    headers: {'Content-Type': 'text/plain', 'Content-Length': '0'},
+    status: 422,
+    message: 'GitHub returned an empty diff.',
+  },
+])('$name from the upstream answers $status', async ({headers, status, message}) => {
+  const warn = spyOnWarnings()
+  const upstream = stubUpstream({[PUBLIC_PULL_URL]: () => new Response('', {headers})})
+
+  const response = await handleDiffRequest(diffRequest(`path=${PULL_PATH}`), {
+    fetch: upstream.fetchImpl,
+  })
+
+  expect(response.status).toBe(status)
+  expect((await readError(response)).message).toBe(message)
+  expect(upstream.calls).toHaveLength(1)
+  warn.mockRestore()
+})
+
 test('a Codeberg diff that fails names the Codeberg page and offers no GitHub sign-in', async () => {
   const warn = spyOnWarnings()
   const upstream = stubUpstream({[CODEBERG_PULL_API_URL]: () => failureAnswer(404)})

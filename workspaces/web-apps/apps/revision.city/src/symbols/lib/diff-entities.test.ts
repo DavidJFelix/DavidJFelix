@@ -60,6 +60,17 @@ test('reports only the entity that changed, not the ones enclosing it', async ()
   expect(diff.changes).toMatchObject([{type: 'modified', qualifiedName: 'Widget.render'}])
 })
 
+test('reports a new struct parameter as a change to its function only', async () => {
+  const oldSource = 'void handle(int code) {\n  use(code);\n}\n'
+  const newSource = 'void handle(int code, struct request *req) {\n  use(code);\n}\n'
+
+  const diff = await diffEntities({path: 'src/handle.c', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([
+    {type: 'modified', kind: 'function', qualifiedName: 'handle'},
+  ])
+})
+
 // The cspell.jsonc shape that once cascaded: objects in an array all carry the
 // same keys, so their entities collide on qualified name and an insertion used
 // to shift every later sibling's ordinal into a bogus modified row.

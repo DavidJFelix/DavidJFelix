@@ -32,9 +32,8 @@ const COLOR_SCHEMES: ColorScheme[] = ['light', 'dark']
 // Navbar tint (iOS Safari's <meta name="theme-color">) for each resolved color
 // scheme. These match the global body `--background` (oklch(1)/oklch(0.145))
 // that iOS samples at the top of the page, so the navbar blends with the page
-// instead of contrasting it. Kept in sync with the same literals hardcoded in
-// lib/theme-bootstrap's pre-paint script (which can't import this module).
-const SCHEME_THEME_COLOR: Record<ColorScheme, string> = {
+// instead of contrasting it.
+export const SCHEME_THEME_COLOR: Record<ColorScheme, string> = {
   light: '#ffffff',
   dark: '#0a0a0a',
 }
@@ -57,17 +56,19 @@ function setThemeColorMeta(color: string) {
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined)
 
 // Applies the already-resolved color scheme to <html>: the class/data-attribute
-// contract, the native color-scheme, and the iOS navbar tint. The resolved
-// 'light'/'dark' comes straight from the theme controller, so this never
-// re-derives it from a raw mode + system preference.
+// contract, the raw mode in data-theme-mode, the native color-scheme, and the
+// iOS navbar tint. The resolved 'light'/'dark' comes straight from the theme
+// controller, so this never re-derives it from a raw mode + system preference.
 function applyColorScheme({
   attribute,
   enableColorScheme,
+  mode,
   resolvedColorScheme,
   value,
 }: {
   attribute: ThemeProviderProps['attribute']
   enableColorScheme: boolean
+  mode: ColorMode
   resolvedColorScheme: ColorScheme
   value: Partial<Record<ColorScheme, string>> | undefined
 }) {
@@ -86,6 +87,8 @@ function applyColorScheme({
       root.setAttribute(currentAttribute, resolvedValue)
     }
   }
+
+  root.dataset.themeMode = mode
 
   if (enableColorScheme) {
     root.style.colorScheme = resolvedColorScheme
@@ -128,10 +131,11 @@ export function ThemeProvider({
     applyColorScheme({
       attribute,
       enableColorScheme,
+      mode: state.mode,
       resolvedColorScheme: state.resolvedColorScheme,
       value,
     })
-  }, [attribute, enableColorScheme, state.resolvedColorScheme, value])
+  }, [attribute, enableColorScheme, state.mode, state.resolvedColorScheme, value])
 
   const setColorMode = useCallback((next: ColorMode) => {
     themeController.setColorMode(next)

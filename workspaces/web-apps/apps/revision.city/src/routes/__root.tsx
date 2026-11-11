@@ -1,13 +1,20 @@
 import {ogSite, ogTags} from '@davidjfelix/og'
+import {createThemeBootstrapScript} from '@davidjfelix/theme/bootstrap'
 import {TanStackDevtools} from '@tanstack/react-devtools'
 import {createRootRoute, HeadContent, ScriptOnce, Scripts} from '@tanstack/react-router'
 import {TanStackRouterDevtoolsPanel} from '@tanstack/react-router-devtools'
 
 import {css} from 'styled-system/css'
 
-import {themeBootstrapScript} from '@/diffs/lib/theme-bootstrap'
+import {SCHEME_THEME_COLOR} from '@/diffs/components/contexts/theme-context'
+import {MODE_KEY} from '@/diffs/state/theme-controller'
 import {site} from '@/site'
 import appCss from '../styles.css?url'
+
+const themeBootstrapScript = createThemeBootstrapScript({
+  storageKey: MODE_KEY,
+  themeColors: SCHEME_THEME_COLOR,
+})
 
 // The search params that make a path another page: the viewer's `domain`
 // points the same path at another host, so it belongs in og:url and the

@@ -49,5 +49,6 @@ export const KIND_LABELS: Record<EntityKind, string> = {
   struct: 'struct',
   trait: 'trait',
   type: 'type',
+  union: 'union',
   variable: 'var',
 }

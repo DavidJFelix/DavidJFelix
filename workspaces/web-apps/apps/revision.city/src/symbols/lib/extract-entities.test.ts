@@ -213,6 +213,46 @@ using Alias = int;
     ],
   },
   {
+    language: 'cpp',
+    source: `void handle(struct request *req) {struct context *ctx;}
+struct Forward;
+class Widget {
+public:
+  Widget(int size) : size_(size) {}
+  Widget& operator=(const Widget& other);
+  Widget& operator+=(int amount) {return *this;}
+  int size_;
+};
+bool operator==(const Widget& left, const Widget& right) {return true;}
+Widget make(int count = Limits::max) {return Widget(count);}
+typedef int Count;
+typedef struct {int value;} Anonymous;
+typedef struct node {int value;} node_t;
+typedef int (*callback_t)(int);
+union Number {int whole; float real;};
+`,
+    expected: [
+      'function handle',
+      'class Widget',
+      'function Widget.Widget',
+      'method Widget.operator=',
+      'function Widget.operator+=',
+      'field Widget.size_',
+      'function operator==',
+      'function make',
+      'type Count',
+      'type Anonymous',
+      'field Anonymous.value',
+      'type node_t',
+      'struct node_t.node',
+      'field node_t.node.value',
+      'type callback_t',
+      'union Number',
+      'field Number.whole',
+      'field Number.real',
+    ],
+  },
+  {
     language: 'php',
     source: `<?php
 const VERSION = '1';

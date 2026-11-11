@@ -24,6 +24,7 @@ export type EntityKind =
   | 'struct'
   | 'trait'
   | 'type'
+  | 'union'
   | 'variable'
 
 // How an entity fared between two revisions. Mirrors sem's change buckets so a

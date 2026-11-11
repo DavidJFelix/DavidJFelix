@@ -2,6 +2,7 @@ import {z} from 'zod'
 import type {DismissResult} from './dismiss-check-run'
 import {APP_BOT_LOGIN, APP_SLUG, DISMISS_ACTION} from './publish-review'
 import type {SyncResult} from './resolved-threads'
+import {type LogWideEvent, logWideEvent} from './wide-event'
 
 // Until billing exists, only these repositories get reviews.
 const ALLOWED_REPOSITORIES = new Set(['davidjfelix/davidjfelix'])
@@ -254,14 +255,19 @@ export interface HandleReviewWebhookParams {
   // Both are absent on deployments without the app's client id or private key.
   syncCheckRun?: (params: ThreadSyncParams) => Promise<SyncResult>
   dismissCheckRun?: (params: DismissParams) => Promise<DismissResult>
+  log?: LogWideEvent
 }
 
+// Logs one event for each delivery with a valid signature. The 503 and 401
+// answers log nothing: anyone can send a request to the route, and the Workers
+// invocation log keeps the status code.
 export async function handleReviewWebhook({
   request,
   secret,
   workflow,
   syncCheckRun,
   dismissCheckRun,
+  log = logWideEvent,
 }: HandleReviewWebhookParams): Promise<Response> {
   if (!secret || !workflow) {
     return Response.json({error: 'Reviews are not set up on this deployment'}, {status: 503})
@@ -273,13 +279,56 @@ export async function handleReviewWebhook({
   }
   const event = request.headers.get('x-github-event')
   const payload = parseJson(body)
+  const deliveryFields = {
+    event: 'webhook delivery',
+    deliveryId: request.headers.get('x-github-delivery') ?? undefined,
+    githubEvent: event ?? undefined,
+    action: readAction(payload),
+  }
+  try {
+    const delivery = await handleDelivery({event, payload, workflow, syncCheckRun, dismissCheckRun})
+    log({
+      ...deliveryFields,
+      decision: delivery.answer.status,
+      reason: delivery.answer.reason,
+      runId: delivery.runId,
+    })
+    return Response.json(delivery.answer, {status: delivery.httpStatus})
+  } catch (error) {
+    log({...deliveryFields, decision: 'error', error: String(error)})
+    throw error
+  }
+}
+
+interface HandleDeliveryParams {
+  event: string | null
+  payload: unknown
+  workflow: ReviewWorkflowBinding
+  syncCheckRun: HandleReviewWebhookParams['syncCheckRun']
+  dismissCheckRun: HandleReviewWebhookParams['dismissCheckRun']
+}
+
+interface Delivery {
+  httpStatus: 200 | 202
+  answer: {status: string; reason?: string}
+  // The Workflow instance id of the review, when the delivery started one.
+  runId?: string
+}
+
+async function handleDelivery({
+  event,
+  payload,
+  workflow,
+  syncCheckRun,
+  dismissCheckRun,
+}: HandleDeliveryParams): Promise<Delivery> {
   if (event === 'pull_request_review_thread') {
     const sync = decideThreadSync({event, payload})
     if (!sync.sync || !syncCheckRun) {
       const reason = sync.sync ? 'Threads are not set up on this deployment' : sync.reason
-      return Response.json({status: 'ignored', reason}, {status: 202})
+      return {httpStatus: 202, answer: {status: 'ignored', reason}}
     }
-    return Response.json({status: await syncCheckRun(sync.params)}, {status: 200})
+    return {httpStatus: 200, answer: {status: await syncCheckRun(sync.params)}}
   }
   if (event === 'check_run') {
     const dismiss = decideDismiss({event, payload})
@@ -287,13 +336,13 @@ export async function handleReviewWebhook({
       const reason = dismiss.dismiss
         ? 'Dismissing is not set up on this deployment'
         : dismiss.reason
-      return Response.json({status: 'ignored', reason}, {status: 202})
+      return {httpStatus: 202, answer: {status: 'ignored', reason}}
     }
-    return Response.json({status: await dismissCheckRun(dismiss.params)}, {status: 200})
+    return {httpStatus: 200, answer: {status: await dismissCheckRun(dismiss.params)}}
   }
   const decision = decideReviewRun({event, payload})
   if (!decision.start) {
-    return Response.json({status: 'ignored', reason: decision.reason}, {status: 202})
+    return {httpStatus: 202, answer: {status: 'ignored', reason: decision.reason}}
   }
   try {
     await workflow.create({id: decision.instanceId, params: decision.params})
@@ -307,9 +356,14 @@ export async function handleReviewWebhook({
     if (!exists) {
       throw error
     }
-    return Response.json({status: 'duplicate'}, {status: 202})
+    return {httpStatus: 202, answer: {status: 'duplicate'}, runId: decision.instanceId}
   }
-  return Response.json({status: 'started'}, {status: 202})
+  return {httpStatus: 202, answer: {status: 'started'}, runId: decision.instanceId}
+}
+
+function readAction(payload: unknown): string | undefined {
+  const parsed = z.object({action: z.string()}).safeParse(payload)
+  return parsed.success ? parsed.data.action : undefined
 }
 
 interface VerifyWebhookSignatureParams {

@@ -301,7 +301,7 @@ function resolveDomainPatchRequest(domain: string, path: string): ResolvedPatchR
   }
 
   const patchURL = resolveDomainPatchURL(domain, path)
-  return isNullish(patchURL) ? undefined : {patchURL}
+  return isNullish(patchURL) ? undefined : {patchURL, sourceURL: patchURL}
 }
 
 function resolveCodebergPatchRequest(path: string): ResolvedPatchRequest | undefined {

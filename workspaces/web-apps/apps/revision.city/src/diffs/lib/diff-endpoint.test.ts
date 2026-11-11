@@ -22,6 +22,7 @@ const COMPARE_API_URL = 'https://api.github.com/repos/acme/widgets/compare/base0
 const PUBLIC_COMMIT_URL = 'https://github.com/acme/widgets/commit/83fea5e.diff'
 const COMMIT_API_URL = 'https://api.github.com/repos/acme/widgets/commits/83fea5e'
 const TANGLED_PATCH_URL = 'https://tangled.org/acme/widgets/pulls/7.patch'
+const GITHUB_USER_URL = 'https://api.github.com/user'
 const CODEBERG_PULL_API_URL = 'https://codeberg.org/api/v1/repos/acme/widgets/pulls/7.diff'
 const REJECTED_KEY = 'https://revision.city/.cache/github/credentials-rejected'
 const RATE_LIMITED_KEY = 'https://revision.city/.cache/github/rate-limited'
@@ -276,6 +277,33 @@ test('a non-GitHub patch that fails gets no sign-in, since signing in cannot rea
   expect(upstream.calls).toHaveLength(1)
   warn.mockRestore()
 })
+
+test.each([
+  {name: 'a live token', userAnswer: () => Response.json({login: 'reviewer'})},
+  {name: 'a revoked token', userAnswer: () => failureAnswer(401)},
+])(
+  'a signed-in visitor with $name whose tangled.org patch fails gets the upstream error and no GitHub call',
+  async ({userAnswer}) => {
+    const warn = spyOnWarnings()
+    const upstream = stubUpstream({
+      [TANGLED_PATCH_URL]: () => failureAnswer(404),
+      [GITHUB_USER_URL]: userAnswer,
+    })
+
+    const response = await handleDiffRequest(
+      diffRequest('path=/acme/widgets/pulls/7&domain=tangled.org', SESSION_COOKIE),
+      {credentials: CREDENTIALS, fetch: upstream.fetchImpl},
+    )
+
+    expect(response.status).toBe(404)
+    const body = await readError(response)
+    expect(body.remedy).toBeUndefined()
+    expect(body.message).toBe('Failed to fetch patch from upstream: 404.')
+    expect(upstream.calls.map((call) => call.url)).toEqual([TANGLED_PATCH_URL])
+    expect(response.headers.get('X-Patch-Source')).toBe(TANGLED_PATCH_URL)
+    warn.mockRestore()
+  },
+)
 
 test.each([
   {name: 'a domain and path', search: 'path=/acme/widgets/pulls/7/files&domain=codeberg.org'},

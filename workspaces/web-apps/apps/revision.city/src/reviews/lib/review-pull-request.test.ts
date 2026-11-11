@@ -317,9 +317,12 @@ test('reviewPullRequest checks the valid findings of an answer with a malformed 
   expect(chat).toHaveBeenCalledTimes(2)
 })
 
-test('reviewChunks does not check a finding whose label is not in the chunk', async () => {
+test.each([
+  {name: 'its label is not in the chunk', location: '"label": 9'},
+  {name: 'it is in another file', location: '"path": "b.ts", "label": 1'},
+])('reviewChunks does not check a finding when $name', async ({location}) => {
   const chat = answering(
-    '{"findings": [{"severity": "high", "title": "Bug", "body": "Breaks", "checked": true, "label": 9}]}',
+    `{"findings": [{"severity": "high", "title": "Bug", "body": "Breaks", "checked": true, ${location}}]}`,
   )
 
   const review = await reviewPullRequest({

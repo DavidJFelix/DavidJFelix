@@ -65,6 +65,22 @@ test('anchorFindings maps a label to its new-file line', () => {
 })
 
 test.each([
+  {name: 'no path', path: undefined, expected: 1},
+  {name: 'a null path', path: null, expected: 1},
+  {name: 'the path of the chunk', path: 'a.ts', expected: 1},
+  {name: 'the path of another file', path: 'b.ts', expected: 0},
+])('anchorFindings keeps a finding with $name only in its own file', ({path, expected}) => {
+  const anchored = anchorFindings({
+    reviewerId: 'comments',
+    chunk,
+    rendered,
+    findings: [modelFinding({path, label: 1})],
+  })
+
+  expect(anchored).toHaveLength(expected)
+})
+
+test.each([
   {name: 'true', checked: true, expected: true},
   {name: 'false', checked: false, expected: false},
   {name: 'no value', checked: undefined, expected: false},

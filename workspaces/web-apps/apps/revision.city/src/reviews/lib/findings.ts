@@ -15,6 +15,8 @@ export const modelFindingSchema = z.object({
   // A malformed finding fails the chunk review, so a missing value or one that
   // is not a boolean becomes false.
   checked: z.boolean().catch(false),
+  // Saved answers from before this field do not have it.
+  path: z.string().nullish(),
   label: z.int().positive(),
   endLabel: z.int().positive().nullish(),
   suggestion: z.string().nullish(),
@@ -103,8 +105,22 @@ const MAX_TITLE_LENGTH = 200
 const MAX_BODY_LENGTH = 3000
 const MAX_SUGGESTION_LENGTH = 3000
 
-// Maps chunk-local labels back to new-file lines. A finding whose label is not
-// in the chunk cannot become an inline comment, so it is dropped.
+export interface IsInChunkParams {
+  chunk: ReviewChunk
+  rendered: RenderedChunk
+  finding: ModelFinding
+}
+
+// A finding about another file is not in the chunk, even with a label of the
+// chunk. Its comment would show on an unrelated line.
+export function isInChunk({chunk, rendered, finding}: IsInChunkParams): boolean {
+  const {path, label} = finding
+  const isSameFile = path === undefined || path === null || path === chunk.path
+  return isSameFile && rendered.newLineByLabel.has(label)
+}
+
+// Maps chunk-local labels back to new-file lines. A finding that is not in the
+// chunk cannot become an inline comment, so it is dropped.
 export function anchorFindings({
   reviewerId,
   chunk,
@@ -114,7 +130,7 @@ export function anchorFindings({
   return findings
     .flatMap((finding) => {
       const startLine = rendered.newLineByLabel.get(finding.label)
-      if (startLine === undefined) {
+      if (startLine === undefined || !isInChunk({chunk, rendered, finding})) {
         return []
       }
       const endLine = rangeEndLine({newLineByLabel: rendered.newLineByLabel, finding, startLine})

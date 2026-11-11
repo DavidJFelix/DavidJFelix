@@ -11,8 +11,10 @@ import {
   handleReviewWebhook,
   type ReviewWorkflowBinding,
 } from './webhook'
+import type {LogWideEvent} from './wide-event'
 
 const secret = 'webhook-secret'
+const deliveryId = '72d3162e-cc78-11e3-81ab-4c9367dc0958'
 const headSha = 'e39a9f6002585daebc8265b3d94e094471f4a3d9'
 
 const pullRequestEvent = {
@@ -61,7 +63,7 @@ function webhookRequest({
   omitSignature = false,
 }: WebhookRequestParams) {
   const body = JSON.stringify(payload)
-  const headers = new Headers({'x-github-event': event})
+  const headers = new Headers({'x-github-event': event, 'x-github-delivery': deliveryId})
   if (!omitSignature) {
     headers.set('x-hub-signature-256', signature ?? sign(body))
   }
@@ -77,13 +79,27 @@ const fakeWorkflow = (): ReviewWorkflowBinding & {
   }),
 })
 
+const fakeLog = () => vi.fn<LogWideEvent>()
+
+const deliveryEvent = (fields: object): object => ({
+  event: 'webhook delivery',
+  deliveryId,
+  githubEvent: 'pull_request',
+  action: 'opened',
+  reason: undefined,
+  runId: undefined,
+  ...fields,
+})
+
 test('handleReviewWebhook starts a review of the head and answers 202', async () => {
   const workflow = fakeWorkflow()
+  const log = fakeLog()
 
   const response = await handleReviewWebhook({
     request: webhookRequest({payload: pullRequestEvent}),
     secret,
     workflow,
+    log,
   })
 
   expect(response.status).toBe(202)
@@ -99,6 +115,9 @@ test('handleReviewWebhook starts a review of the head and answers 202', async ()
       headSha,
     },
   })
+  expect(log.mock.calls).toEqual([
+    [deliveryEvent({decision: 'started', runId: `9-769-${headSha}-20261012T125335Z`})],
+  ])
 })
 
 test.each([
@@ -122,15 +141,18 @@ test.each([
   'handleReviewWebhook answers 401 when the signature $name',
   async ({signature, omitSignature}) => {
     const workflow = fakeWorkflow()
+    const log = fakeLog()
 
     const response = await handleReviewWebhook({
       request: webhookRequest({payload: pullRequestEvent, signature, omitSignature}),
       secret,
       workflow,
+      log,
     })
 
     expect(response.status).toBe(401)
     expect(workflow.create).not.toHaveBeenCalled()
+    expect(log).not.toHaveBeenCalled()
   },
 )
 
@@ -141,35 +163,72 @@ test('handleReviewWebhook ignores a signed body that is not JSON', async () => {
     body: 'not json',
   })
 
-  const response = await handleReviewWebhook({request, secret, workflow: fakeWorkflow()})
+  const log = fakeLog()
 
+  const response = await handleReviewWebhook({request, secret, workflow: fakeWorkflow(), log})
+
+  expect(response.status).toBe(202)
   expect(await response.json()).toEqual({
     status: 'ignored',
     reason: 'The payload is not a pull request event',
   })
+  expect(log.mock.calls).toEqual([
+    [
+      deliveryEvent({
+        deliveryId: undefined,
+        action: undefined,
+        decision: 'ignored',
+        reason: 'The payload is not a pull request event',
+      }),
+    ],
+  ])
 })
 
 test('handleReviewWebhook answers duplicate when the instance already exists', async () => {
   const workflow = fakeWorkflow()
   workflow.create.mockRejectedValue(new Error('instance.already_exists'))
   workflow.get = async () => ({})
+  const log = fakeLog()
 
   const response = await handleReviewWebhook({
     request: webhookRequest({payload: pullRequestEvent}),
     secret,
     workflow,
+    log,
   })
 
+  expect(response.status).toBe(202)
   expect(await response.json()).toEqual({status: 'duplicate'})
+  expect(log.mock.calls).toEqual([
+    [deliveryEvent({decision: 'duplicate', runId: `9-769-${headSha}-20261012T125335Z`})],
+  ])
 })
 
 test('handleReviewWebhook throws when the instance cannot start', async () => {
   const workflow = fakeWorkflow()
   workflow.create.mockRejectedValue(new Error('workflow unavailable'))
+  const log = fakeLog()
 
   await expect(
-    handleReviewWebhook({request: webhookRequest({payload: pullRequestEvent}), secret, workflow}),
+    handleReviewWebhook({
+      request: webhookRequest({payload: pullRequestEvent}),
+      secret,
+      workflow,
+      log,
+    }),
   ).rejects.toThrow('workflow unavailable')
+  expect(log.mock.calls).toEqual([
+    [
+      {
+        event: 'webhook delivery',
+        deliveryId,
+        githubEvent: 'pull_request',
+        action: 'opened',
+        decision: 'error',
+        error: 'Error: workflow unavailable',
+      },
+    ],
+  ])
 })
 
 test.each([
@@ -272,12 +331,14 @@ test('handleReviewWebhook syncs the check run when a thread of the app is resolv
   const syncCheckRun = vi.fn<NonNullable<HandleReviewWebhookParams['syncCheckRun']>>(
     async () => 'resolved',
   )
+  const log = fakeLog()
 
   const response = await handleReviewWebhook({
     request: webhookRequest({payload: threadEvent, event: 'pull_request_review_thread'}),
     secret,
     workflow,
     syncCheckRun,
+    log,
   })
 
   expect(response.status).toBe(200)
@@ -290,6 +351,15 @@ test('handleReviewWebhook syncs the check run when a thread of the app is resolv
     pullNumber: 769,
   })
   expect(workflow.create).not.toHaveBeenCalled()
+  expect(log.mock.calls).toEqual([
+    [
+      deliveryEvent({
+        githubEvent: 'pull_request_review_thread',
+        action: 'resolved',
+        decision: 'resolved',
+      }),
+    ],
+  ])
 })
 
 test('handleReviewWebhook ignores a thread event on a deployment without the app key', async () => {
@@ -363,12 +433,14 @@ test('handleReviewWebhook dismisses the check run when its button is clicked', a
   const dismissCheckRun = vi.fn<NonNullable<HandleReviewWebhookParams['dismissCheckRun']>>(
     async () => 'dismissed',
   )
+  const log = fakeLog()
 
   const response = await handleReviewWebhook({
     request: webhookRequest({payload: checkRunEvent, event: 'check_run'}),
     secret,
     workflow: fakeWorkflow(),
     dismissCheckRun,
+    log,
   })
 
   expect(response.status).toBe(200)
@@ -381,6 +453,9 @@ test('handleReviewWebhook dismisses the check run when its button is clicked', a
     checkRunId: 31,
     login: 'DavidJFelix',
   })
+  expect(log.mock.calls).toEqual([
+    [deliveryEvent({githubEvent: 'check_run', action: 'requested_action', decision: 'dismissed'})],
+  ])
 })
 
 test.each([

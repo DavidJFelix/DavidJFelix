@@ -93,11 +93,12 @@ export function fileReviewStatus(
     return 'no-text-diff'
   }
   const lines = file.patch.split('\n')
-  if (lines.length > maxPatchLinesPerFile) {
-    return 'too-large'
+  // Before the line limit, because a too-long line fails the check and a long
+  // diff does not. Each patch line starts with a one-character diff marker.
+  if (lines.some((line) => line.length - 1 > maxPatchLineChars)) {
+    return 'line-too-long'
   }
-  // Each patch line starts with a one-character diff marker.
-  return lines.some((line) => line.length - 1 > maxPatchLineChars) ? 'line-too-long' : 'reviewable'
+  return lines.length > maxPatchLinesPerFile ? 'too-large' : 'reviewable'
 }
 
 export function isReviewableFile(

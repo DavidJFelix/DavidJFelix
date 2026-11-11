@@ -153,7 +153,7 @@ const HighlighterOptions: WorkerInitializationRenderOptions = {
   // now that the canonical default IS the non-soft pair (shared via theming),
   // every site initializes the pool with the same defaults.
   theme: DEFAULT_THEMES,
-  langs: ['tsx', 'typescript'],
+  langs: ['rust', 'tsx', 'typescript'],
   preferredHighlighter: 'shiki-wasm',
 }
 

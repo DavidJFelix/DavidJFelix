@@ -23,9 +23,9 @@ const PATCH = [
 const CORE_COUNT = 8
 const POOL_SIZE = 3
 
-// The worker script's name is `worker-` and an eight-character hash. Other chunks also start with
-// `worker-`, for example `worker-pool-context-<hash>.js`.
-const WORKER_SCRIPT = /\/assets\/worker-[\w-]{8}\.js$/
+// The worker script's name is `worker-portable-` and an eight-character hash. Other chunks also
+// start with `worker-`, for example `worker-pool-context-<hash>.js`.
+const WORKER_SCRIPT = /\/assets\/worker-portable-[\w-]{8}\.js$/
 
 // The worker failure report fetches the script again to read its status. That
 // request is a `fetch`, and a worker load is a `script`.

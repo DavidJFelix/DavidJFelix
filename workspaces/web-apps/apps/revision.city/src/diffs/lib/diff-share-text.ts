@@ -1,3 +1,5 @@
+import {canDrawText} from '@davidjfelix/og/glyphs'
+
 import {encodeURLSegment, type GitHubDiffSource, parseGitHubDiffSource} from './github-diff-source'
 import type {PublicPullRequest} from './github-public-pull-request'
 import {isNullish} from './nullish'
@@ -11,6 +13,9 @@ const SHORT_SHA_LENGTH = 7
 // this length a pull request title would push the card's footer off the canvas.
 const CARD_TITLE_MAX_LENGTH = 90
 const SITE_SUFFIX = 'in the revision.city diff viewer.'
+// The parts of an emoji, sequences and flags included. The card font has no
+// glyph for them, so a title loses them and keeps its words.
+const EMOJI = /\p{Extended_Pictographic}|\p{Emoji_Modifier}|\p{Regional_Indicator}|‍|️/gu
 
 // The share card's own lines: the label is the big text, the description the
 // muted line under it, the author the footer byline.
@@ -93,16 +98,22 @@ function describePullRequest({
   const sentence = [`${describePullRequestKind(pull)} #${number}`, byline, `in ${repo}`]
     .filter((part) => !isNullish(part))
     .join(' ')
+  const cardTitle = pull.title.replace(EMOJI, '').replace(/\s+/g, ' ').trim()
+  // A title that the card font cannot draw shows as boxes, so the card shows
+  // the label in its place, as it does for a pull request without a title.
+  const card =
+    cardTitle !== '' && canDrawText(cardTitle)
+      ? {
+          title: truncate(cardTitle, CARD_TITLE_MAX_LENGTH),
+          description: isNullish(stats) ? label : `${label} · ${stats}`,
+        }
+      : {title: label, description: stats ?? 'Pull request'}
   return {
     imagePath,
     imageAlt,
     title: `${pull.title} · ${label}`,
     description: isNullish(stats) ? `${sentence}.` : `${sentence}: ${stats}.`,
-    card: {
-      title: truncate(pull.title, CARD_TITLE_MAX_LENGTH),
-      description: isNullish(stats) ? label : `${label} · ${stats}`,
-      author: byline,
-    },
+    card: {...card, author: byline},
   }
 }
 

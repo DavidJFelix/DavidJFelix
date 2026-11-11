@@ -12,6 +12,7 @@ consumer bundles with Vite or Nitro).
 | `.`               | `ogTags` -- OpenGraph/Twitter meta tags as plain attribute objects; `ogSite`; `ogImageSize`                                           |
 | `./image`         | `createOgRenderer` -- the title card as PNG bytes, given a runtime; `OgTheme`                                                         |
 | `./card`          | `ogCard` -- the `/og/default.png` request handler with edge caching; `ogCards` -- the same for a family of cards resolved per request |
+| `./glyphs`        | `canDrawText` -- whether the card font draws each character of a text                                                                 |
 | `./runtime/vite`  | The runtime for Vite-bundled Workers (TanStack Start, Astro, SvelteKit)                                                               |
 | `./runtime/nitro` | The runtime for Nitro-bundled Workers (Nuxt)                                                                                          |
 | `./runtime/node`  | The runtime for Node: build-time prerendering and tests                                                                               |
@@ -90,6 +91,10 @@ is what a runtime is:
 Resolution starts inside this package, so the binaries come from its own tree and no app declares
 satori, resvg, or the font package -- except djf.io, whose Vite SSR build externalizes them for the
 Node prerender, where the emitted chunk resolves from the app's tree instead.
+
+The card draws only the characters of Inter's `latin` subset and draws a box for any other
+character. `canDrawText(text)` on `./glyphs` tells an app if a text draws, so that it can show other
+text.
 
 `ogCard({runtime, ...card})` is the request handler apps mount at `/og/default.png`: it renders once
 and keeps the response in the Workers Cache API's default cache (a day's `max-age`), so a burst of

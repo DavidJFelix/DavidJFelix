@@ -119,6 +119,53 @@ test('shortens a long title on the card but not in the tags', () => {
   expect(share.card.title.endsWith('…')).toBe(true)
 })
 
+// Built from code points so that the spell check reads no words in other
+// scripts, and the joiners stay visible in the source.
+const CYRILLIC_TITLE = String.fromCodePoint(0x41f, 0x440, 0x430, 0x432, 0x43a, 0x430)
+const ROCKET = String.fromCodePoint(0x1f680)
+const FAMILY = String.fromCodePoint(0x1f468, 0x200d, 0x1f469, 0x200d, 0x1f467)
+const THUMBS_UP_DARK = String.fromCodePoint(0x1f44d, 0x1f3ff)
+const SPARKLES = String.fromCodePoint(0x2728, 0xfe0f)
+const FLAG = String.fromCodePoint(0x1f1f3, 0x1f1f4)
+
+test.each([
+  {name: 'a Cyrillic title', title: CYRILLIC_TITLE},
+  {name: 'a title with a letter outside the card font', title: 'Fix Ł'},
+  {name: 'a title with an arrow', title: 'Move a → b'},
+  {name: 'a title of emoji only', title: `${ROCKET} ${SPARKLES}`},
+])('shows the label on the card for $name but keeps the title in the tags', ({title}) => {
+  const share = getDiffShareText({source: PULL, pull: {...PUBLIC_PULL, title}})
+
+  expect(share.title).toBe(`${title} · acme/widgets #7`)
+  expect(share.card).toEqual({
+    title: 'acme/widgets #7',
+    description: '2 files changed, +12 -3',
+    author: 'by maintainer',
+  })
+})
+
+test('shows "Pull request" under the label when GitHub sent no counts', () => {
+  const share = getDiffShareText({
+    source: PULL,
+    pull: {title: CYRILLIC_TITLE, state: 'open', draft: false},
+  })
+
+  expect(share.card).toEqual({title: 'acme/widgets #7', description: 'Pull request'})
+})
+
+test.each([
+  {name: 'a leading emoji', title: `${SPARKLES} feat: add widgets`},
+  {name: 'a joined emoji sequence', title: `feat: add widgets ${FAMILY}`},
+  {name: 'an emoji with a skin tone', title: `feat: ${THUMBS_UP_DARK} add widgets`},
+  {name: 'a flag', title: `feat: add widgets ${FLAG}`},
+  {name: 'a rocket', title: `${ROCKET}feat: add widgets`},
+])('removes $name from the card title and keeps its words', ({title}) => {
+  const share = getDiffShareText({source: PULL, pull: {...PUBLIC_PULL, title}})
+
+  expect(share.title).toBe(`${title} · acme/widgets #7`)
+  expect(share.card.title).toBe('feat: add widgets')
+})
+
 // The card route reads the diff back out of the path the tags point at, so
 // the two must agree for every shape of diff, including ranges that carry the
 // characters a path would otherwise split on.

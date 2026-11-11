@@ -2,6 +2,7 @@ import {expect, test, vi} from 'vitest'
 import type {ModelFinding} from './findings'
 import {type Chat, OpenRouterError} from './openrouter'
 import {MAX_VERIFIED_FINDINGS, verifyFindings} from './verify-findings'
+import type {LogWideEvent} from './wide-event'
 
 const usage = {promptTokens: 10, completionTokens: 5, costUsd: 0.01}
 
@@ -50,6 +51,53 @@ test('verifyFindings marks a rejected finding as not checked', async () => {
 
   expect(verified.findings).toEqual([finding({checked: false})])
   expect(verified.error).toBeUndefined()
+})
+
+test.each([
+  {verdict: 'confirmed', answer: '{"confirmed": true, "proof": "Yes."}'},
+  {verdict: 'rejected', answer: '{"confirmed": false, "proof": "No."}'},
+  {verdict: 'unparsed', answer: 'No JSON'},
+])('verifyFindings logs the verdict $verdict for a checked finding', async ({verdict, answer}) => {
+  const log = vi.fn<LogWideEvent>()
+
+  await verifyFindings({
+    findings: [finding({checked: false}), finding({severity: 'critical'})],
+    prompt: 'File: a.ts',
+    chat: answering(answer),
+    model: 'vendor/model',
+    eventFields: {reviewer: 'correctness', path: 'a.ts'},
+    log,
+  })
+
+  expect(log.mock.calls).toEqual([
+    [
+      {
+        event: 'finding check',
+        reviewer: 'correctness',
+        path: 'a.ts',
+        finding: 2,
+        severity: 'critical',
+        verdict,
+      },
+    ],
+  ])
+})
+
+test('verifyFindings logs the verdicts of a failed check and of a finding past the limit', async () => {
+  const log = vi.fn<LogWideEvent>()
+  const chat = vi.fn<Chat>(async () => {
+    throw new OpenRouterError('OpenRouter returned 503: busy', true)
+  })
+  const findings = Array.from({length: MAX_VERIFIED_FINDINGS + 1}, (_, index) =>
+    finding({label: index + 1}),
+  )
+
+  await verifyFindings({findings, prompt: 'File: a.ts', chat, model: 'vendor/model', log})
+
+  expect(log.mock.calls.map(([{verdict}]) => verdict)).toEqual([
+    ...Array.from({length: MAX_VERIFIED_FINDINGS}, () => 'failed'),
+    'over-limit',
+  ])
 })
 
 test('verifyFindings checks only the findings that the review would post', async () => {

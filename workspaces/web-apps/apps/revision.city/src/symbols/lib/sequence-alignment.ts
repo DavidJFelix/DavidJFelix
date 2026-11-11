@@ -1,13 +1,14 @@
 import type {SequenceDetail, SequenceEdit, SequenceElement} from './entity'
 
 // The LCS table is quadratic over whatever survives the common head and tail
-// strip. Churn past this bound is a rewrite of the sequence; per-element edits
-// would be noise, so alignment falls back to reporting nothing element-wise.
+// strip. A middle past this bound is first split on hashes that occur once on
+// each side; a part that is still past it stays unaligned.
 const MAX_ALIGNMENT_CELLS = 250_000
 
 // Order-preserving pairs of equal hashes: common ends by position, the middle
-// by LCS. Past the size cap the middle stays unpaired rather than paying a
-// multi-megabyte table inside a Worker request.
+// by LCS. Past the size cap the middle is split on unique hashes, and a part
+// that is still too large stays unpaired rather than paying a multi-megabyte
+// table inside a Worker request.
 export function alignByHash(
   left: readonly string[],
   right: readonly string[],
@@ -19,10 +20,8 @@ export function alignByHash(
   }
   const middleLeft = left.slice(prefix, leftEnd)
   const middleRight = right.slice(prefix, rightEnd)
-  if (middleLeft.length * middleRight.length <= MAX_ALIGNMENT_CELLS) {
-    for (const [old, next] of lcsPairs(middleLeft, middleRight)) {
-      pairs.push([prefix + old, prefix + next])
-    }
+  for (const [old, next] of alignMiddle(middleLeft, middleRight).pairs) {
+    pairs.push([prefix + old, prefix + next])
   }
   for (let offset = 0; leftEnd + offset < left.length; offset += 1) {
     pairs.push([leftEnd + offset, rightEnd + offset])
@@ -63,14 +62,13 @@ export function diffSequenceElements({
   const middleOld = beforeHashes.slice(prefix, leftEnd)
   const middleNew = afterHashes.slice(prefix, rightEnd)
   const detail = {lengthBefore: before.length, lengthAfter: after.length}
-  if (middleOld.length * middleNew.length > MAX_ALIGNMENT_CELLS) {
+  const middle = alignMiddle(middleOld, middleNew)
+  if (!middle.everyPartAligned) {
     // Lengths still tell the reviewer the array churned wholesale.
     return {detail: {...detail, edits: []}, insertedElements: [], deletedElements: []}
   }
 
-  const anchors = lcsPairs(middleOld, middleNew).map(
-    ([old, next]) => [prefix + old, prefix + next] as const,
-  )
+  const anchors = middle.pairs.map(([old, next]) => [prefix + old, prefix + next] as const)
   const edits: SequenceEdit[] = []
   const insertedElements: SequenceElement[] = []
   const deletedElements: SequenceElement[] = []
@@ -110,6 +108,112 @@ export function diffSequenceElements({
     return undefined
   }
   return {detail: {...detail, edits}, insertedElements, deletedElements}
+}
+
+interface MiddleAlignment {
+  readonly pairs: ReadonlyArray<readonly [number, number]>
+  readonly everyPartAligned: boolean
+}
+
+// LCS when the table fits the cap. Otherwise pair the hashes that occur once on
+// each side, keep the longest run of those pairs that is in order on both
+// sides, and align each part between them the same way.
+function alignMiddle(left: readonly string[], right: readonly string[]): MiddleAlignment {
+  if (left.length * right.length <= MAX_ALIGNMENT_CELLS) {
+    return {pairs: lcsPairs(left, right), everyPartAligned: true}
+  }
+  const anchors = uniqueAnchors(left, right)
+  if (anchors.length === 0) {
+    return {pairs: [], everyPartAligned: false}
+  }
+
+  const pairs: Array<readonly [number, number]> = []
+  let everyPartAligned = true
+  let leftStart = 0
+  let rightStart = 0
+  for (const [anchorLeft, anchorRight] of [...anchors, [left.length, right.length] as const]) {
+    const part = alignMiddle(
+      left.slice(leftStart, anchorLeft),
+      right.slice(rightStart, anchorRight),
+    )
+    for (const [old, next] of part.pairs) {
+      pairs.push([leftStart + old, rightStart + next])
+    }
+    everyPartAligned &&= part.everyPartAligned
+    if (anchorLeft < left.length) {
+      pairs.push([anchorLeft, anchorRight])
+    }
+    leftStart = anchorLeft + 1
+    rightStart = anchorRight + 1
+  }
+  return {pairs, everyPartAligned}
+}
+
+// Pairs of positions whose hash occurs exactly once on each side, cut down to
+// the longest subsequence that ascends on both sides.
+function uniqueAnchors(
+  left: readonly string[],
+  right: readonly string[],
+): ReadonlyArray<readonly [number, number]> {
+  const leftOnce = positionsOfUniqueHashes(left)
+  const rightOnce = positionsOfUniqueHashes(right)
+  const candidates: Array<readonly [number, number]> = []
+  for (const [hash, leftIndex] of leftOnce) {
+    const rightIndex = rightOnce.get(hash)
+    if (rightIndex !== undefined) {
+      candidates.push([leftIndex, rightIndex])
+    }
+  }
+  candidates.sort((first, second) => first[0] - second[0])
+  return longestAscendingByRight(candidates)
+}
+
+function positionsOfUniqueHashes(hashes: readonly string[]): ReadonlyMap<string, number> {
+  const positions = new Map<string, number>()
+  const repeated = new Set<string>()
+  hashes.forEach((hash, index) => {
+    if (positions.has(hash)) {
+      repeated.add(hash)
+    } else {
+      positions.set(hash, index)
+    }
+  })
+  for (const hash of repeated) {
+    positions.delete(hash)
+  }
+  return positions
+}
+
+// Longest subsequence with ascending right positions, by patience sorting in
+// O(n log n). The input ascends by left position already.
+function longestAscendingByRight(
+  pairs: ReadonlyArray<readonly [number, number]>,
+): ReadonlyArray<readonly [number, number]> {
+  // tails[length - 1] is the pair index that ends the best run of that length.
+  const tails: number[] = []
+  const previous = new Int32Array(pairs.length).fill(-1)
+  pairs.forEach(([, right], index) => {
+    let low = 0
+    let high = tails.length
+    while (low < high) {
+      const mid = (low + high) >> 1
+      if (pairs[tails[mid]][1] < right) {
+        low = mid + 1
+      } else {
+        high = mid
+      }
+    }
+    if (low > 0) {
+      previous[index] = tails[low - 1]
+    }
+    tails[low] = index
+  })
+
+  const run: Array<readonly [number, number]> = []
+  for (let index = tails.at(-1) ?? -1; index !== -1; index = previous[index]) {
+    run.push(pairs[index])
+  }
+  return run.toReversed()
 }
 
 interface CommonEnds {

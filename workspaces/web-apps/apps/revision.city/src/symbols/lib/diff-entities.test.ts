@@ -51,6 +51,17 @@ test('names the dependency that changed in a manifest', async () => {
   expect(diff.changes).toMatchObject([{type: 'modified', qualifiedName: 'dependencies.react'}])
 })
 
+test('names the default export of a config file when its options change', async () => {
+  const oldSource = 'export default defineConfig({server: {port: 3000}})\n'
+  const newSource = 'export default defineConfig({server: {port: 4000}})\n'
+
+  const diff = await diffEntities({path: 'vite.config.ts', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([
+    {type: 'modified', kind: 'constant', qualifiedName: 'default'},
+  ])
+})
+
 test('reports only the entity that changed, not the ones enclosing it', async () => {
   const oldSource = 'export class Widget {\n  render() {\n    return 1\n  }\n}\n'
   const newSource = 'export class Widget {\n  render() {\n    return 2\n  }\n}\n'

@@ -231,6 +231,7 @@ test('callback surfaces a token-exchange error response as a 502 and logs its ca
     event: 'github auth failure',
     step: 'code exchange',
     status: 200,
+    outcome: 'refused',
     error: 'bad_verification_code',
     errorDescription: 'The code passed is incorrect or expired.',
   })
@@ -353,6 +354,61 @@ test('resolveGitHubAuth drops the session when the refresh fails', async () => {
 
   expect(auth.session).toBeUndefined()
   expect(auth.setCookieHeaders[0]).toContain('diffs-github-auth=;')
+})
+
+const signInWithExpiredToken = async (): Promise<string> => {
+  const {sessionCookie} = await signIn(
+    stubGitHubFetch({
+      token: {access_token: 'ghu_old', expires_in: 1, refresh_token: 'ghr_refresh'},
+    }),
+  )
+  return sessionCookie
+}
+
+test.each([
+  {name: 'an HTML 503', fetch: async () => new Response('<html>down</html>', {status: 503})},
+  {name: 'a 502 with no error field', fetch: async () => jsonResponse({message: 'down'}, 502)},
+  {
+    name: 'a network error',
+    fetch: async () => {
+      throw new TypeError('fetch failed')
+    },
+  },
+])('resolveGitHubAuth keeps the cookie when the refresh gets $name', async ({fetch}) => {
+  const sessionCookie = await signInWithExpiredToken()
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+  const auth = await resolveGitHubAuth(
+    new Request(`${ORIGIN}/api/diffs/diff`, {headers: {cookie: sessionCookie}}),
+    {credentials: CREDENTIALS, fetch: vi.fn<FetchLike>(fetch)},
+  )
+
+  expect(auth.session).toBeUndefined()
+  expect(auth.setCookieHeaders).toEqual([])
+  expect(consoleError).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({step: 'token refresh', outcome: 'unavailable'}),
+  )
+  consoleError.mockRestore()
+})
+
+test('resolveGitHubAuth drops the session when GitHub refuses the refresh with a 400', async () => {
+  const sessionCookie = await signInWithExpiredToken()
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+  const auth = await resolveGitHubAuth(
+    new Request(`${ORIGIN}/api/diffs/diff`, {headers: {cookie: sessionCookie}}),
+    {
+      credentials: CREDENTIALS,
+      fetch: stubGitHubFetch({token: {error: 'bad_refresh_token'}, tokenStatus: 400}),
+    },
+  )
+
+  expect(auth.session).toBeUndefined()
+  expect(auth.setCookieHeaders[0]).toContain('diffs-github-auth=;')
+  expect(consoleError).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({step: 'token refresh', status: 400, outcome: 'refused'}),
+  )
+  consoleError.mockRestore()
 })
 
 test('resolveGitHubAuth ignores a malformed cookie', async () => {

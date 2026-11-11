@@ -74,23 +74,29 @@ checklist -- whenever you add or touch one.
 
 ## Code review
 
-[Warden](https://warden.sentry.dev/guide) is the canonical automated reviewer: it runs its built-in
-`security-review` and `code-review` skills plus the repo's own `comment-review` skill
-(`.agents/skills/comment-review/`, the rules of
-[comment-style.md](docs/contributing/comment-style.md)) on each PR that gets the `Warden` label
-(`.depot/workflows/ci-warden.yml`) and owns the inline findings posted to the PR. Everything else
-complements it -- nothing else should post competing PR comments. The
-[review-consolidation](docs/projects/review-consolidation/plan.md) project tracks the direction
-(Warden is the path forward; other tools complement, not compete).
+Two automated reviewers post to a PR. Revision City, the repo's own GitHub App, reviews each push.
+[Warden](https://warden.sentry.dev/guide) runs only on its label, until phase 3 of the
+[revision.city Reviews](docs/projects/revision-city-reviews/plan.md) project retires it. The other
+tools below run locally and do not post PR comments.
 
+- **Revision City (automatic, each push).** The app reviews a PR when it opens, gets a push,
+  reopens, or becomes ready for review. Drafts, bot PRs, and authors who are not an owner, member,
+  or collaborator get no automatic review. It posts inline comments and a summary comment, and runs
+  the `Revision City` check. The check fails on a checked finding at `high` or above, when a chunk
+  review fails, or when a file has a diff line longer than 5,000 characters. To clear it, resolve
+  the threads, or click `Dismiss findings` on the check. Only a user who can push can do either. To
+  review the current head again, add the `Revision City` label. Limits and design:
+  [revision-city-reviews](docs/projects/revision-city-reviews/plan.md).
 - **Warden (CI gate, on demand).** Nothing runs on open or on push. Add the `Warden` label to a PR,
   draft or bot PR included, to review its current head; remove and re-add the label to run again. It
-  is the single source of posted inline review comments, and findings at `failOn` severity fail the
-  check. To review a branch without a PR, dispatch `ci-warden.yml` on it (CLI-based; findings land
-  in the job log, not on a PR). Also runs locally: `warden <ref>` with `WARDEN_MODEL` and
+  runs its built-in `security-review` and `code-review` skills plus the repo's own `comment-review`
+  skill (`.agents/skills/comment-review/`, the rules of
+  [comment-style.md](docs/contributing/comment-style.md)), and findings at `failOn` severity fail
+  the check. To review a branch without a PR, dispatch `ci-warden.yml` on it (CLI-based; findings
+  land in the job log, not on a PR). Also runs locally: `warden <ref>` with `WARDEN_MODEL` and
   `WARDEN_OPENROUTER_API_KEY` exported.
 - **Built-in `/code-review` and `/security-review` (local).** Run on-demand before you push, as an
-  inner-loop sanity pass. Do **not** pass `--comment` -- Warden owns posted comments, and
+  inner-loop sanity pass. Do **not** pass `--comment` -- the PR reviewers own posted comments, and
   double-posting the same diff is noise and double model spend.
 - **`comment-review` (before you push).** The same skill Warden runs, for comments and documentation
   prose. Before each push that adds or edits a comment or Markdown prose, run it over the diff (PR

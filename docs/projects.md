@@ -102,8 +102,8 @@ conversations, no database yet); the site, endpoint included, sits behind Cloudf
 #### [revision.city](./projects/revision-city/plan.md)
 
 A centralized version-control service for managing reviews and diffs. The diffs half is live: a
-GitHub diff viewer (ported from Pierre's diffshub) under `/diffs`. Reviews MVP shape still to be
-scoped.
+GitHub diff viewer (ported from Pierre's diffshub) under `/diffs`. Automated pull request reviews
+are built; see revision.city Reviews below.
 
 **Status**: Functional
 
@@ -187,10 +187,11 @@ retire the bespoke freshness skill + cron once coverage is proven.
 
 Consolidate the repo's code-review surfaces around **Warden** as the canonical automated PR gate,
 with the built-in `/code-review` + `/security-review` (local inner loop) and `/review` (Standards +
-Spec) positioned to complement it, not compete. Warden landed 2026-06-30; the gate goes live once
-its secrets exist (#302). Next: encode the repo's own standards as custom Warden skills.
+Spec) positioned to complement it, not compete. Superseded in part: since 2026-11-02 revision.city
+reviews each push and Warden runs only on its `Warden` label. Warden retires in phase 3 of
+revision.city Reviews.
 
-**Status**: Active · Blocked (human activation, #302)
+**Status**: Active
 
 ### [revision.city Reviews](./projects/revision-city-reviews/plan.md)
 

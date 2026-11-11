@@ -59,16 +59,15 @@ migrations_dir = "drizzle"
 [version_metadata]
 binding = "CF_VERSION_METADATA"
 
-# Logs and traces ship to Grafana Cloud and Honeycomb through the
-# account-level observability destinations configured in the dashboard.
-# Grafana stays for a side-by-side week, then goes.
+# Logs and traces ship to Honeycomb through the account-level
+# observability destinations configured in the dashboard.
 [observability.logs]
 enabled = true
-destinations = ["2026-aug-16-grafana-cloud-logs", "honeycomb-logs"]
+destinations = ["honeycomb-logs"]
 
 [observability.traces]
 enabled = true
-destinations = ["2026-aug-16-grafana-cloud-traces", "honeycomb-traces"]
+destinations = ["honeycomb-traces"]
 
 # The dev worker: a second deployment of this same app on a stable workers.dev
 # host, used as the OAuth redirect target for per-PR previews. Previews cannot
@@ -108,8 +107,8 @@ PREVIEW_AUTH_PROXY_URL = "https://revision-city-dev.nullserve.workers.dev"
 # wholesale -- so the config is repeated in full rather than partially.
 [env.dev.observability.logs]
 enabled = true
-destinations = ["2026-aug-16-grafana-cloud-logs", "honeycomb-logs"]
+destinations = ["honeycomb-logs"]
 
 [env.dev.observability.traces]
 enabled = true
-destinations = ["2026-aug-16-grafana-cloud-traces", "honeycomb-traces"]
+destinations = ["honeycomb-traces"]

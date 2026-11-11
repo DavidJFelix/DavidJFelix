@@ -49,6 +49,8 @@ export interface ChunkReviewContext {
 
 export interface ChunkReviewUnit {
   chunk: ReviewChunk
+  // The position of the chunk in the plan, counted from 0.
+  chunkIndex: number
   reviewer: Reviewer
 }
 
@@ -66,6 +68,7 @@ export interface ChunkReviewOutcome {
 
 export async function reviewChunk({
   chunk,
+  chunkIndex,
   reviewer,
   model,
   scope,
@@ -102,6 +105,7 @@ export async function reviewChunk({
   const eventFields = {
     reviewer: reviewer.id,
     path: chunk.path,
+    chunk: chunkIndex + 1,
     chunkLines: chunk.hunks.reduce((total, hunk) => total + hunk.lines.length, 0),
   }
   const result = await runToolLoop({chat, model, system, prompt, tools, eventFields})
@@ -245,8 +249,8 @@ export function planChunkReviews({
   reviewers = REVIEWERS,
   ...chunkOptions
 }: PlanChunkReviewsParams): ChunkReviewUnit[] {
-  return chunkPullRequestFiles(files, chunkOptions).flatMap((chunk) =>
-    reviewers.map((reviewer) => ({chunk, reviewer})),
+  return chunkPullRequestFiles(files, chunkOptions).flatMap((chunk, chunkIndex) =>
+    reviewers.map((reviewer) => ({chunk, chunkIndex, reviewer})),
   )
 }
 
@@ -265,8 +269,8 @@ export async function reviewChunks({
   return mapWithConcurrency({
     items: units,
     limit: concurrency,
-    run: ({chunk, reviewer}) =>
-      reviewChunk({chunk, reviewer, ...context}).catch((error: unknown): ChunkReviewOutcome => ({
+    run: (unit) =>
+      reviewChunk({...unit, ...context}).catch((error: unknown): ChunkReviewOutcome => ({
         findings: [],
         cached: false,
         usage: NO_USAGE,

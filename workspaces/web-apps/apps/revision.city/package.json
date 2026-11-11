@@ -80,6 +80,7 @@
     "@pandacss/preset-base": "catalog:",
     "@pandacss/preset-panda": "catalog:",
     "@playwright/test": "catalog:",
+    "@sentry/vite-plugin": "11.10.0",
     "@tanstack/devtools-vite": "catalog:",
     "@testing-library/dom": "catalog:",
     "@testing-library/jest-dom": "7.0.1",

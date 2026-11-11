@@ -8,6 +8,11 @@ import {defineConfig} from 'vite'
 // before tanstackStart() so the server build targets Workers.
 const config = defineConfig({
   resolve: {tsconfigPaths: true},
+  // CLOUDFLARE_ENV names the wrangler environment of this build ('dev' for the
+  // dev worker, unset for production). Sentry tags each event with it.
+  define: {
+    'import.meta.env.VITE_PUBLIC_DEPLOY_ENV': JSON.stringify(process.env.CLOUDFLARE_ENV ?? ''),
+  },
   plugins: [devtools(), cloudflare({viteEnvironment: {name: 'ssr'}}), tanstackStart(), viteReact()],
 })
 

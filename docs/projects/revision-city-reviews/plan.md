@@ -72,10 +72,11 @@ replaces Warden in this repository. This project started as part of
   The review removes the label, so adding it again starts another review.
 - **Untrusted text.** The pull request's author can steer the reviewers, so the prompts treat the
   title, the description, the diff, and the files as text to review. In posted text, a zero-width
-  space goes after `@`, `#`, `GH-`, `<`, and the `&` of an entity. So model text and file paths
-  cannot mention users, reference issues, or add HTML. Links to github.com go through
-  redirect.github.com, so they do not show in the timeline of the linked issue. The check run is not
-  a security gate by itself.
+  space goes after `@`, `#`, `GH-`, `<`, the `&` of an entity, and the `]` of `](` and `]:`. So
+  model text and file paths cannot mention users, reference issues, add HTML, or show an image or a
+  link whose text hides its address. A link shows as its Markdown source, and its address stays a
+  link that shows its host. Links to github.com go through redirect.github.com, so they do not show
+  in the timeline of the linked issue. The check run is not a security gate by itself.
 - **Posted comments.** Each comment starts with a fingerprint, and a run does not post a finding
   again on a line where the app already posted it. The finding's body goes last, so a code block
   that it leaves open cannot take in the suggestion.
@@ -91,7 +92,8 @@ replaces Warden in this repository. This project started as part of
   threads no longer change a dismissed check run. The webhook must subscribe to "Check run" for the
   button.
 - **Limits.** For each pull request, at most 150 chunks and 700,000 bytes of paths and patches get a
-  review. A file whose diff is longer than 1,500 lines gets no review. One review posts at most 50
+  review. A file whose diff is longer than 1,500 lines, or has a line longer than 5,000 characters,
+  gets no review, and a chunk stops at 40,000 characters of diff text. One review posts at most 50
   new comments. The check run lists every finding, and it cuts its text at 65,000 characters, below
   GitHub's limit of 65,535.
 

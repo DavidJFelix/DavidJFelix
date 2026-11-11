@@ -1,5 +1,5 @@
 // cSpell:ignore revisioncity -- the GitHub App's slug
-import {serialize} from 'node:v8'
+import {deserialize, serialize} from 'node:v8'
 import {expect, test, vi} from 'vitest'
 import {z} from 'zod'
 import {createMemoryChunkReviewStore} from './chunk-review-store'
@@ -176,6 +176,31 @@ function recordingStep() {
 const retryingStep: RunStep = async (_name, run) =>
   run({isLastAttempt: false}).catch(() => run({isLastAttempt: true}))
 
+// Keeps each step result in serialized form, as the Workflow does. The key
+// counts the earlier steps of the same name, as the Workflow's step count does.
+// A run that stops after the step `stopAfter` throws on each step after it, and
+// a later run returns the kept results and does not run those steps again.
+function durableSteps() {
+  const results = new Map<string, Buffer>()
+  const run = (stopAfter?: string): RunStep => {
+    const counts = new Map<string, number>()
+    let stopped = false
+    return async (name, body) => {
+      if (stopped) {
+        throw new Error('The instance stopped')
+      }
+      const count = (counts.get(name) ?? 0) + 1
+      counts.set(name, count)
+      const key = `${name} ${count}`
+      const result = results.get(key) ?? serialize(await body({isLastAttempt: true}))
+      results.set(key, result)
+      stopped = name === stopAfter
+      return deserialize(result)
+    }
+  }
+  return {run}
+}
+
 const checkRunText = (body: unknown) =>
   z.object({output: z.object({text: z.string()})}).parse(body).output.text
 
@@ -227,6 +252,38 @@ test('runReview reviews the head, posts the findings, and fails the check on a h
     output: {title: '1 finding'},
   })
 })
+
+test.each([
+  'start',
+  'read pull request and guides',
+  'review 1 of 1',
+  'post review',
+  'complete check run',
+  'update summary comment',
+])(
+  'runReview after a restart that follows the step %s does each step one time',
+  async (stopAfter) => {
+    const github = fakeGitHub()
+    const steps = durableSteps()
+    const chat = answering([highFinding])
+    const events: WideEvent[] = []
+    const params = {request: github.request, chat, log: (event: WideEvent) => events.push(event)}
+
+    // Each run has its own store, so a chunk review that runs again calls the model again.
+    // The run log step catches its error, so a stop after the last step does not fail the run.
+    await runReview(runParams({...params, step: steps.run(stopAfter)})).catch(() => null)
+    await runReview(runParams({...params, step: steps.run()}))
+
+    expect(github.sent(CHECK_RUNS)).toHaveLength(1)
+    expect(chat).toHaveBeenCalledTimes(CALLS_WITH_CHECKED_FINDING)
+    expect(github.sent(REVIEWS)).toHaveLength(1)
+    expect(github.sent(CHECK_RUN)).toHaveLength(1)
+    expect(github.sent(NEW_ISSUE_COMMENT)).toHaveLength(1)
+    expect(events.filter(({event}) => event === 'review run')).toEqual([
+      expect.objectContaining({outcome: 'failure'}),
+    ])
+  },
+)
 
 // The comments of a first run, as GitHub lists them on the next run.
 async function postedComments() {

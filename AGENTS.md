@@ -47,7 +47,9 @@ The non-negotiable rules, one line each. Follow the link before working in that 
   English wording and glossary terms; doc-format comments only on the exported surface of shared and
   published packages; before each push that adds or edits a comment or prose, run the
   `comment-review` skill over your diff -- [comment-style.md](docs/contributing/comment-style.md)
-- **No emojis** in code, commits, or documentation
+- **Emojis**: only where one carries information -- a status icon, or feedback that tells the reader
+  a result (the pass and fail marks in the preview comment); never as flavor on a heading, a title,
+  a commit message, or a sentence
 - **Commits/PRs**: [conventional commit](https://www.conventionalcommits.org/) PR titles; every PR
   adds a changelog fragment in `docs/changelog/fragments/` -- monthly files are written only by the
   roll-up (`mise run changelog:rollup`), never by PRs -- [CONTRIBUTING.md](CONTRIBUTING.md)

@@ -38,6 +38,7 @@ const GITHUB_HOST = 'github.com'
 const GITHUB_RAW_DIFF_HOST = 'patch-diff.githubusercontent.com'
 const NON_DIFF_RESPONSE_MESSAGE = 'GitHub did not return a diff for this URL.'
 const NON_WHITESPACE_PATTERN = /\S/
+const URL_DROPPED_CHARACTER_PATTERN = /[\t\n\r]/
 const RAW_GITHUB_DIFF_PATH_PATTERN = /^\/raw\/[^/]+\/[^/]+\/pull\/[^/]+\.(?:diff|patch)$/
 const GITHUB_PULL_TAB_PATH_PATTERN = /^\/([^/]+)\/([^/]+)\/pull\/(\d+)\/(?:changes|files)$/
 const UPSTREAM_FAILURE_LOG_MESSAGE = 'diff upstream attempt failed'
@@ -251,6 +252,12 @@ function resolvePatchURLInput(
   input: string,
   apiAuth: GitHubAPIAuth | undefined,
 ): ResolvedPatchRequest | undefined {
+  // The URL parser drops tabs and line breaks without an error, so a ref with
+  // one would fetch a different ref.
+  if (URL_DROPPED_CHARACTER_PATTERN.test(input)) {
+    return undefined
+  }
+
   if (input.startsWith('/')) {
     return resolveGitHubPatchRequest(input, apiAuth)
   }
@@ -454,13 +461,22 @@ function resolveGitHubPath(path: string): string | undefined {
     patchPath += '.diff'
   }
 
-  return `https://${GITHUB_HOST}${patchPath}`
+  return createGitHubURL(patchPath)
 }
 
 // The human-facing github.com URL a patch attempt stands for, which is what the
 // access diagnosis parses back into an owner, repository, and diff source.
 function createGitHubSourceURL(path: string): string {
-  return `https://${GITHUB_HOST}${removeDiffExtension(normalizeGitHubPath(path))}`
+  return createGitHubURL(removeDiffExtension(normalizeGitHubPath(path)))
+}
+
+// The pathname setter escapes `#`, `?` and non-ASCII characters and keeps an
+// existing `%XX` as written. So a ref with a raw `#` and a ref with `%23` get
+// the same URL, and the URL is safe in a response header.
+function createGitHubURL(path: string): string {
+  const url = new URL(`https://${GITHUB_HOST}`)
+  url.pathname = path
+  return url.href
 }
 
 function removeDiffExtension(path: string): string {

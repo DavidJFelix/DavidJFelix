@@ -172,6 +172,55 @@ test('a signed-out 404 spends nothing on the app credentials and asks for a sign
   warn.mockRestore()
 })
 
+const COMPARE_PATH = '/acme/widgets/compare/main...fix/'
+const ISSUE_REF = '123'
+const ESCAPED_COMPARE_URL = `https://github.com${COMPARE_PATH}%23${ISSUE_REF}.diff`
+
+test.each([
+  {name: 'a raw', ref: `#${ISSUE_REF}`},
+  {name: 'an escaped', ref: `%23${ISSUE_REF}`},
+])('a compare ref with $name `#` fetches the whole ref from github.com', async ({ref}) => {
+  const upstream = stubUpstream({[ESCAPED_COMPARE_URL]: () => diffAnswer()})
+
+  const response = await handleDiffRequest(
+    diffRequest(`path=${encodeURIComponent(`${COMPARE_PATH}${ref}`)}`),
+    {fetch: upstream.fetchImpl},
+  )
+
+  expect(response.status).toBe(200)
+  expect(upstream.calls.map((call) => call.url)).toEqual([ESCAPED_COMPARE_URL])
+})
+
+test('a compare ref with non-ASCII characters is fetched and named with an ASCII source', async () => {
+  const ref = '\u6a5f'
+  const escapedRef = encodeURIComponent(ref)
+  const patchURL = `https://github.com${COMPARE_PATH}${escapedRef}.diff`
+  const upstream = stubUpstream({[patchURL]: () => diffAnswer()})
+
+  const response = await handleDiffRequest(
+    diffRequest(`path=${encodeURIComponent(`${COMPARE_PATH}${ref}`)}`),
+    {fetch: upstream.fetchImpl},
+  )
+
+  expect(response.status).toBe(200)
+  expect(response.headers.get('X-Patch-Source')).toBe(
+    `https://github.com${COMPARE_PATH}${escapedRef}`,
+  )
+  expect(upstream.calls.map((call) => call.url)).toEqual([patchURL])
+})
+
+test.each([
+  {name: 'path', search: `path=${encodeURIComponent('/acme/widgets/pull/7\n8')}`},
+  {name: 'URL', search: `url=${encodeURIComponent('https://github.com/acme/widgets/pull/7\t8')}`},
+])('a GitHub $name with a tab or line break is rejected without a fetch', async ({search}) => {
+  const upstream = stubUpstream({})
+
+  const response = await handleDiffRequest(diffRequest(search), {fetch: upstream.fetchImpl})
+
+  expect(response.status).toBe(400)
+  expect(upstream.calls).toHaveLength(0)
+})
+
 test.each([
   {status: 503, statusText: 'Service Unavailable', expected: '503 Service Unavailable'},
   {status: 500, statusText: '', expected: 'with 500.'},

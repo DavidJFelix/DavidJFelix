@@ -22,8 +22,8 @@ export interface CommentBodyParams {
 }
 
 function stageStatus(outcome: string | undefined): string {
-  if (outcome === 'success') return 'passed'
-  if (outcome === 'failure') return 'failed'
+  if (outcome === 'success') return '✅ passed'
+  if (outcome === 'failure') return '❌ failed'
   return '_skipped_'
 }
 

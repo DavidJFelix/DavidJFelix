@@ -17,7 +17,7 @@ test('a failing smoke test keeps the deployed-app link and names the failing sta
   })
 
   expect(body).toContain('- Preview: https://pr-7-app.acct.workers.dev/')
-  expect(body).toContain('- Smoke: failed')
+  expect(body).toContain('- Smoke: ❌ failed')
   expect(body).toContain('- Screenshots: _skipped_')
   expect(body).not.toContain('deploy failed')
 })
@@ -31,8 +31,8 @@ test('a failing screenshot suite keeps the link and shows smoke passed', () => {
   })
 
   expect(body).toContain('- Preview: https://pr-7-app.acct.workers.dev/')
-  expect(body).toContain('- Smoke: passed')
-  expect(body).toContain('- Screenshots: failed')
+  expect(body).toContain('- Smoke: ✅ passed')
+  expect(body).toContain('- Screenshots: ❌ failed')
 })
 
 test('all stages passing renders the link and two passed lines', () => {
@@ -44,8 +44,8 @@ test('all stages passing renders the link and two passed lines', () => {
   })
 
   expect(body).toContain('- Preview: https://pr-7-app.acct.workers.dev/')
-  expect(body).toContain('- Smoke: passed')
-  expect(body).toContain('- Screenshots: passed')
+  expect(body).toContain('- Smoke: ✅ passed')
+  expect(body).toContain('- Screenshots: ✅ passed')
 })
 
 test('a failed deploy explains itself instead of linking, and downstream stages read skipped', () => {

@@ -1,11 +1,15 @@
 import {expect, test} from 'vitest'
 import {z} from 'zod'
+import type {Finding} from './findings'
 import type {GitHubRequest} from './github-api'
 import {APP_BOT_LOGIN} from './publish-review'
+import {findingSummary, neutralizeMarkdown} from './review-markdown'
 import {
   formatRunSection,
   formatSummaryComment,
   MAX_COMMENT_CHARS,
+  type RunSection,
+  readOlderRuns,
   readRunSections,
   SUMMARY_MARKER,
   updateSummaryComment,
@@ -37,6 +41,28 @@ const secondRun = formatRunSection({
   findings: [],
 })
 
+const RUN_COST = 0.1234
+
+interface RunWithParams {
+  checkRunId: number
+  findingCount: number
+  detailChars?: number
+}
+
+function runWith({checkRunId, findingCount, detailChars = 0}: RunWithParams): RunSection {
+  return formatRunSection({
+    checkRunId,
+    headSha: firstSha,
+    costUsd: RUN_COST,
+    title: `${findingCount} findings`,
+    findings: Array.from({length: findingCount}, (_, index) => ({
+      fingerprint: (checkRunId * 10_000 + index).toString(16).padStart(16, '0'),
+      text: `**medium** \`src/a.ts:${index + 1}\` (comments): Finding ${index} of run ${checkRunId}`,
+    })),
+    ...(detailChars === 0 ? {} : {details: 'x'.repeat(detailChars)}),
+  })
+}
+
 test('formatSummaryComment shows each run under a running total', () => {
   expect(formatSummaryComment([firstRun, secondRun])).toBe(
     [
@@ -66,7 +92,7 @@ test('formatSummaryComment shows each run under a running total', () => {
 })
 
 test('formatSummaryComment strikes through a resolved finding and keeps its cost', () => {
-  const body = formatSummaryComment([firstRun], new Set([bugFingerprint]))
+  const body = formatSummaryComment([firstRun], {resolved: new Set([bugFingerprint])})
 
   expect(body).toContain(
     `- ~~**high** \`src/a.ts:2\` (security): Bug~~ (resolved) <!-- revision-city:finding ${bugFingerprint} -->`,
@@ -83,7 +109,9 @@ test('readRunSections reads back the runs, also with resolved findings', () => {
     secondRun,
   ])
   expect(
-    readRunSections(formatSummaryComment([firstRun, secondRun], new Set([bugFingerprint]))),
+    readRunSections(
+      formatSummaryComment([firstRun, secondRun], {resolved: new Set([bugFingerprint])}),
+    ),
   ).toEqual([firstRun, secondRun])
 })
 
@@ -98,6 +126,48 @@ test('readRunSections does not read a marker that neutralized text holds', () =>
   })
 
   expect(readRunSections(formatSummaryComment([forged]))).toEqual([forged])
+})
+
+test('readOlderRuns does not read a marker in the text of a run', () => {
+  const forged = formatRunSection({
+    checkRunId: 31,
+    headSha: firstSha,
+    costUsd: 0,
+    title: 'No findings',
+    findings: [],
+    details: '<!-- revision-city:older 9 9.0000 -->',
+  })
+
+  expect(readOlderRuns(formatSummaryComment([forged]))).toEqual({count: 0, costUsd: 0})
+})
+
+test.each([
+  {name: 'line', separator: String.fromCharCode(0x2028)},
+  {name: 'paragraph', separator: String.fromCharCode(0x2029)},
+])('readRunSections reads back a finding whose title holds a $name separator', ({separator}) => {
+  const finding: Finding = {
+    reviewerId: 'security',
+    path: 'src/a.ts',
+    severity: 'high',
+    title: `Token${separator}leaks`,
+    body: 'The token reaches the log.',
+    checked: true,
+    startLine: 4,
+    endLine: 4,
+  }
+  const section = formatRunSection({
+    checkRunId: 31,
+    headSha: firstSha,
+    costUsd: 0,
+    title: '1 finding',
+    findings: [{fingerprint: bugFingerprint, text: neutralizeMarkdown(findingSummary(finding))}],
+  })
+
+  const [read] = readRunSections(formatSummaryComment([section]))
+
+  expect(read?.findings).toEqual([
+    {fingerprint: bugFingerprint, text: '**high** `src/a.ts:4` (security): Token leaks'},
+  ])
 })
 
 test('formatSummaryComment cuts the details of the oldest runs first and keeps findings', () => {
@@ -115,11 +185,7 @@ test('formatSummaryComment cuts the details of the oldest runs first and keeps f
   expect(body.length).toBeLessThanOrEqual(MAX_COMMENT_CHARS)
   expect(body).toContain('3 runs on this pull request, total cost $3.0000.')
   const sections = readRunSections(body)
-  expect(sections.map(({details}) => details.startsWith('(Details cut:'))).toEqual([
-    true,
-    true,
-    false,
-  ])
+  expect(sections.map(({details}) => details.startsWith('(Cut:'))).toEqual([true, true, false])
   expect(sections.map(({findings}) => findings)).toEqual([
     firstRun.findings,
     firstRun.findings,
@@ -127,10 +193,66 @@ test('formatSummaryComment cuts the details of the oldest runs first and keeps f
   ])
 })
 
-test('formatSummaryComment keeps a comment with too many runs under the limit', () => {
-  const runs = Array.from({length: 1000}, () => secondRun)
+test('formatSummaryComment keeps the newest run and counts each run over 400 edits', () => {
+  const runs = Array.from({length: 400}, (_, index) =>
+    runWith({checkRunId: index + 1, findingCount: 10, detailChars: 4000}),
+  )
 
-  expect(formatSummaryComment(runs).length).toBe(MAX_COMMENT_CHARS)
+  const lastBody = runs.reduce((body, section) => {
+    const next = formatSummaryComment([...readRunSections(body), section], {
+      older: readOlderRuns(body),
+    })
+    const shown = readRunSections(next)
+    const {checkRunId} = section
+    expect(next.length).toBeLessThanOrEqual(MAX_COMMENT_CHARS)
+    expect(shown.at(-1)?.checkRunId).toBe(checkRunId)
+    expect(shown.at(-1)?.findings).toEqual(section.findings)
+    expect(readOlderRuns(next).count + shown.length).toBe(checkRunId)
+    expect(next).toContain(
+      `${checkRunId} ${checkRunId === 1 ? 'run' : 'runs'} on this pull request, total cost $${(checkRunId * RUN_COST).toFixed(4)}.`,
+    )
+    return next
+  }, '')
+
+  const older = readOlderRuns(lastBody)
+  expect(older.count).toBeGreaterThan(0)
+  expect(older.costUsd.toFixed(4)).toBe((older.count * RUN_COST).toFixed(4))
+  expect(lastBody).toContain(`The oldest ${older.count} runs are not shown.`)
+  expect(
+    readRunSections(lastBody)
+      .slice(0, -1)
+      .every(({findings}) => findings.length === 0),
+  ).toBe(true)
+})
+
+test('formatSummaryComment cuts the findings of the oldest runs before it removes a run', () => {
+  const runs = [1, 2, 3, 4].map((checkRunId) => runWith({checkRunId, findingCount: 150}))
+
+  const body = formatSummaryComment(runs)
+
+  expect(body.length).toBeLessThanOrEqual(MAX_COMMENT_CHARS)
+  expect(readOlderRuns(body)).toEqual({count: 0, costUsd: 0})
+  const sections = readRunSections(body)
+  expect(sections.map(({findings}) => findings.length)).toEqual([0, 150, 150, 150])
+  expect(sections[0]?.details).toBe('(Cut: the comment is longer than GitHub accepts.)')
+})
+
+test('formatSummaryComment keeps whole finding lines when the newest run alone is too long', () => {
+  const newest = runWith({checkRunId: 2, findingCount: 1000})
+
+  const body = formatSummaryComment([runWith({checkRunId: 1, findingCount: 1}), newest])
+
+  expect(body.length).toBeLessThanOrEqual(MAX_COMMENT_CHARS)
+  expect(body).toContain(
+    '2 runs on this pull request, total cost $0.2468. The oldest run is not shown.',
+  )
+  expect(readOlderRuns(body)).toEqual({count: 1, costUsd: RUN_COST})
+  const [shown, ...rest] = readRunSections(body)
+  expect(rest).toEqual([])
+  expect(shown?.checkRunId).toBe(2)
+  expect(shown?.findings.length).toBeGreaterThan(500)
+  expect(newest.findings.slice(0, shown?.findings.length)).toEqual(shown?.findings)
+  expect(body.endsWith(' -->')).toBe(true)
 })
 
 interface RecordedRequest {
@@ -195,7 +317,7 @@ test('updateSummaryComment adds the run and shows the resolved findings of every
     {
       method: 'PATCH',
       path: '/repos/acme/repo/issues/comments/3',
-      body: formatSummaryComment([firstRun, secondRun], new Set([nitFingerprint])),
+      body: formatSummaryComment([firstRun, secondRun], {resolved: new Set([nitFingerprint])}),
     },
   ])
 })

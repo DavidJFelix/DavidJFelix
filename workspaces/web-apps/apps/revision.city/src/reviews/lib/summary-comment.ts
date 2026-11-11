@@ -17,9 +17,12 @@ const RUN_MARKER = /^<!-- revision-city:run (\d+) ([0-9a-f]{40}) (\d+\.\d{4}) --
 const FINDING_LINE =
   /^- (?:~~(.*)~~ \(resolved\)|(.*)) <!-- revision-city:finding ([0-9a-f]{16}) -->$/
 
+// The header holds the number and the cost of the runs that a cut removed.
+const OLDER_MARKER = /^<!-- revision-city:older (\d+) (\d+\.\d{4}) -->$/m
+
 // GitHub accepts at most 65,536 characters in a comment.
 export const MAX_COMMENT_CHARS = 65_000
-const CUT_NOTE = '(Details cut: the comment is longer than GitHub accepts.)'
+const CUT_NOTE = '(Cut: the comment is longer than GitHub accepts.)'
 
 // Reads at most 3000 comments. On a pull request with more, a run can post a
 // second summary comment.
@@ -36,9 +39,9 @@ export interface RunSection {
   checkRunId: number
   headSha: string
   costUsd: number
-  // The marker line and the heading. A cut keeps them.
+  // The marker line and the heading. A cut keeps them until it removes the whole run.
   head: string
-  // The reported findings of the run. A cut keeps them too.
+  // The reported findings of the run.
   findings: SectionFinding[]
   // The text after the findings, as the comment shows it.
   details: string
@@ -100,39 +103,117 @@ export function readRunSections(body: string): RunSection[] {
   })
 }
 
+export interface RunTotals {
+  count: number
+  costUsd: number
+}
+
+const NO_RUNS: RunTotals = {count: 0, costUsd: 0}
+
+// Reads the marker only from the header, before the first run, so that the
+// text of a run cannot add one.
+export function readOlderRuns(body: string): RunTotals {
+  const firstRun = body.search(RUN_MARKER)
+  const match = OLDER_MARKER.exec(firstRun === -1 ? body : body.slice(0, firstRun))
+  return match === null ? NO_RUNS : {count: Number(match[1]), costUsd: Number(match[2])}
+}
+
+export interface FormatSummaryCommentOptions {
+  resolved?: ReadonlySet<string>
+  // The runs that an earlier cut removed from the comment.
+  older?: RunTotals
+}
+
+type SectionLevel = 'full' | 'no-details' | 'head-only'
+
 // The newest run goes last. A finding whose fingerprint is in `resolved` shows
-// as resolved. When the comment is too long, older runs lose their details
-// first, and keep their heading, cost, and findings.
+// as resolved. When the comment is too long, a cut removes text, oldest run
+// first: the details of each run, then the findings of each older run, then
+// each older run. The header still counts each run and its cost.
 export function formatSummaryComment(
   sections: readonly RunSection[],
-  resolved: ReadonlySet<string> = new Set(),
+  {resolved = new Set(), older = NO_RUNS}: FormatSummaryCommentOptions = {},
 ): string {
-  const total = sections.reduce((sum, {costUsd}) => sum + costUsd, 0)
-  const header = [
+  const total = addRuns(older, sections)
+  // A section adds its text and the blank line before it.
+  const measure = (section: RunSection, level: SectionLevel | 'removed') =>
+    level === 'removed' ? 0 : formatSection({section, level, resolved}).length + 2
+  const levels = sections.map((): SectionLevel | 'removed' => 'full')
+  const olderSections = sections.slice(0, -1)
+  const cuts = [
+    ...sections.map((section, index) => ({section, index, level: 'no-details' as const})),
+    ...olderSections.map((section, index) => ({section, index, level: 'head-only' as const})),
+    ...olderSections.map((section, index) => ({section, index, level: 'removed' as const})),
+  ]
+  let length = sections.reduce((sum, section) => sum + measure(section, 'full'), 0)
+  let removedRuns = older
+  for (const {section, index, level} of cuts) {
+    if (formatHeader({total, removedRuns}).length + length <= MAX_COMMENT_CHARS) {
+      break
+    }
+    length += measure(section, level) - measure(section, levels[index])
+    levels[index] = level
+    removedRuns = level === 'removed' ? addRuns(removedRuns, [section]) : removedRuns
+  }
+  const body = [
+    formatHeader({total, removedRuns}),
+    ...sections.flatMap((section, index) => {
+      const level = levels[index]
+      return level === 'removed' ? [] : [formatSection({section, level, resolved})]
+    }),
+  ].join('\n\n')
+  // Only the newest run is left, and it is too long alone. The cut keeps whole lines.
+  return body.length <= MAX_COMMENT_CHARS
+    ? body
+    : body.slice(0, body.lastIndexOf('\n', MAX_COMMENT_CHARS))
+}
+
+function addRuns(runs: RunTotals, sections: readonly RunSection[]): RunTotals {
+  return {
+    count: runs.count + sections.length,
+    costUsd: sections.reduce((sum, {costUsd}) => sum + costUsd, runs.costUsd),
+  }
+}
+
+interface FormatHeaderParams {
+  total: RunTotals
+  removedRuns: RunTotals
+}
+
+function formatHeader({total, removedRuns}: FormatHeaderParams): string {
+  const removedNote =
+    removedRuns.count === 0
+      ? ''
+      : ` The oldest ${removedRuns.count === 1 ? 'run is' : `${removedRuns.count} runs are`} not shown.`
+  return [
     SUMMARY_MARKER,
+    ...(removedRuns.count === 0
+      ? []
+      : [`<!-- revision-city:older ${removedRuns.count} ${removedRuns.costUsd.toFixed(4)} -->`]),
     '## Revision City',
     '',
-    `${sections.length} ${sections.length === 1 ? 'run' : 'runs'} on this pull request, total cost $${total.toFixed(4)}.`,
+    `${total.count} ${total.count === 1 ? 'run' : 'runs'} on this pull request, total cost $${total.costUsd.toFixed(4)}.${removedNote}`,
   ].join('\n')
-  const render = (cutCount: number) =>
-    [
-      header,
-      ...sections.map(({head, findings, details}, index) =>
-        [
-          head,
-          ...(findings.length === 0
-            ? []
-            : [findings.map((finding) => findingLine(finding, resolved)).join('\n')]),
-          ...(index < cutCount ? [CUT_NOTE] : details === '' ? [] : [details]),
-        ].join('\n\n'),
-      ),
-    ].join('\n\n')
-  const fitting = Array.from({length: sections.length + 1}, (_, cutCount) => cutCount).find(
-    (cutCount) => render(cutCount).length <= MAX_COMMENT_CHARS,
-  )
-  return fitting === undefined
-    ? render(sections.length).slice(0, MAX_COMMENT_CHARS)
-    : render(fitting)
+}
+
+interface FormatSectionParams {
+  section: RunSection
+  level: SectionLevel
+  resolved: ReadonlySet<string>
+}
+
+function formatSection({
+  section: {head, findings, details},
+  level,
+  resolved,
+}: FormatSectionParams): string {
+  const lines = findings.map((finding) => findingLine(finding, resolved)).join('\n')
+  const rest = {
+    full: [lines, details],
+    'no-details': [lines, details === '' ? '' : CUT_NOTE],
+    'head-only': [lines === '' && details === '' ? '' : CUT_NOTE],
+  }[level]
+  return [head, ...rest.filter((text) => text !== '')].join('\n\n')
 }
 
 function findingLine({fingerprint, text}: SectionFinding, resolved: ReadonlySet<string>): string {
@@ -201,7 +282,7 @@ async function writeSummaryComment({
     await request({
       method: 'POST',
       path: issuePath,
-      body: {body: formatSummaryComment([section], resolved)},
+      body: {body: formatSummaryComment([section], {resolved})},
       schema: ignoredResponse,
     })
     return
@@ -213,7 +294,12 @@ async function writeSummaryComment({
   await request({
     method: 'PATCH',
     path: `${repositoryPath(repository)}/issues/comments/${existing.id}`,
-    body: {body: formatSummaryComment([...sections, section], resolved)},
+    body: {
+      body: formatSummaryComment([...sections, section], {
+        resolved,
+        older: readOlderRuns(existing.body ?? ''),
+      }),
+    },
     schema: ignoredResponse,
   })
 }

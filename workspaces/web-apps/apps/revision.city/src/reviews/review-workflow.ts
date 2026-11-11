@@ -13,6 +13,7 @@ import {createOpenRouterChat} from './lib/openrouter'
 import {runReview} from './lib/run-review'
 import {createSqliteSummaryCommentLock} from './lib/summary-comment-lock'
 import type {ReviewRunParams} from './lib/webhook'
+import {createRunStep} from './lib/workflow-step'
 
 const reviewWorkflowEnvSchema = z.object({
   DB: z.custom<D1Database>((value) => typeof value === 'object' && value !== null),
@@ -39,11 +40,7 @@ export class ReviewWorkflow extends WorkflowEntrypoint<Env, ReviewRunParams> {
     await runReview({
       ...payload,
       runId: event.instanceId,
-      step: (name, run) =>
-        step.do(name, STEP_CONFIG, ({attempt}) =>
-          // The first attempt is not a retry, so the last attempt is limit + 1.
-          run({attempt, isLastAttempt: attempt > STEP_CONFIG.retries.limit}),
-        ),
+      step: createRunStep({step, config: STEP_CONFIG}),
       request: createGitHubRequest({
         token: createInstallationTokenSource({
           clientId: env.GITHUB_APP_CLIENT_ID,

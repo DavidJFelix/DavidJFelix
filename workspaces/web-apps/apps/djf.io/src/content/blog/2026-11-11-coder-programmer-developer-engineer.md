@@ -29,7 +29,8 @@ What is my role? How do I describe myself? What is my goal in this career? Does 
 
 I'm sure many tech-adjacent people can relate to the way relatives talk about your job or present you with computers broken in other-worldly ways.
 I very dearly recall insisting that my mother stop saying that I "work in IT" and beginning to draw my semantic line in the sand.
-My bachelor's degree says "Computer Engineering" and I call myself a "software engineer" and aside from places where it's illegal to do so[^1], I suggest that anyone in a job like mine do the same, regardless of degree or accreditation.
+My bachelor's degree says "Computer Engineering" and I call myself a "software engineer";
+aside from places where it's illegal to do so[^1], I suggest that anyone in a job like mine do the same, regardless of degree or accreditation.
 
 I'm a huge proponent of self-taught developers.
 I love it when people choose software, find a calling in it, and want to learn more.
@@ -37,7 +38,7 @@ I lament when software wears others down and good programmers burn out or leave 
 It's a path with few true barriers to entry and hundreds of inroads.
 There are chat communities, message boards, tutorials, learning paths, video series, free curricula, code bootcamps, and paths through associate's degrees up to PhDs.
 Often, the most enthusiastic software engineers I've met come from code bootcamps or are self-taught.
-There's something really inspiring and beautiful about a skill that you can learn by reading and practice with a few hundred dollars' worth of personal electronics, yet that has the depth to study for years.
+There's something really inspiring and beautiful about a skill that you can learn by reading and practicing on a few hundred dollars' worth of personal electronics, yet that has the depth to study for years.
 
 ## Codifying identity
 
@@ -87,7 +88,8 @@ Something I've come to respect immensely among my peers is that great developers
 Software development does not require professional accreditation and often benefits from a balance of technical and interpersonal skills.
 
 By my archetypal definition, programmers don't concern themselves with how the business operates, just what is asked of them.
-Likewise, the business does not normally ask programmers for their opinion on value or feasibility, it's a purely operational exchange: the business needs this, the programmer builds this.
+Likewise, the business does not normally ask programmers for their opinion on value or feasibility;
+it's a purely operational exchange where the business needs this and the programmer builds it.
 On the other side, engineers are thoughtful builders who aim for technical merit and longevity.
 In the middle, developers balance these by learning what the business wants, building something that works, proving it can stand, and only then making sure it can last.
 This isn't a slight at developers, but a recognition that many systems made quickly last longer than expected;
@@ -112,10 +114,12 @@ I'm proud of my degree in computer engineering, even if I acknowledge that it do
 I'm proud of the role I take in understanding what software needs to be built and then building something that can achieve that.
 As I alluded to earlier, I strongly believe that what I call this role and what I allow others to call this role conveys respect for the work.
 If you don't think highly of yourself and respect yourself, why should others?
-In my experience, this differential in respect is visible in posted salaries: the US "software engineering"[^5] postings I've seen tend to list $10k-$15k more per year.
+In my experience, this differential in respect shows up in posted salaries;
+the US "software engineering"[^5] postings I've seen tend to list $10k-$15k more per year than "software developer" postings.
 A lot of this boils down to expectations and responsibilities of the role, but I contend that those extend deeper to respect for the work being done.
 
-Despite being proud and holding myself with an air of self-respect, it's important to remain humble - anyone can become a software engineer, after all.
+Despite being proud and holding myself with an air of self-respect, it's important to remain humble;
+anyone can become a software engineer, after all.
 Humility helps prevent the engineer's folly of ignoring what the moment needs, instead focusing on the achievement or monument that one can build for themselves.
 I believe that over-engineering stems from pride.
 Maybe it comes from thinking one is above the concerns of the business, ignoring the non-technical problems in front of them.
@@ -128,7 +132,8 @@ The value of software is in the problems it solves, not the cost to replace it.
 This whole discussion about semantics of the name of a role that writes code at a company can feel like wasted energy.
 In a world where AI capabilities are growing and technologists are constantly foretelling the end of SaaS or layoffs coming to software development, I believe it is more important than ever to define one's purpose and role.
 What do you do for work? What value do you provide for the company? Do you care about this industry or is it just a job? I don't particularly believe in "AI doomerism"[^6], but rather a gradual change or displacement (not replacement) of roles.
-Part of the beauty of software has been that anyone can become a good software developer - with AI that's becoming more true than ever.
+Part of the beauty of software has been that anyone can become a good software developer;
+with AI, that's becoming more true than ever.
 I believe the developers who will find homes are those who find affinity to the product and business.
 Those who may be displaced are engineers who love building, programmers who build to the spec, and developers who care about implementation more than the product and business.
 

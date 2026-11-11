@@ -168,17 +168,27 @@ let ready: Promise<void> | undefined
 const prepare = (runtime: OgRuntime): Promise<void> =>
   (ready ??= Promise.all([initYoga(runtime.yoga), initWasm(runtime.resvg)]).then(() => undefined))
 
+/**
+ * Lays out the card and returns it as SVG, before resvg rasterizes it.
+ *
+ * satori 0.32 has advisory GHSA-wx4j-mvgx-mqwp (improper escaping in the
+ * SVG). The card is safe only while no input text gets into this SVG, and a
+ * test reads it to make sure of that.
+ */
+export const ogSvg = async (runtime: OgRuntime, params: OgImageParams): Promise<string> => {
+  await prepare(runtime)
+  const markup = ogMarkup(params, params.theme ?? defaultTheme) as unknown as ReactNode
+  return satori(markup, {...ogImageSize, fonts: [...runtime.fonts]})
+}
+
 export const createOgRenderer =
   (runtime: OgRuntime) =>
   async (params: OgImageParams): Promise<Uint8Array<ArrayBuffer>> => {
-    await prepare(runtime)
-    const markup = ogMarkup(params, params.theme ?? defaultTheme) as unknown as ReactNode
-    const svg = await satori(markup, {...ogImageSize, fonts: [...runtime.fonts]})
     // Explicit frees return the wasm memory to resvg's allocator between
     // requests instead of waiting on the finalization registry. The copy
     // pins the bytes to a plain ArrayBuffer, which is what a Response body
     // takes; asPng's declared type leaves the buffer kind open.
-    const resvg = new Resvg(svg)
+    const resvg = new Resvg(await ogSvg(runtime, params))
     const image = resvg.render()
     const png = new Uint8Array(image.asPng())
     image.free()

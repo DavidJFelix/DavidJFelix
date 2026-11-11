@@ -70,7 +70,7 @@
       "allowedVersions": "<7"
     },
     {
-      "description": "satori 0.33 added HarfBuzz text shaping through harfbuzzjs, whose Emscripten loader reads self.location and compiles wasm from bytes -- neither works on Cloudflare Workers, where @davidjfelix/og renders every app's share card at request time (the cf-wasm project hit the same crash in its issue 100). Hold satori at 0.32 until its standalone init accepts the HarfBuzz module the way it accepts Yoga's",
+      "description": "satori 0.33 added HarfBuzz text shaping through harfbuzzjs, whose Emscripten loader reads self.location and compiles wasm from bytes -- neither works on Cloudflare Workers, where @davidjfelix/og renders every app's share card at request time (the cf-wasm project hit the same crash in its issue 100). Hold satori at 0.32 until its standalone init accepts the HarfBuzz module the way it accepts Yoga's. The hold keeps advisory GHSA-wx4j-mvgx-mqwp (improper escaping in the SVG, fixed in 0.33.5) open; the card is safe while its fonts are embedded and its SVG goes only to resvg, and workspaces/web-apps/packages/og/src/image.test.ts makes sure that no input text gets into the SVG. Check the advisory again when the hold lifts",
       "matchPackageNames": ["satori"],
       "allowedVersions": "<0.33.0"
     },

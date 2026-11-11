@@ -35,7 +35,7 @@ replaces Warden in this repository. This project started as part of
      finding. The chunk review is not saved, so the next run checks it again.
   4. Map findings back to new-file lines. When findings end on the same line, keep the most severe.
   5. Report checked findings at `medium` and above. Fail on a checked finding at `high` and above,
-     or when a chunk review fails.
+     when a chunk review fails, or when a file has a diff line longer than 5,000 characters.
 - **Chunk-local line labels.** The prompt numbers lines from 1 inside the chunk, not by file line. A
   chunk that only moves in the file, for example after a rebase, keeps its text and its saved
   result. A push that grows or shrinks a hunk above it in the same file can still move the chunk
@@ -85,12 +85,12 @@ replaces Warden in this repository. This project started as part of
   resolved by a user who can push, the check run passes, with `Resolved:` before its title. A thread
   that opens again fails it again. The app gets these changes from the `pull_request_review_thread`
   event, so its webhook must subscribe to "Pull request review thread". A review whose findings are
-  all in resolved threads from an earlier run also passes. A failed chunk review has no thread, so
-  it keeps the check red. A failed check run also shows a `Dismiss findings` button. When a user who
-  can push clicks it, the app gets a `check_run` event with the `requested_action` action, and the
-  check run passes, with `Dismissed:` before its title and the external id `dismissed`. Resolved
-  threads no longer change a dismissed check run. The webhook must subscribe to "Check run" for the
-  button.
+  all in resolved threads from an earlier run also passes. A failed chunk review or a too-long line
+  has no thread, so it keeps the check red. A failed check run also shows a `Dismiss findings`
+  button. When a user who can push clicks it, the app gets a `check_run` event with the
+  `requested_action` action, and the check run passes, with `Dismissed:` before its title and the
+  external id `dismissed`. Resolved threads no longer change a dismissed check run. The webhook must
+  subscribe to "Check run" for the button.
 - **Limits.** For each pull request, at most 150 chunks and 700,000 bytes of paths and patches get a
   review. A file whose diff is longer than 1,500 lines, or has a line longer than 5,000 characters,
   gets no review, and a chunk stops at 40,000 characters of diff text. A file with such a long line

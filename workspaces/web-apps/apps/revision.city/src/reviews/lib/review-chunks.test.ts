@@ -71,6 +71,12 @@ test.each([
     expected: 'reviewable',
   },
   {path: 'src/bundle.js', status: 'added', patch: oneLongLine(650_000), expected: 'line-too-long'},
+  {
+    path: 'src/padded.js',
+    status: 'added',
+    patch: `${addedLines(1, DEFAULT_MAX_PATCH_LINES_PER_FILE)}\n+${'x'.repeat(DEFAULT_MAX_PATCH_LINE_CHARS + 1)}`,
+    expected: 'line-too-long',
+  },
 ] as const)('fileReviewStatus($path) is $expected', ({expected, ...file}) => {
   expect(fileReviewStatus(file)).toBe(expected)
 })

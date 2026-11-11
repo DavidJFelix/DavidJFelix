@@ -9,10 +9,10 @@ main = "src/server.ts"
 compatibility_date = "2026-06-01"
 compatibility_flags = ["nodejs_compat"]
 
-# This worker serves via custom domains; explicitly keep workers.dev preview
-# URLs on so `wrangler versions upload --preview-alias` (cd-preview) gets a
-# reachable pr-<N> URL. Does not affect production routing.
-preview_urls = true
+# Previews upload as versions of the dev worker ([env.dev] below), not of this
+# one. So production turns workers.dev preview URLs off: a preview URL here
+# would run an old version with production secrets.
+preview_urls = false
 
 # GitHub App sign-in (src/diffs/lib/github-auth.ts, served under /api/auth/github)
 # reads two secrets from the worker env: GITHUB_APP_CLIENT_ID and

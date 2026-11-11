@@ -11,6 +11,11 @@ export default defineConfig({
     include: ['src/**/*.test.{ts,tsx}'],
     // Playwright specs (*.e2e.test.ts) are driven by Playwright, not Vitest.
     exclude: ['**/*.e2e.test.ts', '**/node_modules/**'],
+    // Undo spies, env stubs and global stubs before each test, so a failed test leaves no state behind.
+    // cSpell:words unstub -- Vitest option names
+    restoreMocks: true,
+    unstubEnvs: true,
+    unstubGlobals: true,
     // The coverage gate covers the unit-tested logic: the helpers in src/lib, the
     // client-config resolver, and the PR review engine (src/reviews/lib). The
     // build and the smoke test exercise the route glue and the client bootstrap

@@ -46,6 +46,12 @@ const getSetCookies = (response: Response): string[] => response.headers.getSetC
 
 const cookiePair = (setCookie: string): string => setCookie.split(';', 1)[0] ?? ''
 
+// Empty values read as missing, so a shell that exports the app credentials does not change the result.
+const withoutAppCredentials = () => {
+  vi.stubEnv('GITHUB_APP_CLIENT_ID', '')
+  vi.stubEnv('GITHUB_APP_CLIENT_SECRET', '')
+}
+
 // Runs login then callback and returns the session Set-Cookie so other tests
 // can exercise cookie-bearing requests through the real flow.
 async function signIn(
@@ -100,9 +106,8 @@ test('login omits Secure on plain-HTTP local dev', () => {
 })
 
 test('login returns 503 when the app credentials are not configured', () => {
-  const response = handleGitHubLoginRequest(new Request(`${ORIGIN}/api/auth/github/login`), {
-    credentials: undefined,
-  })
+  withoutAppCredentials()
+  const response = handleGitHubLoginRequest(new Request(`${ORIGIN}/api/auth/github/login`))
   expect(response.status).toBe(503)
 })
 
@@ -452,9 +457,8 @@ test('config reports the callback URL this origin will ask GitHub for', () => {
 })
 
 test('config reports missing credentials without inventing a failure', async () => {
-  const response = handleGitHubAuthConfigRequest(new Request(`${ORIGIN}/api/auth/github/config`), {
-    credentials: undefined,
-  })
+  withoutAppCredentials()
+  const response = handleGitHubAuthConfigRequest(new Request(`${ORIGIN}/api/auth/github/config`))
 
   await expect(response.json()).resolves.toMatchObject({configured: false})
 })

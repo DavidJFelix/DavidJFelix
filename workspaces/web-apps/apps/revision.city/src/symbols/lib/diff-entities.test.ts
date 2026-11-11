@@ -42,6 +42,27 @@ test('follows a method renamed inside its class', async () => {
   ])
 })
 
+test('reports a Java field value edit as a modified field, not a rename', async () => {
+  const oldSource = 'class A {\n  static final int MAX = 1;\n}\n'
+  const newSource = 'class A {\n  static final int MAX = 2;\n}\n'
+
+  const diff = await diffEntities({path: 'src/A.java', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([{type: 'modified', kind: 'field', qualifiedName: 'A.MAX'}])
+})
+
+test('names a Go method by its receiver type', async () => {
+  const oldSource =
+    'package m\n\nfunc (a A) String() string {\n\treturn "a"\n}\n\nfunc (b B) String() string {\n\treturn "b"\n}\n'
+  const newSource = oldSource.replace('"b"', '"bee"')
+
+  const diff = await diffEntities({path: 'm.go', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([
+    {type: 'modified', kind: 'method', qualifiedName: 'B.String'},
+  ])
+})
+
 test('names the dependency that changed in a manifest', async () => {
   const oldSource = '{"dependencies": {"react": "18.0.0", "zod": "4.0.0"}}'
   const newSource = '{"dependencies": {"react": "19.0.0", "zod": "4.0.0"}}'

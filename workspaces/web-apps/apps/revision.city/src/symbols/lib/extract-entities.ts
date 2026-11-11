@@ -184,7 +184,9 @@ function collectEntityNodes({
       }
 
       const kind = spec.resolveKind?.({node, source}) ?? spec.kind
-      const qualifiedName = disambiguate({kind, path: joinPath(open, name), counts: nameCounts})
+      const owner = spec.resolveOwner?.({node, source})
+      const segment = owner === undefined ? name : `${owner}.${name}`
+      const qualifiedName = disambiguate({kind, path: joinPath(open, segment), counts: nameCounts})
       entityCharacters += node.to - node.from + qualifiedName.length
       if (
         found.length === MAX_ENTITIES_PER_FILE ||
@@ -202,7 +204,13 @@ function collectEntityNodes({
         return false
       }
       found.push({kind, name, qualifiedName, node, sequence})
-      open.push({name, kind, from: node.from, to: node.to, container: spec.container === true})
+      open.push({
+        name: segment,
+        kind,
+        from: node.from,
+        to: node.to,
+        container: spec.container === true,
+      })
       return true
     },
     leave(ref) {

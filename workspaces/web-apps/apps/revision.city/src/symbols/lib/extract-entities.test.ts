@@ -124,6 +124,24 @@ type Alias = u32;
     ],
   },
   {
+    language: 'rust',
+    source: `impl<T> Stack<T> {fn new() {}}
+impl<T> Default for Stack<T> {fn default() {}}
+impl Draw for &Widget {fn draw(&self) {}}
+impl fmt::Debug for Plain {}
+impl Draw for [u8] {}
+`,
+    expected: [
+      'impl Stack',
+      'function Stack.new',
+      'impl Stack#2',
+      'function Stack.default',
+      'impl Widget',
+      'function Widget.draw',
+      'impl Plain',
+    ],
+  },
+  {
     language: 'go',
     source: `package main
 type Widget struct {Field int}
@@ -139,8 +157,18 @@ func (w *Widget) Method() int {return 0}
       'constant Pi',
       'variable Global',
       'function Make',
-      'method Method',
+      'method Widget.Method',
     ],
+  },
+  {
+    language: 'go',
+    source: `package main
+func (s *Stack[T]) Push() {}
+func (s Stack[T]) Len() int {return 0}
+func (b B) String() string {return ""}
+func (*Widget) Reset() {}
+`,
+    expected: ['method Stack.Push', 'method Stack.Len', 'method B.String', 'method Widget.Reset'],
   },
   {
     language: 'java',
@@ -160,6 +188,29 @@ enum Color {RED}
       'interface Draw',
       'method Draw.draw',
       'enum Color',
+    ],
+  },
+  {
+    language: 'java',
+    source: `class Widget {
+  static final int MAX = 1;
+  record Point(int x) {
+    Point {}
+    int sum() {return x;}
+  }
+}
+@interface Marker {}
+interface Limits {int LIMIT = 2;}
+`,
+    expected: [
+      'class Widget',
+      'field Widget.MAX',
+      'class Widget.Point',
+      'constructor Widget.Point.Point',
+      'method Widget.Point.sum',
+      'interface Marker',
+      'interface Limits',
+      'constant Limits.LIMIT',
     ],
   },
   {

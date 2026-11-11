@@ -214,7 +214,7 @@ function DiffsHomePage() {
 // viewer route owns fetching and renders its own loading state there.
 const HomeFetchForm = memo(function HomeFetchForm() {
   return (
-    <div className={css({pl: '4', pr: '2'})}>
+    <div className={css({pl: '4', pr: '2', py: '1.5'})}>
       <DiffUrlForm
         placeholder="https://github.com/org/repo/123"
         inputClassName={css({

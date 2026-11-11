@@ -119,14 +119,13 @@ test('shortens a long title on the card but not in the tags', () => {
   expect(share.card.title.endsWith('…')).toBe(true)
 })
 
-// Built from code points so that the spell check reads no words in other
-// scripts, and the joiners stay visible in the source.
-const CYRILLIC_TITLE = String.fromCodePoint(0x41f, 0x440, 0x430, 0x432, 0x43a, 0x430)
-const ROCKET = String.fromCodePoint(0x1f680)
-const FAMILY = String.fromCodePoint(0x1f468, 0x200d, 0x1f469, 0x200d, 0x1f467)
-const THUMBS_UP_DARK = String.fromCodePoint(0x1f44d, 0x1f3ff)
-const SPARKLES = String.fromCodePoint(0x2728, 0xfe0f)
-const FLAG = String.fromCodePoint(0x1f1f3, 0x1f1f4)
+// The joiners are escapes so that they stay visible. cSpell:ignore Правка
+const CYRILLIC_TITLE = 'Правка'
+const ROCKET = '🚀'
+const FAMILY = '👨\u{200D}👩\u{200D}👧'
+const THUMBS_UP_DARK = '👍🏿'
+const SPARKLES = '✨\u{FE0F}'
+const FLAG = '🇳🇴'
 
 test.each([
   {name: 'a Cyrillic title', title: CYRILLIC_TITLE},

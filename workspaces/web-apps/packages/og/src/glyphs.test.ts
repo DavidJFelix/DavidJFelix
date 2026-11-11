@@ -4,13 +4,15 @@ import {dirname, join} from 'node:path'
 import {expect, test} from 'vitest'
 import {canDrawText, INTER_LATIN_RANGES} from './glyphs'
 
+// cSpell:ignore Привет
+
 test.each([
   {name: 'plain Latin', text: 'fix: add widgets (#7)', drawable: true},
   {name: 'curly quotes, a dash and an ellipsis', text: '“Quoted” – and more…', drawable: true},
   {name: 'accented Western letters', text: 'Café déjà vu', drawable: true},
   {name: 'an empty text', text: '', drawable: true},
   {name: 'a Polish letter', text: 'Ł', drawable: false},
-  {name: 'Cyrillic', text: String.fromCodePoint(0x41f, 0x440, 0x438), drawable: false},
+  {name: 'Cyrillic', text: 'Привет', drawable: false},
   {name: 'CJK', text: '修复', drawable: false},
   {name: 'a right arrow', text: 'a → b', drawable: false},
   {name: 'an emoji', text: '🚀 launch', drawable: false},

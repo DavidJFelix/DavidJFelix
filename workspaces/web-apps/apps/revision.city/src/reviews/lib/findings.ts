@@ -199,14 +199,16 @@ export interface ReviewOutcome {
 
 export interface DecideOutcomeOptions {
   failedChunkReviewCount?: number
+  lineTooLongCount?: number
 }
 
 // A review with a failed chunk is incomplete, so it fails even when no finding
-// reaches the fail severity. A finding that the reviewer did not check cannot
+// reaches the fail severity. A file with a diff line that is too long gets no
+// review, so it also fails the review: such a line can hide a change. A finding that the reviewer did not check cannot
 // fail the review, and it cannot hide a checked finding on the same line.
 export function decideOutcome(
   findings: readonly Finding[],
-  {failedChunkReviewCount = 0}: DecideOutcomeOptions = {},
+  {failedChunkReviewCount = 0, lineTooLongCount = 0}: DecideOutcomeOptions = {},
 ): ReviewOutcome {
   const atReportSeverity = findings.filter((finding) =>
     isAtLeast({severity: finding.severity, threshold: REPORT_SEVERITY}),
@@ -217,6 +219,7 @@ export function decideOutcome(
     unchecked: dedupeFindings(atReportSeverity.filter((finding) => !finding.checked)),
     failed:
       failedChunkReviewCount > 0 ||
+      lineTooLongCount > 0 ||
       reported.some((finding) => isAtLeast({severity: finding.severity, threshold: FAIL_SEVERITY})),
   }
 }

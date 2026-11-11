@@ -140,6 +140,7 @@ export interface FormatCheckRunOutputParams {
   outcome: ReviewOutcome
   review: PullRequestReview
   notReviewed: readonly NotReviewedFile[]
+  lineTooLongCount?: number
   postedCount: number
 }
 
@@ -147,6 +148,7 @@ export function formatCheckRunOutput({
   outcome,
   review,
   notReviewed,
+  lineTooLongCount = 0,
   postedCount,
 }: FormatCheckRunOutputParams): CheckRunOutput {
   const counts = [
@@ -155,6 +157,7 @@ export function formatCheckRunOutput({
       ? [plural(outcome.unchecked.length, 'unchecked finding')]
       : []),
     ...(review.failures.length > 0 ? [plural(review.failures.length, 'failed chunk review')] : []),
+    ...(lineTooLongCount > 0 ? [`${plural(lineTooLongCount, 'file')} with a too-long line`] : []),
   ]
   const sections = [
     section('Findings', outcome.reported.map(findingLine)),
@@ -178,7 +181,7 @@ export function formatCheckRunOutput({
     summary: [
       `${plural(review.chunkReviewCount, 'chunk review')}, ${review.cachedCount} from saved results, cost $${review.usage.costUsd.toFixed(4)}.`,
       `${plural(postedCount, 'new finding')} posted.`,
-      'This check fails on a checked finding at high or above, or on a failed chunk review.',
+      'This check fails on a checked finding at high or above, on a failed chunk review, or on a file with a too-long diff line.',
     ].join(' '),
     ...(sections.length > 0 ? {text: clip(neutralizeMarkdown(sections.join('\n\n')))} : {}),
   }

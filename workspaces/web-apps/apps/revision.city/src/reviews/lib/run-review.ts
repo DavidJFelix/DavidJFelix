@@ -211,7 +211,10 @@ export async function runReview({
       return
     }
     const review = summarizeChunkReviews({units, outcomes: completed.flat()})
-    const outcome = decideOutcome(review.findings, {failedChunkReviewCount: review.failures.length})
+    const outcome = decideOutcome(review.findings, {
+      failedChunkReviewCount: review.failures.length,
+      lineTooLongCount: selection.lineTooLongCount,
+    })
     const posted = await step('post review', async () =>
       (await isCurrentHead()) ? postReview({...pull, headSha, findings: outcome.reported}) : null,
     )
@@ -219,11 +222,21 @@ export async function runReview({
       if (posted === null) {
         return complete('neutral', SUPERSEDED_OUTPUT)
       }
-      const output = formatCheckRunOutput({outcome, review, notReviewed, postedCount: posted.count})
+      const output = formatCheckRunOutput({
+        outcome,
+        review,
+        notReviewed,
+        lineTooLongCount: selection.lineTooLongCount,
+        postedCount: posted.count,
+      })
       // Resolved threads can clear a check that failed only on findings in
       // threads. The findings can all be in threads that a maintainer resolved
       // before this run, and a thread can be resolved during the run.
-      const resolvable = outcome.failed && review.failures.length === 0 && posted.inline
+      const resolvable =
+        outcome.failed &&
+        review.failures.length === 0 &&
+        selection.lineTooLongCount === 0 &&
+        posted.inline
       await completeCheckRun({
         request,
         repository,
@@ -248,6 +261,7 @@ export async function runReview({
             outcome,
             review,
             notReviewed,
+            lineTooLongCount: selection.lineTooLongCount,
             postedCount: posted.count,
           })
           // The section lists the findings itself, so its details leave them out.
@@ -255,6 +269,7 @@ export async function runReview({
             outcome: {...outcome, reported: []},
             review,
             notReviewed,
+            lineTooLongCount: selection.lineTooLongCount,
             postedCount: posted.count,
           })
           const findings = await Promise.all(

@@ -405,6 +405,21 @@ test('runReview passes the check and posts nothing when there are no findings', 
   })
 })
 
+test('runReview fails the check when a file has a diff line that is too long', async () => {
+  const github = fakeGitHub({
+    [FILES]: () => [changedFile('data.json', `@@ -1,1 +1,1 @@\n+${'x'.repeat(5001)}`)],
+  })
+
+  await runReview(runParams({request: github.request}))
+
+  const body = github.sent(CHECK_RUN)[0].body
+  expect(body).toMatchObject({
+    conclusion: 'failure',
+    output: {title: '1 file with a too-long line'},
+  })
+  expect(body).not.toHaveProperty('external_id')
+})
+
 const failingLog: LogWideEvent = () => {
   throw new Error('The log is down')
 }

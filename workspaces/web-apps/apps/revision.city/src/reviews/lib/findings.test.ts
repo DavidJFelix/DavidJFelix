@@ -155,6 +155,10 @@ test('decideOutcome fails when a chunk review failed', () => {
   expect(decideOutcome([], {failedChunkReviewCount: 1}).failed).toBe(true)
 })
 
+test('decideOutcome fails when a file has a diff line that is too long', () => {
+  expect(decideOutcome([], {lineTooLongCount: 1}).failed).toBe(true)
+})
+
 test('decideOutcome keeps only the most severe of findings that end on the same line', () => {
   const outcome = decideOutcome([
     finding({reviewerId: 'correctness', severity: 'medium', startLine: 3, endLine: 3}),

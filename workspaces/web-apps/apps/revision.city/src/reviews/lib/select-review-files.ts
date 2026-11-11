@@ -28,6 +28,8 @@ const NOT_REVIEWED_REASONS: Record<Exclude<FileReviewStatus, 'reviewable' | 'ski
 export interface ReviewFileSelection {
   files: PullRequestFile[]
   notReviewed: NotReviewedFile[]
+  // Counts all such files, also when the `notReviewed` list stops.
+  lineTooLongCount: number
 }
 
 // Keeps each reviewable file, in GitHub's order, if it fits in what is left of
@@ -36,7 +38,7 @@ export interface ReviewFileSelection {
 // MAX_OUTPUT_CHARS characters, because the check run cannot show more. The check
 // run then cuts the list and says so.
 export function selectReviewFiles(files: readonly PullRequestFile[]): ReviewFileSelection {
-  const selection: ReviewFileSelection = {files: [], notReviewed: []}
+  const selection: ReviewFileSelection = {files: [], notReviewed: [], lineTooLongCount: 0}
   let reviewedBytes = 0
   let notReviewedChars = 0
   const leaveOut = (path: string, reason: string) => {
@@ -50,6 +52,9 @@ export function selectReviewFiles(files: readonly PullRequestFile[]): ReviewFile
   }
   for (const file of files) {
     const status = fileReviewStatus(file)
+    if (status === 'line-too-long') {
+      selection.lineTooLongCount += 1
+    }
     if (status !== 'reviewable' && status !== 'skipped') {
       leaveOut(file.path, NOT_REVIEWED_REASONS[status])
     } else if (isReviewableFile(file)) {

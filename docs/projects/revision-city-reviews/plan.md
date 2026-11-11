@@ -93,8 +93,9 @@ replaces Warden in this repository. This project started as part of
   button.
 - **Limits.** For each pull request, at most 150 chunks and 700,000 bytes of paths and patches get a
   review. A file whose diff is longer than 1,500 lines, or has a line longer than 5,000 characters,
-  gets no review, and a chunk stops at 40,000 characters of diff text. One review posts at most 50
-  new comments. The check run lists every finding, and it cuts its text at 65,000 characters, below
+  gets no review, and a chunk stops at 40,000 characters of diff text. A file with such a long line
+  also fails the check, because the line can hide a change. One review posts at most 50 new
+  comments. The check run lists every finding, and it cuts its text at 65,000 characters, below
   GitHub's limit of 65,535.
 
 ## Phases

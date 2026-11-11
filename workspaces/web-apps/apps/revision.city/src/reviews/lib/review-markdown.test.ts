@@ -181,7 +181,8 @@ test('formatCheckRunOutput reports a clean review without a list', () => {
     title: 'No findings',
     summary:
       '3 chunk reviews, 1 from saved results, cost $0.0123. 0 new findings posted. ' +
-      'This check fails on a checked finding at high or above, or on a failed chunk review.',
+      'This check fails on a checked finding at high or above, on a failed chunk review, ' +
+      'or on a file with a too-long diff line.',
   })
 })
 
@@ -194,10 +195,11 @@ test('formatCheckRunOutput lists findings, failures, and files that were not rev
       failures: [{path: 'src/b.ts', reviewerId: 'comments', error: 'Error: bad\nanswer'}],
     },
     notReviewed: [{path: 'src/@someone\r\n.json', reason: 'GitHub shows no text diff'}],
+    lineTooLongCount: 2,
     postedCount: 1,
   })
 
-  expect(output.title).toBe('1 finding, 1 failed chunk review')
+  expect(output.title).toBe('1 finding, 1 failed chunk review, 2 files with a too-long line')
   expect(output.summary).toContain('1 chunk review, 1 from saved results')
   expect(output.summary).toContain('1 new finding posted.')
   expect(output.text).toBe(

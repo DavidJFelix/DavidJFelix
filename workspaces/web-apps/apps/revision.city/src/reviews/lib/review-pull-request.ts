@@ -3,6 +3,7 @@ import {type ChunkReviewStore, chunkReviewKey} from './chunk-review-store'
 import {
   anchorFindings,
   type Finding,
+  isInChunk,
   type ModelFinding,
   modelAnswerSchema,
   modelFindingSchema,
@@ -117,10 +118,10 @@ export async function reviewChunk({
     }
   }
   const answer = parseModelAnswer(result.text)
-  // A finding whose label is not in the chunk cannot post, so it is not checked.
-  // The valid findings of an answer with a malformed one are checked too.
+  // A finding that is not in the chunk cannot post, so it is not checked. The
+  // valid findings of an answer with a malformed one are checked too.
   const verified = await verifyFindings({
-    findings: answer.findings.filter(({label}) => rendered.newLineByLabel.has(label)),
+    findings: answer.findings.filter((finding) => isInChunk({chunk, rendered, finding})),
     prompt,
     chat,
     model,

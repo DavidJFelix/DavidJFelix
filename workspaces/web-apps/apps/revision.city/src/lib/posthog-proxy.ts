@@ -32,9 +32,6 @@ export function postHogUpstream(pathname: string): PostHogUpstream {
 // deadline. After the limit, the proxy aborts and returns a 504.
 const UPSTREAM_TIMEOUT_MS = 10_000
 
-// posthog-js sends only GET and POST. The proxy refuses all other methods before a forward.
-const ALLOWED_METHODS = ['GET', 'POST']
-
 export type FetchRequest = (request: Request, init?: RequestInit) => Promise<Response>
 
 export interface ProxyToPostHogOptions {
@@ -46,10 +43,6 @@ export async function proxyToPostHog(
   request: Request,
   {fetch: fetchImpl = fetch}: ProxyToPostHogOptions = {},
 ): Promise<Response> {
-  if (!ALLOWED_METHODS.includes(request.method)) {
-    return new Response(null, {status: 405, headers: {allow: ALLOWED_METHODS.join(', ')}})
-  }
-
   const url = new URL(request.url)
   const {host, pathname} = postHogUpstream(url.pathname)
 

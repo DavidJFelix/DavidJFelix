@@ -89,17 +89,6 @@ test('removes set-cookie from the answer and sets the sandbox policy', async () 
   expect(await response.text()).toBe('{}')
 })
 
-test('refuses a method other than GET and POST before a forward', async () => {
-  const fetchImpl = stubFetch()
-  const response = await proxyToPostHog(
-    new Request('http://revision.test/diag/e/', {method: 'PUT', body: 'x'}),
-    {fetch: fetchImpl},
-  )
-  expect(response.status).toBe(405)
-  expect(response.headers.get('allow')).toBe('GET, POST')
-  expect(fetchImpl).not.toHaveBeenCalled()
-})
-
 test('returns 504 when the upstream times out', async () => {
   const fetchImpl = vi.fn<FetchRequest>(() =>
     Promise.reject(new DOMException('timed out', 'TimeoutError')),

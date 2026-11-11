@@ -26,6 +26,7 @@ import {
   parseGitHubDiffSource,
 } from './github-diff-source'
 import {diagnoseGitHubAccess} from './github-repo-access'
+import {normalizeGitHubPath} from './normalize-github-path'
 import {isNullish} from './nullish'
 
 const CACHE_CONTROL = 'no-store'
@@ -40,7 +41,6 @@ const NON_DIFF_RESPONSE_MESSAGE = 'GitHub did not return a diff for this URL.'
 const NON_WHITESPACE_PATTERN = /\S/
 const URL_DROPPED_CHARACTER_PATTERN = /[\t\n\r]/
 const RAW_GITHUB_DIFF_PATH_PATTERN = /^\/raw\/[^/]+\/[^/]+\/pull\/[^/]+\.(?:diff|patch)$/
-const GITHUB_PULL_TAB_PATH_PATTERN = /^\/([^/]+)\/([^/]+)\/pull\/(\d+)\/(?:changes|files)$/
 const UPSTREAM_FAILURE_LOG_MESSAGE = 'diff upstream attempt failed'
 const APP_FALLBACK_WITHHELD_LOG_MESSAGE = 'diff app fallback withheld'
 
@@ -453,7 +453,7 @@ function resolveGitHubPath(path: string): string | undefined {
   }
 
   let patchPath = normalizeGitHubPath(path)
-  if (patchPath === '') {
+  if (patchPath === '/') {
     return undefined
   }
 
@@ -489,16 +489,6 @@ function removeDiffExtension(path: string): string {
   }
 
   return path
-}
-
-function normalizeGitHubPath(path: string): string {
-  const trimmedPath = path.replace(/\/+$/, '')
-  const pullTabMatch = GITHUB_PULL_TAB_PATH_PATTERN.exec(trimmedPath)
-  if (isNullish(pullTabMatch)) {
-    return trimmedPath
-  }
-
-  return `/${pullTabMatch[1]}/${pullTabMatch[2]}/pull/${pullTabMatch[3]}`
 }
 
 function isAllowedHttpsUrl(url: URL): boolean {

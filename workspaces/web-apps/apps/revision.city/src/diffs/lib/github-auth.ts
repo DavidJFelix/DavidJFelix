@@ -612,8 +612,6 @@ function parseCookies(header: string | null): Map<string, string> {
   return cookies
 }
 
-// Exported for the preview sign-in broker, which sets the same session cookie
-// from a handoff rather than from a fresh OAuth exchange.
 export function serializeSessionCookie(session: GitHubAuthSession, secure: boolean): string {
   const now = Date.now()
   const expiry = session.refreshTokenExpiresAt ?? session.accessTokenExpiresAt

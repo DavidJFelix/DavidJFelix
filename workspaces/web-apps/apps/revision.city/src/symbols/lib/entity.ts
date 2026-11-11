@@ -81,11 +81,13 @@ export interface CodeEntity {
   // `#n` suffix when siblings collide (overloads, repeated headings).
   readonly qualifiedName: string
   readonly range: EntityRange
-  // Hash of the node-type skeleton with identifier text and trivia dropped --
-  // equal hashes mean structurally identical bodies, which is what lets a
-  // rename be told apart from a rewrite.
+  // Hash of the node-type skeleton, with a close marker after each node's
+  // children, and with identifier text and trivia dropped -- equal hashes mean
+  // structurally identical bodies, which is what lets a rename be told apart
+  // from a rewrite.
   readonly structuralHash: string
-  // Hash of the entity's normalized source. Distinguishes modified from
+  // Hash of the entity's tokens (leaf text and the text between children,
+  // split on white space) plus its skeleton. Distinguishes modified from
   // untouched once identity is already established.
   readonly contentHash: string
   // As above, minus anything nested that is itself an entity. A class whose only

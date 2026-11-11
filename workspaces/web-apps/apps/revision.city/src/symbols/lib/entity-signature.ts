@@ -3,6 +3,9 @@ import type {SyntaxNode} from '@lezer/common'
 // Node types whose contents are noise for identity purposes: a reworded comment
 // should never make a function look renamed or rewritten.
 const TRIVIA_PATTERN = /Comment/u
+const WHITE_SPACE_PATTERN = /\s+/u
+// Ends the children of a node in the skeleton, so nesting is part of the shape.
+const CLOSE_MARKER = ')'
 
 export interface EntitySignature {
   readonly structuralHash: string
@@ -34,10 +37,15 @@ export interface ComputeSignatureParams {
 }
 
 // One walk yields every hash the matcher needs:
-//   - structural: node-type skeleton only, so identifier text and formatting
-//     drop out and a pure rename hashes identically.
-//   - content: leaf token text across the whole subtree, so formatting drops out
-//     but a changed string literal does not.
+//   - structural: node-type skeleton only, with a close marker after the
+//     children of each node, so identifier text and formatting drop out, a pure
+//     rename hashes identically, and a node that moves out of its parent does
+//     not.
+//   - content: the token text across the whole subtree plus the skeleton, so
+//     formatting drops out but a changed string literal or a changed nesting
+//     does not. The tokens are the leaf text and the text that a node holds
+//     between its children (an escaped string, a template literal, a CSS
+//     length), split on white space.
 //   - own content: the same, minus nested entities -- what separates "this
 //     entity changed" from "something declared inside it did".
 export function computeSignature({
@@ -46,31 +54,59 @@ export function computeSignature({
   isNestedEntity,
 }: ComputeSignatureParams): EntitySignature {
   const types: string[] = []
+  const ownTypes: string[] = []
   const tokens: string[] = []
   const ownTokens: string[] = []
+
+  const pushType = (type: string, nested: boolean): void => {
+    types.push(type)
+    if (!nested) {
+      ownTypes.push(type)
+    }
+  }
+  const pushText = (text: string, nested: boolean): void => {
+    for (const token of text.split(WHITE_SPACE_PATTERN)) {
+      if (token !== '') {
+        tokens.push(token)
+        if (!nested) {
+          ownTokens.push(token)
+        }
+      }
+    }
+  }
 
   const walk = (current: SyntaxNode, nested: boolean): void => {
     if (TRIVIA_PATTERN.test(current.type.name)) {
       return
     }
-    types.push(current.type.name)
+    pushType(current.type.name, nested)
     if (current.firstChild === null) {
       const text = source.slice(current.from, current.to)
       tokens.push(text)
       if (!nested) {
         ownTokens.push(text)
       }
+      return
     }
-    for (let child = current.firstChild; child !== null; child = child.nextSibling) {
+    let cursor = current.from
+    for (
+      let child: SyntaxNode | null = current.firstChild;
+      child !== null;
+      child = child.nextSibling
+    ) {
+      pushText(source.slice(cursor, child.from), nested)
       walk(child, nested || isNestedEntity(child))
+      cursor = child.to
     }
+    pushText(source.slice(cursor, current.to), nested)
+    pushType(CLOSE_MARKER, nested)
   }
   walk(node, false)
 
   return {
     structuralHash: hashString(types.join(' ')),
-    contentHash: hashString(tokens.join(' ')),
-    ownContentHash: hashString(ownTokens.join(' ')),
+    contentHash: hashString(`${tokens.join(' ')}\0${types.join(' ')}`),
+    ownContentHash: hashString(`${ownTokens.join(' ')}\0${ownTypes.join(' ')}`),
     tokens,
   }
 }

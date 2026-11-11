@@ -1,4 +1,4 @@
-import {decodeRange, encodeURLSegment} from './github-diff-source'
+import {decodeRange, encodeURLSegment, hasDotSegment} from './github-diff-source'
 import {isNullish} from './nullish'
 
 export const CODEBERG_HOST = 'codeberg.org'
@@ -19,12 +19,6 @@ export type CodebergDiffSource =
 const PULL_PATTERN = /^\/([^/]+)\/([^/]+)\/pulls\/(\d+)(?:\/files)?(?:\.(?:diff|patch))?$/i
 const COMMIT_PATTERN = /^\/([^/]+)\/([^/]+)\/commit\/([0-9a-f]{4,64})(?:\.(?:diff|patch))?$/i
 const COMPARE_PATTERN = /^\/([^/]+)\/([^/]+)\/compare\/(.+?)(?:\.(?:diff|patch))?$/i
-
-// `new URL` resolves `.` and `..` segments, so a path with one can leave the
-// repository and reach another Codeberg API route.
-export function hasDotSegment(path: string): boolean {
-  return path.split('/').some((segment) => segment === '.' || segment === '..')
-}
 
 // The server can read both revisions of a file for a pull request or a commit.
 // It cannot for a compare, because the API gives no merge base for a range.
@@ -55,11 +49,12 @@ export function parseCodebergDiffSource(path: string): CodebergDiffSource | unde
 
   const compareMatch = COMPARE_PATTERN.exec(normalizedPath)
   if (!isNullish(compareMatch)) {
-    return {
-      kind: 'compare',
-      range: decodeRange(compareMatch[3]),
-      repo: {owner: compareMatch[1], repo: compareMatch[2]},
+    // An encoded dot segment such as `%2e%2e` appears only after the decode.
+    const range = decodeRange(compareMatch[3])
+    if (hasDotSegment(range)) {
+      return undefined
     }
+    return {kind: 'compare', range, repo: {owner: compareMatch[1], repo: compareMatch[2]}}
   }
 
   return undefined

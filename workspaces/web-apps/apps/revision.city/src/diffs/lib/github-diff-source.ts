@@ -11,6 +11,10 @@ export type GitHubDiffSource =
 
 export function parseGitHubDiffSource(path: string): GitHubDiffSource | undefined {
   const normalizedPath = path.replace(/\/+$/, '')
+  if (hasDotSegment(normalizedPath)) {
+    return undefined
+  }
+
   const pullMatch = /^\/([^/]+)\/([^/]+)\/pull\/(\d+)(?:\.(?:diff|patch))?$/i.exec(normalizedPath)
   if (!isNullish(pullMatch)) {
     return {
@@ -35,11 +39,12 @@ export function parseGitHubDiffSource(path: string): GitHubDiffSource | undefine
     normalizedPath,
   )
   if (!isNullish(compareMatch)) {
-    return {
-      kind: 'compare',
-      range: decodeRange(compareMatch[3]),
-      repo: {owner: compareMatch[1], repo: compareMatch[2]},
+    // An encoded dot segment such as `%2e%2e` appears only after the decode.
+    const range = decodeRange(compareMatch[3])
+    if (hasDotSegment(range)) {
+      return undefined
     }
+    return {kind: 'compare', range, repo: {owner: compareMatch[1], repo: compareMatch[2]}}
   }
 
   return undefined
@@ -54,6 +59,12 @@ export function decodeRange(range: string): string {
   } catch {
     return range
   }
+}
+
+// `new URL` resolves `.` and `..` segments, so a path with one can leave the
+// repository and reach another API route.
+export function hasDotSegment(path: string): boolean {
+  return path.split('/').some((segment) => segment === '.' || segment === '..')
 }
 
 export function encodeURLSegment(value: string): string {

@@ -49,6 +49,9 @@ test.each([
   {name: 'an issue', path: '/acme/widgets/issues/7'},
   {name: 'a dot-segment owner', path: '/../widgets/pulls/7'},
   {name: 'a dot-segment repository', path: '/acme/./commit/83fea5e'},
+  {name: 'a compare range that decodes to a dot segment', path: '/acme/widgets/compare/%2e%2e'},
+  {name: 'an upper-case encoded dot segment', path: '/acme/widgets/compare/%2E'},
+  {name: 'an encoded dot segment inside a range', path: '/acme/widgets/compare/main%2F%2e%2e%2Fx'},
 ])('does not parse $name', ({path}) => {
   expect(parseCodebergDiffSource(path)).toBeUndefined()
 })

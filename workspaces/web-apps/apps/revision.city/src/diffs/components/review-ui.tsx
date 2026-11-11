@@ -279,10 +279,8 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
   // CodeView would mount during the brief render where lightThemeName/darkThemeName
   // are still at their `DEFAULT_*_THEME` initial values and tokenize the
   // first batch of files against the wrong palette.
-  const viewerAvailable =
-    workerPoolState !== 'initializing' &&
-    themesHydrated &&
-    (loadState === 'ready' || (loadState === 'streaming' && initialItems.length > 0))
+  const patchShown = loadState === 'ready' || (loadState === 'streaming' && initialItems.length > 0)
+  const viewerAvailable = workerPoolState !== 'initializing' && themesHydrated && patchShown
 
   return (
     <ReviewGrid>
@@ -361,7 +359,9 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
           errorMessage={errorMessage}
           onRetry={retryLoad}
           remedy={errorRemedy}
+          sourceName={isNullish(domain) ? 'GitHub' : domain}
           state={loadState}
+          waitingFor={patchShown ? 'highlighter' : 'patch'}
         />
       )}
     </ReviewGrid>

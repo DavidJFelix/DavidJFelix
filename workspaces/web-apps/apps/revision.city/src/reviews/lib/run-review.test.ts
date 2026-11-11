@@ -817,6 +817,56 @@ test('runReview reviews without guides when it cannot read them', async () => {
   warn.mockRestore()
 })
 
+test('runReview reads the guides again after a failed read before the last attempt', async () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+  let baseTreeReads = 0
+  const github = fakeGitHub({
+    [BASE_TREE]: () => {
+      baseTreeReads += 1
+      if (baseTreeReads === 1) {
+        throw new GitHubApiError(502, 'Bad Gateway')
+      }
+      return {
+        sha: 'base-tree',
+        truncated: false,
+        tree: [{path: 'AGENTS.md', type: 'blob', sha: 'root-guide'}],
+      }
+    },
+    'GET /repos/acme/repo/git/blobs/root-guide': () => ({
+      content: btoa('Use bun.'),
+      encoding: 'base64',
+    }),
+  })
+  const chat = answering([])
+
+  await runReview(runParams({step: retryingStep, request: github.request, chat}))
+
+  expect(baseTreeReads).toBe(2)
+  expect(chat.mock.calls[0][0].messages[0].content).toContain('Guide: AGENTS.md')
+  expect(warn).not.toHaveBeenCalledWith('Could not read the repository guides', expect.anything())
+  warn.mockRestore()
+})
+
+test('runReview reviews without guides when the last attempt cannot read them', async () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+  const github = fakeGitHub({
+    [BASE_TREE]: () => {
+      throw new GitHubApiError(502, 'Bad Gateway')
+    },
+  })
+  const chat = answering([])
+
+  await runReview(runParams({step: retryingStep, request: github.request, chat}))
+
+  expect(github.sent(BASE_TREE)).toHaveLength(2)
+  expect(chat).toHaveBeenCalledTimes(REVIEWERS.length)
+  expect(chat.mock.calls[0][0].messages[0].content).not.toContain('Guide:')
+  expect(warn).toHaveBeenCalledWith('Could not read the repository guides', {
+    error: 'Error: Bad Gateway',
+  })
+  warn.mockRestore()
+})
+
 test('runReview reviews at most 150 chunks, in steps, and loads the head tree once', async () => {
   const files = Array.from({length: 151}, (_, index) => changedFile(`src/${index}.ts`, SMALL_PATCH))
   const github = fakeGitHub({

@@ -27,11 +27,15 @@ export interface ReviewChunk {
 
 export interface ChunkPullRequestFilesOptions extends FileReviewStatusOptions {
   maxLinesPerChunk?: number
+  maxCharsPerChunk?: number
 }
 
 // Small enough that one model call stays focused on the change, large enough
 // that most files fit in one chunk.
 export const DEFAULT_MAX_LINES_PER_CHUNK = 200
+// Each model call sends the chunk again, so a chunk of long lines also stops at
+// this many characters.
+export const DEFAULT_MAX_CHARS_PER_CHUNK = 40_000
 
 const SKIPPED_FILE_NAMES = new Set([
   'bun.lock',
@@ -52,19 +56,30 @@ const SKIPPED_FILE_SUFFIXES = ['.min.js', '.min.css', '.map', '.snap']
 // A diff this long is almost always generated or vendored code. Its review
 // would cost more than it finds.
 export const DEFAULT_MAX_PATCH_LINES_PER_FILE = 1500
+// For the same reason, a file with a diff line this long gets no review. Such
+// a line is almost always data, a bundle or an image as text.
+export const DEFAULT_MAX_PATCH_LINE_CHARS = 5_000
 
 export interface FileReviewStatusOptions {
   maxPatchLinesPerFile?: number
+  maxPatchLineChars?: number
 }
 
 // `skipped`: removed files, lockfiles, and generated files, which are not
-// reviewed by design. A caller can report `no-text-diff` and `too-large` files
-// as not reviewed.
-export type FileReviewStatus = 'reviewable' | 'skipped' | 'no-text-diff' | 'too-large'
+// reviewed by design. A caller can report the other statuses as not reviewed.
+export type FileReviewStatus =
+  | 'reviewable'
+  | 'skipped'
+  | 'no-text-diff'
+  | 'too-large'
+  | 'line-too-long'
 
 export function fileReviewStatus(
   file: PullRequestFile,
-  {maxPatchLinesPerFile = DEFAULT_MAX_PATCH_LINES_PER_FILE}: FileReviewStatusOptions = {},
+  {
+    maxPatchLinesPerFile = DEFAULT_MAX_PATCH_LINES_PER_FILE,
+    maxPatchLineChars = DEFAULT_MAX_PATCH_LINE_CHARS,
+  }: FileReviewStatusOptions = {},
 ): FileReviewStatus {
   const fileName = file.path.slice(file.path.lastIndexOf('/') + 1)
   if (
@@ -77,7 +92,12 @@ export function fileReviewStatus(
   if (!file.patch) {
     return 'no-text-diff'
   }
-  return file.patch.split('\n').length > maxPatchLinesPerFile ? 'too-large' : 'reviewable'
+  const lines = file.patch.split('\n')
+  if (lines.length > maxPatchLinesPerFile) {
+    return 'too-large'
+  }
+  // Each patch line starts with a one-character diff marker.
+  return lines.some((line) => line.length - 1 > maxPatchLineChars) ? 'line-too-long' : 'reviewable'
 }
 
 export function isReviewableFile(
@@ -91,45 +111,72 @@ export function chunkPullRequestFiles(
   files: readonly PullRequestFile[],
   {
     maxLinesPerChunk = DEFAULT_MAX_LINES_PER_CHUNK,
+    maxCharsPerChunk = DEFAULT_MAX_CHARS_PER_CHUNK,
     ...statusOptions
   }: ChunkPullRequestFilesOptions = {},
 ): ReviewChunk[] {
+  const budget: ChunkBudget = {lines: maxLinesPerChunk, chars: maxCharsPerChunk}
   const reviewable = files.filter((file) => isReviewableFile(file, statusOptions))
   return reviewable.flatMap(({path, patch}) => {
     const hunks = parsePatchHunks(patch)
-      .flatMap((hunk) => splitHunk(hunk, maxLinesPerChunk))
+      .flatMap((hunk) => splitHunk(hunk, budget))
       // A slice of only removed lines has no labels, so `anchorFindings` would drop
       // every finding in it. Its review would cost money and report nothing.
       .filter((hunk) => hunk.lines.some((line) => line.kind !== 'removed'))
-    return groupHunks(hunks, maxLinesPerChunk).map((group) => ({path, hunks: group}))
+    return groupHunks(hunks, budget).map((group) => ({path, hunks: group}))
   })
 }
 
-function splitHunk(hunk: PatchHunk, maxLines: number): PatchHunk[] {
-  const step = Math.max(1, maxLines)
-  const slices: PatchHunk[] = []
-  for (let start = 0; start < hunk.lines.length; start += step) {
-    slices.push({lines: hunk.lines.slice(start, start + step)})
+interface ChunkBudget {
+  lines: number
+  chars: number
+}
+
+// A slice always gets its first line, so a budget below one line acts as one.
+function splitHunk(hunk: PatchHunk, budget: ChunkBudget): PatchHunk[] {
+  const slices: DiffLine[][] = []
+  let sliceChars = 0
+  for (const line of hunk.lines) {
+    const current = slices.at(-1)
+    if (current && current.length < budget.lines && sliceChars + line.text.length <= budget.chars) {
+      current.push(line)
+      sliceChars += line.text.length
+    } else {
+      slices.push([line])
+      sliceChars = line.text.length
+    }
   }
-  return slices
+  return slices.map((lines) => ({lines}))
 }
 
 // Fills each chunk from the top of the file, so a push that grows or shrinks a
 // hunk can move the chunk boundaries below it.
-function groupHunks(hunks: readonly PatchHunk[], maxLines: number): PatchHunk[][] {
+function groupHunks(hunks: readonly PatchHunk[], budget: ChunkBudget): PatchHunk[][] {
   const groups: PatchHunk[][] = []
   let groupLineCount = 0
+  let groupChars = 0
   for (const hunk of hunks) {
     const current = groups.at(-1)
-    if (current && groupLineCount + hunk.lines.length <= maxLines) {
+    const hunkChars = charCount(hunk)
+    if (
+      current &&
+      groupLineCount + hunk.lines.length <= budget.lines &&
+      groupChars + hunkChars <= budget.chars
+    ) {
       current.push(hunk)
       groupLineCount += hunk.lines.length
+      groupChars += hunkChars
     } else {
       groups.push([hunk])
       groupLineCount = hunk.lines.length
+      groupChars = hunkChars
     }
   }
   return groups
+}
+
+function charCount(hunk: PatchHunk): number {
+  return hunk.lines.reduce((sum, line) => sum + line.text.length, 0)
 }
 
 export interface RenderedChunk {

@@ -92,7 +92,8 @@ replaces Warden in this repository. This project started as part of
   threads no longer change a dismissed check run. The webhook must subscribe to "Check run" for the
   button.
 - **Limits.** For each pull request, at most 150 chunks and 700,000 bytes of paths and patches get a
-  review. A file whose diff is longer than 1,500 lines gets no review. One review posts at most 50
+  review. A file whose diff is longer than 1,500 lines, or has a line longer than 5,000 characters,
+  gets no review, and a chunk stops at 40,000 characters of diff text. One review posts at most 50
   new comments. The check run lists every finding, and it cuts its text at 65,000 characters, below
   GitHub's limit of 65,535.
 

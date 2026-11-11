@@ -23,18 +23,20 @@ test('selectReviewFiles keeps reviewable files in order and leaves out skipped f
   expect(selectReviewFiles(files)).toEqual({files: [files[0], files[3]], notReviewed: []})
 })
 
-test('selectReviewFiles lists a file with no text diff and a file over the line limit', () => {
+test('selectReviewFiles lists a file with no text diff, a file over the line limit, and a file with a long line', () => {
   const files = [
     modified('image.png'),
     modified('generated.ts', patchOf(1600)),
+    modified('data.json', patchOf(1, 'x'.repeat(5001))),
     modified('src/a.ts', patchOf(1)),
   ]
 
   expect(selectReviewFiles(files)).toEqual({
-    files: [files[2]],
+    files: [files[3]],
     notReviewed: [
       {path: 'image.png', reason: 'GitHub shows no text diff'},
       {path: 'generated.ts', reason: 'the diff is longer than 1500 lines'},
+      {path: 'data.json', reason: 'a line of the diff is longer than 5000 characters'},
     ],
   })
 })

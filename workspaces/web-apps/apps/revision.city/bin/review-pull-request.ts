@@ -77,7 +77,7 @@ for (const failure of review.failures) {
 }
 for (const file of files) {
   const status = fileReviewStatus(file)
-  if (status === 'no-text-diff' || status === 'too-large') {
+  if (status !== 'reviewable' && status !== 'skipped') {
     console.error(`Not reviewed (${status}): ${file.path}`)
   }
 }

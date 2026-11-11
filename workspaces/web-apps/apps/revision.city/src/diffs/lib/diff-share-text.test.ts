@@ -165,6 +165,13 @@ test.each([
   expect(share.card.title).toBe('feat: add widgets')
 })
 
+test('keeps the pictographs that the card font draws', () => {
+  const title = 'Add the ™ and © marks'
+  const share = getDiffShareText({source: PULL, pull: {...PUBLIC_PULL, title}})
+
+  expect(share.card.title).toBe(title)
+})
+
 // The card route reads the diff back out of the path the tags point at, so
 // the two must agree for every shape of diff, including ranges that carry the
 // characters a path would otherwise split on.

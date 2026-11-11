@@ -13,10 +13,12 @@ const SHORT_SHA_LENGTH = 7
 // this length a pull request title would push the card's footer off the canvas.
 const CARD_TITLE_MAX_LENGTH = 90
 const SITE_SUFFIX = 'in the revision.city diff viewer.'
-// The parts of an emoji, sequences and flags included. The card font has no
-// glyph for them, so a title loses them and keeps its words.
+// The parts of an emoji, sequences and flags included. A title loses the
+// parts that the card font cannot draw and keeps its words. The font draws a
+// few pictographs, such as the trademark sign, so those stay.
 const EMOJI =
   /\p{Extended_Pictographic}|\p{Emoji_Modifier}|\p{Regional_Indicator}|\p{Join_Control}|\p{Variation_Selector}/gu
+const PICTOGRAPH = /\p{Extended_Pictographic}/u
 
 // The share card's own lines: the label is the big text, the description the
 // muted line under it, the author the footer byline.
@@ -99,7 +101,10 @@ function describePullRequest({
   const sentence = [`${describePullRequestKind(pull)} #${number}`, byline, `in ${repo}`]
     .filter((part) => !isNullish(part))
     .join(' ')
-  const cardTitle = pull.title.replace(EMOJI, '').replace(/\s+/g, ' ').trim()
+  const cardTitle = pull.title
+    .replace(EMOJI, (part) => (PICTOGRAPH.test(part) && canDrawText(part) ? part : ''))
+    .replace(/\s+/g, ' ')
+    .trim()
   // A title that the card font cannot draw shows as boxes, so the card shows
   // the label in its place, as it does for a pull request without a title.
   const card =

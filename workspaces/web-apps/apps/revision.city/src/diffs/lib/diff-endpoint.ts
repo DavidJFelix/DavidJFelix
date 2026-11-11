@@ -665,15 +665,45 @@ async function createPatchStreamResponse({
     }
   }
 
+  // Reads GitHub only when the client asks for more, so a slow client does not
+  // make the Worker hold the rest of the diff in memory.
+  const reader = responseBody.getReader()
+  let sawContent = false
+  const stopListening = () => {
+    requestSignal.removeEventListener('abort', abortUpstream)
+  }
   const stream = new ReadableStream<Uint8Array>({
-    start(controller) {
-      void pumpPatchBody(responseBody, controller).finally(() => {
-        requestSignal.removeEventListener('abort', abortUpstream)
-      })
+    async pull(controller) {
+      try {
+        // The stream does not call pull again after a pull that enqueues nothing,
+        // so skip empty chunks here.
+        for (;;) {
+          const result = await reader.read()
+          if (result.done) {
+            stopListening()
+            if (sawContent) {
+              controller.close()
+            } else {
+              controller.error(new Error(EMPTY_PATCH_MESSAGE))
+            }
+            return
+          }
+
+          if (result.value.byteLength > 0) {
+            sawContent = true
+            controller.enqueue(result.value)
+            return
+          }
+        }
+      } catch (error) {
+        stopListening()
+        controller.error(error)
+      }
     },
-    cancel() {
+    async cancel(reason) {
       abortUpstream()
-      requestSignal.removeEventListener('abort', abortUpstream)
+      stopListening()
+      await reader.cancel(reason).catch(() => {})
     },
   })
 
@@ -1010,40 +1040,6 @@ function isDiffContentType(contentType: string): boolean {
     (normalizedContentType.includes('application/vnd.github') &&
       normalizedContentType.includes('diff'))
   )
-}
-
-// Forwards each validated upstream diff chunk into the client stream.
-async function pumpPatchBody(
-  body: ReadableStream<Uint8Array>,
-  controller: ReadableStreamDefaultController<Uint8Array>,
-): Promise<void> {
-  try {
-    const reader = body.getReader()
-    let sawContent = false
-    try {
-      for (;;) {
-        const result = await reader.read()
-        if (result.done) {
-          break
-        }
-
-        if (result.value.byteLength > 0) {
-          sawContent = true
-          controller.enqueue(result.value)
-        }
-      }
-    } finally {
-      reader.releaseLock()
-    }
-
-    if (!sawContent) {
-      throw new Error(EMPTY_PATCH_MESSAGE)
-    }
-
-    controller.close()
-  } catch (error) {
-    controller.error(error)
-  }
 }
 
 // Centralizes text response headers for both stream and error bodies. Diff

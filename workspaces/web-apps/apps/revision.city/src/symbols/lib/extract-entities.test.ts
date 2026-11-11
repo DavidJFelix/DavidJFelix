@@ -223,6 +223,19 @@ trait Logger {public function log() {}}
     expected: ['mixin center', 'rule .button'],
   },
   {
+    language: 'sass-indented',
+    source: `@mixin rounded($radius)
+  border-radius: $radius
+
+.card
+  color: red
+  &:hover
+    color: blue
+    +rounded(2px)
+`,
+    expected: ['mixin rounded', 'rule .card', 'rule .card.&:hover'],
+  },
+  {
     language: 'markdown',
     source: `# Title
 
@@ -281,6 +294,28 @@ test.each([
   const entities = extractWithinLimits({source: `${heading}\n`, parser: markdownParser})
 
   expect(entities.map((entity) => entity.name)).toEqual([name])
+})
+
+test.each([
+  {source: 'Title\n=====\n', name: 'Title'},
+  {source: 'Title\n---\n', name: 'Title'},
+  {source: 'Two line\nheading\n=====\n', name: 'Two line heading'},
+  {source: 'Title\r\n---\r\n', name: 'Title'},
+])('names the setext heading in $source as "$name"', ({source, name}) => {
+  const entities = extractWithinLimits({source, parser: markdownParser})
+
+  expect(entities.map((entity) => entity.name)).toEqual([name])
+})
+
+test.each([
+  {source: '---\ntitle: Notes\n---\n\n# Body\n'},
+  {source: '---\ntitle: Notes\n\ntags: one\n---\n\n# Body\n'},
+  {source: '---\ntags:\n  - one\n---\n\n# Body\n'},
+  {source: '---\r\ntitle: Notes\r\n---\r\n\r\n# Body\r\n'},
+])('does not name front matter as a heading in $source', ({source}) => {
+  const entities = extractWithinLimits({source, parser: markdownParser})
+
+  expect(entities.map((entity) => entity.name)).toEqual(['Body'])
 })
 
 test('names a heading with a long run of spaces before the test times out', () => {

@@ -231,12 +231,6 @@ const HomeFetchForm = memo(function HomeFetchForm() {
             size="icon-md"
             disabled={isPending || url.length === 0}
             aria-label={isPending ? 'Fetching…' : 'Fetch'}
-            className={css({
-              mr: '-2',
-              '&[data-slot="button"]': {
-                _hover: {color: 'diffs.muted.foreground', bg: 'transparent'},
-              },
-            })}
           >
             <IconArrow className={css({w: '4', h: '4', transform: 'rotate(180deg)'})} />
           </Button>

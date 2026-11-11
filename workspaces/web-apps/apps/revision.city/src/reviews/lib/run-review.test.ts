@@ -11,6 +11,7 @@ import {createMemorySummaryCommentLock} from './summary-comment-lock'
 import type {LogWideEvent, WideEvent} from './wide-event'
 
 const headSha = 'a'.repeat(40)
+const runId = 'review-run'
 const baseSha = 'c'.repeat(40)
 const usage = {promptTokens: 10, completionTokens: 5, costUsd: 0.01}
 
@@ -165,7 +166,7 @@ function recordingStep() {
   const results = new Map<string, unknown>()
   const step: RunStep = async (name, run) => {
     names.push(name)
-    const result = await run({isLastAttempt: true})
+    const result = await run({attempt: 1, isLastAttempt: true})
     results.set(name, result)
     return result
   }
@@ -174,7 +175,7 @@ function recordingStep() {
 
 // Runs a failed step again, as the Workflow does, but only once.
 const retryingStep: RunStep = async (_name, run) =>
-  run({isLastAttempt: false}).catch(() => run({isLastAttempt: true}))
+  run({attempt: 1, isLastAttempt: false}).catch(() => run({attempt: 2, isLastAttempt: true}))
 
 // Keeps each step result in serialized form, as the Workflow does. The key
 // counts the earlier steps of the same name, as the Workflow's step count does.
@@ -192,7 +193,7 @@ function durableSteps() {
       const count = (counts.get(name) ?? 0) + 1
       counts.set(name, count)
       const key = `${name} ${count}`
-      const result = results.get(key) ?? serialize(await body({isLastAttempt: true}))
+      const result = results.get(key) ?? serialize(await body({attempt: 1, isLastAttempt: true}))
       results.set(key, result)
       stopped = name === stopAfter
       return deserialize(result)
@@ -212,6 +213,7 @@ function runParams(changes: Partial<RunReviewParams> = {}): RunReviewParams {
     name: 'repo',
     pullNumber: 7,
     headSha,
+    runId,
     step: recordingStep().step,
     request: fakeGitHub().request,
     chat: answering([]),
@@ -345,9 +347,10 @@ test('runReview keeps the failed check run when the sync with the threads fails'
     'log failure run',
   ])
   expect(github.sent(CHECK_RUN)).toHaveLength(1)
-  expect(warn).toHaveBeenCalledWith('Could not sync the check run with the threads', {
-    error: 'Error: GitHub is down',
-  })
+  expect(warn).toHaveBeenCalledWith(
+    'Could not sync the check run with the threads',
+    expect.objectContaining({runId, error: 'Error: GitHub is down'}),
+  )
   warn.mockRestore()
 })
 
@@ -409,9 +412,10 @@ test('runReview retries the summary comment, then only warns', async () => {
   expect(github.sent(CHECK_RUN)).toEqual([
     expect.objectContaining({body: expect.objectContaining({conclusion: 'success'})}),
   ])
-  expect(warn).toHaveBeenCalledWith('Could not update the summary comment', {
-    error: 'Error: GitHub is down',
-  })
+  expect(warn).toHaveBeenCalledWith(
+    'Could not update the summary comment',
+    expect.objectContaining({runId, error: 'Error: GitHub is down'}),
+  )
   warn.mockRestore()
 })
 
@@ -424,9 +428,10 @@ test('runReview waits for a run that holds the summary comment lock, then only w
   await runReview(runParams({request: github.request, step: retryingStep, summaryCommentLock}))
 
   expect(github.sent(ISSUE_COMMENTS)).toEqual([])
-  expect(warn).toHaveBeenCalledWith('Could not update the summary comment', {
-    error: 'Error: Another run is editing the summary comment',
-  })
+  expect(warn).toHaveBeenCalledWith(
+    'Could not update the summary comment',
+    expect.objectContaining({runId, error: 'Error: Another run is editing the summary comment'}),
+  )
   warn.mockRestore()
 })
 
@@ -496,7 +501,7 @@ test('runReview completes the check run once when a log step fails', async () =>
     if (name.startsWith('log ')) {
       throw new Error('The step failed')
     }
-    return run({isLastAttempt: true})
+    return run({attempt: 1, isLastAttempt: true})
   }
 
   await runReview(runParams({request: github.request, step}))
@@ -570,9 +575,10 @@ test('runReview removes the label that asked for the review, and continues when 
   await runReview(runParams({request: github.request, label: 'Revision City'}))
 
   expect(github.sent(LABEL)).toHaveLength(1)
-  expect(warn).toHaveBeenCalledWith('Could not remove the review label', {
-    error: 'Error: label not found',
-  })
+  expect(warn).toHaveBeenCalledWith(
+    'Could not remove the review label',
+    expect.objectContaining({runId, error: 'Error: label not found'}),
+  )
   expect(github.sent(CHECK_RUN)[0].body).toMatchObject({conclusion: 'success'})
   warn.mockRestore()
 })
@@ -879,6 +885,8 @@ test('runReview logs one run event with the outcome and counts of the review', a
 
   expect(named('review run')).toEqual([
     expect.objectContaining({
+      runId,
+      checkRunId: 31,
       repository: 'acme/repo',
       installationId: 5,
       pullNumber: 7,
@@ -894,11 +902,29 @@ test('runReview logs one run event with the outcome and counts of the review', a
   ])
   expect(named('model call')).toHaveLength(CALLS_WITH_CHECKED_FINDING)
   expect(named('model call')[0]).toMatchObject({
+    runId,
+    checkRunId: 31,
     pullNumber: 7,
     headSha,
+    step: 1,
+    attempt: 1,
     outcome: 'success',
     costUsd: usage.costUsd,
   })
+})
+
+test('runReview logs the model calls of each attempt of a review step with that attempt', async () => {
+  const {log, named} = recordingLog()
+  const chat = answering([])
+  chat.mockRejectedValueOnce(new OpenRouterError('OpenRouter returned 503: busy', true))
+
+  await runReview(runParams({step: retryingStep, chat, log}))
+
+  expect(named('model call').map(({step, attempt, outcome}) => [step, attempt, outcome])).toEqual([
+    [1, 1, 'error'],
+    ...REVIEWERS.slice(1).map(() => [1, 1, 'success']),
+    [1, 2, 'success'],
+  ])
 })
 
 test.each<{name: string; outcome: string; routes: Record<string, Route>}>([

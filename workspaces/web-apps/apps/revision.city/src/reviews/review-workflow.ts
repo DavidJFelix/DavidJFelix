@@ -38,10 +38,11 @@ export class ReviewWorkflow extends WorkflowEntrypoint<Env, ReviewRunParams> {
     const db = drizzle(env.DB)
     await runReview({
       ...payload,
+      runId: event.instanceId,
       step: (name, run) =>
         step.do(name, STEP_CONFIG, ({attempt}) =>
           // The first attempt is not a retry, so the last attempt is limit + 1.
-          run({isLastAttempt: attempt > STEP_CONFIG.retries.limit}),
+          run({attempt, isLastAttempt: attempt > STEP_CONFIG.retries.limit}),
         ),
       request: createGitHubRequest({
         token: createInstallationTokenSource({

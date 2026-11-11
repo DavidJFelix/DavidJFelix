@@ -692,9 +692,38 @@ test('reviewPullRequest tells the logs which reviewer and chunk each model call 
   expect(chat.mock.calls[0][0].eventFields).toEqual({
     reviewer: REVIEWERS[0].id,
     path: 'a.ts',
+    chunk: 1,
     chunkLines: 2,
     round: 0,
   })
+})
+
+test('reviewPullRequest gives each chunk of a split file its own number in the logs', async () => {
+  const chat = answering('{"findings": []}')
+
+  await reviewPullRequest({
+    files: [
+      {
+        path: 'big.ts',
+        status: 'modified',
+        patch: '@@ -1,1 +1,2 @@\n ctx\n+one\n@@ -50,1 +51,2 @@\n ctx\n+two',
+      },
+    ],
+    reviewers: REVIEWERS.slice(0, 1),
+    maxLinesPerChunk: 2,
+    model: 'vendor/model',
+    description: DESCRIPTION,
+    store: createMemoryChunkReviewStore(),
+    chat,
+    scope: 'test',
+  })
+
+  expect(chat.mock.calls.map(([{eventFields}]) => [eventFields?.path, eventFields?.chunk])).toEqual(
+    [
+      ['big.ts', 1],
+      ['big.ts', 2],
+    ],
+  )
 })
 
 test('reviewPullRequest takes one finding without a findings list as a list of one', async () => {

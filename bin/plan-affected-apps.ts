@@ -230,6 +230,28 @@ export const planAffected = ({
     })
 }
 
+// Turbo cannot see repo-root tooling (bin/, the composite actions, the tool
+// pins), so a pull request that changes only tooling affects no app. The
+// preview plan then previews this one app, so the change still runs the
+// upload, smoke and e2e path before it merges.
+export const PREVIEW_CANARY_DIR = 'revision.city'
+
+export type PlanPreviewParams = Omit<PlanAffectedParams, 'kind'>
+
+export const planPreview = ({
+  affectedPaths,
+  targets = WEB_APP_TARGETS,
+}: PlanPreviewParams): {readonly apps: WebAppMatrixEntry[]; readonly canary: boolean} => {
+  const apps = planAffected({affectedPaths, kind: 'preview', targets})
+  if (apps.length > 0) return {apps, canary: false}
+  const canary = planAffected({
+    affectedPaths: [`apps/${PREVIEW_CANARY_DIR}`],
+    kind: 'preview',
+    targets,
+  })
+  return {apps: canary, canary: true}
+}
+
 type TurboPackageList = {
   readonly packages?: {readonly items?: readonly {readonly path?: string}[]}
 }
@@ -265,8 +287,13 @@ if (import.meta.main) {
     process.exit(1)
   }
 
-  const apps = planAffected({affectedPaths: parseAffectedPaths(turbo.stdout.toString()), kind})
-  console.log(`affected ${kind} apps: ${apps.map((app) => app.dir).join(', ') || '(none)'}`)
+  const affectedPaths = parseAffectedPaths(turbo.stdout.toString())
+  const {apps, canary} =
+    kind === 'preview'
+      ? planPreview({affectedPaths})
+      : {apps: planAffected({affectedPaths, kind}), canary: false}
+  const names = apps.map((app) => app.dir).join(', ') || '(none)'
+  console.log(`affected ${kind} apps: ${names}${canary ? ' (canary)' : ''}`)
 
   const output = process.env.GITHUB_OUTPUT
   if (output) appendFileSync(output, `apps=${JSON.stringify(apps)}\n`)

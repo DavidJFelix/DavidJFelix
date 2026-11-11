@@ -1,10 +1,12 @@
 import {expect, test} from 'bun:test'
 import {
+  PREVIEW_CANARY_DIR,
   WEB_APP_TARGETS,
   type WebAppTarget,
   isUsableScmBase,
   parseAffectedPaths,
   planAffected,
+  planPreview,
 } from './plan-affected-apps'
 
 const target = (overrides: Partial<WebAppTarget> = {}): WebAppTarget => ({
@@ -83,6 +85,37 @@ test('ignores affected packages that are not deployable apps', () => {
 
 test('returns nothing when no app is affected', () => {
   expect(planAffected({affectedPaths: [], kind: 'deploy', targets: [target()]})).toEqual([])
+})
+
+test('previews the canary on its dev worker when no app is affected', () => {
+  // A change to repo-root tooling affects no app in turbo's graph, but it can
+  // still break the preview path. The canary runs that path before the merge.
+  const {apps, canary} = planPreview({affectedPaths: []})
+
+  expect(canary).toBe(true)
+  expect(apps.map(({dir, worker, cloudflareEnv}) => ({dir, worker, cloudflareEnv}))).toEqual([
+    {dir: 'revision.city', worker: 'revision-city-dev', cloudflareEnv: 'dev'},
+  ])
+})
+
+test('previews only the affected app when one is affected', () => {
+  const {apps, canary} = planPreview({affectedPaths: ['apps/djf.io']})
+
+  expect(canary).toBe(false)
+  expect(apps.map((app) => app.dir)).toEqual(['djf.io'])
+})
+
+test('previews the canary when only an opted-out app is affected', () => {
+  // f311x previews through its own workflow, so the shared matrix is empty.
+  const {apps, canary} = planPreview({affectedPaths: ['apps/f311x']})
+
+  expect(canary).toBe(true)
+  expect(apps.map((app) => app.dir)).toEqual([PREVIEW_CANARY_DIR])
+})
+
+test('the canary is a registered app in the shared preview matrix', () => {
+  // A registry change that drops the canary would empty the canary plan.
+  expect(WEB_APP_TARGETS.find((app) => app.dir === PREVIEW_CANARY_DIR)?.preview).toBe('wrangler')
 })
 
 test('parses turbo ls output past its version banner', () => {

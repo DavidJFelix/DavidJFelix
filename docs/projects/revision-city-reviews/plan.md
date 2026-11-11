@@ -72,10 +72,11 @@ replaces Warden in this repository. This project started as part of
   The review removes the label, so adding it again starts another review.
 - **Untrusted text.** The pull request's author can steer the reviewers, so the prompts treat the
   title, the description, the diff, and the files as text to review. In posted text, a zero-width
-  space goes after `@`, `#`, `GH-`, `<`, and the `&` of an entity. So model text and file paths
-  cannot mention users, reference issues, or add HTML. Links to github.com go through
-  redirect.github.com, so they do not show in the timeline of the linked issue. The check run is not
-  a security gate by itself.
+  space goes after `@`, `#`, `GH-`, `<`, the `&` of an entity, and the `]` of `](` and `]:`. So
+  model text and file paths cannot mention users, reference issues, add HTML, or show an image or a
+  link whose text hides its address. A link shows as its Markdown source, and its address stays a
+  link that shows its host. Links to github.com go through redirect.github.com, so they do not show
+  in the timeline of the linked issue. The check run is not a security gate by itself.
 - **Posted comments.** Each comment starts with a fingerprint, and a run does not post a finding
   again on a line where the app already posted it. The finding's body goes last, so a code block
   that it leaves open cannot take in the suggestion.

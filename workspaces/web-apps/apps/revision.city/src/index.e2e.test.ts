@@ -47,6 +47,7 @@ test('home page carries OpenGraph meta and serves the card it points at', async 
   expect(response.headers()['content-type']).toContain('image/png')
   const png = await response.body()
   expect(pngSize(png)).toEqual({width: 1200, height: 630})
+  expect(png).toMatchSnapshot('og-default.png', {maxDiffPixelRatio: 0.01})
   // Scrapers and CDNs probe the image with HEAD before fetching it: GET's
   // status and headers, no body.
   const probe = await request.head(cardPath)

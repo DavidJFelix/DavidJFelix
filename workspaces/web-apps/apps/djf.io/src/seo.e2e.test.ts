@@ -119,6 +119,19 @@ test('every sitemap page has Open Graph and Twitter card meta with a served og i
   }
 })
 
+// The default card and one fixed post: a new post adds a card without adding
+// a baseline.
+;[
+  {path: '/og/default.png', snapshot: 'og-default.png'},
+  {path: '/og/blog/2025-12-07-on-running.png', snapshot: 'og-on-running.png'},
+].forEach(({path, snapshot}) => {
+  test(`${path} matches its baseline`, async ({request}) => {
+    const response = await request.get(path)
+    expect(response.ok()).toBe(true)
+    expect(await response.body()).toMatchSnapshot(snapshot, {maxDiffPixelRatio: 0.01})
+  })
+})
+
 test('home page advertises the RSS feed', async ({page}) => {
   await page.goto('/')
   const alternate = page.locator('head link[rel="alternate"][type="application/rss+xml"]')

@@ -123,9 +123,17 @@ test('a tracker tag on the link stays off og:url and the canonical link', async 
 // lookup remembers a miss; a compare card has nothing to wait for and keeps
 // the hour.
 ;[
-  {path: `/og/diffs/${REPO}/pull/1.png`, cacheControl: 'public, max-age=300'},
-  {path: `/og/diffs/${REPO}/compare/v1.0...v2.0.png`, cacheControl: 'public, max-age=3600'},
-].forEach(({path, cacheControl}) => {
+  {
+    path: `/og/diffs/${REPO}/pull/1.png`,
+    cacheControl: 'public, max-age=300',
+    snapshot: 'og-pull.png',
+  },
+  {
+    path: `/og/diffs/${REPO}/compare/v1.0...v2.0.png`,
+    cacheControl: 'public, max-age=3600',
+    snapshot: 'og-compare.png',
+  },
+].forEach(({path, cacheControl, snapshot}) => {
   test(`${path} serves a diff card at the shared size`, async ({request}) => {
     const response = await request.get(path)
     expect(response.ok()).toBe(true)
@@ -133,6 +141,7 @@ test('a tracker tag on the link stays off og:url and the canonical link', async 
     expect(response.headers()['cache-control']).toBe(cacheControl)
     const png = await response.body()
     expect(pngSize(png)).toEqual({width: 1200, height: 630})
+    expect(png).toMatchSnapshot(snapshot, {maxDiffPixelRatio: 0.01})
     // Scrapers and CDNs probe the image with HEAD before fetching it: GET's
     // status and headers, no body.
     const probe = await request.head(path)

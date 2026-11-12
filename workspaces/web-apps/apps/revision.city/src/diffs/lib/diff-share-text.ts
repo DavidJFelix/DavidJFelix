@@ -9,8 +9,8 @@ import {isNullish} from './nullish'
 export const DIFF_CARD_BASE_PATH = '/og/diffs'
 const DIFF_CARD_EXTENSION = '.png'
 const SHORT_SHA_LENGTH = 7
-// Satori wraps a long title but only ever picks between two sizes, so past
-// this length a pull request title would push the card's footer off the canvas.
+// The share text cuts a longer pull request title, so the card title fills
+// about three lines at most.
 const CARD_TITLE_MAX_LENGTH = 90
 const SITE_SUFFIX = 'in the revision.city diff viewer.'
 // The parts of an emoji, sequences and flags included. A title loses the

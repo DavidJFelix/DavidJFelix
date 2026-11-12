@@ -4,12 +4,11 @@ import {pngSize} from '../png'
 import {ogImageSize} from '../tags'
 import {nitroRuntime} from './nitro'
 
-// vitest.config.ts stands in for the bundler: the `?module` imports arrive as
-// compiled modules and the `raw:` fonts as bytes, the shapes unwasm and Nitro
+// vitest.config.ts stands in for the bundler: the `?module` import arrives as
+// a compiled module and the `raw:` fonts as bytes, the shapes unwasm and Nitro
 // hand a Worker bundle.
-test('the Nitro runtime carries compiled wasm modules and Inter fonts', () => {
-  expect(nitroRuntime.yoga).toBeInstanceOf(WebAssembly.Module)
-  expect(nitroRuntime.resvg).toBeInstanceOf(WebAssembly.Module)
+test('the Nitro runtime carries a compiled wasm module and Inter fonts', () => {
+  expect(nitroRuntime.takumi).toBeInstanceOf(WebAssembly.Module)
   expect(nitroRuntime.fonts.map((font) => font.weight)).toEqual([400, 700])
   for (const font of nitroRuntime.fonts) {
     expect(font.data.byteLength).toBeGreaterThan(10_000)

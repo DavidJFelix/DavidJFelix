@@ -23,7 +23,7 @@ test('home page carries OpenGraph meta', async ({page}) => {
   )
   await expect(head.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://f311x.com/')
   await expect(head.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary')
-  // No card route (deploys through alchemy, no wasm module rule -- src/site.ts).
+  // No card route: see src/site.ts.
   await expect(head.locator('meta[property="og:image"]')).toHaveCount(0)
 })
 

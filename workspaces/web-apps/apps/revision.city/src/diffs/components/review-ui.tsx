@@ -274,6 +274,7 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
       behavior: 'smooth-auto',
     })
   }, [])
+  const patchShown = loadState === 'ready' || (loadState === 'streaming' && initialItems.length > 0)
   // Withhold the viewer until the persisted themes have been read from
   // localStorage. Otherwise on client-side navigation back into a diff the
   // CodeView would mount during the brief render where lightThemeName/darkThemeName
@@ -287,7 +288,7 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
     workerPoolState !== 'initializing' &&
     themesHydrated &&
     githubSession.status !== 'loading' &&
-    (loadState === 'ready' || (loadState === 'streaming' && initialItems.length > 0))
+    patchShown
 
   return (
     <ReviewGrid>
@@ -366,7 +367,9 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
           errorMessage={errorMessage}
           onRetry={retryLoad}
           remedy={errorRemedy}
+          sourceName={isNullish(domain) ? 'GitHub' : domain}
           state={loadState}
+          waitingFor={patchShown ? 'highlighter' : 'patch'}
         />
       )}
     </ReviewGrid>

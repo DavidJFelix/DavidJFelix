@@ -15,9 +15,8 @@ export default defineNuxtConfig({
     storageKey: 'theme',
     disableTransition: true,
   },
-  // Deploy as a Cloudflare Worker (module syntax) via Nitro. Wasm is for the
-  // share card's Takumi module (the cloudflare presets already import
-  // wasm as native modules via unwasm's esmImport).
+  // Deploy as a Cloudflare Worker through Nitro. The share card runtime
+  // (@davidjfelix/og/runtime/nitro) needs `experimental.wasm`.
   nitro: {
     preset: 'cloudflare_module',
     experimental: {wasm: true},

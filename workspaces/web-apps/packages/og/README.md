@@ -84,6 +84,9 @@ it:
   Vite plugin's module rule, and `?inline` folds the font files into the bundle as data URLs.
   SvelteKit's adapter hands wrangler an unbundled worker, so monicandavid.com carries a small Vite
   plugin (`vite.config.ts`) that leaves `.wasm` imports for wrangler's bundler to turn into modules.
+  This runtime does not load in Node. A SvelteKit route imports it on the first request, because the
+  build imports every route module in Node (monicandavid.com). An Astro app that prerenders in Node
+  sets `prerender = false` on its card route (davidjfelix.com).
 - `./runtime/nitro`: unwasm's `?module` suffix and Nitro's `raw:` prefix do the same for Nuxt,
   behind `nitro.experimental.wasm`.
 - `./runtime/node`: reads the binary and fonts from disk, for djf.io's prerendered endpoint and the
@@ -94,11 +97,8 @@ Takumi or the font package -- except djf.io, whose Vite SSR build externalizes t
 prerender, where the emitted chunk resolves from the app's tree instead.
 
 The fonts are the latin subset of `@fontsource/inter` as WOFF2, because Takumi does not read the
-older WOFF. A character outside the subset draws as Inter's missing-glyph box.
-
-The card draws only the characters of Inter's `latin` subset and draws a box for any other
-character. `canDrawText(text)` on `./glyphs` tells an app if a text draws, so that it can show other
-text.
+older WOFF. A character outside the subset draws as Inter's missing-glyph box. `canDrawText(text)`
+on `./glyphs` tells an app if a text draws, so that it can show other text.
 
 `ogCard({runtime, ...card})` is the request handler apps mount at `/og/default.png`: it renders once
 and keeps the response in the Workers Cache API's default cache (a day's `max-age`), so a burst of

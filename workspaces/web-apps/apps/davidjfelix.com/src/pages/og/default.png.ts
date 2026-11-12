@@ -3,14 +3,10 @@ import {viteRuntime} from '@davidjfelix/og/runtime/vite'
 import type {APIRoute} from 'astro'
 import {cardTheme, site} from '../../site'
 
-// The only on-demand route besides bugs.ts and diag -- astro.config.mjs
-// prerenders every other page in Node (prerenderEnvironment: 'node'), but this
-// endpoint has to run in workerd, where the wasm modules load as imported
-// modules instead of raw bytes.
+// This route runs on demand, unlike the pages: astro.config.mjs prerenders in
+// Node, and viteRuntime loads only in the Worker.
 export const prerender = false
 
-// The share card every page's og:image points at, rendered on the Worker at
-// request time (Takumi on wasm) and kept in the edge cache.
 const card = ogCard({
   runtime: viteRuntime,
   title: site.title,

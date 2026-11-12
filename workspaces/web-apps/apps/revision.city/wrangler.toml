@@ -70,11 +70,9 @@ database_name = "revision-city"
 database_id = "e62e3ce1-5045-4b3f-a557-b05a13b0095f"
 migrations_dir = "drizzle"
 
-# The deployed version's id, read by the share-card routes (src/routes/og) to
-# key their edge cache: a rendered card lives at the edge for its whole cache
-# life, and without the version in the key a deploy would keep serving the
-# previous version's cards until they expired. Bindings are not inherited by
-# environments, so the dev environment below declares it again.
+# The deployed version's id, for the share card routes (src/deployed-version.ts).
+# Bindings are not inherited by environments, so the dev environment below
+# declares it again.
 [version_metadata]
 binding = "CF_VERSION_METADATA"
 

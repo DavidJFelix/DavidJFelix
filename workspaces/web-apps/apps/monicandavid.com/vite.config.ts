@@ -6,14 +6,11 @@ import {vitePreprocess} from '@sveltejs/vite-plugin-svelte'
 import type {Plugin} from 'vite'
 import {defineConfig, normalizePath} from 'vite'
 
-// adapter-cloudflare hands wrangler an unbundled worker (_worker.js imports the
-// Vite SSR output as-is), and wrangler's own bundler turns a `.wasm` import
-// into a WebAssembly module uploaded with the Worker -- the only form Workers
-// accept, since they refuse to compile wasm from bytes at runtime. Vite has no
-// such rule, so this plugin keeps every `.wasm` import external in the SSR
-// build, copies the binary into the server output, and points the import at
-// it. The share card's Takumi module (@davidjfelix/og/runtime/vite) is
-// what rides through it.
+// adapter-cloudflare gives wrangler the Vite SSR output without a bundle step.
+// Only wrangler's bundler turns a `.wasm` import into a module that Workers
+// accept. So this plugin keeps each `.wasm` import external in the SSR build,
+// copies the binary into the server output, and points the import at the copy.
+// The share card runtime (@davidjfelix/og/runtime/vite) needs it.
 const WASM_IMPORT = /__wasm_module__(\/[^'"]+\.wasm)/g
 
 const wasmModules = (): Plugin => ({

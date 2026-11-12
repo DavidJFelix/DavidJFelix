@@ -3,8 +3,6 @@ import {nitroRuntime} from '@davidjfelix/og/runtime/nitro'
 import {defineEventHandler, toWebRequest} from 'h3'
 import {cardTheme, site} from '../../../shared/site'
 
-// The share card every page's og:image points at, rendered on the Worker at
-// request time (Takumi on wasm) and kept in the edge cache.
 const card = ogCard({
   runtime: nitroRuntime,
   title: site.title,

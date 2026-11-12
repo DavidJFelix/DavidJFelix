@@ -6,6 +6,7 @@ Cloudflare Workers the same way as the old modules. The cards keep their layout;
 a few pixels at most. In a local benchmark, a card after the first renders in about 6 ms in place of
 about 23 ms. The fonts are now WOFF2 files, because Takumi does not read WOFF. Each Worker upload
 grows by about 0.7 MB gzipped. The package tests now compare three cards with committed PNG
-snapshots and measure the card layout. Takumi draws text directly to pixels, with no SVG step, so
-the `ogSvg` export and the SVG text test that pinned satori's advisory are removed. The Renovate
-rule for satori now says that no code imports satori.
+snapshots and measure the card layout. Takumi draws text directly to pixels, with no SVG step. So
+the `ogSvg` export and the SVG text test that pinned satori's advisory are gone, and so are satori,
+`@resvg/resvg-wasm`, and the Renovate rule that held satori at 0.32. The apps' comments no longer
+describe how the og package works; its README does.

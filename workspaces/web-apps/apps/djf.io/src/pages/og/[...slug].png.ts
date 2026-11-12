@@ -27,8 +27,8 @@ export const getStaticPaths = async () => {
 
 type Props = InferGetStaticPropsType<typeof getStaticPaths>
 
-// Prerendered, so the cards are rendered once at build in Node: the runtime
-// reads Takumi's wasm plus the Inter files from this app's tree.
+// Astro prerenders these cards at build, in Node, so the route uses the Node
+// runtime.
 const render = createOgRenderer(await nodeRuntime())
 
 export const GET: APIRoute<Props> = async ({props}) => {

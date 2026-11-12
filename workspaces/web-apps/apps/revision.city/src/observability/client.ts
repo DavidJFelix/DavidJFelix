@@ -1,6 +1,6 @@
 import {INGEST_PREFIX} from '@/lib/posthog-proxy'
 import {SENTRY_TUNNEL_ROUTE} from '@/lib/sentry-tunnel'
-import {resolvePostHog, resolveSentry} from './config'
+import {resolvePostHog, resolveSentry, resolveSentryEnvironment} from './config'
 
 // Starts client-side error monitoring (Sentry) and product analytics (PostHog),
 // each only when configured. Both ride a same-origin relay so ad/tracker blockers
@@ -20,7 +20,7 @@ export function initClientObservability(): void {
       void import('@sentry/react').then((Sentry) => {
         Sentry.init({
           dsn: sentry.dsn,
-          environment: import.meta.env.MODE,
+          environment: resolveSentryEnvironment(import.meta.env.VITE_PUBLIC_DEPLOY_ENV),
           integrations: [Sentry.browserTracingIntegration()],
           tracesSampleRate: 1,
           // Relay envelopes through our own origin (src/routes/bugs.ts) so

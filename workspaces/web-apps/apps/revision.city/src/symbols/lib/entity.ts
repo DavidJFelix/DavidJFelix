@@ -24,6 +24,7 @@ export type EntityKind =
   | 'struct'
   | 'trait'
   | 'type'
+  | 'union'
   | 'variable'
 
 // How an entity fared between two revisions. Mirrors sem's change buckets so a
@@ -153,6 +154,10 @@ export interface EntitySpec {
   // Escape hatch for grammars whose name is not a node -- a CSS selector list,
   // a markdown heading's text.
   readonly resolveName?: (params: ResolveEntityNameParams) => string | undefined
+  // The type that owns a member declared outside it (a Go method's receiver).
+  // The owner goes in front of the name in the qualified path; `name` stays the
+  // bare member name.
+  readonly resolveOwner?: (params: ResolveEntityNameParams) => string | undefined
   // The value nodes forming an ordered sequence this entity owns (a JSON array
   // property's elements), or undefined when it owns none. Elements become
   // fingerprints on the entity, giving the matcher an element-level diff.

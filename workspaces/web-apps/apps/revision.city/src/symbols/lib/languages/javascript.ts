@@ -4,8 +4,16 @@ import {parser} from '@lezer/javascript'
 import type {EntityKind, EntitySpec, ResolveEntityNameParams} from '../entity'
 import {anonymousScopeProp, entityProp} from '../entity'
 
-// Initializers that make a binding a function rather than a value.
-const FUNCTION_INITIALIZERS = new Set(['ArrowFunction', 'FunctionExpression', 'ClassExpression'])
+// Initializers that make a binding a function rather than a value. The
+// declarations are the values of `export default function () {}` and
+// `export default class {}`.
+const FUNCTION_INITIALIZERS = new Set([
+  'ArrowFunction',
+  'FunctionExpression',
+  'ClassExpression',
+  'FunctionDeclaration',
+  'ClassDeclaration',
+])
 
 const SPECS: Record<string, EntitySpec> = {
   FunctionDeclaration: {kind: 'function', name: ['VariableDefinition'], container: true},
@@ -24,6 +32,16 @@ const SPECS: Record<string, EntitySpec> = {
   TypeAliasDeclaration: {kind: 'type', name: ['TypeDefinition']},
   EnumDeclaration: {kind: 'enum', name: ['TypeDefinition']},
   NamespaceDeclaration: {kind: 'module', name: ['VariableDefinition'], container: true},
+  AmbientFunctionDeclaration: {kind: 'function', name: ['VariableDefinition']},
+  // `export default defineConfig({...})` has no name of its own. A named default
+  // function or class is already an entity, so it gets no second row.
+  ExportDeclaration: {
+    kind: 'constant',
+    accept: isAnonymousDefaultExport,
+    resolveName: () => 'default',
+    resolveKind: resolveBindingKind,
+    container: true,
+  },
   // Only module- and class-level bindings; `scope` keeps function locals out.
   VariableDeclaration: {
     kind: 'constant',
@@ -42,6 +60,30 @@ const SPECS: Record<string, EntitySpec> = {
     accept: isStatementCall,
     resolveName: resolveCallLabel,
   },
+  // `module.exports = ...`, `exports.load = ...`, `Button.displayName = ...`:
+  // a module-level assignment to a member, named by the member path.
+  AssignmentExpression: {
+    kind: 'constant',
+    scope: 'top-level',
+    accept: isMemberAssignmentStatement,
+    resolveName: ({node, source}) => calleePath(node.firstChild, source),
+    resolveKind: resolveBindingKind,
+  },
+}
+
+function isAnonymousDefaultExport({node}: ResolveEntityNameParams): boolean {
+  if (node.getChild('default') === null) {
+    return false
+  }
+  const declaration = node.getChild('FunctionDeclaration') ?? node.getChild('ClassDeclaration')
+  return declaration === null || declaration.getChild('VariableDefinition') === null
+}
+
+function isMemberAssignmentStatement({node}: ResolveEntityNameParams): boolean {
+  return (
+    node.parent?.type.name === 'ExpressionStatement' &&
+    node.firstChild?.type.name === 'MemberExpression'
+  )
 }
 
 // Statement position only: an initializer or argument is part of the entity

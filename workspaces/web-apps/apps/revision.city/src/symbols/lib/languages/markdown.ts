@@ -1,12 +1,33 @@
+import type {SyntaxNode} from '@lezer/common'
 import {parser} from '@lezer/markdown'
 
 import type {EntitySpec, ResolveEntityNameParams} from '../entity'
 import {entityProp} from '../entity'
 
+// The match ends where the closing `---` line of YAML front matter starts.
+const FRONT_MATTER = /^---\r?\n[\s\S]*?\n(?=---\r?(?:\n|$))/u
+
+// The parser reads YAML front matter as a rule and then a setext heading that
+// the closing `---` underlines. That heading is not a heading of the document.
+function isFrontMatter(mark: SyntaxNode | null, source: string): boolean {
+  const close = FRONT_MATTER.exec(source)?.[0].length
+  return close !== undefined && mark?.from === close
+}
+
 // Headings carry their marker (`##`) and, for setext, an underline; the entity
 // name is what is left once those are removed.
 function resolveHeadingText({node, source}: ResolveEntityNameParams): string | undefined {
   const mark = node.getChild('HeaderMark')
+  if (node.name.startsWith('Setext')) {
+    if (isFrontMatter(mark, source)) {
+      return undefined
+    }
+    const text = source
+      .slice(node.from, mark?.from ?? node.to)
+      .trim()
+      .replaceAll(/\s+/gu, ' ')
+    return text === '' ? undefined : text
+  }
   const start = mark === null ? node.from : mark.to
   const text = removeClosingSequence(source.slice(start, node.to).split('\n')[0]).trim()
   return text === '' ? undefined : text

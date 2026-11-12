@@ -274,13 +274,21 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
       behavior: 'smooth-auto',
     })
   }, [])
+  const patchShown = loadState === 'ready' || (loadState === 'streaming' && initialItems.length > 0)
   // Withhold the viewer until the persisted themes have been read from
   // localStorage. Otherwise on client-side navigation back into a diff the
   // CodeView would mount during the brief render where lightThemeName/darkThemeName
   // are still at their `DEFAULT_*_THEME` initial values and tokenize the
   // first batch of files against the wrong palette.
-  const patchShown = loadState === 'ready' || (loadState === 'streaming' && initialItems.length > 0)
-  const viewerAvailable = workerPoolState !== 'initializing' && themesHydrated && patchShown
+  // Also withhold it until the session is known. The session decides
+  // `loadDiffFiles`, which adds a "more unchanged context" row to each partial
+  // file. CodeView does not compute its file heights again when that option
+  // changes. So a late session makes the scroll height too short for the last file.
+  const viewerAvailable =
+    workerPoolState !== 'initializing' &&
+    themesHydrated &&
+    githubSession.status !== 'loading' &&
+    patchShown
 
   return (
     <ReviewGrid>

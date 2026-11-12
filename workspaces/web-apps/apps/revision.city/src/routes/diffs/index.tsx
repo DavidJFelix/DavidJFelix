@@ -214,7 +214,7 @@ function DiffsHomePage() {
 // viewer route owns fetching and renders its own loading state there.
 const HomeFetchForm = memo(function HomeFetchForm() {
   return (
-    <div className={css({px: '4'})}>
+    <div className={css({pl: '4', pr: '2', py: '1.5'})}>
       <DiffUrlForm
         placeholder="https://github.com/org/repo/123"
         inputClassName={css({
@@ -231,12 +231,6 @@ const HomeFetchForm = memo(function HomeFetchForm() {
             size="icon-md"
             disabled={isPending || url.length === 0}
             aria-label={isPending ? 'Fetching…' : 'Fetch'}
-            className={css({
-              mr: '-2',
-              '&[data-slot="button"]': {
-                _hover: {color: 'diffs.muted.foreground', bg: 'transparent'},
-              },
-            })}
           >
             <IconArrow className={css({w: '4', h: '4', transform: 'rotate(180deg)'})} />
           </Button>

@@ -42,6 +42,89 @@ test('follows a method renamed inside its class', async () => {
   ])
 })
 
+test('reports a Java field value edit as a modified field, not a rename', async () => {
+  const oldSource = 'class A {\n  static final int MAX = 1;\n}\n'
+  const newSource = 'class A {\n  static final int MAX = 2;\n}\n'
+
+  const diff = await diffEntities({path: 'src/A.java', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([{type: 'modified', kind: 'field', qualifiedName: 'A.MAX'}])
+})
+
+test('names a Go method by its receiver type', async () => {
+  const oldSource =
+    'package m\n\nfunc (a A) String() string {\n\treturn "a"\n}\n\nfunc (b B) String() string {\n\treturn "b"\n}\n'
+  const newSource = oldSource.replace('"b"', '"bee"')
+
+  const diff = await diffEntities({path: 'm.go', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([
+    {type: 'modified', kind: 'method', qualifiedName: 'B.String'},
+  ])
+})
+
+test.each([
+  {
+    change: 'prototype',
+    oldSource: 'int add(int a, int b);\n',
+    newSource: 'long add(long a, long b);\n',
+    kind: 'function',
+    qualifiedName: 'add',
+  },
+  {
+    change: 'global',
+    oldSource: 'static int counter = 0;\n',
+    newSource: 'static int counter = 1;\n',
+    kind: 'variable',
+    qualifiedName: 'counter',
+  },
+  {
+    change: 'macro',
+    oldSource: '#define LIMIT 10\n',
+    newSource: '#define LIMIT 20\n',
+    kind: 'macro',
+    qualifiedName: 'LIMIT',
+  },
+])(
+  'reports a changed C $change as one modified row',
+  async ({oldSource, newSource, kind, qualifiedName}) => {
+    const diff = await diffEntities({path: 'limits.c', oldSource, newSource})
+
+    expect(diff.changes).toMatchObject([{type: 'modified', kind, qualifiedName}])
+    expect(diff.changes).toHaveLength(1)
+  },
+)
+
+test('reports a changed C include as no row', async () => {
+  const diff = await diffEntities({
+    path: 'main.c',
+    oldSource: '#include <stdio.h>\n',
+    newSource: '#include <stdlib.h>\n',
+  })
+
+  expect(diff.changes).toEqual([])
+})
+
+test('reports a changed C local declaration against its function only', async () => {
+  const oldSource = 'int main(void) {\n  int local = 1;\n  return local;\n}\n'
+  const newSource = oldSource.replace('= 1', '= 2')
+
+  const diff = await diffEntities({path: 'main.c', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([{type: 'modified', kind: 'function', qualifiedName: 'main'}])
+  expect(diff.changes).toHaveLength(1)
+})
+
+test('reports a body edit of a C function that has a prototype against the definition', async () => {
+  const oldSource = 'int add(int a, int b);\n\nint add(int a, int b) {\n  return a + b;\n}\n'
+  const newSource = oldSource.replace('a + b', 'b + a')
+
+  const diff = await diffEntities({path: 'add.c', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([{type: 'modified', kind: 'function', qualifiedName: 'add#2'}])
+  expect(diff.changes).toHaveLength(1)
+})
+
 test('names the dependency that changed in a manifest', async () => {
   const oldSource = '{"dependencies": {"react": "18.0.0", "zod": "4.0.0"}}'
   const newSource = '{"dependencies": {"react": "19.0.0", "zod": "4.0.0"}}'
@@ -51,6 +134,17 @@ test('names the dependency that changed in a manifest', async () => {
   expect(diff.changes).toMatchObject([{type: 'modified', qualifiedName: 'dependencies.react'}])
 })
 
+test('names the default export of a config file when its options change', async () => {
+  const oldSource = 'export default defineConfig({server: {port: 3000}})\n'
+  const newSource = 'export default defineConfig({server: {port: 4000}})\n'
+
+  const diff = await diffEntities({path: 'vite.config.ts', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([
+    {type: 'modified', kind: 'constant', qualifiedName: 'default'},
+  ])
+})
+
 test('reports only the entity that changed, not the ones enclosing it', async () => {
   const oldSource = 'export class Widget {\n  render() {\n    return 1\n  }\n}\n'
   const newSource = 'export class Widget {\n  render() {\n    return 2\n  }\n}\n'
@@ -58,6 +152,17 @@ test('reports only the entity that changed, not the ones enclosing it', async ()
   const diff = await diffEntities({path: 'src/widget.ts', oldSource, newSource})
 
   expect(diff.changes).toMatchObject([{type: 'modified', qualifiedName: 'Widget.render'}])
+})
+
+test('reports a new struct parameter as a change to its function only', async () => {
+  const oldSource = 'void handle(int code) {\n  use(code);\n}\n'
+  const newSource = 'void handle(int code, struct request *req) {\n  use(code);\n}\n'
+
+  const diff = await diffEntities({path: 'src/handle.c', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([
+    {type: 'modified', kind: 'function', qualifiedName: 'handle'},
+  ])
 })
 
 // The cspell.jsonc shape that once cascaded: objects in an array all carry the

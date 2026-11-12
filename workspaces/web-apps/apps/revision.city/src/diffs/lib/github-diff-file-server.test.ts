@@ -6,6 +6,7 @@ import {
   createGitHubFileReader,
   loadGitHubDiffFiles,
 } from './github-diff-file-server'
+import {getLoaderErrorStatus} from './loader-error'
 
 // fetch by call signature only: lib.dom types `typeof fetch` with a required
 // static `preconnect`, which a stub cannot (and need not) satisfy.
@@ -153,12 +154,40 @@ test('a reader does not keep a failed lookup, so the next read tries again', asy
   expect(newFile?.contents).toContain('greet')
 })
 
+// The file endpoint answers with the status that the error carries.
+test.each([
+  {name: 'a revoked token', response: () => new Response('', {status: 401}), status: 401},
+  {name: 'a missing pull request', response: () => new Response('', {status: 404}), status: 404},
+  {
+    name: 'a rate limit',
+    response: () => new Response('', {status: 403, headers: {'x-ratelimit-remaining': '0'}}),
+    status: 429,
+  },
+  {name: 'a GitHub outage', response: () => new Response('', {status: 503}), status: 502},
+])('a reader gives $status for $name', async ({response, status}) => {
+  clearGitHubDiffFileServerCache()
+  const readFiles = createGitHubFileReader(SOURCE, {
+    fetch: vi.fn<FetchLike>(async () => response()),
+    token: 'user-token',
+    tokenSource: 'request',
+  })
+
+  const error = await readFiles({name: 'src/a.ts', type: 'change'}).catch(
+    (caught: unknown) => caught,
+  )
+
+  expect(getLoaderErrorStatus(error)).toBe(status)
+})
+
 test('a reader rejects a path that is not a GitHub diff', async () => {
   const readFiles = createGitHubFileReader('/owner/repo/issues/7', {tokenSource: 'anonymous'})
 
-  await expect(readFiles({name: 'src/a.ts', type: 'change'})).rejects.toThrow(
-    'Unsupported GitHub diff path.',
+  const error = await readFiles({name: 'src/a.ts', type: 'change'}).catch(
+    (caught: unknown) => caught,
   )
+
+  expect(error).toHaveProperty('message', 'Unsupported GitHub diff path.')
+  expect(getLoaderErrorStatus(error)).toBe(400)
 })
 
 // A dot segment that is percent-encoded in a compare range appears only after

@@ -1,5 +1,5 @@
 // cSpell:ignore revisioncity -- the GitHub App's slug
-import {serialize} from 'node:v8'
+import {deserialize, serialize} from 'node:v8'
 import {expect, test, vi} from 'vitest'
 import {z} from 'zod'
 import {createMemoryChunkReviewStore} from './chunk-review-store'
@@ -11,6 +11,7 @@ import {createMemorySummaryCommentLock} from './summary-comment-lock'
 import type {LogWideEvent, WideEvent} from './wide-event'
 
 const headSha = 'a'.repeat(40)
+const runId = 'review-run'
 const baseSha = 'c'.repeat(40)
 const usage = {promptTokens: 10, completionTokens: 5, costUsd: 0.01}
 
@@ -165,7 +166,7 @@ function recordingStep() {
   const results = new Map<string, unknown>()
   const step: RunStep = async (name, run) => {
     names.push(name)
-    const result = await run({isLastAttempt: true})
+    const result = await run({attempt: 1, isLastAttempt: true})
     results.set(name, result)
     return result
   }
@@ -174,7 +175,32 @@ function recordingStep() {
 
 // Runs a failed step again, as the Workflow does, but only once.
 const retryingStep: RunStep = async (_name, run) =>
-  run({isLastAttempt: false}).catch(() => run({isLastAttempt: true}))
+  run({attempt: 1, isLastAttempt: false}).catch(() => run({attempt: 2, isLastAttempt: true}))
+
+// Keeps each step result in serialized form, as the Workflow does. The key
+// counts the earlier steps of the same name, as the Workflow's step count does.
+// A run that stops after the step `stopAfter` throws on each step after it, and
+// a later run returns the kept results and does not run those steps again.
+function durableSteps() {
+  const results = new Map<string, Buffer>()
+  const run = (stopAfter?: string): RunStep => {
+    const counts = new Map<string, number>()
+    let stopped = false
+    return async (name, body) => {
+      if (stopped) {
+        throw new Error('The instance stopped')
+      }
+      const count = (counts.get(name) ?? 0) + 1
+      counts.set(name, count)
+      const key = `${name} ${count}`
+      const result = results.get(key) ?? serialize(await body({attempt: 1, isLastAttempt: true}))
+      results.set(key, result)
+      stopped = name === stopAfter
+      return deserialize(result)
+    }
+  }
+  return {run}
+}
 
 const checkRunText = (body: unknown) =>
   z.object({output: z.object({text: z.string()})}).parse(body).output.text
@@ -187,6 +213,7 @@ function runParams(changes: Partial<RunReviewParams> = {}): RunReviewParams {
     name: 'repo',
     pullNumber: 7,
     headSha,
+    runId,
     step: recordingStep().step,
     request: fakeGitHub().request,
     chat: answering([]),
@@ -227,6 +254,38 @@ test('runReview reviews the head, posts the findings, and fails the check on a h
     output: {title: '1 finding'},
   })
 })
+
+test.each([
+  'start',
+  'read pull request and guides',
+  'review 1 of 1',
+  'post review',
+  'complete check run',
+  'update summary comment',
+])(
+  'runReview after a restart that follows the step %s does each step one time',
+  async (stopAfter) => {
+    const github = fakeGitHub()
+    const steps = durableSteps()
+    const chat = answering([highFinding])
+    const events: WideEvent[] = []
+    const params = {request: github.request, chat, log: (event: WideEvent) => events.push(event)}
+
+    // Each run has its own store, so a chunk review that runs again calls the model again.
+    // The run log step catches its error, so a stop after the last step does not fail the run.
+    await runReview(runParams({...params, step: steps.run(stopAfter)})).catch(() => null)
+    await runReview(runParams({...params, step: steps.run()}))
+
+    expect(github.sent(CHECK_RUNS)).toHaveLength(1)
+    expect(chat).toHaveBeenCalledTimes(CALLS_WITH_CHECKED_FINDING)
+    expect(github.sent(REVIEWS)).toHaveLength(1)
+    expect(github.sent(CHECK_RUN)).toHaveLength(1)
+    expect(github.sent(NEW_ISSUE_COMMENT)).toHaveLength(1)
+    expect(events.filter(({event}) => event === 'review run')).toEqual([
+      expect.objectContaining({outcome: 'failure'}),
+    ])
+  },
+)
 
 // The comments of a first run, as GitHub lists them on the next run.
 async function postedComments() {
@@ -288,9 +347,10 @@ test('runReview keeps the failed check run when the sync with the threads fails'
     'log failure run',
   ])
   expect(github.sent(CHECK_RUN)).toHaveLength(1)
-  expect(warn).toHaveBeenCalledWith('Could not sync the check run with the threads', {
-    error: 'Error: GitHub is down',
-  })
+  expect(warn).toHaveBeenCalledWith(
+    'Could not sync the check run with the threads',
+    expect.objectContaining({runId, error: 'Error: GitHub is down'}),
+  )
   warn.mockRestore()
 })
 
@@ -352,9 +412,10 @@ test('runReview retries the summary comment, then only warns', async () => {
   expect(github.sent(CHECK_RUN)).toEqual([
     expect.objectContaining({body: expect.objectContaining({conclusion: 'success'})}),
   ])
-  expect(warn).toHaveBeenCalledWith('Could not update the summary comment', {
-    error: 'Error: GitHub is down',
-  })
+  expect(warn).toHaveBeenCalledWith(
+    'Could not update the summary comment',
+    expect.objectContaining({runId, error: 'Error: GitHub is down'}),
+  )
   warn.mockRestore()
 })
 
@@ -367,9 +428,10 @@ test('runReview waits for a run that holds the summary comment lock, then only w
   await runReview(runParams({request: github.request, step: retryingStep, summaryCommentLock}))
 
   expect(github.sent(ISSUE_COMMENTS)).toEqual([])
-  expect(warn).toHaveBeenCalledWith('Could not update the summary comment', {
-    error: 'Error: Another run is editing the summary comment',
-  })
+  expect(warn).toHaveBeenCalledWith(
+    'Could not update the summary comment',
+    expect.objectContaining({runId, error: 'Error: Another run is editing the summary comment'}),
+  )
   warn.mockRestore()
 })
 
@@ -403,6 +465,21 @@ test('runReview passes the check and posts nothing when there are no findings', 
     conclusion: 'success',
     output: {title: 'No findings'},
   })
+})
+
+test('runReview fails the check when a file has a diff line that is too long', async () => {
+  const github = fakeGitHub({
+    [FILES]: () => [changedFile('data.json', `@@ -1,1 +1,1 @@\n+${'x'.repeat(5001)}`)],
+  })
+
+  await runReview(runParams({request: github.request}))
+
+  const body = github.sent(CHECK_RUN)[0].body
+  expect(body).toMatchObject({
+    conclusion: 'failure',
+    output: {title: '1 file with a too-long line'},
+  })
+  expect(body).not.toHaveProperty('external_id')
 })
 
 const failingLog: LogWideEvent = () => {
@@ -439,7 +516,7 @@ test('runReview completes the check run once when a log step fails', async () =>
     if (name.startsWith('log ')) {
       throw new Error('The step failed')
     }
-    return run({isLastAttempt: true})
+    return run({attempt: 1, isLastAttempt: true})
   }
 
   await runReview(runParams({request: github.request, step}))
@@ -513,9 +590,10 @@ test('runReview removes the label that asked for the review, and continues when 
   await runReview(runParams({request: github.request, label: 'Revision City'}))
 
   expect(github.sent(LABEL)).toHaveLength(1)
-  expect(warn).toHaveBeenCalledWith('Could not remove the review label', {
-    error: 'Error: label not found',
-  })
+  expect(warn).toHaveBeenCalledWith(
+    'Could not remove the review label',
+    expect.objectContaining({runId, error: 'Error: label not found'}),
+  )
   expect(github.sent(CHECK_RUN)[0].body).toMatchObject({conclusion: 'success'})
   warn.mockRestore()
 })
@@ -745,6 +823,56 @@ test('runReview reviews without guides when it cannot read them', async () => {
   warn.mockRestore()
 })
 
+test('runReview reads the guides again after a failed read before the last attempt', async () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+  let baseTreeReads = 0
+  const github = fakeGitHub({
+    [BASE_TREE]: () => {
+      baseTreeReads += 1
+      if (baseTreeReads === 1) {
+        throw new GitHubApiError(502, 'Bad Gateway')
+      }
+      return {
+        sha: 'base-tree',
+        truncated: false,
+        tree: [{path: 'AGENTS.md', type: 'blob', sha: 'root-guide'}],
+      }
+    },
+    'GET /repos/acme/repo/git/blobs/root-guide': () => ({
+      content: btoa('Use bun.'),
+      encoding: 'base64',
+    }),
+  })
+  const chat = answering([])
+
+  await runReview(runParams({step: retryingStep, request: github.request, chat}))
+
+  expect(baseTreeReads).toBe(2)
+  expect(chat.mock.calls[0][0].messages[0].content).toContain('Guide: AGENTS.md')
+  expect(warn).not.toHaveBeenCalledWith('Could not read the repository guides', expect.anything())
+  warn.mockRestore()
+})
+
+test('runReview reviews without guides when the last attempt cannot read them', async () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+  const github = fakeGitHub({
+    [BASE_TREE]: () => {
+      throw new GitHubApiError(502, 'Bad Gateway')
+    },
+  })
+  const chat = answering([])
+
+  await runReview(runParams({step: retryingStep, request: github.request, chat}))
+
+  expect(github.sent(BASE_TREE)).toHaveLength(2)
+  expect(chat).toHaveBeenCalledTimes(REVIEWERS.length)
+  expect(chat.mock.calls[0][0].messages[0].content).not.toContain('Guide:')
+  expect(warn).toHaveBeenCalledWith('Could not read the repository guides', {
+    error: 'Error: Bad Gateway',
+  })
+  warn.mockRestore()
+})
+
 test('runReview reviews at most 150 chunks, in steps, and loads the head tree once', async () => {
   const files = Array.from({length: 151}, (_, index) => changedFile(`src/${index}.ts`, SMALL_PATCH))
   const github = fakeGitHub({
@@ -822,6 +950,8 @@ test('runReview logs one run event with the outcome and counts of the review', a
 
   expect(named('review run')).toEqual([
     expect.objectContaining({
+      runId,
+      checkRunId: 31,
       repository: 'acme/repo',
       installationId: 5,
       pullNumber: 7,
@@ -837,11 +967,29 @@ test('runReview logs one run event with the outcome and counts of the review', a
   ])
   expect(named('model call')).toHaveLength(CALLS_WITH_CHECKED_FINDING)
   expect(named('model call')[0]).toMatchObject({
+    runId,
+    checkRunId: 31,
     pullNumber: 7,
     headSha,
+    step: 1,
+    attempt: 1,
     outcome: 'success',
     costUsd: usage.costUsd,
   })
+})
+
+test('runReview logs the model calls of each attempt of a review step with that attempt', async () => {
+  const {log, named} = recordingLog()
+  const chat = answering([])
+  chat.mockRejectedValueOnce(new OpenRouterError('OpenRouter returned 503: busy', true))
+
+  await runReview(runParams({step: retryingStep, chat, log}))
+
+  expect(named('model call').map(({step, attempt, outcome}) => [step, attempt, outcome])).toEqual([
+    [1, 1, 'error'],
+    ...REVIEWERS.slice(1).map(() => [1, 1, 'success']),
+    [1, 2, 'success'],
+  ])
 })
 
 test.each<{name: string; outcome: string; routes: Record<string, Route>}>([

@@ -26,6 +26,7 @@ import {
   parseGitHubDiffSource,
 } from './github-diff-source'
 import {diagnoseGitHubAccess} from './github-repo-access'
+import {normalizeGitHubPath} from './normalize-github-path'
 import {isNullish} from './nullish'
 
 const CACHE_CONTROL = 'no-store'
@@ -38,8 +39,8 @@ const GITHUB_HOST = 'github.com'
 const GITHUB_RAW_DIFF_HOST = 'patch-diff.githubusercontent.com'
 const NON_DIFF_RESPONSE_MESSAGE = 'GitHub did not return a diff for this URL.'
 const NON_WHITESPACE_PATTERN = /\S/
+const URL_DROPPED_CHARACTER_PATTERN = /[\t\n\r]/
 const RAW_GITHUB_DIFF_PATH_PATTERN = /^\/raw\/[^/]+\/[^/]+\/pull\/[^/]+\.(?:diff|patch)$/
-const GITHUB_PULL_TAB_PATH_PATTERN = /^\/([^/]+)\/([^/]+)\/pull\/(\d+)\/(?:changes|files)$/
 const UPSTREAM_FAILURE_LOG_MESSAGE = 'diff upstream attempt failed'
 const APP_FALLBACK_WITHHELD_LOG_MESSAGE = 'diff app fallback withheld'
 
@@ -251,6 +252,12 @@ function resolvePatchURLInput(
   input: string,
   apiAuth: GitHubAPIAuth | undefined,
 ): ResolvedPatchRequest | undefined {
+  // The URL parser drops tabs and line breaks without an error, so a ref with
+  // one would fetch a different ref.
+  if (URL_DROPPED_CHARACTER_PATTERN.test(input)) {
+    return undefined
+  }
+
   if (input.startsWith('/')) {
     return resolveGitHubPatchRequest(input, apiAuth)
   }
@@ -294,7 +301,7 @@ function resolveDomainPatchRequest(domain: string, path: string): ResolvedPatchR
   }
 
   const patchURL = resolveDomainPatchURL(domain, path)
-  return isNullish(patchURL) ? undefined : {patchURL}
+  return isNullish(patchURL) ? undefined : {patchURL, sourceURL: patchURL}
 }
 
 function resolveCodebergPatchRequest(path: string): ResolvedPatchRequest | undefined {
@@ -446,7 +453,7 @@ function resolveGitHubPath(path: string): string | undefined {
   }
 
   let patchPath = normalizeGitHubPath(path)
-  if (patchPath === '') {
+  if (patchPath === '/') {
     return undefined
   }
 
@@ -454,13 +461,22 @@ function resolveGitHubPath(path: string): string | undefined {
     patchPath += '.diff'
   }
 
-  return `https://${GITHUB_HOST}${patchPath}`
+  return createGitHubURL(patchPath)
 }
 
 // The human-facing github.com URL a patch attempt stands for, which is what the
 // access diagnosis parses back into an owner, repository, and diff source.
 function createGitHubSourceURL(path: string): string {
-  return `https://${GITHUB_HOST}${removeDiffExtension(normalizeGitHubPath(path))}`
+  return createGitHubURL(removeDiffExtension(normalizeGitHubPath(path)))
+}
+
+// The pathname setter escapes `#`, `?` and non-ASCII characters and keeps an
+// existing `%XX` as written. So a ref with a raw `#` and a ref with `%23` get
+// the same URL, and the URL is safe in a response header.
+function createGitHubURL(path: string): string {
+  const url = new URL(`https://${GITHUB_HOST}`)
+  url.pathname = path
+  return url.href
 }
 
 function removeDiffExtension(path: string): string {
@@ -473,16 +489,6 @@ function removeDiffExtension(path: string): string {
   }
 
   return path
-}
-
-function normalizeGitHubPath(path: string): string {
-  const trimmedPath = path.replace(/\/+$/, '')
-  const pullTabMatch = GITHUB_PULL_TAB_PATH_PATTERN.exec(trimmedPath)
-  if (isNullish(pullTabMatch)) {
-    return trimmedPath
-  }
-
-  return `/${pullTabMatch[1]}/${pullTabMatch[2]}/pull/${pullTabMatch[3]}`
 }
 
 function isAllowedHttpsUrl(url: URL): boolean {
@@ -665,15 +671,45 @@ async function createPatchStreamResponse({
     }
   }
 
+  // Reads GitHub only when the client asks for more, so a slow client does not
+  // make the Worker hold the rest of the diff in memory.
+  const reader = responseBody.getReader()
+  let sawContent = false
+  const stopListening = () => {
+    requestSignal.removeEventListener('abort', abortUpstream)
+  }
   const stream = new ReadableStream<Uint8Array>({
-    start(controller) {
-      void pumpPatchBody(responseBody, controller).finally(() => {
-        requestSignal.removeEventListener('abort', abortUpstream)
-      })
+    async pull(controller) {
+      try {
+        // The stream does not call pull again after a pull that enqueues nothing,
+        // so skip empty chunks here.
+        for (;;) {
+          const result = await reader.read()
+          if (result.done) {
+            stopListening()
+            if (sawContent) {
+              controller.close()
+            } else {
+              controller.error(new Error(EMPTY_PATCH_MESSAGE))
+            }
+            return
+          }
+
+          if (result.value.byteLength > 0) {
+            sawContent = true
+            controller.enqueue(result.value)
+            return
+          }
+        }
+      } catch (error) {
+        stopListening()
+        controller.error(error)
+      }
     },
-    cancel() {
+    async cancel(reason) {
       abortUpstream()
-      requestSignal.removeEventListener('abort', abortUpstream)
+      stopListening()
+      await reader.cancel(reason).catch(() => {})
     },
   })
 
@@ -1010,40 +1046,6 @@ function isDiffContentType(contentType: string): boolean {
     (normalizedContentType.includes('application/vnd.github') &&
       normalizedContentType.includes('diff'))
   )
-}
-
-// Forwards each validated upstream diff chunk into the client stream.
-async function pumpPatchBody(
-  body: ReadableStream<Uint8Array>,
-  controller: ReadableStreamDefaultController<Uint8Array>,
-): Promise<void> {
-  try {
-    const reader = body.getReader()
-    let sawContent = false
-    try {
-      for (;;) {
-        const result = await reader.read()
-        if (result.done) {
-          break
-        }
-
-        if (result.value.byteLength > 0) {
-          sawContent = true
-          controller.enqueue(result.value)
-        }
-      }
-    } finally {
-      reader.releaseLock()
-    }
-
-    if (!sawContent) {
-      throw new Error(EMPTY_PATCH_MESSAGE)
-    }
-
-    controller.close()
-  } catch (error) {
-    controller.error(error)
-  }
 }
 
 // Centralizes text response headers for both stream and error bodies. Diff

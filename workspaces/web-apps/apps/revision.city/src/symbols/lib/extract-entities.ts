@@ -299,9 +299,9 @@ interface CountOccurrenceParams {
   counts: Map<string, number>
 }
 
-// Overloads and repeated markdown headings would otherwise share a key and match
-// each other arbitrarily. Counted per kind, because a Rust `struct Widget` and
-// its `impl Widget` are separate entities that legitimately share a name.
+// Overloads and repeated markdown headings would otherwise share one display
+// name. Counted per kind, because a Rust `struct Widget` and its `impl Widget`
+// are separate entities that legitimately share a name.
 function countOccurrence({kind, path, counts}: CountOccurrenceParams): number {
   const key = `${kind}\0${path}`
   const occurrence = (counts.get(key) ?? 0) + 1

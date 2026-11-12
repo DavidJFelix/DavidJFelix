@@ -385,6 +385,7 @@ test('declines to report on a file with more entities than the cap', async () =>
 
   expect(diff.language).toBe('json')
   expect(diff.changes).toEqual([])
+  expect(diff.skipped).toBe('too-large')
 })
 
 test('orders changes by bucket then by position in the new file', async () => {

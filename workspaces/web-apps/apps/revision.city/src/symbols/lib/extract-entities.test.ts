@@ -635,3 +635,19 @@ test('reports a small file of deeply nested entities as too large without hashin
   expect(extractEntities({source, parser: tsxParser})).toEqual({tooLarge: true})
   expect(computeSignature).not.toHaveBeenCalled()
 })
+
+test('reports a parser stack overflow as too large', () => {
+  vi.spyOn(jsonParser, 'parse').mockImplementationOnce(() => {
+    throw new RangeError('Maximum call stack size exceeded')
+  })
+
+  expect(extractEntities({source: '[[0]]', parser: jsonParser})).toEqual({tooLarge: true})
+})
+
+test('passes through a parser error that is not a stack overflow', () => {
+  vi.spyOn(jsonParser, 'parse').mockImplementationOnce(() => {
+    throw new TypeError('The grammar is broken')
+  })
+
+  expect(() => extractEntities({source: '[[0]]', parser: jsonParser})).toThrow(TypeError)
+})

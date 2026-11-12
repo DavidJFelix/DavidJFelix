@@ -5,6 +5,7 @@ import {
   type PullRequestFetch,
   type PullRequestSearchResult,
   type PullRequestSummary,
+  readGitHubSearchFailure,
   SEARCH_PAGE_SIZE,
   searchChunkedPullRequests,
   searchPullRequests,
@@ -15,7 +16,8 @@ export type {PullRequestSummary} from './github-pull-request-search'
 
 // Search is limited to 30 requests per minute per user, so the chunked groups
 // are bounded rather than exhaustive: two fixed queries (assigned, owned) plus
-// at most these many per chunked group keeps a page load well inside it.
+// at most these many per chunked group keeps one load well inside it. Loads
+// that come quickly one after another can still spend it.
 const MEMBER_SEARCH_CHUNK_LIMIT = 2
 const WATCHED_SEARCH_CHUNK_LIMIT = 3
 // One page of watch subscriptions; a full page means the list was cut there.
@@ -47,7 +49,8 @@ export interface PullRequestListBody {
 
 // Lists open pull requests the signed-in visitor can reach, grouped by why
 // they can reach them. Each pull request is reported once, under the first
-// group that claims it. Answers 401 signed out and 502 when GitHub's search
+// group that claims it. Answers 401 signed out or when GitHub rejects the
+// token, 429 when GitHub's search rate limit is spent, and 502 when the search
 // is unavailable, so the client can tell "sign in" from "try again later". A
 // visitor with nothing searchable (no pull requests, or no repositories
 // granted to the app) gets 200 with empty groups, not an error.
@@ -71,12 +74,31 @@ export async function handlePullRequestListRequest(
       token: auth.session.accessToken,
     })
     return withSetCookieHeaders(createJSONResponse({groups}, 200), auth.setCookieHeaders)
-  } catch {
-    return withSetCookieHeaders(
-      createJSONResponse({message: 'GitHub could not list pull requests right now.'}, 502),
-      auth.setCookieHeaders,
+  } catch (error) {
+    return withSetCookieHeaders(createSearchFailureResponse(error), auth.setCookieHeaders)
+  }
+}
+
+// GitHub's search limit counts requests per minute, so one minute is the wait.
+const RATE_LIMITED_RETRY_AFTER_SECONDS = 60
+
+function createSearchFailureResponse(error: unknown): Response {
+  const failure = readGitHubSearchFailure(error)
+  if (failure?.status === 401) {
+    return createJSONResponse(
+      {message: 'GitHub rejected your sign-in. Sign in again.', reason: 'sign-in-again'},
+      401,
     )
   }
+  if (failure?.rateLimited === true) {
+    const response = createJSONResponse(
+      {message: 'GitHub asked to wait before listing pull requests again.'},
+      429,
+    )
+    response.headers.set('Retry-After', String(RATE_LIMITED_RETRY_AFTER_SECONDS))
+    return response
+  }
+  return createJSONResponse({message: 'GitHub could not list pull requests right now.'}, 502)
 }
 
 interface ListPullRequestGroupsParams {

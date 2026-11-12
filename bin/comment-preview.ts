@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
 // Upserts a single "sticky" PR comment with the preview URL and per-stage
 // status (deploy, smoke, screenshots). Idempotent across pushes: scans ALL
-// comment pages for the per-app marker, edits the first match, and deletes any
-// duplicate markers left behind by earlier runs. Shared by every preview
+// comment pages for bot comments that start with the per-app marker, edits the
+// first match, and deletes any duplicates. Shared by every preview
 // workflow -- the app-specific marker, heading, and teardown note come from
 // PREVIEW_MARKER / PREVIEW_TITLE / PREVIEW_FOOTER; the stage outcomes come from
 // PREVIEW_DEPLOY_OUTCOME / PREVIEW_SMOKE_OUTCOME / PREVIEW_E2E_OUTCOME (the
@@ -79,7 +79,7 @@ interface UpsertParams {
   body: string
 }
 
-async function upsertStickyComment(params: UpsertParams): Promise<void> {
+export async function upsertStickyComment(params: UpsertParams): Promise<void> {
   const {gh, repo, prNumber, marker, body} = params
 
   // The list-issue-comments endpoint returns comments oldest-first with no sort
@@ -90,6 +90,7 @@ async function upsertStickyComment(params: UpsertParams): Promise<void> {
   interface Comment {
     id: number
     body?: string
+    user?: {type?: string} | null
   }
   const marked: Comment[] = []
   for (let page = 1; ; page++) {
@@ -97,7 +98,11 @@ async function upsertStickyComment(params: UpsertParams): Promise<void> {
       'GET',
       `/repos/${repo}/issues/${prNumber}/comments?per_page=100&page=${page}`,
     )) as Comment[]
-    marked.push(...batch.filter((c) => c.body?.includes(marker)))
+    // Only an app installed on the repository posts as a Bot. A person who posts
+    // or quotes the marker must not take over the sticky comment or lose theirs.
+    marked.push(
+      ...batch.filter((c) => c.user?.type === 'Bot' && c.body?.startsWith(marker) === true),
+    )
     if (batch.length < 100) break
   }
 

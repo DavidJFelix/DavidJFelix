@@ -42,9 +42,25 @@ test.each([
   },
   {
     text: 'see https://github.com/o/r/issues/1 and [x](//www.GitHub\\.com\\/o/r/pull/2)',
-    expected:
-      'see https://redirect.github.com/o/r/issues/1 and [x](//redirect.github.com\\/o/r/pull/2)',
+    expected: `see https://redirect.github.com/o/r/issues/1 and [x]${ZERO_WIDTH_SPACE}(//redirect.github.com\\/o/r/pull/2)`,
   },
+  {
+    text: 'see [the fix](https://example.com/a) and ![x](https://example.com/a.png)',
+    expected: `see [the fix]${ZERO_WIDTH_SPACE}(https://example.com/a) and ![x]${ZERO_WIDTH_SPACE}(https://example.com/a.png)`,
+  },
+  {
+    text: 'see [a][r], [r][], and [r]\n\n[r]: https://example.com/a\n> [q]: https://example.com/b',
+    expected: `see [a][r], [r][], and [r]\n\n[r]${ZERO_WIDTH_SPACE}: https://example.com/a\n> [q]${ZERO_WIDTH_SPACE}: https://example.com/b`,
+  },
+  {
+    text: '[the\nfix](https://example.com/a) [![b](https://example.com/b.svg)](https://example.com/c)',
+    expected: `[the\nfix]${ZERO_WIDTH_SPACE}(https://example.com/a) [![b]${ZERO_WIDTH_SPACE}(https://example.com/b.svg)]${ZERO_WIDTH_SPACE}(https://example.com/c)`,
+  },
+  {
+    text: 'see [^1]\n\n[^1]: [x](https://example.com/a)',
+    expected: `see [^1]\n\n[^1]${ZERO_WIDTH_SPACE}: [x]${ZERO_WIDTH_SPACE}(https://example.com/a)`,
+  },
+  {text: 'see https://example.com/a [x] (y)', expected: 'see https://example.com/a [x] (y)'},
   {
     text: 'api.github.com/repos, my_github.com/o, my-github.com/o, github.com',
     expected: 'api.github.com/repos, my_github.com/o, my-github.com/o, github.com',
@@ -56,7 +72,7 @@ test.each([
   },
   {text: 'a < b & c; @ alone, # heading', expected: 'a < b & c; @ alone, # heading'},
 ])(
-  'neutralizeMarkdown stops mentions, references, suggestions, and HTML in $text',
+  'neutralizeMarkdown stops mentions, references, suggestions, links, and HTML in $text',
   ({text, expected}) => {
     expect(neutralizeMarkdown(text)).toBe(expected)
     expect(neutralizeMarkdown(expected)).toBe(expected)
@@ -165,7 +181,8 @@ test('formatCheckRunOutput reports a clean review without a list', () => {
     title: 'No findings',
     summary:
       '3 chunk reviews, 1 from saved results, cost $0.0123. 0 new findings posted. ' +
-      'This check fails on a checked finding at high or above, or on a failed chunk review.',
+      'This check fails on a checked finding at high or above, on a failed chunk review, ' +
+      'or on a file with a too-long diff line.',
   })
 })
 
@@ -178,10 +195,11 @@ test('formatCheckRunOutput lists findings, failures, and files that were not rev
       failures: [{path: 'src/b.ts', reviewerId: 'comments', error: 'Error: bad\nanswer'}],
     },
     notReviewed: [{path: 'src/@someone\r\n.json', reason: 'GitHub shows no text diff'}],
+    lineTooLongCount: 2,
     postedCount: 1,
   })
 
-  expect(output.title).toBe('1 finding, 1 failed chunk review')
+  expect(output.title).toBe('1 finding, 1 failed chunk review, 2 files with a too-long line')
   expect(output.summary).toContain('1 chunk review, 1 from saved results')
   expect(output.summary).toContain('1 new finding posted.')
   expect(output.text).toBe(
@@ -235,7 +253,9 @@ test('formatCheckRunOutput keeps each path with backticks inside its code span',
     postedCount: 0,
   })
 
-  expect(output.text).toContain('- **high** ``a`[x](https://example.com)`.ts:4`` (security)')
+  expect(output.text).toContain(
+    `- **high** \`\`a\`[x]${ZERO_WIDTH_SPACE}(https://example.com)\`.ts:4\`\` (security)`,
+  )
   expect(output.text).toContain('- ``` ``b ``` (comments)')
   expect(output.text).toContain('- `` c ` ``: GitHub shows no text diff')
 })

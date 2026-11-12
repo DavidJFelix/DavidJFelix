@@ -11,6 +11,11 @@ export default defineConfig({
     include: ['src/**/*.test.{ts,tsx}'],
     // Playwright specs (*.e2e.test.ts) are driven by Playwright, not Vitest.
     exclude: ['**/*.e2e.test.ts', '**/node_modules/**'],
+    // Undo spies, env stubs and global stubs before each test, so a failed test leaves no state behind.
+    // cSpell:words unstub -- Vitest option names
+    restoreMocks: true,
+    unstubEnvs: true,
+    unstubGlobals: true,
     // @pierre/icons ships ESM with imports that have no file extension, which
     // Node cannot load. Vite transforms the package so that the imports resolve.
     server: {deps: {inline: ['@pierre/icons']}},

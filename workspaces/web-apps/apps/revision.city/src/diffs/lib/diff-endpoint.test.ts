@@ -22,6 +22,7 @@ const COMPARE_API_URL = 'https://api.github.com/repos/acme/widgets/compare/base0
 const PUBLIC_COMMIT_URL = 'https://github.com/acme/widgets/commit/83fea5e.diff'
 const COMMIT_API_URL = 'https://api.github.com/repos/acme/widgets/commits/83fea5e'
 const TANGLED_PATCH_URL = 'https://tangled.org/acme/widgets/pulls/7.patch'
+const GITHUB_USER_URL = 'https://api.github.com/user'
 const CODEBERG_PULL_API_URL = 'https://codeberg.org/api/v1/repos/acme/widgets/pulls/7.diff'
 const REJECTED_KEY = 'https://revision.city/.cache/github/credentials-rejected'
 const RATE_LIMITED_KEY = 'https://revision.city/.cache/github/rate-limited'
@@ -134,6 +135,116 @@ test.each([
   },
 )
 
+const CHUNK = new TextEncoder().encode(DIFF)
+const EMPTY_CHUNK = new Uint8Array(0)
+const UPSTREAM_FAILURE = new Error('connection reset')
+
+interface ScriptedBodyParams {
+  chunks: Uint8Array[]
+  failAfterChunks?: boolean
+  failCancel?: boolean
+}
+
+// An upstream diff body that gives one scripted chunk per pull and records how
+// often it was pulled and why it was cancelled.
+const scriptedBody = ({
+  chunks,
+  failAfterChunks = false,
+  failCancel = false,
+}: ScriptedBodyParams) => {
+  const record = {pulls: 0, cancelReason: undefined as unknown}
+  const queue = [...chunks]
+  const body = new ReadableStream<Uint8Array>(
+    {
+      pull(controller) {
+        record.pulls += 1
+        const next = queue.shift()
+        if (next !== undefined) {
+          controller.enqueue(next)
+        } else if (failAfterChunks) {
+          controller.error(UPSTREAM_FAILURE)
+        } else {
+          controller.close()
+        }
+      },
+      cancel(reason) {
+        record.cancelReason = reason
+        if (failCancel) {
+          throw UPSTREAM_FAILURE
+        }
+      },
+    },
+    {highWaterMark: 0},
+  )
+  return {body, record}
+}
+
+const streamDiff = async (body: ReadableStream<Uint8Array>) => {
+  const upstream = stubUpstream({
+    [PUBLIC_PULL_URL]: () => new Response(body, {headers: {'Content-Type': 'text/plain'}}),
+  })
+  const response = await handleDiffRequest(diffRequest('path=/acme/widgets/pull/7'), {
+    credentials: CREDENTIALS,
+    fetch: upstream.fetchImpl,
+  })
+  expect(response.status).toBe(200)
+  if (response.body === null) {
+    throw new Error('Expected a streamed diff body.')
+  }
+  return response.body
+}
+
+const settle = () => new Promise((resolve) => setTimeout(resolve, 10))
+
+test('a diff stream reads GitHub no faster than the client reads', async () => {
+  const {body, record} = scriptedBody({chunks: Array.from({length: 200}, () => CHUNK)})
+
+  await streamDiff(body)
+  await settle()
+
+  expect(record.pulls).toBeLessThanOrEqual(3)
+})
+
+test('a diff stream gives the client every upstream byte and skips empty chunks', async () => {
+  const {body} = scriptedBody({chunks: [EMPTY_CHUNK, CHUNK, EMPTY_CHUNK, EMPTY_CHUNK, CHUNK]})
+
+  const text = await new Response(await streamDiff(body)).text()
+
+  expect(text).toBe(DIFF + DIFF)
+})
+
+test.each([
+  {name: 'is empty', chunks: [], failAfterChunks: false, error: 'GitHub returned an empty diff.'},
+  {
+    name: 'has only empty chunks',
+    chunks: [EMPTY_CHUNK],
+    failAfterChunks: false,
+    error: 'GitHub returned an empty diff.',
+  },
+  {name: 'fails mid-read', chunks: [CHUNK], failAfterChunks: true, error: UPSTREAM_FAILURE.message},
+])(
+  'a diff stream errors when the upstream body $name',
+  async ({chunks, failAfterChunks, error}) => {
+    const {body} = scriptedBody({chunks, failAfterChunks})
+
+    const text = new Response(await streamDiff(body)).text()
+
+    await expect(text).rejects.toThrow(error)
+  },
+)
+
+test.each([
+  {name: 'cancels the upstream body', failCancel: false},
+  {name: 'still settles when the upstream cancel fails', failCancel: true},
+])('a client cancel of a diff stream $name', async ({failCancel}) => {
+  const {body, record} = scriptedBody({chunks: [CHUNK, CHUNK], failCancel})
+  const reason = new Error('client left')
+
+  await (await streamDiff(body)).cancel(reason)
+
+  expect(record.cancelReason).toBe(reason)
+})
+
 test('a signed-out commit falls back to the commit diff API as the app', async () => {
   const warn = spyOnWarnings()
   const upstream = stubUpstream({
@@ -155,6 +266,19 @@ test('a signed-out commit falls back to the commit diff API as the app', async (
   warn.mockRestore()
 })
 
+test('a commit opened from the pull request changes tab is fetched as that commit', async () => {
+  const upstream = stubUpstream({[PUBLIC_COMMIT_URL]: () => diffAnswer()})
+
+  const response = await handleDiffRequest(
+    diffRequest('path=/acme/widgets/pull/7/changes/83fea5e'),
+    {credentials: CREDENTIALS, fetch: upstream.fetchImpl},
+  )
+
+  expect(response.status).toBe(200)
+  expect(await response.text()).toBe(DIFF)
+  expect(upstream.calls).toEqual([{url: PUBLIC_COMMIT_URL, authorization: null, accept: null}])
+})
+
 test('a signed-out 404 spends nothing on the app credentials and asks for a sign-in', async () => {
   const warn = spyOnWarnings()
   const upstream = stubUpstream({[PUBLIC_PULL_URL]: () => failureAnswer(404)})
@@ -170,6 +294,55 @@ test('a signed-out 404 spends nothing on the app credentials and asks for a sign
   expect(body.message).toContain('acme/widgets')
   expect(upstream.calls).toHaveLength(1)
   warn.mockRestore()
+})
+
+const COMPARE_PATH = '/acme/widgets/compare/main...fix/'
+const ISSUE_REF = '123'
+const ESCAPED_COMPARE_URL = `https://github.com${COMPARE_PATH}%23${ISSUE_REF}.diff`
+
+test.each([
+  {name: 'a raw', ref: `#${ISSUE_REF}`},
+  {name: 'an escaped', ref: `%23${ISSUE_REF}`},
+])('a compare ref with $name `#` fetches the whole ref from github.com', async ({ref}) => {
+  const upstream = stubUpstream({[ESCAPED_COMPARE_URL]: () => diffAnswer()})
+
+  const response = await handleDiffRequest(
+    diffRequest(`path=${encodeURIComponent(`${COMPARE_PATH}${ref}`)}`),
+    {fetch: upstream.fetchImpl},
+  )
+
+  expect(response.status).toBe(200)
+  expect(upstream.calls.map((call) => call.url)).toEqual([ESCAPED_COMPARE_URL])
+})
+
+test('a compare ref with non-ASCII characters is fetched and named with an ASCII source', async () => {
+  const ref = '\u6a5f'
+  const escapedRef = encodeURIComponent(ref)
+  const patchURL = `https://github.com${COMPARE_PATH}${escapedRef}.diff`
+  const upstream = stubUpstream({[patchURL]: () => diffAnswer()})
+
+  const response = await handleDiffRequest(
+    diffRequest(`path=${encodeURIComponent(`${COMPARE_PATH}${ref}`)}`),
+    {fetch: upstream.fetchImpl},
+  )
+
+  expect(response.status).toBe(200)
+  expect(response.headers.get('X-Patch-Source')).toBe(
+    `https://github.com${COMPARE_PATH}${escapedRef}`,
+  )
+  expect(upstream.calls.map((call) => call.url)).toEqual([patchURL])
+})
+
+test.each([
+  {name: 'path', search: `path=${encodeURIComponent('/acme/widgets/pull/7\n8')}`},
+  {name: 'URL', search: `url=${encodeURIComponent('https://github.com/acme/widgets/pull/7\t8')}`},
+])('a GitHub $name with a tab or line break is rejected without a fetch', async ({search}) => {
+  const upstream = stubUpstream({})
+
+  const response = await handleDiffRequest(diffRequest(search), {fetch: upstream.fetchImpl})
+
+  expect(response.status).toBe(400)
+  expect(upstream.calls).toHaveLength(0)
 })
 
 test.each([
@@ -278,6 +451,33 @@ test('a non-GitHub patch that fails gets no sign-in, since signing in cannot rea
 })
 
 test.each([
+  {name: 'a live token', userAnswer: () => Response.json({login: 'reviewer'})},
+  {name: 'a revoked token', userAnswer: () => failureAnswer(401)},
+])(
+  'a signed-in visitor with $name whose tangled.org patch fails gets the upstream error and no GitHub call',
+  async ({userAnswer}) => {
+    const warn = spyOnWarnings()
+    const upstream = stubUpstream({
+      [TANGLED_PATCH_URL]: () => failureAnswer(404),
+      [GITHUB_USER_URL]: userAnswer,
+    })
+
+    const response = await handleDiffRequest(
+      diffRequest('path=/acme/widgets/pulls/7&domain=tangled.org', SESSION_COOKIE),
+      {credentials: CREDENTIALS, fetch: upstream.fetchImpl},
+    )
+
+    expect(response.status).toBe(404)
+    const body = await readError(response)
+    expect(body.remedy).toBeUndefined()
+    expect(body.message).toBe('Failed to fetch patch from upstream: 404.')
+    expect(upstream.calls.map((call) => call.url)).toEqual([TANGLED_PATCH_URL])
+    expect(response.headers.get('X-Patch-Source')).toBe(TANGLED_PATCH_URL)
+    warn.mockRestore()
+  },
+)
+
+test.each([
   {name: 'a domain and path', search: 'path=/acme/widgets/pulls/7/files&domain=codeberg.org'},
   {
     name: 'a full URL',
@@ -311,6 +511,109 @@ test('a Codeberg path that is not a diff is rejected without a fetch', async () 
 
   expect(response.status).toBe(400)
   expect(upstream.calls).toHaveLength(0)
+})
+
+const GITHUB_HOST = 'github.com'
+const TANGLED_HOST = 'tangled.org'
+const PULL_PATH = '/acme/widgets/pull/7'
+const TANGLED_PULL_PATH = '/acme/widgets/pulls/7'
+const ALLOWED_HOSTS = new Set([
+  GITHUB_HOST,
+  'api.github.com',
+  'patch-diff.githubusercontent.com',
+  TANGLED_HOST,
+  'codeberg.org',
+])
+
+const urlSearch = (url: string) => `url=${encodeURIComponent(url)}`
+const domainSearch = (domain: string) =>
+  `path=${TANGLED_PULL_PATH}&domain=${encodeURIComponent(domain)}`
+
+test.each([
+  {name: 'an unknown host', search: urlSearch(`https://example.com${PULL_PATH}`)},
+  {name: 'plain http', search: urlSearch(`http://${GITHUB_HOST}${PULL_PATH}`)},
+  {name: 'a port', search: urlSearch(`https://${GITHUB_HOST}:8443${PULL_PATH}`)},
+  {name: 'a user name', search: urlSearch(`https://reviewer@${GITHUB_HOST}${PULL_PATH}`)},
+  {name: 'a password', search: urlSearch(`https://:password@${GITHUB_HOST}${PULL_PATH}`)},
+  {name: 'a look-alike suffix host', search: urlSearch(`https://other-${GITHUB_HOST}${PULL_PATH}`)},
+  {
+    name: 'a look-alike prefix host',
+    search: urlSearch(`https://${GITHUB_HOST}.example.org${PULL_PATH}`),
+  },
+  {name: 'a trailing-dot host', search: urlSearch(`https://${GITHUB_HOST}.${PULL_PATH}`)},
+  {name: 'an off-pattern raw diff path', search: urlSearch(`${RAW_PULL_URL}/more`)},
+  {
+    name: 'a look-alike Tangled URL',
+    search: urlSearch(`https://other-${TANGLED_HOST}${TANGLED_PULL_PATH}`),
+  },
+  {name: 'an unknown domain', search: domainSearch('example.com')},
+  {name: 'a look-alike suffix domain', search: domainSearch(`other-${TANGLED_HOST}`)},
+  {name: 'a look-alike prefix domain', search: domainSearch(`${TANGLED_HOST}.example.org`)},
+  {name: 'a domain with a user name', search: domainSearch(`${TANGLED_HOST}@example.org`)},
+  {name: 'a relative path', search: `path=${PULL_PATH.slice(1)}`},
+  {name: 'the root path', search: 'path=/'},
+  {name: 'a path of only slashes', search: 'path=///'},
+  {name: 'no path or URL', search: ''},
+])('$name is rejected without a fetch', async ({search}) => {
+  const upstream = stubUpstream({})
+
+  const response = await handleDiffRequest(diffRequest(search), {
+    credentials: CREDENTIALS,
+    fetch: upstream.fetchImpl,
+  })
+
+  expect(response.status).toBe(400)
+  expect(upstream.calls).toHaveLength(0)
+})
+
+test.each([
+  {name: 'a path that starts with two slashes', search: `path=//example.com${PULL_PATH}`},
+  {name: 'a backslash path', search: `path=${encodeURIComponent(`/\\example.com${PULL_PATH}`)}`},
+  {name: 'a Tangled domain with a port', search: domainSearch(`${TANGLED_HOST}:8443`)},
+])('$name is fetched from an allowed host only', async ({search}) => {
+  const fetchedURLs: URL[] = []
+  const fetchImpl: FetchLike = async (input) => {
+    fetchedURLs.push(new URL(input instanceof Request ? input.url : input))
+    return diffAnswer()
+  }
+
+  await handleDiffRequest(diffRequest(search), {credentials: CREDENTIALS, fetch: fetchImpl})
+
+  expect(fetchedURLs).not.toHaveLength(0)
+  for (const {hostname, port, protocol} of fetchedURLs) {
+    expect({allowed: ALLOWED_HOSTS.has(hostname), port, protocol}).toEqual({
+      allowed: true,
+      port: '',
+      protocol: 'https:',
+    })
+  }
+})
+
+test.each<{name: string; headers: Record<string, string>; status: number; message: string}>([
+  {
+    name: 'a body that is not a diff',
+    headers: {'Content-Type': 'text/html'},
+    status: 415,
+    message: 'GitHub did not return a diff for this URL.',
+  },
+  {
+    name: 'an empty diff',
+    headers: {'Content-Type': 'text/plain', 'Content-Length': '0'},
+    status: 422,
+    message: 'GitHub returned an empty diff.',
+  },
+])('$name from the upstream answers $status', async ({headers, status, message}) => {
+  const warn = spyOnWarnings()
+  const upstream = stubUpstream({[PUBLIC_PULL_URL]: () => new Response('', {headers})})
+
+  const response = await handleDiffRequest(diffRequest(`path=${PULL_PATH}`), {
+    fetch: upstream.fetchImpl,
+  })
+
+  expect(response.status).toBe(status)
+  expect((await readError(response)).message).toBe(message)
+  expect(upstream.calls).toHaveLength(1)
+  warn.mockRestore()
 })
 
 test('a Codeberg diff that fails names the Codeberg page and offers no GitHub sign-in', async () => {

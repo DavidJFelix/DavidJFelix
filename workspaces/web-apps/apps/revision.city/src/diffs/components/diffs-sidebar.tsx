@@ -525,7 +525,7 @@ function FileTreeFilterButton({
   // onCheckedChange handler (which receives no event) can branch on it.
   const altKeyRef = useRef(false)
   return (
-    <DropdownMenu>
+    <DropdownMenu align="end">
       <DropdownMenuTrigger asChild>
         <Button
           type="button"
@@ -554,7 +554,7 @@ function FileTreeFilterButton({
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className={css({p: '2'})} style={dropdownThemeStyle}>
+      <DropdownMenuContent className={css({p: '2'})} style={dropdownThemeStyle}>
         <DropdownMenuLabel
           className={css({
             display: 'flex',
@@ -583,9 +583,7 @@ function FileTreeFilterButton({
             onPointerDown={(e) => {
               altKeyRef.current = e.altKey
             }}
-            onSelect={(e) => {
-              e.preventDefault()
-            }}
+            closeOnSelect={false}
             onCheckedChange={() => {
               if (altKeyRef.current) {
                 onIsolate(status)

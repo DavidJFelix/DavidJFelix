@@ -23,7 +23,7 @@
   "devDependencies": {
     "@cloudflare/vite-plugin": "catalog:",
     "@playwright/test": "catalog:",
-    "@tailwindcss/vite": "4.3.3",
+    "@tailwindcss/vite": "4.3.5",
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
@@ -33,7 +33,7 @@
     "jsdom": "catalog:",
     "oxlint-tailwindcss": "catalog:",
     "oxlint-tsgolint": "catalog:",
-    "tailwindcss": "4.3.3",
+    "tailwindcss": "4.3.5",
     "typescript": "7.0.2",
     "vite": "catalog:",
     "vitest": "catalog:",

@@ -29,3 +29,15 @@ test.each([200, 302, 400, 404])('reportServerErrorResponse ignores a %i', (statu
 
   expect(captureMessage).not.toHaveBeenCalled()
 })
+
+test('reportServerErrorResponse ignores a 5xx from the Sentry tunnel', () => {
+  const captureMessage = vi.fn<CaptureMessage>()
+
+  reportServerErrorResponse({
+    request: new Request('https://revision.city/bugs', {method: 'POST'}),
+    response: new Response(null, {status: 503}),
+    captureMessage,
+  })
+
+  expect(captureMessage).not.toHaveBeenCalled()
+})

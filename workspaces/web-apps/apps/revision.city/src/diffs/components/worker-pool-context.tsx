@@ -6,10 +6,11 @@ import {
   WorkerPoolContextProvider,
   type WorkerPoolOptions,
 } from '@pierre/diffs/react'
-// Vite bundles the highlight worker and its shiki/wasm imports into a dedicated worker chunk.
-// The import gives the URL of that chunk. `workerFactory` below constructs the worker, only in
-// the browser.
-import * as DiffsRenderWorkerUrlModule from '@pierre/diffs/worker/worker.js?worker&url'
+// The portable build of the highlight worker is one script with no imports. The standard build
+// makes Vite put every shiki grammar into the worker chunk. A worker cannot load those grammars:
+// the main thread resolves the languages and sends them to the workers. `workerFactory` below
+// constructs the worker, only in the browser.
+import * as DiffsRenderWorkerUrlModule from '@pierre/diffs/worker/worker-portable.js?worker&url'
 import {type ReactNode, useEffect, useSyncExternalStore} from 'react'
 import {isNullish} from '@/diffs/lib/nullish'
 import {
@@ -152,7 +153,7 @@ const HighlighterOptions: WorkerInitializationRenderOptions = {
   // now that the canonical default IS the non-soft pair (shared via theming),
   // every site initializes the pool with the same defaults.
   theme: DEFAULT_THEMES,
-  langs: ['cpp', 'css', 'go', 'python', 'rust', 'sh', 'swift', 'tsx', 'typescript', 'zig'],
+  langs: ['rust', 'tsx', 'typescript'],
   preferredHighlighter: 'shiki-wasm',
 }
 

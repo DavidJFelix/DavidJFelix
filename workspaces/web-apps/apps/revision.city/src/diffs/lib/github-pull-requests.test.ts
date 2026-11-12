@@ -54,6 +54,8 @@ interface GitHubStubOptions {
   // The body sent with a failing search; a 422 defaults to the unsearchable
   // query failure.
   searchErrorBody?: unknown
+  // The headers sent with a failing search, such as the rate limit counts.
+  searchErrorHeaders?: Record<string, string>
 }
 
 const installation = (login: string, overrides: Record<string, unknown> = {}) => ({
@@ -66,7 +68,7 @@ const installation = (login: string, overrides: Record<string, unknown> = {}) =>
 const searchErrorResponse = (options: GitHubStubOptions, status: number): Response =>
   Response.json(
     options.searchErrorBody ?? (status === 422 ? UNSEARCHABLE_QUERY_BODY : {message: 'blocked'}),
-    {status},
+    {status, headers: options.searchErrorHeaders},
   )
 
 // Stands in for GitHub's search, org, subscription, and installation
@@ -332,6 +334,31 @@ test('an app without org or watching visibility reports those groups empty', asy
 
 test('a failing search answers 502 rather than an empty list', async () => {
   const response = await listPullRequests(stubGitHubFetch({searchStatus: 403}))
+  expect(response.status).toBe(502)
+})
+
+test('a search that GitHub answers 401 asks the visitor to sign in again', async () => {
+  const response = await listPullRequests(stubGitHubFetch({searchStatus: 401}))
+  expect(response.status).toBe(401)
+  expect(await response.json()).toMatchObject({reason: 'sign-in-again'})
+})
+
+test.each<{name: string; status: number; headers: Record<string, string>}>([
+  {name: '429', status: 429, headers: {}},
+  {name: '403 with no requests remaining', status: 403, headers: {'x-ratelimit-remaining': '0'}},
+  {name: '403 with a retry-after', status: 403, headers: {'retry-after': '30'}},
+])('a rate-limited search ($name) answers 429, not 502', async ({status, headers}) => {
+  const response = await listPullRequests(
+    stubGitHubFetch({searchStatus: status, searchErrorHeaders: headers}),
+  )
+  expect(response.status).toBe(429)
+  expect(response.headers.get('Retry-After')).toBe('60')
+})
+
+test('a search that cannot reach GitHub answers 502', async () => {
+  const response = await listPullRequests(async () => {
+    throw new TypeError('network down')
+  })
   expect(response.status).toBe(502)
 })
 

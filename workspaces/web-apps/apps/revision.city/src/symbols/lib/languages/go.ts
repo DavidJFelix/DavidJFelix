@@ -9,7 +9,12 @@ import {anonymousScopeProp, entityProp} from '../entity'
 // into a single symbol.
 const SPECS: Record<string, EntitySpec> = {
   FunctionDecl: {kind: 'function', name: ['DefName'], container: true},
-  MethodDecl: {kind: 'method', name: ['FieldName'], container: true},
+  MethodDecl: {
+    kind: 'method',
+    name: ['FieldName'],
+    container: true,
+    resolveOwner: resolveReceiverType,
+  },
   TypeSpec: {kind: 'type', name: ['DefName'], container: true, resolveKind: resolveTypeKind},
   ConstSpec: {kind: 'constant', name: ['DefName'], scope: 'top-level'},
   VarSpec: {kind: 'variable', name: ['DefName'], scope: 'top-level'},
@@ -25,6 +30,18 @@ function resolveTypeKind({node}: ResolveEntityNameParams): EntityKind {
     }
   }
   return 'type'
+}
+
+// Nodes that wrap the receiver type name: `*Widget`, `Stack[T]`.
+const RECEIVER_WRAPPERS = new Set(['PointerType', 'ParameterizedType'])
+
+// `func (w *Widget) Render()` belongs to `Widget`.
+function resolveReceiverType({node, source}: ResolveEntityNameParams): string | undefined {
+  let current = node.getChild('Parameters')?.getChild('Parameter')?.lastChild ?? null
+  while (current !== null && RECEIVER_WRAPPERS.has(current.type.name)) {
+    current = current.getChild('TypeName') ?? current.getChild('ParameterizedType')
+  }
+  return current?.type.name === 'TypeName' ? source.slice(current.from, current.to) : undefined
 }
 
 export const goParser = parser.configure({

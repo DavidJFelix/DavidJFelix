@@ -216,16 +216,16 @@ export async function handleGitHubOAuthCallbackRequest(
     },
     fetcher,
   )
-  if (isNullish(grant)) {
+  if (grant.kind !== 'granted') {
     return createAuthTextResponse('GitHub sign-in failed. Try again.', 502, [clearStateCookie])
   }
 
-  const user = await fetchGitHubUser(grant.accessToken, fetcher)
+  const user = await fetchGitHubUser(grant.grant.accessToken, fetcher)
   if (isNullish(user)) {
     return createAuthTextResponse('GitHub sign-in failed. Try again.', 502, [clearStateCookie])
   }
 
-  const session: GitHubAuthSession = {...grant, ...user}
+  const session: GitHubAuthSession = {...grant.grant, ...user}
   return createRedirectResponse(returnPath, [
     clearStateCookie,
     serializeSessionCookie(session, secure),
@@ -374,12 +374,17 @@ export async function resolveGitHubAuth(
     },
     options.fetch ?? fetch,
   )
-  if (isNullish(grant)) {
+  // A transient failure keeps the cookie, so that the next request tries the
+  // refresh again. Only a refusal from GitHub ends the session.
+  if (grant.kind === 'unavailable') {
+    return {session: undefined, setCookieHeaders: []}
+  }
+  if (grant.kind === 'refused') {
     return {session: undefined, setCookieHeaders: expiredCookies}
   }
 
   const refreshed: GitHubAuthSession = {
-    ...grant,
+    ...grant.grant,
     login: session.login,
     avatarUrl: session.avatarUrl,
   }
@@ -416,13 +421,21 @@ interface GitHubTokenGrant {
   refreshTokenExpiresAt?: number
 }
 
+type GitHubTokenGrantOutcome = 'refused' | 'unavailable'
+
+type GitHubTokenGrantResult =
+  | {kind: 'granted'; grant: GitHubTokenGrant}
+  | {kind: 'refused'}
+  | {kind: 'unavailable'}
+
 // Calls GitHub's token endpoint for both the initial code exchange and refresh
 // grants. GitHub reports failures as 200s with an `error` field, so both paths
-// are checked.
+// are checked. A body with an `error` field is a refusal. Any other failure
+// (a 5xx, a body that is not JSON, a network error) is unavailable.
 async function requestGitHubTokenGrant(
   body: Record<string, string>,
   fetcher: AuthFetch,
-): Promise<GitHubTokenGrant | undefined> {
+): Promise<GitHubTokenGrantResult> {
   try {
     const response = await fetcher(GITHUB_TOKEN_URL, {
       method: 'POST',
@@ -436,25 +449,31 @@ async function requestGitHubTokenGrant(
       typeof data.access_token !== 'string' ||
       data.access_token === ''
     ) {
+      const error = isRecord(data) ? readOptionalString(data.error) : undefined
+      const outcome = isNullish(error) ? 'unavailable' : 'refused'
       logGitHubAuthFailure({
         step: grantStep(body),
         status: response.status,
-        error: isRecord(data) ? readOptionalString(data.error) : undefined,
+        outcome,
+        error,
         errorDescription: isRecord(data) ? readOptionalString(data.error_description) : undefined,
       })
-      return undefined
+      return {kind: outcome}
     }
 
     const now = Date.now()
     return {
-      accessToken: data.access_token,
-      accessTokenExpiresAt: readExpiry(now, data.expires_in),
-      refreshToken: typeof data.refresh_token === 'string' ? data.refresh_token : undefined,
-      refreshTokenExpiresAt: readExpiry(now, data.refresh_token_expires_in),
+      kind: 'granted',
+      grant: {
+        accessToken: data.access_token,
+        accessTokenExpiresAt: readExpiry(now, data.expires_in),
+        refreshToken: typeof data.refresh_token === 'string' ? data.refresh_token : undefined,
+        refreshTokenExpiresAt: readExpiry(now, data.refresh_token_expires_in),
+      },
     }
   } catch (error) {
-    logGitHubAuthFailure({step: grantStep(body), error: String(error)})
-    return undefined
+    logGitHubAuthFailure({step: grantStep(body), outcome: 'unavailable', error: String(error)})
+    return {kind: 'unavailable'}
   }
 }
 
@@ -510,6 +529,7 @@ type GitHubAuthStep = 'code exchange' | 'token refresh' | 'user lookup'
 interface GitHubAuthFailure {
   step: GitHubAuthStep
   status?: number
+  outcome?: GitHubTokenGrantOutcome
   // GitHub's error name or message, such as bad_verification_code. Never the
   // code or a token.
   error?: string

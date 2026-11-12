@@ -2,6 +2,7 @@ import {createRouter as createTanStackRouter} from '@tanstack/react-router'
 
 import {installMissingChunkReload} from './lib/missing-chunk-reload'
 import {initClientObservability} from './observability/client'
+import {routerErrorOptions} from './router-error-options'
 import {routeTree} from './routeTree.gen'
 
 export function getRouter() {
@@ -10,6 +11,7 @@ export function getRouter() {
     scrollRestoration: true,
     defaultPreload: 'intent',
     defaultPreloadStaleTime: 0,
+    ...routerErrorOptions,
   })
 
   // Browser-only: SSR builds dead-code-eliminate this, so the SDKs never enter

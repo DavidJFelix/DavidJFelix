@@ -100,6 +100,7 @@ function ButtonGroupItem({className, value, children, onClick, ...props}: Button
       size={context.size}
       onClick={handleClick}
       title={value}
+      aria-pressed={isSelected}
       {...props}
     >
       {children}

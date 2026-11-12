@@ -8,6 +8,7 @@ import {
   hasDotSegment,
   parseGitHubDiffSource,
 } from './github-diff-source'
+import {createLoaderError} from './loader-error'
 import {isNullish} from './nullish'
 import {readLimitedText} from './read-limited-text'
 
@@ -97,10 +98,10 @@ export function createGitHubFileReader(
 
   return async (file) => {
     if (isNullish(source)) {
-      throw new Error('Unsupported GitHub diff path.')
+      throw createLoaderError({message: 'Unsupported GitHub diff path.', status: 400})
     }
     if (hasDotSegment(file.name) || hasDotSegment(file.prevName ?? '')) {
-      throw new Error('Unsupported GitHub file path.')
+      throw createLoaderError({message: 'Unsupported GitHub file path.', status: 400})
     }
     // The reader does not keep a failed lookup, so the next read tries again.
     const resolveRefs = () => {
@@ -667,14 +668,19 @@ async function assertGitHubResponseOK(response: Response, label: string): Promis
 
   const detail = (await response.text()).trim()
   if (isGitHubRateLimitResponse(response, detail)) {
-    throw new Error('GitHub rate limit exceeded. Sign in with GitHub to raise the limit.')
+    throw createLoaderError({
+      message: 'GitHub rate limit exceeded. Sign in with GitHub to raise the limit.',
+      status: 429,
+    })
   }
 
-  throw new Error(
-    detail.length > 0
-      ? `${label} failed (${response.status}): ${detail}`
-      : `${label} failed (${response.status}).`,
-  )
+  throw createLoaderError({
+    message:
+      detail.length > 0
+        ? `${label} failed (${response.status}): ${detail}`
+        : `${label} failed (${response.status}).`,
+    status: response.status,
+  })
 }
 
 function isGitHubRateLimitResponse(response: Response, detail: string): boolean {

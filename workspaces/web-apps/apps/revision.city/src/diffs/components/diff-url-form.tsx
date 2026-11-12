@@ -64,7 +64,12 @@ export function DiffUrlForm({
 
     const updatePosition = () => {
       const rect = inputRef.current?.getBoundingClientRect()
-      if (!isNullish(rect)) setErrorAnchor({top: rect.bottom, left: rect.left})
+      if (isNullish(rect)) return
+      setErrorAnchor((anchor) =>
+        anchor?.top === rect.bottom && anchor.left === rect.left
+          ? anchor
+          : {top: rect.bottom, left: rect.left},
+      )
     }
 
     window.addEventListener('resize', updatePosition)
@@ -123,6 +128,7 @@ export function DiffUrlForm({
     >
       <input
         ref={inputRef}
+        aria-label="Diff URL"
         className={cx(
           css({
             _focus: {color: 'diffs.primary'},

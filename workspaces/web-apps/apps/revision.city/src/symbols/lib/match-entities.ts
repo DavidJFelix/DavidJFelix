@@ -184,7 +184,7 @@ function diffSequence({
   if (result === undefined) {
     return undefined
   }
-  const ownerBase = basePath(candidate)
+  const ownerBase = candidate.basePath
   for (const element of result.deletedElements) {
     covered.deleted.push({ownerBase, span: element.span})
   }
@@ -222,7 +222,7 @@ function isCovered(entity: CodeEntity, spans: readonly OwnedSpan[]): boolean {
     ({ownerBase, span}) =>
       entity.span.from >= span.from &&
       entity.span.to <= span.to &&
-      basePath(entity).startsWith(`${ownerBase}.`),
+      entity.basePath.startsWith(`${ownerBase}.`),
   )
 }
 
@@ -387,11 +387,5 @@ function createChange({
 // Kind is part of identity: replacing a `function` with a `class` of the same
 // name is a rewrite, not a modification.
 function baseKey(entity: CodeEntity): string {
-  return `${entity.kind}\0${basePath(entity)}`
-}
-
-// The qualified path with every `#n` ordinal dropped -- what siblings that
-// collide on a name share.
-function basePath(entity: CodeEntity): string {
-  return entity.qualifiedName.replaceAll(/#\d+/gu, '')
+  return `${entity.kind}\0${entity.basePath}`
 }

@@ -10,6 +10,8 @@ const SUBSTANTIAL_TOKENS = Array.from({length: 16}, (_, index) => `token${index}
 interface CreateEntityParams {
   name: string
   qualifiedName?: string
+  basePath?: string
+  occurrence?: number
   kind?: EntityKind
   tokens?: readonly string[]
   structuralHash?: string
@@ -23,6 +25,8 @@ interface CreateEntityParams {
 function createEntity({
   name,
   qualifiedName = name,
+  basePath = qualifiedName,
+  occurrence = 1,
   kind = 'function',
   tokens = SUBSTANTIAL_TOKENS,
   structuralHash = 'aaaa',
@@ -36,6 +40,8 @@ function createEntity({
     kind,
     name,
     qualifiedName,
+    basePath,
+    occurrence,
     range: {startLine, endLine: startLine + 2},
     structuralHash,
     contentHash,
@@ -253,6 +259,8 @@ function createOccurrence(hash: string, ordinal: number): CodeEntity {
   return createEntity({
     name: 'name',
     qualifiedName: ordinal === 0 ? 'defs.name' : `defs.name#${ordinal + 1}`,
+    basePath: 'defs.name',
+    occurrence: ordinal + 1,
     kind: 'property',
     contentHash: hash,
     ownContentHash: hash,

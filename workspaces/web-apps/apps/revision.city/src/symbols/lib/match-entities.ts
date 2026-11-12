@@ -1,5 +1,5 @@
 import type {CodeEntity, EntityChange, EntityKind, EntitySpan, SequenceDetail} from './entity'
-import {tokenSimilarity} from './entity-signature'
+import {hashString, tokenSimilarity} from './entity-signature'
 import {alignByHash, diffSequenceElements} from './sequence-alignment'
 
 // Below this token overlap a pair is two different entities that happen to look
@@ -32,7 +32,8 @@ export interface MatchEntitiesParams {
 //   1. occurrence alignment  -- entities grouped by kind + base path, occurrence
 //      sequences aligned by content, so the entity is the same entity even when
 //      an insertion shifted its ordinal
-//   2. same structural hash  -- a rename or move, proven by an identical body
+//   2. same structural hash and same body -- a rename or move, proven by an
+//      identical body
 //   3. token overlap over 0.8 -- a probable rename, body edited in place
 // Whatever is unclaimed at the end is genuinely added or deleted -- minus rows
 // that sit inside an element the sequence diff already reported, which would be
@@ -233,7 +234,8 @@ interface MatchPhaseParams {
 }
 
 // An identical body under a different name is the strongest rename signal there
-// is, so this phase runs before any similarity scoring.
+// is, so this phase runs before any similarity scoring. The same shape alone is
+// not enough: two unrelated rules or keys often share one.
 function matchByStructure({unmatchedOld, unmatchedNew, changes}: MatchPhaseParams): void {
   const byHash = new Map<string, CodeEntity[]>()
   for (const entity of unmatchedOld) {
@@ -256,7 +258,10 @@ function matchByStructure({unmatchedOld, unmatchedNew, changes}: MatchPhaseParam
     }
     const bucket = byHash.get(candidate.structuralHash)
     const previous = bucket?.find(
-      (entity) => entity.kind === candidate.kind && unmatchedOld.has(entity),
+      (entity) =>
+        entity.kind === candidate.kind &&
+        unmatchedOld.has(entity) &&
+        bodyHash(entity) === bodyHash(candidate),
     )
     if (previous === undefined) {
       continue
@@ -311,6 +316,7 @@ function matchByTokens({unmatchedOld, unmatchedNew, changes}: MatchPhaseParams):
         previous: best,
         candidate,
         similarity: Number(bestScore.toFixed(3)),
+        bodyChanged: bodyHash(best) !== bodyHash(candidate),
       }),
     )
   }
@@ -359,6 +365,7 @@ interface CreateChangeParams {
   previous: CodeEntity
   candidate: CodeEntity
   similarity?: number
+  bodyChanged?: boolean
   detail?: SequenceDetail
 }
 
@@ -367,6 +374,7 @@ function createChange({
   previous,
   candidate,
   similarity,
+  bodyChanged = false,
   detail,
 }: CreateChangeParams): EntityChange {
   return {
@@ -380,8 +388,56 @@ function createChange({
     oldRange: previous.range,
     newRange: candidate.range,
     ...(similarity === undefined ? {} : {similarity}),
+    ...(bodyChanged ? {bodyChanged} : {}),
     ...(detail === undefined ? {} : {detail}),
   }
+}
+
+// Entities are immutable, so the hash of each one is computed once.
+const bodyHashes = new WeakMap<CodeEntity, string>()
+
+// The hash of an entity's tokens without its own name: two bodies that hash
+// alike differ only in the name.
+function bodyHash(entity: CodeEntity): string {
+  const cached = bodyHashes.get(entity)
+  if (cached !== undefined) {
+    return cached
+  }
+  const hash = hashString(withoutName(entity).join('\0'))
+  bodyHashes.set(entity, hash)
+  return hash
+}
+
+// A name is often more than one token (`.card` is `.` and `card`, `Fix #12` is
+// `Fix` and `#12`), and a JSON key token keeps the quotes that its name drops.
+// So a token that is the whole name is removed. If no token is, the first
+// tokens, in order, that spell the name without its white space are removed.
+function withoutName(entity: CodeEntity): readonly string[] {
+  const name = compact(entity.name)
+  const whole = entity.tokens.findIndex((token) => tokenForms(token).includes(name))
+  if (whole !== -1) {
+    return entity.tokens.toSpliced(whole, 1)
+  }
+  let spelled = 0
+  return entity.tokens.filter((token) => {
+    const form = tokenForms(token).find(
+      (text) => text !== '' && spelled < name.length && name.startsWith(text, spelled),
+    )
+    if (form === undefined) {
+      return true
+    }
+    spelled += form.length
+    return false
+  })
+}
+
+function tokenForms(token: string): readonly string[] {
+  const text = compact(token)
+  return [text, text.replaceAll(/^["']|["']$/gu, '')]
+}
+
+function compact(text: string): string {
+  return text.replaceAll(/\s+/gu, '')
 }
 
 // Kind is part of identity: replacing a `function` with a `class` of the same

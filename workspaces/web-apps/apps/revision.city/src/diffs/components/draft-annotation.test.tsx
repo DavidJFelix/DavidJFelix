@@ -1,5 +1,3 @@
-// @vitest-environment jsdom
-
 import '@testing-library/jest-dom/vitest'
 import type {DiffLineAnnotation} from '@pierre/diffs'
 import {render, screen} from '@testing-library/react'

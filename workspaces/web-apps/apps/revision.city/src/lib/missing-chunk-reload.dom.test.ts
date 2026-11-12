@@ -1,5 +1,3 @@
-// @vitest-environment jsdom
-
 import {expect, test, vi} from 'vitest'
 
 import {findMissingChunk, installMissingChunkReload} from './missing-chunk-reload'

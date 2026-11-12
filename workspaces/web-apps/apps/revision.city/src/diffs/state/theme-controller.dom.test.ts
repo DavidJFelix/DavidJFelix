@@ -1,5 +1,3 @@
-// @vitest-environment jsdom
-
 import {expect, test, vi} from 'vitest'
 
 // In-memory Storage stand-in. Node 26 defines a global localStorage getter

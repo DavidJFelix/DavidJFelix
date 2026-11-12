@@ -1,5 +1,3 @@
-// @vitest-environment jsdom
-
 import '@testing-library/jest-dom/vitest'
 import {act, fireEvent, render, within} from '@testing-library/react'
 import {Profiler, type ProfilerOnRenderCallback} from 'react'

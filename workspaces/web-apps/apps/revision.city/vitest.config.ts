@@ -7,9 +7,27 @@ export default defineConfig({
   plugins: [react()],
   resolve: {tsconfigPaths: true},
   test: {
-    // A test file that needs the DOM starts with `// @vitest-environment jsdom`.
-    environment: 'node',
-    include: ['src/**/*.test.{ts,tsx}'],
+    // The file name picks the environment: `*.test.tsx` and `*.dom.test.ts` run
+    // in jsdom, and the other `*.test.ts` files run in node.
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'node',
+          environment: 'node',
+          include: ['src/**/*.test.ts'],
+          exclude: ['src/**/*.dom.test.ts', '**/*.e2e.test.ts'],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'dom',
+          environment: 'jsdom',
+          include: ['src/**/*.test.tsx', 'src/**/*.dom.test.ts'],
+        },
+      },
+    ],
     // Playwright specs (*.e2e.test.ts) are driven by Playwright, not Vitest.
     exclude: ['**/*.e2e.test.ts', '**/node_modules/**'],
     // Undo spies, env stubs and global stubs before each test, so a failed test leaves no state behind.

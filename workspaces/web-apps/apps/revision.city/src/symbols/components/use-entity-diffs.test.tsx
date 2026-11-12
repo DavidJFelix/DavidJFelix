@@ -1,5 +1,3 @@
-// @vitest-environment jsdom
-
 import {act, cleanup, renderHook, waitFor} from '@testing-library/react'
 import {HttpResponse, type HttpResponseResolver, http, type PathParams} from 'msw'
 import {setupServer} from 'msw/node'

@@ -2,6 +2,7 @@ import type {ChangeTypes} from '@pierre/diffs'
 
 import {resolveGitHubAuth, withSetCookieHeaders} from './github-auth'
 import {loadGitHubDiffFiles} from './github-diff-file-server'
+import {getLoaderErrorStatus} from './loader-error'
 import {isNullish} from './nullish'
 
 const CACHE_CONTROL = 'no-store'
@@ -54,7 +55,7 @@ export async function handleGitHubDiffFileRequest(request: Request): Promise<Res
     return withSetCookieHeaders(
       createJSONResponse(
         {error: error instanceof Error ? error.message : 'Unknown error'},
-        {status: 502},
+        {status: getLoaderErrorStatus(error)},
       ),
       auth.setCookieHeaders,
     )

@@ -10,6 +10,7 @@ import {entityProp} from '../entity'
 const DECLARATOR_WRAPPERS = new Set([
   'ArrayDeclarator',
   'FunctionDeclarator',
+  'InitDeclarator',
   'ParenthesizedDeclarator',
   'PointerDeclarator',
   'ReferenceDeclarator',
@@ -44,6 +45,14 @@ const SPECS: Record<string, EntitySpec> = {
   TypeDefinition: {kind: 'type', resolveName: resolveTypedefName, container: true},
   // A member is either a field or a prototype, told apart by the declarator.
   FieldDeclaration: {kind: 'field', resolveName: resolveMemberName, resolveKind: resolveFieldKind},
+  // A prototype or a global, told apart by the declarator.
+  Declaration: {
+    kind: 'variable',
+    scope: 'top-level',
+    resolveName: resolveMemberName,
+    resolveKind: resolveDeclarationKind,
+  },
+  PreprocDirective: {kind: 'macro', name: ['Identifier'], accept: isDefine},
 }
 
 function hasFields({node}: ResolveEntityNameParams): boolean {
@@ -86,6 +95,14 @@ function resolveMemberName({node, source}: ResolveEntityNameParams): string | un
 
 function resolveFieldKind({node}: ResolveEntityNameParams): EntityKind {
   return declaratorChain({node, names: MEMBER_NAMES})?.isFunction === true ? 'method' : 'field'
+}
+
+function resolveDeclarationKind({node}: ResolveEntityNameParams): EntityKind {
+  return declaratorChain({node, names: MEMBER_NAMES})?.isFunction === true ? 'function' : 'variable'
+}
+
+function isDefine({node}: ResolveEntityNameParams): boolean {
+  return node.firstChild?.type.name === '#define'
 }
 
 // The new name comes after the aliased type: `node_t` in

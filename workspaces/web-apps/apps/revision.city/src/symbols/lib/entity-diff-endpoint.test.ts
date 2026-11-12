@@ -228,6 +228,7 @@ test('stops reading a GitHub file past the size limit and gives an empty diff', 
         language: 'typescript',
         changes: [],
         summary: {added: 0, deleted: 0, modified: 0, moved: 0, renamed: 0},
+        skipped: 'too-large',
       },
     },
   ])
@@ -254,7 +255,7 @@ test('refuses a Codeberg file by its Content-Length and gives an empty diff', as
   )
 
   await expect(readLines(response)).resolves.toMatchObject([
-    {itemId: 'item-1', diff: {language: 'typescript', changes: []}},
+    {itemId: 'item-1', diff: {language: 'typescript', changes: [], skipped: 'too-large'}},
   ])
   expect(large.counter.pulled).toBeLessThanOrEqual(1)
 })

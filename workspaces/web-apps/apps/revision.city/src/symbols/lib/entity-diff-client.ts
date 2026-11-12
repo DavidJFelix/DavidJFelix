@@ -174,6 +174,7 @@ function normalizeEntityDiff(data: unknown): EntityDiff | undefined {
     language: typeof data.language === 'string' ? data.language : null,
     changes,
     summary: isSummary(data.summary) ? data.summary : createSummary(changes),
+    ...(data.skipped === 'too-large' ? {skipped: 'too-large'} : {}),
   }
 }
 

@@ -135,6 +135,9 @@ export interface EntityDiff {
   readonly language: string | null
   readonly changes: readonly EntityChange[]
   readonly summary: EntityDiffSummary
+  // Set when the file was too large to diff. The change list is then empty, but
+  // the file can still hold changes.
+  readonly skipped?: 'too-large'
 }
 
 export interface ResolveEntityNameParams {

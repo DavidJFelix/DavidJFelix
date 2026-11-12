@@ -47,10 +47,16 @@ export async function diffEntities({
   return {path, language: language.id, changes, summary: createSummary(changes)}
 }
 
-// The result for a file too large to diff: the language is named and the
-// change list is empty.
+// The result for a file too large to diff: the language is named, the change
+// list is empty, and `skipped` tells the reader that the file was not diffed.
 export function createTooLargeEntityDiff(path: string): EntityDiff {
-  return {path, language: detectLanguage(path)?.id ?? null, changes: [], summary: createSummary([])}
+  return {
+    path,
+    language: detectLanguage(path)?.id ?? null,
+    changes: [],
+    summary: createSummary([]),
+    skipped: 'too-large',
+  }
 }
 
 function compareChanges(left: EntityChange, right: EntityChange): number {

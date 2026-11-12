@@ -58,6 +58,19 @@ export type EntityExtraction =
 // several grammars (script tags, template blocks) needs no special handling.
 // For a file over a `_PER_FILE` limit, the result is `{tooLarge: true}`.
 export function extractEntities({source, parser}: ExtractEntitiesParams): EntityExtraction {
+  try {
+    return extractFromTree({source, parser})
+  } catch (error) {
+    // The parser builds its tree with recursion, so input nested past a few
+    // thousand levels can overflow the stack. That input counts as too large.
+    if (error instanceof RangeError) {
+      return {tooLarge: true}
+    }
+    throw error
+  }
+}
+
+function extractFromTree({source, parser}: ExtractEntitiesParams): EntityExtraction {
   const found = collectEntityNodes({source, parser})
   if (found === undefined) {
     return {tooLarge: true}

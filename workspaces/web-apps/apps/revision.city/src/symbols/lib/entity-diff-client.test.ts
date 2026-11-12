@@ -110,6 +110,19 @@ test('accepts a final result with no trailing newline', async () => {
   expect(await collect(fetcher)).toHaveLength(1)
 })
 
+test('keeps the mark on a file too large to read', async () => {
+  const tooLarge = {...createDiff('src/a.ts'), changes: [], skipped: 'too-large'}
+  const fetcher = stubStream([
+    `${JSON.stringify({itemId: 'item-1', name: 'src/a.ts', diff: tooLarge})}\n`,
+    `${JSON.stringify({itemId: 'item-2', name: 'src/b.ts', diff: createDiff('src/b.ts')})}\n`,
+  ])
+
+  const results = await collect(fetcher)
+
+  expect(results[0]?.diff?.skipped).toBe('too-large')
+  expect(results[1]?.diff).not.toHaveProperty('skipped')
+})
+
 test('carries a per-file failure without ending the stream', async () => {
   const fetcher = stubStream([
     `${JSON.stringify({itemId: 'item-1', name: 'src/a.ts', error: 'GitHub rate limit exceeded.'})}\n`,

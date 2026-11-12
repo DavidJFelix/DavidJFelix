@@ -47,15 +47,13 @@ export interface GitHubDiffFileRequest {
   type: ChangeTypes
 }
 
-interface GitHubDiffFileServerOptions {
+// 'request' carries the caller's own token, so results stay out of the shared
+// cache. 'anonymous' reads public content with no credential, and only these
+// reads use the shared cache.
+type GitHubReadCredentials = {tokenSource: 'request'; token: string} | {tokenSource: 'anonymous'}
+
+type GitHubDiffFileServerOptions = GitHubReadCredentials & {
   fetch?: GitHubServerFetch
-  token?: string
-  // 'request' carries the caller's own token, so results stay out of the shared
-  // cache. 'anonymous' fetches public content with no credential at all and
-  // never falls back to a server token -- without that, configuring one would
-  // silently widen what an unauthenticated visitor can reach, and land private
-  // content in a cache shared by every visitor.
-  tokenSource?: 'request' | 'anonymous'
   // Fetch the real contents of added and deleted files instead of the empty
   // placeholder. The viewer never needs them -- the patch already carries every
   // line -- but a consumer that parses the file does.
@@ -79,7 +77,7 @@ type GitHubFileReader = (file: Omit<GitHubDiffFileRequest, 'path'>) => Promise<G
 
 export function loadGitHubDiffFiles(
   request: GitHubDiffFileRequest,
-  options: GitHubDiffFileServerOptions = {},
+  options: GitHubDiffFileServerOptions,
 ): Promise<GitHubDiffFiles> {
   return createGitHubFileReader(request.path, options)(request)
 }
@@ -89,11 +87,11 @@ export function loadGitHubDiffFiles(
 // the shared cache, so without this each file looks up the refs again.
 export function createGitHubFileReader(
   path: string,
-  options: GitHubDiffFileServerOptions = {},
+  options: GitHubDiffFileServerOptions,
 ): GitHubFileReader {
   const source = parseGitHubDiffSource(path)
   const fetcher = options.fetch ?? fetch
-  const useSharedCache = options.tokenSource !== 'request'
+  const useSharedCache = options.tokenSource === 'anonymous'
   let refsPromise: Promise<GitHubDiffRefs> | undefined
 
   return async (file) => {
@@ -592,7 +590,7 @@ async function fetchGitHubFileContents({
   fetcher,
   options,
 }: FetchGitHubFileContentsParams): Promise<Response> {
-  if (options.tokenSource === 'request' && !isNullish(options.token)) {
+  if (options.tokenSource === 'request') {
     const url = createGitHubApiUrl(
       `/repos/${encodeURLSegment(repoRef.owner)}/${encodeURLSegment(repoRef.repo)}/contents/${encodePath(path)}`,
       {ref: repoRef.ref},
@@ -609,7 +607,7 @@ async function fetchGitHubFileContents({
 
   const url = `${GITHUB_RAW_ROOT}/${encodeURLSegment(repoRef.owner)}/${encodeURLSegment(repoRef.repo)}/${encodeURLSegment(repoRef.ref)}/${encodePath(path)}`
   const response = await fetcher(url, {
-    headers: createGitHubRawHeaders(resolveServerToken(options)),
+    headers: {'User-Agent': 'pierre-diffs'},
   })
   await assertGitHubResponseOK(
     response,
@@ -624,7 +622,7 @@ async function fetchGitHubJSON(
   options: GitHubDiffFileServerOptions,
 ): Promise<unknown> {
   const response = await fetcher(url, {
-    headers: createGitHubJSONHeaders(resolveServerToken(options)),
+    headers: createGitHubJSONHeaders(readRequestToken(options)),
   })
   await assertGitHubResponseOK(response, `GitHub API ${url}`)
   return response.json()
@@ -635,16 +633,6 @@ function createGitHubJSONHeaders(token: string | undefined): HeadersInit {
     Accept: 'application/vnd.github+json',
     'User-Agent': 'pierre-diffs',
     'X-GitHub-Api-Version': GITHUB_API_VERSION,
-  }
-  if (!isNullish(token) && token !== '') {
-    headers.Authorization = `Bearer ${token}`
-  }
-  return headers
-}
-
-function createGitHubRawHeaders(token: string | undefined): HeadersInit {
-  const headers: Record<string, string> = {
-    'User-Agent': 'pierre-diffs',
   }
   if (!isNullish(token) && token !== '') {
     headers.Authorization = `Bearer ${token}`
@@ -786,15 +774,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
 }
 
-// An anonymous request must stay anonymous: falling back to a server token
-// here would hand unauthenticated visitors that token full reach.
-function resolveServerToken(options: GitHubDiffFileServerOptions): string | undefined {
-  if (options.tokenSource === 'anonymous') {
-    return undefined
-  }
-  return options.token ?? getGitHubToken()
-}
-
-function getGitHubToken(): string | undefined {
-  return process.env.DIFFSHUB_GITHUB_TOKEN ?? process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN
+function readRequestToken(options: GitHubReadCredentials): string | undefined {
+  return options.tokenSource === 'request' ? options.token : undefined
 }

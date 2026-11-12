@@ -47,12 +47,34 @@ test.each([
   expect(fetcher).not.toHaveBeenCalled()
 })
 
-test('answers 502 with the reason when Codeberg fails', async () => {
+test('rejects a compare path with 400 without a fetch', async () => {
+  const fetcher = stubCodeberg()
+
   const response = await handleCodebergDiffFileRequest(
-    fileRequest('path=/acme/widgets/pulls/7&type=change&name=README.md'),
-    {fetch: vi.fn<FetchLike>(async () => new Response('', {status: 404}))},
+    fileRequest('path=/acme/widgets/compare/v1...v2&type=change&name=README.md'),
+    {fetch: fetcher},
   )
 
-  expect(response.status).toBe(502)
-  expect(await response.json()).toEqual({error: 'Codeberg pull acme/widgets#7 failed (404).'})
+  expect(response.status).toBe(400)
+  expect(await response.json()).toEqual({error: 'Unsupported Codeberg diff path.'})
+  expect(fetcher).not.toHaveBeenCalled()
 })
+
+test.each([
+  {upstream: 404, status: 404},
+  {upstream: 429, status: 429},
+  {upstream: 500, status: 502},
+])(
+  'answers $status with the reason when Codeberg answers $upstream',
+  async ({upstream, status}) => {
+    const response = await handleCodebergDiffFileRequest(
+      fileRequest('path=/acme/widgets/pulls/7&type=change&name=README.md'),
+      {fetch: vi.fn<FetchLike>(async () => new Response('', {status: upstream}))},
+    )
+
+    expect(response.status).toBe(status)
+    expect(await response.json()).toEqual({
+      error: `Codeberg pull acme/widgets#7 failed (${upstream}).`,
+    })
+  },
+)

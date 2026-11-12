@@ -7,6 +7,7 @@
     ".": "./src/tags.ts",
     "./image": "./src/image.ts",
     "./card": "./src/card.ts",
+    "./glyphs": "./src/glyphs.ts",
     "./png": "./src/png.ts",
     "./runtime/node": "./src/runtime/node.ts",
     "./runtime/vite": {

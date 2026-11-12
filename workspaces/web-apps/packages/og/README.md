@@ -117,7 +117,10 @@ cards until they expire. On Workers the version is the version metadata binding'
 
 satori is held at 0.32: 0.33 added HarfBuzz text shaping whose Emscripten loader reads
 `self.location` and compiles wasm from bytes, neither of which works on Workers
-(`.github/renovate.json` records the hold).
+(`.github/renovate.json` records the hold). The hold keeps advisory GHSA-wx4j-mvgx-mqwp (improper
+escaping in the SVG, fixed in 0.33.5) open. The card is safe while the fonts are embedded, so text
+becomes glyph paths, and the SVG goes only to resvg; `src/image.test.ts` makes sure that no input
+text gets into the SVG. Check this again when the hold lifts.
 
 ## Tests
 

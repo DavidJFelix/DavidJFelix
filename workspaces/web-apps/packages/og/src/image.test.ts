@@ -1,10 +1,11 @@
 import {expect, test} from 'vitest'
-import {createOgRenderer} from './image'
+import {createOgRenderer, ogSvg} from './image'
 import {pngSize} from './png'
 import {nodeRuntime} from './runtime/node'
 import {ogImageSize} from './tags'
 
-const render = createOgRenderer(await nodeRuntime())
+const runtime = await nodeRuntime()
+const render = createOgRenderer(runtime)
 
 test('renders a dated card at the shared OpenGraph size', async () => {
   const png = await render({
@@ -47,8 +48,9 @@ test('renders params into the pixels, not just a fixed card', async () => {
   expect(one).not.toEqual(other)
 })
 
-// Titles flow into satori's SVG as text nodes; markup characters in
-// frontmatter must come out as pixels, never as parsed markup or a crash.
+// satori draws text with the embedded fonts as glyph paths, so markup
+// characters in frontmatter must come out as pixels, never as parsed markup
+// or a crash.
 test('renders titles containing markup characters', async () => {
   const png = await render({
     title: 'Ampersands & <angles> and "quotes"',
@@ -57,6 +59,33 @@ test('renders titles containing markup characters', async () => {
     author: 'David J Felix',
   })
   expect(pngSize(png)).toEqual(ogImageSize)
+})
+
+// satori 0.32 has advisory GHSA-wx4j-mvgx-mqwp (improper escaping in the
+// SVG). The card is safe while no input text gets into the SVG. A new element
+// name here must carry no input: check that before you add it to the list.
+const svgElements = new Set([
+  'clipPath',
+  'defs',
+  'g',
+  'linearGradient',
+  'mask',
+  'path',
+  'pattern',
+  'rect',
+  'stop',
+  'svg',
+])
+
+const marker = (field: string) => `<b class="${field}">${field}-marker & 'x'</b>`
+
+test('keeps input text out of the SVG', async () => {
+  const fields = ['title', 'description', 'site', 'author']
+  const [title, description, siteName, author] = fields.map(marker)
+  const svg = await ogSvg(runtime, {title, description, siteName, author})
+  const names = new Set([...svg.matchAll(/<([A-Za-z][\w:-]*)/g)].map(([, name]) => name))
+  expect([...names].filter((name) => !svgElements.has(name))).toEqual([])
+  for (const field of fields) expect(svg).not.toContain(`${field}-marker`)
 })
 
 test('paints the theme into the pixels, with a foreground-to-muted bar when no accent is set', async () => {

@@ -54,12 +54,14 @@ interface ListHarness {
 
 interface RenderListParams {
   entries?: readonly EntityDiffEntry[]
+  onRetry?: () => void
   onSelectSymbol?: (selection: SymbolSelection) => void
   supported?: boolean
 }
 
 function renderList({
   entries = [createEntry([MODIFIED_METHOD])],
+  onRetry,
   onSelectSymbol,
   supported = true,
 }: RenderListParams = {}): ListHarness {
@@ -71,6 +73,7 @@ function renderList({
       root.render(
         <SymbolChangesList
           entries={nextEntries}
+          onRetry={onRetry}
           onSelectSymbol={onSelectSymbol}
           supported={supported}
         />,
@@ -192,6 +195,59 @@ test('says so when a diff changed no nameable symbol', () => {
   const harness = renderList({entries: [createEntry([])]})
 
   expect(harness.container.textContent).toContain('No symbol changes')
+  harness.unmount()
+})
+
+const TOO_LARGE_FILE: EntityDiffEntry = {
+  itemId: 'item-2',
+  name: 'src/generated.ts',
+  status: 'ready',
+  diff: {
+    path: 'src/generated.ts',
+    language: 'typescript',
+    changes: [],
+    summary: {added: 0, deleted: 0, modified: 0, moved: 0, renamed: 0},
+    skipped: 'too-large',
+  },
+}
+
+const FAILED_FILE: EntityDiffEntry = {
+  itemId: 'item-3',
+  name: 'src/failed.ts',
+  status: 'error',
+  error: 'GitHub rate limit exceeded.',
+}
+
+test('names a file too large to read beside the files that changed', () => {
+  const harness = renderList({entries: [createEntry([MODIFIED_METHOD]), TOO_LARGE_FILE]})
+
+  const note = harness.container.querySelector('details')
+  expect(note?.querySelector('summary')?.textContent).toBe('1 file not read')
+  expect(note?.textContent).toContain('src/generated.ts: too large')
+  expect(harness.container.textContent).toContain('Widget.render')
+  harness.unmount()
+})
+
+test('offers to read a failed file again', () => {
+  const onRetry = vi.fn<() => void>()
+  const harness = renderList({entries: [createEntry([MODIFIED_METHOD]), FAILED_FILE], onRetry})
+
+  const note = harness.container.querySelector('details')
+  expect(note?.textContent).toContain('src/failed.ts: GitHub rate limit exceeded.')
+  act(() => {
+    findRow(harness.container, 'Retry')?.click()
+  })
+
+  expect(onRetry).toHaveBeenCalledTimes(1)
+  harness.unmount()
+})
+
+test('does not claim no changes for a file it did not read', () => {
+  const harness = renderList({entries: [TOO_LARGE_FILE]})
+
+  expect(harness.container.textContent).toContain('No symbol changes in the files that were read')
+  expect(harness.container.querySelector('summary')?.textContent).toBe('1 file not read')
+  expect(findRow(harness.container, 'Retry')).toBeUndefined()
   harness.unmount()
 })
 

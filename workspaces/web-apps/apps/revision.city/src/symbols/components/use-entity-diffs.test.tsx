@@ -35,26 +35,29 @@ function ndjson(lines: unknown[]): Response {
   return HttpResponse.text(lines.map((line) => `${JSON.stringify(line)}\n`).join(''))
 }
 
+function modifiedGreet(file: {itemId: string; name: string}) {
+  return {
+    itemId: file.itemId,
+    name: file.name,
+    diff: {
+      path: file.name,
+      language: 'typescript',
+      changes: [{type: 'modified', kind: 'function', name: 'greet', qualifiedName: 'greet'}],
+      summary: {added: 0, deleted: 0, modified: 1, moved: 0, renamed: 0},
+    },
+  }
+}
+
 // Reports one modified function for every file named in the request body.
 const modifiedGreetPerFile: EntityDiffResolver = async ({request}) => {
   const body = await request.json()
-  return ndjson(
-    body.files.map((file) => ({
-      itemId: file.itemId,
-      name: file.name,
-      diff: {
-        path: file.name,
-        language: 'typescript',
-        changes: [{type: 'modified', kind: 'function', name: 'greet', qualifiedName: 'greet'}],
-        summary: {added: 0, deleted: 0, modified: 1, moved: 0, renamed: 0},
-      },
-    })),
-  )
+  return ndjson(body.files.map(modifiedGreet))
 }
 
 function mountHook(enabled: boolean) {
-  const hook = renderHook(() =>
-    useEntityDiffs({enabled, requests: REQUESTS, sourcePath: 'o/r/pull/1'}),
+  const hook = renderHook(
+    ({requests}) => useEntityDiffs({enabled, requests, sourcePath: 'o/r/pull/1'}),
+    {initialProps: {requests: REQUESTS}},
   )
   onTestFinished(cleanup)
   return hook
@@ -142,4 +145,63 @@ test('marks the whole batch when the request itself fails', async () => {
   const {result} = await mountSettled()
 
   expect(result.current.entries.map((entry) => entry.status)).toEqual(['error', 'error'])
+})
+
+test('marks a file that the stream did not answer as not read', async () => {
+  serveEntityDiffs(() => ndjson([modifiedGreet({itemId: 'item-1', name: 'src/a.ts'})]))
+
+  const {result} = await mountSettled()
+
+  expect(result.current.entries.map((entry) => entry.status)).toEqual(['ready', 'error'])
+  expect(result.current.entries[1]?.error).toBe('No result for this file.')
+})
+
+test('asks again only for the files that failed', async () => {
+  const askedFor: string[][] = []
+  serveEntityDiffs(async ({request}) => {
+    const body = await request.json()
+    askedFor.push(body.files.map((file) => file.itemId))
+    return ndjson(
+      body.files.map((file) =>
+        askedFor.length === 1 && file.itemId === 'item-1'
+          ? {itemId: file.itemId, name: file.name, error: 'GitHub rate limit exceeded.'}
+          : modifiedGreet(file),
+      ),
+    )
+  })
+  const {result} = await mountSettled()
+  expect(result.current.entries.map((entry) => entry.status)).toEqual(['error', 'ready'])
+
+  act(() => {
+    result.current.retry()
+  })
+
+  await waitFor(() => {
+    expect(result.current.entries.map((entry) => entry.status)).toEqual(['ready', 'ready'])
+  })
+  expect(askedFor).toEqual([['item-1', 'item-2'], ['item-1']])
+})
+
+test('reads again the files that a re-run left in flight', async () => {
+  let release: (() => void) | undefined
+  const respond = serveEntityDiffs(async (info) => {
+    if (respond.mock.calls.length === 1) {
+      await new Promise<void>((resolve) => {
+        release = resolve
+      })
+    }
+    return modifiedGreetPerFile(info)
+  })
+  const {result, rerender} = mountHook(true)
+  await waitFor(() => {
+    expect(respond).toHaveBeenCalledTimes(1)
+  })
+
+  rerender({requests: [...REQUESTS]})
+
+  await waitFor(() => {
+    expect(result.current.entries.map((entry) => entry.status)).toEqual(['ready', 'ready'])
+  })
+  expect(respond).toHaveBeenCalledTimes(2)
+  release?.()
 })

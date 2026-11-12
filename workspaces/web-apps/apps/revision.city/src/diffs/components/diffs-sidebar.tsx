@@ -373,6 +373,7 @@ export const DiffsSidebar = memo(function DiffsSidebar({
           >
             <SymbolChangesList
               entries={entityDiffs.entries}
+              onRetry={entityDiffs.retry}
               onSelectItem={onSelectItem}
               onSelectSymbol={onSelectSymbol}
               supported={symbolsAvailable}

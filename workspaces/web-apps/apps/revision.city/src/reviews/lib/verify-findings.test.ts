@@ -39,6 +39,9 @@ test('verifyFindings adds the proof to a confirmed finding', async () => {
   })
   const [{messages}] = chat.mock.calls[0]
   expect(messages[0].content).toContain('You see only the diff piece.')
+  expect(messages[0].content).toContain(
+    'Those numbers are labels for this piece, not file line numbers.',
+  )
   expect(messages[1].content).toBe(
     'File: a.ts\n\nFinding to check:\n{"severity":"high","title":"Bug","body":"Breaks","label":2,"endLabel":2}',
   )

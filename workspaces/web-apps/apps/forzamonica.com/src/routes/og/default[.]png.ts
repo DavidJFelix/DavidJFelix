@@ -4,7 +4,7 @@ import {createFileRoute} from '@tanstack/react-router'
 import {cardTheme, site} from '@/site.ts'
 
 // The share card every page's og:image points at, rendered on the Worker at
-// request time (satori + resvg on wasm) and kept in the edge cache.
+// request time (Takumi on wasm) and kept in the edge cache.
 const card = ogCard({
   runtime: viteRuntime,
   title: site.title,

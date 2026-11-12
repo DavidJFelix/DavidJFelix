@@ -12,8 +12,8 @@ import {defineConfig, normalizePath} from 'vite'
 // accept, since they refuse to compile wasm from bytes at runtime. Vite has no
 // such rule, so this plugin keeps every `.wasm` import external in the SSR
 // build, copies the binary into the server output, and points the import at
-// it. The share card's satori and resvg modules (@davidjfelix/og/runtime/vite)
-// are what ride through it.
+// it. The share card's Takumi module (@davidjfelix/og/runtime/vite) is
+// what rides through it.
 const WASM_IMPORT = /__wasm_module__(\/[^'"]+\.wasm)/g
 
 const wasmModules = (): Plugin => ({

@@ -112,7 +112,7 @@ const sentrySourceMaps =
 // adapter's default workerd, because the build optimizes images with native
 // `sharp`, which can't load in workerd. (The OG cards under src/pages/og render
 // on wasm through @davidjfelix/og and would run either way; in Node they read
-// their wasm and font files from this app's tree, hence the satori, resvg, and
+// their wasm and font files from this app's tree, hence the @takumi-rs/wasm and
 // @fontsource/inter dependencies.)
 // `imageService: 'custom'` keeps Astro's default sharp service so astro:assets
 // are optimized at build; the adapter's other modes (incl. 'compile') hand

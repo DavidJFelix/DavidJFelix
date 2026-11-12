@@ -110,6 +110,7 @@
         "@radix-ui/colors": "^3.0.0",
         "@resvg/resvg-wasm": "^2.6.2",
         "@sentry/astro": "^11.0.0",
+        "@takumi-rs/wasm": "2.20.0",
         "astro": "^7.3.0",
         "hast-util-from-html": "^2.0.3",
         "hast-util-to-mdast": "^10.1.2",
@@ -508,6 +509,7 @@
       "dependencies": {
         "@fontsource/inter": "5.3.0",
         "@resvg/resvg-wasm": "2.6.2",
+        "@takumi-rs/wasm": "2.20.0",
         "satori": "0.32.0",
       },
       "devDependencies": {
@@ -1688,6 +1690,10 @@
     "@tailwindcss/typography": ["@tailwindcss/typography@0.5.20", "", { "dependencies": { "postcss-selector-parser": "6.0.10" }, "peerDependencies": { "tailwindcss": ">=3.0.0 || >=4.0.0 || insiders" } }, "sha512-hwbzQuNUfcPvbegQFatVPl/MY/tcM9KLl963hQ5laJKPh81TEZ1+dNG9PirGvcaDBkp+BCshExAyKVPW91dozw=="],
 
     "@tailwindcss/vite": ["@tailwindcss/vite@4.3.5", "", { "dependencies": { "@tailwindcss/node": "4.3.5", "@tailwindcss/oxide": "4.3.5", "tailwindcss": "4.3.5" }, "peerDependencies": { "vite": "^5.2.0 || ^6 || ^7 || ^8" } }, "sha512-BCNiY0a1ZjdOHVqw7kyb7U72BwfMF3dfUuN+tQsLWky/J5JOI/r7abibglXfygrZhVO/3u3V+E25kkKTeMkXaQ=="],
+
+    "@takumi-rs/helpers": ["@takumi-rs/helpers@2.20.0", "", { "peerDependencies": { "preact": "^10.0.0 || ^11.0.0", "react": "^18.0.0 || ^19.0.0" }, "optionalPeers": ["preact", "react"] }, "sha512-efdeG4Ujsw0IEYXhq3lUN1UiKhK6f3tak7VSMrCEWSvumFs0q5moBHSLdsR6aJhPNsYei21Ea6Rjtv94/qdyjg=="],
+
+    "@takumi-rs/wasm": ["@takumi-rs/wasm@2.20.0", "", { "dependencies": { "@takumi-rs/helpers": "2.20.0" }, "peerDependencies": { "csstype": "*" }, "optionalPeers": ["csstype"] }, "sha512-2Xfu55Ye8gmJMXQEDun/5zl/78LyCXKUjP503alH1tG0OyotkkWpZbgW8iWGuxxf4IJvp9kIaO+NLGbq4B6J8A=="],
 
     "@tanstack/ai": ["@tanstack/ai@1.0.1", "", { "dependencies": { "@ag-ui/core": "1.0.0", "@cfworker/json-schema": "^4.1.1", "@standard-schema/spec": "^1.1.0", "@tanstack/ai-event-client": "^1.0.0", "@tanstack/ai-utils": "^1.0.0", "fast-json-patch": "^3.1.1", "partial-json": "^0.1.7" }, "peerDependencies": { "@opentelemetry/api": ">=1.9.0" }, "optionalPeers": ["@opentelemetry/api"] }, "sha512-oddcGha40pa0MMWdMogvljNiul6OY3H+V9fDOS6DZ+2+8KdUXxWfOf8QDYtkat6xAuZf4E4Clc7b1RAewbxSkA=="],
 

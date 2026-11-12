@@ -154,8 +154,9 @@ filter and document why in a header comment.
 ## Fanning out over apps: matrix from the affected set
 
 Per-app preview and deploy workflows are gone. A plan job asks turbo which apps a change affects and
-emits a matrix; the fan-out job deploys exactly those. When a change affects no app, the preview
-plan picks one canary app, so a tooling change still runs the preview path:
+emits a matrix; the fan-out job deploys exactly those. When the plan finds no app in the matrix (a
+change to repo-root tooling, which turbo cannot see), it takes every app, because that change can
+change every build:
 
 ```yaml
 jobs:

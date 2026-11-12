@@ -231,25 +231,19 @@ export const planAffected = ({
 }
 
 // Turbo cannot see repo-root tooling (bin/, the composite actions, the tool
-// pins), so a pull request that changes only tooling affects no app. The
-// preview plan then previews this one app, so the change still runs the
-// upload, smoke and e2e path before it merges.
-export const PREVIEW_CANARY_DIR = 'revision.city'
-
-export type PlanPreviewParams = Omit<PlanAffectedParams, 'kind'>
-
-export const planPreview = ({
+// pins), so a change to it affects no app. That change can still change every
+// build, so the plan then takes every app in the matrix for that kind: the
+// preview tests the change on every app before it merges, and the deploy ships
+// every app built with it.
+export const planAffectedOrAll = ({
   affectedPaths,
+  kind,
   targets = WEB_APP_TARGETS,
-}: PlanPreviewParams): {readonly apps: WebAppMatrixEntry[]; readonly canary: boolean} => {
-  const apps = planAffected({affectedPaths, kind: 'preview', targets})
-  if (apps.length > 0) return {apps, canary: false}
-  const canary = planAffected({
-    affectedPaths: [`apps/${PREVIEW_CANARY_DIR}`],
-    kind: 'preview',
-    targets,
-  })
-  return {apps: canary, canary: true}
+}: PlanAffectedParams): {readonly apps: WebAppMatrixEntry[]; readonly all: boolean} => {
+  const apps = planAffected({affectedPaths, kind, targets})
+  if (apps.length > 0) return {apps, all: false}
+  const everyApp = targets.map((target) => `apps/${target.dir}`)
+  return {apps: planAffected({affectedPaths: everyApp, kind, targets}), all: true}
 }
 
 type TurboPackageList = {
@@ -287,13 +281,12 @@ if (import.meta.main) {
     process.exit(1)
   }
 
-  const affectedPaths = parseAffectedPaths(turbo.stdout.toString())
-  const {apps, canary} =
-    kind === 'preview'
-      ? planPreview({affectedPaths})
-      : {apps: planAffected({affectedPaths, kind}), canary: false}
+  const {apps, all} = planAffectedOrAll({
+    affectedPaths: parseAffectedPaths(turbo.stdout.toString()),
+    kind,
+  })
   const names = apps.map((app) => app.dir).join(', ') || '(none)'
-  console.log(`affected ${kind} apps: ${names}${canary ? ' (canary)' : ''}`)
+  console.log(`affected ${kind} apps: ${names}${all ? ' (no app affected, so every app)' : ''}`)
 
   const output = process.env.GITHUB_OUTPUT
   if (output) appendFileSync(output, `apps=${JSON.stringify(apps)}\n`)

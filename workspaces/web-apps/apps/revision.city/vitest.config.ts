@@ -16,6 +16,9 @@ export default defineConfig({
     restoreMocks: true,
     unstubEnvs: true,
     unstubGlobals: true,
+    // @pierre/icons ships ESM with imports that have no file extension, which
+    // Node cannot load. Vite transforms the package so that the imports resolve.
+    server: {deps: {inline: ['@pierre/icons']}},
     // The coverage gate covers the unit-tested logic: the helpers in src/lib, the
     // client-config resolver, and the PR review engine (src/reviews/lib). The
     // build and the smoke test exercise the route glue and the client bootstrap

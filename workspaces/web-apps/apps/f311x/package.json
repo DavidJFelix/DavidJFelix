@@ -25,8 +25,8 @@
     "test:e2e:update": "playwright test --update-snapshots"
   },
   "dependencies": {
-    "@alchemy.run/cloudflare": "2.0.0-beta.84",
-    "@alchemy.run/github": "2.0.0-beta.84",
+    "@alchemy.run/cloudflare": "2.0.0-beta.85",
+    "@alchemy.run/github": "2.0.0-beta.85",
     "@cloudflare/vite-plugin": "^1.40.2",
     "@davidjfelix/og": "workspace:*",
     "@davidjfelix/theme": "workspace:*",
@@ -41,10 +41,10 @@
     "@tanstack/react-router-devtools": "catalog:",
     "@tanstack/react-start": "catalog:",
     "@tanstack/router-plugin": "catalog:",
-    "alchemy": "2.0.0-beta.84",
+    "alchemy": "2.0.0-beta.85",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "effect": "4.0.7",
+    "effect": "4.1.2",
     "lucide-react": "^1.18.0",
     "marked": "^18.0.5",
     "posthog-js": "^1.393.0",
@@ -63,7 +63,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "catalog:",
-    "@effect/platform-node": "4.0.7",
+    "@effect/platform-node": "4.1.2",
     "@playwright/test": "catalog:",
     "@tailwindcss/typography": "0.5.20",
     "@tanstack/devtools-vite": "catalog:",

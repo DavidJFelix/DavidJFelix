@@ -214,11 +214,6 @@
       "groupName": "alchemy packages"
     },
     {
-      "description": "effect 4.1 removed the top-level effect/Crypto module. alchemy 2.0.0-beta.84 still imports it from Stack, Util/PlatformServices, and Auth/OAuthFlow, so `alchemy deploy` cannot load the f311x stacks on effect 4.1. tsc does not report the error, because skipLibCheck hides the missing module. Hold effect and @effect below 4.1 until an alchemy release supports effect 4.1",
-      "matchPackageNames": ["effect", "@effect/**"],
-      "allowedVersions": "<4.1.0"
-    },
-    {
       "description": "the @earendil-works pi packages (pi-coding-agent in the repo-root package.json; pi-ai left with Flue in 2026-08) come from one org and share the pi runtime, so group every update type into a single PR",
       "matchPackageNames": ["@earendil-works/**"],
       "groupName": "earendil pi packages"

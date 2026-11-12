@@ -257,6 +257,36 @@ test('callback logs the error body of a failed code exchange status', async () =
   consoleError.mockRestore()
 })
 
+// github.com throttles by IP address, and a Worker shares its addresses, so
+// the next attempt often gets through with the same code.
+test('callback retries a throttled code exchange and signs in', async () => {
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+  const stub = stubGitHubFetch()
+  stub.mockImplementationOnce(async () =>
+    Response.json({}, {status: 429, headers: {'Retry-After': '300'}}),
+  )
+
+  const {sessionCookie} = await signIn(stub)
+
+  expect(sessionCookie).not.toBe('')
+  expect(consoleError).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({step: 'code exchange', status: 429, retryAfter: '300'}),
+  )
+  consoleError.mockRestore()
+})
+
+test('callback names the GitHub rate limit when every exchange attempt is throttled', async () => {
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+  const stub = stubGitHubFetch({tokenStatus: 429, token: {}})
+
+  const {callbackResponse} = await signIn(stub)
+
+  expect(callbackResponse.status).toBe(503)
+  expect(await callbackResponse.text()).toContain('GitHub is limiting sign-in requests')
+  expect(stub).toHaveBeenCalledTimes(3)
+  consoleError.mockRestore()
+})
+
 test('callback logs the status and message when the user lookup fails', async () => {
   const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
   const {callbackResponse} = await signIn(

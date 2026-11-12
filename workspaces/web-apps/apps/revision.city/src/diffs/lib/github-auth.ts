@@ -216,6 +216,13 @@ export async function handleGitHubOAuthCallbackRequest(
     },
     fetcher,
   )
+  if (grant.kind === 'unavailable' && grant.status === 429) {
+    return createAuthTextResponse(
+      'GitHub is limiting sign-in requests from revision.city right now. Try again in a few minutes.',
+      503,
+      [clearStateCookie],
+    )
+  }
   if (grant.kind !== 'granted') {
     return createAuthTextResponse('GitHub sign-in failed. Try again.', 502, [clearStateCookie])
   }
@@ -426,13 +433,32 @@ type GitHubTokenGrantOutcome = 'refused' | 'unavailable'
 type GitHubTokenGrantResult =
   | {kind: 'granted'; grant: GitHubTokenGrant}
   | {kind: 'refused'}
-  | {kind: 'unavailable'}
+  | {kind: 'unavailable'; status?: number}
+
+// github.com limits requests by IP address, and a Worker shares its outgoing
+// addresses with other Cloudflare customers. So a 429 can come from traffic
+// that is not ours, and the next attempt often leaves from another address.
+// A throttled request does not reach the code check, so the next attempt can
+// send the same code.
+const TOKEN_GRANT_ATTEMPTS = 3
 
 // Calls GitHub's token endpoint for both the initial code exchange and refresh
 // grants. GitHub reports failures as 200s with an `error` field, so both paths
 // are checked. A body with an `error` field is a refusal. Any other failure
 // (a 5xx, a body that is not JSON, a network error) is unavailable.
 async function requestGitHubTokenGrant(
+  body: Record<string, string>,
+  fetcher: AuthFetch,
+  attemptsLeft = TOKEN_GRANT_ATTEMPTS,
+): Promise<GitHubTokenGrantResult> {
+  const result = await requestGitHubTokenGrantOnce(body, fetcher)
+  const isThrottled = result.kind === 'unavailable' && result.status === 429
+  return isThrottled && attemptsLeft > 1
+    ? requestGitHubTokenGrant(body, fetcher, attemptsLeft - 1)
+    : result
+}
+
+async function requestGitHubTokenGrantOnce(
   body: Record<string, string>,
   fetcher: AuthFetch,
 ): Promise<GitHubTokenGrantResult> {
@@ -457,8 +483,11 @@ async function requestGitHubTokenGrant(
         outcome,
         error,
         errorDescription: isRecord(data) ? readOptionalString(data.error_description) : undefined,
+        retryAfter: response.headers.get('retry-after') ?? undefined,
       })
-      return {kind: outcome}
+      return outcome === 'refused'
+        ? {kind: 'refused'}
+        : {kind: 'unavailable', status: response.status}
     }
 
     const now = Date.now()
@@ -534,6 +563,7 @@ interface GitHubAuthFailure {
   // code or a token.
   error?: string
   errorDescription?: string
+  retryAfter?: string
 }
 
 // The sign-in answers a failed GitHub call with a generic message, so the log

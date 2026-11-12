@@ -78,6 +78,11 @@ export interface SequenceDetail {
 export interface CodeEntity {
   readonly kind: EntityKind
   readonly name: string
+  // The qualified name without the `#n` suffix, and the position (from 1) of
+  // the entity among the entities of the same kind with that path. A `#12`
+  // that the author wrote in a name stays in the path.
+  readonly basePath: string
+  readonly occurrence: number
   // Dotted path through enclosing containers, e.g. `Widget.render`. Carries an
   // `#n` suffix when siblings collide (overloads, repeated headings).
   readonly qualifiedName: string

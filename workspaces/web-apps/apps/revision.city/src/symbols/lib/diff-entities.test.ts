@@ -148,6 +148,17 @@ test('reports an array insertion as one edit per array, not a cascade', async ()
   ])
 })
 
+test('keeps a number that the author wrote in a heading as part of its name', async () => {
+  const oldSource = '# Notes\n\n## Fix #12\n\nFirst.\n'
+  const newSource = '# Notes\n\n## Fix #14\n\nFirst.\n'
+
+  const diff = await diffEntities({path: 'docs/notes.md', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([
+    {type: 'renamed', qualifiedName: 'Fix #14', previousQualifiedName: 'Fix #12'},
+  ])
+})
+
 test('reports an added test once, not once per local inside its callback', async () => {
   const oldSource = "test('first', () => {\n  const value = 1\n  expect(value).toBe(1)\n})\n"
   const newSource = `${oldSource}test('second', () => {\n  const other = 2\n  expect(other).toBe(2)\n})\n`

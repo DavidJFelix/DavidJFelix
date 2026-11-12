@@ -69,16 +69,14 @@ export function extractEntities({source, parser}: ExtractEntitiesParams): Entity
   const lineStarts = createLineStarts(source)
   const entitySpans = found.map((entity) => ({from: entity.node.from, to: entity.node.to}))
 
-  const entities = found.map(({kind, name, qualifiedName, node, sequence}) => {
+  const entities = found.map(({node, sequence, ...identity}) => {
     const signature = computeSignature({node, source, isNestedEntity})
     const elements =
       sequence === undefined
         ? undefined
         : fingerprintSequence({sequence, source, lineStarts, entitySpans})
     return {
-      kind,
-      name,
-      qualifiedName,
+      ...identity,
       range: {startLine: lineAt(lineStarts, node.from), endLine: lineAt(lineStarts, node.to)},
       structuralHash: signature.structuralHash,
       contentHash: signature.contentHash,
@@ -127,6 +125,8 @@ interface FoundEntity {
   readonly kind: EntityKind
   readonly name: string
   readonly qualifiedName: string
+  readonly basePath: string
+  readonly occurrence: number
   readonly node: SyntaxNode
   readonly sequence?: readonly SyntaxNode[]
 }
@@ -186,7 +186,9 @@ function collectEntityNodes({
       const kind = spec.resolveKind?.({node, source}) ?? spec.kind
       const owner = spec.resolveOwner?.({node, source})
       const segment = owner === undefined ? name : `${owner}.${name}`
-      const qualifiedName = disambiguate({kind, path: joinPath(open, segment), counts: nameCounts})
+      const basePath = joinPath(open, segment)
+      const occurrence = countOccurrence({kind, path: basePath, counts: nameCounts})
+      const qualifiedName = occurrence === 1 ? basePath : `${basePath}#${occurrence}`
       entityCharacters += node.to - node.from + qualifiedName.length
       if (
         found.length === MAX_ENTITIES_PER_FILE ||
@@ -203,7 +205,7 @@ function collectEntityNodes({
         tooLarge = true
         return false
       }
-      found.push({kind, name, qualifiedName, node, sequence})
+      found.push({kind, name, qualifiedName, basePath, occurrence, node, sequence})
       open.push({
         name: segment,
         kind,
@@ -291,7 +293,7 @@ function joinPath(open: readonly EntityFrame[], name: string): string {
   return path.length === 0 ? name : `${path.join('.')}.${name}`
 }
 
-interface DisambiguateParams {
+interface CountOccurrenceParams {
   kind: EntityKind
   path: string
   counts: Map<string, number>
@@ -300,11 +302,11 @@ interface DisambiguateParams {
 // Overloads and repeated markdown headings would otherwise share a key and match
 // each other arbitrarily. Counted per kind, because a Rust `struct Widget` and
 // its `impl Widget` are separate entities that legitimately share a name.
-function disambiguate({kind, path, counts}: DisambiguateParams): string {
+function countOccurrence({kind, path, counts}: CountOccurrenceParams): number {
   const key = `${kind}\0${path}`
-  const seen = counts.get(key) ?? 0
-  counts.set(key, seen + 1)
-  return seen === 0 ? path : `${path}#${seen + 1}`
+  const occurrence = (counts.get(key) ?? 0) + 1
+  counts.set(key, occurrence)
+  return occurrence
 }
 
 function createLineStarts(source: string): readonly number[] {

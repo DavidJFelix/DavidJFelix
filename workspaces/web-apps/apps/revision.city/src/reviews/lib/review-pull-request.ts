@@ -171,8 +171,9 @@ function parseModelAnswer(text: string): ParsedModelAnswer {
     : {findings}
 }
 
-// A model can answer with a JSON array and no object around it. That array is
-// the findings list. A model can also answer with one finding and no list around
+// A model can answer with a JSON array and no object around it. That array, or
+// the first Markdown fence that holds only that array, is the findings list. A
+// model can also answer with one finding and no list around
 // it. That finding counts as a list of one. Two or more findings with no list do
 // not count, because the text can quote finding-shaped JSON. An answer that the
 // token limit cut can hold a complete finding before the cut, so a cut answer
@@ -185,7 +186,7 @@ function readFindingItems(text: string): unknown[] | undefined {
   if (findJsonSyntaxError(text) !== undefined) {
     return undefined
   }
-  const list = tryParseJsonArray(text)
+  const list = tryParseJsonArray(text) ?? tryParseJsonArray(firstFenceContent(text))
   if (list !== undefined) {
     return list
   }
@@ -194,6 +195,12 @@ function readFindingItems(text: string): unknown[] | undefined {
   }
   const finding = tryExtractJson(text, modelFindingSchema)
   return finding === undefined ? undefined : [finding]
+}
+
+const MARKDOWN_FENCE = /```[a-z]*\n([\s\S]*?)```/i
+
+function firstFenceContent(text: string): string {
+  return MARKDOWN_FENCE.exec(text)?.[1] ?? ''
 }
 
 function tryParseJsonArray(text: string): unknown[] | undefined {

@@ -738,6 +738,16 @@ test('reviewPullRequest takes a JSON array with no object around it as the findi
   expect(review.failures).toEqual([])
 })
 
+test('reviewPullRequest takes a JSON array in a Markdown fence after prose as the findings list', async () => {
+  const findings = [LOW_FINDING, {...LOW_FINDING, title: 'Two'}]
+  const answer = `Findings:\n\`\`\`json\n${JSON.stringify(findings)}\n\`\`\`\nDone.`
+
+  const review = await reviewWithOneReviewer(answering(answer))
+
+  expect(review.findings.map(({title}) => title)).toEqual(['Bug', 'Two'])
+  expect(review.failures).toEqual([])
+})
+
 test('reviewPullRequest takes an empty JSON array as an empty findings list', async () => {
   const review = await reviewWithOneReviewer(answering('[]'))
 
@@ -760,8 +770,8 @@ test.each([
     answer: `${JSON.stringify(LOW_FINDING)}\n${JSON.stringify({...LOW_FINDING, title: 'Two'})}`,
   },
   {
-    name: 'a JSON array of two findings inside prose and a fence',
-    answer: `Findings:\n\`\`\`json\n${JSON.stringify([LOW_FINDING, LOW_FINDING])}\n\`\`\``,
+    name: 'a JSON array of two findings inside prose',
+    answer: `Findings: ${JSON.stringify([LOW_FINDING, LOW_FINDING])}`,
   },
 ])('reviewPullRequest reports $name as a missing findings list', async ({answer}) => {
   const review = await reviewWithOneReviewer(answering(answer))

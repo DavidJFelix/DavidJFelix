@@ -8,8 +8,11 @@ import type {
 
 const PULL_REQUESTS_ENDPOINT = '/api/diffs/pull-requests'
 const GROUP_KINDS: ReadonlySet<string> = new Set(['assigned', 'owned', 'member', 'watched'])
+// Each load costs up to 7 GitHub searches, and GitHub allows 30 searches per
+// minute for one user, so a refocus reloads only after this gap.
+export const FOCUS_RELOAD_GAP_MS = 30_000
 
-export type PullRequestGroupsStatus = 'idle' | 'loading' | 'error' | 'loaded'
+export type PullRequestGroupsStatus = 'idle' | 'loading' | 'error' | 'sign-in-again' | 'loaded'
 
 export interface PullRequestGroupsState {
   status: PullRequestGroupsStatus
@@ -19,10 +22,12 @@ export interface PullRequestGroupsState {
 const IDLE_STATE: PullRequestGroupsState = {status: 'idle', groups: []}
 const LOADING_STATE: PullRequestGroupsState = {status: 'loading', groups: []}
 const ERROR_STATE: PullRequestGroupsState = {status: 'error', groups: []}
+const SIGN_IN_AGAIN_STATE: PullRequestGroupsState = {status: 'sign-in-again', groups: []}
 
 // Loads the signed-in visitor's open pull requests on mount and revalidates
-// whenever the window regains focus, since the list goes stale while the
-// visitor is off merging or opening pull requests elsewhere. `enabled` keeps
+// when the window regains focus at least FOCUS_RELOAD_GAP_MS after the last
+// load started, since the list goes stale while the visitor is off merging or
+// opening pull requests elsewhere. `enabled` keeps
 // the request from firing before the GitHub session is known, so signed-out
 // visitors never hit the endpoint.
 export function usePullRequestGroups(enabled: boolean): PullRequestGroupsState {
@@ -35,11 +40,13 @@ export function usePullRequestGroups(enabled: boolean): PullRequestGroupsState {
 
     let cancelled = false
     let inFlight = false
+    let lastStartedAt = 0
     const load = () => {
       if (inFlight) {
         return
       }
       inFlight = true
+      lastStartedAt = Date.now()
       // Stale-while-revalidate: only the first load shows a loading state. A
       // refocus refetch keeps the already loaded groups rendered, and a failed
       // one keeps them too -- a working list beats an error message.
@@ -55,11 +62,17 @@ export function usePullRequestGroups(enabled: boolean): PullRequestGroupsState {
       })
     }
 
+    const reloadOnFocus = () => {
+      if (Date.now() - lastStartedAt >= FOCUS_RELOAD_GAP_MS) {
+        load()
+      }
+    }
+
     load()
-    window.addEventListener('focus', load)
+    window.addEventListener('focus', reloadOnFocus)
     return () => {
       cancelled = true
-      window.removeEventListener('focus', load)
+      window.removeEventListener('focus', reloadOnFocus)
     }
   }, [enabled])
 
@@ -69,6 +82,9 @@ export function usePullRequestGroups(enabled: boolean): PullRequestGroupsState {
 async function fetchPullRequestGroups(): Promise<PullRequestGroupsState> {
   try {
     const response = await fetch(PULL_REQUESTS_ENDPOINT, {cache: 'no-store'})
+    if (response.status === 401) {
+      return SIGN_IN_AGAIN_STATE
+    }
     if (!response.ok) {
       return ERROR_STATE
     }

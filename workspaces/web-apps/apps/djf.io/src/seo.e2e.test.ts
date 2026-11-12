@@ -1,6 +1,10 @@
 import {pngSize} from '@davidjfelix/og/png'
 import {type APIRequestContext, expect, test} from '@playwright/test'
 
+// A preview build bakes its own URL into absolute tags (see astro.config.mjs);
+// a local production boot keeps the canonical origin.
+const origin = process.env.PREVIEW_URL ? new URL(process.env.PREVIEW_URL).origin : 'https://djf.io'
+
 const locsFrom = (xml: string): string[] =>
   [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1])
 
@@ -36,9 +40,9 @@ test('sitemap aliases serve the sitemap index content', async ({request}) => {
 
 test('sitemap lists the home page and every blog post', async ({request}) => {
   const locs = await sitemapPaths(request)
-  expect(locs).toContain('https://djf.io/')
-  expect(locs).toContain('https://djf.io/blog/')
-  expect(locs).toContain('https://djf.io/blog/2025-12-07-on-running/')
+  expect(locs).toContain(`${origin}/`)
+  expect(locs).toContain(`${origin}/blog/`)
+  expect(locs).toContain(`${origin}/blog/2025-12-07-on-running/`)
 })
 
 test('every sitemap page has a title, meta description, and self-referencing canonical', async ({
@@ -92,8 +96,10 @@ test('every sitemap page has Open Graph and Twitter card meta with a served og i
       'summary_large_image',
     )
     const ogImage = await head.locator('meta[property="og:image"]').getAttribute('content')
-    expect(ogImage, `${loc} og:image`).toMatch(/^https:\/\/djf\.io\/og\/.+\.png$/)
-    imagePaths.add(new URL(ogImage as string).pathname)
+    const ogImageUrl = new URL(ogImage as string)
+    expect(ogImageUrl.origin, `${loc} og:image origin`).toBe(origin)
+    expect(ogImageUrl.pathname, `${loc} og:image path`).toMatch(/^\/og\/.+\.png$/)
+    imagePaths.add(ogImageUrl.pathname)
   }
   for (const imagePath of imagePaths) {
     const response = await request.get(imagePath)
@@ -127,8 +133,8 @@ test('blog posts embed BlogPosting and BreadcrumbList JSON-LD matching the page'
   const jsonLd = JSON.parse((await scripts.first().textContent()) as string)
   expect(jsonLd['@type']).toBe('BlogPosting')
   expect(jsonLd.headline).toBe((await page.locator('h1').textContent())?.trim())
-  expect(jsonLd.url).toBe('https://djf.io/blog/2025-12-07-on-running/')
-  expect(jsonLd.image).toBe('https://djf.io/og/blog/2025-12-07-on-running.png')
+  expect(jsonLd.url).toBe(`${origin}/blog/2025-12-07-on-running/`)
+  expect(jsonLd.image).toBe(`${origin}/og/blog/2025-12-07-on-running.png`)
   expect(jsonLd.datePublished).toBe('2025-12-07T00:00:00.000Z')
 
   await expect(page.locator('head meta[property="og:image:alt"]')).toHaveAttribute(
@@ -139,8 +145,8 @@ test('blog posts embed BlogPosting and BreadcrumbList JSON-LD matching the page'
   const breadcrumb = JSON.parse((await scripts.nth(1).textContent()) as string)
   expect(breadcrumb['@type']).toBe('BreadcrumbList')
   expect(breadcrumb.itemListElement.map((item: {item: string}) => item.item)).toEqual([
-    'https://djf.io/',
-    'https://djf.io/blog/',
-    'https://djf.io/blog/2025-12-07-on-running/',
+    `${origin}/`,
+    `${origin}/blog/`,
+    `${origin}/blog/2025-12-07-on-running/`,
   ])
 })

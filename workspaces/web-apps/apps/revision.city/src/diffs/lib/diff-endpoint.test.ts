@@ -23,6 +23,7 @@ const PUBLIC_COMMIT_URL = 'https://github.com/acme/widgets/commit/83fea5e.diff'
 const COMMIT_API_URL = 'https://api.github.com/repos/acme/widgets/commits/83fea5e'
 const TANGLED_PATCH_URL = 'https://tangled.org/acme/widgets/pulls/7.patch'
 const GITHUB_USER_URL = 'https://api.github.com/user'
+const GITHUB_TOKEN_URL = 'https://github.com/login/oauth/access_token'
 const CODEBERG_PULL_API_URL = 'https://codeberg.org/api/v1/repos/acme/widgets/pulls/7.diff'
 const REJECTED_KEY = 'https://revision.city/.cache/github/credentials-rejected'
 const RATE_LIMITED_KEY = 'https://revision.city/.cache/github/rate-limited'
@@ -671,6 +672,33 @@ test('a signed-in diff retries github.com with the visitor token before the API,
     {url: PUBLIC_PULL_URL, authorization: null, accept: null},
     {url: PUBLIC_PULL_URL, authorization: VISITOR_AUTH, accept: null},
   ])
+  warn.mockRestore()
+})
+
+test('a signed-in diff sends the refreshed token and hands the browser the new session cookie', async () => {
+  const warn = spyOnWarnings()
+  const expiredCookie = `diffs-github-auth=${encodeCookiePayload({
+    accessToken: 'ghu_old',
+    accessTokenExpiresAt: 0,
+    refreshToken: 'ghr_refresh',
+    login: 'reviewer',
+  })}`
+  const upstream = stubUpstream({
+    [GITHUB_TOKEN_URL]: () => Response.json({access_token: 'ghu_new', expires_in: 28_800}),
+    [PUBLIC_PULL_URL]: (call) =>
+      call.authorization === 'Bearer ghu_new' ? diffAnswer() : failureAnswer(503),
+  })
+
+  const response = await handleDiffRequest(
+    diffRequest('path=/acme/widgets/pull/7', expiredCookie),
+    {credentials: CREDENTIALS, fetch: upstream.fetchImpl},
+  )
+
+  expect(response.status).toBe(200)
+  expect(upstream.calls.map((call) => call.authorization)).toEqual([null, null, 'Bearer ghu_new'])
+  const [sessionCookie] = response.headers.getSetCookie()
+  expect(sessionCookie).toMatch(/^diffs-github-auth=/)
+  expect(sessionCookie).toContain('ghu_new')
   warn.mockRestore()
 })
 

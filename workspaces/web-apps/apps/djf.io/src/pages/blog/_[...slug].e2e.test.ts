@@ -21,6 +21,16 @@ test('a blog post with a hero image in frontmatter displays it', async ({page}) 
   expect(naturalWidth).toBeGreaterThan(0)
 })
 
+test('a blog post with a hero tagline in frontmatter displays it under the title', async ({
+  page,
+}) => {
+  await page.goto('/blog/2023-12-30-shipposting')
+
+  await expect(
+    page.getByText("Resolving to ship more in 2024. It's easier said than done"),
+  ).toBeVisible()
+})
+
 test('a blog post links its chronological neighbor', async ({page}) => {
   await page.goto('/blog/2025-12-07-on-running/')
 

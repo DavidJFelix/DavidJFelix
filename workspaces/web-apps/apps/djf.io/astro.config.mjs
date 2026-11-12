@@ -132,7 +132,10 @@ const adapter = process.env.VITEST
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://djf.io',
+  // A preview build bakes in its own pr-<N> URL (PUBLIC_SITE_URL, set by
+  // .depot/actions/preview-wrangler) so its absolute tags name the host that
+  // serves them; production builds carry the canonical origin.
+  site: process.env.PUBLIC_SITE_URL || 'https://djf.io',
   adapter,
   // The site has no sessions. Without this the Cloudflare adapter defaults to a
   // KV-backed session driver, which would require provisioning a SESSION KV

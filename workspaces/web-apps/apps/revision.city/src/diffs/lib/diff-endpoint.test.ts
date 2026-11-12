@@ -135,6 +135,116 @@ test.each([
   },
 )
 
+const CHUNK = new TextEncoder().encode(DIFF)
+const EMPTY_CHUNK = new Uint8Array(0)
+const UPSTREAM_FAILURE = new Error('connection reset')
+
+interface ScriptedBodyParams {
+  chunks: Uint8Array[]
+  failAfterChunks?: boolean
+  failCancel?: boolean
+}
+
+// An upstream diff body that gives one scripted chunk per pull and records how
+// often it was pulled and why it was cancelled.
+const scriptedBody = ({
+  chunks,
+  failAfterChunks = false,
+  failCancel = false,
+}: ScriptedBodyParams) => {
+  const record = {pulls: 0, cancelReason: undefined as unknown}
+  const queue = [...chunks]
+  const body = new ReadableStream<Uint8Array>(
+    {
+      pull(controller) {
+        record.pulls += 1
+        const next = queue.shift()
+        if (next !== undefined) {
+          controller.enqueue(next)
+        } else if (failAfterChunks) {
+          controller.error(UPSTREAM_FAILURE)
+        } else {
+          controller.close()
+        }
+      },
+      cancel(reason) {
+        record.cancelReason = reason
+        if (failCancel) {
+          throw UPSTREAM_FAILURE
+        }
+      },
+    },
+    {highWaterMark: 0},
+  )
+  return {body, record}
+}
+
+const streamDiff = async (body: ReadableStream<Uint8Array>) => {
+  const upstream = stubUpstream({
+    [PUBLIC_PULL_URL]: () => new Response(body, {headers: {'Content-Type': 'text/plain'}}),
+  })
+  const response = await handleDiffRequest(diffRequest('path=/acme/widgets/pull/7'), {
+    credentials: CREDENTIALS,
+    fetch: upstream.fetchImpl,
+  })
+  expect(response.status).toBe(200)
+  if (response.body === null) {
+    throw new Error('Expected a streamed diff body.')
+  }
+  return response.body
+}
+
+const settle = () => new Promise((resolve) => setTimeout(resolve, 10))
+
+test('a diff stream reads GitHub no faster than the client reads', async () => {
+  const {body, record} = scriptedBody({chunks: Array.from({length: 200}, () => CHUNK)})
+
+  await streamDiff(body)
+  await settle()
+
+  expect(record.pulls).toBeLessThanOrEqual(3)
+})
+
+test('a diff stream gives the client every upstream byte and skips empty chunks', async () => {
+  const {body} = scriptedBody({chunks: [EMPTY_CHUNK, CHUNK, EMPTY_CHUNK, EMPTY_CHUNK, CHUNK]})
+
+  const text = await new Response(await streamDiff(body)).text()
+
+  expect(text).toBe(DIFF + DIFF)
+})
+
+test.each([
+  {name: 'is empty', chunks: [], failAfterChunks: false, error: 'GitHub returned an empty diff.'},
+  {
+    name: 'has only empty chunks',
+    chunks: [EMPTY_CHUNK],
+    failAfterChunks: false,
+    error: 'GitHub returned an empty diff.',
+  },
+  {name: 'fails mid-read', chunks: [CHUNK], failAfterChunks: true, error: UPSTREAM_FAILURE.message},
+])(
+  'a diff stream errors when the upstream body $name',
+  async ({chunks, failAfterChunks, error}) => {
+    const {body} = scriptedBody({chunks, failAfterChunks})
+
+    const text = new Response(await streamDiff(body)).text()
+
+    await expect(text).rejects.toThrow(error)
+  },
+)
+
+test.each([
+  {name: 'cancels the upstream body', failCancel: false},
+  {name: 'still settles when the upstream cancel fails', failCancel: true},
+])('a client cancel of a diff stream $name', async ({failCancel}) => {
+  const {body, record} = scriptedBody({chunks: [CHUNK, CHUNK], failCancel})
+  const reason = new Error('client left')
+
+  await (await streamDiff(body)).cancel(reason)
+
+  expect(record.cancelReason).toBe(reason)
+})
+
 test('a signed-out commit falls back to the commit diff API as the app', async () => {
   const warn = spyOnWarnings()
   const upstream = stubUpstream({

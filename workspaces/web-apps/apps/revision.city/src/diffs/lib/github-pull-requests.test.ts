@@ -148,6 +148,37 @@ test('answers 401 without a session, before touching GitHub', async () => {
   expect(fetchImpl).not.toHaveBeenCalled()
 })
 
+test('a refreshed token is used for the searches and reaches the browser as a new session cookie', async () => {
+  const expiredCookie = `diffs-github-auth=${encodeURIComponent(
+    JSON.stringify({
+      accessToken: 'ghu_old',
+      accessTokenExpiresAt: 0,
+      refreshToken: 'ghr_refresh',
+      login: 'test-user',
+    }),
+  )}`
+  const searchFetch = stubGitHubFetch()
+  const fetchImpl = vi.fn<FetchLike>(async (input, init) =>
+    inputHref(input) === 'https://github.com/login/oauth/access_token'
+      ? Response.json({access_token: 'ghu_new', expires_in: 28_800})
+      : searchFetch(input, init),
+  )
+
+  const response = await handlePullRequestListRequest(
+    new Request(`${ORIGIN}/api/diffs/pull-requests`, {headers: {cookie: expiredCookie}}),
+    {credentials: {clientId: 'client-id', clientSecret: 'client-secret'}, fetch: fetchImpl},
+  )
+
+  expect(response.status).toBe(200)
+  expect(searchFetch).toHaveBeenCalled()
+  for (const [, init] of searchFetch.mock.calls) {
+    expect(new Headers(init?.headers).get('authorization')).toBe('Bearer ghu_new')
+  }
+  const [sessionCookie] = response.headers.getSetCookie()
+  expect(sessionCookie).toMatch(/^diffs-github-auth=/)
+  expect(sessionCookie).toContain('ghu_new')
+})
+
 // One pull request per group: assigned in the visitor's own repo, two owned,
 // one in a member org repo, one in a watched repo outside both.
 const FOUR_GROUP_STUB: GitHubStubOptions = {

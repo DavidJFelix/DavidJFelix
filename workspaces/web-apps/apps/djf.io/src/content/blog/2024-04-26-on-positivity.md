@@ -11,8 +11,6 @@ tags:
   - meta-blog
   - personal
 readingTime: 3m
-hero:
-  tagline: Positivity
 ---
 
 I think I'm often seen as a "hater," and I worry about this perception, both because I care about how others feel and I think that it's not a complete picture of me.

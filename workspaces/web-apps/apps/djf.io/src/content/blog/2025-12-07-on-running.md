@@ -17,8 +17,6 @@ aiAssistants:
     details: Ideating changes and structure. Providing feedback on prose.
   - name: Grammarly
     details: Advanced grammar checking and clarity.
-hero:
-  tagline: On Running
 ---
 
 I've been running about four to five times a week these days and I think it's safe to say that it's part of my routine.

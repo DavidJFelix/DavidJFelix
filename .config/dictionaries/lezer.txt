@@ -11,3 +11,5 @@ Sørensen
 # A bag of tokens that may repeat, as opposed to a set; the shape the similarity
 # score compares.
 multisets
+# Short for preprocessor; a node type in @lezer/cpp (PreprocDirective).
+preproc

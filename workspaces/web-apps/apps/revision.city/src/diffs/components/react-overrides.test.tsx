@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import '@testing-library/jest-dom/vitest'
 import type {CodeViewHandle} from '@pierre/diffs/react'
 import type {ThemeLike} from '@pierre/theming'

@@ -1,4 +1,3 @@
-// @vitest-environment node
 // cSpell:ignore revisioncity -- the GitHub App's slug
 
 import {createHmac} from 'node:crypto'

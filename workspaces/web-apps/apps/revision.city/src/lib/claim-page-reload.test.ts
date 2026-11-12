@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import {expect, test} from 'vitest'
 
 import {claimPageReload} from './claim-page-reload'

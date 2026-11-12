@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 // cSpell:ignore unstub -- vi.unstubAllGlobals
 import {
   createMemoryHistory,

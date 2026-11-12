@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import {act, type ReactNode} from 'react'
 import {createRoot} from 'react-dom/client'
 import {expect, test} from 'vitest'

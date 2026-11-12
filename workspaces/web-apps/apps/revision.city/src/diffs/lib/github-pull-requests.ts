@@ -1,3 +1,4 @@
+import {type AppInstallation, readAppInstallations} from './github-app-installations'
 import {type GitHubAuthOptions, resolveGitHubAuth, withSetCookieHeaders} from './github-auth'
 import {
   fetchGitHubJSON,
@@ -22,8 +23,8 @@ const MEMBER_SEARCH_CHUNK_LIMIT = 2
 const WATCHED_SEARCH_CHUNK_LIMIT = 3
 // One page of watch subscriptions; a full page means the list was cut there.
 const WATCHED_REPO_PAGE_SIZE = 100
-// One page each of the app's installations and of a selected-repository
-// installation's grants; anything past a page reads as not searchable.
+// One page of a selected-repository installation's grants; anything past a
+// page reads as not searchable.
 const INSTALLATION_PAGE_SIZE = 100
 
 // Why the signed-in visitor can see a pull request, in the order the groups
@@ -120,7 +121,7 @@ async function listPullRequestGroups({
     searchPullRequests({fetcher, qualifiers: ['user:@me'], token}),
     fetchOrganizationLogins(token, fetcher),
     fetchWatchedRepositories(token, fetcher),
-    fetchAppInstallations(token, fetcher),
+    readAppInstallations({fetcher, token}),
   ])
 
   // The search API reaches only repositories the app is installed on, and
@@ -165,7 +166,7 @@ async function listPullRequestGroups({
 
 interface SearchWatchedPullRequestsParams {
   fetcher: PullRequestFetch
-  installationsByAccount: ReadonlyMap<string, GitHubAppInstallation>
+  installationsByAccount: ReadonlyMap<string, AppInstallation>
   token: string
   uncoveredWatchedRepos: readonly WatchedRepo[]
 }
@@ -274,48 +275,6 @@ async function fetchWatchedRepositories(
   return data
     .map((repo) => (isRecord(repo) ? parseFullName(repo.full_name) : undefined))
     .filter((repo): repo is WatchedRepo => repo !== undefined)
-}
-
-interface GitHubAppInstallation {
-  id: number
-  accountLogin: string
-  repositorySelection: 'all' | 'selected'
-}
-
-// The app's installations this token can see, each naming the account it is
-// installed on and whether it reaches every repository there or a selection.
-// A failure reads as no installations, which leaves the member and watched
-// groups empty rather than failing the list.
-async function fetchAppInstallations(
-  token: string,
-  fetcher: PullRequestFetch,
-): Promise<GitHubAppInstallation[]> {
-  const data = await fetchGitHubJSON(
-    `/user/installations?per_page=${INSTALLATION_PAGE_SIZE}`,
-    token,
-    fetcher,
-  )
-  const entries = isRecord(data) && Array.isArray(data.installations) ? data.installations : []
-  return entries
-    .map((entry) => parseInstallation(entry))
-    .filter((installation): installation is GitHubAppInstallation => installation !== undefined)
-}
-
-function parseInstallation(entry: unknown): GitHubAppInstallation | undefined {
-  if (!isRecord(entry) || typeof entry.id !== 'number' || !isRecord(entry.account)) {
-    return undefined
-  }
-  const accountLogin = entry.account.login
-  if (typeof accountLogin !== 'string' || accountLogin === '') {
-    return undefined
-  }
-  // Anything but an explicit "all" is read as a selection, which costs one
-  // more request but never searches a repository the app was not granted.
-  return {
-    id: entry.id,
-    accountLogin,
-    repositorySelection: entry.repository_selection === 'all' ? 'all' : 'selected',
-  }
 }
 
 interface InstallationRepositoryNames {

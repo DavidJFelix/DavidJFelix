@@ -304,6 +304,28 @@ union Number {int whole; float real;};
     ],
   },
   {
+    language: 'cpp',
+    source: `#include <stdio.h>
+#define LIMIT 10
+#define SQUARE(x) ((x) * (x))
+int add(int a, int b);
+static int counter = 0;
+extern const char *names[];
+namespace ns {int inner;}
+int main(void) {int local = 1; return local;}
+`,
+    expected: [
+      'macro LIMIT',
+      'macro SQUARE',
+      'function add',
+      'variable counter',
+      'variable names',
+      'module ns',
+      'variable ns.inner',
+      'function main',
+    ],
+  },
+  {
     language: 'php',
     source: `<?php
 const VERSION = '1';

@@ -63,6 +63,68 @@ test('names a Go method by its receiver type', async () => {
   ])
 })
 
+test.each([
+  {
+    change: 'prototype',
+    oldSource: 'int add(int a, int b);\n',
+    newSource: 'long add(long a, long b);\n',
+    kind: 'function',
+    qualifiedName: 'add',
+  },
+  {
+    change: 'global',
+    oldSource: 'static int counter = 0;\n',
+    newSource: 'static int counter = 1;\n',
+    kind: 'variable',
+    qualifiedName: 'counter',
+  },
+  {
+    change: 'macro',
+    oldSource: '#define LIMIT 10\n',
+    newSource: '#define LIMIT 20\n',
+    kind: 'macro',
+    qualifiedName: 'LIMIT',
+  },
+])(
+  'reports a changed C $change as one modified row',
+  async ({oldSource, newSource, kind, qualifiedName}) => {
+    const diff = await diffEntities({path: 'limits.c', oldSource, newSource})
+
+    expect(diff.changes).toMatchObject([{type: 'modified', kind, qualifiedName}])
+    expect(diff.changes).toHaveLength(1)
+  },
+)
+
+test('reports a changed C include as no row', async () => {
+  const diff = await diffEntities({
+    path: 'main.c',
+    oldSource: '#include <stdio.h>\n',
+    newSource: '#include <stdlib.h>\n',
+  })
+
+  expect(diff.changes).toEqual([])
+})
+
+test('reports a changed C local declaration against its function only', async () => {
+  const oldSource = 'int main(void) {\n  int local = 1;\n  return local;\n}\n'
+  const newSource = oldSource.replace('= 1', '= 2')
+
+  const diff = await diffEntities({path: 'main.c', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([{type: 'modified', kind: 'function', qualifiedName: 'main'}])
+  expect(diff.changes).toHaveLength(1)
+})
+
+test('reports a body edit of a C function that has a prototype against the definition', async () => {
+  const oldSource = 'int add(int a, int b);\n\nint add(int a, int b) {\n  return a + b;\n}\n'
+  const newSource = oldSource.replace('a + b', 'b + a')
+
+  const diff = await diffEntities({path: 'add.c', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([{type: 'modified', kind: 'function', qualifiedName: 'add#2'}])
+  expect(diff.changes).toHaveLength(1)
+})
+
 test('names the dependency that changed in a manifest', async () => {
   const oldSource = '{"dependencies": {"react": "18.0.0", "zod": "4.0.0"}}'
   const newSource = '{"dependencies": {"react": "19.0.0", "zod": "4.0.0"}}'

@@ -579,6 +579,22 @@ test('runReview reviews the current head when a label asked for the review', asy
   expect(github.sent(REVIEWS)[0].body).toMatchObject({commit_id: movedSha})
 })
 
+test('runReview reviews the current head when a user reran the check', async () => {
+  const github = fakeGitHub({
+    [PULL]: () => movedPull,
+    [`GET /repos/acme/repo/git/trees/${movedSha}?recursive=1`]: () => ({
+      sha: 'tree',
+      truncated: false,
+      tree: [],
+    }),
+  })
+
+  await runReview(runParams({request: github.request, rerun: true, chat: answering([])}))
+
+  expect(github.sent(LABEL)).toHaveLength(0)
+  expect(github.sent(CHECK_RUNS)[0].body).toMatchObject({head_sha: movedSha})
+})
+
 test('runReview removes the label that asked for the review, and continues when that fails', async () => {
   const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
   const github = fakeGitHub({

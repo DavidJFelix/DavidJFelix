@@ -1,5 +1,5 @@
 import {expect, test} from 'vitest'
-import {resolvePostHog, resolveSentry} from './config'
+import {resolvePostHog, resolveSentry, resolveSentryEnvironment} from './config'
 
 test('resolveSentry is disabled when no DSN is set', () => {
   expect(resolveSentry({})).toEqual({enabled: false})
@@ -14,6 +14,18 @@ test('resolveSentry is enabled and trims the DSN when set', () => {
     enabled: true,
     dsn: 'https://k@o0.ingest.sentry.io/1',
   })
+})
+
+test('resolveSentryEnvironment uses the deploy environment when set', () => {
+  expect(resolveSentryEnvironment('dev')).toBe('dev')
+})
+
+test('resolveSentryEnvironment is production when the deploy environment is unset', () => {
+  expect(resolveSentryEnvironment(undefined)).toBe('production')
+})
+
+test('resolveSentryEnvironment is production when the deploy environment is blank', () => {
+  expect(resolveSentryEnvironment('  ')).toBe('production')
 })
 
 test('resolvePostHog is disabled when no key is set', () => {

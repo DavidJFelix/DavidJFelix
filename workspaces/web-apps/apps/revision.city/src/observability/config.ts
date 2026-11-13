@@ -17,6 +17,11 @@ export function resolveSentry(env: ObservabilityEnv): SentryConfig {
   return dsn ? {enabled: true, dsn} : {enabled: false}
 }
 
+// A production build has no CLOUDFLARE_ENV, so a blank deploy environment is production.
+export function resolveSentryEnvironment(deployEnv: string | undefined): string {
+  return deployEnv?.trim() || 'production'
+}
+
 export type PostHogConfig =
   | {readonly enabled: false}
   | {readonly enabled: true; readonly key: string}

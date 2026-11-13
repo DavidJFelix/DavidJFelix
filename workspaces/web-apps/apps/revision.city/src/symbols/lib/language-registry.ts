@@ -83,8 +83,14 @@ export const LANGUAGES: readonly LanguageDefinition[] = [
   {
     id: 'sass',
     label: 'Sass',
-    extensions: ['.scss', '.sass'],
+    extensions: ['.scss'],
     loadParser: async () => (await import('./languages/css')).sassParser,
+  },
+  {
+    id: 'sass-indented',
+    label: 'Sass (indented)',
+    extensions: ['.sass'],
+    loadParser: async () => (await import('./languages/css')).indentedSassParser,
   },
   {
     id: 'markdown',

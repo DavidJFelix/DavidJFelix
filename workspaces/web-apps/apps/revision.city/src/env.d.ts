@@ -9,4 +9,6 @@ interface ImportMetaEnv {
   readonly VITE_PUBLIC_POSTHOG_KEY?: string
   // The deployment's own URL, set for preview builds (src/site.ts).
   readonly VITE_PUBLIC_SITE_URL?: string
+  // The wrangler environment of the build, from CLOUDFLARE_ENV (vite.config.ts).
+  readonly VITE_PUBLIC_DEPLOY_ENV?: string
 }

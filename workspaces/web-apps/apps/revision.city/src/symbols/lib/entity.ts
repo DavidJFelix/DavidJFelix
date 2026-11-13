@@ -24,6 +24,7 @@ export type EntityKind =
   | 'struct'
   | 'trait'
   | 'type'
+  | 'union'
   | 'variable'
 
 // How an entity fared between two revisions. Mirrors sem's change buckets so a
@@ -77,15 +78,22 @@ export interface SequenceDetail {
 export interface CodeEntity {
   readonly kind: EntityKind
   readonly name: string
+  // The qualified name without the `#n` suffix, and the position (from 1) of
+  // the entity among the entities of the same kind with that path. A `#12`
+  // that the author wrote in a name stays in the path.
+  readonly basePath: string
+  readonly occurrence: number
   // Dotted path through enclosing containers, e.g. `Widget.render`. Carries an
   // `#n` suffix when siblings collide (overloads, repeated headings).
   readonly qualifiedName: string
   readonly range: EntityRange
-  // Hash of the node-type skeleton with identifier text and trivia dropped --
-  // equal hashes mean structurally identical bodies, which is what lets a
-  // rename be told apart from a rewrite.
+  // Hash of the node-type skeleton, with a close marker after each node's
+  // children, and with identifier text and trivia dropped -- equal hashes mean
+  // structurally identical bodies, which is what lets a rename be told apart
+  // from a rewrite.
   readonly structuralHash: string
-  // Hash of the entity's normalized source. Distinguishes modified from
+  // Hash of the entity's tokens (leaf text and the text between children,
+  // split on white space) plus its skeleton. Distinguishes modified from
   // untouched once identity is already established.
   readonly contentHash: string
   // As above, minus anything nested that is itself an entity. A class whose only
@@ -109,6 +117,8 @@ export interface EntityChange {
   readonly newRange?: EntityRange
   // Only present on fuzzy renames -- the token overlap that justified the match.
   readonly similarity?: number
+  // Only present on renames and moves whose body also changed.
+  readonly bodyChanged?: boolean
   // Only present on modified sequence-valued entities whose elements moved:
   // which indexes gained or lost an element.
   readonly detail?: SequenceDetail
@@ -127,6 +137,9 @@ export interface EntityDiff {
   readonly language: string | null
   readonly changes: readonly EntityChange[]
   readonly summary: EntityDiffSummary
+  // Set when the file was too large to diff. The change list is then empty, but
+  // the file can still hold changes.
+  readonly skipped?: 'too-large'
 }
 
 export interface ResolveEntityNameParams {
@@ -153,6 +166,10 @@ export interface EntitySpec {
   // Escape hatch for grammars whose name is not a node -- a CSS selector list,
   // a markdown heading's text.
   readonly resolveName?: (params: ResolveEntityNameParams) => string | undefined
+  // The type that owns a member declared outside it (a Go method's receiver).
+  // The owner goes in front of the name in the qualified path; `name` stays the
+  // bare member name.
+  readonly resolveOwner?: (params: ResolveEntityNameParams) => string | undefined
   // The value nodes forming an ordered sequence this entity owns (a JSON array
   // property's elements), or undefined when it owns none. Elements become
   // fingerprints on the entity, giving the matcher an element-level diff.

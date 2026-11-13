@@ -35,7 +35,7 @@ replaces Warden in this repository. This project started as part of
      finding. The chunk review is not saved, so the next run checks it again.
   4. Map findings back to new-file lines. When findings end on the same line, keep the most severe.
   5. Report checked findings at `medium` and above. Fail on a checked finding at `high` and above,
-     or when a chunk review fails.
+     when a chunk review fails, or when a file has a diff line longer than 5,000 characters.
 - **Chunk-local line labels.** The prompt numbers lines from 1 inside the chunk, not by file line. A
   chunk that only moves in the file, for example after a rebase, keeps its text and its saved
   result. A push that grows or shrinks a hunk above it in the same file can still move the chunk
@@ -49,8 +49,8 @@ replaces Warden in this repository. This project started as part of
   together at 50,000, so the step result stays under 1 MiB. The guides are read at the base commit,
   so a pull request cannot change the rules that review it. A pull request whose base is not the
   default branch gets no guides, because anyone who can push a branch can make it the base. When
-  they cannot be read, the review runs without them. A document that a guide links to is read at the
-  head, so the prompt calls it author text.
+  they cannot be read after the step's retries, the review runs without them. A document that a
+  guide links to is read at the head, so the prompt calls it author text.
 - **Saved results** in D1 (`chunk_reviews`, a drizzle schema with its migrations in `drizzle/`). The
   key is a SHA-256 of the scope, model, reviewer, system prompt, and user prompt. The user prompt is
   the pull request's title and description (at most 4,000 characters), the file list, then the
@@ -72,10 +72,11 @@ replaces Warden in this repository. This project started as part of
   The review removes the label, so adding it again starts another review.
 - **Untrusted text.** The pull request's author can steer the reviewers, so the prompts treat the
   title, the description, the diff, and the files as text to review. In posted text, a zero-width
-  space goes after `@`, `#`, `GH-`, `<`, and the `&` of an entity. So model text and file paths
-  cannot mention users, reference issues, or add HTML. Links to github.com go through
-  redirect.github.com, so they do not show in the timeline of the linked issue. The check run is not
-  a security gate by itself.
+  space goes after `@`, `#`, `GH-`, `<`, the `&` of an entity, and the `]` of `](` and `]:`. So
+  model text and file paths cannot mention users, reference issues, add HTML, or show an image or a
+  link whose text hides its address. A link shows as its Markdown source, and its address stays a
+  link that shows its host. Links to github.com go through redirect.github.com, so they do not show
+  in the timeline of the linked issue. The check run is not a security gate by itself.
 - **Posted comments.** Each comment starts with a fingerprint, and a run does not post a finding
   again on a line where the app already posted it. The finding's body goes last, so a code block
   that it leaves open cannot take in the suggestion.
@@ -84,15 +85,17 @@ replaces Warden in this repository. This project started as part of
   resolved by a user who can push, the check run passes, with `Resolved:` before its title. A thread
   that opens again fails it again. The app gets these changes from the `pull_request_review_thread`
   event, so its webhook must subscribe to "Pull request review thread". A review whose findings are
-  all in resolved threads from an earlier run also passes. A failed chunk review has no thread, so
-  it keeps the check red. A failed check run also shows a `Dismiss findings` button. When a user who
-  can push clicks it, the app gets a `check_run` event with the `requested_action` action, and the
-  check run passes, with `Dismissed:` before its title and the external id `dismissed`. Resolved
-  threads no longer change a dismissed check run. The webhook must subscribe to "Check run" for the
-  button.
+  all in resolved threads from an earlier run also passes. A failed chunk review or a too-long line
+  has no thread, so it keeps the check red. A failed check run also shows a `Dismiss findings`
+  button. When a user who can push clicks it, the app gets a `check_run` event with the
+  `requested_action` action, and the check run passes, with `Dismissed:` before its title and the
+  external id `dismissed`. Resolved threads no longer change a dismissed check run. The webhook must
+  subscribe to "Check run" for the button.
 - **Limits.** For each pull request, at most 150 chunks and 700,000 bytes of paths and patches get a
-  review. A file whose diff is longer than 1,500 lines gets no review. One review posts at most 50
-  new comments. The check run lists every finding, and it cuts its text at 65,000 characters, below
+  review. A file whose diff is longer than 1,500 lines, or has a line longer than 5,000 characters,
+  gets no review, and a chunk stops at 40,000 characters of diff text. A file with such a long line
+  also fails the check, because the line can hide a change. One review posts at most 50 new
+  comments. The check run lists every finding, and it cuts its text at 65,000 characters, below
   GitHub's limit of 65,535.
 
 ## Phases

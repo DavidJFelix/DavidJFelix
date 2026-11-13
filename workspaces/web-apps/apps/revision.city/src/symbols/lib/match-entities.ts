@@ -1,5 +1,5 @@
 import type {CodeEntity, EntityChange, EntityKind, EntitySpan, SequenceDetail} from './entity'
-import {tokenSimilarity} from './entity-signature'
+import {hashString, tokenSimilarity} from './entity-signature'
 import {alignByHash, diffSequenceElements} from './sequence-alignment'
 
 // Below this token overlap a pair is two different entities that happen to look
@@ -15,6 +15,10 @@ const MAX_FUZZY_CANDIDATES = 200
 // need 624 million reads, and a renamed 92 KB class with 150 edited methods needs
 // 7.7 million.
 const MAX_FUZZY_TOKEN_READS = 20_000_000
+
+// Sums of likeness scores that differ by less than this are equal. Without it,
+// rounding in a different order of additions could break a tie the wrong way.
+const LIKENESS_TIE_TOLERANCE = 1e-9
 
 // Short entities share a node skeleton with every other entity of their shape --
 // every one-line getter hashes alike -- so structural matching is reserved for
@@ -32,7 +36,8 @@ export interface MatchEntitiesParams {
 //   1. occurrence alignment  -- entities grouped by kind + base path, occurrence
 //      sequences aligned by content, so the entity is the same entity even when
 //      an insertion shifted its ordinal
-//   2. same structural hash  -- a rename or move, proven by an identical body
+//   2. same structural hash and same body -- a rename or move, proven by an
+//      identical body
 //   3. token overlap over 0.8 -- a probable rename, body edited in place
 // Whatever is unclaimed at the end is genuinely added or deleted -- minus rows
 // that sit inside an element the sequence diff already reported, which would be
@@ -123,23 +128,21 @@ function matchByIdentity({
     }
 
     // Occurrences edited in place keep their position among unedited siblings,
-    // so the leftovers zip in order. Whatever the zip cannot pair is genuinely
-    // added or deleted and falls through to the rename phases. Occurrences
-    // inside an element already reported inserted or deleted stay out of the
-    // zip -- pairing the keys of one deleted object with another inserted
-    // object's would invent a modification neither had. Groups arrive in
-    // document order, so a sequence owner runs before the entities inside its
-    // elements and `covered` is populated by the time they zip.
+    // so equal leftover counts zip in order. Unequal counts pair by likeness,
+    // see `pairLeftovers`. Whatever stays unpaired is genuinely added or deleted
+    // and falls through to the rename phases. Occurrences inside an element
+    // already reported inserted or deleted stay out of the pairing -- pairing
+    // the keys of one deleted object with another inserted object's would
+    // invent a modification neither had. Groups arrive in document order, so a
+    // sequence owner runs before the entities inside its elements and `covered`
+    // is populated by the time they pair.
     const restOld = group.old.filter(
       (entity, index) => !pairedOld.has(index) && !isCovered(entity, covered.deleted),
     )
     const restNew = group.new.filter(
       (entity, index) => !pairedNew.has(index) && !isCovered(entity, covered.inserted),
     )
-    const zipped = Math.min(restOld.length, restNew.length)
-    for (let index = 0; index < zipped; index += 1) {
-      const previous = restOld[index]
-      const candidate = restNew[index]
+    for (const [previous, candidate] of pairLeftovers({restOld, restNew})) {
       unmatchedOld.delete(previous)
       unmatchedNew.delete(candidate)
       const detail = diffSequence({previous, candidate, covered})
@@ -148,6 +151,70 @@ function matchByIdentity({
       }
     }
   }
+}
+
+interface PairLeftoversParams {
+  restOld: readonly CodeEntity[]
+  restNew: readonly CodeEntity[]
+}
+
+// Each entry of the shorter side pairs in order. The longer side skips the
+// entries that give the lowest total likeness, so a deleted sibling next to an
+// edited one does not take the edit. Likeness reads the words inside each
+// token: a YAML or JSON scalar such as `bun run lint` is one token, and two
+// steps that differ only inside their scalars would tie. A tie skips the later
+// entry, which keeps the order of a plain zip. Over the read budget, the
+// pairing is a plain zip.
+function pairLeftovers({restOld, restNew}: PairLeftoversParams): Array<[CodeEntity, CodeEntity]> {
+  const oldIsShort = restOld.length <= restNew.length
+  const short = oldIsShort ? restOld : restNew
+  const long = oldIsShort ? restNew : restOld
+  const toPair = (shortIndex: number, longIndex: number): [CodeEntity, CodeEntity] =>
+    oldIsShort ? [short[shortIndex], long[longIndex]] : [long[longIndex], short[shortIndex]]
+
+  const zip = (): Array<[CodeEntity, CodeEntity]> => short.map((_, index) => toPair(index, index))
+  if (short.length === long.length) {
+    return zip()
+  }
+  const shortWords = short.map(entityWords)
+  const longWords = long.map(entityWords)
+  const reads = long.length * countWords(shortWords) + short.length * countWords(longWords)
+  if (reads > MAX_FUZZY_TOKEN_READS) {
+    return zip()
+  }
+
+  // best[i][j]: the highest total likeness when the first i short entries pair
+  // inside the first j long entries. Row i only needs the columns that leave
+  // enough long entries for the short entries after it.
+  const slack = long.length - short.length
+  const best = Array.from({length: short.length + 1}, () =>
+    new Float64Array(long.length + 1).fill(Number.NEGATIVE_INFINITY),
+  )
+  best[0].fill(0)
+  for (let i = 1; i <= short.length; i += 1) {
+    for (let j = i; j <= i + slack; j += 1) {
+      const take = best[i - 1][j - 1] + tokenSimilarity(shortWords[i - 1], longWords[j - 1])
+      best[i][j] = Math.max(best[i][j - 1], take)
+    }
+  }
+
+  const pairs: Array<[CodeEntity, CodeEntity]> = []
+  let j = long.length
+  for (let i = short.length; i > 0; j -= 1) {
+    if (best[i][j - 1] < best[i][j] - LIKENESS_TIE_TOLERANCE) {
+      pairs.push(toPair(i - 1, j - 1))
+      i -= 1
+    }
+  }
+  return pairs.toReversed()
+}
+
+function entityWords(entity: CodeEntity): string[] {
+  return entity.tokens.flatMap((token) => token.split(/\s+/).filter((word) => word !== ''))
+}
+
+function countWords(lists: readonly (readonly string[])[]): number {
+  return lists.reduce((total, words) => total + words.length, 0)
 }
 
 function getGroup(
@@ -184,7 +251,7 @@ function diffSequence({
   if (result === undefined) {
     return undefined
   }
-  const ownerBase = basePath(candidate)
+  const ownerBase = candidate.basePath
   for (const element of result.deletedElements) {
     covered.deleted.push({ownerBase, span: element.span})
   }
@@ -222,7 +289,7 @@ function isCovered(entity: CodeEntity, spans: readonly OwnedSpan[]): boolean {
     ({ownerBase, span}) =>
       entity.span.from >= span.from &&
       entity.span.to <= span.to &&
-      basePath(entity).startsWith(`${ownerBase}.`),
+      entity.basePath.startsWith(`${ownerBase}.`),
   )
 }
 
@@ -233,7 +300,8 @@ interface MatchPhaseParams {
 }
 
 // An identical body under a different name is the strongest rename signal there
-// is, so this phase runs before any similarity scoring.
+// is, so this phase runs before any similarity scoring. The same shape alone is
+// not enough: two unrelated rules or keys often share one.
 function matchByStructure({unmatchedOld, unmatchedNew, changes}: MatchPhaseParams): void {
   const byHash = new Map<string, CodeEntity[]>()
   for (const entity of unmatchedOld) {
@@ -256,7 +324,10 @@ function matchByStructure({unmatchedOld, unmatchedNew, changes}: MatchPhaseParam
     }
     const bucket = byHash.get(candidate.structuralHash)
     const previous = bucket?.find(
-      (entity) => entity.kind === candidate.kind && unmatchedOld.has(entity),
+      (entity) =>
+        entity.kind === candidate.kind &&
+        unmatchedOld.has(entity) &&
+        bodyHash(entity) === bodyHash(candidate),
     )
     if (previous === undefined) {
       continue
@@ -311,6 +382,7 @@ function matchByTokens({unmatchedOld, unmatchedNew, changes}: MatchPhaseParams):
         previous: best,
         candidate,
         similarity: Number(bestScore.toFixed(3)),
+        bodyChanged: bodyHash(best) !== bodyHash(candidate),
       }),
     )
   }
@@ -359,6 +431,7 @@ interface CreateChangeParams {
   previous: CodeEntity
   candidate: CodeEntity
   similarity?: number
+  bodyChanged?: boolean
   detail?: SequenceDetail
 }
 
@@ -367,6 +440,7 @@ function createChange({
   previous,
   candidate,
   similarity,
+  bodyChanged = false,
   detail,
 }: CreateChangeParams): EntityChange {
   return {
@@ -380,18 +454,60 @@ function createChange({
     oldRange: previous.range,
     newRange: candidate.range,
     ...(similarity === undefined ? {} : {similarity}),
+    ...(bodyChanged ? {bodyChanged} : {}),
     ...(detail === undefined ? {} : {detail}),
   }
+}
+
+// Entities are immutable, so the hash of each one is computed once.
+const bodyHashes = new WeakMap<CodeEntity, string>()
+
+// The hash of an entity's tokens without its own name: two bodies that hash
+// alike differ only in the name.
+function bodyHash(entity: CodeEntity): string {
+  const cached = bodyHashes.get(entity)
+  if (cached !== undefined) {
+    return cached
+  }
+  const hash = hashString(withoutName(entity).join('\0'))
+  bodyHashes.set(entity, hash)
+  return hash
+}
+
+// A name is often more than one token (`.card` is `.` and `card`, `Fix #12` is
+// `Fix` and `#12`), and a JSON key token keeps the quotes that its name drops.
+// So a token that is the whole name is removed. If no token is, the first
+// tokens, in order, that spell the name without its white space are removed.
+function withoutName(entity: CodeEntity): readonly string[] {
+  const name = compact(entity.name)
+  const whole = entity.tokens.findIndex((token) => tokenForms(token).includes(name))
+  if (whole !== -1) {
+    return entity.tokens.toSpliced(whole, 1)
+  }
+  let spelled = 0
+  return entity.tokens.filter((token) => {
+    const form = tokenForms(token).find(
+      (text) => text !== '' && spelled < name.length && name.startsWith(text, spelled),
+    )
+    if (form === undefined) {
+      return true
+    }
+    spelled += form.length
+    return false
+  })
+}
+
+function tokenForms(token: string): readonly string[] {
+  const text = compact(token)
+  return [text, text.replaceAll(/^["']|["']$/gu, '')]
+}
+
+function compact(text: string): string {
+  return text.replaceAll(/\s+/gu, '')
 }
 
 // Kind is part of identity: replacing a `function` with a `class` of the same
 // name is a rewrite, not a modification.
 function baseKey(entity: CodeEntity): string {
-  return `${entity.kind}\0${basePath(entity)}`
-}
-
-// The qualified path with every `#n` ordinal dropped -- what siblings that
-// collide on a name share.
-function basePath(entity: CodeEntity): string {
-  return entity.qualifiedName.replaceAll(/#\d+/gu, '')
+  return `${entity.kind}\0${entity.basePath}`
 }

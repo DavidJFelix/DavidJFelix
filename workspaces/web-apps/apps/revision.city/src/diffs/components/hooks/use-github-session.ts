@@ -19,7 +19,8 @@ const LOADING_SESSION: GitHubSession = {status: 'loading'}
 const ANONYMOUS_SESSION: GitHubSession = {status: 'anonymous'}
 
 // Signing in or out reloads the page, so the session cannot change within a
-// page lifetime; a single fetch per load is shared by every hook instance.
+// page lifetime; a single fetch per load is shared by every hook instance. A
+// failed lookup is not kept, so the next hook instance asks again.
 let sessionPromise: Promise<GitHubSession> | undefined
 
 // Reports whether the browser holds a GitHub session cookie. The token itself
@@ -57,28 +58,29 @@ export function getCurrentReturnPath(): string {
 }
 
 function loadGitHubSession(): Promise<GitHubSession> {
-  sessionPromise ??= fetchGitHubSession()
+  sessionPromise ??= fetchGitHubSession().catch(() => {
+    sessionPromise = undefined
+    return ANONYMOUS_SESSION
+  })
   return sessionPromise
 }
 
+// The session route answers 200 for signed-in and signed-out visitors, so an
+// error status is a failed lookup.
 async function fetchGitHubSession(): Promise<GitHubSession> {
-  try {
-    const response = await fetch(SESSION_ENDPOINT, {cache: 'no-store'})
-    if (!response.ok) {
-      return ANONYMOUS_SESSION
-    }
+  const response = await fetch(SESSION_ENDPOINT, {cache: 'no-store'})
+  if (!response.ok) {
+    throw new Error(`GitHub session lookup failed with status ${response.status}`)
+  }
 
-    const data: unknown = await response.json()
-    if (!isRecord(data) || data.authenticated !== true || typeof data.login !== 'string') {
-      return ANONYMOUS_SESSION
-    }
-    return {
-      status: 'authenticated',
-      login: data.login,
-      avatarUrl: typeof data.avatarUrl === 'string' ? data.avatarUrl : undefined,
-    }
-  } catch {
+  const data: unknown = await response.json()
+  if (!isRecord(data) || data.authenticated !== true || typeof data.login !== 'string') {
     return ANONYMOUS_SESSION
+  }
+  return {
+    status: 'authenticated',
+    login: data.login,
+    avatarUrl: typeof data.avatarUrl === 'string' ? data.avatarUrl : undefined,
   }
 }
 

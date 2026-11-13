@@ -50,7 +50,7 @@ const bundlerModules = (): Plugin => {
       if (asset.kind === 'raw') {
         return `export default Uint8Array.from(atob('${base64}'), (char) => char.charCodeAt(0))`
       }
-      return `export default 'data:font/woff;base64,${base64}'`
+      return `export default 'data:font/woff2;base64,${base64}'`
     },
   }
 }

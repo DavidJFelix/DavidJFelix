@@ -7,10 +7,37 @@ export default defineConfig({
   plugins: [react()],
   resolve: {tsconfigPaths: true},
   test: {
-    environment: 'jsdom',
-    include: ['src/**/*.test.{ts,tsx}'],
+    // The file name picks the environment: `*.test.tsx` and `*.dom.test.ts` run
+    // in jsdom, and the other `*.test.ts` files run in node.
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'node',
+          environment: 'node',
+          include: ['src/**/*.test.ts'],
+          exclude: ['src/**/*.dom.test.ts', '**/*.e2e.test.ts'],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'dom',
+          environment: 'jsdom',
+          include: ['src/**/*.test.tsx', 'src/**/*.dom.test.ts'],
+        },
+      },
+    ],
     // Playwright specs (*.e2e.test.ts) are driven by Playwright, not Vitest.
     exclude: ['**/*.e2e.test.ts', '**/node_modules/**'],
+    // Undo spies, env stubs and global stubs before each test, so a failed test leaves no state behind.
+    // cSpell:words unstub -- Vitest option names
+    restoreMocks: true,
+    unstubEnvs: true,
+    unstubGlobals: true,
+    // @pierre/icons ships ESM with imports that have no file extension, which
+    // Node cannot load. Vite transforms the package so that the imports resolve.
+    server: {deps: {inline: ['@pierre/icons']}},
     // The coverage gate covers the unit-tested logic: the helpers in src/lib, the
     // client-config resolver, and the PR review engine (src/reviews/lib). The
     // build and the smoke test exercise the route glue and the client bootstrap

@@ -42,7 +42,6 @@ export const ExampleAnnotation = memo(function ExampleAnnotation({
     >
       <button
         type="button"
-        aria-label="Toggle line selection for this comment"
         className={css({
           display: 'flex',
           w: 'full',

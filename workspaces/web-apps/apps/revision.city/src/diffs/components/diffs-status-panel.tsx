@@ -6,6 +6,7 @@ import {getCurrentReturnPath, getGitHubLoginURL} from '@/diffs/components/hooks/
 import {Button} from '@/diffs/components/ui/button'
 import type {GitHubAccessRemedy} from '@/diffs/lib/github-access-remedy'
 import {isNullish} from '@/diffs/lib/nullish'
+import {type StatusPanelWait, statusPanelText} from '@/diffs/lib/status-panel-text'
 import {diffsChromeMapping} from '@/diffs/lib/theme/diffs-chrome-mapping'
 import type {ViewerLoadState} from '@/diffs/lib/types'
 import {useChromeThemeProps} from './hooks/use-chrome-theme-props'
@@ -16,10 +17,20 @@ interface DiffsStatusPanelProps {
   // out. Rendered as the panel's primary action.
   remedy: GitHubAccessRemedy | null
   onRetry: () => void
+  // The source of the patch in the fetch text, for example "GitHub" or "codeberg.org".
+  sourceName: string
   state: ViewerLoadState
+  waitingFor: StatusPanelWait
 }
 
-export function DiffsStatusPanel({errorMessage, onRetry, remedy, state}: DiffsStatusPanelProps) {
+export function DiffsStatusPanel({
+  errorMessage,
+  onRetry,
+  remedy,
+  sourceName,
+  state,
+  waitingFor,
+}: DiffsStatusPanelProps) {
   // Mirror the rest of the diffs chrome so the loading screen sits on the
   // active Shiki theme's surface instead of the global light/dark palette.
   // Mounted before the viewer is available, so we lean on the same provider
@@ -30,21 +41,7 @@ export function DiffsStatusPanel({errorMessage, onRetry, remedy, state}: DiffsSt
   const isError = state === 'error'
   const isGrantingAccess = isError && remedy?.kind === 'grant-repo-access'
   useReloadOnReturn({enabled: isGrantingAccess, onRetry})
-  const title = isError
-    ? 'Couldn’t load diff'
-    : state === 'parsing'
-      ? 'Preparing diff'
-      : state === 'fetching'
-        ? 'Fetching diff'
-        : 'Streaming diff'
-
-  const message = isError
-    ? (errorMessage ?? 'Failed to fetch the diff, please try again.')
-    : state === 'parsing'
-      ? 'Parsing the patch and building the file tree…'
-      : state === 'fetching'
-        ? 'Fetching the patch from GitHub…'
-        : 'Reading the patch and showing files as they arrive…'
+  const {title, message} = statusPanelText({errorMessage, sourceName, state, waitingFor})
 
   return (
     <div

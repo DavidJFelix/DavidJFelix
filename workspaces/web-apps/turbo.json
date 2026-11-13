@@ -43,7 +43,14 @@
       // strict mode's effects: the variable reaches the task at all, and two
       // builds of one app under different environments never share a cache
       // entry -- a hit here would deploy production's config as the dev worker.
-      "env": ["CLOUDFLARE_ENV"],
+      // If SENTRY_ORG, SENTRY_PROJECT and the token below are set, the Astro
+      // apps upload their source maps. The Sentry plugin then writes debug IDs
+      // into the output. STANDARD_SITE_RESOLVE makes djf.io link each post to
+      // its record. All three change the output, so they are in the hash.
+      "env": ["CLOUDFLARE_ENV", "SENTRY_ORG", "SENTRY_PROJECT", "STANDARD_SITE_RESOLVE"],
+      // The token is a secret: it reaches the task, but turbo keeps it out of
+      // the hash.
+      "passThroughEnv": ["SENTRY_AUTH_TOKEN"],
       "outputs": [
         "dist/**",
         "dist-ssr/**",

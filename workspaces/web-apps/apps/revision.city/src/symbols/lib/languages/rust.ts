@@ -16,13 +16,23 @@ const SPECS: Record<string, EntitySpec> = {
   StaticItem: {kind: 'constant', name: ['BoundIdentifier'], scope: 'top-level'},
 }
 
-// `impl Widget` has one type; `impl Draw for Widget` has two, and the second is
-// the implementing type -- the name a reader looks for. Taking the last
-// TypeIdentifier covers both.
+// Nodes that wrap the type name: `Stack<T>`, `&Widget`, `*const Widget`, `fmt::Debug`.
+const WRAPPER_TYPES = new Set([
+  'GenericType',
+  'ReferenceType',
+  'PointerType',
+  'ScopedTypeIdentifier',
+])
+
+// `impl Widget` has one type; `impl Draw for Widget` has two, and the type after
+// `for` is the implementing type -- the name a reader looks for. A type that is
+// not a named type (`impl Draw for [u8]`) gives no name.
 function resolveImplName({node, source}: ResolveEntityNameParams): string | undefined {
-  const types = node.getChildren('TypeIdentifier')
-  const target = types.at(-1)
-  return target === undefined ? undefined : source.slice(target.from, target.to)
+  let target = node.getChild('Type', 'for') ?? node.getChild('Type')
+  while (target !== null && WRAPPER_TYPES.has(target.type.name)) {
+    target = target.getChild('TypeIdentifier') ?? target.getChild('Type')
+  }
+  return target?.type.name === 'TypeIdentifier' ? source.slice(target.from, target.to) : undefined
 }
 
 export const rustParser = parser.configure({

@@ -70,11 +70,6 @@
       "allowedVersions": "<7"
     },
     {
-      "description": "satori 0.33 added HarfBuzz text shaping through harfbuzzjs, whose Emscripten loader reads self.location and compiles wasm from bytes -- neither works on Cloudflare Workers, where @davidjfelix/og renders every app's share card at request time (the cf-wasm project hit the same crash in its issue 100). Hold satori at 0.32 until its standalone init accepts the HarfBuzz module the way it accepts Yoga's",
-      "matchPackageNames": ["satori"],
-      "allowedVersions": "<0.33.0"
-    },
-    {
       "description": "the bun manager supersedes npm for every package.json at or below a bun.lock (the repo root and the web-apps workspace), and the catalog custom manager reads the web-apps workspaces.catalog, so the npm rule above reaches only the pnpm exercise trees; batch these patch/minor updates into a separate weekly PR, so a web-app breakage does not hold back the exercise bumps. The named groups below override this groupName for their packages, so keep this rule above them",
       "matchUpdateTypes": ["patch", "minor"],
       "matchManagers": ["bun", "custom.jsonata"],
@@ -212,11 +207,6 @@
         "@effect/**"
       ],
       "groupName": "alchemy packages"
-    },
-    {
-      "description": "effect 4.1 removed the top-level effect/Crypto module. alchemy 2.0.0-beta.84 still imports it from Stack, Util/PlatformServices, and Auth/OAuthFlow, so `alchemy deploy` cannot load the f311x stacks on effect 4.1. tsc does not report the error, because skipLibCheck hides the missing module. Hold effect and @effect below 4.1 until an alchemy release supports effect 4.1",
-      "matchPackageNames": ["effect", "@effect/**"],
-      "allowedVersions": "<4.1.0"
     },
     {
       "description": "the @earendil-works pi packages (pi-coding-agent in the repo-root package.json; pi-ai left with Flue in 2026-08) come from one org and share the pi runtime, so group every update type into a single PR",

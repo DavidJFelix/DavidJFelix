@@ -1,3 +1,5 @@
+import {canDrawText} from '@davidjfelix/og/glyphs'
+
 import {encodeURLSegment, type GitHubDiffSource, parseGitHubDiffSource} from './github-diff-source'
 import type {PublicPullRequest} from './github-public-pull-request'
 import {isNullish} from './nullish'
@@ -7,10 +9,16 @@ import {isNullish} from './nullish'
 export const DIFF_CARD_BASE_PATH = '/og/diffs'
 const DIFF_CARD_EXTENSION = '.png'
 const SHORT_SHA_LENGTH = 7
-// Satori wraps a long title but only ever picks between two sizes, so past
-// this length a pull request title would push the card's footer off the canvas.
+// The share text cuts a longer pull request title, so the card title fills
+// about three lines at most.
 const CARD_TITLE_MAX_LENGTH = 90
 const SITE_SUFFIX = 'in the revision.city diff viewer.'
+// The parts of an emoji, sequences and flags included. A title loses the
+// parts that the card font cannot draw and keeps its words. The font draws a
+// few pictographs, such as the trademark sign, so those stay.
+const EMOJI =
+  /\p{Extended_Pictographic}|\p{Emoji_Modifier}|\p{Regional_Indicator}|\p{Join_Control}|\p{Variation_Selector}/gu
+const PICTOGRAPH = /\p{Extended_Pictographic}/u
 
 // The share card's own lines: the label is the big text, the description the
 // muted line under it, the author the footer byline.
@@ -93,16 +101,25 @@ function describePullRequest({
   const sentence = [`${describePullRequestKind(pull)} #${number}`, byline, `in ${repo}`]
     .filter((part) => !isNullish(part))
     .join(' ')
+  const cardTitle = pull.title
+    .replace(EMOJI, (part) => (PICTOGRAPH.test(part) && canDrawText(part) ? part : ''))
+    .replace(/\s+/g, ' ')
+    .trim()
+  // A title that the card font cannot draw shows as boxes, so the card shows
+  // the label in its place, as it does for a pull request without a title.
+  const card =
+    cardTitle !== '' && canDrawText(cardTitle)
+      ? {
+          title: truncate(cardTitle, CARD_TITLE_MAX_LENGTH),
+          description: isNullish(stats) ? label : `${label} · ${stats}`,
+        }
+      : {title: label, description: stats ?? 'Pull request'}
   return {
     imagePath,
     imageAlt,
     title: `${pull.title} · ${label}`,
     description: isNullish(stats) ? `${sentence}.` : `${sentence}: ${stats}.`,
-    card: {
-      title: truncate(pull.title, CARD_TITLE_MAX_LENGTH),
-      description: isNullish(stats) ? label : `${label} · ${stats}`,
-      author: byline,
-    },
+    card: {...card, author: byline},
   }
 }
 

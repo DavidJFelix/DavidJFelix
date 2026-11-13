@@ -31,6 +31,135 @@ test('reports a comment-only edit as no semantic change', async () => {
   expect(diff.changes).toEqual([])
 })
 
+// Text that a node holds between its children is in no leaf, so each of these
+// edits reports a row only because the hashes read that text and the shape.
+test.each([
+  {
+    edit: 'a TypeScript template literal',
+    path: 'src/greet.ts',
+    oldSource: `export function greet() {\n  return \`hello \${name} there\`\n}\n`,
+    newSource: `export function greet() {\n  return \`hello \${name} again\`\n}\n`,
+    qualifiedName: 'greet',
+  },
+  {
+    edit: 'a TypeScript string with an escape',
+    path: 'src/greet.ts',
+    oldSource: "export function greet() {\n  return 'hello\\nthere'\n}\n",
+    newSource: "export function greet() {\n  return 'hello\\nagain'\n}\n",
+    qualifiedName: 'greet',
+  },
+  {
+    edit: 'a Python f-string',
+    path: 'greet.py',
+    oldSource: 'def greet():\n    return f"hello {name} there"\n',
+    newSource: 'def greet():\n    return f"hello {name} again"\n',
+    qualifiedName: 'greet',
+  },
+  {
+    edit: 'a Python statement moved out of an if',
+    path: 'greet.py',
+    oldSource: 'def greet():\n    if name:\n        first()\n        second()\n',
+    newSource: 'def greet():\n    if name:\n        first()\n    second()\n',
+    qualifiedName: 'greet',
+  },
+  {
+    edit: 'a PHP interpolated string',
+    path: 'greet.php',
+    oldSource: '<?php\nfunction greet() {\n  return "hello $name there";\n}\n',
+    newSource: '<?php\nfunction greet() {\n  return "hello $name again";\n}\n',
+    qualifiedName: 'greet',
+  },
+  {
+    edit: 'a Rust string with an escape',
+    path: 'src/greet.rs',
+    oldSource: 'fn greet() {\n    let text = "hello\\nthere";\n}\n',
+    newSource: 'fn greet() {\n    let text = "hello\\nagain";\n}\n',
+    qualifiedName: 'greet',
+  },
+  {
+    edit: 'a dropped Rust question mark',
+    path: 'src/greet.rs',
+    oldSource: 'fn greet() -> Result {\n    send()?;\n    Ok(())\n}\n',
+    newSource: 'fn greet() -> Result {\n    send();\n    Ok(())\n}\n',
+    qualifiedName: 'greet',
+  },
+  {
+    edit: 'a C++ member access through a pointer',
+    path: 'src/greet.cpp',
+    oldSource: 'void greet() {\n  widget->render();\n}\n',
+    newSource: 'void greet() {\n  widget.render();\n}\n',
+    qualifiedName: 'greet',
+  },
+  {
+    edit: 'a C++ string with an escape',
+    path: 'src/greet.cpp',
+    oldSource: 'void greet() {\n  text = "hello\\nthere";\n}\n',
+    newSource: 'void greet() {\n  text = "hello\\nagain";\n}\n',
+    qualifiedName: 'greet',
+  },
+  {
+    edit: 'a CSS length',
+    path: 'src/card.css',
+    oldSource: '.card {\n  width: 700px;\n}\n',
+    newSource: '.card {\n  width: 701px;\n}\n',
+    qualifiedName: '.card',
+  },
+  {
+    edit: 'an SCSS length',
+    path: 'src/card.scss',
+    oldSource: '.card {\n  width: 700px;\n}\n',
+    newSource: '.card {\n  width: 701px;\n}\n',
+    qualifiedName: '.card',
+  },
+])('reports an edit to $edit as modified', async ({path, oldSource, newSource, qualifiedName}) => {
+  const diff = await diffEntities({path, oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([{type: 'modified', qualifiedName}])
+})
+
+test.each([
+  {
+    edit: 'white space inside a template literal placeholder',
+    path: 'src/greet.ts',
+    oldSource: `export function greet() {\n  return \`hello \${name} there\`\n}\n`,
+    newSource: `export function greet() {\n  return \`hello \${ name } there\`\n}\n`,
+  },
+  {
+    edit: 'CRLF line endings',
+    path: 'src/greet.ts',
+    oldSource: 'export function greet() {\r\n  return 1\r\n}\r\n',
+    newSource: 'export function greet() {\n  return 1\n}\n',
+  },
+  {
+    edit: 'a Python indentation width',
+    path: 'greet.py',
+    oldSource: 'def greet():\n    if name:\n        first()\n',
+    newSource: 'def greet():\n  if name:\n    first()\n',
+  },
+  {
+    edit: 'a CSS reformat',
+    path: 'src/card.css',
+    oldSource: '.card {\n  width: 700px;\n}\n',
+    newSource: '.card { width:   700px; }\n',
+  },
+])('reports $edit as no semantic change', async ({path, oldSource, newSource}) => {
+  const diff = await diffEntities({path, oldSource, newSource})
+
+  expect(diff.changes).toEqual([])
+})
+
+test('reports a Markdown heading with new text as added and deleted, not renamed', async () => {
+  const oldSource = '# Guide\n\n## Install\n\nRun it.\n'
+  const newSource = '# Guide\n\n## License\n\nRun it.\n'
+
+  const diff = await diffEntities({path: 'README.md', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([
+    {type: 'added', qualifiedName: 'License'},
+    {type: 'deleted', qualifiedName: 'Install'},
+  ])
+})
+
 test('follows a method renamed inside its class', async () => {
   const oldSource = 'export class Widget {\n  render() {\n    return 1\n  }\n}\n'
   const newSource = 'export class Widget {\n  draw() {\n    return 1\n  }\n}\n'
@@ -42,6 +171,160 @@ test('follows a method renamed inside its class', async () => {
   ])
 })
 
+// The same shape alone is no rename: these pairs share a skeleton but not a body.
+test.each([
+  {
+    pair: 'unrelated functions',
+    path: 'src/store.ts',
+    oldSource: 'export function load() {\n  return fetchUser(id, options)\n}\n',
+    newSource: 'export function save() {\n  return storeItem(key, value)\n}\n',
+  },
+  {
+    pair: 'unrelated CSS rules',
+    path: 'src/card.css',
+    oldSource: '.card {\n  color: red;\n  width: auto;\n}\n',
+    newSource: '.panel {\n  border: none;\n  height: inherit;\n}\n',
+  },
+  {
+    pair: 'unrelated JSON keys',
+    path: 'data.json',
+    oldSource: '{"alpha": [1, 2, 3, 4, 5]}\n',
+    newSource: '{"beta": [6, 7, 8, 9, 10]}\n',
+  },
+  {
+    pair: 'a renamed method with a rewritten body',
+    path: 'src/widget.ts',
+    oldSource: 'export class Widget {\n  render() {\n    return paint(canvas, frame)\n  }\n}\n',
+    newSource: 'export class Widget {\n  draw() {\n    return measure(bounds, scale)\n  }\n}\n',
+  },
+])('reports $pair as added and deleted, not renamed', async ({path, oldSource, newSource}) => {
+  const diff = await diffEntities({path, oldSource, newSource})
+
+  expect(diff.changes.map((change) => change.type)).toEqual(['added', 'deleted'])
+})
+
+test('pairs each renamed function with its own body when the order also changed', async () => {
+  const oldSource =
+    'export function alpha() {\n  return first(one, two)\n}\n' +
+    'export function beta() {\n  return second(three, four)\n}\n'
+  const newSource =
+    'export function gamma() {\n  return second(three, four)\n}\n' +
+    'export function delta() {\n  return first(one, two)\n}\n'
+
+  const diff = await diffEntities({path: 'src/steps.ts', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([
+    {type: 'renamed', qualifiedName: 'gamma', previousQualifiedName: 'beta'},
+    {type: 'renamed', qualifiedName: 'delta', previousQualifiedName: 'alpha'},
+  ])
+})
+
+test('marks a renamed function whose body was also edited', async () => {
+  const oldSource =
+    'export function greet(name, title) {\n  const text = format(title, name)\n  return print(text, options)\n}\n'
+  const newSource =
+    'export function welcome(name, title) {\n  const text = format(title, name)\n  return print(text, settings)\n}\n'
+
+  const diff = await diffEntities({path: 'src/greet.ts', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([
+    {type: 'renamed', qualifiedName: 'welcome', previousQualifiedName: 'greet', bodyChanged: true},
+  ])
+})
+
+test('does not mark a pure rename as a body edit', async () => {
+  const oldSource = 'export function greet(name) {\n  return print(format(name), options)\n}\n'
+  const newSource = 'export function welcome(name) {\n  return print(format(name), options)\n}\n'
+
+  const diff = await diffEntities({path: 'src/greet.ts', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([{type: 'renamed', previousQualifiedName: 'greet'}])
+  expect(diff.changes[0]).not.toHaveProperty('bodyChanged')
+})
+
+test('reports a Java field value edit as a modified field, not a rename', async () => {
+  const oldSource = 'class A {\n  static final int MAX = 1;\n}\n'
+  const newSource = 'class A {\n  static final int MAX = 2;\n}\n'
+
+  const diff = await diffEntities({path: 'src/A.java', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([{type: 'modified', kind: 'field', qualifiedName: 'A.MAX'}])
+})
+
+test('names a Go method by its receiver type', async () => {
+  const oldSource =
+    'package m\n\nfunc (a A) String() string {\n\treturn "a"\n}\n\nfunc (b B) String() string {\n\treturn "b"\n}\n'
+  const newSource = oldSource.replace('"b"', '"bee"')
+
+  const diff = await diffEntities({path: 'm.go', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([
+    {type: 'modified', kind: 'method', qualifiedName: 'B.String'},
+  ])
+})
+
+test.each([
+  {
+    change: 'prototype',
+    oldSource: 'int add(int a, int b);\n',
+    newSource: 'long add(long a, long b);\n',
+    kind: 'function',
+    qualifiedName: 'add',
+  },
+  {
+    change: 'global',
+    oldSource: 'static int counter = 0;\n',
+    newSource: 'static int counter = 1;\n',
+    kind: 'variable',
+    qualifiedName: 'counter',
+  },
+  {
+    change: 'macro',
+    oldSource: '#define LIMIT 10\n',
+    newSource: '#define LIMIT 20\n',
+    kind: 'macro',
+    qualifiedName: 'LIMIT',
+  },
+])(
+  'reports a changed C $change as one modified row',
+  async ({oldSource, newSource, kind, qualifiedName}) => {
+    const diff = await diffEntities({path: 'limits.c', oldSource, newSource})
+
+    expect(diff.changes).toMatchObject([{type: 'modified', kind, qualifiedName}])
+    expect(diff.changes).toHaveLength(1)
+  },
+)
+
+test('reports a changed C include as no row', async () => {
+  const diff = await diffEntities({
+    path: 'main.c',
+    oldSource: '#include <stdio.h>\n',
+    newSource: '#include <stdlib.h>\n',
+  })
+
+  expect(diff.changes).toEqual([])
+})
+
+test('reports a changed C local declaration against its function only', async () => {
+  const oldSource = 'int main(void) {\n  int local = 1;\n  return local;\n}\n'
+  const newSource = oldSource.replace('= 1', '= 2')
+
+  const diff = await diffEntities({path: 'main.c', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([{type: 'modified', kind: 'function', qualifiedName: 'main'}])
+  expect(diff.changes).toHaveLength(1)
+})
+
+test('reports a body edit of a C function that has a prototype against the definition', async () => {
+  const oldSource = 'int add(int a, int b);\n\nint add(int a, int b) {\n  return a + b;\n}\n'
+  const newSource = oldSource.replace('a + b', 'b + a')
+
+  const diff = await diffEntities({path: 'add.c', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([{type: 'modified', kind: 'function', qualifiedName: 'add#2'}])
+  expect(diff.changes).toHaveLength(1)
+})
+
 test('names the dependency that changed in a manifest', async () => {
   const oldSource = '{"dependencies": {"react": "18.0.0", "zod": "4.0.0"}}'
   const newSource = '{"dependencies": {"react": "19.0.0", "zod": "4.0.0"}}'
@@ -51,6 +334,17 @@ test('names the dependency that changed in a manifest', async () => {
   expect(diff.changes).toMatchObject([{type: 'modified', qualifiedName: 'dependencies.react'}])
 })
 
+test('names the default export of a config file when its options change', async () => {
+  const oldSource = 'export default defineConfig({server: {port: 3000}})\n'
+  const newSource = 'export default defineConfig({server: {port: 4000}})\n'
+
+  const diff = await diffEntities({path: 'vite.config.ts', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([
+    {type: 'modified', kind: 'constant', qualifiedName: 'default'},
+  ])
+})
+
 test('reports only the entity that changed, not the ones enclosing it', async () => {
   const oldSource = 'export class Widget {\n  render() {\n    return 1\n  }\n}\n'
   const newSource = 'export class Widget {\n  render() {\n    return 2\n  }\n}\n'
@@ -58,6 +352,17 @@ test('reports only the entity that changed, not the ones enclosing it', async ()
   const diff = await diffEntities({path: 'src/widget.ts', oldSource, newSource})
 
   expect(diff.changes).toMatchObject([{type: 'modified', qualifiedName: 'Widget.render'}])
+})
+
+test('reports a new struct parameter as a change to its function only', async () => {
+  const oldSource = 'void handle(int code) {\n  use(code);\n}\n'
+  const newSource = 'void handle(int code, struct request *req) {\n  use(code);\n}\n'
+
+  const diff = await diffEntities({path: 'src/handle.c', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([
+    {type: 'modified', kind: 'function', qualifiedName: 'handle'},
+  ])
 })
 
 // The cspell.jsonc shape that once cascaded: objects in an array all carry the
@@ -105,6 +410,78 @@ test('reports an array insertion as one edit per array, not a cascade', async ()
   ])
 })
 
+test('blames the edited overload, not the one after the deleted overload', async () => {
+  const oldSource = [
+    'export function parse(input: string): Node',
+    'export function parse(input: number): Node',
+    'export function parse(input: string[], options: ParseOptions): Node[]',
+    'export function parse(input: unknown, options?: ParseOptions) {',
+    '  return read(input, options)',
+    '}',
+    '',
+  ].join('\n')
+  const newSource = [
+    'export function parse(input: string): Node',
+    'export function parse(input: string[], options?: ParseOptions): Node[]',
+    'export function parse(input: unknown, options?: ParseOptions) {',
+    '  return read(input, options)',
+    '}',
+    '',
+  ].join('\n')
+
+  const diff = await diffEntities({path: 'src/parse.ts', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([
+    {type: 'modified', qualifiedName: 'parse#2', oldRange: {startLine: 3}},
+    {type: 'deleted', qualifiedName: 'parse#2', oldRange: {startLine: 2}},
+  ])
+})
+
+test('blames the edited workflow step, not the one after the deleted step', async () => {
+  const oldSource = [
+    'steps:',
+    '  - name: Install',
+    '    run: bun install',
+    '  - name: Format',
+    '    run: bun run format',
+    '  - name: Lint',
+    '    run: bun run lint',
+    '',
+  ].join('\n')
+  const newSource = [
+    'steps:',
+    '  - name: Install',
+    '    run: bun install',
+    '  - name: Lint',
+    '    run: bun run lint --max-warnings 0',
+    '',
+  ].join('\n')
+
+  const diff = await diffEntities({path: '.github/workflows/ci.yml', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([
+    {type: 'modified', qualifiedName: 'steps'},
+    {type: 'modified', qualifiedName: 'steps.run#2', oldRange: {startLine: 7}},
+    {type: 'deleted', qualifiedName: 'steps.name#2', oldRange: {startLine: 4}},
+    {type: 'deleted', qualifiedName: 'steps.run#2', oldRange: {startLine: 5}},
+  ])
+})
+
+test('keeps a number that the author wrote in a heading as part of its name', async () => {
+  const oldSource = '# Notes\n\n## Verified on Depot (PR #406)\n\nFirst.\n'
+  const newSource = '# Notes\n\n## Verified on Depot (PR #407)\n\nFirst.\n'
+
+  const diff = await diffEntities({path: 'docs/notes.md', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([
+    {
+      type: 'renamed',
+      qualifiedName: 'Verified on Depot (PR #407)',
+      previousQualifiedName: 'Verified on Depot (PR #406)',
+    },
+  ])
+})
+
 test('reports an added test once, not once per local inside its callback', async () => {
   const oldSource = "test('first', () => {\n  const value = 1\n  expect(value).toBe(1)\n})\n"
   const newSource = `${oldSource}test('second', () => {\n  const other = 2\n  expect(other).toBe(2)\n})\n`
@@ -136,6 +513,7 @@ test('declines to report on a file with more entities than the cap', async () =>
 
   expect(diff.language).toBe('json')
   expect(diff.changes).toEqual([])
+  expect(diff.skipped).toBe('too-large')
 })
 
 test('orders changes by bucket then by position in the new file', async () => {

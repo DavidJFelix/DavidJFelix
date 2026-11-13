@@ -1,4 +1,5 @@
 import {
+  DEFAULT_MAX_PATCH_LINE_CHARS,
   DEFAULT_MAX_PATCH_LINES_PER_FILE,
   type FileReviewStatus,
   fileReviewStatus,
@@ -17,14 +18,18 @@ const FILE_OVERHEAD_BYTES = 64
 
 export const OVER_LIMIT_REASON = 'over the review size limit'
 
-const NOT_REVIEWED_REASONS: Partial<Record<FileReviewStatus, string>> = {
+// A full record, so that a new status cannot go without a line in the list.
+const NOT_REVIEWED_REASONS: Record<Exclude<FileReviewStatus, 'reviewable' | 'skipped'>, string> = {
   'no-text-diff': 'GitHub shows no text diff',
   'too-large': `the diff is longer than ${DEFAULT_MAX_PATCH_LINES_PER_FILE} lines`,
+  'line-too-long': `a line of the diff is longer than ${DEFAULT_MAX_PATCH_LINE_CHARS} characters`,
 }
 
 export interface ReviewFileSelection {
   files: PullRequestFile[]
   notReviewed: NotReviewedFile[]
+  // Counts all such files, also when the `notReviewed` list stops.
+  lineTooLongCount: number
 }
 
 // Keeps each reviewable file, in GitHub's order, if it fits in what is left of
@@ -33,7 +38,7 @@ export interface ReviewFileSelection {
 // MAX_OUTPUT_CHARS characters, because the check run cannot show more. The check
 // run then cuts the list and says so.
 export function selectReviewFiles(files: readonly PullRequestFile[]): ReviewFileSelection {
-  const selection: ReviewFileSelection = {files: [], notReviewed: []}
+  const selection: ReviewFileSelection = {files: [], notReviewed: [], lineTooLongCount: 0}
   let reviewedBytes = 0
   let notReviewedChars = 0
   const leaveOut = (path: string, reason: string) => {
@@ -46,9 +51,12 @@ export function selectReviewFiles(files: readonly PullRequestFile[]): ReviewFile
     }
   }
   for (const file of files) {
-    const reason = NOT_REVIEWED_REASONS[fileReviewStatus(file)]
-    if (reason !== undefined) {
-      leaveOut(file.path, reason)
+    const status = fileReviewStatus(file)
+    if (status === 'line-too-long') {
+      selection.lineTooLongCount += 1
+    }
+    if (status !== 'reviewable' && status !== 'skipped') {
+      leaveOut(file.path, NOT_REVIEWED_REASONS[status])
     } else if (isReviewableFile(file)) {
       const bytes = storedBytes(file.path) + storedBytes(file.patch) + FILE_OVERHEAD_BYTES
       if (reviewedBytes + bytes > MAX_REVIEWED_BYTES) {

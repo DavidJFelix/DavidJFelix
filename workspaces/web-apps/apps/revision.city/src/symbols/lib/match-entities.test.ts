@@ -10,6 +10,8 @@ const SUBSTANTIAL_TOKENS = Array.from({length: 16}, (_, index) => `token${index}
 interface CreateEntityParams {
   name: string
   qualifiedName?: string
+  basePath?: string
+  occurrence?: number
   kind?: EntityKind
   tokens?: readonly string[]
   structuralHash?: string
@@ -23,6 +25,8 @@ interface CreateEntityParams {
 function createEntity({
   name,
   qualifiedName = name,
+  basePath = qualifiedName,
+  occurrence = 1,
   kind = 'function',
   tokens = SUBSTANTIAL_TOKENS,
   structuralHash = 'aaaa',
@@ -36,6 +40,8 @@ function createEntity({
     kind,
     name,
     qualifiedName,
+    basePath,
+    occurrence,
     range: {startLine, endLine: startLine + 2},
     structuralHash,
     contentHash,
@@ -103,6 +109,19 @@ test('matches an identical body under a new name as a rename', () => {
   expect(changes).toMatchObject([
     {type: 'renamed', qualifiedName: 'welcome', previousQualifiedName: 'greet'},
   ])
+})
+
+test('does not pair equal shapes whose tokens differ', () => {
+  const before = createEntity({name: 'greet', structuralHash: 'same'})
+  const after = createEntity({
+    name: 'welcome',
+    structuralHash: 'same',
+    tokens: SUBSTANTIAL_TOKENS.map((token) => `${token}x`),
+  })
+
+  const changes = matchEntities({oldEntities: [before], newEntities: [after]})
+
+  expect(changes.map((change) => change.type).toSorted()).toEqual(['added', 'deleted'])
 })
 
 test('matches an entity that kept its name but changed owner as a move', () => {
@@ -253,6 +272,8 @@ function createOccurrence(hash: string, ordinal: number): CodeEntity {
   return createEntity({
     name: 'name',
     qualifiedName: ordinal === 0 ? 'defs.name' : `defs.name#${ordinal + 1}`,
+    basePath: 'defs.name',
+    occurrence: ordinal + 1,
     kind: 'property',
     contentHash: hash,
     ownContentHash: hash,
@@ -279,6 +300,33 @@ test('pairs an edited occurrence by its position among unedited siblings', () =>
   const changes = matchEntities({oldEntities: olds, newEntities: news})
 
   expect(changes).toMatchObject([{type: 'modified', qualifiedName: 'defs.name#2'}])
+})
+
+// 101 old and 100 new leftovers of one name, each of `words` words: the pairing
+// reads the 100 new lists 101 times and the 101 old lists 100 times. At 990
+// words that is 19,998,000 reads; at 1,000 it is 20,200,000, over the limit.
+// Each new entry is most like the old entry after it, so the pairing skips the
+// first old entry only if it runs. Otherwise the zip skips the last.
+test.each([
+  {words: 990, runs: true},
+  {words: 1000, runs: false},
+])('the leftover pairing reads $words words an entry: runs $runs', ({words, runs}) => {
+  const createLeftover = (hash: string, ordinal: number, word: string): CodeEntity => ({
+    ...createOccurrence(hash, ordinal),
+    tokens: repeatToken(word, words),
+  })
+  const olds = Array.from({length: 101}, (_, ordinal) =>
+    createLeftover(`old${ordinal}`, ordinal, ordinal === 0 ? 'other' : `word${ordinal - 1}`),
+  )
+  const news = Array.from({length: 100}, (_, ordinal) =>
+    createLeftover(`new${ordinal}`, ordinal, `word${ordinal}`),
+  )
+
+  const changes = matchEntities({oldEntities: olds, newEntities: news})
+
+  expect(changes.filter((change) => change.type === 'deleted')).toMatchObject([
+    {qualifiedName: runs ? 'defs.name' : 'defs.name#101'},
+  ])
 })
 
 test('summarizes an array insertion as an element edit with its index', () => {

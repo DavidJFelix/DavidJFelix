@@ -69,6 +69,8 @@ export interface ReadBaseGuidesParams {
   repository: GitHubRepository
   baseSha: string
   paths: readonly string[]
+  // Before the last attempt a failure throws, so the step tries the read again.
+  isLastAttempt: boolean
 }
 
 // The guides only add context. Without them the review still runs.
@@ -77,10 +79,14 @@ export async function readBaseGuides({
   repository,
   baseSha,
   paths,
+  isLastAttempt,
 }: ReadBaseGuidesParams): Promise<Record<string, string>> {
   return loadRepositorySnapshot({request, repository, commitSha: baseSha})
     .then((snapshot) => readGuides({snapshot, paths}))
     .catch((error: unknown) => {
+      if (!isLastAttempt) {
+        throw error
+      }
       console.warn('Could not read the repository guides', {error: String(error)})
       return {}
     })

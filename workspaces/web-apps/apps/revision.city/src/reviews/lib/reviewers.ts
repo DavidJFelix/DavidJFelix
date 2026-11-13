@@ -28,8 +28,9 @@ Severity:
 - info: worth knowing, not a defect.
 
 Answer with JSON only, in this shape:
-{"findings": [{"severity": "high", "title": "...", "body": "...", "checked": true, "label": 12, "endLabel": 14, "suggestion": "..."}]}
+{"findings": [{"severity": "high", "title": "...", "body": "...", "checked": true, "path": "src/a.ts", "label": 12, "endLabel": 14, "suggestion": "..."}]}
 
+- "path" is the file that the problem is in. Report only problems in the file of the diff piece, which its "File:" line names. A problem in another file belongs to the review of that file, so leave it out, also when a line of this piece led you to it.
 - "label" is the number printed on the line the problem is on. Use a numbered line; when the problem is a removed line, use the nearest numbered line.
 - "endLabel" is optional: the number of the last line, when the problem spans several lines.
 - "title" is one short sentence that states the problem.

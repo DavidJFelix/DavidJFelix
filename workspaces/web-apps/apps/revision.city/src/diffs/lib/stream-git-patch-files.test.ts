@@ -180,6 +180,23 @@ test('any byte chunking gives the same files as one chunk', async () => {
   )
 })
 
+test('a large file sent in many small chunks gives the same files as one chunk', async () => {
+  const largeLines = Array.from(
+    {length: 8000},
+    (_, index) => `export const line${index} = ${index}`,
+  )
+  const patch = fileDiff('src/large.ts', largeLines.join('\n+')) + BETA
+  const chunkSize = 997
+  const chunks = Array.from({length: Math.ceil(patch.length / chunkSize)}, (_, index) =>
+    patch.slice(index * chunkSize, (index + 1) * chunkSize),
+  )
+
+  const chunked = await collectFiles(streamOf(chunks))
+
+  expect(chunked).toEqual(await collectFiles(streamOf([patch])))
+  expect(chunked.files).toHaveLength(2)
+})
+
 test('the files of a patch are its text cut at each file start, with nothing lost', async () => {
   await assert(
     asyncProperty(

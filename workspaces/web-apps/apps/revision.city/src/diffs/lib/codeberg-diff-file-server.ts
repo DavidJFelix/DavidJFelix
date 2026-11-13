@@ -7,6 +7,7 @@ import {
   parseCodebergDiffSource,
 } from './codeberg-diff-source'
 import {encodePath, encodeURLSegment, hasDotSegment} from './github-diff-source'
+import {createLoaderError} from './loader-error'
 import {isNullish} from './nullish'
 import {readLimitedText} from './read-limited-text'
 
@@ -69,10 +70,10 @@ export function createCodebergFileReader(
 
   return async (file) => {
     if (isNullish(source) || source.kind === 'compare') {
-      throw new Error('Unsupported Codeberg diff path.')
+      throw createLoaderError({message: 'Unsupported Codeberg diff path.', status: 400})
     }
     if (hasDotSegment(file.name) || hasDotSegment(file.prevName ?? '')) {
-      throw new Error('Unsupported Codeberg file path.')
+      throw createLoaderError({message: 'Unsupported Codeberg file path.', status: 400})
     }
 
     // The reader does not keep a failed lookup, so the next read tries again.
@@ -196,7 +197,10 @@ async function fetchCodebergJSON({url, label, fetcher}: FetchCodebergJSONParams)
 
 function assertCodebergResponseOK(response: Response, label: string): void {
   if (!response.ok) {
-    throw new Error(`${label} failed (${response.status}).`)
+    throw createLoaderError({
+      message: `${label} failed (${response.status}).`,
+      status: response.status,
+    })
   }
 }
 

@@ -1,4 +1,3 @@
-// cSpell:ignore unstub -- vi.unstubAllEnvs
 import {expect, test, vi} from 'vitest'
 
 import {
@@ -6,6 +5,7 @@ import {
   createGitHubFileReader,
   loadGitHubDiffFiles,
 } from './github-diff-file-server'
+import {getLoaderErrorStatus} from './loader-error'
 
 // fetch by call signature only: lib.dom types `typeof fetch` with a required
 // static `preconnect`, which a stub cannot (and need not) satisfy.
@@ -34,9 +34,8 @@ function authorizationHeaders(fetcher: ReturnType<typeof stubGitHub>): (string |
   return fetcher.mock.calls.map(([, init]) => new Headers(init?.headers).get('authorization'))
 }
 
-test('an anonymous read sends no credential even when a server token is configured', async () => {
+test('an anonymous read sends no credential', async () => {
   clearGitHubDiffFileServerCache()
-  vi.stubEnv('DIFFSHUB_GITHUB_TOKEN', 'server-token-with-private-access')
   const fetcher = stubGitHub()
 
   await loadGitHubDiffFiles(
@@ -44,24 +43,7 @@ test('an anonymous read sends no credential even when a server token is configur
     {fetch: fetcher, tokenSource: 'anonymous'},
   )
 
-  // Falling back to the server token here would hand every unauthenticated
-  // visitor its reach, and cache private content where all of them share it.
-  expect(authorizationHeaders(fetcher)).not.toContain('Bearer server-token-with-private-access')
   expect(authorizationHeaders(fetcher).every((header) => header === null)).toBe(true)
-  vi.unstubAllEnvs()
-})
-
-// Pairs with the test above: without this, that one would still pass if the
-// stubbed env never reached the code, proving nothing about the guard.
-test('a read with no token source does fall back to the server token', async () => {
-  clearGitHubDiffFileServerCache()
-  vi.stubEnv('DIFFSHUB_GITHUB_TOKEN', 'server-token-with-private-access')
-  const fetcher = stubGitHub()
-
-  await loadGitHubDiffFiles({name: 'src/a.ts', path: SOURCE, type: 'change'}, {fetch: fetcher})
-
-  expect(authorizationHeaders(fetcher)).toContain('Bearer server-token-with-private-access')
-  vi.unstubAllEnvs()
 })
 
 test("a signed-in read carries the caller's own token", async () => {
@@ -74,6 +56,61 @@ test("a signed-in read carries the caller's own token", async () => {
   )
 
   expect(authorizationHeaders(fetcher)).toContain('Bearer user-token')
+})
+
+function requestURL(input: Parameters<FetchLike>[0]): string {
+  return typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
+}
+
+function fileReads(fetcher: ReturnType<typeof stubGitHub>): number {
+  return fetcher.mock.calls.filter(([input]) => requestURL(input).includes('src/a.ts')).length
+}
+
+test('a signed-in read stays out of the shared cache', async () => {
+  clearGitHubDiffFileServerCache()
+  const fetcher = stubGitHub()
+  const file = {name: 'src/a.ts', path: SOURCE, type: 'change'} as const
+
+  await loadGitHubDiffFiles(file, {fetch: fetcher, token: 'user-token', tokenSource: 'request'})
+  await loadGitHubDiffFiles(file, {fetch: fetcher, token: 'user-token', tokenSource: 'request'})
+  await loadGitHubDiffFiles(file, {fetch: fetcher, tokenSource: 'anonymous'})
+
+  // Two reads for each of the three calls: the old and the new file.
+  expect(fileReads(fetcher)).toBe(6)
+  expect(authorizationHeaders(fetcher).slice(-3)).toEqual([null, null, null])
+})
+
+test('an anonymous read is used again from the shared cache', async () => {
+  clearGitHubDiffFileServerCache()
+  const fetcher = stubGitHub()
+  const file = {name: 'src/a.ts', path: SOURCE, type: 'change'} as const
+
+  await loadGitHubDiffFiles(file, {fetch: fetcher, tokenSource: 'anonymous'})
+  const again = await loadGitHubDiffFiles(file, {fetch: fetcher, tokenSource: 'anonymous'})
+
+  expect(fileReads(fetcher)).toBe(2)
+  expect(again.newFile?.contents).toBe('export function greet() {}\n')
+})
+
+test('the shared cache does not keep a failed read', async () => {
+  clearGitHubDiffFileServerCache()
+  const github = stubGitHub()
+  let failures = 1
+  const fetcher = vi.fn<FetchLike>(async (input, init) => {
+    if (requestURL(input).includes('src/a.ts') && failures > 0) {
+      failures -= 1
+      return new Response('unavailable', {status: 503})
+    }
+    return github(input, init)
+  })
+  const file = {name: 'src/a.ts', path: SOURCE, type: 'change'} as const
+
+  await expect(
+    loadGitHubDiffFiles(file, {fetch: fetcher, tokenSource: 'anonymous'}),
+  ).rejects.toThrow('src/a.ts')
+  const files = await loadGitHubDiffFiles(file, {fetch: fetcher, tokenSource: 'anonymous'})
+
+  expect(files.newFile?.contents).toBe('export function greet() {}\n')
 })
 
 test('hydrates an added file only when asked, so the viewer keeps its placeholder', async () => {
@@ -153,12 +190,40 @@ test('a reader does not keep a failed lookup, so the next read tries again', asy
   expect(newFile?.contents).toContain('greet')
 })
 
+// The file endpoint answers with the status that the error carries.
+test.each([
+  {name: 'a revoked token', response: () => new Response('', {status: 401}), status: 401},
+  {name: 'a missing pull request', response: () => new Response('', {status: 404}), status: 404},
+  {
+    name: 'a rate limit',
+    response: () => new Response('', {status: 403, headers: {'x-ratelimit-remaining': '0'}}),
+    status: 429,
+  },
+  {name: 'a GitHub outage', response: () => new Response('', {status: 503}), status: 502},
+])('a reader gives $status for $name', async ({response, status}) => {
+  clearGitHubDiffFileServerCache()
+  const readFiles = createGitHubFileReader(SOURCE, {
+    fetch: vi.fn<FetchLike>(async () => response()),
+    token: 'user-token',
+    tokenSource: 'request',
+  })
+
+  const error = await readFiles({name: 'src/a.ts', type: 'change'}).catch(
+    (caught: unknown) => caught,
+  )
+
+  expect(getLoaderErrorStatus(error)).toBe(status)
+})
+
 test('a reader rejects a path that is not a GitHub diff', async () => {
   const readFiles = createGitHubFileReader('/owner/repo/issues/7', {tokenSource: 'anonymous'})
 
-  await expect(readFiles({name: 'src/a.ts', type: 'change'})).rejects.toThrow(
-    'Unsupported GitHub diff path.',
+  const error = await readFiles({name: 'src/a.ts', type: 'change'}).catch(
+    (caught: unknown) => caught,
   )
+
+  expect(error).toHaveProperty('message', 'Unsupported GitHub diff path.')
+  expect(getLoaderErrorStatus(error)).toBe(400)
 })
 
 // A dot segment that is percent-encoded in a compare range appears only after

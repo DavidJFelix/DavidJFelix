@@ -20,7 +20,8 @@ interface GitHubStubOptions {
 // repository check, and the app's installation list.
 const stubGitHub = ({installations = [], repoStatus = 404, userStatus = 200}: GitHubStubOptions) =>
   vi.fn<FetchLike>(async (input) => {
-    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
+    const href = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
+    const url = new URL(href).pathname
     if (url.endsWith('/user')) {
       return new Response(null, {status: userStatus})
     }

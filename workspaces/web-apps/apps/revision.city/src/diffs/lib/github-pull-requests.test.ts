@@ -54,6 +54,8 @@ interface GitHubStubOptions {
   // The body sent with a failing search; a 422 defaults to the unsearchable
   // query failure.
   searchErrorBody?: unknown
+  // The headers sent with a failing search, such as the rate limit counts.
+  searchErrorHeaders?: Record<string, string>
 }
 
 const installation = (login: string, overrides: Record<string, unknown> = {}) => ({
@@ -66,7 +68,7 @@ const installation = (login: string, overrides: Record<string, unknown> = {}) =>
 const searchErrorResponse = (options: GitHubStubOptions, status: number): Response =>
   Response.json(
     options.searchErrorBody ?? (status === 422 ? UNSEARCHABLE_QUERY_BODY : {message: 'blocked'}),
-    {status},
+    {status, headers: options.searchErrorHeaders},
   )
 
 // Stands in for GitHub's search, org, subscription, and installation
@@ -144,6 +146,37 @@ test('answers 401 without a session, before touching GitHub', async () => {
 
   expect(response.status).toBe(401)
   expect(fetchImpl).not.toHaveBeenCalled()
+})
+
+test('a refreshed token is used for the searches and reaches the browser as a new session cookie', async () => {
+  const expiredCookie = `diffs-github-auth=${encodeURIComponent(
+    JSON.stringify({
+      accessToken: 'ghu_old',
+      accessTokenExpiresAt: 0,
+      refreshToken: 'ghr_refresh',
+      login: 'test-user',
+    }),
+  )}`
+  const searchFetch = stubGitHubFetch()
+  const fetchImpl = vi.fn<FetchLike>(async (input, init) =>
+    inputHref(input) === 'https://github.com/login/oauth/access_token'
+      ? Response.json({access_token: 'ghu_new', expires_in: 28_800})
+      : searchFetch(input, init),
+  )
+
+  const response = await handlePullRequestListRequest(
+    new Request(`${ORIGIN}/api/diffs/pull-requests`, {headers: {cookie: expiredCookie}}),
+    {credentials: {clientId: 'client-id', clientSecret: 'client-secret'}, fetch: fetchImpl},
+  )
+
+  expect(response.status).toBe(200)
+  expect(searchFetch).toHaveBeenCalled()
+  for (const [, init] of searchFetch.mock.calls) {
+    expect(new Headers(init?.headers).get('authorization')).toBe('Bearer ghu_new')
+  }
+  const [sessionCookie] = response.headers.getSetCookie()
+  expect(sessionCookie).toMatch(/^diffs-github-auth=/)
+  expect(sessionCookie).toContain('ghu_new')
 })
 
 // One pull request per group: assigned in the visitor's own repo, two owned,
@@ -332,6 +365,31 @@ test('an app without org or watching visibility reports those groups empty', asy
 
 test('a failing search answers 502 rather than an empty list', async () => {
   const response = await listPullRequests(stubGitHubFetch({searchStatus: 403}))
+  expect(response.status).toBe(502)
+})
+
+test('a search that GitHub answers 401 asks the visitor to sign in again', async () => {
+  const response = await listPullRequests(stubGitHubFetch({searchStatus: 401}))
+  expect(response.status).toBe(401)
+  expect(await response.json()).toMatchObject({reason: 'sign-in-again'})
+})
+
+test.each<{name: string; status: number; headers: Record<string, string>}>([
+  {name: '429', status: 429, headers: {}},
+  {name: '403 with no requests remaining', status: 403, headers: {'x-ratelimit-remaining': '0'}},
+  {name: '403 with a retry-after', status: 403, headers: {'retry-after': '30'}},
+])('a rate-limited search ($name) answers 429, not 502', async ({status, headers}) => {
+  const response = await listPullRequests(
+    stubGitHubFetch({searchStatus: status, searchErrorHeaders: headers}),
+  )
+  expect(response.status).toBe(429)
+  expect(response.headers.get('Retry-After')).toBe('60')
+})
+
+test('a search that cannot reach GitHub answers 502', async () => {
+  const response = await listPullRequests(async () => {
+    throw new TypeError('network down')
+  })
   expect(response.status).toBe(502)
 })
 

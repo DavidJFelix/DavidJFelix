@@ -27,3 +27,7 @@ const SASS_SPECS: Record<string, EntitySpec> = {
 
 export const cssParser = cssGrammar.configure({props: [entityProp.add(SPECS)]})
 export const sassParser = sassGrammar.configure({props: [entityProp.add(SASS_SPECS)]})
+export const indentedSassParser = sassGrammar.configure({
+  props: [entityProp.add(SASS_SPECS)],
+  dialect: 'indented',
+})

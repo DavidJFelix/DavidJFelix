@@ -317,9 +317,12 @@ test('reviewPullRequest checks the valid findings of an answer with a malformed 
   expect(chat).toHaveBeenCalledTimes(2)
 })
 
-test('reviewChunks does not check a finding whose label is not in the chunk', async () => {
+test.each([
+  {name: 'its label is not in the chunk', location: '"label": 9'},
+  {name: 'it is in another file', location: '"path": "b.ts", "label": 1'},
+])('reviewChunks does not check a finding when $name', async ({location}) => {
   const chat = answering(
-    '{"findings": [{"severity": "high", "title": "Bug", "body": "Breaks", "checked": true, "label": 9}]}',
+    `{"findings": [{"severity": "high", "title": "Bug", "body": "Breaks", "checked": true, ${location}}]}`,
   )
 
   const review = await reviewPullRequest({
@@ -692,9 +695,38 @@ test('reviewPullRequest tells the logs which reviewer and chunk each model call 
   expect(chat.mock.calls[0][0].eventFields).toEqual({
     reviewer: REVIEWERS[0].id,
     path: 'a.ts',
+    chunk: 1,
     chunkLines: 2,
     round: 0,
   })
+})
+
+test('reviewPullRequest gives each chunk of a split file its own number in the logs', async () => {
+  const chat = answering('{"findings": []}')
+
+  await reviewPullRequest({
+    files: [
+      {
+        path: 'big.ts',
+        status: 'modified',
+        patch: '@@ -1,1 +1,2 @@\n ctx\n+one\n@@ -50,1 +51,2 @@\n ctx\n+two',
+      },
+    ],
+    reviewers: REVIEWERS.slice(0, 1),
+    maxLinesPerChunk: 2,
+    model: 'vendor/model',
+    description: DESCRIPTION,
+    store: createMemoryChunkReviewStore(),
+    chat,
+    scope: 'test',
+  })
+
+  expect(chat.mock.calls.map(([{eventFields}]) => [eventFields?.path, eventFields?.chunk])).toEqual(
+    [
+      ['big.ts', 1],
+      ['big.ts', 2],
+    ],
+  )
 })
 
 test('reviewPullRequest takes one finding without a findings list as a list of one', async () => {
@@ -728,6 +760,59 @@ const reviewWithOneReviewer = (chat: Chat) =>
     chat,
     scope: 'test',
   })
+
+test('reviewPullRequest takes a JSON array with no object around it as the findings list', async () => {
+  const findings = [LOW_FINDING, {...LOW_FINDING, title: 'Two'}, {...LOW_FINDING, title: 'Three'}]
+
+  const review = await reviewWithOneReviewer(answering(`\n${JSON.stringify(findings)}\n`))
+
+  expect(review.findings.map(({title}) => title)).toEqual(['Bug', 'Two', 'Three'])
+  expect(review.failures).toEqual([])
+})
+
+test('reviewPullRequest takes a JSON array in a Markdown fence after prose as the findings list', async () => {
+  const findings = [LOW_FINDING, {...LOW_FINDING, title: 'Two'}]
+  const answer = `Findings:\n\`\`\`json\n${JSON.stringify(findings)}\n\`\`\`\nDone.`
+
+  const review = await reviewWithOneReviewer(answering(answer))
+
+  expect(review.findings.map(({title}) => title)).toEqual(['Bug', 'Two'])
+  expect(review.failures).toEqual([])
+})
+
+test('reviewPullRequest takes an empty JSON array as an empty findings list', async () => {
+  const review = await reviewWithOneReviewer(answering('[]'))
+
+  expect(review.findings).toEqual([])
+  expect(review.failures).toEqual([])
+})
+
+test('reviewPullRequest counts a malformed item of a JSON array answer', async () => {
+  const answer = JSON.stringify([LOW_FINDING, {title: 'No label'}])
+
+  const review = await reviewWithOneReviewer(answering(answer))
+
+  expect(review.findings.map(({title}) => title)).toEqual(['Bug'])
+  expect(review.failures.map(({error}) => error)).toEqual(['Malformed findings in the answer: 1'])
+})
+
+test.each([
+  {
+    name: 'two findings with no list around them',
+    answer: `${JSON.stringify(LOW_FINDING)}\n${JSON.stringify({...LOW_FINDING, title: 'Two'})}`,
+  },
+  {
+    name: 'a JSON array of two findings inside prose',
+    answer: `Findings: ${JSON.stringify([LOW_FINDING, LOW_FINDING])}`,
+  },
+])('reviewPullRequest reports $name as a missing findings list', async ({answer}) => {
+  const review = await reviewWithOneReviewer(answering(answer))
+
+  expect(review.findings).toEqual([])
+  expect(review.failures.map(({error}) => error.split('. The answer has')[0])).toEqual([
+    'No findings list: 2 findings without a list around them',
+  ])
+})
 
 test.each([
   {name: 'a findings list sent as JSON text', answer: {findings: JSON.stringify([LOW_FINDING])}},

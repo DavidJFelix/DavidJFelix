@@ -1,5 +1,6 @@
 import {captureMessage, withSentry} from '@sentry/cloudflare'
 import handler from '@tanstack/react-start/server-entry'
+import {resolveSentryEnvironment} from './observability/config'
 import {reportServerErrorResponse} from './observability/server-error-response'
 
 // The Workflow class must be a named export of the worker's main module.
@@ -17,6 +18,7 @@ export {ReviewWorkflow} from './reviews/review-workflow'
 export default withSentry(
   () => ({
     dsn: import.meta.env.VITE_PUBLIC_SENTRY_DSN,
+    environment: resolveSentryEnvironment(import.meta.env.VITE_PUBLIC_DEPLOY_ENV),
     tracesSampleRate: 1,
   }),
   {

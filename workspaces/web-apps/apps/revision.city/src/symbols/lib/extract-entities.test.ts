@@ -82,6 +82,37 @@ namespace Utils {
     ],
   },
   {
+    language: 'typescript',
+    source: `declare function load(path: string): string
+export default defineConfig({server: {port: 3000}})
+`,
+    expected: ['function load', 'constant default'],
+  },
+  {
+    language: 'javascript',
+    source: `module.exports = {load}
+exports.load = function () {}
+Button.displayName = 'Button'
+this.ignored = 1
+list[0] = 1
+count = 1
+function setup() {
+  exports.inner = 1
+}
+export default function () {
+  const local = 1
+  return local
+}
+`,
+    expected: [
+      'constant module.exports',
+      'function exports.load',
+      'constant Button.displayName',
+      'function setup',
+      'function default',
+    ],
+  },
+  {
     language: 'python',
     source: `CONST = 3
 def greet(name):
@@ -124,6 +155,24 @@ type Alias = u32;
     ],
   },
   {
+    language: 'rust',
+    source: `impl<T> Stack<T> {fn new() {}}
+impl<T> Default for Stack<T> {fn default() {}}
+impl Draw for &Widget {fn draw(&self) {}}
+impl fmt::Debug for Plain {}
+impl Draw for [u8] {}
+`,
+    expected: [
+      'impl Stack',
+      'function Stack.new',
+      'impl Stack#2',
+      'function Stack.default',
+      'impl Widget',
+      'function Widget.draw',
+      'impl Plain',
+    ],
+  },
+  {
     language: 'go',
     source: `package main
 type Widget struct {Field int}
@@ -139,8 +188,18 @@ func (w *Widget) Method() int {return 0}
       'constant Pi',
       'variable Global',
       'function Make',
-      'method Method',
+      'method Widget.Method',
     ],
+  },
+  {
+    language: 'go',
+    source: `package main
+func (s *Stack[T]) Push() {}
+func (s Stack[T]) Len() int {return 0}
+func (b B) String() string {return ""}
+func (*Widget) Reset() {}
+`,
+    expected: ['method Stack.Push', 'method Stack.Len', 'method B.String', 'method Widget.Reset'],
   },
   {
     language: 'java',
@@ -163,6 +222,29 @@ enum Color {RED}
     ],
   },
   {
+    language: 'java',
+    source: `class Widget {
+  static final int MAX = 1;
+  record Point(int x) {
+    Point {}
+    int sum() {return x;}
+  }
+}
+@interface Marker {}
+interface Limits {int LIMIT = 2;}
+`,
+    expected: [
+      'class Widget',
+      'field Widget.MAX',
+      'class Widget.Point',
+      'constructor Widget.Point.Point',
+      'method Widget.Point.sum',
+      'interface Marker',
+      'interface Limits',
+      'constant Limits.LIMIT',
+    ],
+  },
+  {
     language: 'cpp',
     source: `namespace ns {
 struct Widget {int field; void method();};
@@ -179,6 +261,68 @@ using Alias = int;
       'enum ns.Color',
       'function ns.make',
       'type ns.Alias',
+    ],
+  },
+  {
+    language: 'cpp',
+    source: `void handle(struct request *req) {struct context *ctx;}
+struct Forward;
+class Widget {
+public:
+  Widget(int size) : size_(size) {}
+  Widget& operator=(const Widget& other);
+  Widget& operator+=(int amount) {return *this;}
+  int size_;
+};
+bool operator==(const Widget& left, const Widget& right) {return true;}
+Widget make(int count = Limits::max) {return Widget(count);}
+typedef int Count;
+typedef struct {int value;} Anonymous;
+typedef struct node {int value;} node_t;
+typedef int (*callback_t)(int);
+union Number {int whole; float real;};
+`,
+    expected: [
+      'function handle',
+      'class Widget',
+      'function Widget.Widget',
+      'method Widget.operator=',
+      'function Widget.operator+=',
+      'field Widget.size_',
+      'function operator==',
+      'function make',
+      'type Count',
+      'type Anonymous',
+      'field Anonymous.value',
+      'type node_t',
+      'struct node_t.node',
+      'field node_t.node.value',
+      'type callback_t',
+      'union Number',
+      'field Number.whole',
+      'field Number.real',
+    ],
+  },
+  {
+    language: 'cpp',
+    source: `#include <stdio.h>
+#define LIMIT 10
+#define SQUARE(x) ((x) * (x))
+int add(int a, int b);
+static int counter = 0;
+extern const char *names[];
+namespace ns {int inner;}
+int main(void) {int local = 1; return local;}
+`,
+    expected: [
+      'macro LIMIT',
+      'macro SQUARE',
+      'function add',
+      'variable counter',
+      'variable names',
+      'module ns',
+      'variable ns.inner',
+      'function main',
     ],
   },
   {
@@ -221,6 +365,19 @@ trait Logger {public function log() {}}
 .button {color: red;}
 `,
     expected: ['mixin center', 'rule .button'],
+  },
+  {
+    language: 'sass-indented',
+    source: `@mixin rounded($radius)
+  border-radius: $radius
+
+.card
+  color: red
+  &:hover
+    color: blue
+    +rounded(2px)
+`,
+    expected: ['mixin rounded', 'rule .card', 'rule .card.&:hover'],
   },
   {
     language: 'markdown',
@@ -283,6 +440,28 @@ test.each([
   expect(entities.map((entity) => entity.name)).toEqual([name])
 })
 
+test.each([
+  {source: 'Title\n=====\n', name: 'Title'},
+  {source: 'Title\n---\n', name: 'Title'},
+  {source: 'Two line\nheading\n=====\n', name: 'Two line heading'},
+  {source: 'Title\r\n---\r\n', name: 'Title'},
+])('names the setext heading in $source as "$name"', ({source, name}) => {
+  const entities = extractWithinLimits({source, parser: markdownParser})
+
+  expect(entities.map((entity) => entity.name)).toEqual([name])
+})
+
+test.each([
+  {source: '---\ntitle: Notes\n---\n\n# Body\n'},
+  {source: '---\ntitle: Notes\n\ntags: one\n---\n\n# Body\n'},
+  {source: '---\ntags:\n  - one\n---\n\n# Body\n'},
+  {source: '---\r\ntitle: Notes\r\n---\r\n\r\n# Body\r\n'},
+])('does not name front matter as a heading in $source', ({source}) => {
+  const entities = extractWithinLimits({source, parser: markdownParser})
+
+  expect(entities.map((entity) => entity.name)).toEqual(['Body'])
+})
+
 test('names a heading with a long run of spaces before the test times out', () => {
   const name = `a${' '.repeat(4000)}b`
 
@@ -313,6 +492,17 @@ test('ignores locals declared inside a function body', () => {
   const entities = extractWithinLimits({source, parser: tsxParser})
 
   expect(entities.map((entity) => entity.name)).toEqual(['outer'])
+})
+
+test('gives a named default export one entity, not a second default row', () => {
+  const source = 'export default class Widget {\n  render() {}\n}\n'
+
+  const entities = extractWithinLimits({source, parser: tsxParser})
+
+  expect(entities.map((entity) => `${entity.kind} ${entity.qualifiedName}`)).toEqual([
+    'class Widget',
+    'method Widget.render',
+  ])
 })
 
 test('reports a module-level call once, without the locals in its callback', () => {
@@ -444,4 +634,20 @@ test('reports a small file of deeply nested entities as too large without hashin
 
   expect(extractEntities({source, parser: tsxParser})).toEqual({tooLarge: true})
   expect(computeSignature).not.toHaveBeenCalled()
+})
+
+test('reports a parser stack overflow as too large', () => {
+  vi.spyOn(jsonParser, 'parse').mockImplementationOnce(() => {
+    throw new RangeError('Maximum call stack size exceeded')
+  })
+
+  expect(extractEntities({source: '[[0]]', parser: jsonParser})).toEqual({tooLarge: true})
+})
+
+test('passes through a parser error that is not a stack overflow', () => {
+  vi.spyOn(jsonParser, 'parse').mockImplementationOnce(() => {
+    throw new TypeError('The grammar is broken')
+  })
+
+  expect(() => extractEntities({source: '[[0]]', parser: jsonParser})).toThrow(TypeError)
 })

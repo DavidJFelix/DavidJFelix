@@ -16,6 +16,7 @@ import {
   findJsonSyntaxError,
   hasJsonObjectStart,
   isRetryable,
+  matchTopLevelJson,
   NO_USAGE,
 } from './openrouter'
 import {selectGuides} from './repository-guides'
@@ -175,17 +176,45 @@ function parseModelAnswer(text: string): ParsedModelAnswer {
     : {findings}
 }
 
-// A model can answer with one finding and no findings list around it. That
-// finding counts as a list of one. An answer that the token limit cut can hold
-// a complete finding before the cut, so a cut answer does not count.
+// A model can answer with a JSON array and no object around it. That array, or
+// the first Markdown fence that holds only that array, is the findings list. A
+// model can also answer with one finding and no list around
+// it. That finding counts as a list of one. Two or more findings with no list do
+// not count, because the text can quote finding-shaped JSON. An answer that the
+// token limit cut can hold a complete finding before the cut, so a cut answer
+// does not count.
 function readFindingItems(text: string): unknown[] | undefined {
   const answer = tryExtractJson(text, modelAnswerSchema)
   if (answer !== undefined) {
     return answer.findings
   }
-  const finding =
-    findJsonSyntaxError(text) === undefined ? tryExtractJson(text, modelFindingSchema) : undefined
+  if (findJsonSyntaxError(text) !== undefined) {
+    return undefined
+  }
+  const list = tryParseJsonArray(text) ?? tryParseJsonArray(firstFenceContent(text))
+  if (list !== undefined) {
+    return list
+  }
+  if (matchTopLevelJson(text, modelFindingSchema).length > 1) {
+    return undefined
+  }
+  const finding = tryExtractJson(text, modelFindingSchema)
   return finding === undefined ? undefined : [finding]
+}
+
+const MARKDOWN_FENCE = /```[a-z]*\n([\s\S]*?)```/i
+
+function firstFenceContent(text: string): string {
+  return MARKDOWN_FENCE.exec(text)?.[1] ?? ''
+}
+
+function tryParseJsonArray(text: string): unknown[] | undefined {
+  try {
+    const value: unknown = JSON.parse(text)
+    return Array.isArray(value) ? value : undefined
+  } catch {
+    return undefined
+  }
 }
 
 function tryExtractJson<Value>(text: string, schema: z.ZodType<Value>): Value | undefined {
@@ -212,6 +241,10 @@ const findingsTextSchema = z.union([
 ])
 
 function describeMissingFindingsList(text: string): string {
+  const looseFindingCount = matchTopLevelJson(text, modelFindingSchema).length
+  if (looseFindingCount > 1) {
+    return `No findings list: ${looseFindingCount} findings without a list around them`
+  }
   if (tryExtractJson(text, findingsTextSchema) !== undefined) {
     return 'No findings list: the findings are a string that is not a JSON array'
   }

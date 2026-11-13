@@ -761,6 +761,59 @@ const reviewWithOneReviewer = (chat: Chat) =>
     scope: 'test',
   })
 
+test('reviewPullRequest takes a JSON array with no object around it as the findings list', async () => {
+  const findings = [LOW_FINDING, {...LOW_FINDING, title: 'Two'}, {...LOW_FINDING, title: 'Three'}]
+
+  const review = await reviewWithOneReviewer(answering(`\n${JSON.stringify(findings)}\n`))
+
+  expect(review.findings.map(({title}) => title)).toEqual(['Bug', 'Two', 'Three'])
+  expect(review.failures).toEqual([])
+})
+
+test('reviewPullRequest takes a JSON array in a Markdown fence after prose as the findings list', async () => {
+  const findings = [LOW_FINDING, {...LOW_FINDING, title: 'Two'}]
+  const answer = `Findings:\n\`\`\`json\n${JSON.stringify(findings)}\n\`\`\`\nDone.`
+
+  const review = await reviewWithOneReviewer(answering(answer))
+
+  expect(review.findings.map(({title}) => title)).toEqual(['Bug', 'Two'])
+  expect(review.failures).toEqual([])
+})
+
+test('reviewPullRequest takes an empty JSON array as an empty findings list', async () => {
+  const review = await reviewWithOneReviewer(answering('[]'))
+
+  expect(review.findings).toEqual([])
+  expect(review.failures).toEqual([])
+})
+
+test('reviewPullRequest counts a malformed item of a JSON array answer', async () => {
+  const answer = JSON.stringify([LOW_FINDING, {title: 'No label'}])
+
+  const review = await reviewWithOneReviewer(answering(answer))
+
+  expect(review.findings.map(({title}) => title)).toEqual(['Bug'])
+  expect(review.failures.map(({error}) => error)).toEqual(['Malformed findings in the answer: 1'])
+})
+
+test.each([
+  {
+    name: 'two findings with no list around them',
+    answer: `${JSON.stringify(LOW_FINDING)}\n${JSON.stringify({...LOW_FINDING, title: 'Two'})}`,
+  },
+  {
+    name: 'a JSON array of two findings inside prose',
+    answer: `Findings: ${JSON.stringify([LOW_FINDING, LOW_FINDING])}`,
+  },
+])('reviewPullRequest reports $name as a missing findings list', async ({answer}) => {
+  const review = await reviewWithOneReviewer(answering(answer))
+
+  expect(review.findings).toEqual([])
+  expect(review.failures.map(({error}) => error.split('. The answer has')[0])).toEqual([
+    'No findings list: 2 findings without a list around them',
+  ])
+})
+
 test.each([
   {name: 'a findings list sent as JSON text', answer: {findings: JSON.stringify([LOW_FINDING])}},
   {

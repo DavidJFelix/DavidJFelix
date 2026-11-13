@@ -1,7 +1,9 @@
 #!/usr/bin/env bun
 // Emits the GitHub Actions matrix of web-apps affected by a change, so the
 // preview and deploy workflows fan out over exactly the apps that changed
-// instead of one hand-written workflow per app.
+// instead of one hand-written workflow per app. When no app in the matrix is
+// affected (a repo-root tooling change), it emits every app in the matrix,
+// because that change can change every build.
 //
 // Affectedness comes from `turbo ls --affected`, which walks the workspace
 // dependency graph: touching packages/theme marks every app that depends on

@@ -289,6 +289,33 @@ test('pairs an edited occurrence by its position among unedited siblings', () =>
   expect(changes).toMatchObject([{type: 'modified', qualifiedName: 'defs.name#2'}])
 })
 
+// 101 old and 100 new leftovers of one name, each of `words` words: the pairing
+// reads the 100 new lists 101 times and the 101 old lists 100 times. At 990
+// words that is 19,998,000 reads; at 1,000 it is 20,200,000, over the limit.
+// Each new entry is most like the old entry after it, so the pairing skips the
+// first old entry only if it runs. Otherwise the zip skips the last.
+test.each([
+  {words: 990, runs: true},
+  {words: 1000, runs: false},
+])('the leftover pairing reads $words words an entry: runs $runs', ({words, runs}) => {
+  const createLeftover = (hash: string, ordinal: number, word: string): CodeEntity => ({
+    ...createOccurrence(hash, ordinal),
+    tokens: repeatToken(word, words),
+  })
+  const olds = Array.from({length: 101}, (_, ordinal) =>
+    createLeftover(`old${ordinal}`, ordinal, ordinal === 0 ? 'other' : `word${ordinal - 1}`),
+  )
+  const news = Array.from({length: 100}, (_, ordinal) =>
+    createLeftover(`new${ordinal}`, ordinal, `word${ordinal}`),
+  )
+
+  const changes = matchEntities({oldEntities: olds, newEntities: news})
+
+  expect(changes.filter((change) => change.type === 'deleted')).toMatchObject([
+    {qualifiedName: runs ? 'defs.name' : 'defs.name#101'},
+  ])
+})
+
 test('summarizes an array insertion as an element edit with its index', () => {
   const before = createEntity({
     name: 'words',

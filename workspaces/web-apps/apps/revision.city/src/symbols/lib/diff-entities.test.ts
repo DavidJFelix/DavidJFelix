@@ -339,6 +339,63 @@ test('reports an array insertion as one edit per array, not a cascade', async ()
   ])
 })
 
+test('blames the edited overload, not the one after the deleted overload', async () => {
+  const oldSource = [
+    'export function parse(input: string): Node',
+    'export function parse(input: number): Node',
+    'export function parse(input: string[], options: ParseOptions): Node[]',
+    'export function parse(input: unknown, options?: ParseOptions) {',
+    '  return read(input, options)',
+    '}',
+    '',
+  ].join('\n')
+  const newSource = [
+    'export function parse(input: string): Node',
+    'export function parse(input: string[], options?: ParseOptions): Node[]',
+    'export function parse(input: unknown, options?: ParseOptions) {',
+    '  return read(input, options)',
+    '}',
+    '',
+  ].join('\n')
+
+  const diff = await diffEntities({path: 'src/parse.ts', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([
+    {type: 'modified', qualifiedName: 'parse#2', oldRange: {startLine: 3}},
+    {type: 'deleted', qualifiedName: 'parse#2', oldRange: {startLine: 2}},
+  ])
+})
+
+test('blames the edited workflow step, not the one after the deleted step', async () => {
+  const oldSource = [
+    'steps:',
+    '  - name: Install',
+    '    run: bun install',
+    '  - name: Format',
+    '    run: bun run format',
+    '  - name: Lint',
+    '    run: bun run lint',
+    '',
+  ].join('\n')
+  const newSource = [
+    'steps:',
+    '  - name: Install',
+    '    run: bun install',
+    '  - name: Lint',
+    '    run: bun run lint --max-warnings 0',
+    '',
+  ].join('\n')
+
+  const diff = await diffEntities({path: '.github/workflows/ci.yml', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([
+    {type: 'modified', qualifiedName: 'steps'},
+    {type: 'modified', qualifiedName: 'steps.run#2', oldRange: {startLine: 7}},
+    {type: 'deleted', qualifiedName: 'steps.name#2', oldRange: {startLine: 4}},
+    {type: 'deleted', qualifiedName: 'steps.run#2', oldRange: {startLine: 5}},
+  ])
+})
+
 test('keeps a number that the author wrote in a heading as part of its name', async () => {
   const oldSource = '# Notes\n\n## Verified on Depot (PR #406)\n\nFirst.\n'
   const newSource = '# Notes\n\n## Verified on Depot (PR #407)\n\nFirst.\n'

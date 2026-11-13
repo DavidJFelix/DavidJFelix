@@ -566,9 +566,9 @@ interface GitHubAuthFailure {
   retryAfter?: string
 }
 
-// The sign-in answers a failed GitHub call with a generic message, so the log
-// is the only place that keeps the cause. Workers Logs keeps each field of the
-// object separate.
+// The sign-in answers most failed GitHub calls with a generic message, so the
+// log is the only place that keeps the cause. Workers Logs keeps each field of
+// the object separate.
 function logGitHubAuthFailure(failure: GitHubAuthFailure): void {
   console.error({event: 'github auth failure', ...failure})
 }

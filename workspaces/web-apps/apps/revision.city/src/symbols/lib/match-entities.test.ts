@@ -111,6 +111,19 @@ test('matches an identical body under a new name as a rename', () => {
   ])
 })
 
+test('does not pair equal shapes whose tokens differ', () => {
+  const before = createEntity({name: 'greet', structuralHash: 'same'})
+  const after = createEntity({
+    name: 'welcome',
+    structuralHash: 'same',
+    tokens: SUBSTANTIAL_TOKENS.map((token) => `${token}x`),
+  })
+
+  const changes = matchEntities({oldEntities: [before], newEntities: [after]})
+
+  expect(changes.map((change) => change.type).toSorted()).toEqual(['added', 'deleted'])
+})
+
 test('matches an entity that kept its name but changed owner as a move', () => {
   const before = createEntity({name: 'render', qualifiedName: 'Widget.render', kind: 'method'})
   const after = createEntity({name: 'render', qualifiedName: 'Gadget.render', kind: 'method'})

@@ -117,6 +117,8 @@ export interface EntityChange {
   readonly newRange?: EntityRange
   // Only present on fuzzy renames -- the token overlap that justified the match.
   readonly similarity?: number
+  // Only present on renames and moves whose body also changed.
+  readonly bodyChanged?: boolean
   // Only present on modified sequence-valued entities whose elements moved:
   // which indexes gained or lost an element.
   readonly detail?: SequenceDetail

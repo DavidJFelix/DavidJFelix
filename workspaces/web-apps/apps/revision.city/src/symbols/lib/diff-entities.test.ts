@@ -171,6 +171,77 @@ test('follows a method renamed inside its class', async () => {
   ])
 })
 
+// The same shape alone is no rename: these pairs share a skeleton but not a body.
+test.each([
+  {
+    pair: 'unrelated functions',
+    path: 'src/store.ts',
+    oldSource: 'export function load() {\n  return fetchUser(id, options)\n}\n',
+    newSource: 'export function save() {\n  return storeItem(key, value)\n}\n',
+  },
+  {
+    pair: 'unrelated CSS rules',
+    path: 'src/card.css',
+    oldSource: '.card {\n  color: red;\n  width: auto;\n}\n',
+    newSource: '.panel {\n  border: none;\n  height: inherit;\n}\n',
+  },
+  {
+    pair: 'unrelated JSON keys',
+    path: 'data.json',
+    oldSource: '{"alpha": [1, 2, 3, 4, 5]}\n',
+    newSource: '{"beta": [6, 7, 8, 9, 10]}\n',
+  },
+  {
+    pair: 'a renamed method with a rewritten body',
+    path: 'src/widget.ts',
+    oldSource: 'export class Widget {\n  render() {\n    return paint(canvas, frame)\n  }\n}\n',
+    newSource: 'export class Widget {\n  draw() {\n    return measure(bounds, scale)\n  }\n}\n',
+  },
+])('reports $pair as added and deleted, not renamed', async ({path, oldSource, newSource}) => {
+  const diff = await diffEntities({path, oldSource, newSource})
+
+  expect(diff.changes.map((change) => change.type)).toEqual(['added', 'deleted'])
+})
+
+test('pairs each renamed function with its own body when the order also changed', async () => {
+  const oldSource =
+    'export function alpha() {\n  return first(one, two)\n}\n' +
+    'export function beta() {\n  return second(three, four)\n}\n'
+  const newSource =
+    'export function gamma() {\n  return second(three, four)\n}\n' +
+    'export function delta() {\n  return first(one, two)\n}\n'
+
+  const diff = await diffEntities({path: 'src/steps.ts', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([
+    {type: 'renamed', qualifiedName: 'gamma', previousQualifiedName: 'beta'},
+    {type: 'renamed', qualifiedName: 'delta', previousQualifiedName: 'alpha'},
+  ])
+})
+
+test('marks a renamed function whose body was also edited', async () => {
+  const oldSource =
+    'export function greet(name, title) {\n  const text = format(title, name)\n  return print(text, options)\n}\n'
+  const newSource =
+    'export function welcome(name, title) {\n  const text = format(title, name)\n  return print(text, settings)\n}\n'
+
+  const diff = await diffEntities({path: 'src/greet.ts', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([
+    {type: 'renamed', qualifiedName: 'welcome', previousQualifiedName: 'greet', bodyChanged: true},
+  ])
+})
+
+test('does not mark a pure rename as a body edit', async () => {
+  const oldSource = 'export function greet(name) {\n  return print(format(name), options)\n}\n'
+  const newSource = 'export function welcome(name) {\n  return print(format(name), options)\n}\n'
+
+  const diff = await diffEntities({path: 'src/greet.ts', oldSource, newSource})
+
+  expect(diff.changes).toMatchObject([{type: 'renamed', previousQualifiedName: 'greet'}])
+  expect(diff.changes[0]).not.toHaveProperty('bodyChanged')
+})
+
 test('reports a Java field value edit as a modified field, not a rename', async () => {
   const oldSource = 'class A {\n  static final int MAX = 1;\n}\n'
   const newSource = 'class A {\n  static final int MAX = 2;\n}\n'

@@ -167,6 +167,27 @@ test('shows what a renamed symbol used to be called', () => {
   harness.unmount()
 })
 
+test('says when a renamed symbol also had its body edited', () => {
+  const harness = renderList({
+    entries: [
+      createEntry([
+        {
+          type: 'renamed',
+          kind: 'function',
+          name: 'welcome',
+          qualifiedName: 'welcome',
+          previousQualifiedName: 'greet',
+          bodyChanged: true,
+          newRange: {startLine: 3, endLine: 8},
+        },
+      ]),
+    ],
+  })
+
+  expect(harness.container.textContent).toContain('was greet · body edited')
+  harness.unmount()
+})
+
 test('explains itself on a diff source it cannot read', () => {
   const harness = renderList({entries: [], supported: false})
 

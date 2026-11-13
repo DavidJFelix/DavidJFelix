@@ -392,6 +392,7 @@ function SymbolRow({change, itemId, onSelectSymbol}: SymbolRowProps) {
           >
             <span style={{color: style.color}}>{style.label}</span> {KIND_LABELS[change.kind]}
             {!isNullish(change.previousQualifiedName) && ` · was ${change.previousQualifiedName}`}
+            {change.bodyChanged === true && ' · body edited'}
             {!isNullish(change.detail) &&
               ` · ${change.detail.lengthBefore} → ${change.detail.lengthAfter} elements`}
           </span>

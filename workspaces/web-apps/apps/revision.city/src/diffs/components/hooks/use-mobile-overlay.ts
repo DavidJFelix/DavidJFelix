@@ -33,7 +33,10 @@ export function useMobileOverlay({open, onClose, panelRef, scrollRef}: UseMobile
       codeViewScroll.style.overflow = 'hidden'
     }
 
-    panelRef.current?.focus()
+    // The panel is still below the screen when it gets focus. Without
+    // preventScroll, the browser scrolls the grid to show it, and the sheet
+    // jumps.
+    panelRef.current?.focus({preventScroll: true})
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose()
     }

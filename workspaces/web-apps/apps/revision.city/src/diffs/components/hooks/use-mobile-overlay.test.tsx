@@ -63,6 +63,17 @@ test('opening moves focus into the panel', () => {
   expect(document.activeElement).toBe(view.getByTestId('panel'))
 })
 
+test('opening focuses the panel without a scroll, so the slide does not jump', () => {
+  stubPhoneWidth(true)
+  const onClose = vi.fn<() => void>()
+  const view = renderOverlay({open: false, onClose})
+  const focus = vi.spyOn(view.getByTestId('panel'), 'focus')
+
+  view.rerender(<Overlay open onClose={onClose} />)
+
+  expect(focus).toHaveBeenCalledWith({preventScroll: true})
+})
+
 test('Escape calls onClose, and closing puts focus back on the opener', () => {
   stubPhoneWidth(true)
   const onClose = vi.fn<() => void>()

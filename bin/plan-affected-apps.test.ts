@@ -112,12 +112,25 @@ test('plans only the affected app when one is affected', () => {
   expect(apps.map((app) => app.dir)).toEqual(['djf.io'])
 })
 
-test('plans every matrix app when only an opted-out app is affected', () => {
-  // f311x previews and deploys through its own workflow, so the shared matrix
-  // is empty and the plan takes every app.
+test('plans nothing when only an app outside the matrix is affected', () => {
+  // f311x previews and deploys through its own workflow. A change to it is not
+  // a tooling change, so it must not preview or deploy every other app.
   const targets = [target({dir: 'f311x', preview: 'none', deploy: 'none'}), target({dir: 'ravrun'})]
 
-  const {apps, all} = planAffectedOrAll({affectedPaths: ['apps/f311x'], kind: 'preview', targets})
+  for (const kind of ['preview', 'deploy'] as const) {
+    expect(planAffectedOrAll({affectedPaths: ['apps/f311x'], kind, targets})).toEqual({
+      apps: [],
+      all: false,
+    })
+  }
+})
+
+test('plans every matrix app when only a shared package is affected', () => {
+  // A package that no app depends on reaches no app in turbo's graph, the same
+  // as a repo-root tooling change.
+  const targets = [target({dir: 'ravrun'})]
+
+  const {apps, all} = planAffectedOrAll({affectedPaths: ['packages/theme'], kind: 'deploy', targets})
   expect(all).toBe(true)
   expect(apps.map((app) => app.dir)).toEqual(['ravrun'])
 })

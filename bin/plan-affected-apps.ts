@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
 // Emits the GitHub Actions matrix of web-apps affected by a change, so the
 // preview and deploy workflows fan out over exactly the apps that changed
-// instead of one hand-written workflow per app. When no app in the matrix is
-// affected (a repo-root tooling change), it emits every app in the matrix,
-// because that change can change every build.
+// instead of one hand-written workflow per app. When no app is affected (a
+// repo-root tooling change), it emits every app in the matrix, because that
+// change can change every build.
 //
 // Affectedness comes from `turbo ls --affected`, which walks the workspace
 // dependency graph: touching packages/theme marks every app that depends on
@@ -236,14 +236,16 @@ export const planAffected = ({
 // pins), so a change to it affects no app. That change can still change every
 // build, so the plan then takes every app in the matrix for that kind: the
 // preview tests the change on every app before it merges, and the deploy ships
-// every app built with it.
+// every app built with it. A change to an app outside the matrix (f311x) is not
+// a tooling change, so it plans nothing here.
 export const planAffectedOrAll = ({
   affectedPaths,
   kind,
   targets = WEB_APP_TARGETS,
 }: PlanAffectedParams): {readonly apps: WebAppMatrixEntry[]; readonly all: boolean} => {
-  const apps = planAffected({affectedPaths, kind, targets})
-  if (apps.length > 0) return {apps, all: false}
+  if (affectedPaths.some((path) => path.startsWith('apps/'))) {
+    return {apps: planAffected({affectedPaths, kind, targets}), all: false}
+  }
   const everyApp = targets.map((target) => `apps/${target.dir}`)
   return {apps: planAffected({affectedPaths: everyApp, kind, targets}), all: true}
 }

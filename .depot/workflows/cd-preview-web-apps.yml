@@ -4,7 +4,8 @@ name: CD Preview web-apps
 # everything downstream of a shared package like packages/theme -- and the
 # matrix deploys exactly those. When a change affects no app (repo-root tooling
 # such as bin/, the actions and the tool pins, which turbo cannot see), the plan
-# previews every app, because that change can change every build.
+# previews every app in the matrix, because that change can change every
+# build.
 # Adding an app means adding a registry entry in bin/plan-affected-apps.ts, not
 # another workflow file.
 #

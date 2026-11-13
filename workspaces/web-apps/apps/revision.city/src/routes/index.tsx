@@ -66,6 +66,7 @@ const footerTextClass = css({
 })
 
 function Home() {
+  useRenderErrorProbe()
   return (
     <div className={pageClass}>
       <main className={mainClass}>
@@ -197,4 +198,15 @@ function OpenDiffsCard() {
       <IconArrowRightShort className={css({flexShrink: '0', opacity: '0.5'})} />
     </Link>
   )
+}
+
+// Temporary probe, never to merge: throws a render error in the browser when
+// the URL has ?render-error-probe, to check the Sentry report end to end.
+function useRenderErrorProbe(): void {
+  if (
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).has('render-error-probe')
+  ) {
+    throw new Error('render error probe')
+  }
 }

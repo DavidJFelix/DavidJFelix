@@ -387,6 +387,39 @@ test('runToolLoop takes the text answer when submit_answer has empty arguments',
   expect(result).toMatchObject({text: '{"findings": []}'})
 })
 
+test('runToolLoop takes the text answer when submit_answer has an empty object', async () => {
+  const chat = vi.fn<Chat>(async () => ({
+    ...answer('{"findings": []}'),
+    toolCalls: [submitAnswer('1', ' { } ')],
+  }))
+
+  const result = await runToolLoop({...params, chat, tools: fakeTools()})
+
+  expect(result).toMatchObject({text: '{"findings": []}'})
+})
+
+test('runToolLoop keeps an empty submit_answer object when the text has no JSON answer', async () => {
+  const chat = vi.fn<Chat>(async () => ({
+    ...answer('I found no problems.'),
+    toolCalls: [submitAnswer('1', '{}')],
+  }))
+
+  const result = await runToolLoop({...params, chat, tools: fakeTools()})
+
+  expect(result).toMatchObject({text: '{}'})
+})
+
+test('runToolLoop takes the submit_answer arguments over a JSON answer in the text', async () => {
+  const chat = vi.fn<Chat>(async () => ({
+    ...answer('{"findings": []}'),
+    toolCalls: [submitAnswer('1', '{"findings": [{"title": "A"}]}')],
+  }))
+
+  const result = await runToolLoop({...params, chat, tools: fakeTools()})
+
+  expect(result).toMatchObject({text: '{"findings": [{"title": "A"}]}'})
+})
+
 test('runToolLoop asks again without reasoning when the token limit cuts a submit_answer call', async () => {
   const chat = vi
     .fn<Chat>()

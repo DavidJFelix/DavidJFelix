@@ -1,5 +1,3 @@
-// @vitest-environment node
-
 import type {WorkflowStepConfig} from 'cloudflare:workers'
 import {expect, test} from 'vitest'
 import type {StepAttempt} from './run-review'

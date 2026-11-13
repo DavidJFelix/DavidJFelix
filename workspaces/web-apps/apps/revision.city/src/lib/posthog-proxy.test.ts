@@ -1,5 +1,3 @@
-// @vitest-environment node
-
 import {expect, test, vi} from 'vitest'
 import {type FetchRequest, INGEST_PREFIX, postHogUpstream, proxyToPostHog} from './posthog-proxy'
 

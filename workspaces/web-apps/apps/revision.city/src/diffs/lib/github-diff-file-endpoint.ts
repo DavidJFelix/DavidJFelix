@@ -1,6 +1,6 @@
 import type {ChangeTypes} from '@pierre/diffs'
 
-import {resolveGitHubAuth, withSetCookieHeaders} from './github-auth'
+import {type GitHubAuthOptions, resolveGitHubAuth, withSetCookieHeaders} from './github-auth'
 import {loadGitHubDiffFiles} from './github-diff-file-server'
 import {getLoaderErrorStatus} from './loader-error'
 import {isNullish} from './nullish'
@@ -14,11 +14,16 @@ const CHANGE_TYPES = new Set<ChangeTypes>([
   'rename-pure',
 ])
 
+type GitHubDiffFileRequestOptions = Pick<GitHubAuthOptions, 'credentials' | 'fetch'>
+
 // Expands a diff entry into full old/new file contents via the GitHub API so
 // the viewer can show unchanged context lines. Requires a signed-in GitHub
 // session; the token comes from the HttpOnly session cookie, never from the
 // client request itself.
-export async function handleGitHubDiffFileRequest(request: Request): Promise<Response> {
+export async function handleGitHubDiffFileRequest(
+  request: Request,
+  options: GitHubDiffFileRequestOptions = {},
+): Promise<Response> {
   const params = new URL(request.url).searchParams
   const path = params.get('path')
   const name = params.get('name')
@@ -32,7 +37,7 @@ export async function handleGitHubDiffFileRequest(request: Request): Promise<Res
     )
   }
 
-  const auth = await resolveGitHubAuth(request)
+  const auth = await resolveGitHubAuth(request, options)
   const token = auth.session?.accessToken
   if (isNullish(token)) {
     return withSetCookieHeaders(
@@ -47,7 +52,10 @@ export async function handleGitHubDiffFileRequest(request: Request): Promise<Res
   try {
     return withSetCookieHeaders(
       createJSONResponse(
-        await loadGitHubDiffFiles({name, path, prevName, type}, {token, tokenSource: 'request'}),
+        await loadGitHubDiffFiles(
+          {name, path, prevName, type},
+          {fetch: options.fetch, token, tokenSource: 'request'},
+        ),
       ),
       auth.setCookieHeaders,
     )

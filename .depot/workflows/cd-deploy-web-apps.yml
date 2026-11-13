@@ -2,8 +2,11 @@ name: CD Deploy web-apps
 # Production deploys, fanned out over the apps a push to main actually
 # affects. The plan job asks turbo which workspace packages changed -- a
 # packages/theme edit marks every app that depends on it -- and the matrix
-# deploys exactly those. Adding an app means adding a registry entry in
-# bin/plan-affected-apps.ts, not another workflow file.
+# deploys exactly those. When a push affects no app (repo-root tooling such as
+# bin/, the actions and the tool pins, which turbo cannot see), the plan deploys
+# every app in the matrix, because that change can change every build. Adding
+# an app means adding a registry entry in bin/plan-affected-apps.ts, not
+# another workflow file.
 #
 # f311x deploys through alchemy rather than wrangler and keeps its own
 # workflow.

@@ -5,6 +5,7 @@ import {
   isUsableScmBase,
   parseAffectedPaths,
   planAffected,
+  planAffectedOrAll,
 } from './plan-affected-apps'
 
 const target = (overrides: Partial<WebAppTarget> = {}): WebAppTarget => ({
@@ -83,6 +84,68 @@ test('ignores affected packages that are not deployable apps', () => {
 
 test('returns nothing when no app is affected', () => {
   expect(planAffected({affectedPaths: [], kind: 'deploy', targets: [target()]})).toEqual([])
+})
+
+test('plans every matrix app when no app is affected', () => {
+  // A change to repo-root tooling affects no app in turbo's graph, but it can
+  // change every build, so every app previews and deploys with it.
+  const targets = [
+    target({dir: 'djf.io'}),
+    target({dir: 'onvibes.org', preview: 'none'}),
+    target({dir: 'ravrun'}),
+  ]
+
+  const preview = planAffectedOrAll({affectedPaths: [], kind: 'preview', targets})
+  expect(preview.all).toBe(true)
+  expect(preview.apps.map((app) => app.dir)).toEqual(['djf.io', 'ravrun'])
+
+  const deploy = planAffectedOrAll({affectedPaths: [], kind: 'deploy', targets})
+  expect(deploy.all).toBe(true)
+  expect(deploy.apps.map((app) => app.dir)).toEqual(['djf.io', 'onvibes.org', 'ravrun'])
+})
+
+test('plans only the affected app when one is affected', () => {
+  const targets = [target({dir: 'djf.io'}), target({dir: 'ravrun'})]
+
+  const {apps, all} = planAffectedOrAll({affectedPaths: ['apps/djf.io'], kind: 'preview', targets})
+  expect(all).toBe(false)
+  expect(apps.map((app) => app.dir)).toEqual(['djf.io'])
+})
+
+test('plans nothing when only an app outside the matrix is affected', () => {
+  // f311x previews and deploys through its own workflow. A change to it is not
+  // a tooling change, so it must not preview or deploy every other app.
+  const targets = [target({dir: 'f311x', preview: 'none', deploy: 'none'}), target({dir: 'ravrun'})]
+
+  for (const kind of ['preview', 'deploy'] as const) {
+    expect(planAffectedOrAll({affectedPaths: ['apps/f311x'], kind, targets})).toEqual({
+      apps: [],
+      all: false,
+    })
+  }
+})
+
+test('plans every matrix app when only a shared package is affected', () => {
+  // A package that no app depends on reaches no app in turbo's graph, the same
+  // as a repo-root tooling change.
+  const targets = [target({dir: 'ravrun'})]
+
+  const {apps, all} = planAffectedOrAll({affectedPaths: ['packages/theme'], kind: 'deploy', targets})
+  expect(all).toBe(true)
+  expect(apps.map((app) => app.dir)).toEqual(['ravrun'])
+})
+
+test('every app keeps its dev worker shape when every app is planned', () => {
+  // The registry's dev-environment apps still preview as their dev worker
+  // only, and still deploy as both workers.
+  const preview = planAffectedOrAll({affectedPaths: [], kind: 'preview'})
+  expect(preview.apps.map((app) => app.worker)).toContain('revision-city-dev')
+  expect(preview.apps.map((app) => app.worker)).not.toContain('revision-city')
+
+  const deploy = planAffectedOrAll({affectedPaths: [], kind: 'deploy'})
+  expect(deploy.apps.map((app) => app.worker)).toEqual(
+    expect.arrayContaining(['revision-city', 'revision-city-dev']),
+  )
 })
 
 test('parses turbo ls output past its version banner', () => {

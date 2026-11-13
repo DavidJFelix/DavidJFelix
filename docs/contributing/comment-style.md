@@ -4,7 +4,7 @@ How comments and documentation are written -- when a comment earns its place, ho
 which code gets formal API docs. Code shape is [code-style.md](code-style.md); spelling is
 [spelling.md](spelling.md); where the domain vocabulary lives is
 [docs/agents/domain.md](../agents/domain.md). Review is automated: the `comment-review` skill
-(`.agents/skills/comment-review/`) runs under Warden on every PR.
+(`.agents/skills/comment-review/`) runs under Warden on each PR that gets the `Warden` label.
 
 ## The one test: would the code say it better?
 

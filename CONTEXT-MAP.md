@@ -8,7 +8,7 @@ design decisions) and `docs/adr/` (architecture decisions). System-wide decision
 
 | Context                       | `CONTEXT.md`                                                                             | ADRs                                                                                   |
 | ----------------------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| Repository organization       | [CONTEXT.md](CONTEXT.md)                                                                 | [docs/adr/](docs/adr/)                                                                 |
+| Repository organization       | [CONTEXT.md](CONTEXT.md)                                                                 | none yet                                                                               |
 | djf.io (personal site + blog) | [workspaces/web-apps/apps/djf.io/CONTEXT.md](workspaces/web-apps/apps/djf.io/CONTEXT.md) | [workspaces/web-apps/apps/djf.io/docs/adr/](workspaces/web-apps/apps/djf.io/docs/adr/) |
 
 Add a row when a new app grows context worth recording. Apps without a `CONTEXT.md` simply aren't

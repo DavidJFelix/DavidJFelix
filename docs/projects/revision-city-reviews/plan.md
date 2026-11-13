@@ -44,6 +44,8 @@ replaces Warden in this repository. This project started as part of
   request's head commit, for up to 4 rounds in each chunk review. The tools read through the GitHub
   API, so the Worker needs no container. `read_definition` uses the Lezer entity extractor of the
   Symbols tab, not a code index.
+- **Answer tool.** A reviewer with tools answers through a `submit_answer` call. On the last round,
+  `submit_answer` is the only tool, and the model must call it. A text answer is still accepted.
 - **Agent guides.** The system prompt of each chunk review has the root `AGENTS.md` and the
   `AGENTS.md` nearest to the chunk's file. Each guide stops at 12,000 characters, and all of them
   together at 50,000, so the step result stays under 1 MiB. The guides are read at the base commit,
@@ -91,6 +93,10 @@ replaces Warden in this repository. This project started as part of
   `requested_action` action, and the check run passes, with `Dismissed:` before its title and the
   external id `dismissed`. Resolved threads no longer change a dismissed check run. The webhook must
   subscribe to "Check run" for the button.
+- **Summary comment.** Each pull request has one `## Revision City` comment, with one section for
+  each run. A run edits the comment in place. Before the edit, the run takes a lock in D1
+  (`summary_comment_locks`, migration `drizzle/0001_summary-comment-locks.sql`) with a lease of 60
+  seconds, so two runs cannot overwrite each other.
 - **Limits.** For each pull request, at most 150 chunks and 700,000 bytes of paths and patches get a
   review. A file whose diff is longer than 1,500 lines, or has a line longer than 5,000 characters,
   gets no review, and a chunk stops at 40,000 characters of diff text. A file with such a long line
@@ -107,7 +113,7 @@ replaces Warden in this repository. This project started as part of
    needs the one-time setup in #790: the D1 database and its migrations, the app's permissions and
    webhook, and the secrets.
 3. **Retire Warden.** After a few PRs where both reviewers agree, delete `warden.toml`,
-   `.depot/workflows/ci-warden.yml`, and the summary script, and update CONTRIBUTING and the
+   `.depot/workflows/ci-warden.yml`, and Warden's summary script, and update CONTRIBUTING and the
    [review consolidation](../review-consolidation/plan.md) plan.
 
 Later: a manual review request that can go over the 1,500-line limit, then billing per installation,

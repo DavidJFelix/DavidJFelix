@@ -39,6 +39,8 @@ export interface MatchEntitiesParams {
 //   2. same structural hash and same body -- a rename or move, proven by an
 //      identical body
 //   3. token overlap over 0.8 -- a probable rename, body edited in place
+// When phase 2 or 3 pairs two entities whose paths differ, the members inside
+// them pair by identity under the new path, see `matchMembers`.
 // Whatever is unclaimed at the end is genuinely added or deleted -- minus rows
 // that sit inside an element the sequence diff already reported, which would be
 // the same fact restated.
@@ -47,11 +49,25 @@ export function matchEntities({oldEntities, newEntities}: MatchEntitiesParams): 
   const unmatchedOld = new Set(oldEntities)
   const unmatchedNew = new Set(newEntities)
   const covered: CoveredSpans = {inserted: [], deleted: []}
+  const phase: RenamePhase = {
+    unmatchedOld,
+    unmatchedNew,
+    changes,
+    covered,
+    renames: [],
+    released: new Set(),
+  }
 
   matchByIdentity({unmatchedOld, unmatchedNew, changes, covered})
   suppressCoveredRows({unmatchedOld, unmatchedNew, covered})
-  matchByStructure({unmatchedOld, unmatchedNew, changes})
-  matchByTokens({unmatchedOld, unmatchedNew, changes})
+  matchByStructure(phase)
+  matchByTokens(phase)
+
+  for (const pair of phase.renames) {
+    if (!phase.released.has(pair)) {
+      changes.push(pair.change)
+    }
+  }
 
   for (const entity of unmatchedNew) {
     changes.push({
@@ -92,6 +108,9 @@ interface IdentityPhaseParams {
   unmatchedNew: Set<CodeEntity>
   changes: EntityChange[]
   covered: CoveredSpans
+  // The path that groups an old entity. A member of a renamed container
+  // groups under the path that it has after the rename.
+  oldPath?: (entity: CodeEntity) => string
 }
 
 // The `#n` ordinal that disambiguates name collisions cannot be identity: one
@@ -104,13 +123,14 @@ function matchByIdentity({
   unmatchedNew,
   changes,
   covered,
+  oldPath = (entity) => entity.basePath,
 }: IdentityPhaseParams): void {
   const groups = new Map<string, {old: CodeEntity[]; new: CodeEntity[]}>()
   for (const entity of unmatchedOld) {
-    getGroup(groups, baseKey(entity)).old.push(entity)
+    getGroup(groups, baseKey({kind: entity.kind, path: oldPath(entity)})).old.push(entity)
   }
   for (const entity of unmatchedNew) {
-    getGroup(groups, baseKey(entity)).new.push(entity)
+    getGroup(groups, baseKey({kind: entity.kind, path: entity.basePath})).new.push(entity)
   }
 
   for (const group of groups.values()) {
@@ -137,10 +157,14 @@ function matchByIdentity({
     // sequence owner runs before the entities inside its elements and `covered`
     // is populated by the time they pair.
     const restOld = group.old.filter(
-      (entity, index) => !pairedOld.has(index) && !isCovered(entity, covered.deleted),
+      (entity, index) =>
+        !pairedOld.has(index) &&
+        !isCovered({span: entity.span, path: oldPath(entity), spans: covered.deleted}),
     )
     const restNew = group.new.filter(
-      (entity, index) => !pairedNew.has(index) && !isCovered(entity, covered.inserted),
+      (entity, index) =>
+        !pairedNew.has(index) &&
+        !isCovered({span: entity.span, path: entity.basePath, spans: covered.inserted}),
     )
     for (const [previous, candidate] of pairLeftovers({restOld, restNew})) {
       unmatchedOld.delete(previous)
@@ -273,36 +297,150 @@ interface SuppressPhaseParams {
 // one currently being visited.
 function suppressCoveredRows({unmatchedOld, unmatchedNew, covered}: SuppressPhaseParams): void {
   for (const entity of unmatchedNew) {
-    if (isCovered(entity, covered.inserted)) {
+    if (isCovered({span: entity.span, path: entity.basePath, spans: covered.inserted})) {
       unmatchedNew.delete(entity)
     }
   }
   for (const entity of unmatchedOld) {
-    if (isCovered(entity, covered.deleted)) {
+    if (isCovered({span: entity.span, path: entity.basePath, spans: covered.deleted})) {
       unmatchedOld.delete(entity)
     }
   }
 }
 
-function isCovered(entity: CodeEntity, spans: readonly OwnedSpan[]): boolean {
+interface IsCoveredParams {
+  span: EntitySpan
+  path: string
+  spans: readonly OwnedSpan[]
+}
+
+function isCovered({span, path, spans}: IsCoveredParams): boolean {
   return spans.some(
-    ({ownerBase, span}) =>
-      entity.span.from >= span.from &&
-      entity.span.to <= span.to &&
-      entity.basePath.startsWith(`${ownerBase}.`),
+    (owned) =>
+      span.from >= owned.span.from &&
+      span.to <= owned.span.to &&
+      path.startsWith(`${owned.ownerBase}.`),
   )
 }
 
-interface MatchPhaseParams {
+// A pair that phase 2 or 3 made. Its row is added at the end, because a
+// renamed container that pairs later can release the pair of a member.
+interface RenamePair {
+  previous: CodeEntity
+  candidate: CodeEntity
+  change: EntityChange
+}
+
+interface RenamePhase {
   unmatchedOld: Set<CodeEntity>
   unmatchedNew: Set<CodeEntity>
   changes: EntityChange[]
+  covered: CoveredSpans
+  renames: RenamePair[]
+  released: Set<RenamePair>
+}
+
+interface RecordRenameParams {
+  phase: RenamePhase
+  pair: RenamePair
+}
+
+function recordRename({phase, pair}: RecordRenameParams): void {
+  phase.unmatchedOld.delete(pair.previous)
+  phase.unmatchedNew.delete(pair.candidate)
+  phase.renames.push(pair)
+  if (pair.previous.basePath !== pair.candidate.basePath) {
+    matchMembers({phase, container: pair})
+  }
+}
+
+interface MatchMembersParams {
+  phase: RenamePhase
+  container: RenamePair
+}
+
+// The members of a renamed container moved with it. Without this step, each
+// member that did not change reports a `moved` row. The members pair by
+// identity, with the old path prefix changed to the new one, so an unchanged
+// member reports nothing and an edited member reports `modified`. A member
+// pair made before its container paired is released and pairs again here. A
+// member is inside the span of its container and under its
+// path, so a Rust `struct Foo` and its `impl Foo` keep their own members.
+function matchMembers({phase, container}: MatchMembersParams): void {
+  const {previous, candidate} = container
+  const newPathOf = (entity: CodeEntity): string =>
+    `${candidate.basePath}${entity.basePath.slice(previous.basePath.length)}`
+
+  for (const pair of phase.renames) {
+    if (
+      !phase.released.has(pair) &&
+      isMember({entity: pair.previous, container: previous}) &&
+      isMember({entity: pair.candidate, container: candidate}) &&
+      newPathOf(pair.previous) === pair.candidate.basePath
+    ) {
+      phase.released.add(pair)
+      phase.unmatchedOld.add(pair.previous)
+      phase.unmatchedNew.add(pair.candidate)
+    }
+  }
+
+  const oldMembers = [...phase.unmatchedOld].filter((entity) =>
+    isMember({entity, container: previous}),
+  )
+  const newMembers = [...phase.unmatchedNew].filter((entity) =>
+    isMember({entity, container: candidate}),
+  )
+  const unmatchedOld = new Set(oldMembers)
+  const unmatchedNew = new Set(newMembers)
+  matchByIdentity({
+    unmatchedOld,
+    unmatchedNew,
+    changes: phase.changes,
+    covered: phase.covered,
+    oldPath: newPathOf,
+  })
+  // A paired member leaves the sets. So does a member inside an element that
+  // the sequence diff reported, as in `suppressCoveredRows`.
+  for (const entity of oldMembers) {
+    const covered = isCovered({
+      span: entity.span,
+      path: newPathOf(entity),
+      spans: phase.covered.deleted,
+    })
+    if (!unmatchedOld.has(entity) || covered) {
+      phase.unmatchedOld.delete(entity)
+    }
+  }
+  for (const entity of newMembers) {
+    const covered = isCovered({
+      span: entity.span,
+      path: entity.basePath,
+      spans: phase.covered.inserted,
+    })
+    if (!unmatchedNew.has(entity) || covered) {
+      phase.unmatchedNew.delete(entity)
+    }
+  }
+}
+
+interface IsMemberParams {
+  entity: CodeEntity
+  container: CodeEntity
+}
+
+function isMember({entity, container}: IsMemberParams): boolean {
+  return (
+    entity.span.from >= container.span.from &&
+    entity.span.to <= container.span.to &&
+    entity.basePath.startsWith(`${container.basePath}.`)
+  )
 }
 
 // An identical body under a different name is the strongest rename signal there
 // is, so this phase runs before any similarity scoring. The same shape alone is
 // not enough: two unrelated rules or keys often share one.
-function matchByStructure({unmatchedOld, unmatchedNew, changes}: MatchPhaseParams): void {
+function matchByStructure(phase: RenamePhase): void {
+  const {unmatchedOld, unmatchedNew} = phase
   const byHash = new Map<string, CodeEntity[]>()
   for (const entity of unmatchedOld) {
     if (entity.tokens.length < MIN_STRUCTURAL_TOKENS) {
@@ -316,8 +454,9 @@ function matchByStructure({unmatchedOld, unmatchedNew, changes}: MatchPhaseParam
     }
   }
 
-  // Safe to mutate while iterating: the only element removed from this set is
-  // the one currently being visited.
+  // Safe to change while iterating: a `Set` skips an entry that is removed
+  // before the loop gets to it. So the members that a renamed container
+  // claims are not visited.
   for (const candidate of unmatchedNew) {
     if (candidate.tokens.length < MIN_STRUCTURAL_TOKENS) {
       continue
@@ -332,21 +471,19 @@ function matchByStructure({unmatchedOld, unmatchedNew, changes}: MatchPhaseParam
     if (previous === undefined) {
       continue
     }
-    unmatchedOld.delete(previous)
-    unmatchedNew.delete(candidate)
-    changes.push(
-      createChange({
-        type: previous.name === candidate.name ? 'moved' : 'renamed',
-        previous,
-        candidate,
-      }),
-    )
+    const change = createChange({
+      type: previous.name === candidate.name ? 'moved' : 'renamed',
+      previous,
+      candidate,
+    })
+    recordRename({phase, pair: {previous, candidate, change}})
   }
 }
 
 // Last resort: an entity that was renamed *and* edited. Each new entity takes
 // its single best-scoring partner, so one old entity cannot be claimed twice.
-function matchByTokens({unmatchedOld, unmatchedNew, changes}: MatchPhaseParams): void {
+function matchByTokens(phase: RenamePhase): void {
+  const {unmatchedOld, unmatchedNew} = phase
   if (
     unmatchedOld.size > MAX_FUZZY_CANDIDATES ||
     unmatchedNew.size > MAX_FUZZY_CANDIDATES ||
@@ -355,7 +492,7 @@ function matchByTokens({unmatchedOld, unmatchedNew, changes}: MatchPhaseParams):
     return
   }
 
-  // Same as above: only the visited element is removed mid-iteration.
+  // Same as above: the members that a renamed container claims are not visited.
   for (const candidate of unmatchedNew) {
     let best: CodeEntity | undefined
     let bestScore = RENAME_SIMILARITY_THRESHOLD
@@ -374,17 +511,14 @@ function matchByTokens({unmatchedOld, unmatchedNew, changes}: MatchPhaseParams):
     if (best === undefined) {
       continue
     }
-    unmatchedOld.delete(best)
-    unmatchedNew.delete(candidate)
-    changes.push(
-      createChange({
-        type: best.name === candidate.name ? 'moved' : 'renamed',
-        previous: best,
-        candidate,
-        similarity: Number(bestScore.toFixed(3)),
-        bodyChanged: bodyHash(best) !== bodyHash(candidate),
-      }),
-    )
+    const change = createChange({
+      type: best.name === candidate.name ? 'moved' : 'renamed',
+      previous: best,
+      candidate,
+      similarity: Number(bestScore.toFixed(3)),
+      bodyChanged: bodyHash(best) !== bodyHash(candidate),
+    })
+    recordRename({phase, pair: {previous: best, candidate, change}})
   }
 }
 
@@ -506,8 +640,13 @@ function compact(text: string): string {
   return text.replaceAll(/\s+/gu, '')
 }
 
+interface BaseKeyParams {
+  kind: EntityKind
+  path: string
+}
+
 // Kind is part of identity: replacing a `function` with a `class` of the same
 // name is a rewrite, not a modification.
-function baseKey(entity: CodeEntity): string {
-  return `${entity.kind}\0${entity.basePath}`
+function baseKey({kind, path}: BaseKeyParams): string {
+  return `${kind}\0${path}`
 }

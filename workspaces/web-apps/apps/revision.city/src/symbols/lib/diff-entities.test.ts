@@ -171,6 +171,83 @@ test('follows a method renamed inside its class', async () => {
   ])
 })
 
+const METHOD_NAMES = ['alpha', 'beta', 'gamma', 'delta', 'epsilon']
+
+interface ClassSourceParams {
+  name: string
+  editedMethod?: string
+}
+
+function classSource({name, editedMethod}: ClassSourceParams): string {
+  const methods = METHOD_NAMES.map((method, index) => {
+    const edit = method === editedMethod ? ' + 1' : ''
+    return `  ${method}(value) {\n    return compute(value, ${index}, options)${edit}\n  }\n`
+  })
+  return `export class ${name} {\n${methods.join('')}}\n`
+}
+
+test('reports a renamed class once, not once more per untouched method', async () => {
+  const diff = await diffEntities({
+    path: 'src/foo.ts',
+    oldSource: classSource({name: 'Foo'}),
+    newSource: classSource({name: 'Bar'}),
+  })
+
+  expect(diff.changes).toMatchObject([
+    {type: 'renamed', qualifiedName: 'Bar', previousQualifiedName: 'Foo'},
+  ])
+  expect(diff.changes).toHaveLength(1)
+})
+
+test('reports a renamed class and its edited method, not its untouched methods', async () => {
+  const diff = await diffEntities({
+    path: 'src/foo.ts',
+    oldSource: classSource({name: 'Foo'}),
+    newSource: classSource({name: 'Bar', editedMethod: 'gamma'}),
+  })
+
+  expect(diff.changes).toMatchObject([
+    {type: 'modified', qualifiedName: 'Bar.gamma', previousQualifiedName: 'Foo.gamma'},
+    {type: 'renamed', qualifiedName: 'Bar', previousQualifiedName: 'Foo'},
+  ])
+  expect(diff.changes).toHaveLength(2)
+})
+
+test('reports a renamed JSON key once, not once more per key inside it', async () => {
+  const versions =
+    '{"a": "1.0.0", "b": "2.0.0", "c": "3.0.0", "d": "4.0.0", "e": "5.0.0", "f": "6.0.0"}'
+  const diff = await diffEntities({
+    path: 'package.json',
+    oldSource: `{"name": "app", "devDependencies": ${versions}}\n`,
+    newSource: `{"name": "app", "dependencies": ${versions}}\n`,
+  })
+
+  expect(diff.changes).toMatchObject([
+    {type: 'renamed', qualifiedName: 'dependencies', previousQualifiedName: 'devDependencies'},
+  ])
+  expect(diff.changes).toHaveLength(1)
+})
+
+function rustStructSource(name: string): string {
+  return (
+    `struct ${name} {\n    a: u32,\n}\n` +
+    `impl ${name} {\n    fn get(&self) -> u32 {\n        self.a + compute(1, 2, 3)\n    }\n}\n`
+  )
+}
+
+test('keeps the members of a renamed Rust struct and its impl apart', async () => {
+  const diff = await diffEntities({
+    path: 'src/foo.rs',
+    oldSource: rustStructSource('Foo'),
+    newSource: rustStructSource('Bar'),
+  })
+
+  expect(diff.changes.map((change) => [change.type, change.qualifiedName])).toEqual([
+    ['renamed', 'Bar'],
+    ['renamed', 'Bar'],
+  ])
+})
+
 // The same shape alone is no rename: these pairs share a skeleton but not a body.
 test.each([
   {

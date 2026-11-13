@@ -11,7 +11,15 @@
   const key = import.meta.env.PUBLIC_POSTHOG_KEY
   if (key) {
     void (async () => {
-      const {default: posthog} = await import('posthog-js')
+      // The SDK chunk can fail to load: a tab left open across a deploy asks for
+      // a hashed file that is gone, or the visitor leaves the page mid-fetch.
+      // Analytics is best effort, so skip it without an unhandled rejection
+      // that Sentry reports as an error.
+      const posthog = await import('posthog-js').then(
+        (module) => module.default,
+        () => undefined,
+      )
+      if (!posthog) return
       // Same-origin reverse proxy: events and the lazily-loaded SDK assets
       // travel through /diag on this domain (see src/worker.ts), so content
       // blockers that drop *.posthog.com don't drop our analytics. api_host is

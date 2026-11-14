@@ -5,6 +5,10 @@
 description = "Type-check with tsc"
 run = "bun run typecheck"
 
+[tasks.types]
+description = "Regenerate worker-configuration.d.ts; run after a wrangler bump or a wrangler.toml change"
+run = "bun run types"
+
 [tasks.lint]
 description = "Lint with Oxlint + Biome"
 run = "bun run lint"

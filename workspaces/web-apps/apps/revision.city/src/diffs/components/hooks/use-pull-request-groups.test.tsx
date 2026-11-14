@@ -3,7 +3,11 @@ import {HttpResponse, http} from 'msw'
 import {setupServer} from 'msw/node'
 import {expect, type Mock, onTestFinished, test, vi} from 'vitest'
 
-import {type PullRequestGroupsState, usePullRequestGroups} from './use-pull-request-groups'
+import {
+  FOCUS_RELOAD_GAP_MS,
+  type PullRequestGroupsState,
+  usePullRequestGroups,
+} from './use-pull-request-groups'
 
 const ENDPOINT = '/api/diffs/pull-requests'
 
@@ -53,6 +57,18 @@ async function mountLoaded() {
   return hook
 }
 
+// Puts the clock under test control, so a test can move it past the focus
+// reload gap without fake timers, which waitFor and msw depend on.
+function controlClock(): {advance: (milliseconds: number) => void} {
+  let now = Date.now()
+  vi.spyOn(Date, 'now').mockImplementation(() => now)
+  return {
+    advance: (milliseconds) => {
+      now += milliseconds
+    },
+  }
+}
+
 function refocusWindow(): void {
   act(() => {
     window.dispatchEvent(new Event('focus'))
@@ -81,7 +97,48 @@ test('loads pull request groups on mount', async () => {
   expect(titles(result.current)).toEqual(['first'])
 })
 
+test('a 401 answer asks the visitor to sign in again', async () => {
+  servePullRequests(() => HttpResponse.json({reason: 'sign-in-again'}, {status: 401}))
+
+  const {result} = renderHook(() => usePullRequestGroups(true))
+  onTestFinished(cleanup)
+
+  await waitFor(() => {
+    expect(result.current.status).toBe('sign-in-again')
+  })
+})
+
+test('refocus before the reload gap ends makes no request', async () => {
+  const clock = controlClock()
+  const respond = servePullRequests(() => groups(['first']))
+  await mountLoaded()
+
+  clock.advance(FOCUS_RELOAD_GAP_MS - 1)
+  refocusWindow()
+
+  await settle()
+  expect(respond).toHaveBeenCalledTimes(1)
+})
+
+test('refocus after the reload gap ends makes a request', async () => {
+  const clock = controlClock()
+  const respond = servePullRequests(
+    () => groups(['first']),
+    () => groups(['second']),
+  )
+  const {result} = await mountLoaded()
+
+  clock.advance(FOCUS_RELOAD_GAP_MS)
+  refocusWindow()
+
+  await waitFor(() => {
+    expect(titles(result.current)).toEqual(['second'])
+  })
+  expect(respond).toHaveBeenCalledTimes(2)
+})
+
 test('window refocus starts a refetch while presenting the stale groups', async () => {
+  const clock = controlClock()
   let finishRefetch!: (response: Response) => void
   const refetch = new Promise<Response>((resolve) => {
     finishRefetch = resolve
@@ -92,6 +149,7 @@ test('window refocus starts a refetch while presenting the stale groups', async 
   )
   const {result} = await mountLoaded()
 
+  clock.advance(FOCUS_RELOAD_GAP_MS)
   refocusWindow()
 
   await waitFor(() => {
@@ -107,12 +165,14 @@ test('window refocus starts a refetch while presenting the stale groups', async 
 })
 
 test('a failed refocus refetch keeps the previously loaded groups', async () => {
+  const clock = controlClock()
   const respond = servePullRequests(
     () => groups(['first']),
     () => HttpResponse.json({}, {status: 500}),
   )
   const {result} = await mountLoaded()
 
+  clock.advance(FOCUS_RELOAD_GAP_MS)
   refocusWindow()
 
   await waitFor(() => {
@@ -124,13 +184,16 @@ test('a failed refocus refetch keeps the previously loaded groups', async () => 
 })
 
 test('refocus while a refetch is in flight does not start another request', async () => {
+  const clock = controlClock()
   const respond = servePullRequests(
     () => groups(['first']),
     () => new Promise(() => {}),
   )
   await mountLoaded()
 
+  clock.advance(FOCUS_RELOAD_GAP_MS)
   refocusWindow()
+  clock.advance(FOCUS_RELOAD_GAP_MS)
   refocusWindow()
 
   await settle()

@@ -103,7 +103,8 @@ conversations, no database yet); the site, endpoint included, sits behind Cloudf
 
 A centralized version-control service for managing reviews and diffs. The diffs half is live: a
 GitHub diff viewer (ported from Pierre's diffshub) under `/diffs`. Automated pull request reviews
-are built; see revision.city Reviews below.
+are built; see revision.city Reviews below. Local setup:
+[the app's README](../workspaces/web-apps/apps/revision.city/README.md).
 
 **Status**: Functional
 

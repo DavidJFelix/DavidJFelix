@@ -35,6 +35,34 @@ diffs as first-class objects.
 - Automated pull request reviews are built and tracked in
   [revision-city-reviews](../revision-city-reviews/plan.md).
 
+## Telemetry and privacy
+
+A signed-in visitor can open a private repository. The rule for what each telemetry service may hold
+(decided 2026-11-14):
+
+- PostHog, Honeycomb and Cloudflare Workers Logs may hold the repository owner, the repository name,
+  the pull number and file paths. PostHog keeps full paths, so page views can be broken down by
+  repository.
+- Sentry holds route templates such as `/diffs/$path`, not repository paths.
+- No service holds private code or model reasoning about private code.
+
+Today (main `c34990a`) the code follows the PostHog and Honeycomb parts of the rule but not the
+Sentry part:
+
+- PostHog page views carry the full viewer path.
+- Cloudflare's automatic traces in Honeycomb carry the full URL of each request and of each GitHub
+  call. App code cannot remove these URLs. The failed upstream log line holds the full patch URL.
+  The `webhook delivery` event names any repository that is not allowed.
+- Sentry in the browser names page loads and API calls by the full URL. On the server, the title of
+  a 5xx message holds the request path. The message also carries the console breadcrumbs of the
+  request, which can include the failed upstream log line and its URL.
+- No service gets private code today. The one risk is the `reasoningTail` of a cut model reply in
+  the `model call` event. Today it can quote only the one allowed repository, which is public.
+
+Two follow-up changes make Sentry follow the rule. The first gives Sentry in the browser route
+templates for page loads and API calls. The second does the same for Sentry on the server: the 5xx
+title and the upstream log line name the route and the host, not the repository.
+
 ## Stack
 
 TanStack Start (React 19) + PandaCSS + Ark UI, Cloudflare Worker.

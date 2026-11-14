@@ -23,6 +23,7 @@ import {Link} from '@tanstack/react-router'
 import {
   type CSSProperties,
   type Dispatch,
+  type KeyboardEvent,
   memo,
   type SetStateAction,
   useLayoutEffect,
@@ -401,6 +402,13 @@ function ColorModeIcon({colorMode, ...props}: ColorModeIconProps) {
   return <IconColorAuto {...props} />
 }
 
+// The menu content takes Enter and Space for its highlighted row and cancels
+// the click of the focused button. Stop these keys before they reach the menu,
+// so that the button gets its usual click.
+function keepPressKeysOnButton(event: KeyboardEvent) {
+  if (event.key === 'Enter' || event.key === ' ') event.stopPropagation()
+}
+
 interface ThemeDropdownProps {
   colorMode: ColorMode
   darkThemeName: DarkThemeName
@@ -418,7 +426,7 @@ interface ThemeDropdownProps {
 // corresponding row, picks a theme, and is returned to the main view. The
 // menu auto-resets to the main view whenever it closes so the next open
 // always starts from the top.
-function ThemeDropdown({
+export function ThemeDropdown({
   colorMode,
   darkThemeName,
   lightThemeName,
@@ -463,6 +471,7 @@ function ThemeDropdown({
             >
               <ButtonGroup
                 className={css({w: 'full'})}
+                onKeyDown={keepPressKeysOnButton}
                 value={colorMode}
                 onValueChange={(value) => {
                   if (value === 'system' || value === 'light' || value === 'dark') {

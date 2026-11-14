@@ -151,6 +151,36 @@ function toHref(input: Parameters<FetchLike>[0]): string {
   return typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
 }
 
+// The base branch moved on after the head branch split off, so the base tip and the merge base differ.
+test.each([
+  {name: 'a three-dot compare', range: 'main...feature', oldRef: 'merge-base-sha'},
+  {name: 'a one-ref compare', range: 'feature', oldRef: 'merge-base-sha'},
+  {name: 'a two-dot compare', range: 'main..feature', oldRef: 'base-tip-sha'},
+])('$name reads the old file at $oldRef', async ({range, oldRef}) => {
+  clearGitHubDiffFileServerCache()
+  const fetcher = vi.fn<FetchLike>(async (input) => {
+    if (toHref(input).includes('/compare/')) {
+      return Response.json({
+        base_commit: {sha: 'base-tip-sha'},
+        merge_base_commit: {sha: 'merge-base-sha'},
+        commits: [{sha: 'head-sha'}],
+        total_commits: 1,
+      })
+    }
+    return new Response('export function greet() {}\n')
+  })
+
+  await loadGitHubDiffFiles(
+    {name: 'src/gone.ts', path: `/owner/repo/compare/${range}`, type: 'deleted'},
+    {fetch: fetcher, tokenSource: 'anonymous', hydrateSingleSided: true},
+  )
+
+  const fileUrls = fetcher.mock.calls
+    .map(([input]) => toHref(input))
+    .filter((url) => url.includes('src/gone.ts'))
+  expect(fileUrls).toEqual([expect.stringContaining(`/${oldRef}/`)])
+})
+
 test('a signed-in reader looks up the refs once for a batch of files', async () => {
   clearGitHubDiffFileServerCache()
   const fetcher = stubGitHub()

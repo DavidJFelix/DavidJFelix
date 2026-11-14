@@ -91,9 +91,10 @@ export const ExampleAnnotation = memo(function ExampleAnnotation({
           opacity: '0',
           boxShadow: '[inherit]',
           transition: '[opacity 100ms cubic-bezier(0.4, 0, 0.2, 1)]',
-          // Revealed when the annotation card (the `.group` ancestor above) is
-          // hovered, mirroring the original group-hover utilities.
+          // Shows when the annotation card (the `.group` ancestor above) is
+          // hovered, and when the button has keyboard focus.
           _groupHover: {pointerEvents: 'auto', opacity: '1'},
+          _focusVisible: {pointerEvents: 'auto', opacity: '1'},
         })}
       >
         <IconX size={12} />

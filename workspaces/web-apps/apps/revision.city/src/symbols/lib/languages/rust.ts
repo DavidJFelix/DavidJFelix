@@ -2,8 +2,9 @@ import {parser} from '@lezer/rust'
 
 import type {EntitySpec, ResolveEntityNameParams} from '../entity'
 import {anonymousScopeProp, entityProp} from '../entity'
+import {wrapperChildren} from './wrapper-children'
 
-const SPECS: Record<string, EntitySpec> = {
+const ITEM_SPECS: Record<string, EntitySpec> = {
   StructItem: {kind: 'struct', name: ['TypeIdentifier'], container: true},
   EnumItem: {kind: 'enum', name: ['TypeIdentifier'], container: true},
   TraitItem: {kind: 'trait', name: ['TypeIdentifier'], container: true},
@@ -15,6 +16,12 @@ const SPECS: Record<string, EntitySpec> = {
   ConstItem: {kind: 'constant', name: ['BoundIdentifier'], scope: 'top-level'},
   StaticItem: {kind: 'constant', name: ['BoundIdentifier'], scope: 'top-level'},
 }
+
+// Every item can carry attributes (`#[derive(...)]`, `#[inline]`).
+const attributes = wrapperChildren({wrapper: 'AttributeItem', type: 'Attribute'})
+const SPECS: Record<string, EntitySpec> = Object.fromEntries(
+  Object.entries(ITEM_SPECS).map(([type, spec]) => [type, {...spec, leading: attributes}]),
+)
 
 // Nodes that wrap the type name: `Stack<T>`, `&Widget`, `*const Widget`, `fmt::Debug`.
 const WRAPPER_TYPES = new Set([

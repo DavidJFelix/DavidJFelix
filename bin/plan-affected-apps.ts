@@ -179,6 +179,18 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     d1Database: '',
   },
   {
+    dir: 'revision-city-reviewer',
+    worker: 'revision-city-reviewer',
+    // The Worker has no public host, so it has no preview and no route to fetch.
+    smokeRoutes: '',
+    wranglerConfig: '',
+    preview: 'none',
+    deploy: 'wrangler',
+    envSuffix: 'REVISION_CITY_REVIEWER',
+    devEnv: '',
+    d1Database: '',
+  },
+  {
     dir: 'revision.city',
     worker: 'revision-city',
     smokeRoutes: '/',

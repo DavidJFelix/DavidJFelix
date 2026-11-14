@@ -1,0 +1,35 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "revision-city-reviewer"
+main = "src/index.ts"
+compatibility_date = "2026-06-01"
+compatibility_flags = ["nodejs_compat"]
+
+# No public host: the Worker has no route, no workers.dev host, and no preview
+# URLs. Other Workers of the account call the ReviewAgent Durable Object through
+# a binding. Keep `workers_dev = false`: without it, wrangler gives a Worker
+# that has no route a workers.dev host.
+workers_dev = false
+preview_urls = false
+
+# The ReviewAgent reads one secret, OPENROUTER_API_KEY. Set it with
+# `wrangler secret put OPENROUTER_API_KEY`. Without it, each model call fails
+# and the agent answers `unanswered`.
+
+# A ReviewAgent runs OpenCode in its own SQLite database (src/review-agent.ts).
+[[durable_objects.bindings]]
+name = "REVIEW_AGENT"
+class_name = "ReviewAgent"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ReviewAgent"]
+
+# Logs and traces ship to Honeycomb through the account-level
+# observability destinations configured in the dashboard.
+[observability.logs]
+enabled = true
+destinations = ["honeycomb-logs"]
+
+[observability.traces]
+enabled = true
+destinations = ["honeycomb-traces"]

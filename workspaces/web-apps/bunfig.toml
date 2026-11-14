@@ -56,6 +56,14 @@
 #   typechecked against v2 (no toWebRequest) and ran against v1. The direct
 #   dep makes types and runtime agree. Drop it when nothing pulls an aliased
 #   h3 v2, or when nitro itself moves to v2 and the routes move with it.
+# - revision-city-reviewer declares @opentelemetry/sdk-trace-node 2.8.0, which
+#   it does not import. OpenCode (@opencode/util) brings the package, and the
+#   lockfile held it only below @opencode/util. Bun 1.4.4 then stops with a
+#   panic ("index out of bounds") when an install must download the package,
+#   as in CI. The direct dependency adds a top-level entry, and the install
+#   passes. Keep the version equal to the one in @opencode/util. Remove the
+#   dependency when an install with an empty cache passes without it:
+#   `BUN_INSTALL_CACHE_DIR=<empty directory> bun install --frozen-lockfile`.
 
 [install]
 minimumReleaseAge = 86400

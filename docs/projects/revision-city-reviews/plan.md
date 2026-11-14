@@ -120,6 +120,40 @@ Later: a manual review request that can go over the 1,500-line limit, then billi
 then open the allowlist. `REVIEW_MODEL` is not secret, so it becomes a plain variable instead of a
 secret, and later a config value.
 
+## Harness reviewer
+
+The review moves from its own tool loop to a coding harness. The harness is OpenCode, and the
+Cloudflare Agents SDK (`agents/harness/opencode`) runs it in a Durable Object. The model is DeepSeek
+V4.1 Flash on OpenRouter. When `REVIEW_MODEL` names the same model, a comparison with the tool loop
+measures only the harness.
+
+- **A second Worker.** The harness is in `workspaces/web-apps/apps/revision-city-reviewer`, not in
+  the revision.city Worker. OpenCode adds 23 MiB to a server bundle, which doubles the bundle of
+  revision.city, and the harness API is experimental. The Worker has no public host. revision.city
+  will call its `ReviewAgent` Durable Object through a binding.
+- **The model provider is the one in OpenCode.** The provider in the Agents SDK
+  (`agents/models/opencode`) needs a package that OpenCode included only until 2.2.0. That version
+  of OpenCode needs `effect` 4.0.1, and this workspace has `effect` 4.1.2. Thus the Worker uses the
+  OpenRouter provider of OpenCode with the `OPENROUTER_API_KEY` secret.
+- **OpenCode loads on the first prompt.** An import at the top of the module uses about 450 ms of
+  the 1 second that Cloudflare allows for the start of a Worker. The dynamic import uses about 65
+  ms.
+
+Steps, each a small PR:
+
+1. **Reviewer Worker.** The `ReviewAgent` Durable Object, which answers one prompt and reports the
+   tokens and the cost. A smoke test sends a prompt through OpenCode to a local model server. Done.
+2. **Live proof.** revision.city binds `ReviewAgent` and sends one prompt in each review run. It
+   logs the answer as a wide event. This step needs the `OPENROUTER_API_KEY` secret on the reviewer
+   Worker.
+3. **Reviewer tools.** The tools of OpenCode need a local disk. Read-only tools for the pull request
+   head and a tool that submits the findings replace them.
+4. **Reviews through the agent.** The Workflow sends each chunk review to `ReviewAgent`, behind a
+   setting.
+5. **Comparison.** Findings, cost, and time for the harness and the tool loop on the same pull
+   requests.
+6. **Delete the tool loop.**
+
 ## Open questions
 
 - Whether the comments reviewer should read the repository's own comment style guide when one exists

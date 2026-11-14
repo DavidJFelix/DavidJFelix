@@ -236,6 +236,7 @@
     "codemode", // the @cloudflare/codemode npm package (a dep of the agents SDK)
     "consolas",
     "dall", // DALL-E
+    "deepseek", // the maker of the review model; model ids write the name in lowercase
     "devbox",
     "diffsitter", // tree-sitter-based semantic diff tool -- prior art for revision.city symbols
     "difftastic", // syntax-aware structural diff tool -- prior art for revision.city symbols

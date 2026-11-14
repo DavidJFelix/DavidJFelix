@@ -1,0 +1,34 @@
+{
+  "name": "@davidjfelix/revision-city-reviewer",
+  "private": true,
+  "license": "(MIT OR Apache-2.0)",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --port 3013",
+    "build": "wrangler deploy --dry-run --outdir dist",
+    "smoke": "bun bin/smoke-local.ts",
+    "deploy": "wrangler deploy",
+    "lint": "biome check . && oxlint",
+    "lint:fix": "biome check --write . && oxlint --fix",
+    "format": "oxfmt --check . && prettier --check --no-error-on-unmatched-pattern \"**/*.md\" \"**/*.mdx\"",
+    "format:fix": "oxfmt . && prettier --write --no-error-on-unmatched-pattern \"**/*.md\" \"**/*.mdx\"",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@opencode/sdk": "2.2.7",
+    "@opentelemetry/sdk-trace-node": "2.8.0",
+    "agents": "0.33.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "catalog:",
+    "@types/bun": "catalog:",
+    "@types/node": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "typescript": "7.0.2",
+    "vitest": "catalog:",
+    "wrangler": "catalog:"
+  }
+}

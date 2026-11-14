@@ -52,7 +52,7 @@ Model the domain as **immutable data plus free functions**, not object graphs.
 
 ## Arguments: named and position-independent
 
-Past two parameters -- or the moment two parameters share a type -- switch to named,
+Past three parameters -- or the moment two parameters share a type -- switch to named,
 position-independent arguments. `move(3, 7)` is unreviewable; `move({x: 3, y: 7})` is not.
 
 - **JS/TS**: a single destructured object parameter, typed by an interface named for its role:

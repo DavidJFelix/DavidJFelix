@@ -629,10 +629,7 @@ function readOptionalNumber(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined
 }
 
-export function readCookiePayload(
-  request: Request,
-  name: string,
-): Record<string, unknown> | undefined {
+function readCookiePayload(request: Request, name: string): Record<string, unknown> | undefined {
   const value = parseCookies(request.headers.get('cookie')).get(name)
   if (isNullish(value)) {
     return undefined
@@ -662,7 +659,7 @@ function parseCookies(header: string | null): Map<string, string> {
   return cookies
 }
 
-export function serializeSessionCookie(session: GitHubAuthSession, secure: boolean): string {
+function serializeSessionCookie(session: GitHubAuthSession, secure: boolean): string {
   const now = Date.now()
   const expiry = session.refreshTokenExpiresAt ?? session.accessTokenExpiresAt
   const maxAgeSeconds = isNullish(expiry)
@@ -690,12 +687,7 @@ interface SerializeCookieParams {
 // HttpOnly keeps the token out of reach of page scripts; SameSite=Lax still
 // sends the cookie on the top-level redirect back from github.com. `Secure` is
 // dropped only for plain-HTTP local dev.
-export function serializeCookie({
-  name,
-  value,
-  maxAgeSeconds,
-  secure,
-}: SerializeCookieParams): string {
+function serializeCookie({name, value, maxAgeSeconds, secure}: SerializeCookieParams): string {
   const attributes = [
     `${name}=${value}`,
     `Max-Age=${maxAgeSeconds}`,
@@ -718,7 +710,7 @@ const RETURN_PATH_BASE = new URL('https://return-path.invalid')
 // The browser resolves the Location header with the URL rules. This parses the
 // value with the same rules and sends only the parsed path, so the redirect
 // after sign-in or sign-out stays on this site.
-export function sanitizeReturnPath(value: string | null): string {
+function sanitizeReturnPath(value: string | null): string {
   if (isNullish(value) || !value.startsWith('/')) {
     return DEFAULT_RETURN_PATH
   }
@@ -729,14 +721,11 @@ export function sanitizeReturnPath(value: string | null): string {
   return `${resolved.pathname}${resolved.search}${resolved.hash}`
 }
 
-export function isSecureRequest(url: URL): boolean {
+function isSecureRequest(url: URL): boolean {
   return url.protocol === 'https:'
 }
 
-export function createRedirectResponse(
-  location: string,
-  setCookieHeaders: readonly string[],
-): Response {
+function createRedirectResponse(location: string, setCookieHeaders: readonly string[]): Response {
   const response = new Response(null, {
     status: 302,
     headers: {Location: location, 'Cache-Control': 'no-store'},

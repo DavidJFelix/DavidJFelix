@@ -327,8 +327,8 @@ test('session reports anonymous without a cookie', async () => {
   expect(await response.json()).toEqual({authenticated: false})
 })
 
-test('logout clears the session cookie and returns to the diff', () => {
-  const response = handleGitHubLogoutRequest(
+test('logout clears the session cookie and returns to the diff', async () => {
+  const response = await handleGitHubLogoutRequest(
     new Request(`${ORIGIN}/api/auth/github/logout?returnTo=/diffs/o/r/pull/1`),
   )
   expect(response.status).toBe(302)
@@ -336,6 +336,88 @@ test('logout clears the session cookie and returns to the diff', () => {
   const [cleared] = getSetCookies(response)
   expect(cleared).toContain('diffs-github-auth=;')
   expect(cleared).toContain('Max-Age=0')
+})
+
+const logoutRequest = (sessionCookie: string): Request =>
+  new Request(`${ORIGIN}/api/auth/github/logout?returnTo=/diffs/o/r/pull/1`, {
+    headers: {cookie: sessionCookie},
+  })
+
+const expectClearedSessionCookie = (response: Response) => {
+  expect(response.headers.get('location')).toBe('/diffs/o/r/pull/1')
+  expect(getSetCookies(response)[0]).toContain('diffs-github-auth=;')
+}
+
+test('logout revokes the session token at GitHub before it clears the cookie', async () => {
+  const {sessionCookie} = await signIn()
+  const fetchImpl = vi.fn<FetchLike>(async () => new Response(null, {status: 204}))
+
+  const response = await handleGitHubLogoutRequest(logoutRequest(sessionCookie), {
+    credentials: CREDENTIALS,
+    fetch: fetchImpl,
+  })
+
+  expect(fetchImpl).toHaveBeenCalledOnce()
+  const [url, init] = fetchImpl.mock.calls[0] ?? []
+  expect(url).toBe(`https://api.github.com/applications/${CREDENTIALS.clientId}/token`)
+  expect(init?.method).toBe('DELETE')
+  expect(new Headers(init?.headers).get('authorization')).toBe(
+    `Basic ${btoa(`${CREDENTIALS.clientId}:${CREDENTIALS.clientSecret}`)}`,
+  )
+  expect(init?.body).toBe(JSON.stringify({access_token: 'ghu_token'}))
+  expect(init?.signal).toBeInstanceOf(AbortSignal)
+  expectClearedSessionCookie(response)
+})
+
+test('logout still clears the cookie and logs the cause when GitHub refuses the revoke', async () => {
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+  const {sessionCookie} = await signIn()
+
+  const response = await handleGitHubLogoutRequest(logoutRequest(sessionCookie), {
+    credentials: CREDENTIALS,
+    fetch: async () => jsonResponse({message: 'Validation Failed'}, 422),
+  })
+
+  expectClearedSessionCookie(response)
+  expect(consoleError).toHaveBeenCalledExactlyOnceWith({
+    event: 'github auth failure',
+    step: 'token revoke',
+    status: 422,
+    error: 'Validation Failed',
+  })
+  consoleError.mockRestore()
+})
+
+test('logout still clears the cookie and logs the cause when the revoke request throws', async () => {
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+  const {sessionCookie} = await signIn()
+
+  const response = await handleGitHubLogoutRequest(logoutRequest(sessionCookie), {
+    credentials: CREDENTIALS,
+    fetch: async () => {
+      throw new TypeError('network down')
+    },
+  })
+
+  expectClearedSessionCookie(response)
+  expect(consoleError).toHaveBeenCalledExactlyOnceWith({
+    event: 'github auth failure',
+    step: 'token revoke',
+    error: 'TypeError: network down',
+  })
+  consoleError.mockRestore()
+})
+
+test('logout without a session makes no GitHub call', async () => {
+  const fetchImpl = vi.fn<FetchLike>()
+
+  const response = await handleGitHubLogoutRequest(logoutRequest(''), {
+    credentials: CREDENTIALS,
+    fetch: fetchImpl,
+  })
+
+  expect(fetchImpl).not.toHaveBeenCalled()
+  expectClearedSessionCookie(response)
 })
 
 test('resolveGitHubAuth returns the access token for a non-expiring session', async () => {
@@ -454,7 +536,12 @@ test('resolveGitHubAuth ignores a malformed cookie', async () => {
   expect(auth.session).toBeUndefined()
 })
 
-test('unsafe returnTo values fall back to /diffs', () => {
+const logoutWithReturnTo = (returnTo: string): Promise<Response> =>
+  handleGitHubLogoutRequest(
+    new Request(`${ORIGIN}/api/auth/github/logout?returnTo=${encodeURIComponent(returnTo)}`),
+  )
+
+test('unsafe returnTo values fall back to /diffs', async () => {
   const unsafe = [
     'https://evil.test/x',
     '//evil.test/x',
@@ -467,27 +554,23 @@ test('unsafe returnTo values fall back to /diffs', () => {
     '/.//evil.test/x',
     '/..//evil.test/x',
   ]
-  for (const returnTo of unsafe) {
-    const response = handleGitHubLogoutRequest(
-      new Request(`${ORIGIN}/api/auth/github/logout?returnTo=${encodeURIComponent(returnTo)}`),
-    )
-    expect(response.headers.get('location')).toBe('/diffs')
-  }
+  const responses = await Promise.all(unsafe.map((returnTo) => logoutWithReturnTo(returnTo)))
+  expect(responses.map((response) => response.headers.get('location'))).toEqual(
+    unsafe.map(() => '/diffs'),
+  )
 })
 
-test('safe returnTo values redirect to their normalized same-site path', () => {
+test('safe returnTo values redirect to their normalized same-site path', async () => {
   const cases = [
     ['/diffs/o/r/pull/1?tab=files#top', '/diffs/o/r/pull/1?tab=files#top'],
     ['/a\\b', '/a/b'],
     ['/a/../b', '/b'],
     ['/a\tb', '/ab'],
   ]
-  for (const [returnTo, location] of cases) {
-    const response = handleGitHubLogoutRequest(
-      new Request(`${ORIGIN}/api/auth/github/logout?returnTo=${encodeURIComponent(returnTo)}`),
-    )
-    expect(response.headers.get('location')).toBe(location)
-  }
+  const responses = await Promise.all(cases.map(([returnTo]) => logoutWithReturnTo(returnTo)))
+  expect(responses.map((response) => response.headers.get('location'))).toEqual(
+    cases.map(([, location]) => location),
+  )
 })
 
 test('manage-access redirects a signed-in visitor to their installation on GitHub', async () => {

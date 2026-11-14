@@ -75,31 +75,52 @@ function extractFromTree({source, parser}: ExtractEntitiesParams): EntityExtract
   if (found === undefined) {
     return {tooLarge: true}
   }
-  const emitted = new Set(found.map((entity) => nodeKey(entity.node)))
+  const emitted = new Set(found.flatMap(ownedNodes).map((node) => nodeKey(node)))
   // Only nodes that survived `accept` and `scope` count as nested entities --
   // a skipped local must still contribute to its enclosing function's content.
   const isNestedEntity = (node: SyntaxNode): boolean => emitted.has(nodeKey(node))
   const lineStarts = createLineStarts(source)
-  const entitySpans = found.map((entity) => ({from: entity.node.from, to: entity.node.to}))
+  const entitySpans = found.map(entitySpan)
 
-  const entities = found.map(({node, sequence, ...identity}) => {
-    const signature = computeSignature({node, source, isNestedEntity})
+  const entities = found.map(({node, leading, sequence, ...identity}) => {
+    const span = entitySpan({node, leading})
+    const signature = computeSignature({nodes: [...leading, node], source, isNestedEntity})
     const elements =
       sequence === undefined
         ? undefined
         : fingerprintSequence({sequence, source, lineStarts, entitySpans})
     return {
       ...identity,
-      range: {startLine: lineAt(lineStarts, node.from), endLine: lineAt(lineStarts, node.to)},
+      range: {startLine: lineAt(lineStarts, span.from), endLine: lineAt(lineStarts, span.to)},
       structuralHash: signature.structuralHash,
       contentHash: signature.contentHash,
       ownContentHash: signature.ownContentHash,
       tokens: signature.tokens,
-      span: {from: node.from, to: node.to},
+      span,
       ...(elements === undefined ? {} : {elements}),
     }
   })
   return {tooLarge: false, entities}
+}
+
+// The nodes that an enclosing entity does not count as its own: the entity's
+// node, its leading nodes, and a parent that wraps only these (a Python
+// `DecoratedStatement`). So an added or changed decorator goes to the entity
+// that it decorates, not to the enclosing class.
+function ownedNodes({node, leading}: FoundEntity): readonly SyntaxNode[] {
+  const span = entitySpan({node, leading})
+  const parent = node.parent
+  const wrapper =
+    leading.length > 0 && parent !== null && parent.from === span.from && parent.to === span.to
+      ? [parent]
+      : []
+  return [...wrapper, ...leading, node]
+}
+
+// The span starts at the first leading node, so a decorated entity starts at
+// its first decorator.
+function entitySpan({node, leading}: Pick<FoundEntity, 'node' | 'leading'>): EntitySpan {
+  return {from: leading[0]?.from ?? node.from, to: node.to}
 }
 
 interface FingerprintSequenceParams {
@@ -119,7 +140,7 @@ function fingerprintSequence({
   entitySpans,
 }: FingerprintSequenceParams): readonly SequenceElement[] {
   return sequence.map((element) => ({
-    hash: computeSignature({node: element, source, isNestedEntity: () => false}).contentHash,
+    hash: computeSignature({nodes: [element], source, isNestedEntity: () => false}).contentHash,
     preview: createPreview(source.slice(element.from, element.to)),
     range: {startLine: lineAt(lineStarts, element.from), endLine: lineAt(lineStarts, element.to)},
     span: {from: element.from, to: element.to},
@@ -141,6 +162,7 @@ interface FoundEntity {
   readonly basePath: string
   readonly occurrence: number
   readonly node: SyntaxNode
+  readonly leading: readonly SyntaxNode[]
   readonly sequence?: readonly SyntaxNode[]
 }
 
@@ -202,7 +224,9 @@ function collectEntityNodes({
       const basePath = joinPath(open, segment)
       const occurrence = countOccurrence({kind, path: basePath, counts: nameCounts})
       const qualifiedName = occurrence === 1 ? basePath : `${basePath}#${occurrence}`
-      entityCharacters += node.to - node.from + qualifiedName.length
+      const leading = spec.leading?.({node, source}) ?? []
+      const span = entitySpan({node, leading})
+      entityCharacters += span.to - span.from + qualifiedName.length
       if (
         found.length === MAX_ENTITIES_PER_FILE ||
         entityCharacters > MAX_ENTITY_CHARACTERS_PER_FILE
@@ -218,7 +242,7 @@ function collectEntityNodes({
         tooLarge = true
         return false
       }
-      found.push({kind, name, qualifiedName, basePath, occurrence, node, sequence})
+      found.push({kind, name, qualifiedName, basePath, occurrence, node, leading, sequence})
       open.push({
         name: segment,
         kind,

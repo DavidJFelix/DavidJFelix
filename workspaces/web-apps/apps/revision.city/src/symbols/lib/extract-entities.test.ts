@@ -505,6 +505,43 @@ test('gives a named default export one entity, not a second default row', () => 
   ])
 })
 
+test.each([
+  {language: 'typescript', source: '@Dec()\nexport class Widget {}\n', name: 'Widget'},
+  {language: 'python', source: '@app.route("/")\n@login\ndef index():\n    pass\n', name: 'index'},
+  {language: 'rust', source: '#[derive(Debug)]\n#[repr(C)]\nstruct Point {}\n', name: 'Point'},
+])(
+  'starts a decorated $language entity at its first decorator',
+  async ({language, source, name}) => {
+    const entities = extractWithinLimits({source, parser: await parserFor(language)})
+    const entity = entities.find((entry) => entry.name === name)
+
+    expect(entity?.range.startLine).toBe(1)
+    expect(entity?.span.from).toBe(0)
+  },
+)
+
+// `@lezer/javascript` has no rule for a decorator ahead of `export`. The
+// extractor reads how the parser recovers: a class with no name that holds
+// the decorators, then the export. A grammar upgrade that changes this shape
+// must fail here, not drop the decorator row in silence.
+test('pins how the parser recovers from a decorator ahead of export', async () => {
+  const parser = await parserFor('typescript')
+  const source = '@Dec export class Widget {}\n'
+
+  const top = parser.parse(source).topNode
+  const recovered = top.firstChild
+  const exported = recovered?.nextSibling
+
+  expect(recovered?.type.name).toBe('ClassDeclaration')
+  expect(recovered?.getChild('VariableDefinition')).toBeNull()
+  expect(
+    recovered?.getChildren('Decorator').map((node) => source.slice(node.from, node.to)),
+  ).toEqual(['@Dec '])
+  expect(exported?.type.name).toBe('ExportDeclaration')
+  expect(exported?.getChild('ClassDeclaration')?.getChild('VariableDefinition')).not.toBeNull()
+  expect(exported?.nextSibling).toBeNull()
+})
+
 test('reports a module-level call once, without the locals in its callback', () => {
   const source = "register('event', () => {\n  const hidden = 1\n  use(hidden)\n})\n"
 

@@ -17,7 +17,12 @@ const FUNCTION_INITIALIZERS = new Set([
 
 const SPECS: Record<string, EntitySpec> = {
   FunctionDeclaration: {kind: 'function', name: ['VariableDefinition'], container: true},
-  ClassDeclaration: {kind: 'class', name: ['VariableDefinition'], container: true},
+  ClassDeclaration: {
+    kind: 'class',
+    name: ['VariableDefinition'],
+    container: true,
+    leading: decoratorsBeforeExport,
+  },
   MethodDeclaration: {
     kind: 'method',
     name: ['PropertyDefinition', 'PrivatePropertyDefinition'],
@@ -69,6 +74,17 @@ const SPECS: Record<string, EntitySpec> = {
     resolveName: ({node, source}) => calleePath(node.firstChild, source),
     resolveKind: resolveBindingKind,
   },
+}
+
+// The grammar has no decorators ahead of `export`. It parses `@Dec() export
+// class A {}` as a class with no name that holds only the decorators, then the
+// export. Those decorators belong to the exported class.
+function decoratorsBeforeExport({node}: ResolveEntityNameParams): readonly SyntaxNode[] {
+  const recovered = node.parent?.type.name === 'ExportDeclaration' ? node.parent.prevSibling : null
+  return recovered?.type.name === 'ClassDeclaration' &&
+    recovered.getChild('VariableDefinition') === null
+    ? recovered.getChildren('Decorator')
+    : []
 }
 
 function isAnonymousDefaultExport({node}: ResolveEntityNameParams): boolean {

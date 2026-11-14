@@ -1,5 +1,6 @@
 import {expect, test} from 'bun:test'
 import {
+  type PlanAffectedParams,
   WEB_APP_TARGETS,
   type WebAppTarget,
   isUsableScmBase,
@@ -18,6 +19,7 @@ const target = (overrides: Partial<WebAppTarget> = {}): WebAppTarget => ({
   envSuffix: 'EXAMPLE_COM',
   devEnv: '',
   d1Database: '',
+  productionUrl: '',
   ...overrides,
 })
 
@@ -61,6 +63,22 @@ test('keeps the D1 database on the production entry only', () => {
       (entry) => entry.d1Database,
     ),
   ).toEqual(['example-com', ''])
+})
+
+test('keeps the production URL on the production deploy entry only', () => {
+  // The deploy smokes the entry's production URL. The dev worker and the
+  // previews do not serve the custom domain, so their entries must skip it.
+  const withDev = [target({devEnv: 'dev', productionUrl: 'https://example.com'})]
+  const productionOnly = [target({productionUrl: 'https://example.com'})]
+  const urls = (params: Omit<PlanAffectedParams, 'affectedPaths'>) =>
+    planAffected({affectedPaths: ['apps/example.com'], ...params}).map(
+      (entry) => entry.productionUrl,
+    )
+
+  expect(urls({kind: 'deploy', targets: withDev})).toEqual(['https://example.com', ''])
+  expect(urls({kind: 'deploy', targets: productionOnly})).toEqual(['https://example.com'])
+  expect(urls({kind: 'preview', targets: withDev})).toEqual([''])
+  expect(urls({kind: 'preview', targets: productionOnly})).toEqual([''])
 })
 
 test('skips apps that opt out of the shared matrix for that kind', () => {
@@ -211,5 +229,24 @@ test('registry names the D1 database of every app with migrations', async () => 
     expect(migrated.map((database) => database.database_name)).toEqual(
       app.d1Database ? [app.d1Database] : [],
     )
+  }
+})
+
+test('registry names the production URL of every app with a custom domain', async () => {
+  // The deploy smokes this URL. It must be the first custom domain in the
+  // app's wrangler.toml, so a domain added or removed there is not forgotten.
+  type WranglerToml = {
+    readonly routes?: readonly {readonly pattern: string; readonly custom_domain?: boolean}[]
+  }
+  for (const app of WEB_APP_TARGETS) {
+    const file = Bun.file(
+      new URL(`../workspaces/web-apps/apps/${app.dir}/wrangler.toml`, import.meta.url),
+    )
+    const config = (await file.exists()) ? (Bun.TOML.parse(await file.text()) as WranglerToml) : {}
+    const domain = (config.routes ?? []).find((route) => route.custom_domain)?.pattern
+    expect({dir: app.dir, productionUrl: app.productionUrl}).toEqual({
+      dir: app.dir,
+      productionUrl: domain ? `https://${domain}` : '',
+    })
   }
 })

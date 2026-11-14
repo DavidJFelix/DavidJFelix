@@ -52,6 +52,11 @@ export type WebAppTarget = {
   // pending migrations before `wrangler deploy`. Dev workers bind no D1, so
   // their matrix entries carry ''.
   readonly d1Database: string
+  // Base URL of the live production site, from the first custom domain in the
+  // app's wrangler.toml. The deploy smokes it after `wrangler deploy`. '' for
+  // apps with no custom domain, which skips that step. Only the production
+  // deploy entry carries it: dev and preview entries carry ''.
+  readonly productionUrl: string
 }
 
 // What the matrix jobs actually consume: a target plus the CLOUDFLARE_ENV its
@@ -78,6 +83,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     envSuffix: 'ALCHEMY_STATE_VIEWER',
     devEnv: '',
     d1Database: '',
+    productionUrl: '',
   },
   {
     dir: 'calendar-visualizer',
@@ -89,6 +95,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     envSuffix: 'CALENDAR_VISUALIZER',
     devEnv: '',
     d1Database: '',
+    productionUrl: '',
   },
   {
     dir: 'davidjfelix.com',
@@ -100,6 +107,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     envSuffix: 'DAVIDJFELIX_COM',
     devEnv: '',
     d1Database: '',
+    productionUrl: 'https://davidjfelix.com',
   },
   {
     dir: 'djf.io',
@@ -111,6 +119,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     envSuffix: 'DJF_IO',
     devEnv: '',
     d1Database: '',
+    productionUrl: '',
   },
   {
     dir: 'f311x',
@@ -122,6 +131,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     envSuffix: 'F311X',
     devEnv: '',
     d1Database: '',
+    productionUrl: '',
   },
   {
     dir: 'forzamonica.com',
@@ -133,6 +143,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     envSuffix: 'FORZAMONICA_COM',
     devEnv: '',
     d1Database: '',
+    productionUrl: '',
   },
   {
     dir: 'monicandavid.com',
@@ -144,6 +155,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     envSuffix: 'MONICANDAVID_COM',
     devEnv: 'dev',
     d1Database: 'monicandavid-com',
+    productionUrl: 'https://monicandavid.com',
   },
   {
     dir: 'onvibes.org',
@@ -155,6 +167,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     envSuffix: 'ONVIBES_ORG',
     devEnv: '',
     d1Database: '',
+    productionUrl: 'https://onvibes.org',
   },
   {
     dir: 'pkg.dog',
@@ -166,6 +179,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     envSuffix: 'PKG_DOG',
     devEnv: '',
     d1Database: '',
+    productionUrl: 'https://pkg.dog',
   },
   {
     dir: 'ravrun',
@@ -177,17 +191,19 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     envSuffix: 'RAVRUN',
     devEnv: '',
     d1Database: '',
+    productionUrl: 'https://ravrun.com',
   },
   {
     dir: 'revision.city',
     worker: 'revision-city',
-    smokeRoutes: '/',
+    smokeRoutes: '/,/diffs',
     wranglerConfig: '',
     preview: 'wrangler',
     deploy: 'wrangler',
     envSuffix: 'REVISION_CITY',
     devEnv: 'dev',
     d1Database: 'revision-city',
+    productionUrl: 'https://revision.city',
   },
   {
     dir: 'startchi.com',
@@ -199,6 +215,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     envSuffix: 'STARTCHI_COM',
     devEnv: '',
     d1Database: '',
+    productionUrl: 'https://startchi.com',
   },
 ]
 
@@ -218,17 +235,23 @@ export const planAffected = ({
   return targets
     .filter((target) => target[kind] !== 'none' && affected.has(`apps/${target.dir}`))
     .flatMap((target) => {
-      if (target.devEnv === '') return [{...target, cloudflareEnv: ''}]
+      const production = {
+        ...target,
+        cloudflareEnv: '',
+        productionUrl: kind === 'deploy' ? target.productionUrl : '',
+      }
+      if (target.devEnv === '') return [production]
       const dev = {
         ...target,
         worker: `${target.worker}-${target.devEnv}`,
         cloudflareEnv: target.devEnv,
         d1Database: '',
+        productionUrl: '',
       }
       // A preview is a version of the dev worker only -- it must share the dev
       // GitHub App, never production's. A deploy ships both workers so the dev
       // worker's stable URL keeps tracking main.
-      return kind === 'preview' ? [dev] : [{...target, cloudflareEnv: ''}, dev]
+      return kind === 'preview' ? [dev] : [production, dev]
     })
 }
 

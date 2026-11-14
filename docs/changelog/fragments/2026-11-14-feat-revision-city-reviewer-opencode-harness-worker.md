@@ -21,3 +21,7 @@ The smoke test starts the Worker in workerd and sends one prompt through OpenCod
 that answers in place of OpenRouter. It fails if the answer, the usage, or the number of model calls
 is wrong. The model calls in production need one manual step: the `OPENROUTER_API_KEY` secret on the
 new Worker. Without the secret, `ask` returns the status `unanswered`.
+
+The app declares `@opentelemetry/sdk-trace-node`, which it does not import. Without the direct
+dependency, bun 1.4.4 stops with a panic when an install must download that package, as in CI.
+`bunfig.toml` has the details.

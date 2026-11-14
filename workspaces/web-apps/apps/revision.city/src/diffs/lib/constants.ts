@@ -98,7 +98,10 @@ const HIDDEN_SEARCH_UNSAFE_CSS = `
   }
 `
 
-/** In `@layer unsafe` so it overrides core tree `padding-inline` without host vars. */
+/**
+ * In `@layer unsafe` so it overrides core tree `padding-inline` without host vars. On phones it
+ * also sets the search box to 16px, so iOS does not zoom the page on focus.
+ */
 const SIDEBAR_VIRTUALIZED_SCROLL_UNSAFE_CSS = `
   [data-file-tree-virtualized-scroll="true"] {
     padding-inline-start: 0;
@@ -119,6 +122,10 @@ const SIDEBAR_VIRTUALIZED_SCROLL_UNSAFE_CSS = `
 
     [data-file-tree-virtualized-scroll="true"] {
       padding-inline-end: max(0px, calc(14px - var(--trees-scrollbar-gutter)));
+    }
+
+    [data-file-tree-search-input] {
+      font-size: 16px;
     }
   }
 `

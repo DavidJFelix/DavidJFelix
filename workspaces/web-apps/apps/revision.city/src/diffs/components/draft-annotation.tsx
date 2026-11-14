@@ -87,7 +87,7 @@ export function DraftAnnotation({annotation, itemId, onCancel, onSave}: DraftAnn
             rounded: 'diffs.sm',
             bg: 'transparent',
             py: '1.5',
-            fontSize: '[14px]',
+            fontSize: {base: '[16px]', md: '[14px]'},
             color: '[inherit]',
             _placeholder: {
               color: 'var(--diffs-popover-muted-fg, var(--muted-foreground))',

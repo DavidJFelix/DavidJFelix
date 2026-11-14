@@ -137,7 +137,7 @@ export function DiffUrlForm({
             h: '9',
             minW: '[24ch]',
             rounded: 'diffs.md',
-            fontSize: 'sm',
+            fontSize: {base: 'md', md: 'sm'},
             lineHeight: '[1.25rem]',
             _focusVisible: {outline: 'none'},
           }),

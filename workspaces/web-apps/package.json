@@ -41,9 +41,9 @@
   },
   "overrides": {
     "rolldown": "1.2.16",
-    "@effect/platform-node-shared": "4.1.2",
-    "@effect/sql-d1": "4.1.2",
-    "effect": "4.1.2"
+    "@effect/platform-node-shared": "4.1.4",
+    "@effect/sql-d1": "4.1.4",
+    "effect": "4.1.4"
   },
   "trustedDependencies": [
     "@sentry/cli",

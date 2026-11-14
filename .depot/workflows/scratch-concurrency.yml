@@ -1,0 +1,24 @@
+name: Scratch concurrency
+# Throwaway check, never merged: does Depot read the matrix value in a
+# job-level concurrency group? Deploys nothing and needs no secret.
+on:
+  workflow_dispatch:
+jobs:
+  wait:
+    name: wait ${{ matrix.worker }}
+    strategy:
+      fail-fast: false
+      matrix:
+        worker: [scratch-alpha, scratch-beta]
+    concurrency:
+      group: scratch-concurrency-${{ matrix.worker }}
+      cancel-in-progress: false
+    runs-on: depot-ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: sleep
+        run: |
+          echo "start ${{ matrix.worker }} $(date -u +%H:%M:%S)"
+          sleep 60
+          echo "end ${{ matrix.worker }} $(date -u +%H:%M:%S)"

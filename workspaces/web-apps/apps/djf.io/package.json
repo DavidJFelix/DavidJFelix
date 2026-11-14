@@ -51,7 +51,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "0.9.12",
-    "@atproto/api": "0.30.0",
+    "@atproto/api": "0.31.0",
     "@pandacss/dev": "catalog:",
     "@pandacss/preset-base": "catalog:",
     "@pandacss/preset-panda": "catalog:",
@@ -63,7 +63,7 @@
     "@vitest/coverage-v8": "catalog:",
     "gray-matter": "4.0.3",
     "oxlint-tsgolint": "catalog:",
-    "pagefind": "1.5.2",
+    "pagefind": "1.6.0",
     "typescript": "6.0.3",
     "vitest": "catalog:",
     "wrangler": "catalog:"

@@ -7,9 +7,10 @@ import {act, createRef} from 'react'
 import {createRoot, type Root} from 'react-dom/client'
 import {expect, test} from 'vitest'
 import type {ChromeMapping} from '@/diffs/lib/theme/chrome-theme-props'
+import type {ThemeInput} from '@/diffs/lib/theme/theme-source'
 import {OverridableThemeSourceProvider} from './contexts/overridable-theme-source-provider'
+import {useChromeThemeProps} from './hooks/use-chrome-theme-props'
 import {ThemedCodeView} from './themed-code-view'
-import {ThemedSurface} from './themed-surface'
 
 // jsdom (the vitest environment configured for this app) does not implement
 // ResizeObserver; stub it so a mounted CodeView/surface that observes its
@@ -52,6 +53,11 @@ const themeNameMapping: ChromeMapping = (_chrome, theme) =>
   ({
     '--test-theme-name': theme.name ?? '',
   }) as CSSProperties
+
+function ChromeThemedDiv({theme}: {theme: ThemeInput}) {
+  const themeProps = useChromeThemeProps(themeNameMapping, theme)
+  return <div style={themeProps.style} />
+}
 
 // Flushes the microtasks React schedules for effects/state updates so
 // assertions can read the settled DOM.
@@ -107,7 +113,7 @@ test('React themed component overrides: per-component theme pairs use the provid
   // given
   const {container} = render(
     <OverridableThemeSourceProvider theme={darkTheme}>
-      <ThemedSurface mapping={themeNameMapping} theme={{light: lightTheme, dark: darkTheme}} />
+      <ChromeThemedDiv theme={{light: lightTheme, dark: darkTheme}} />
     </OverridableThemeSourceProvider>,
   )
 

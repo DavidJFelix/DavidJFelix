@@ -13,6 +13,9 @@ import {
 const GITHUB_AUTHORIZE_URL = 'https://github.com/login/oauth/authorize'
 const GITHUB_TOKEN_URL = 'https://github.com/login/oauth/access_token'
 const GITHUB_USER_URL = 'https://api.github.com/user'
+const GITHUB_APPLICATIONS_URL = 'https://api.github.com/applications'
+// A slow GitHub must not hold up sign-out.
+const TOKEN_REVOKE_TIMEOUT_MS = 3000
 const GITHUB_API_VERSION = '2022-11-28'
 const USER_AGENT = 'revision-city-diffs'
 
@@ -269,9 +272,24 @@ async function handleGitHubInstallationSetupRedirect({
   return handleGitHubLoginRequest(new Request(loginURL), options)
 }
 
-export function handleGitHubLogoutRequest(request: Request): Response {
+// Asks GitHub to revoke the token of this session, then clears the cookie, so a
+// copy of the cookie stops working at sign-out. The revoke is best effort: a
+// failure is logged and the sign-out continues.
+export async function handleGitHubLogoutRequest(
+  request: Request,
+  options: GitHubAuthOptions = {},
+): Promise<Response> {
   const requestURL = new URL(request.url)
   const returnPath = sanitizeReturnPath(requestURL.searchParams.get('returnTo'))
+  const session = readSessionCookie(request)
+  const credentials = options.credentials ?? readGitHubAppCredentials()
+  if (!isNullish(session) && !isNullish(credentials)) {
+    await revokeGitHubToken({
+      token: session.accessToken,
+      credentials,
+      fetcher: options.fetch ?? fetch,
+    })
+  }
   return createRedirectResponse(returnPath, [
     serializeExpiredCookie(AUTH_COOKIE_NAME, isSecureRequest(requestURL)),
   ])
@@ -542,6 +560,43 @@ async function fetchGitHubUser(
   }
 }
 
+interface RevokeGitHubTokenParams {
+  token: string
+  credentials: GitHubAppCredentials
+  fetcher: AuthFetch
+}
+
+async function revokeGitHubToken({
+  token,
+  credentials,
+  fetcher,
+}: RevokeGitHubTokenParams): Promise<void> {
+  try {
+    const response = await fetcher(`${GITHUB_APPLICATIONS_URL}/${credentials.clientId}/token`, {
+      method: 'DELETE',
+      headers: {
+        Accept: 'application/vnd.github+json',
+        Authorization: `Basic ${btoa(`${credentials.clientId}:${credentials.clientSecret}`)}`,
+        'Content-Type': 'application/json',
+        'User-Agent': USER_AGENT,
+        'X-GitHub-Api-Version': GITHUB_API_VERSION,
+      },
+      body: JSON.stringify({access_token: token}),
+      signal: AbortSignal.timeout(TOKEN_REVOKE_TIMEOUT_MS),
+    })
+    if (response.status !== 204) {
+      const data = await readJSONBody(response)
+      logGitHubAuthFailure({
+        step: 'token revoke',
+        status: response.status,
+        error: isRecord(data) ? readOptionalString(data.message) : undefined,
+      })
+    }
+  } catch (error) {
+    logGitHubAuthFailure({step: 'token revoke', error: String(error)})
+  }
+}
+
 // GitHub also puts the cause of a 4xx or 5xx in a JSON body, so the body is
 // read on every status. A body that is not JSON gives undefined.
 async function readJSONBody(response: Response): Promise<unknown> {
@@ -553,7 +608,7 @@ async function readJSONBody(response: Response): Promise<unknown> {
   }
 }
 
-type GitHubAuthStep = 'code exchange' | 'token refresh' | 'user lookup'
+type GitHubAuthStep = 'code exchange' | 'token refresh' | 'user lookup' | 'token revoke'
 
 interface GitHubAuthFailure {
   step: GitHubAuthStep

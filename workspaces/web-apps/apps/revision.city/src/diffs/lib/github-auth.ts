@@ -274,12 +274,17 @@ async function handleGitHubInstallationSetupRedirect({
 
 // Asks GitHub to revoke the token of this session, then clears the cookie, so a
 // copy of the cookie stops working at sign-out. The revoke is best effort: a
-// failure is logged and the sign-out continues.
+// failure is logged and the sign-out continues. A browser sends its Origin
+// header with every POST, so a request that names another site is refused.
 export async function handleGitHubLogoutRequest(
   request: Request,
   options: GitHubAuthOptions = {},
 ): Promise<Response> {
   const requestURL = new URL(request.url)
+  const origin = request.headers.get('origin')
+  if (!isNullish(origin) && origin !== requestURL.origin) {
+    return createAuthTextResponse('Sign out from this site.', 403)
+  }
   const returnPath = sanitizeReturnPath(requestURL.searchParams.get('returnTo'))
   const session = readSessionCookie(request)
   const credentials = options.credentials ?? readGitHubAppCredentials()

@@ -13,6 +13,7 @@ import {
 import {decodeProxyState, encodeProxyState} from './preview-auth'
 
 const ORIGIN = 'https://revision.city'
+const OTHER_ORIGIN = 'https://example.com'
 const CREDENTIALS = {clientId: 'Iv1.test-client', clientSecret: 'shh-secret'}
 
 // fetch by call signature only: lib.dom types `typeof fetch` with a required
@@ -406,6 +407,36 @@ test('logout still clears the cookie and logs the cause when the revoke request 
     error: 'TypeError: network down',
   })
   consoleError.mockRestore()
+})
+
+test('logout refuses a request from another site without a GitHub call or a cleared cookie', async () => {
+  const {sessionCookie} = await signIn()
+  const fetchImpl = vi.fn<FetchLike>()
+  const request = new Request(`${ORIGIN}/api/auth/github/logout`, {
+    method: 'POST',
+    headers: {cookie: sessionCookie, origin: OTHER_ORIGIN},
+  })
+
+  const response = await handleGitHubLogoutRequest(request, {
+    credentials: CREDENTIALS,
+    fetch: fetchImpl,
+  })
+
+  expect(response.status).toBe(403)
+  expect(fetchImpl).not.toHaveBeenCalled()
+  expect(getSetCookies(response)).toEqual([])
+})
+
+test('logout accepts a request from this site', async () => {
+  const request = new Request(`${ORIGIN}/api/auth/github/logout?returnTo=/diffs/o/r/pull/1`, {
+    method: 'POST',
+    headers: {origin: ORIGIN},
+  })
+
+  const response = await handleGitHubLogoutRequest(request, {credentials: CREDENTIALS})
+
+  expect(response.status).toBe(302)
+  expectClearedSessionCookie(response)
 })
 
 test('logout without a session makes no GitHub call', async () => {

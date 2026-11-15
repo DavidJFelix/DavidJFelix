@@ -177,6 +177,10 @@ export interface EntitySpec {
   // Skip the node unless this returns true. Lets one node type serve two roles
   // (a `const` binding is only a function when its initializer is one).
   readonly accept?: (params: ResolveEntityNameParams) => boolean
+  // The nodes ahead of the entity that belong to it (decorators, attributes).
+  // They are part of the entity's range, span and hashes, not of an enclosing
+  // entity.
+  readonly leading?: (params: ResolveEntityNameParams) => readonly SyntaxNode[]
 }
 
 // Attached to node types via `parser.configure({props})`, which every Lezer

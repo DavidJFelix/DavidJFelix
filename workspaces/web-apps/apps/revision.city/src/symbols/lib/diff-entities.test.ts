@@ -422,6 +422,87 @@ test('names the default export of a config file when its options change', async 
   ])
 })
 
+// A decorator or attribute is part of the declaration it marks, so its edit
+// goes to that declaration and not to the enclosing class, impl or file.
+test.each([
+  {
+    edit: 'a Python route decorator',
+    path: 'app.py',
+    oldSource: "@app.route('/users')\ndef users():\n    return 1\n",
+    newSource: "@app.route('/accounts')\ndef users():\n    return 1\n",
+    change: ['function', 'users'],
+  },
+  {
+    edit: 'a new Python decorator',
+    path: 'fixtures.py',
+    oldSource: 'def client():\n    return 1\n',
+    newSource: '@fixture\ndef client():\n    return 1\n',
+    change: ['function', 'client'],
+  },
+  {
+    edit: 'a Python method decorator',
+    path: 'shapes.py',
+    oldSource: 'class Shape:\n    def area(self):\n        return 1\n',
+    newSource: 'class Shape:\n    @property\n    def area(self):\n        return 1\n',
+    change: ['function', 'Shape.area'],
+  },
+  {
+    edit: 'a Rust derive attribute',
+    path: 'src/point.rs',
+    oldSource: '#[derive(Debug)]\nstruct Point {\n    x: u8,\n}\n',
+    newSource: '#[derive(Debug, Clone, Serialize)]\nstruct Point {\n    x: u8,\n}\n',
+    change: ['struct', 'Point'],
+  },
+  {
+    edit: 'a Rust attribute on an impl method',
+    path: 'src/point.rs',
+    oldSource: 'impl Point {\n    fn norm() {}\n}\n',
+    newSource: 'impl Point {\n    #[inline]\n    fn norm() {}\n}\n',
+    change: ['function', 'Point.norm'],
+  },
+  {
+    edit: 'a TypeScript decorator ahead of export',
+    path: 'src/app.component.ts',
+    oldSource: "@Component({selector: 'app'})\nexport class App {}\n",
+    newSource: "@Component({selector: 'root'})\nexport class App {}\n",
+    change: ['class', 'App'],
+  },
+  {
+    edit: 'a TypeScript decorator after export',
+    path: 'src/app.component.ts',
+    oldSource: "export @Component({selector: 'app'}) class App {}\n",
+    newSource: "export @Component({selector: 'root'}) class App {}\n",
+    change: ['class', 'App'],
+  },
+  {
+    edit: 'a TypeScript method decorator',
+    path: 'src/users.controller.ts',
+    oldSource: "@Controller()\nexport class Users {\n  @Get('list')\n  list() {}\n}\n",
+    newSource: "@Controller()\nexport class Users {\n  @Get('all')\n  list() {}\n}\n",
+    change: ['method', 'Users.list'],
+  },
+  {
+    edit: 'a body in a decorated exported class',
+    path: 'src/users.controller.ts',
+    oldSource: '@Controller()\nexport class Users {\n  list() {\n    return 1\n  }\n}\n',
+    newSource: '@Controller()\nexport class Users {\n  list() {\n    return 2\n  }\n}\n',
+    change: ['method', 'Users.list'],
+  },
+  {
+    edit: 'a decorator of a class ahead of an exported class',
+    path: 'src/models.ts',
+    oldSource: '@Model()\nclass Draft {}\nexport class Post {}\n',
+    newSource: '@Model({table: true})\nclass Draft {}\nexport class Post {}\n',
+    change: ['class', 'Draft'],
+  },
+])('reports an edit to $edit against $change', async ({path, oldSource, newSource, change}) => {
+  const diff = await diffEntities({path, oldSource, newSource})
+
+  expect(diff.changes.map((entry) => [entry.type, entry.kind, entry.qualifiedName])).toEqual([
+    ['modified', ...change],
+  ])
+})
+
 test('reports only the entity that changed, not the ones enclosing it', async () => {
   const oldSource = 'export class Widget {\n  render() {\n    return 1\n  }\n}\n'
   const newSource = 'export class Widget {\n  render() {\n    return 2\n  }\n}\n'

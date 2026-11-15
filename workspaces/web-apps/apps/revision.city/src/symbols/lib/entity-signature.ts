@@ -28,7 +28,9 @@ export function hashString(value: string): string {
 }
 
 export interface ComputeSignatureParams {
-  node: SyntaxNode
+  // Walked in order as one entity: the leading nodes (decorators), then the
+  // node.
+  nodes: readonly SyntaxNode[]
   source: string
   // True for a descendant that was itself reported as an entity. Its content is
   // excluded from `ownContentHash`, so a class is not called modified merely
@@ -49,7 +51,7 @@ export interface ComputeSignatureParams {
 //   - own content: the same, minus nested entities -- what separates "this
 //     entity changed" from "something declared inside it did".
 export function computeSignature({
-  node,
+  nodes,
   source,
   isNestedEntity,
 }: ComputeSignatureParams): EntitySignature {
@@ -101,7 +103,9 @@ export function computeSignature({
     pushText(source.slice(cursor, current.to), nested)
     pushType(CLOSE_MARKER, nested)
   }
-  walk(node, false)
+  for (const node of nodes) {
+    walk(node, false)
+  }
 
   return {
     structuralHash: hashString(types.join(' ')),

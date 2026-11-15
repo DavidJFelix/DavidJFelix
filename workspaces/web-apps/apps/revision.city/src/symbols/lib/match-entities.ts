@@ -1,4 +1,4 @@
-import type {CodeEntity, EntityChange, EntityKind, EntitySpan, SequenceDetail} from './entity'
+import type {CodeSymbol, EntityChange, SequenceDetail, SymbolKind, SymbolSpan} from './code-symbol'
 import {hashString, tokenSimilarity} from './entity-signature'
 import {alignByHash, diffSequenceElements} from './sequence-alignment'
 
@@ -27,8 +27,8 @@ const LIKENESS_TIE_TOLERANCE = 1e-9
 const MIN_STRUCTURAL_TOKENS = 12
 
 export interface MatchEntitiesParams {
-  oldEntities: readonly CodeEntity[]
-  newEntities: readonly CodeEntity[]
+  oldEntities: readonly CodeSymbol[]
+  newEntities: readonly CodeSymbol[]
 }
 
 // Three phases, cheapest and most certain first, each removing its matches from
@@ -95,7 +95,7 @@ export function matchEntities({oldEntities, newEntities}: MatchEntitiesParams): 
 // tagged with the owning entity's base path so only descendants suppress.
 interface OwnedSpan {
   ownerBase: string
-  span: EntitySpan
+  span: SymbolSpan
 }
 
 interface CoveredSpans {
@@ -104,13 +104,13 @@ interface CoveredSpans {
 }
 
 interface IdentityPhaseParams {
-  unmatchedOld: Set<CodeEntity>
-  unmatchedNew: Set<CodeEntity>
+  unmatchedOld: Set<CodeSymbol>
+  unmatchedNew: Set<CodeSymbol>
   changes: EntityChange[]
   covered: CoveredSpans
   // The path that groups an old entity. A member of a renamed container
   // groups under the path that it has after the rename.
-  oldPath?: (entity: CodeEntity) => string
+  oldPath?: (entity: CodeSymbol) => string
 }
 
 // The `#n` ordinal that disambiguates name collisions cannot be identity: one
@@ -125,7 +125,7 @@ function matchByIdentity({
   covered,
   oldPath = (entity) => entity.basePath,
 }: IdentityPhaseParams): void {
-  const groups = new Map<string, {old: CodeEntity[]; new: CodeEntity[]}>()
+  const groups = new Map<string, {old: CodeSymbol[]; new: CodeSymbol[]}>()
   for (const entity of unmatchedOld) {
     getGroup(groups, baseKey({kind: entity.kind, path: oldPath(entity)})).old.push(entity)
   }
@@ -178,8 +178,8 @@ function matchByIdentity({
 }
 
 interface PairLeftoversParams {
-  restOld: readonly CodeEntity[]
-  restNew: readonly CodeEntity[]
+  restOld: readonly CodeSymbol[]
+  restNew: readonly CodeSymbol[]
 }
 
 // Each entry of the shorter side pairs in order. The longer side skips the
@@ -189,14 +189,14 @@ interface PairLeftoversParams {
 // steps that differ only inside their scalars would tie. A tie skips the later
 // entry, which keeps the order of a plain zip. Over the read budget, the
 // pairing is a plain zip.
-function pairLeftovers({restOld, restNew}: PairLeftoversParams): Array<[CodeEntity, CodeEntity]> {
+function pairLeftovers({restOld, restNew}: PairLeftoversParams): Array<[CodeSymbol, CodeSymbol]> {
   const oldIsShort = restOld.length <= restNew.length
   const short = oldIsShort ? restOld : restNew
   const long = oldIsShort ? restNew : restOld
-  const toPair = (shortIndex: number, longIndex: number): [CodeEntity, CodeEntity] =>
+  const toPair = (shortIndex: number, longIndex: number): [CodeSymbol, CodeSymbol] =>
     oldIsShort ? [short[shortIndex], long[longIndex]] : [long[longIndex], short[shortIndex]]
 
-  const zip = (): Array<[CodeEntity, CodeEntity]> => short.map((_, index) => toPair(index, index))
+  const zip = (): Array<[CodeSymbol, CodeSymbol]> => short.map((_, index) => toPair(index, index))
   if (short.length === long.length) {
     return zip()
   }
@@ -222,7 +222,7 @@ function pairLeftovers({restOld, restNew}: PairLeftoversParams): Array<[CodeEnti
     }
   }
 
-  const pairs: Array<[CodeEntity, CodeEntity]> = []
+  const pairs: Array<[CodeSymbol, CodeSymbol]> = []
   let j = long.length
   for (let i = short.length; i > 0; j -= 1) {
     if (best[i][j - 1] < best[i][j] - LIKENESS_TIE_TOLERANCE) {
@@ -233,7 +233,7 @@ function pairLeftovers({restOld, restNew}: PairLeftoversParams): Array<[CodeEnti
   return pairs.toReversed()
 }
 
-function entityWords(entity: CodeEntity): string[] {
+function entityWords(entity: CodeSymbol): string[] {
   return entity.tokens.flatMap((token) => token.split(/\s+/).filter((word) => word !== ''))
 }
 
@@ -242,9 +242,9 @@ function countWords(lists: readonly (readonly string[])[]): number {
 }
 
 function getGroup(
-  groups: Map<string, {old: CodeEntity[]; new: CodeEntity[]}>,
+  groups: Map<string, {old: CodeSymbol[]; new: CodeSymbol[]}>,
   key: string,
-): {old: CodeEntity[]; new: CodeEntity[]} {
+): {old: CodeSymbol[]; new: CodeSymbol[]} {
   const existing = groups.get(key)
   if (existing !== undefined) {
     return existing
@@ -255,8 +255,8 @@ function getGroup(
 }
 
 interface DiffSequenceParams {
-  previous: CodeEntity
-  candidate: CodeEntity
+  previous: CodeSymbol
+  candidate: CodeSymbol
   covered: CoveredSpans
 }
 
@@ -286,8 +286,8 @@ function diffSequence({
 }
 
 interface SuppressPhaseParams {
-  unmatchedOld: Set<CodeEntity>
-  unmatchedNew: Set<CodeEntity>
+  unmatchedOld: Set<CodeSymbol>
+  unmatchedNew: Set<CodeSymbol>
   covered: CoveredSpans
 }
 
@@ -309,7 +309,7 @@ function suppressCoveredRows({unmatchedOld, unmatchedNew, covered}: SuppressPhas
 }
 
 interface IsCoveredParams {
-  span: EntitySpan
+  span: SymbolSpan
   path: string
   spans: readonly OwnedSpan[]
 }
@@ -326,14 +326,14 @@ function isCovered({span, path, spans}: IsCoveredParams): boolean {
 // A pair that phase 2 or 3 made. Its row is added at the end, because a
 // renamed container that pairs later can release the pair of a member.
 interface RenamePair {
-  previous: CodeEntity
-  candidate: CodeEntity
+  previous: CodeSymbol
+  candidate: CodeSymbol
   change: EntityChange
 }
 
 interface RenamePhase {
-  unmatchedOld: Set<CodeEntity>
-  unmatchedNew: Set<CodeEntity>
+  unmatchedOld: Set<CodeSymbol>
+  unmatchedNew: Set<CodeSymbol>
   changes: EntityChange[]
   covered: CoveredSpans
   renames: RenamePair[]
@@ -368,7 +368,7 @@ interface MatchMembersParams {
 // path, so a Rust `struct Foo` and its `impl Foo` keep their own members.
 function matchMembers({phase, container}: MatchMembersParams): void {
   const {previous, candidate} = container
-  const newPathOf = (entity: CodeEntity): string =>
+  const newPathOf = (entity: CodeSymbol): string =>
     `${candidate.basePath}${entity.basePath.slice(previous.basePath.length)}`
 
   for (const pair of phase.renames) {
@@ -424,8 +424,8 @@ function matchMembers({phase, container}: MatchMembersParams): void {
 }
 
 interface IsMemberParams {
-  entity: CodeEntity
-  container: CodeEntity
+  entity: CodeSymbol
+  container: CodeSymbol
 }
 
 function isMember({entity, container}: IsMemberParams): boolean {
@@ -441,7 +441,7 @@ function isMember({entity, container}: IsMemberParams): boolean {
 // not enough: two unrelated rules or keys often share one.
 function matchByStructure(phase: RenamePhase): void {
   const {unmatchedOld, unmatchedNew} = phase
-  const byHash = new Map<string, CodeEntity[]>()
+  const byHash = new Map<string, CodeSymbol[]>()
   for (const entity of unmatchedOld) {
     if (entity.tokens.length < MIN_STRUCTURAL_TOKENS) {
       continue
@@ -494,7 +494,7 @@ function matchByTokens(phase: RenamePhase): void {
 
   // Same as above: the members that a renamed container claims are not visited.
   for (const candidate of unmatchedNew) {
-    let best: CodeEntity | undefined
+    let best: CodeSymbol | undefined
     let bestScore = RENAME_SIMILARITY_THRESHOLD
 
     for (const previous of unmatchedOld) {
@@ -523,8 +523,8 @@ function matchByTokens(phase: RenamePhase): void {
 }
 
 interface CountWorstCaseFuzzyTokenReadsParams {
-  unmatchedOld: ReadonlySet<CodeEntity>
-  unmatchedNew: ReadonlySet<CodeEntity>
+  unmatchedOld: ReadonlySet<CodeSymbol>
+  unmatchedNew: ReadonlySet<CodeSymbol>
 }
 
 function countWorstCaseFuzzyTokenReads({
@@ -548,8 +548,8 @@ interface TokenTotal {
   readonly tokens: number
 }
 
-function totalTokensByKind(entities: ReadonlySet<CodeEntity>): Map<EntityKind, TokenTotal> {
-  const totals = new Map<EntityKind, TokenTotal>()
+function totalTokensByKind(entities: ReadonlySet<CodeSymbol>): Map<SymbolKind, TokenTotal> {
+  const totals = new Map<SymbolKind, TokenTotal>()
   for (const entity of entities) {
     const total = totals.get(entity.kind) ?? {entities: 0, tokens: 0}
     totals.set(entity.kind, {
@@ -562,8 +562,8 @@ function totalTokensByKind(entities: ReadonlySet<CodeEntity>): Map<EntityKind, T
 
 interface CreateChangeParams {
   type: EntityChange['type']
-  previous: CodeEntity
-  candidate: CodeEntity
+  previous: CodeSymbol
+  candidate: CodeSymbol
   similarity?: number
   bodyChanged?: boolean
   detail?: SequenceDetail
@@ -594,11 +594,11 @@ function createChange({
 }
 
 // Entities are immutable, so the hash of each one is computed once.
-const bodyHashes = new WeakMap<CodeEntity, string>()
+const bodyHashes = new WeakMap<CodeSymbol, string>()
 
 // The hash of an entity's tokens without its own name: two bodies that hash
 // alike differ only in the name.
-function bodyHash(entity: CodeEntity): string {
+function bodyHash(entity: CodeSymbol): string {
   const cached = bodyHashes.get(entity)
   if (cached !== undefined) {
     return cached
@@ -612,7 +612,7 @@ function bodyHash(entity: CodeEntity): string {
 // `Fix` and `#12`), and a JSON key token keeps the quotes that its name drops.
 // So a token that is the whole name is removed. If no token is, the first
 // tokens, in order, that spell the name without its white space are removed.
-function withoutName(entity: CodeEntity): readonly string[] {
+function withoutName(entity: CodeSymbol): readonly string[] {
   const name = compact(entity.name)
   const whole = entity.tokens.findIndex((token) => tokenForms(token).includes(name))
   if (whole !== -1) {
@@ -641,7 +641,7 @@ function compact(text: string): string {
 }
 
 interface BaseKeyParams {
-  kind: EntityKind
+  kind: SymbolKind
   path: string
 }
 

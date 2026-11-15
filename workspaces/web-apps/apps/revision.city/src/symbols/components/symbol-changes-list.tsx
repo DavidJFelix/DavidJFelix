@@ -4,7 +4,7 @@ import {memo, type ReactNode} from 'react'
 import {css, cx} from 'styled-system/css'
 import {isNullish} from '@/diffs/lib/nullish'
 import {CHANGE_ORDER, CHANGE_STYLES, KIND_LABELS} from '@/symbols/lib/change-presentation'
-import type {EntityChange} from '@/symbols/lib/entity'
+import type {EntityChange} from '@/symbols/lib/code-symbol'
 import {SequenceEditRows} from './sequence-edit-rows'
 import type {EntityDiffEntry} from './use-entity-diffs'
 

@@ -1,6 +1,6 @@
 import {expect, test} from 'vitest'
 
-import type {CodeEntity, EntityKind, EntitySpan, SequenceElement} from './entity'
+import type {CodeSymbol, SequenceElement, SymbolKind, SymbolSpan} from './code-symbol'
 import {matchEntities} from './match-entities'
 
 // Long enough to clear the matcher's minimum for structural matching, so cases
@@ -12,13 +12,13 @@ interface CreateEntityParams {
   qualifiedName?: string
   basePath?: string
   occurrence?: number
-  kind?: EntityKind
+  kind?: SymbolKind
   tokens?: readonly string[]
   structuralHash?: string
   contentHash?: string
   ownContentHash?: string
   startLine?: number
-  span?: EntitySpan
+  span?: SymbolSpan
   elements?: readonly SequenceElement[]
 }
 
@@ -35,7 +35,7 @@ function createEntity({
   startLine = 1,
   span,
   elements,
-}: CreateEntityParams): CodeEntity {
+}: CreateEntityParams): CodeSymbol {
   return {
     kind,
     name,
@@ -56,7 +56,7 @@ interface CreateElementParams {
   hash: string
   index?: number
   hasEntities?: boolean
-  span?: EntitySpan
+  span?: SymbolSpan
 }
 
 function createElement({
@@ -268,7 +268,7 @@ test('the fuzzy phase counts only the reads between entities of the same kind', 
 
 // A property occurrence sharing its key with siblings, the way objects in a
 // JSON array all carry `name`. Ordinal suffixes follow document order.
-function createOccurrence(hash: string, ordinal: number): CodeEntity {
+function createOccurrence(hash: string, ordinal: number): CodeSymbol {
   return createEntity({
     name: 'name',
     qualifiedName: ordinal === 0 ? 'defs.name' : `defs.name#${ordinal + 1}`,
@@ -311,7 +311,7 @@ test.each([
   {words: 990, runs: true},
   {words: 1000, runs: false},
 ])('the leftover pairing reads $words words an entry: runs $runs', ({words, runs}) => {
-  const createLeftover = (hash: string, ordinal: number, word: string): CodeEntity => ({
+  const createLeftover = (hash: string, ordinal: number, word: string): CodeSymbol => ({
     ...createOccurrence(hash, ordinal),
     tokens: repeatToken(word, words),
   })

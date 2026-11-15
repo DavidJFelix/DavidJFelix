@@ -16,6 +16,7 @@
 
 import {appendFileSync} from 'node:fs'
 import {join, resolve} from 'node:path'
+import type {SmokeProbe} from './smoke-url'
 
 export type WebAppTarget = {
   // Directory under workspaces/web-apps/apps, and the tail of the package
@@ -58,6 +59,12 @@ export type WebAppTarget = {
   // apps with no custom domain, which skips that step. Only the production
   // deploy entry carries it: dev and preview entries carry ''.
   readonly productionUrl: string
+  // Requests the production smoke sends after the pages pass, each with the
+  // one status it must answer. No probe sends a credential or changes data.
+  // Only the production deploy entry carries them: dev and preview entries
+  // carry none (revision.city's dev worker binds no review Workflow, so its
+  // webhook answers 503 by design).
+  readonly probes: readonly SmokeProbe[]
 }
 
 // What the matrix jobs actually consume: a target plus the CLOUDFLARE_ENV its
@@ -85,6 +92,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     devEnv: '',
     d1Database: '',
     productionUrl: '',
+    probes: [],
   },
   {
     dir: 'calendar-visualizer',
@@ -97,6 +105,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     devEnv: '',
     d1Database: '',
     productionUrl: '',
+    probes: [],
   },
   {
     dir: 'davidjfelix.com',
@@ -109,6 +118,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     devEnv: '',
     d1Database: '',
     productionUrl: 'https://davidjfelix.com',
+    probes: [],
   },
   {
     dir: 'djf.io',
@@ -121,6 +131,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     devEnv: '',
     d1Database: '',
     productionUrl: '',
+    probes: [],
   },
   {
     dir: 'f311x',
@@ -133,6 +144,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     devEnv: '',
     d1Database: '',
     productionUrl: '',
+    probes: [],
   },
   {
     dir: 'forzamonica.com',
@@ -145,6 +157,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     devEnv: '',
     d1Database: '',
     productionUrl: '',
+    probes: [],
   },
   {
     dir: 'monicandavid.com',
@@ -157,6 +170,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     devEnv: 'dev',
     d1Database: 'monicandavid-com',
     productionUrl: 'https://monicandavid.com',
+    probes: [],
   },
   {
     dir: 'onvibes.org',
@@ -169,6 +183,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     devEnv: '',
     d1Database: '',
     productionUrl: 'https://onvibes.org',
+    probes: [],
   },
   {
     dir: 'pkg.dog',
@@ -181,6 +196,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     devEnv: '',
     d1Database: '',
     productionUrl: 'https://pkg.dog',
+    probes: [],
   },
   {
     dir: 'ravrun',
@@ -193,6 +209,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     devEnv: '',
     d1Database: '',
     productionUrl: 'https://ravrun.com',
+    probes: [],
   },
   {
     dir: 'revision.city',
@@ -205,6 +222,17 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     devEnv: 'dev',
     d1Database: 'revision-city',
     productionUrl: 'https://revision.city',
+    probes: [
+      // Sign-in has its GitHub App credentials. The route always answers 200.
+      {
+        method: 'GET',
+        path: '/api/auth/github/config',
+        status: 200,
+        bodyIncludes: '"configured":true',
+      },
+      // Reviews are set up: an unsigned delivery gets 401, not 503.
+      {method: 'POST', path: '/api/github/webhook', status: 401},
+    ],
   },
   {
     dir: 'startchi.com',
@@ -217,6 +245,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     devEnv: '',
     d1Database: '',
     productionUrl: 'https://startchi.com',
+    probes: [],
   },
 ]
 
@@ -240,6 +269,7 @@ export const planAffected = ({
         ...target,
         cloudflareEnv: '',
         productionUrl: kind === 'deploy' ? target.productionUrl : '',
+        probes: kind === 'deploy' ? target.probes : [],
       }
       if (target.devEnv === '') return [production]
       const dev = {
@@ -248,6 +278,7 @@ export const planAffected = ({
         cloudflareEnv: target.devEnv,
         d1Database: '',
         productionUrl: '',
+        probes: [],
       }
       // A preview is a version of the dev worker only -- it must share the dev
       // GitHub App, never production's. A deploy ships both workers so the dev

@@ -157,3 +157,16 @@ jobs:
             deploy ${{ matrix.app.wranglerConfig && format('-c {0}', matrix.app.wranglerConfig) || '' }}
             ${{ matrix.app.cloudflareEnv && format('--env {0}', matrix.app.cloudflareEnv) || '' }}
           workingDirectory: workspaces/web-apps/apps/${{ matrix.app.dir }}
+
+      # Fetch the live site after the deploy: each smoke route must serve a
+      # complete page and its first hashed asset (bin/smoke-url.ts). Only a
+      # production entry of an app with a custom domain names a URL
+      # (bin/plan-affected-apps.ts, `productionUrl`). A failure marks the job
+      # red and does not roll back.
+      - name: smoke production
+        if: matrix.app.productionUrl != ''
+        working-directory: ${{ github.workspace }}
+        env:
+          SMOKE_URL: ${{ matrix.app.productionUrl }}
+          SMOKE_ROUTES: ${{ matrix.app.smokeRoutes }}
+        run: bun bin/smoke-url.ts

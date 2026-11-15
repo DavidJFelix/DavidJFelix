@@ -162,11 +162,15 @@ jobs:
       # complete page and its first hashed asset (bin/smoke-url.ts). Only a
       # production entry of an app with a custom domain names a URL
       # (bin/plan-affected-apps.ts, `productionUrl`). A failure marks the job
-      # red and does not roll back.
+      # red and does not roll back. The Access service token is the one the
+      # previews use: onvibes.org sits behind Cloudflare Access in production
+      # too, and hosts without Access ignore the headers.
       - name: smoke production
         if: matrix.app.productionUrl != ''
         working-directory: ${{ github.workspace }}
         env:
           SMOKE_URL: ${{ matrix.app.productionUrl }}
           SMOKE_ROUTES: ${{ matrix.app.smokeRoutes }}
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
         run: bun bin/smoke-url.ts

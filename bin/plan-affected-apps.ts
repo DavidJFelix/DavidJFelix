@@ -23,7 +23,8 @@ export type WebAppTarget = {
   readonly dir: string
   // wrangler.toml `name`: the deploy target and the preview alias's base.
   readonly worker: string
-  // Routes the preview smoke gate fetches, comma-separated.
+  // Routes the preview smoke gate and the production smoke fetch,
+  // comma-separated.
   readonly smokeRoutes: string
   // Explicit wrangler config, for builds that emit a resolved one (Astro's
   // Cloudflare adapter). Empty means the app's own wrangler.toml.

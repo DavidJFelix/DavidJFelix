@@ -1,3 +1,5 @@
+import {createGitHubApiUrl, createGitHubHeaders, type GitHubFetch} from '@/lib/github-http'
+
 import {resolveGitHubManageAccessURL} from './github-repo-access'
 import {isNullish} from './nullish'
 import {
@@ -12,12 +14,8 @@ import {
 
 const GITHUB_AUTHORIZE_URL = 'https://github.com/login/oauth/authorize'
 const GITHUB_TOKEN_URL = 'https://github.com/login/oauth/access_token'
-const GITHUB_USER_URL = 'https://api.github.com/user'
-const GITHUB_APPLICATIONS_URL = 'https://api.github.com/applications'
 // A slow GitHub must not hold up sign-out.
 const TOKEN_REVOKE_TIMEOUT_MS = 3000
-const GITHUB_API_VERSION = '2022-11-28'
-const USER_AGENT = 'revision-city-diffs'
 
 const AUTH_COOKIE_NAME = 'diffs-github-auth'
 const STATE_COOKIE_NAME = 'diffs-github-oauth-state'
@@ -36,11 +34,6 @@ const LOGIN_PATH = '/api/auth/github/login'
 // the cookie is site-wide rather than scoped to either subtree.
 const COOKIE_PATH = '/'
 
-type AuthFetch = (
-  input: Parameters<typeof fetch>[0],
-  init?: Parameters<typeof fetch>[1],
-) => ReturnType<typeof fetch>
-
 export interface GitHubAppCredentials {
   clientId: string
   clientSecret: string
@@ -48,7 +41,7 @@ export interface GitHubAppCredentials {
 
 export interface GitHubAuthOptions {
   credentials?: GitHubAppCredentials
-  fetch?: AuthFetch
+  fetch?: GitHubFetch
   previewConfig?: PreviewAuthConfig
 }
 
@@ -470,7 +463,7 @@ const TOKEN_GRANT_ATTEMPTS = 3
 // (a 5xx, a body that is not JSON, a network error) is unavailable.
 async function requestGitHubTokenGrant(
   body: Record<string, string>,
-  fetcher: AuthFetch,
+  fetcher: GitHubFetch,
   attemptsLeft = TOKEN_GRANT_ATTEMPTS,
 ): Promise<GitHubTokenGrantResult> {
   const result = await requestGitHubTokenGrantOnce(body, fetcher)
@@ -482,12 +475,12 @@ async function requestGitHubTokenGrant(
 
 async function requestGitHubTokenGrantOnce(
   body: Record<string, string>,
-  fetcher: AuthFetch,
+  fetcher: GitHubFetch,
 ): Promise<GitHubTokenGrantResult> {
   try {
     const response = await fetcher(GITHUB_TOKEN_URL, {
       method: 'POST',
-      headers: {Accept: 'application/json', 'User-Agent': USER_AGENT},
+      headers: {...createGitHubHeaders({}), Accept: 'application/json'},
       body: new URLSearchParams(body),
     })
     const text = await response.text()
@@ -539,16 +532,11 @@ function grantStep(body: Record<string, string>): GitHubAuthStep {
 
 async function fetchGitHubUser(
   token: string,
-  fetcher: AuthFetch,
+  fetcher: GitHubFetch,
 ): Promise<{login: string; avatarUrl?: string} | undefined> {
   try {
-    const response = await fetcher(GITHUB_USER_URL, {
-      headers: {
-        Accept: 'application/vnd.github+json',
-        Authorization: `Bearer ${token}`,
-        'User-Agent': USER_AGENT,
-        'X-GitHub-Api-Version': GITHUB_API_VERSION,
-      },
+    const response = await fetcher(createGitHubApiUrl({path: '/user'}), {
+      headers: createGitHubHeaders({media: 'json', authorization: {kind: 'token', token}}),
     })
     const data = await readJSONBody(response)
     if (!response.ok || !isRecord(data) || typeof data.login !== 'string' || data.login === '') {
@@ -572,7 +560,7 @@ async function fetchGitHubUser(
 interface RevokeGitHubTokenParams {
   token: string
   credentials: GitHubAppCredentials
-  fetcher: AuthFetch
+  fetcher: GitHubFetch
 }
 
 async function revokeGitHubToken({
@@ -581,14 +569,12 @@ async function revokeGitHubToken({
   fetcher,
 }: RevokeGitHubTokenParams): Promise<void> {
   try {
-    const response = await fetcher(`${GITHUB_APPLICATIONS_URL}/${credentials.clientId}/token`, {
+    const url = createGitHubApiUrl({path: `/applications/${credentials.clientId}/token`})
+    const response = await fetcher(url, {
       method: 'DELETE',
       headers: {
-        Accept: 'application/vnd.github+json',
-        Authorization: `Basic ${btoa(`${credentials.clientId}:${credentials.clientSecret}`)}`,
+        ...createGitHubHeaders({media: 'json', authorization: {kind: 'app', credentials}}),
         'Content-Type': 'application/json',
-        'User-Agent': USER_AGENT,
-        'X-GitHub-Api-Version': GITHUB_API_VERSION,
       },
       body: JSON.stringify({access_token: token}),
       signal: AbortSignal.timeout(TOKEN_REVOKE_TIMEOUT_MS),

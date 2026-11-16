@@ -46,22 +46,20 @@ A signed-in visitor can open a private repository. The rule for what each teleme
 - Sentry holds route templates such as `/diffs/$path`, not repository paths.
 - No service holds private code or model reasoning about private code.
 
-Today (main `c34990a`) the code follows the PostHog and Honeycomb parts of the rule but not the
-Sentry part:
+What the code does:
 
 - PostHog page views carry the full viewer path.
 - Cloudflare's automatic traces in Honeycomb carry the full URL of each request and of each GitHub
   call. App code cannot remove these URLs. The failed upstream log line holds the full patch URL.
   The `webhook delivery` event names any repository that is not allowed.
-- Sentry in the browser names page loads and API calls by the full URL. On the server, the title of
-  a 5xx message holds the request path. The message also carries the console breadcrumbs of the
-  request, which can include the failed upstream log line and its URL.
+- Sentry in the browser names page loads and API calls by route template.
+- Sentry on the server names requests and 5xx messages by route template, such as
+  `GET /diffs/$path answered 502`. Outgoing calls to GitHub, Codeberg and the model provider keep
+  only their origin, such as `https://api.github.com`. Before Sentry gets the console breadcrumbs of
+  a request, the server changes each URL to its origin or to a route template, removes `repository`
+  fields, and drops the breadcrumbs of wide events. Workers Logs and Honeycomb keep the full lines.
 - No service gets private code today. The one risk is the `reasoningTail` of a cut model reply in
   the `model call` event. Today it can quote only the one allowed repository, which is public.
-
-Two follow-up changes make Sentry follow the rule. The first gives Sentry in the browser route
-templates for page loads and API calls. The second does the same for Sentry on the server: the 5xx
-title and the upstream log line name the route and the host, not the repository.
 
 ## Stack
 

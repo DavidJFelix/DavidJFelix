@@ -1,4 +1,4 @@
-import type {EntityChangeType, EntityKind} from './entity'
+import type {EntityChangeType, SymbolKind} from './code-symbol'
 
 export interface ChangeStyle {
   readonly color: string
@@ -29,7 +29,7 @@ export const CHANGE_ORDER: readonly EntityChangeType[] = [
 
 // Short kind labels, so a row reads "fn parseUrl" rather than spelling out each
 // grammar's own vocabulary.
-export const KIND_LABELS: Record<EntityKind, string> = {
+export const KIND_LABELS: Record<SymbolKind, string> = {
   call: 'call',
   class: 'class',
   constant: 'const',

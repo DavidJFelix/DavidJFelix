@@ -1,7 +1,7 @@
 import type {Parser, SyntaxNode} from '@lezer/common'
 
-import type {CodeEntity, EntityKind, EntitySpan, EntitySpec, SequenceElement} from './entity'
-import {anonymousScopeProp, entityProp} from './entity'
+import type {CodeSymbol, SequenceElement, SymbolKind, SymbolSpan, SymbolSpec} from './code-symbol'
+import {anonymousScopeProp, symbolProp} from './code-symbol'
 import {computeSignature} from './entity-signature'
 
 // A generated file, such as a lockfile or a bundled asset, can hold tens of
@@ -28,7 +28,7 @@ const PREVIEW_LENGTH = 48
 
 // Entities whose bodies hold executable code. Anything declared inside one is a
 // local, not part of the file's public shape.
-const EXECUTABLE_KINDS = new Set<EntityKind>(['constructor', 'function', 'method'])
+const EXECUTABLE_KINDS = new Set<SymbolKind>(['constructor', 'function', 'method'])
 
 // A deep name search must not wander into an entity's body, where it would find
 // local variables instead of the declarator it was aiming for.
@@ -51,10 +51,10 @@ export interface ExtractEntitiesParams {
 
 export type EntityExtraction =
   | {readonly tooLarge: true}
-  | {readonly tooLarge: false; readonly entities: readonly CodeEntity[]}
+  | {readonly tooLarge: false; readonly entities: readonly CodeSymbol[]}
 
 // Walks a parsed tree once, emitting an entity for every node whose type carries
-// an `entityProp`. Because the spec lives on the node type, a tree stitched from
+// an `symbolProp`. Because the spec lives on the node type, a tree stitched from
 // several grammars (script tags, template blocks) needs no special handling.
 // For a file over a `_PER_FILE` limit, the result is `{tooLarge: true}`.
 export function extractEntities({source, parser}: ExtractEntitiesParams): EntityExtraction {
@@ -119,7 +119,7 @@ function ownedNodes({node, leading}: FoundEntity): readonly SyntaxNode[] {
 
 // The span starts at the first leading node, so a decorated entity starts at
 // its first decorator.
-function entitySpan({node, leading}: Pick<FoundEntity, 'node' | 'leading'>): EntitySpan {
+function entitySpan({node, leading}: Pick<FoundEntity, 'node' | 'leading'>): SymbolSpan {
   return {from: leading[0]?.from ?? node.from, to: node.to}
 }
 
@@ -127,7 +127,7 @@ interface FingerprintSequenceParams {
   sequence: readonly SyntaxNode[]
   source: string
   lineStarts: readonly number[]
-  entitySpans: readonly EntitySpan[]
+  entitySpans: readonly SymbolSpan[]
 }
 
 // Fingerprints for the elements of a sequence-valued entity. Hashes use full
@@ -156,7 +156,7 @@ function createPreview(text: string): string {
 }
 
 interface FoundEntity {
-  readonly kind: EntityKind
+  readonly kind: SymbolKind
   readonly name: string
   readonly qualifiedName: string
   readonly basePath: string
@@ -168,7 +168,7 @@ interface FoundEntity {
 
 interface EntityFrame {
   readonly name: string
-  readonly kind: EntityKind
+  readonly kind: SymbolKind
   readonly from: number
   readonly to: number
   readonly container: boolean
@@ -198,7 +198,7 @@ function collectEntityNodes({
       if (ref.type.prop(anonymousScopeProp) === true) {
         anonymousScopes += 1
       }
-      const spec = ref.type.prop(entityProp)
+      const spec = ref.type.prop(symbolProp)
       if (spec === undefined) {
         return true
       }
@@ -274,7 +274,7 @@ function nodeKey(node: SyntaxNode): string {
 interface ResolveNameParams {
   node: SyntaxNode
   source: string
-  spec: EntitySpec
+  spec: SymbolSpec
 }
 
 function resolveName({node, source, spec}: ResolveNameParams): string | undefined {
@@ -331,7 +331,7 @@ function joinPath(open: readonly EntityFrame[], name: string): string {
 }
 
 interface CountOccurrenceParams {
-  kind: EntityKind
+  kind: SymbolKind
   path: string
   counts: Map<string, number>
 }

@@ -1,6 +1,6 @@
 import type {SyntaxNode} from '@lezer/common'
 
-import type {ResolveEntityNameParams} from '../entity'
+import type {ResolveSymbolNameParams} from '../code-symbol'
 
 export interface WrapperChildrenOptions {
   wrapper: string
@@ -13,6 +13,6 @@ export interface WrapperChildrenOptions {
 export function wrapperChildren({
   wrapper,
   type,
-}: WrapperChildrenOptions): (params: ResolveEntityNameParams) => readonly SyntaxNode[] {
+}: WrapperChildrenOptions): (params: ResolveSymbolNameParams) => readonly SyntaxNode[] {
   return ({node}) => (node.parent?.type.name === wrapper ? node.parent.getChildren(type) : [])
 }

@@ -1,7 +1,7 @@
 import type {Parser} from '@lezer/common'
 import {expect, test, vi} from 'vitest'
 
-import type {CodeEntity} from './entity'
+import type {CodeSymbol} from './code-symbol'
 import type * as EntitySignatureModule from './entity-signature'
 import {computeSignature} from './entity-signature'
 import type {ExtractEntitiesParams} from './extract-entities'
@@ -31,7 +31,7 @@ const tsxParser = await parserFor('tsx')
 const markdownParser = await parserFor('markdown')
 const jsonParser = await parserFor('json')
 
-function extractWithinLimits(params: ExtractEntitiesParams): readonly CodeEntity[] {
+function extractWithinLimits(params: ExtractEntitiesParams): readonly CodeSymbol[] {
   const extraction = extractEntities(params)
   if (extraction.tooLarge) {
     throw new Error('The source is too large to extract.')

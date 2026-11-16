@@ -13,8 +13,8 @@ import {
 import {createGitHubFileReader} from '@/diffs/lib/github-diff-file-server'
 import {isNullish} from '@/diffs/lib/nullish'
 import {isFileTooLargeError} from '@/diffs/lib/read-limited-text'
+import type {EntityDiff} from './code-symbol'
 import {createTooLargeEntityDiff, diffEntities} from './diff-entities'
-import type {EntityDiff} from './entity'
 import {MAX_FILES_PER_REQUEST} from './entity-diff-client'
 import {detectLanguage} from './language-registry'
 

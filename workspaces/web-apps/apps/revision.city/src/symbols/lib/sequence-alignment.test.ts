@@ -1,6 +1,6 @@
 import {expect, test} from 'vitest'
 
-import type {SequenceElement} from './entity'
+import type {SequenceElement} from './code-symbol'
 import {alignByHash, diffSequenceElements} from './sequence-alignment'
 
 // 600 by 600 is past the 250,000-cell table cap, so these cases reach the

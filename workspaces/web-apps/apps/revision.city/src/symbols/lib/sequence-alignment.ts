@@ -1,4 +1,4 @@
-import type {SequenceDetail, SequenceEdit, SequenceElement} from './entity'
+import type {SequenceDetail, SequenceEdit, SequenceElement} from './code-symbol'
 
 // The LCS table is quadratic over whatever survives the common head and tail
 // strip. A middle past this bound is first split on hashes that occur once on

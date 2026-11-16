@@ -1,5 +1,5 @@
 import {z} from 'zod'
-import type {CodeEntity, EntityRange} from '../../symbols/lib/entity'
+import type {CodeSymbol, SymbolRange} from '../../symbols/lib/code-symbol'
 import {extractEntities} from '../../symbols/lib/extract-entities'
 import {detectLanguage} from '../../symbols/lib/language-registry'
 import type {ToolCall, ToolDefinition} from './openrouter'
@@ -333,7 +333,7 @@ async function readDefinition({snapshot, path, name}: ReadDefinitionParams): Pro
 
 // The node of a definition can end with its line break. Then the node ends at
 // the start of the next line, which is not part of the definition.
-function definitionLines({range, span}: CodeEntity, text: string): EntityRange {
+function definitionLines({range, span}: CodeSymbol, text: string): SymbolRange {
   return {
     startLine: range.startLine,
     endLine: text[span.to - 1] === '\n' ? range.endLine - 1 : range.endLine,

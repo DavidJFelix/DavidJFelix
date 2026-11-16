@@ -1,4 +1,4 @@
-import type {EntityChange, EntityDiff, EntityDiffSummary} from './entity'
+import type {EntityChange, EntityDiff, EntityDiffSummary} from './code-symbol'
 import {extractEntities} from './extract-entities'
 import {detectLanguage} from './language-registry'
 import {matchEntities} from './match-entities'

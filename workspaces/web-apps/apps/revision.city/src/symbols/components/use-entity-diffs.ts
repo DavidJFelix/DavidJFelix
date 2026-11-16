@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useRef, useState} from 'react'
 
-import type {EntityDiff} from '@/symbols/lib/entity'
+import type {EntityDiff} from '@/symbols/lib/code-symbol'
 import {
   type EntityDiffRequest,
   MAX_FILES_PER_REQUEST,

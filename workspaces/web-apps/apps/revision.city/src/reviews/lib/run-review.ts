@@ -86,6 +86,7 @@ export async function runReview({
   pullNumber,
   headSha: eventHeadSha,
   label,
+  rerun = false,
   runId,
   step,
   request,
@@ -124,9 +125,9 @@ export async function runReview({
       })
     }
     const currentSha = await openHeadSha()
-    // A label asks for a review of the current head, which can be newer than
-    // the head in the event.
-    const headSha = label === undefined ? eventHeadSha : currentSha
+    // A label or a rerun asks for a review of the current head, which can be
+    // newer than the head in the event.
+    const headSha = label === undefined && !rerun ? eventHeadSha : currentSha
     return headSha !== undefined && headSha === currentSha
       ? {headSha, checkRunId: await createCheckRun({request, repository, headSha})}
       : null

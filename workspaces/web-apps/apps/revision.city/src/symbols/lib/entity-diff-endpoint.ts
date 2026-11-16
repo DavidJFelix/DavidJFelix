@@ -5,7 +5,11 @@ import {
   createCodebergFileReader,
 } from '@/diffs/lib/codeberg-diff-file-server'
 import {CODEBERG_HOST, canReadCodebergFiles} from '@/diffs/lib/codeberg-diff-source'
-import {resolveGitHubAuth, withSetCookieHeaders} from '@/diffs/lib/github-auth'
+import {
+  type GitHubAuthOptions,
+  resolveGitHubAuth,
+  withSetCookieHeaders,
+} from '@/diffs/lib/github-auth'
 import {createGitHubFileReader} from '@/diffs/lib/github-diff-file-server'
 import {isNullish} from '@/diffs/lib/nullish'
 import {isFileTooLargeError} from '@/diffs/lib/read-limited-text'
@@ -51,6 +55,7 @@ export interface EntityDiffResult {
 }
 
 export interface EntityDiffEndpointOptions {
+  credentials?: GitHubAuthOptions['credentials']
   fetch?: CodebergDiffFileServerOptions['fetch']
 }
 
@@ -99,7 +104,10 @@ export async function handleEntityDiffRequest(
     return createErrorResponse('Symbols read from GitHub and Codeberg only.', 400)
   }
 
-  const auth = await resolveGitHubAuth(request)
+  const auth = await resolveGitHubAuth(request, {
+    credentials: options.credentials,
+    fetch: options.fetch,
+  })
   const token = auth.session?.accessToken
   const credentials = isNullish(token)
     ? ({tokenSource: 'anonymous'} as const)

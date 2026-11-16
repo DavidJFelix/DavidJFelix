@@ -13,6 +13,9 @@ import {
 const GITHUB_AUTHORIZE_URL = 'https://github.com/login/oauth/authorize'
 const GITHUB_TOKEN_URL = 'https://github.com/login/oauth/access_token'
 const GITHUB_USER_URL = 'https://api.github.com/user'
+const GITHUB_APPLICATIONS_URL = 'https://api.github.com/applications'
+// A slow GitHub must not hold up sign-out.
+const TOKEN_REVOKE_TIMEOUT_MS = 3000
 const GITHUB_API_VERSION = '2022-11-28'
 const USER_AGENT = 'revision-city-diffs'
 
@@ -269,9 +272,29 @@ async function handleGitHubInstallationSetupRedirect({
   return handleGitHubLoginRequest(new Request(loginURL), options)
 }
 
-export function handleGitHubLogoutRequest(request: Request): Response {
+// Asks GitHub to revoke the token of this session, then clears the cookie, so a
+// copy of the cookie stops working at sign-out. The revoke is best effort: a
+// failure is logged and the sign-out continues. A browser sends its Origin
+// header with every POST, so a request that names another site is refused.
+export async function handleGitHubLogoutRequest(
+  request: Request,
+  options: GitHubAuthOptions = {},
+): Promise<Response> {
   const requestURL = new URL(request.url)
+  const origin = request.headers.get('origin')
+  if (!isNullish(origin) && origin !== requestURL.origin) {
+    return createAuthTextResponse('Sign out from this site.', 403)
+  }
   const returnPath = sanitizeReturnPath(requestURL.searchParams.get('returnTo'))
+  const session = readSessionCookie(request)
+  const credentials = options.credentials ?? readGitHubAppCredentials()
+  if (!isNullish(session) && !isNullish(credentials)) {
+    await revokeGitHubToken({
+      token: session.accessToken,
+      credentials,
+      fetcher: options.fetch ?? fetch,
+    })
+  }
   return createRedirectResponse(returnPath, [
     serializeExpiredCookie(AUTH_COOKIE_NAME, isSecureRequest(requestURL)),
   ])
@@ -435,11 +458,10 @@ type GitHubTokenGrantResult =
   | {kind: 'refused'}
   | {kind: 'unavailable'; status?: number}
 
-// github.com limits requests by IP address, and a Worker shares its outgoing
-// addresses with other Cloudflare customers. So a 429 can come from traffic
-// that is not ours, and the next attempt often leaves from another address.
-// A throttled request does not reach the code check, so the next attempt can
-// send the same code.
+// github.com sometimes answers the exchange with 429 (three in a row on
+// 2026-11-12). Which layer sends it is not known yet, so the failure log keeps
+// the headers. A retry sends the same code. If the 429 used up the code, the
+// retry gets bad_verification_code and the sign-in fails as it did before.
 const TOKEN_GRANT_ATTEMPTS = 3
 
 // Calls GitHub's token endpoint for both the initial code exchange and refresh
@@ -468,7 +490,8 @@ async function requestGitHubTokenGrantOnce(
       headers: {Accept: 'application/json', 'User-Agent': USER_AGENT},
       body: new URLSearchParams(body),
     })
-    const data = await readJSONBody(response)
+    const text = await response.text()
+    const data = parseJSON(text)
     if (
       !response.ok ||
       !isRecord(data) ||
@@ -484,6 +507,10 @@ async function requestGitHubTokenGrantOnce(
         error,
         errorDescription: isRecord(data) ? readOptionalString(data.error_description) : undefined,
         retryAfter: response.headers.get('retry-after') ?? undefined,
+        headers: readHeadersForLog(response.headers),
+        // Only a body that is not JSON, such as an HTML block page. A JSON body
+        // can hold a token, and its error fields are logged above.
+        bodyStart: isNullish(data) ? text.slice(0, BODY_LOG_LENGTH) : undefined,
       })
       return outcome === 'refused'
         ? {kind: 'refused'}
@@ -542,6 +569,61 @@ async function fetchGitHubUser(
   }
 }
 
+interface RevokeGitHubTokenParams {
+  token: string
+  credentials: GitHubAppCredentials
+  fetcher: AuthFetch
+}
+
+async function revokeGitHubToken({
+  token,
+  credentials,
+  fetcher,
+}: RevokeGitHubTokenParams): Promise<void> {
+  try {
+    const response = await fetcher(`${GITHUB_APPLICATIONS_URL}/${credentials.clientId}/token`, {
+      method: 'DELETE',
+      headers: {
+        Accept: 'application/vnd.github+json',
+        Authorization: `Basic ${btoa(`${credentials.clientId}:${credentials.clientSecret}`)}`,
+        'Content-Type': 'application/json',
+        'User-Agent': USER_AGENT,
+        'X-GitHub-Api-Version': GITHUB_API_VERSION,
+      },
+      body: JSON.stringify({access_token: token}),
+      signal: AbortSignal.timeout(TOKEN_REVOKE_TIMEOUT_MS),
+    })
+    if (response.status !== 204) {
+      const data = await readJSONBody(response)
+      logGitHubAuthFailure({
+        step: 'token revoke',
+        status: response.status,
+        error: isRecord(data) ? readOptionalString(data.message) : undefined,
+      })
+    }
+  } catch (error) {
+    logGitHubAuthFailure({step: 'token revoke', error: String(error)})
+  }
+}
+
+// Enough of a block page to name who sent it, short enough for one log line.
+const BODY_LOG_LENGTH = 500
+
+// Every response header except Set-Cookie, so a throttled answer shows which
+// layer sent it (Server, X-GitHub-Request-Id, CF-Ray and the rate limit headers).
+function readHeadersForLog(headers: Headers): Record<string, string> {
+  return Object.fromEntries([...headers].filter(([name]) => name !== 'set-cookie'))
+}
+
+function parseJSON(text: string): unknown {
+  try {
+    const data: unknown = JSON.parse(text)
+    return data
+  } catch {
+    return undefined
+  }
+}
+
 // GitHub also puts the cause of a 4xx or 5xx in a JSON body, so the body is
 // read on every status. A body that is not JSON gives undefined.
 async function readJSONBody(response: Response): Promise<unknown> {
@@ -553,7 +635,7 @@ async function readJSONBody(response: Response): Promise<unknown> {
   }
 }
 
-type GitHubAuthStep = 'code exchange' | 'token refresh' | 'user lookup'
+type GitHubAuthStep = 'code exchange' | 'token refresh' | 'user lookup' | 'token revoke'
 
 interface GitHubAuthFailure {
   step: GitHubAuthStep
@@ -564,6 +646,8 @@ interface GitHubAuthFailure {
   error?: string
   errorDescription?: string
   retryAfter?: string
+  headers?: Record<string, string>
+  bodyStart?: string
 }
 
 // The sign-in answers most failed GitHub calls with a generic message, so the

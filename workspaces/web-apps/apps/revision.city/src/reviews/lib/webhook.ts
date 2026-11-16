@@ -1,3 +1,5 @@
+// cSpell:ignore rerequested -- the GitHub action of a Re-run click
+
 import {z} from 'zod'
 import type {DismissResult} from './dismiss-check-run'
 import {APP_BOT_LOGIN, APP_SLUG, DISMISS_ACTION} from './publish-review'
@@ -28,6 +30,8 @@ export interface ReviewRunParams {
   headSha: string
   // The label as the pull request shows it, when the label started the review.
   label?: string
+  // True when a user asked to run the check again (`decideRerun`).
+  rerun?: boolean
 }
 
 const repositorySchema = z.object({
@@ -105,6 +109,70 @@ export function decideReviewRun({event, payload}: DecideReviewRunParams): Review
       pullNumber: pull.number,
       headSha: pull.head.sha,
       ...(reviewLabel === undefined ? {} : {label: reviewLabel}),
+    },
+  }
+}
+
+// The part of a check run or a check suite that a rerun reads.
+const rerunCheckSchema = z.object({
+  id: z.number(),
+  head_sha: z.string(),
+  app: z.object({slug: z.string()}).nullable(),
+  pull_requests: z.array(
+    z.object({number: z.number(), base: z.object({repo: z.object({id: z.number()})})}),
+  ),
+})
+
+const rerunEventSchema = z.object({
+  action: z.string(),
+  installation: z.object({id: z.number()}),
+  repository: repositorySchema,
+  check_run: rerunCheckSchema.optional(),
+  check_suite: rerunCheckSchema.optional(),
+})
+
+export interface DecideRerunParams extends DecideReviewRunParams {
+  // The X-GitHub-Event header.
+  event: 'check_run' | 'check_suite'
+  // The X-GitHub-Delivery header. A delivery that GitHub sends again keeps it.
+  deliveryId: string | null
+}
+
+// A click on Re-run (check run) or Re-run all checks (check suite). As with the
+// label, the review takes the current head of the pull request, because the
+// check can be on an older commit. Only users who can push see the buttons.
+export function decideRerun({event, payload, deliveryId}: DecideRerunParams): ReviewRunDecision {
+  const parsed = rerunEventSchema.safeParse(payload)
+  const check = event === 'check_run' ? parsed.data?.check_run : parsed.data?.check_suite
+  if (!parsed.success || check === undefined) {
+    return {start: false, reason: `The payload is not a ${event} event`}
+  }
+  const {action, installation, repository} = parsed.data
+  if (!ALLOWED_REPOSITORIES.has(repository.full_name.toLowerCase())) {
+    return {start: false, reason: `${repository.full_name} is not allowed`}
+  }
+  if (action !== 'rerequested' || check.app?.slug !== APP_SLUG) {
+    return {start: false, reason: 'The event does not ask to run a check of the app again'}
+  }
+  // A commit can be the head of more than one pull request. The review is for
+  // the first one in this repository. GitHub lists no pull requests from forks.
+  const pull = check.pull_requests.find((entry) => entry.base.repo.id === repository.id)
+  if (pull === undefined) {
+    return {start: false, reason: 'The check has no pull request in this repository'}
+  }
+  const once = deliveryId?.replaceAll(/[^0-9a-f-]/gi, '') || `${event}-${check.id}`
+  return {
+    start: true,
+    instanceId: `${repository.id}-${pull.number}-rerun-${once}`,
+    params: {
+      installationId: installation.id,
+      repositoryId: repository.id,
+      owner: repository.owner.login,
+      name: repository.name,
+      pullNumber: pull.number,
+      // The commit of the check. The review takes the current head instead.
+      headSha: check.head_sha,
+      rerun: true,
     },
   }
 }
@@ -279,14 +347,22 @@ export async function handleReviewWebhook({
   }
   const event = request.headers.get('x-github-event')
   const payload = parseJson(body)
+  const deliveryId = request.headers.get('x-github-delivery')
   const deliveryFields = {
     event: 'webhook delivery',
-    deliveryId: request.headers.get('x-github-delivery') ?? undefined,
+    deliveryId: deliveryId ?? undefined,
     githubEvent: event ?? undefined,
     action: readAction(payload),
   }
   try {
-    const delivery = await handleDelivery({event, payload, workflow, syncCheckRun, dismissCheckRun})
+    const delivery = await handleDelivery({
+      event,
+      deliveryId,
+      payload,
+      workflow,
+      syncCheckRun,
+      dismissCheckRun,
+    })
     log({
       ...deliveryFields,
       decision: delivery.answer.status,
@@ -302,6 +378,7 @@ export async function handleReviewWebhook({
 
 interface HandleDeliveryParams {
   event: string | null
+  deliveryId: string | null
   payload: unknown
   workflow: ReviewWorkflowBinding
   syncCheckRun: HandleReviewWebhookParams['syncCheckRun']
@@ -317,6 +394,7 @@ interface Delivery {
 
 async function handleDelivery({
   event,
+  deliveryId,
   payload,
   workflow,
   syncCheckRun,
@@ -330,6 +408,9 @@ async function handleDelivery({
     }
     return {httpStatus: 200, answer: {status: await syncCheckRun(sync.params)}}
   }
+  if ((event === 'check_run' || event === 'check_suite') && readAction(payload) === 'rerequested') {
+    return startReview({workflow, decision: decideRerun({event, payload, deliveryId})})
+  }
   if (event === 'check_run') {
     const dismiss = decideDismiss({event, payload})
     if (!dismiss.dismiss || !dismissCheckRun) {
@@ -340,7 +421,15 @@ async function handleDelivery({
     }
     return {httpStatus: 200, answer: {status: await dismissCheckRun(dismiss.params)}}
   }
-  const decision = decideReviewRun({event, payload})
+  return startReview({workflow, decision: decideReviewRun({event, payload})})
+}
+
+interface StartReviewParams {
+  workflow: ReviewWorkflowBinding
+  decision: ReviewRunDecision
+}
+
+async function startReview({workflow, decision}: StartReviewParams): Promise<Delivery> {
   if (!decision.start) {
     return {httpStatus: 202, answer: {status: 'ignored', reason: decision.reason}}
   }

@@ -292,30 +292,32 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
 
   return (
     <ReviewGrid>
-      <DiffsHeader
-        className={css({gridArea: 'header'})}
-        collapseMode={collapseMode}
-        colorMode={colorMode}
-        darkThemeName={darkThemeName}
-        diffIndicators={diffIndicators}
-        diffStyle={diffStyle}
-        lightThemeName={lightThemeName}
-        lineNumbers={lineNumbers}
-        overflow={overflow}
-        fileTreeOverlayOpen={fileTreeOverlayOpen}
-        fileTreeAvailable={!isNullish(treeSource)}
-        onToggleCollapseMode={handleToggleCollapseMode}
-        onToggleFileTreeOverlay={handleToggleFileTreeOverlay}
-        setColorMode={setColorMode}
-        setDarkThemeName={setDarkThemeName}
-        setDiffIndicators={setDiffIndicators}
-        setDiffStyle={setDiffStyle}
-        setLightThemeName={setLightThemeName}
-        setLineNumbers={setLineNumbers}
-        setOverflow={setOverflow}
-        setShowBackgrounds={setShowBackgrounds}
-        showBackgrounds={showBackgrounds}
-      />
+      <InertContents inert={fileTreeOverlayOpen}>
+        <DiffsHeader
+          className={css({gridArea: 'header'})}
+          collapseMode={collapseMode}
+          colorMode={colorMode}
+          darkThemeName={darkThemeName}
+          diffIndicators={diffIndicators}
+          diffStyle={diffStyle}
+          lightThemeName={lightThemeName}
+          lineNumbers={lineNumbers}
+          overflow={overflow}
+          fileTreeOverlayOpen={fileTreeOverlayOpen}
+          fileTreeAvailable={!isNullish(treeSource)}
+          onToggleCollapseMode={handleToggleCollapseMode}
+          onToggleFileTreeOverlay={handleToggleFileTreeOverlay}
+          setColorMode={setColorMode}
+          setDarkThemeName={setDarkThemeName}
+          setDiffIndicators={setDiffIndicators}
+          setDiffStyle={setDiffStyle}
+          setLightThemeName={setLightThemeName}
+          setLineNumbers={setLineNumbers}
+          setOverflow={setOverflow}
+          setShowBackgrounds={setShowBackgrounds}
+          showBackgrounds={showBackgrounds}
+        />
+      </InertContents>
       {viewerAvailable && !isNullish(treeSource) ? (
         <>
           <DiffsSidebar
@@ -339,28 +341,30 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
             viewerRef={viewerRef}
             onSelectItem={handleSelectTreeItem}
           />
-          <DiffsViewer
-            key={viewerKey}
-            className={css({gridArea: 'viewer'})}
-            diffStyle={diffStyle}
-            // A viewer that uses a failed pool starts a new initialization each
-            // time it sets its theme. Without the pool, the viewer highlights on
-            // the main thread with its own theme.
-            disableWorkerPool={workerPoolState === 'failed'}
-            overflow={overflow}
-            showBackgrounds={showBackgrounds}
-            diffIndicators={diffIndicators}
-            lineNumbers={lineNumbers}
-            scrollRef={scrollRef}
-            themeType={colorMode}
-            viewerRef={viewerRef}
-            initialItems={initialItems}
-            loadDiffFiles={loadDiffFiles}
-            onCommentDeleted={handleCommentDeleted}
-            onCommentSaved={handleCommentSaved}
-            onLineLinkChange={onLineLinkChange}
-            onViewerReady={onViewerReady}
-          />
+          <InertContents inert={fileTreeOverlayOpen}>
+            <DiffsViewer
+              key={viewerKey}
+              className={css({gridArea: 'viewer'})}
+              diffStyle={diffStyle}
+              // A viewer that uses a failed pool starts a new initialization each
+              // time it sets its theme. Without the pool, the viewer highlights on
+              // the main thread with its own theme.
+              disableWorkerPool={workerPoolState === 'failed'}
+              overflow={overflow}
+              showBackgrounds={showBackgrounds}
+              diffIndicators={diffIndicators}
+              lineNumbers={lineNumbers}
+              scrollRef={scrollRef}
+              themeType={colorMode}
+              viewerRef={viewerRef}
+              initialItems={initialItems}
+              loadDiffFiles={loadDiffFiles}
+              onCommentDeleted={handleCommentDeleted}
+              onCommentSaved={handleCommentSaved}
+              onLineLinkChange={onLineLinkChange}
+              onViewerReady={onViewerReady}
+            />
+          </InertContents>
         </>
       ) : (
         <DiffsStatusPanel
@@ -406,6 +410,22 @@ function useWorkerPoolState(): WorkerPoolState {
 
 interface ReviewGridProps {
   children: ReactNode
+}
+
+interface InertContentsProps {
+  children: ReactNode
+  inert: boolean
+}
+
+// A box with no layout of its own, so its child stays a grid item of
+// ReviewGrid. While the phone file tree is open, `inert` keeps the parts
+// behind it out of focus and out of the accessibility tree.
+function InertContents({children, inert}: InertContentsProps) {
+  return (
+    <div className={css({display: 'contents'})} inert={inert}>
+      {children}
+    </div>
+  )
 }
 
 function ReviewGrid({children}: ReviewGridProps) {

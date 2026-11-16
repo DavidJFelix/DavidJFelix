@@ -14,7 +14,6 @@ import {
   type ReactNode,
   type RefObject,
   useCallback,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -52,13 +51,12 @@ import {DiffsCommentsList} from './diffs-comments-list'
 import {DiffsFileTree} from './diffs-file-tree'
 import {DiffsStats} from './diffs-stats'
 import {useChromeThemeProps} from './hooks/use-chrome-theme-props'
+import {MOBILE_MEDIA_QUERY, useMobileOverlay} from './hooks/use-mobile-overlay'
 import type {ThemeCycleControls} from './hooks/use-theme-cycle'
 import {WorkerPoolStatus} from './worker-pool-status'
 
 type SidebarTab = 'files' | 'comments' | 'symbols'
 type SidebarStatusPanel = 'diffStats' | 'systemMonitor'
-
-const MOBILE_MEDIA_QUERY = '(max-width: 767px)'
 
 // Shared 16/12px icon size for the tab-row toggle buttons (search, filter,
 // mobile close), matching the header's own ICON_SIZE_CLASS.
@@ -183,31 +181,13 @@ export const DiffsSidebar = memo(function DiffsSidebar({
     })
   }, [])
 
-  useEffect(() => {
-    if (!mobileOverlayOpen || !window.matchMedia(MOBILE_MEDIA_QUERY).matches) {
-      return
-    }
-
-    const {body, documentElement} = document
-    const codeViewScroll = scrollRef.current
-    const previousBodyOverflow = body.style.overflow
-    const previousRootOverscrollBehavior = documentElement.style.overscrollBehavior
-    const previousCodeViewOverflow = codeViewScroll?.style.overflow
-
-    body.style.overflow = 'hidden'
-    documentElement.style.overscrollBehavior = 'none'
-    if (!isNullish(codeViewScroll)) {
-      codeViewScroll.style.overflow = 'hidden'
-    }
-
-    return () => {
-      body.style.overflow = previousBodyOverflow
-      documentElement.style.overscrollBehavior = previousRootOverscrollBehavior
-      if (!isNullish(codeViewScroll)) {
-        codeViewScroll.style.overflow = previousCodeViewOverflow ?? ''
-      }
-    }
-  }, [mobileOverlayOpen, scrollRef])
+  const panelRef = useRef<HTMLDivElement | null>(null)
+  useMobileOverlay({
+    open: mobileOverlayOpen,
+    onClose: onMobileClose,
+    panelRef,
+    scrollRef,
+  })
 
   return (
     <>
@@ -236,6 +216,7 @@ export const DiffsSidebar = memo(function DiffsSidebar({
       <SidebarWrapper
         className={className}
         mobileOverlayOpen={mobileOverlayOpen}
+        ref={panelRef}
         themeStyle={sidebarStyle}
       >
         <div
@@ -409,12 +390,24 @@ interface SidebarWrapperProps {
   children: ReactNode
   className?: string
   mobileOverlayOpen: boolean
+  ref: RefObject<HTMLDivElement | null>
   themeStyle?: CSSProperties
 }
 
-function SidebarWrapper({children, className, mobileOverlayOpen, themeStyle}: SidebarWrapperProps) {
+function SidebarWrapper({
+  children,
+  className,
+  mobileOverlayOpen,
+  ref,
+  themeStyle,
+}: SidebarWrapperProps) {
   return (
     <div
+      ref={ref}
+      role={mobileOverlayOpen ? 'dialog' : undefined}
+      aria-modal={mobileOverlayOpen ? true : undefined}
+      aria-label={mobileOverlayOpen ? 'File tree' : undefined}
+      tabIndex={mobileOverlayOpen ? -1 : undefined}
       className={cx(
         className,
         css({
@@ -424,7 +417,6 @@ function SidebarWrapper({children, className, mobileOverlayOpen, themeStyle}: Si
           h: 'full',
           minH: '0',
           flexDirection: 'column',
-          transition: '[transform 300ms cubic-bezier(0.32, 0.72, 0, 1)]',
           willChange: {base: 'transform', md: 'auto'},
           transform: {md: 'translateY(0)'},
           _motionReduce: {transition: '[none]'},
@@ -437,6 +429,8 @@ function SidebarWrapper({children, className, mobileOverlayOpen, themeStyle}: Si
           ? css({
               pointerEvents: 'auto',
               transform: 'translateY(0)',
+              transition: '[transform 300ms cubic-bezier(0.32, 0.72, 0, 1)]',
+              visibility: 'visible',
               overflow: {base: 'hidden', md: 'visible'},
               roundedTop: 'diffs.xl',
               boxShadow: {
@@ -450,6 +444,11 @@ function SidebarWrapper({children, className, mobileOverlayOpen, themeStyle}: Si
           : css({
               pointerEvents: {base: 'none', md: 'auto'},
               transform: 'translateY(calc(100% + 1.5rem))',
+              // Hide the closed sheet only after the slide ends, so the close
+              // animation stays visible.
+              visibility: {base: 'hidden', md: 'visible'},
+              transition:
+                '[transform 300ms cubic-bezier(0.32, 0.72, 0, 1), visibility 0s linear 300ms]',
               overflow: {base: 'hidden', md: 'visible'},
               rounded: {base: 'diffs.xl', md: '[0]'},
               h: {md: 'full'},

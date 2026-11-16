@@ -1,22 +1,35 @@
 import {expect, test, vi} from 'vitest'
 
+import {encodeCookiePayload} from '@/diffs/lib/github-auth'
+import {clearGitHubDiffFileServerCache} from '@/diffs/lib/github-diff-file-server'
 import {MAX_FILES_PER_REQUEST} from './entity-diff-client'
 import {handleEntityDiffRequest} from './entity-diff-endpoint'
 
 const ORIGIN = 'https://revision.city'
 const CODEBERG_PULL = '/acme/widgets/pulls/7'
 const CODEBERG_PULL_API = 'https://codeberg.org/api/v1/repos/acme/widgets/pulls/7'
+const GITHUB_PULL = '/acme/widgets/pull/7'
+const CREDENTIALS = {clientId: 'Iv1.test-client', clientSecret: 'test-secret'}
+const SESSION_COOKIE = `diffs-github-auth=${encodeCookiePayload({accessToken: 'ghu_token', login: 'reviewer'})}`
 
 // fetch by call signature only: lib.dom types `typeof fetch` with a required
 // static `preconnect`, which a stub cannot (and need not) satisfy.
 type FetchLike = (...args: Parameters<typeof fetch>) => ReturnType<typeof fetch>
 
-function createRequest(body: unknown): Request {
+function createRequest(body: unknown, cookie?: string): Request {
   return new Request(`${ORIGIN}/api/diffs/entity-diff`, {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
+    headers: {'Content-Type': 'application/json', ...(cookie === undefined ? {} : {cookie})},
     body: typeof body === 'string' ? body : JSON.stringify(body),
   })
+}
+
+// Asks for the symbols of one changed file in a GitHub pull request.
+function createGitHubRequest(cookie?: string): Request {
+  return createRequest(
+    {path: GITHUB_PULL, files: [{itemId: 'item-1', name: 'src/a.ts', type: 'change'}]},
+    cookie,
+  )
 }
 
 function toHref(input: Parameters<FetchLike>[0]): string {
@@ -34,6 +47,32 @@ function stubCodeberg() {
     const value = url.searchParams.get('ref') === 'base-sha' ? 1 : 2
     return new Response(`export function greet() {\n  return ${value}\n}\n`)
   })
+}
+
+// Answers the token refresh, the pull request lookup, the merge base and the
+// file reads. The merge base and the head have a different body of `greet`.
+function stubGitHub() {
+  return vi.fn<FetchLike>(async (input) => {
+    const url = toHref(input)
+    if (url.includes('/login/oauth/access_token')) {
+      return Response.json({access_token: 'ghu_new', expires_in: 28_800})
+    }
+    if (url.includes('/pulls/7')) {
+      return Response.json({
+        base: {sha: 'base-sha', repo: {full_name: 'acme/widgets'}},
+        head: {sha: 'head-sha', repo: {full_name: 'acme/widgets'}},
+      })
+    }
+    if (url.includes('/compare/')) {
+      return Response.json({merge_base_commit: {sha: 'merge-base-sha'}})
+    }
+    const value = url.includes('head-sha') ? 2 : 1
+    return new Response(`export function greet() {\n  return ${value}\n}\n`)
+  })
+}
+
+function authorizationHeaders(fetcher: ReturnType<typeof stubGitHub>): (string | null)[] {
+  return fetcher.mock.calls.map(([, init]) => new Headers(init?.headers).get('authorization'))
 }
 
 async function readLines(response: Response): Promise<unknown[]> {
@@ -110,15 +149,60 @@ test('answers a pure rename without contacting GitHub', async () => {
   expect(result).toMatchObject({diff: {summary: {added: 0, deleted: 0, modified: 0}}})
 })
 
-test('reads a public diff without a signed-in session', async () => {
-  const response = await handleEntityDiffRequest(
-    createRequest({
-      path: 'o/r/pull/1',
-      files: [{itemId: 'item-1', name: 'src/a.ts', type: 'change'}],
-    }),
-  )
+test('reads a GitHub diff signed out without an Authorization header', async () => {
+  clearGitHubDiffFileServerCache()
+  const fetcher = stubGitHub()
 
-  expect(response.status).not.toBe(401)
+  const response = await handleEntityDiffRequest(createGitHubRequest(), {
+    credentials: CREDENTIALS,
+    fetch: fetcher,
+  })
+
+  await expect(readLines(response)).resolves.toMatchObject([
+    {itemId: 'item-1', diff: {changes: [{type: 'modified', name: 'greet'}]}},
+  ])
+  expect(fetcher).toHaveBeenCalled()
+  expect(authorizationHeaders(fetcher).every((header) => header === null)).toBe(true)
+})
+
+test('reads a GitHub diff signed in with the session token and keeps it out of the shared cache', async () => {
+  clearGitHubDiffFileServerCache()
+  const fetcher = stubGitHub()
+  const options = {credentials: CREDENTIALS, fetch: fetcher}
+
+  const signedIn = await handleEntityDiffRequest(createGitHubRequest(SESSION_COOKIE), options)
+  await readLines(signedIn)
+  const signedInCalls = fetcher.mock.calls.length
+  const signedOut = await handleEntityDiffRequest(createGitHubRequest(), options)
+  await readLines(signedOut)
+
+  expect(signedInCalls).toBeGreaterThan(0)
+  expect(
+    authorizationHeaders(fetcher)
+      .slice(0, signedInCalls)
+      .every((header) => header === 'Bearer ghu_token'),
+  ).toBe(true)
+  expect(fetcher.mock.calls.length).toBe(signedInCalls * 2)
+})
+
+test('a refreshed session cookie reaches the browser', async () => {
+  clearGitHubDiffFileServerCache()
+  const fetcher = stubGitHub()
+  const expiredCookie = `diffs-github-auth=${encodeCookiePayload({
+    accessToken: 'ghu_old',
+    accessTokenExpiresAt: Date.now() - 1000,
+    refreshToken: 'ghr_refresh',
+    login: 'reviewer',
+  })}`
+
+  const response = await handleEntityDiffRequest(createGitHubRequest(expiredCookie), {
+    credentials: CREDENTIALS,
+    fetch: fetcher,
+  })
+  await readLines(response)
+
+  expect(response.headers.get('set-cookie')).toContain('diffs-github-auth=')
+  expect(authorizationHeaders(fetcher)).toContain('Bearer ghu_new')
 })
 
 test('keeps entity diffs out of shared caches', async () => {

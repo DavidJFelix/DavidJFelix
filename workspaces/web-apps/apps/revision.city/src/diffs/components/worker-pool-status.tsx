@@ -213,6 +213,12 @@ function StatsDisplay({expanded, onToggle, stats, themeCycle, viewerRef}: StatsD
             fontSize: 'sm',
             lineHeight: '[1.25rem]',
             _focus: {outline: 'none'},
+            // Same keyboard focus outline as CHROME_ICON_BUTTON_CLASS.
+            _focusVisible: {
+              outline: '[2px solid]',
+              outlineColor: 'currentColor !important',
+              outlineOffset: '[1px]',
+            },
           })}
           aria-expanded={expanded}
         >

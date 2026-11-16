@@ -171,6 +171,83 @@ test('follows a method renamed inside its class', async () => {
   ])
 })
 
+const METHOD_NAMES = ['alpha', 'beta', 'gamma', 'delta', 'epsilon']
+
+interface ClassSourceParams {
+  name: string
+  editedMethod?: string
+}
+
+function classSource({name, editedMethod}: ClassSourceParams): string {
+  const methods = METHOD_NAMES.map((method, index) => {
+    const edit = method === editedMethod ? ' + 1' : ''
+    return `  ${method}(value) {\n    return compute(value, ${index}, options)${edit}\n  }\n`
+  })
+  return `export class ${name} {\n${methods.join('')}}\n`
+}
+
+test('reports a renamed class once, not once more per untouched method', async () => {
+  const diff = await diffEntities({
+    path: 'src/foo.ts',
+    oldSource: classSource({name: 'Foo'}),
+    newSource: classSource({name: 'Bar'}),
+  })
+
+  expect(diff.changes).toMatchObject([
+    {type: 'renamed', qualifiedName: 'Bar', previousQualifiedName: 'Foo'},
+  ])
+  expect(diff.changes).toHaveLength(1)
+})
+
+test('reports a renamed class and its edited method, not its untouched methods', async () => {
+  const diff = await diffEntities({
+    path: 'src/foo.ts',
+    oldSource: classSource({name: 'Foo'}),
+    newSource: classSource({name: 'Bar', editedMethod: 'gamma'}),
+  })
+
+  expect(diff.changes).toMatchObject([
+    {type: 'modified', qualifiedName: 'Bar.gamma', previousQualifiedName: 'Foo.gamma'},
+    {type: 'renamed', qualifiedName: 'Bar', previousQualifiedName: 'Foo'},
+  ])
+  expect(diff.changes).toHaveLength(2)
+})
+
+test('reports a renamed JSON key once, not once more per key inside it', async () => {
+  const versions =
+    '{"a": "1.0.0", "b": "2.0.0", "c": "3.0.0", "d": "4.0.0", "e": "5.0.0", "f": "6.0.0"}'
+  const diff = await diffEntities({
+    path: 'package.json',
+    oldSource: `{"name": "app", "devDependencies": ${versions}}\n`,
+    newSource: `{"name": "app", "dependencies": ${versions}}\n`,
+  })
+
+  expect(diff.changes).toMatchObject([
+    {type: 'renamed', qualifiedName: 'dependencies', previousQualifiedName: 'devDependencies'},
+  ])
+  expect(diff.changes).toHaveLength(1)
+})
+
+function rustStructSource(name: string): string {
+  return (
+    `struct ${name} {\n    a: u32,\n}\n` +
+    `impl ${name} {\n    fn get(&self) -> u32 {\n        self.a + compute(1, 2, 3)\n    }\n}\n`
+  )
+}
+
+test('keeps the members of a renamed Rust struct and its impl apart', async () => {
+  const diff = await diffEntities({
+    path: 'src/foo.rs',
+    oldSource: rustStructSource('Foo'),
+    newSource: rustStructSource('Bar'),
+  })
+
+  expect(diff.changes.map((change) => [change.type, change.qualifiedName])).toEqual([
+    ['renamed', 'Bar'],
+    ['renamed', 'Bar'],
+  ])
+})
+
 // The same shape alone is no rename: these pairs share a skeleton but not a body.
 test.each([
   {
@@ -342,6 +419,87 @@ test('names the default export of a config file when its options change', async 
 
   expect(diff.changes).toMatchObject([
     {type: 'modified', kind: 'constant', qualifiedName: 'default'},
+  ])
+})
+
+// A decorator or attribute is part of the declaration it marks, so its edit
+// goes to that declaration and not to the enclosing class, impl or file.
+test.each([
+  {
+    edit: 'a Python route decorator',
+    path: 'app.py',
+    oldSource: "@app.route('/users')\ndef users():\n    return 1\n",
+    newSource: "@app.route('/accounts')\ndef users():\n    return 1\n",
+    change: ['function', 'users'],
+  },
+  {
+    edit: 'a new Python decorator',
+    path: 'fixtures.py',
+    oldSource: 'def client():\n    return 1\n',
+    newSource: '@fixture\ndef client():\n    return 1\n',
+    change: ['function', 'client'],
+  },
+  {
+    edit: 'a Python method decorator',
+    path: 'shapes.py',
+    oldSource: 'class Shape:\n    def area(self):\n        return 1\n',
+    newSource: 'class Shape:\n    @property\n    def area(self):\n        return 1\n',
+    change: ['function', 'Shape.area'],
+  },
+  {
+    edit: 'a Rust derive attribute',
+    path: 'src/point.rs',
+    oldSource: '#[derive(Debug)]\nstruct Point {\n    x: u8,\n}\n',
+    newSource: '#[derive(Debug, Clone, Serialize)]\nstruct Point {\n    x: u8,\n}\n',
+    change: ['struct', 'Point'],
+  },
+  {
+    edit: 'a Rust attribute on an impl method',
+    path: 'src/point.rs',
+    oldSource: 'impl Point {\n    fn norm() {}\n}\n',
+    newSource: 'impl Point {\n    #[inline]\n    fn norm() {}\n}\n',
+    change: ['function', 'Point.norm'],
+  },
+  {
+    edit: 'a TypeScript decorator ahead of export',
+    path: 'src/app.component.ts',
+    oldSource: "@Component({selector: 'app'})\nexport class App {}\n",
+    newSource: "@Component({selector: 'root'})\nexport class App {}\n",
+    change: ['class', 'App'],
+  },
+  {
+    edit: 'a TypeScript decorator after export',
+    path: 'src/app.component.ts',
+    oldSource: "export @Component({selector: 'app'}) class App {}\n",
+    newSource: "export @Component({selector: 'root'}) class App {}\n",
+    change: ['class', 'App'],
+  },
+  {
+    edit: 'a TypeScript method decorator',
+    path: 'src/users.controller.ts',
+    oldSource: "@Controller()\nexport class Users {\n  @Get('list')\n  list() {}\n}\n",
+    newSource: "@Controller()\nexport class Users {\n  @Get('all')\n  list() {}\n}\n",
+    change: ['method', 'Users.list'],
+  },
+  {
+    edit: 'a body in a decorated exported class',
+    path: 'src/users.controller.ts',
+    oldSource: '@Controller()\nexport class Users {\n  list() {\n    return 1\n  }\n}\n',
+    newSource: '@Controller()\nexport class Users {\n  list() {\n    return 2\n  }\n}\n',
+    change: ['method', 'Users.list'],
+  },
+  {
+    edit: 'a decorator of a class ahead of an exported class',
+    path: 'src/models.ts',
+    oldSource: '@Model()\nclass Draft {}\nexport class Post {}\n',
+    newSource: '@Model({table: true})\nclass Draft {}\nexport class Post {}\n',
+    change: ['class', 'Draft'],
+  },
+])('reports an edit to $edit against $change', async ({path, oldSource, newSource, change}) => {
+  const diff = await diffEntities({path, oldSource, newSource})
+
+  expect(diff.changes.map((entry) => [entry.type, entry.kind, entry.qualifiedName])).toEqual([
+    ['modified', ...change],
   ])
 })
 

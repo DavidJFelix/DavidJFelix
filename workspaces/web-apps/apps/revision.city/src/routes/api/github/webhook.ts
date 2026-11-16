@@ -12,8 +12,9 @@ const installationRequest = (params: CreateInstallationTokenSourceParams) =>
   createGitHubRequest({token: createInstallationTokenSource(params)})
 
 // The GitHub App's webhook. A signed pull request event from an allowed
-// repository can start a review (src/reviews/review-workflow.ts).
-// `decideReviewRun` holds the trigger rules. A resolved or reopened thread of
+// repository can start a review (src/reviews/review-workflow.ts), and so can a
+// Re-run click on a check of the app. `decideReviewRun` and `decideRerun` hold
+// the trigger rules. A resolved or reopened thread of
 // the app makes the check run agree with the threads again, and the dismiss
 // button passes a failed check run. Runs in the worker.
 export const Route = createFileRoute('/api/github/webhook')({

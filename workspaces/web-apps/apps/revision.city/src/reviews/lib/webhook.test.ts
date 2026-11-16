@@ -1,9 +1,10 @@
-// cSpell:ignore revisioncity -- the GitHub App's slug
+// cSpell:ignore revisioncity rerequested -- the GitHub App's slug, the action of a Re-run click
 
 import {createHmac} from 'node:crypto'
 import {expect, test, vi} from 'vitest'
 import {
   decideDismiss,
+  decideRerun,
   decideReviewRun,
   decideThreadSync,
   type HandleReviewWebhookParams,
@@ -492,4 +493,98 @@ test.each([
   {name: 'a payload of another shape', payload: {action: 'requested_action'}},
 ])('decideDismiss ignores $name', ({event = 'check_run', payload}) => {
   expect(decideDismiss({event, payload})).toMatchObject({dismiss: false})
+})
+
+const oldSha = '0000000000000000000000000000000000000001'
+
+const rerunCheck = {
+  id: 31,
+  head_sha: oldSha,
+  app: {slug: 'revisioncity'},
+  pull_requests: [{number: 769, base: {repo: {id: 9}}}],
+}
+
+const rerunEvent = (key: 'check_run' | 'check_suite', changes: object = {}): object => ({
+  action: 'rerequested',
+  installation: {id: 5},
+  repository: pullRequestEvent.repository,
+  [key]: {...rerunCheck, ...changes},
+})
+
+const rerunParams = {
+  installationId: 5,
+  repositoryId: 9,
+  owner: 'DavidJFelix',
+  name: 'DavidJFelix',
+  pullNumber: 769,
+  headSha: oldSha,
+  rerun: true,
+}
+
+test.each(['check_run', 'check_suite'] as const)(
+  'handleReviewWebhook starts a review when a user reruns the %s',
+  async (event) => {
+    const workflow = fakeWorkflow()
+    const dismissCheckRun = vi.fn<NonNullable<HandleReviewWebhookParams['dismissCheckRun']>>()
+    const log = fakeLog()
+
+    const response = await handleReviewWebhook({
+      request: webhookRequest({payload: rerunEvent(event), event}),
+      secret,
+      workflow,
+      dismissCheckRun,
+      log,
+    })
+
+    expect(response.status).toBe(202)
+    expect(await response.json()).toEqual({status: 'started'})
+    const runId = `9-769-rerun-${deliveryId}`
+    expect(workflow.create).toHaveBeenCalledWith({id: runId, params: rerunParams})
+    expect(dismissCheckRun).not.toHaveBeenCalled()
+    expect(log.mock.calls).toEqual([
+      [deliveryEvent({githubEvent: event, action: 'rerequested', decision: 'started', runId})],
+    ])
+  },
+)
+
+test('decideRerun uses the check id when the delivery has no id', () => {
+  expect(
+    decideRerun({event: 'check_suite', payload: rerunEvent('check_suite'), deliveryId: null}),
+  ).toMatchObject({start: true, instanceId: '9-769-rerun-check_suite-31'})
+})
+
+test('decideRerun takes the pull request of this repository', () => {
+  const payload = rerunEvent('check_run', {
+    pull_requests: [
+      {number: 4, base: {repo: {id: 77}}},
+      {number: 769, base: {repo: {id: 9}}},
+    ],
+  })
+
+  expect(decideRerun({event: 'check_run', payload, deliveryId})).toMatchObject({
+    start: true,
+    params: {pullNumber: 769},
+  })
+})
+
+test.each([
+  {name: 'another action', payload: {...rerunEvent('check_run'), action: 'completed'}},
+  {name: 'a check of another app', payload: rerunEvent('check_run', {app: {slug: 'other-app'}})},
+  {name: 'a check of no app', payload: rerunEvent('check_run', {app: null})},
+  {name: 'a check without a pull request', payload: rerunEvent('check_run', {pull_requests: []})},
+  {
+    name: 'a pull request of another repository',
+    payload: rerunEvent('check_run', {pull_requests: [{number: 4, base: {repo: {id: 77}}}]}),
+  },
+  {
+    name: 'a repository that is not allowed',
+    payload: {
+      ...rerunEvent('check_run'),
+      repository: {...pullRequestEvent.repository, full_name: 'acme/repo'},
+    },
+  },
+  {name: 'a check suite payload for a check run event', payload: rerunEvent('check_suite')},
+  {name: 'a payload of another shape', payload: {action: 'rerequested'}},
+])('decideRerun ignores $name', ({payload}) => {
+  expect(decideRerun({event: 'check_run', payload, deliveryId})).toMatchObject({start: false})
 })

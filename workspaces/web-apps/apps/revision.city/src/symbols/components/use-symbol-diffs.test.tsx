@@ -3,27 +3,27 @@ import {HttpResponse, type HttpResponseResolver, http, type PathParams} from 'ms
 import {setupServer} from 'msw/node'
 import {expect, type Mock, onTestFinished, test, vi} from 'vitest'
 
-import type {EntityDiffRequest} from '@/symbols/lib/entity-diff-client'
-import {useEntityDiffs} from './use-entity-diffs'
+import type {SymbolDiffRequest} from '@/symbols/lib/symbol-diff-client'
+import {useSymbolDiffs} from './use-symbol-diffs'
 
 const ENDPOINT = '/api/diffs/entity-diff'
 
-const REQUESTS: readonly EntityDiffRequest[] = [
+const REQUESTS: readonly SymbolDiffRequest[] = [
   {itemId: 'item-1', name: 'src/a.ts', type: 'change'},
   {itemId: 'item-2', name: 'src/b.ts', type: 'change'},
 ]
 
-interface EntityDiffBody {
+interface SymbolDiffBody {
   files: {itemId: string; name: string}[]
 }
 
-type EntityDiffResolver = HttpResponseResolver<PathParams, EntityDiffBody>
+type SymbolDiffResolver = HttpResponseResolver<PathParams, SymbolDiffBody>
 
 const server = setupServer()
 server.listen({onUnhandledFrame: 'error'})
 
-function serveEntityDiffs(resolver: EntityDiffResolver): Mock<EntityDiffResolver> {
-  const respond = vi.fn<EntityDiffResolver>(resolver)
+function serveSymbolDiffs(resolver: SymbolDiffResolver): Mock<SymbolDiffResolver> {
+  const respond = vi.fn<SymbolDiffResolver>(resolver)
   server.use(http.post(ENDPOINT, respond))
   onTestFinished(() => {
     server.resetHandlers()
@@ -49,14 +49,14 @@ function modifiedGreet(file: {itemId: string; name: string}) {
 }
 
 // Reports one modified function for every file named in the request body.
-const modifiedGreetPerFile: EntityDiffResolver = async ({request}) => {
+const modifiedGreetPerFile: SymbolDiffResolver = async ({request}) => {
   const body = await request.json()
   return ndjson(body.files.map(modifiedGreet))
 }
 
 function mountHook(enabled: boolean) {
   const hook = renderHook(
-    ({requests}) => useEntityDiffs({enabled, requests, sourcePath: 'o/r/pull/1'}),
+    ({requests}) => useSymbolDiffs({enabled, requests, sourcePath: 'o/r/pull/1'}),
     {initialProps: {requests: REQUESTS}},
   )
   onTestFinished(cleanup)
@@ -86,7 +86,7 @@ async function settle(): Promise<void> {
 }
 
 test('fetches nothing until the symbols tab asks for it', async () => {
-  const respond = serveEntityDiffs(modifiedGreetPerFile)
+  const respond = serveSymbolDiffs(modifiedGreetPerFile)
 
   const {result} = mountHook(false)
 
@@ -96,7 +96,7 @@ test('fetches nothing until the symbols tab asks for it', async () => {
 })
 
 test('reads every file over a single request once the tab is open', async () => {
-  const respond = serveEntityDiffs(modifiedGreetPerFile)
+  const respond = serveSymbolDiffs(modifiedGreetPerFile)
 
   const {result} = await mountSettled()
 
@@ -107,7 +107,7 @@ test('reads every file over a single request once the tab is open', async () => 
 })
 
 test('reports the change list for each file it read', async () => {
-  serveEntityDiffs(modifiedGreetPerFile)
+  serveSymbolDiffs(modifiedGreetPerFile)
 
   const {result} = await mountSettled()
 
@@ -117,7 +117,7 @@ test('reports the change list for each file it read', async () => {
 })
 
 test('marks a file that could not be read without failing the rest', async () => {
-  serveEntityDiffs(() =>
+  serveSymbolDiffs(() =>
     ndjson([
       {itemId: 'item-1', name: 'src/a.ts', error: 'GitHub rate limit exceeded.'},
       {
@@ -140,7 +140,7 @@ test('marks a file that could not be read without failing the rest', async () =>
 })
 
 test('marks the whole batch when the request itself fails', async () => {
-  serveEntityDiffs(() => new HttpResponse(null, {status: 502}))
+  serveSymbolDiffs(() => new HttpResponse(null, {status: 502}))
 
   const {result} = await mountSettled()
 
@@ -148,7 +148,7 @@ test('marks the whole batch when the request itself fails', async () => {
 })
 
 test('marks a file that the stream did not answer as not read', async () => {
-  serveEntityDiffs(() => ndjson([modifiedGreet({itemId: 'item-1', name: 'src/a.ts'})]))
+  serveSymbolDiffs(() => ndjson([modifiedGreet({itemId: 'item-1', name: 'src/a.ts'})]))
 
   const {result} = await mountSettled()
 
@@ -158,7 +158,7 @@ test('marks a file that the stream did not answer as not read', async () => {
 
 test('asks again only for the files that failed', async () => {
   const askedFor: string[][] = []
-  serveEntityDiffs(async ({request}) => {
+  serveSymbolDiffs(async ({request}) => {
     const body = await request.json()
     askedFor.push(body.files.map((file) => file.itemId))
     return ndjson(
@@ -184,7 +184,7 @@ test('asks again only for the files that failed', async () => {
 
 test('reads again the files that a re-run left in flight', async () => {
   let release: (() => void) | undefined
-  const respond = serveEntityDiffs(async (info) => {
+  const respond = serveSymbolDiffs(async (info) => {
     if (respond.mock.calls.length === 1) {
       await new Promise<void>((resolve) => {
         release = resolve

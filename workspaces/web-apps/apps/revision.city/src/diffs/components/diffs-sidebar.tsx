@@ -44,8 +44,8 @@ import type {
   DiffsViewerHandle,
 } from '@/diffs/lib/types'
 import {SymbolChangesList, type SymbolSelection} from '@/symbols/components/symbol-changes-list'
-import {useEntityDiffs} from '@/symbols/components/use-entity-diffs'
-import type {EntityDiffRequest} from '@/symbols/lib/entity-diff-client'
+import {useSymbolDiffs} from '@/symbols/components/use-symbol-diffs'
+import type {SymbolDiffRequest} from '@/symbols/lib/symbol-diff-client'
 import {CHROME_ICON_BUTTON_CLASS} from './chrome-button-styles'
 import {DiffsCommentsList} from './diffs-comments-list'
 import {DiffsFileTree} from './diffs-file-tree'
@@ -70,7 +70,7 @@ interface DiffsSidebarProps {
   commentSections: readonly DiffsSavedCommentItem[]
   diffStats: DiffsStatsData | null
   domain?: string
-  entityDiffRequests: readonly EntityDiffRequest[]
+  symbolDiffRequests: readonly SymbolDiffRequest[]
   mobileOverlayOpen?: boolean
   onMobileClose: () => void
   onSelectComment: (comment: DiffsSavedCommentEntry) => void
@@ -90,7 +90,7 @@ export const DiffsSidebar = memo(function DiffsSidebar({
   commentSections,
   diffStats,
   domain,
-  entityDiffRequests,
+  symbolDiffRequests,
   mobileOverlayOpen = false,
   onMobileClose,
   onSelectComment,
@@ -109,10 +109,10 @@ export const DiffsSidebar = memo(function DiffsSidebar({
   // requests. Once opened it stays enabled so results survive tab switches.
   // Reads wait until the patch stops streaming, then cover every file.
   const [symbolsRequested, setSymbolsRequested] = useState(false)
-  const entityDiffs = useEntityDiffs({
+  const symbolDiffs = useSymbolDiffs({
     domain,
     enabled: symbolsRequested && symbolsAvailable && !streaming,
-    requests: entityDiffRequests,
+    requests: symbolDiffRequests,
     sourcePath,
   })
   let totalCommentCount = 0
@@ -353,8 +353,8 @@ export const DiffsSidebar = memo(function DiffsSidebar({
             className={css({h: 'full', minH: '0'})}
           >
             <SymbolChangesList
-              entries={entityDiffs.entries}
-              onRetry={entityDiffs.retry}
+              entries={symbolDiffs.entries}
+              onRetry={symbolDiffs.retry}
               onSelectItem={onSelectItem}
               onSelectSymbol={onSelectSymbol}
               supported={symbolsAvailable}

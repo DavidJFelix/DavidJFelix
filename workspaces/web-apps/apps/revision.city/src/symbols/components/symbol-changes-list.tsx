@@ -6,7 +6,7 @@ import {isNullish} from '@/diffs/lib/nullish'
 import {CHANGE_ORDER, CHANGE_STYLES, KIND_LABELS} from '@/symbols/lib/change-presentation'
 import type {SymbolChange} from '@/symbols/lib/code-symbol'
 import {SequenceEditRows} from './sequence-edit-rows'
-import type {EntityDiffEntry} from './use-entity-diffs'
+import type {SymbolDiffEntry} from './use-symbol-diffs'
 
 export interface SymbolSelection {
   itemId: string
@@ -15,7 +15,7 @@ export interface SymbolSelection {
 }
 
 interface SymbolChangesListProps {
-  entries: readonly EntityDiffEntry[]
+  entries: readonly SymbolDiffEntry[]
   onRetry?: () => void
   onSelectItem?: (itemId: string) => void
   onSelectSymbol?: (selection: SymbolSelection) => void
@@ -84,12 +84,12 @@ export const SymbolChangesList = memo(function SymbolChangesList({
 })
 
 interface SymbolSectionsProps {
-  entries: readonly EntityDiffEntry[]
+  entries: readonly SymbolDiffEntry[]
   onRetry?: () => void
   onSelectItem?: (itemId: string) => void
   onSelectSymbol?: (selection: SymbolSelection) => void
   pendingCount: number
-  sections: readonly EntityDiffEntry[]
+  sections: readonly SymbolDiffEntry[]
 }
 
 function SymbolSections({
@@ -144,12 +144,12 @@ const MUTED_LINE = css({
 
 // A file with no grammar (language null) is not in this list: the tab never
 // reads such files, and that is a known limit.
-function findNotRead(entries: readonly EntityDiffEntry[]): readonly EntityDiffEntry[] {
+function findNotRead(entries: readonly SymbolDiffEntry[]): readonly SymbolDiffEntry[] {
   return entries.filter((entry) => entry.status === 'error' || entry.diff?.skipped === 'too-large')
 }
 
 interface NotReadNoteProps {
-  entries: readonly EntityDiffEntry[]
+  entries: readonly SymbolDiffEntry[]
   onRetry?: () => void
 }
 
@@ -210,7 +210,7 @@ function RetryButton({onRetry}: {onRetry: () => void}) {
 
 // Totals across the whole diff, in the same colors and words the rows use, so
 // it reads as a legend as much as a count.
-function ChangeSummary({sections}: {sections: readonly EntityDiffEntry[]}) {
+function ChangeSummary({sections}: {sections: readonly SymbolDiffEntry[]}) {
   const changes = sections.flatMap((entry) => entry.diff?.changes ?? [])
   const buckets = CHANGE_ORDER.map((type) => ({
     type,
@@ -239,7 +239,7 @@ function ChangeSummary({sections}: {sections: readonly EntityDiffEntry[]}) {
 }
 
 interface FileSectionProps {
-  entry: EntityDiffEntry
+  entry: SymbolDiffEntry
   onSelectItem?: (itemId: string) => void
   onSelectSymbol?: (selection: SymbolSelection) => void
 }

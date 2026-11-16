@@ -58,6 +58,18 @@ export type WebAppTarget = {
   // apps with no custom domain, which skips that step. Only the production
   // deploy entry carries it: dev and preview entries carry ''.
   readonly productionUrl: string
+  // More Workers that the build of this app makes (the `auxiliaryWorkers` of
+  // the Cloudflare vite plugin). A production deploy ships each one as its own
+  // matrix entry, from the resolved config that the build writes. A preview and
+  // the dev worker have none.
+  readonly auxiliaryWorkers?: readonly AuxiliaryWorker[]
+}
+
+export type AuxiliaryWorker = {
+  // `name` in the wrangler config of the Worker.
+  readonly worker: string
+  // The resolved config in the build output, relative to the app directory.
+  readonly wranglerConfig: string
 }
 
 // What the matrix jobs actually consume: a target plus the CLOUDFLARE_ENV its
@@ -195,18 +207,6 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     productionUrl: 'https://ravrun.com',
   },
   {
-    dir: 'revision-city-reviewer',
-    worker: 'revision-city-reviewer',
-    // The Worker has no public host, so it has no preview and no route to fetch.
-    smokeRoutes: '',
-    wranglerConfig: '',
-    preview: 'none',
-    deploy: 'wrangler',
-    envSuffix: 'REVISION_CITY_REVIEWER',
-    devEnv: '',
-    d1Database: '',
-  },
-  {
     dir: 'revision.city',
     worker: 'revision-city',
     smokeRoutes: '/,/diffs',
@@ -217,6 +217,14 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     devEnv: 'dev',
     d1Database: 'revision-city',
     productionUrl: 'https://revision.city',
+    // The review harness (wrangler.reviewer.toml). It has no public host, so it
+    // has no preview and no route to fetch.
+    auxiliaryWorkers: [
+      {
+        worker: 'revision-city-reviewer',
+        wranglerConfig: 'dist/revision_city_reviewer/wrangler.json',
+      },
+    ],
   },
   {
     dir: 'startchi.com',
@@ -247,13 +255,26 @@ export const planAffected = ({
   const affected = new Set(affectedPaths)
   return targets
     .filter((target) => target[kind] !== 'none' && affected.has(`apps/${target.dir}`))
-    .flatMap((target) => {
+    .flatMap(({auxiliaryWorkers = [], ...target}) => {
       const production = {
         ...target,
         cloudflareEnv: '',
         productionUrl: kind === 'deploy' ? target.productionUrl : '',
       }
-      if (target.devEnv === '') return [production]
+      // An auxiliary Worker deploys from the production build of its app. It
+      // has no database to migrate and no site to fetch.
+      const auxiliary =
+        kind === 'deploy'
+          ? auxiliaryWorkers.map((worker) => ({
+              ...target,
+              ...worker,
+              smokeRoutes: '',
+              cloudflareEnv: '',
+              d1Database: '',
+              productionUrl: '',
+            }))
+          : []
+      if (target.devEnv === '') return [production, ...auxiliary]
       const dev = {
         ...target,
         worker: `${target.worker}-${target.devEnv}`,
@@ -264,7 +285,7 @@ export const planAffected = ({
       // A preview is a version of the dev worker only -- it must share the dev
       // GitHub App, never production's. A deploy ships both workers so the dev
       // worker's stable URL keeps tracking main.
-      return kind === 'preview' ? [dev] : [production, dev]
+      return kind === 'preview' ? [dev] : [production, ...auxiliary, dev]
     })
 }
 

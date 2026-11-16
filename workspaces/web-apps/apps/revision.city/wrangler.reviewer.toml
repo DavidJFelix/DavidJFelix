@@ -1,6 +1,13 @@
 #:schema node_modules/wrangler/config-schema.json
+# The second Worker of this app. It holds the review harness (OpenCode), which
+# is larger than the rest of the app. The Workers runtime parses each module of
+# a Worker when the Worker starts, also a module that no code imports. Thus the
+# harness in the `revision-city` Worker would make each start of the viewer
+# slower. `vite build` makes the two Workers (vite.config.ts), and the deploy
+# ships this one from `dist/revision_city_reviewer/wrangler.json`
+# (bin/plan-affected-apps.ts).
 name = "revision-city-reviewer"
-main = "src/index.ts"
+main = "src/reviews/reviewer-worker.ts"
 compatibility_date = "2026-06-01"
 compatibility_flags = ["nodejs_compat"]
 
@@ -12,10 +19,11 @@ workers_dev = false
 preview_urls = false
 
 # The ReviewAgent reads one secret, OPENROUTER_API_KEY. Set it with
-# `wrangler secret put OPENROUTER_API_KEY`. Without it, each model call fails
-# and the agent answers `unanswered`.
+# `wrangler secret put OPENROUTER_API_KEY --name revision-city-reviewer`.
+# Without it, each model call fails and the agent answers `unanswered`.
 
-# A ReviewAgent runs OpenCode in its own SQLite database (src/review-agent.ts).
+# A ReviewAgent runs OpenCode in its own SQLite database
+# (src/reviews/review-agent.ts).
 [[durable_objects.bindings]]
 name = "REVIEW_AGENT"
 class_name = "ReviewAgent"

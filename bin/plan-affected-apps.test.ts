@@ -81,6 +81,56 @@ test('keeps the production URL on the production deploy entry only', () => {
   expect(urls({kind: 'preview', targets: productionOnly})).toEqual([''])
 })
 
+test('deploys an auxiliary Worker of an app as its own entry', () => {
+  const auxiliaryWorkers = [
+    {worker: 'example-com-jobs', wranglerConfig: 'dist/example_com_jobs/wrangler.json'},
+  ]
+  const app = target({
+    devEnv: 'dev',
+    d1Database: 'example-com',
+    productionUrl: 'https://example.com',
+  })
+  const targets = [{...app, auxiliaryWorkers}]
+
+  expect(planAffected({affectedPaths: ['apps/example.com'], kind: 'deploy', targets})).toEqual([
+    {...app, cloudflareEnv: ''},
+    {
+      ...app,
+      ...auxiliaryWorkers[0],
+      smokeRoutes: '',
+      cloudflareEnv: '',
+      d1Database: '',
+      productionUrl: '',
+    },
+    {
+      ...app,
+      worker: 'example-com-dev',
+      cloudflareEnv: 'dev',
+      d1Database: '',
+      productionUrl: '',
+    },
+  ])
+})
+
+test('previews no auxiliary Worker', () => {
+  // A preview is a version of one worker. An auxiliary Worker has no preview.
+  const auxiliaryWorkers = [
+    {worker: 'example-com-jobs', wranglerConfig: 'dist/example_com_jobs/wrangler.json'},
+  ]
+  const targets = [
+    target({auxiliaryWorkers}),
+    target({dir: 'dev.example.com', devEnv: 'dev', auxiliaryWorkers}),
+  ]
+
+  expect(
+    planAffected({
+      affectedPaths: ['apps/example.com', 'apps/dev.example.com'],
+      kind: 'preview',
+      targets,
+    }).map((entry) => entry.worker),
+  ).toEqual(['example-com', 'example-com-dev'])
+})
+
 test('skips apps that opt out of the shared matrix for that kind', () => {
   // onvibes.org's preview is a real worker with a teardown, so it keeps its
   // own workflow while still deploying through the matrix.
@@ -148,7 +198,11 @@ test('plans every matrix app when only a shared package is affected', () => {
   // as a repo-root tooling change.
   const targets = [target({dir: 'ravrun'})]
 
-  const {apps, all} = planAffectedOrAll({affectedPaths: ['packages/theme'], kind: 'deploy', targets})
+  const {apps, all} = planAffectedOrAll({
+    affectedPaths: ['packages/theme'],
+    kind: 'deploy',
+    targets,
+  })
   expect(all).toBe(true)
   expect(apps.map((app) => app.dir)).toEqual(['ravrun'])
 })
@@ -171,7 +225,13 @@ test('parses turbo ls output past its version banner', () => {
     '• turbo 2.10.8',
     JSON.stringify({
       packageManager: 'bun',
-      packages: {count: 2, items: [{name: 'a', path: 'apps/djf.io'}, {name: 'b', path: 'packages/theme'}]},
+      packages: {
+        count: 2,
+        items: [
+          {name: 'a', path: 'apps/djf.io'},
+          {name: 'b', path: 'packages/theme'},
+        ],
+      },
     }),
   ].join('\n')
 
@@ -247,6 +307,29 @@ test('registry names the production URL of every app with a custom domain', asyn
     expect({dir: app.dir, productionUrl: app.productionUrl}).toEqual({
       dir: app.dir,
       productionUrl: domain ? `https://${domain}` : '',
+    })
+  }
+})
+
+test('registry names the auxiliary Workers of every app', async () => {
+  // An auxiliary Worker has its own source config, `wrangler.<name>.toml`, in
+  // the app directory. A Worker that is added or renamed there must also change
+  // in the registry, or the deploy does not ship it.
+  const {readdirSync} = await import('node:fs')
+  for (const app of WEB_APP_TARGETS) {
+    const appUrl = new URL(`../workspaces/web-apps/apps/${app.dir}/`, import.meta.url)
+    const configs = readdirSync(appUrl).filter((name) => /^wrangler\..+\.toml$/.test(name))
+    const names = await Promise.all(
+      configs.map(async (name) => {
+        const config = Bun.TOML.parse(await Bun.file(new URL(name, appUrl)).text()) as {
+          readonly name?: string
+        }
+        return config.name
+      }),
+    )
+    expect({dir: app.dir, workers: names.toSorted()}).toEqual({
+      dir: app.dir,
+      workers: (app.auxiliaryWorkers ?? []).map((worker) => worker.worker).toSorted(),
     })
   }
 })

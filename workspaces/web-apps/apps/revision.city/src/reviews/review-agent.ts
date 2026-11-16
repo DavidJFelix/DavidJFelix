@@ -18,7 +18,7 @@ export class ReviewAgent extends DurableObject<ReviewAgentEnv> {
   private readonly harness = new OpenCodeHarness({
     opencode: async ({storage}) => {
       // OpenCode is most of the bundle. A static import runs all of it when the
-      // Worker starts: about 450 ms of the 1 second that Cloudflare allows.
+      // Worker starts: about 250 ms of the 1 second that Cloudflare allows.
       const {OpenCodeWorkerd} = await import('@opencode/sdk/workerd')
       return OpenCodeWorkerd.create({
         storage,

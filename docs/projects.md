@@ -199,8 +199,8 @@ Turn revision.city into a standalone GitHub App reviewer that replaces Warden. A
 review, a Cloudflare Workflow runs it, and D1 saves each chunk's result. OpenRouter serves the
 models. The review engine and the GitHub App wiring are built, and the one-time setup in #790 is
 done. Next: a comparison with Warden on a few pull requests, and a move of the model work to a
-coding harness. The harness is OpenCode in a Durable Object of a second Worker,
-`revision-city-reviewer`, which has no public host.
+coding harness. The harness is OpenCode in a Durable Object. The revision.city app builds a second
+Worker for it, `revision-city-reviewer`, which has no public host.
 
 **Status**: Active
 

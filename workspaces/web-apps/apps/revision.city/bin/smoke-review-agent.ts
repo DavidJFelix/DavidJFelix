@@ -1,23 +1,31 @@
 /// <reference types="bun" />
-// Pre-merge smoke gate: boots the Worker in workerd (`wrangler dev`) and sends
-// one prompt through the ReviewAgent Durable Object. OpenCode starts in the
-// object, calls the model, and returns the answer with its usage. A local
-// server answers in place of OpenRouter, so the test needs no secret and no
-// network.
+// Pre-merge smoke gate for the `revision-city-reviewer` Worker
+// (wrangler.reviewer.toml): boots the built Worker in workerd (`wrangler dev`)
+// and sends one prompt through the ReviewAgent Durable Object. OpenCode starts
+// in the object, calls the model, and returns the answer with its usage. A
+// local server answers in place of OpenRouter, so the test needs no secret and
+// no network. Assumes `vite build` has run (the `smoke` task depends on
+// `build`).
 //
 // The Worker serves `/smoke` only when SMOKE_TEST is `true`, which only this
 // script sets.
 
-import {mkdtempSync, rmSync} from 'node:fs'
+import {existsSync, mkdtempSync, rmSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 
-const PORT = Number(process.env.SMOKE_PORT ?? 4391)
+const PORT = Number(process.env.SMOKE_AGENT_PORT ?? 4391)
 const MODEL_PORT = Number(process.env.SMOKE_MODEL_PORT ?? 4392)
+const WORKER_CONFIG = 'dist/revision_city_reviewer/wrangler.json'
 const BASE_URL = `http://127.0.0.1:${PORT}`
 const READY_TIMEOUT_MS = 60_000
 const ANSWER = 'ready'
 const USAGE = {prompt_tokens: 1200, completion_tokens: 8, total_tokens: 1208, cost: 0.0001}
+
+if (!existsSync(WORKER_CONFIG)) {
+  console.error(`::error::${WORKER_CONFIG} is missing -- run \`mise run build\` first`)
+  process.exit(1)
+}
 
 // A new directory for the Durable Object storage of each run. A session that
 // an earlier run left open would continue in this run and call the model again.
@@ -66,6 +74,8 @@ const worker = Bun.spawn(
   [
     'node_modules/.bin/wrangler',
     'dev',
+    '--config',
+    WORKER_CONFIG,
     '--ip',
     '127.0.0.1',
     '--port',

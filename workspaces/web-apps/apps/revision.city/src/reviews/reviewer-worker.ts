@@ -1,10 +1,12 @@
 import type {ReviewAgent, ReviewAgentEnv} from './review-agent'
 
+// The entry of the `revision-city-reviewer` Worker (wrangler.reviewer.toml).
+// The Durable Object class must be a named export of the main module.
 export {ReviewAgent} from './review-agent'
 
-interface Env extends ReviewAgentEnv {
+interface ReviewerWorkerEnv extends ReviewAgentEnv {
   REVIEW_AGENT: DurableObjectNamespace<ReviewAgent>
-  // Only the smoke test sets this (bin/smoke-local.ts).
+  // Only the smoke test sets this (bin/smoke-review-agent.ts).
   SMOKE_TEST?: string
 }
 
@@ -19,4 +21,4 @@ export default {
     }
     return Response.json(await env.REVIEW_AGENT.getByName('smoke').ask(SMOKE_PROMPT))
   },
-} satisfies ExportedHandler<Env>
+} satisfies ExportedHandler<ReviewerWorkerEnv>

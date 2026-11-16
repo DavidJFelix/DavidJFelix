@@ -13,8 +13,8 @@ import {
 import {createGitHubFileReader} from '@/diffs/lib/github-diff-file-server'
 import {isNullish} from '@/diffs/lib/nullish'
 import {isFileTooLargeError} from '@/diffs/lib/read-limited-text'
-import {createTooLargeEntityDiff, diffEntities} from './diff-entities'
-import type {EntityDiff} from './entity'
+import type {SymbolDiff} from './code-symbol'
+import {createTooLargeSymbolDiff, diffSymbols} from './diff-symbols'
 import {MAX_FILES_PER_REQUEST} from './entity-diff-client'
 import {detectLanguage} from './language-registry'
 
@@ -50,7 +50,7 @@ export interface EntityDiffFileRequest {
 export interface EntityDiffResult {
   itemId: string
   name: string
-  diff?: EntityDiff
+  diff?: SymbolDiff
   error?: string
 }
 
@@ -196,7 +196,7 @@ async function computeResult({file, readFiles}: ComputeResultParams): Promise<En
     return {
       itemId: file.itemId,
       name: file.name,
-      diff: await diffEntities({
+      diff: await diffSymbols({
         path: file.name,
         oldSource: oldFile?.contents ?? '',
         newSource: newFile?.contents ?? '',
@@ -204,7 +204,7 @@ async function computeResult({file, readFiles}: ComputeResultParams): Promise<En
     }
   } catch (error) {
     if (isFileTooLargeError(error)) {
-      return {itemId: file.itemId, name: file.name, diff: createTooLargeEntityDiff(file.name)}
+      return {itemId: file.itemId, name: file.name, diff: createTooLargeSymbolDiff(file.name)}
     }
     return {
       itemId: file.itemId,
@@ -256,7 +256,7 @@ function parseFileRequest(value: unknown): EntityDiffFileRequest | undefined {
   }
 }
 
-function createEmptyEntityDiff(path: string): EntityDiff {
+function createEmptyEntityDiff(path: string): SymbolDiff {
   return {
     path,
     language: null,

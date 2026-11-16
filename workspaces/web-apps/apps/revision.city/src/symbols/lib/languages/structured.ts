@@ -2,13 +2,13 @@ import type {SyntaxNode} from '@lezer/common'
 import {parser as jsonGrammar} from '@lezer/json'
 import {parser as yamlGrammar} from '@lezer/yaml'
 
-import type {EntitySpec, ResolveEntityNameParams} from '../entity'
-import {entityProp} from '../entity'
+import type {ResolveSymbolNameParams, SymbolSpec} from '../code-symbol'
+import {symbolProp} from '../code-symbol'
 
-// Data formats earn entity tracking because config diffs are where line-based
+// Data formats earn symbol tracking because config diffs are where line-based
 // review is weakest: `dependencies.react` changing is the fact a reviewer wants,
 // not that line 47 moved.
-function resolveQuotedKey({node, source}: ResolveEntityNameParams): string | undefined {
+function resolveQuotedKey({node, source}: ResolveSymbolNameParams): string | undefined {
   const key = node.getChild('PropertyName')
   if (key === null) {
     return undefined
@@ -20,7 +20,7 @@ function resolveQuotedKey({node, source}: ResolveEntityNameParams): string | und
 // JSONC comment parses to.
 const JSON_VALUE_TYPES = new Set(['Array', 'False', 'Null', 'Number', 'Object', 'String', 'True'])
 
-function resolveArrayElements({node}: ResolveEntityNameParams): readonly SyntaxNode[] | undefined {
+function resolveArrayElements({node}: ResolveSymbolNameParams): readonly SyntaxNode[] | undefined {
   const array = node.getChild('Array')
   if (array === null) {
     return undefined
@@ -34,7 +34,7 @@ function resolveArrayElements({node}: ResolveEntityNameParams): readonly SyntaxN
   return elements
 }
 
-const JSON_SPECS: Record<string, EntitySpec> = {
+const JSON_SPECS: Record<string, SymbolSpec> = {
   Property: {
     kind: 'property',
     resolveName: resolveQuotedKey,
@@ -43,9 +43,9 @@ const JSON_SPECS: Record<string, EntitySpec> = {
   },
 }
 
-const YAML_SPECS: Record<string, EntitySpec> = {
+const YAML_SPECS: Record<string, SymbolSpec> = {
   Pair: {kind: 'property', name: ['Key'], container: true},
 }
 
-export const jsonParser = jsonGrammar.configure({props: [entityProp.add(JSON_SPECS)]})
-export const yamlParser = yamlGrammar.configure({props: [entityProp.add(YAML_SPECS)]})
+export const jsonParser = jsonGrammar.configure({props: [symbolProp.add(JSON_SPECS)]})
+export const yamlParser = yamlGrammar.configure({props: [symbolProp.add(YAML_SPECS)]})

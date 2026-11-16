@@ -1,28 +1,28 @@
 import {expect, test} from 'vitest'
 
-import type {CodeEntity, EntityKind, EntitySpan, SequenceElement} from './entity'
-import {matchEntities} from './match-entities'
+import type {CodeSymbol, SequenceElement, SymbolKind, SymbolSpan} from './code-symbol'
+import {matchSymbols} from './match-symbols'
 
 // Long enough to clear the matcher's minimum for structural matching, so cases
 // that mean to exercise that phase actually reach it.
 const SUBSTANTIAL_TOKENS = Array.from({length: 16}, (_, index) => `token${index}`)
 
-interface CreateEntityParams {
+interface CreateSymbolParams {
   name: string
   qualifiedName?: string
   basePath?: string
   occurrence?: number
-  kind?: EntityKind
+  kind?: SymbolKind
   tokens?: readonly string[]
   structuralHash?: string
   contentHash?: string
   ownContentHash?: string
   startLine?: number
-  span?: EntitySpan
+  span?: SymbolSpan
   elements?: readonly SequenceElement[]
 }
 
-function createEntity({
+function createSymbol({
   name,
   qualifiedName = name,
   basePath = qualifiedName,
@@ -35,7 +35,7 @@ function createEntity({
   startLine = 1,
   span,
   elements,
-}: CreateEntityParams): CodeEntity {
+}: CreateSymbolParams): CodeSymbol {
   return {
     kind,
     name,
@@ -55,14 +55,14 @@ function createEntity({
 interface CreateElementParams {
   hash: string
   index?: number
-  hasEntities?: boolean
-  span?: EntitySpan
+  hasSymbols?: boolean
+  span?: SymbolSpan
 }
 
 function createElement({
   hash,
   index = 0,
-  hasEntities = false,
+  hasSymbols = false,
   span,
 }: CreateElementParams): SequenceElement {
   return {
@@ -70,41 +70,41 @@ function createElement({
     preview: hash,
     range: {startLine: index + 1, endLine: index + 1},
     span: span ?? {from: index * 10, to: index * 10 + 9},
-    hasEntities,
+    hasSymbols,
   }
 }
 
-test('reports nothing when both revisions hold the same entities', () => {
-  const entity = createEntity({name: 'greet'})
+test('reports nothing when both revisions hold the same symbols', () => {
+  const symbol = createSymbol({name: 'greet'})
 
-  const changes = matchEntities({oldEntities: [entity], newEntities: [entity]})
+  const changes = matchSymbols({oldSymbols: [symbol], newSymbols: [symbol]})
 
   expect(changes).toEqual([])
 })
 
-test('reports a same-named entity with a changed body as modified', () => {
-  const before = createEntity({name: 'greet', ownContentHash: 'one'})
-  const after = createEntity({name: 'greet', ownContentHash: 'two'})
+test('reports a same-named symbol with a changed body as modified', () => {
+  const before = createSymbol({name: 'greet', ownContentHash: 'one'})
+  const after = createSymbol({name: 'greet', ownContentHash: 'two'})
 
-  const changes = matchEntities({oldEntities: [before], newEntities: [after]})
+  const changes = matchSymbols({oldSymbols: [before], newSymbols: [after]})
 
   expect(changes).toMatchObject([{type: 'modified', qualifiedName: 'greet'}])
 })
 
-test('treats a same-named entity of a different kind as an add plus a delete', () => {
-  const before = createEntity({name: 'Widget', kind: 'function'})
-  const after = createEntity({name: 'Widget', kind: 'class'})
+test('treats a same-named symbol of a different kind as an add plus a delete', () => {
+  const before = createSymbol({name: 'Widget', kind: 'function'})
+  const after = createSymbol({name: 'Widget', kind: 'class'})
 
-  const changes = matchEntities({oldEntities: [before], newEntities: [after]})
+  const changes = matchSymbols({oldSymbols: [before], newSymbols: [after]})
 
   expect(changes.map((change) => change.type).toSorted()).toEqual(['added', 'deleted'])
 })
 
 test('matches an identical body under a new name as a rename', () => {
-  const before = createEntity({name: 'greet', structuralHash: 'same'})
-  const after = createEntity({name: 'welcome', structuralHash: 'same'})
+  const before = createSymbol({name: 'greet', structuralHash: 'same'})
+  const after = createSymbol({name: 'welcome', structuralHash: 'same'})
 
-  const changes = matchEntities({oldEntities: [before], newEntities: [after]})
+  const changes = matchSymbols({oldSymbols: [before], newSymbols: [after]})
 
   expect(changes).toMatchObject([
     {type: 'renamed', qualifiedName: 'welcome', previousQualifiedName: 'greet'},
@@ -112,86 +112,86 @@ test('matches an identical body under a new name as a rename', () => {
 })
 
 test('does not pair equal shapes whose tokens differ', () => {
-  const before = createEntity({name: 'greet', structuralHash: 'same'})
-  const after = createEntity({
+  const before = createSymbol({name: 'greet', structuralHash: 'same'})
+  const after = createSymbol({
     name: 'welcome',
     structuralHash: 'same',
     tokens: SUBSTANTIAL_TOKENS.map((token) => `${token}x`),
   })
 
-  const changes = matchEntities({oldEntities: [before], newEntities: [after]})
+  const changes = matchSymbols({oldSymbols: [before], newSymbols: [after]})
 
   expect(changes.map((change) => change.type).toSorted()).toEqual(['added', 'deleted'])
 })
 
-test('matches an entity that kept its name but changed owner as a move', () => {
-  const before = createEntity({name: 'render', qualifiedName: 'Widget.render', kind: 'method'})
-  const after = createEntity({name: 'render', qualifiedName: 'Gadget.render', kind: 'method'})
+test('matches a symbol that kept its name but changed owner as a move', () => {
+  const before = createSymbol({name: 'render', qualifiedName: 'Widget.render', kind: 'method'})
+  const after = createSymbol({name: 'render', qualifiedName: 'Gadget.render', kind: 'method'})
 
-  const changes = matchEntities({oldEntities: [before], newEntities: [after]})
+  const changes = matchSymbols({oldSymbols: [before], newSymbols: [after]})
 
   expect(changes).toMatchObject([
     {type: 'moved', qualifiedName: 'Gadget.render', previousQualifiedName: 'Widget.render'},
   ])
 })
 
-test('stays quiet when an entity is untouched but sits at a new line', () => {
-  const before = createEntity({name: 'greet', startLine: 5})
-  const after = createEntity({name: 'greet', startLine: 40})
+test('stays quiet when a symbol is untouched but sits at a new line', () => {
+  const before = createSymbol({name: 'greet', startLine: 5})
+  const after = createSymbol({name: 'greet', startLine: 40})
 
-  const changes = matchEntities({oldEntities: [before], newEntities: [after]})
+  const changes = matchSymbols({oldSymbols: [before], newSymbols: [after]})
 
   expect(changes).toEqual([])
 })
 
 test('leaves a one-line body to token matching rather than trusting its shape', () => {
-  const before = createEntity({name: 'goes', structuralHash: 'same', tokens: ['return', '2']})
-  const after = createEntity({name: 'arrives', structuralHash: 'same', tokens: ['return', '3']})
+  const before = createSymbol({name: 'goes', structuralHash: 'same', tokens: ['return', '2']})
+  const after = createSymbol({name: 'arrives', structuralHash: 'same', tokens: ['return', '3']})
 
-  const changes = matchEntities({oldEntities: [before], newEntities: [after]})
+  const changes = matchSymbols({oldSymbols: [before], newSymbols: [after]})
 
   expect(changes.map((change) => change.type).toSorted()).toEqual(['added', 'deleted'])
 })
 
 test('matches a renamed and lightly edited body by token overlap', () => {
-  const before = createEntity({name: 'greet', structuralHash: 'one', tokens: SUBSTANTIAL_TOKENS})
-  const after = createEntity({
+  const before = createSymbol({name: 'greet', structuralHash: 'one', tokens: SUBSTANTIAL_TOKENS})
+  const after = createSymbol({
     name: 'welcome',
     structuralHash: 'two',
     tokens: [...SUBSTANTIAL_TOKENS.slice(0, 15), 'changed'],
   })
 
-  const changes = matchEntities({oldEntities: [before], newEntities: [after]})
+  const changes = matchSymbols({oldSymbols: [before], newSymbols: [after]})
 
   expect(changes).toMatchObject([{type: 'renamed', previousQualifiedName: 'greet'}])
   expect(changes[0].similarity).toBeGreaterThan(0.8)
 })
 
 test('leaves a rewritten body unmatched rather than guessing a rename', () => {
-  const before = createEntity({name: 'greet', structuralHash: 'one', tokens: ['a', 'b', 'c', 'd']})
-  const after = createEntity({name: 'welcome', structuralHash: 'two', tokens: ['w', 'x', 'y', 'z']})
+  const before = createSymbol({name: 'greet', structuralHash: 'one', tokens: ['a', 'b', 'c', 'd']})
+  const after = createSymbol({name: 'welcome', structuralHash: 'two', tokens: ['w', 'x', 'y', 'z']})
 
-  const changes = matchEntities({oldEntities: [before], newEntities: [after]})
+  const changes = matchSymbols({oldSymbols: [before], newSymbols: [after]})
 
   expect(changes.map((change) => change.type).toSorted()).toEqual(['added', 'deleted'])
 })
 
-test('never claims one old entity for two new ones', () => {
-  const before = createEntity({name: 'greet', structuralHash: 'same'})
-  const first = createEntity({name: 'welcome', structuralHash: 'same'})
-  const second = createEntity({name: 'salute', structuralHash: 'same'})
+test('never claims one old symbol for two new ones', () => {
+  const before = createSymbol({name: 'greet', structuralHash: 'same'})
+  const first = createSymbol({name: 'welcome', structuralHash: 'same'})
+  const second = createSymbol({name: 'salute', structuralHash: 'same'})
 
-  const changes = matchEntities({oldEntities: [before], newEntities: [first, second]})
+  const changes = matchSymbols({oldSymbols: [before], newSymbols: [first, second]})
 
   expect(changes.filter((change) => change.type === 'renamed')).toHaveLength(1)
   expect(changes.filter((change) => change.type === 'added')).toHaveLength(1)
 })
 
-test('reports entities present on only one side', () => {
-  const before = createEntity({name: 'removed', structuralHash: 'one', tokens: ['a']})
-  const after = createEntity({name: 'introduced', structuralHash: 'two', tokens: ['z']})
+test('reports symbols present on only one side', () => {
+  const before = createSymbol({name: 'removed', structuralHash: 'one', tokens: ['a']})
+  const after = createSymbol({name: 'introduced', structuralHash: 'two', tokens: ['z']})
 
-  const changes = matchEntities({oldEntities: [before], newEntities: [after]})
+  const changes = matchSymbols({oldSymbols: [before], newSymbols: [after]})
 
   expect(changes).toMatchObject([
     {type: 'added', qualifiedName: 'introduced'},
@@ -214,8 +214,8 @@ test.each([
   {reads: '20,000,001', extraTokens: 1, runs: false},
 ])('the fuzzy phase runs at $reads token reads: $runs', ({extraTokens, runs}) => {
   const otherTokens = repeatToken('other', 100_000)
-  const oldEntities = Array.from({length: 100}, (_, index) =>
-    createEntity({
+  const oldSymbols = Array.from({length: 100}, (_, index) =>
+    createSymbol({
       name: `old${index}`,
       structuralHash: `old${index}`,
       tokens:
@@ -224,13 +224,13 @@ test.each([
           : otherTokens,
     }),
   )
-  const newEntity = createEntity({
+  const newSymbol = createSymbol({
     name: 'new',
     structuralHash: 'new',
     tokens: repeatToken('shared', 100_000),
   })
 
-  const changes = matchEntities({oldEntities, newEntities: [newEntity]})
+  const changes = matchSymbols({oldSymbols, newSymbols: [newSymbol]})
 
   expect(changes.some((change) => change.type === 'renamed')).toBe(runs)
 })
@@ -238,29 +238,29 @@ test.each([
 // If the phase counted all kinds together, it would read the 100,199 old tokens
 // once and the 100,000 new tokens 200 times. That is 20,100,199 reads, over the
 // limit.
-test('the fuzzy phase counts only the reads between entities of the same kind', () => {
-  const oldFunction = createEntity({
+test('the fuzzy phase counts only the reads between symbols of the same kind', () => {
+  const oldFunction = createSymbol({
     name: 'old',
     structuralHash: 'old',
     tokens: repeatToken('shared', 100_000),
   })
   const deletedClasses = Array.from({length: 199}, (_, index) =>
-    createEntity({
+    createSymbol({
       name: `Deleted${index}`,
       kind: 'class',
       structuralHash: `deleted${index}`,
       tokens: ['class'],
     }),
   )
-  const newFunction = createEntity({
+  const newFunction = createSymbol({
     name: 'new',
     structuralHash: 'new',
     tokens: repeatToken('shared', 100_000),
   })
 
-  const changes = matchEntities({
-    oldEntities: [oldFunction, ...deletedClasses],
-    newEntities: [newFunction],
+  const changes = matchSymbols({
+    oldSymbols: [oldFunction, ...deletedClasses],
+    newSymbols: [newFunction],
   })
 
   expect(changes).toContainEqual(expect.objectContaining({type: 'renamed', name: 'new'}))
@@ -268,8 +268,8 @@ test('the fuzzy phase counts only the reads between entities of the same kind', 
 
 // A property occurrence sharing its key with siblings, the way objects in a
 // JSON array all carry `name`. Ordinal suffixes follow document order.
-function createOccurrence(hash: string, ordinal: number): CodeEntity {
-  return createEntity({
+function createOccurrence(hash: string, ordinal: number): CodeSymbol {
+  return createSymbol({
     name: 'name',
     qualifiedName: ordinal === 0 ? 'defs.name' : `defs.name#${ordinal + 1}`,
     basePath: 'defs.name',
@@ -288,7 +288,7 @@ test('aligns colliding names by content so an insertion does not cascade', () =>
     createOccurrence(hash, ordinal),
   )
 
-  const changes = matchEntities({oldEntities: olds, newEntities: news})
+  const changes = matchSymbols({oldSymbols: olds, newSymbols: news})
 
   expect(changes).toMatchObject([{type: 'added', qualifiedName: 'defs.name'}])
 })
@@ -297,7 +297,7 @@ test('pairs an edited occurrence by its position among unedited siblings', () =>
   const olds = ['alpha', 'beta', 'gamma'].map((hash, ordinal) => createOccurrence(hash, ordinal))
   const news = ['alpha', 'edited', 'gamma'].map((hash, ordinal) => createOccurrence(hash, ordinal))
 
-  const changes = matchEntities({oldEntities: olds, newEntities: news})
+  const changes = matchSymbols({oldSymbols: olds, newSymbols: news})
 
   expect(changes).toMatchObject([{type: 'modified', qualifiedName: 'defs.name#2'}])
 })
@@ -311,7 +311,7 @@ test.each([
   {words: 990, runs: true},
   {words: 1000, runs: false},
 ])('the leftover pairing reads $words words an entry: runs $runs', ({words, runs}) => {
-  const createLeftover = (hash: string, ordinal: number, word: string): CodeEntity => ({
+  const createLeftover = (hash: string, ordinal: number, word: string): CodeSymbol => ({
     ...createOccurrence(hash, ordinal),
     tokens: repeatToken(word, words),
   })
@@ -322,7 +322,7 @@ test.each([
     createLeftover(`new${ordinal}`, ordinal, `word${ordinal}`),
   )
 
-  const changes = matchEntities({oldEntities: olds, newEntities: news})
+  const changes = matchSymbols({oldSymbols: olds, newSymbols: news})
 
   expect(changes.filter((change) => change.type === 'deleted')).toMatchObject([
     {qualifiedName: runs ? 'defs.name' : 'defs.name#101'},
@@ -330,7 +330,7 @@ test.each([
 })
 
 test('summarizes an array insertion as an element edit with its index', () => {
-  const before = createEntity({
+  const before = createSymbol({
     name: 'words',
     kind: 'property',
     ownContentHash: 'one',
@@ -339,7 +339,7 @@ test('summarizes an array insertion as an element edit with its index', () => {
       createElement({hash: '"beta"', index: 1}),
     ],
   })
-  const after = createEntity({
+  const after = createSymbol({
     name: 'words',
     kind: 'property',
     ownContentHash: 'two',
@@ -350,7 +350,7 @@ test('summarizes an array insertion as an element edit with its index', () => {
     ],
   })
 
-  const changes = matchEntities({oldEntities: [before], newEntities: [after]})
+  const changes = matchSymbols({oldSymbols: [before], newSymbols: [after]})
 
   expect(changes).toMatchObject([
     {
@@ -366,7 +366,7 @@ test('summarizes an array insertion as an element edit with its index', () => {
 })
 
 test('reports an in-place scalar edit as a delete plus insert at its index', () => {
-  const before = createEntity({
+  const before = createSymbol({
     name: 'words',
     kind: 'property',
     ownContentHash: 'one',
@@ -375,7 +375,7 @@ test('reports an in-place scalar edit as a delete plus insert at its index', () 
       createElement({hash: '"betas"', index: 1}),
     ],
   })
-  const after = createEntity({
+  const after = createSymbol({
     name: 'words',
     kind: 'property',
     ownContentHash: 'two',
@@ -385,7 +385,7 @@ test('reports an in-place scalar edit as a delete plus insert at its index', () 
     ],
   })
 
-  const changes = matchEntities({oldEntities: [before], newEntities: [after]})
+  const changes = matchSymbols({oldSymbols: [before], newSymbols: [after]})
 
   expect(changes[0].detail?.edits).toMatchObject([
     {type: 'deleted', index: 1, preview: '"betas"'},
@@ -393,44 +393,44 @@ test('reports an in-place scalar edit as a delete plus insert at its index', () 
   ])
 })
 
-test('stays quiet about an element edit that nested entities already report', () => {
-  const before = createEntity({
+test('stays quiet about an element edit that nested symbols already report', () => {
+  const before = createSymbol({
     name: 'defs',
     kind: 'property',
     ownContentHash: 'same',
-    elements: [createElement({hash: 'objA', index: 0, hasEntities: true})],
+    elements: [createElement({hash: 'objA', index: 0, hasSymbols: true})],
   })
-  const after = createEntity({
+  const after = createSymbol({
     name: 'defs',
     kind: 'property',
     ownContentHash: 'same',
-    elements: [createElement({hash: 'objB', index: 0, hasEntities: true})],
+    elements: [createElement({hash: 'objB', index: 0, hasSymbols: true})],
   })
 
-  const changes = matchEntities({oldEntities: [before], newEntities: [after]})
+  const changes = matchSymbols({oldSymbols: [before], newSymbols: [after]})
 
   expect(changes).toEqual([])
 })
 
 test('reports an inserted object element once, not once per key inside it', () => {
-  const before = createEntity({
+  const before = createSymbol({
     name: 'defs',
     kind: 'property',
     ownContentHash: 'one',
     span: {from: 0, to: 200},
-    elements: [createElement({hash: 'objA', hasEntities: true, span: {from: 100, to: 199}})],
+    elements: [createElement({hash: 'objA', hasSymbols: true, span: {from: 100, to: 199}})],
   })
-  const after = createEntity({
+  const after = createSymbol({
     name: 'defs',
     kind: 'property',
     ownContentHash: 'two',
     span: {from: 0, to: 300},
     elements: [
-      createElement({hash: 'objNew', hasEntities: true, span: {from: 10, to: 99}}),
-      createElement({hash: 'objA', hasEntities: true, span: {from: 100, to: 199}}),
+      createElement({hash: 'objNew', hasSymbols: true, span: {from: 10, to: 99}}),
+      createElement({hash: 'objA', hasSymbols: true, span: {from: 100, to: 199}}),
     ],
   })
-  const insertedKey = createEntity({
+  const insertedKey = createSymbol({
     name: 'name',
     qualifiedName: 'defs.name',
     kind: 'property',
@@ -438,7 +438,7 @@ test('reports an inserted object element once, not once per key inside it', () =
     span: {from: 20, to: 40},
   })
 
-  const changes = matchEntities({oldEntities: [before], newEntities: [after, insertedKey]})
+  const changes = matchSymbols({oldSymbols: [before], newSymbols: [after, insertedKey]})
 
   expect(changes).toMatchObject([
     {

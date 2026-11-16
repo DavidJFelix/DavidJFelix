@@ -1,4 +1,4 @@
-import type {EntityChange, EntityDiff, EntityDiffSummary} from './entity'
+import type {SymbolChange, SymbolDiff, SymbolDiffSummary} from './code-symbol'
 
 export interface EntityDiffRequest {
   itemId: string
@@ -10,7 +10,7 @@ export interface EntityDiffRequest {
 export interface EntityDiffStreamResult {
   itemId: string
   name: string
-  diff?: EntityDiff
+  diff?: SymbolDiff
   error?: string
 }
 
@@ -163,7 +163,7 @@ function normalizeResult(data: unknown): EntityDiffStreamResult | undefined {
     : {itemId: data.itemId, name: data.name, diff}
 }
 
-function normalizeEntityDiff(data: unknown): EntityDiff | undefined {
+function normalizeEntityDiff(data: unknown): SymbolDiff | undefined {
   if (!isRecord(data) || typeof data.path !== 'string' || !Array.isArray(data.changes)) {
     return undefined
   }
@@ -193,7 +193,7 @@ async function readErrorDetail(response: Response): Promise<string> {
   return `Symbol lookup failed (${response.status}).`
 }
 
-function isEntityChange(value: unknown): value is EntityChange {
+function isEntityChange(value: unknown): value is SymbolChange {
   return (
     isRecord(value) &&
     typeof value.type === 'string' &&
@@ -203,7 +203,7 @@ function isEntityChange(value: unknown): value is EntityChange {
   )
 }
 
-function isSummary(value: unknown): value is EntityDiffSummary {
+function isSummary(value: unknown): value is SymbolDiffSummary {
   return (
     isRecord(value) &&
     typeof value.added === 'number' &&
@@ -214,7 +214,7 @@ function isSummary(value: unknown): value is EntityDiffSummary {
   )
 }
 
-function createSummary(changes: readonly EntityChange[]): EntityDiffSummary {
+function createSummary(changes: readonly SymbolChange[]): SymbolDiffSummary {
   return {
     added: countOf(changes, 'added'),
     deleted: countOf(changes, 'deleted'),
@@ -224,7 +224,7 @@ function createSummary(changes: readonly EntityChange[]): EntityDiffSummary {
   }
 }
 
-function countOf(changes: readonly EntityChange[], type: EntityChange['type']): number {
+function countOf(changes: readonly SymbolChange[], type: SymbolChange['type']): number {
   return changes.filter((change) => change.type === type).length
 }
 

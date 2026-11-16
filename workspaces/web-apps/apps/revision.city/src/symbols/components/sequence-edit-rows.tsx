@@ -1,7 +1,7 @@
 import {css} from 'styled-system/css'
 import {isNullish} from '@/diffs/lib/nullish'
 import {CHANGE_STYLES} from '@/symbols/lib/change-presentation'
-import type {SequenceEdit} from '@/symbols/lib/entity'
+import type {SequenceEdit} from '@/symbols/lib/code-symbol'
 import type {SymbolSelection} from './symbol-changes-list'
 
 // Element edits beyond this stay behind a count: a reviewer scanning a huge

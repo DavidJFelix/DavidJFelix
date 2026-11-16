@@ -2,7 +2,7 @@ import {act} from 'react'
 import {createRoot} from 'react-dom/client'
 import {expect, test, vi} from 'vitest'
 
-import type {EntityChange} from '@/symbols/lib/entity'
+import type {SymbolChange} from '@/symbols/lib/code-symbol'
 import type * as SequenceEditRowsModule from './sequence-edit-rows'
 import {SequenceEditRows} from './sequence-edit-rows'
 import {SymbolChangesList, type SymbolSelection} from './symbol-changes-list'
@@ -23,7 +23,7 @@ vi.mock('./sequence-edit-rows', async (importOriginal) => {
 })
 ;(globalThis as {IS_REACT_ACT_ENVIRONMENT?: boolean}).IS_REACT_ACT_ENVIRONMENT = true
 
-function createEntry(changes: readonly EntityChange[]): EntityDiffEntry {
+function createEntry(changes: readonly SymbolChange[]): EntityDiffEntry {
   return {
     itemId: 'item-1',
     name: 'src/widget.ts',
@@ -37,7 +37,7 @@ function createEntry(changes: readonly EntityChange[]): EntityDiffEntry {
   }
 }
 
-const MODIFIED_METHOD: EntityChange = {
+const MODIFIED_METHOD: SymbolChange = {
   type: 'modified',
   kind: 'method',
   name: 'render',
@@ -272,7 +272,7 @@ test('does not claim no changes for a file it did not read', () => {
   harness.unmount()
 })
 
-const MODIFIED_ARRAY: EntityChange = {
+const MODIFIED_ARRAY: SymbolChange = {
   type: 'modified',
   kind: 'property',
   name: 'words',

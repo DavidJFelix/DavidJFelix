@@ -4,7 +4,7 @@ import {memo, type ReactNode} from 'react'
 import {css, cx} from 'styled-system/css'
 import {isNullish} from '@/diffs/lib/nullish'
 import {CHANGE_ORDER, CHANGE_STYLES, KIND_LABELS} from '@/symbols/lib/change-presentation'
-import type {EntityChange} from '@/symbols/lib/entity'
+import type {SymbolChange} from '@/symbols/lib/code-symbol'
 import {SequenceEditRows} from './sequence-edit-rows'
 import type {EntityDiffEntry} from './use-entity-diffs'
 
@@ -302,14 +302,14 @@ const FileSection = memo(function FileSection({
 })
 
 interface SymbolRowProps {
-  change: EntityChange
+  change: SymbolChange
   itemId: string
   onSelectSymbol?: (selection: SymbolSelection) => void
 }
 
 function SymbolRow({change, itemId, onSelectSymbol}: SymbolRowProps) {
   const style = CHANGE_STYLES[change.type]
-  // A deleted entity only exists on the left; everything else is anchored to
+  // A deleted symbol only exists on the left; everything else is anchored to
   // where it now lives.
   const side = change.type === 'deleted' ? 'deletions' : 'additions'
   const lineNumber =

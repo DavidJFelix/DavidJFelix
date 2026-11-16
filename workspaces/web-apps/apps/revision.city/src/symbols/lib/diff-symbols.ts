@@ -1,11 +1,11 @@
-import type {EntityChange, EntityDiff, EntityDiffSummary} from './entity'
-import {extractEntities} from './extract-entities'
+import type {SymbolChange, SymbolDiff, SymbolDiffSummary} from './code-symbol'
+import {extractSymbols} from './extract-symbols'
 import {detectLanguage} from './language-registry'
-import {matchEntities} from './match-entities'
+import {matchSymbols} from './match-symbols'
 
 // Report order: the buckets a reviewer scans first, and within a bucket the
 // order the symbols appear in the new file.
-const CHANGE_TYPE_ORDER: Record<EntityChange['type'], number> = {
+const CHANGE_TYPE_ORDER: Record<SymbolChange['type'], number> = {
   added: 0,
   modified: 1,
   renamed: 2,
@@ -13,43 +13,43 @@ const CHANGE_TYPE_ORDER: Record<EntityChange['type'], number> = {
   deleted: 4,
 }
 
-export interface DiffEntitiesParams {
+export interface DiffSymbolsParams {
   path: string
   oldSource: string
   newSource: string
 }
 
-// Entity-level diff of one file. If no entity changed, for example after a
+// Symbol-level diff of one file. If no symbol changed, for example after a
 // formatting pass or a comment edit, the change list is empty and the language
 // is still named. A side too large to extract also gives the empty list.
-export async function diffEntities({
+export async function diffSymbols({
   path,
   oldSource,
   newSource,
-}: DiffEntitiesParams): Promise<EntityDiff> {
+}: DiffSymbolsParams): Promise<SymbolDiff> {
   const language = detectLanguage(path)
   if (language === undefined) {
     return {path, language: null, changes: [], summary: createSummary([])}
   }
 
   const parser = await language.loadParser()
-  const oldExtraction = extractEntities({source: oldSource, parser})
-  const newExtraction = extractEntities({source: newSource, parser})
+  const oldExtraction = extractSymbols({source: oldSource, parser})
+  const newExtraction = extractSymbols({source: newSource, parser})
 
   if (oldExtraction.tooLarge || newExtraction.tooLarge) {
-    return createTooLargeEntityDiff(path)
+    return createTooLargeSymbolDiff(path)
   }
 
-  const changes = matchEntities({
-    oldEntities: oldExtraction.entities,
-    newEntities: newExtraction.entities,
+  const changes = matchSymbols({
+    oldSymbols: oldExtraction.symbols,
+    newSymbols: newExtraction.symbols,
   }).toSorted(compareChanges)
   return {path, language: language.id, changes, summary: createSummary(changes)}
 }
 
 // The result for a file too large to diff: the language is named, the change
 // list is empty, and `skipped` tells the reader that the file was not diffed.
-export function createTooLargeEntityDiff(path: string): EntityDiff {
+export function createTooLargeSymbolDiff(path: string): SymbolDiff {
   return {
     path,
     language: detectLanguage(path)?.id ?? null,
@@ -59,7 +59,7 @@ export function createTooLargeEntityDiff(path: string): EntityDiff {
   }
 }
 
-function compareChanges(left: EntityChange, right: EntityChange): number {
+function compareChanges(left: SymbolChange, right: SymbolChange): number {
   const byType = CHANGE_TYPE_ORDER[left.type] - CHANGE_TYPE_ORDER[right.type]
   if (byType !== 0) {
     return byType
@@ -69,7 +69,7 @@ function compareChanges(left: EntityChange, right: EntityChange): number {
   return leftLine - rightLine
 }
 
-function createSummary(changes: readonly EntityChange[]): EntityDiffSummary {
+function createSummary(changes: readonly SymbolChange[]): SymbolDiffSummary {
   return {
     added: countOf(changes, 'added'),
     deleted: countOf(changes, 'deleted'),
@@ -79,6 +79,6 @@ function createSummary(changes: readonly EntityChange[]): EntityDiffSummary {
   }
 }
 
-function countOf(changes: readonly EntityChange[], type: EntityChange['type']): number {
+function countOf(changes: readonly SymbolChange[], type: SymbolChange['type']): number {
   return changes.filter((change) => change.type === type).length
 }

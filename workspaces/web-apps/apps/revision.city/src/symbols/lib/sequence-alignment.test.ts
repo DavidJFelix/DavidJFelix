@@ -1,6 +1,6 @@
 import {expect, test} from 'vitest'
 
-import type {SequenceElement} from './entity'
+import type {SequenceElement} from './code-symbol'
 import {alignByHash, diffSequenceElements} from './sequence-alignment'
 
 // 600 by 600 is past the 250,000-cell table cap, so these cases reach the
@@ -17,7 +17,7 @@ function toElements(values: readonly string[]): SequenceElement[] {
     preview: hash,
     range: {startLine: index + 1, endLine: index + 1},
     span: {from: index, to: index + 1},
-    hasEntities: false,
+    hasSymbols: false,
   }))
 }
 

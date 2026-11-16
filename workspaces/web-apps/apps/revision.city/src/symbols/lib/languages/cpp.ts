@@ -1,8 +1,8 @@
 import type {SyntaxNode} from '@lezer/common'
 import {parser} from '@lezer/cpp'
 
-import type {EntityKind, EntitySpec, ResolveEntityNameParams} from '../entity'
-import {entityProp} from '../entity'
+import type {ResolveSymbolNameParams, SymbolKind, SymbolSpec} from '../code-symbol'
+import {symbolProp} from '../code-symbol'
 
 // A declarator name sits at the bottom of a chain of these wrappers
 // (`int *const (*name)()`). The walk follows only these nodes, so it never
@@ -26,10 +26,10 @@ const MEMBER_NAMES = new Set([
 
 const TYPE_NAMES = new Set(['TypeIdentifier'])
 
-const SPECS: Record<string, EntitySpec> = {
+const SPECS: Record<string, SymbolSpec> = {
   NamespaceDefinition: {kind: 'module', name: ['Identifier'], container: true},
   // A specifier without a body only refers to the type (`struct request *req`,
-  // `class Forward;`), so it is not an entity.
+  // `class Forward;`), so it is not a symbol.
   StructSpecifier: {kind: 'struct', name: ['TypeIdentifier'], container: true, accept: hasFields},
   ClassSpecifier: {kind: 'class', name: ['TypeIdentifier'], container: true, accept: hasFields},
   UnionSpecifier: {kind: 'union', name: ['TypeIdentifier'], container: true, accept: hasFields},
@@ -55,11 +55,11 @@ const SPECS: Record<string, EntitySpec> = {
   PreprocDirective: {kind: 'macro', name: ['Identifier'], accept: isDefine},
 }
 
-function hasFields({node}: ResolveEntityNameParams): boolean {
+function hasFields({node}: ResolveSymbolNameParams): boolean {
   return node.getChild('FieldDeclarationList') !== null
 }
 
-function hasEnumerators({node}: ResolveEntityNameParams): boolean {
+function hasEnumerators({node}: ResolveSymbolNameParams): boolean {
   return node.getChild('EnumeratorList') !== null
 }
 
@@ -88,26 +88,26 @@ function declaratorChain({node, names}: DeclaratorChainParams): DeclaratorChain 
   return undefined
 }
 
-function resolveMemberName({node, source}: ResolveEntityNameParams): string | undefined {
+function resolveMemberName({node, source}: ResolveSymbolNameParams): string | undefined {
   const chain = declaratorChain({node, names: MEMBER_NAMES})
   return chain === undefined ? undefined : source.slice(chain.name.from, chain.name.to)
 }
 
-function resolveFieldKind({node}: ResolveEntityNameParams): EntityKind {
+function resolveFieldKind({node}: ResolveSymbolNameParams): SymbolKind {
   return declaratorChain({node, names: MEMBER_NAMES})?.isFunction === true ? 'method' : 'field'
 }
 
-function resolveDeclarationKind({node}: ResolveEntityNameParams): EntityKind {
+function resolveDeclarationKind({node}: ResolveSymbolNameParams): SymbolKind {
   return declaratorChain({node, names: MEMBER_NAMES})?.isFunction === true ? 'function' : 'variable'
 }
 
-function isDefine({node}: ResolveEntityNameParams): boolean {
+function isDefine({node}: ResolveSymbolNameParams): boolean {
   return node.firstChild?.type.name === '#define'
 }
 
 // The new name comes after the aliased type: `node_t` in
 // `typedef struct node {...} node_t`, `fn_t` in `typedef int (*fn_t)(int)`.
-function resolveTypedefName({node, source}: ResolveEntityNameParams): string | undefined {
+function resolveTypedefName({node, source}: ResolveSymbolNameParams): string | undefined {
   let name: SyntaxNode | undefined
   for (let child = node.firstChild; child !== null; child = child.nextSibling) {
     if (child.type.name === 'TypeIdentifier') {
@@ -119,4 +119,4 @@ function resolveTypedefName({node, source}: ResolveEntityNameParams): string | u
   return name === undefined ? undefined : source.slice(name.from, name.to)
 }
 
-export const cppParser = parser.configure({props: [entityProp.add(SPECS)]})
+export const cppParser = parser.configure({props: [symbolProp.add(SPECS)]})

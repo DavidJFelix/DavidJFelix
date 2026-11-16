@@ -6,7 +6,7 @@
 description = "Type-check with astro check"
 run = "bun run typecheck"
 # astro check and astro build both regenerate .astro/ types; serialize them
-# when both are scheduled (e.g. via the check umbrella task)
+# when both are scheduled
 wait_for = ["build"]
 
 [tasks.lint]

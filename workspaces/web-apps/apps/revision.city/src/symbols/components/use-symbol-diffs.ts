@@ -2,48 +2,48 @@ import {useCallback, useEffect, useRef, useState} from 'react'
 
 import type {SymbolDiff} from '@/symbols/lib/code-symbol'
 import {
-  type EntityDiffRequest,
   MAX_FILES_PER_REQUEST,
-  streamEntityDiffs,
-} from '@/symbols/lib/entity-diff-client'
+  type SymbolDiffRequest,
+  streamSymbolDiffs,
+} from '@/symbols/lib/symbol-diff-client'
 
-export type EntityDiffStatus = 'pending' | 'loading' | 'ready' | 'error'
+export type SymbolDiffStatus = 'pending' | 'loading' | 'ready' | 'error'
 
-export interface EntityDiffEntry {
+export interface SymbolDiffEntry {
   readonly diff?: SymbolDiff
   readonly error?: string
   readonly itemId: string
   readonly name: string
-  readonly status: EntityDiffStatus
+  readonly status: SymbolDiffStatus
 }
 
-export interface UseEntityDiffsParams {
+export interface UseSymbolDiffsParams {
   domain?: string
   // Gates the whole thing: nothing is requested until the symbols tab is opened,
   // so viewing a diff without opening the tab costs nothing.
   enabled: boolean
-  requests: readonly EntityDiffRequest[]
+  requests: readonly SymbolDiffRequest[]
   sourcePath: string
 }
 
-export interface EntityDiffsState {
-  readonly entries: readonly EntityDiffEntry[]
+export interface SymbolDiffsState {
+  readonly entries: readonly SymbolDiffEntry[]
   readonly loadedCount: number
   // Asks again for the files that failed, and only for those.
   readonly retry: () => void
   readonly totalCount: number
 }
 
-export function useEntityDiffs({
+export function useSymbolDiffs({
   domain,
   enabled,
   requests,
   sourcePath,
-}: UseEntityDiffsParams): EntityDiffsState {
-  const [entries, setEntries] = useState<readonly EntityDiffEntry[]>([])
+}: UseSymbolDiffsParams): SymbolDiffsState {
+  const [entries, setEntries] = useState<readonly SymbolDiffEntry[]>([])
   // Results survive tab switches and streamed additions to the file list; the
   // key pins a result to one revision pair so it can never be shown for another.
-  const cacheRef = useRef(new Map<string, EntityDiffEntry>())
+  const cacheRef = useRef(new Map<string, SymbolDiffEntry>())
   const sourceKey = `${domain ?? ''}\0${sourcePath}`
   const previousSourceRef = useRef(sourceKey)
   const [attempt, setAttempt] = useState(0)
@@ -113,7 +113,7 @@ export function useEntityDiffs({
         publish()
 
         try {
-          await streamEntityDiffs({
+          await streamSymbolDiffs({
             domain,
             files: batch,
             signal: controller.signal,
@@ -197,6 +197,6 @@ export function useEntityDiffs({
 
 // Includes prevName and type because a rename changes which blobs are compared
 // while the file's name stays the same.
-function cacheKey(request: EntityDiffRequest): string {
+function cacheKey(request: SymbolDiffRequest): string {
   return `${request.type}\0${request.prevName ?? ''}\0${request.name}`
 }

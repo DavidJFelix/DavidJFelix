@@ -15,8 +15,8 @@ import {isNullish} from '@/diffs/lib/nullish'
 import {isFileTooLargeError} from '@/diffs/lib/read-limited-text'
 import type {SymbolDiff} from './code-symbol'
 import {createTooLargeSymbolDiff, diffSymbols} from './diff-symbols'
-import {MAX_FILES_PER_REQUEST} from './entity-diff-client'
 import {detectLanguage} from './language-registry'
+import {MAX_FILES_PER_REQUEST} from './symbol-diff-client'
 
 const CHANGE_TYPES: readonly ChangeTypes[] = [
   'change',
@@ -35,26 +35,26 @@ const MAX_CONCURRENT_READS = 4
 // limit is not read to its end and gets an empty diff.
 const MAX_FILE_BYTES = 1_000_000
 
-// Entity diffs are immutable per revision pair, but a GitHub read can use the
+// Symbol diffs are immutable per revision pair, but a GitHub read can use the
 // caller's own credentials. A Codeberg read is public and uses the same header,
 // so that one policy covers every response.
 const CACHE_CONTROL = 'private, no-store'
 
-export interface EntityDiffFileRequest {
+export interface SymbolDiffFileRequest {
   itemId: string
   name: string
   prevName?: string
   type: ChangeTypes
 }
 
-export interface EntityDiffResult {
+export interface SymbolDiffResult {
   itemId: string
   name: string
   diff?: SymbolDiff
   error?: string
 }
 
-export interface EntityDiffEndpointOptions {
+export interface SymbolDiffEndpointOptions {
   credentials?: GitHubAuthOptions['credentials']
   fetch?: CodebergDiffFileServerOptions['fetch']
 }
@@ -64,16 +64,16 @@ interface DiffFiles {
   newFile: FileContents | null
 }
 
-type ReadDiffFiles = (file: Omit<EntityDiffFileRequest, 'itemId'>) => Promise<DiffFiles>
+type ReadDiffFiles = (file: Omit<SymbolDiffFileRequest, 'itemId'>) => Promise<DiffFiles>
 
 // Streams one newline-delimited JSON result per file, in completion order, so
 // the viewer can render each file's symbols the moment it is ready instead of
 // waiting for the slowest one. Signing in is not required -- a public repo reads
 // fine unauthenticated, the same way the viewer already loads its patch. A body
 // with `domain: 'codeberg.org'` reads from Codeberg, which has no sign-in yet.
-export async function handleEntityDiffRequest(
+export async function handleSymbolDiffRequest(
   request: Request,
-  options: EntityDiffEndpointOptions = {},
+  options: SymbolDiffEndpointOptions = {},
 ): Promise<Response> {
   let body: unknown
   try {
@@ -137,7 +137,7 @@ function createStreamResponse(stream: ReadableStream<Uint8Array>): Response {
 }
 
 interface CreateResultStreamParams {
-  files: readonly EntityDiffFileRequest[]
+  files: readonly SymbolDiffFileRequest[]
   readFiles: ReadDiffFiles
 }
 
@@ -170,21 +170,21 @@ function createResultStream({
 }
 
 interface ComputeResultParams {
-  file: EntityDiffFileRequest
+  file: SymbolDiffFileRequest
   readFiles: ReadDiffFiles
 }
 
 // One file never fails the batch: a read that throws is reported on its own line
 // so the other files still arrive.
-async function computeResult({file, readFiles}: ComputeResultParams): Promise<EntityDiffResult> {
+async function computeResult({file, readFiles}: ComputeResultParams): Promise<SymbolDiffResult> {
   // A pure rename moves a file without touching its contents, so both sides hold
-  // the same entities. Answer without a request to GitHub or Codeberg.
+  // the same symbols. Answer without a request to GitHub or Codeberg.
   if (file.type === 'rename-pure') {
-    return {itemId: file.itemId, name: file.name, diff: createEmptyEntityDiff(file.name)}
+    return {itemId: file.itemId, name: file.name, diff: createEmptySymbolDiff(file.name)}
   }
   // A file with no grammar always gives an empty diff, so do not read it.
   if (detectLanguage(file.name) === undefined) {
-    return {itemId: file.itemId, name: file.name, diff: createEmptyEntityDiff(file.name)}
+    return {itemId: file.itemId, name: file.name, diff: createEmptySymbolDiff(file.name)}
   }
 
   try {
@@ -216,7 +216,7 @@ async function computeResult({file, readFiles}: ComputeResultParams): Promise<En
 
 interface ParsedRequestBody {
   domain?: string
-  files: readonly EntityDiffFileRequest[]
+  files: readonly SymbolDiffFileRequest[]
   path: string
 }
 
@@ -240,7 +240,7 @@ function parseRequestBody(body: unknown): ParsedRequestBody | undefined {
     : {domain: body.domain, files, path: body.path}
 }
 
-function parseFileRequest(value: unknown): EntityDiffFileRequest | undefined {
+function parseFileRequest(value: unknown): SymbolDiffFileRequest | undefined {
   if (!isRecord(value) || typeof value.itemId !== 'string' || typeof value.name !== 'string') {
     return undefined
   }
@@ -256,7 +256,7 @@ function parseFileRequest(value: unknown): EntityDiffFileRequest | undefined {
   }
 }
 
-function createEmptyEntityDiff(path: string): SymbolDiff {
+function createEmptySymbolDiff(path: string): SymbolDiff {
   return {
     path,
     language: null,

@@ -1,12 +1,12 @@
 import {expect, test} from 'vitest'
 
-import {diffEntities} from './diff-entities'
+import {diffSymbols} from './diff-symbols'
 
 test('names the changed function rather than the changed lines', async () => {
   const oldSource = 'export function greet(name) {\n  return name\n}\n'
   const newSource = "export function greet(name) {\n  return 'hi ' + name\n}\n"
 
-  const diff = await diffEntities({path: 'src/greet.ts', oldSource, newSource})
+  const diff = await diffSymbols({path: 'src/greet.ts', oldSource, newSource})
 
   expect(diff.language).toBe('typescript')
   expect(diff.changes).toMatchObject([{type: 'modified', qualifiedName: 'greet'}])
@@ -17,7 +17,7 @@ test('reports a pure reformat as no semantic change', async () => {
   const oldSource = 'export function greet(name) {\n  return name\n}\n'
   const newSource = 'export function greet(name) {\n\n      return name\n\n}\n'
 
-  const diff = await diffEntities({path: 'src/greet.ts', oldSource, newSource})
+  const diff = await diffSymbols({path: 'src/greet.ts', oldSource, newSource})
 
   expect(diff.changes).toEqual([])
 })
@@ -26,7 +26,7 @@ test('reports a comment-only edit as no semantic change', async () => {
   const oldSource = 'export function greet() {\n  // old note\n  return 1\n}\n'
   const newSource = 'export function greet() {\n  // a completely different note\n  return 1\n}\n'
 
-  const diff = await diffEntities({path: 'src/greet.ts', oldSource, newSource})
+  const diff = await diffSymbols({path: 'src/greet.ts', oldSource, newSource})
 
   expect(diff.changes).toEqual([])
 })
@@ -112,7 +112,7 @@ test.each([
     qualifiedName: '.card',
   },
 ])('reports an edit to $edit as modified', async ({path, oldSource, newSource, qualifiedName}) => {
-  const diff = await diffEntities({path, oldSource, newSource})
+  const diff = await diffSymbols({path, oldSource, newSource})
 
   expect(diff.changes).toMatchObject([{type: 'modified', qualifiedName}])
 })
@@ -143,7 +143,7 @@ test.each([
     newSource: '.card { width:   700px; }\n',
   },
 ])('reports $edit as no semantic change', async ({path, oldSource, newSource}) => {
-  const diff = await diffEntities({path, oldSource, newSource})
+  const diff = await diffSymbols({path, oldSource, newSource})
 
   expect(diff.changes).toEqual([])
 })
@@ -152,7 +152,7 @@ test('reports a Markdown heading with new text as added and deleted, not renamed
   const oldSource = '# Guide\n\n## Install\n\nRun it.\n'
   const newSource = '# Guide\n\n## License\n\nRun it.\n'
 
-  const diff = await diffEntities({path: 'README.md', oldSource, newSource})
+  const diff = await diffSymbols({path: 'README.md', oldSource, newSource})
 
   expect(diff.changes).toMatchObject([
     {type: 'added', qualifiedName: 'License'},
@@ -164,7 +164,7 @@ test('follows a method renamed inside its class', async () => {
   const oldSource = 'export class Widget {\n  render() {\n    return 1\n  }\n}\n'
   const newSource = 'export class Widget {\n  draw() {\n    return 1\n  }\n}\n'
 
-  const diff = await diffEntities({path: 'src/widget.ts', oldSource, newSource})
+  const diff = await diffSymbols({path: 'src/widget.ts', oldSource, newSource})
 
   expect(diff.changes).toMatchObject([
     {type: 'renamed', qualifiedName: 'Widget.draw', previousQualifiedName: 'Widget.render'},
@@ -187,7 +187,7 @@ function classSource({name, editedMethod}: ClassSourceParams): string {
 }
 
 test('reports a renamed class once, not once more per untouched method', async () => {
-  const diff = await diffEntities({
+  const diff = await diffSymbols({
     path: 'src/foo.ts',
     oldSource: classSource({name: 'Foo'}),
     newSource: classSource({name: 'Bar'}),
@@ -200,7 +200,7 @@ test('reports a renamed class once, not once more per untouched method', async (
 })
 
 test('reports a renamed class and its edited method, not its untouched methods', async () => {
-  const diff = await diffEntities({
+  const diff = await diffSymbols({
     path: 'src/foo.ts',
     oldSource: classSource({name: 'Foo'}),
     newSource: classSource({name: 'Bar', editedMethod: 'gamma'}),
@@ -216,7 +216,7 @@ test('reports a renamed class and its edited method, not its untouched methods',
 test('reports a renamed JSON key once, not once more per key inside it', async () => {
   const versions =
     '{"a": "1.0.0", "b": "2.0.0", "c": "3.0.0", "d": "4.0.0", "e": "5.0.0", "f": "6.0.0"}'
-  const diff = await diffEntities({
+  const diff = await diffSymbols({
     path: 'package.json',
     oldSource: `{"name": "app", "devDependencies": ${versions}}\n`,
     newSource: `{"name": "app", "dependencies": ${versions}}\n`,
@@ -236,7 +236,7 @@ function rustStructSource(name: string): string {
 }
 
 test('keeps the members of a renamed Rust struct and its impl apart', async () => {
-  const diff = await diffEntities({
+  const diff = await diffSymbols({
     path: 'src/foo.rs',
     oldSource: rustStructSource('Foo'),
     newSource: rustStructSource('Bar'),
@@ -275,7 +275,7 @@ test.each([
     newSource: 'export class Widget {\n  draw() {\n    return measure(bounds, scale)\n  }\n}\n',
   },
 ])('reports $pair as added and deleted, not renamed', async ({path, oldSource, newSource}) => {
-  const diff = await diffEntities({path, oldSource, newSource})
+  const diff = await diffSymbols({path, oldSource, newSource})
 
   expect(diff.changes.map((change) => change.type)).toEqual(['added', 'deleted'])
 })
@@ -288,7 +288,7 @@ test('pairs each renamed function with its own body when the order also changed'
     'export function gamma() {\n  return second(three, four)\n}\n' +
     'export function delta() {\n  return first(one, two)\n}\n'
 
-  const diff = await diffEntities({path: 'src/steps.ts', oldSource, newSource})
+  const diff = await diffSymbols({path: 'src/steps.ts', oldSource, newSource})
 
   expect(diff.changes).toMatchObject([
     {type: 'renamed', qualifiedName: 'gamma', previousQualifiedName: 'beta'},
@@ -302,7 +302,7 @@ test('marks a renamed function whose body was also edited', async () => {
   const newSource =
     'export function welcome(name, title) {\n  const text = format(title, name)\n  return print(text, settings)\n}\n'
 
-  const diff = await diffEntities({path: 'src/greet.ts', oldSource, newSource})
+  const diff = await diffSymbols({path: 'src/greet.ts', oldSource, newSource})
 
   expect(diff.changes).toMatchObject([
     {type: 'renamed', qualifiedName: 'welcome', previousQualifiedName: 'greet', bodyChanged: true},
@@ -313,7 +313,7 @@ test('does not mark a pure rename as a body edit', async () => {
   const oldSource = 'export function greet(name) {\n  return print(format(name), options)\n}\n'
   const newSource = 'export function welcome(name) {\n  return print(format(name), options)\n}\n'
 
-  const diff = await diffEntities({path: 'src/greet.ts', oldSource, newSource})
+  const diff = await diffSymbols({path: 'src/greet.ts', oldSource, newSource})
 
   expect(diff.changes).toMatchObject([{type: 'renamed', previousQualifiedName: 'greet'}])
   expect(diff.changes[0]).not.toHaveProperty('bodyChanged')
@@ -323,7 +323,7 @@ test('reports a Java field value edit as a modified field, not a rename', async 
   const oldSource = 'class A {\n  static final int MAX = 1;\n}\n'
   const newSource = 'class A {\n  static final int MAX = 2;\n}\n'
 
-  const diff = await diffEntities({path: 'src/A.java', oldSource, newSource})
+  const diff = await diffSymbols({path: 'src/A.java', oldSource, newSource})
 
   expect(diff.changes).toMatchObject([{type: 'modified', kind: 'field', qualifiedName: 'A.MAX'}])
 })
@@ -333,7 +333,7 @@ test('names a Go method by its receiver type', async () => {
     'package m\n\nfunc (a A) String() string {\n\treturn "a"\n}\n\nfunc (b B) String() string {\n\treturn "b"\n}\n'
   const newSource = oldSource.replace('"b"', '"bee"')
 
-  const diff = await diffEntities({path: 'm.go', oldSource, newSource})
+  const diff = await diffSymbols({path: 'm.go', oldSource, newSource})
 
   expect(diff.changes).toMatchObject([
     {type: 'modified', kind: 'method', qualifiedName: 'B.String'},
@@ -365,7 +365,7 @@ test.each([
 ])(
   'reports a changed C $change as one modified row',
   async ({oldSource, newSource, kind, qualifiedName}) => {
-    const diff = await diffEntities({path: 'limits.c', oldSource, newSource})
+    const diff = await diffSymbols({path: 'limits.c', oldSource, newSource})
 
     expect(diff.changes).toMatchObject([{type: 'modified', kind, qualifiedName}])
     expect(diff.changes).toHaveLength(1)
@@ -373,7 +373,7 @@ test.each([
 )
 
 test('reports a changed C include as no row', async () => {
-  const diff = await diffEntities({
+  const diff = await diffSymbols({
     path: 'main.c',
     oldSource: '#include <stdio.h>\n',
     newSource: '#include <stdlib.h>\n',
@@ -386,7 +386,7 @@ test('reports a changed C local declaration against its function only', async ()
   const oldSource = 'int main(void) {\n  int local = 1;\n  return local;\n}\n'
   const newSource = oldSource.replace('= 1', '= 2')
 
-  const diff = await diffEntities({path: 'main.c', oldSource, newSource})
+  const diff = await diffSymbols({path: 'main.c', oldSource, newSource})
 
   expect(diff.changes).toMatchObject([{type: 'modified', kind: 'function', qualifiedName: 'main'}])
   expect(diff.changes).toHaveLength(1)
@@ -396,7 +396,7 @@ test('reports a body edit of a C function that has a prototype against the defin
   const oldSource = 'int add(int a, int b);\n\nint add(int a, int b) {\n  return a + b;\n}\n'
   const newSource = oldSource.replace('a + b', 'b + a')
 
-  const diff = await diffEntities({path: 'add.c', oldSource, newSource})
+  const diff = await diffSymbols({path: 'add.c', oldSource, newSource})
 
   expect(diff.changes).toMatchObject([{type: 'modified', kind: 'function', qualifiedName: 'add#2'}])
   expect(diff.changes).toHaveLength(1)
@@ -406,7 +406,7 @@ test('names the dependency that changed in a manifest', async () => {
   const oldSource = '{"dependencies": {"react": "18.0.0", "zod": "4.0.0"}}'
   const newSource = '{"dependencies": {"react": "19.0.0", "zod": "4.0.0"}}'
 
-  const diff = await diffEntities({path: 'package.json', oldSource, newSource})
+  const diff = await diffSymbols({path: 'package.json', oldSource, newSource})
 
   expect(diff.changes).toMatchObject([{type: 'modified', qualifiedName: 'dependencies.react'}])
 })
@@ -415,7 +415,7 @@ test('names the default export of a config file when its options change', async 
   const oldSource = 'export default defineConfig({server: {port: 3000}})\n'
   const newSource = 'export default defineConfig({server: {port: 4000}})\n'
 
-  const diff = await diffEntities({path: 'vite.config.ts', oldSource, newSource})
+  const diff = await diffSymbols({path: 'vite.config.ts', oldSource, newSource})
 
   expect(diff.changes).toMatchObject([
     {type: 'modified', kind: 'constant', qualifiedName: 'default'},
@@ -496,18 +496,18 @@ test.each([
     change: ['class', 'Draft'],
   },
 ])('reports an edit to $edit against $change', async ({path, oldSource, newSource, change}) => {
-  const diff = await diffEntities({path, oldSource, newSource})
+  const diff = await diffSymbols({path, oldSource, newSource})
 
   expect(diff.changes.map((entry) => [entry.type, entry.kind, entry.qualifiedName])).toEqual([
     ['modified', ...change],
   ])
 })
 
-test('reports only the entity that changed, not the ones enclosing it', async () => {
+test('reports only the symbol that changed, not the ones enclosing it', async () => {
   const oldSource = 'export class Widget {\n  render() {\n    return 1\n  }\n}\n'
   const newSource = 'export class Widget {\n  render() {\n    return 2\n  }\n}\n'
 
-  const diff = await diffEntities({path: 'src/widget.ts', oldSource, newSource})
+  const diff = await diffSymbols({path: 'src/widget.ts', oldSource, newSource})
 
   expect(diff.changes).toMatchObject([{type: 'modified', qualifiedName: 'Widget.render'}])
 })
@@ -516,7 +516,7 @@ test('reports a new struct parameter as a change to its function only', async ()
   const oldSource = 'void handle(int code) {\n  use(code);\n}\n'
   const newSource = 'void handle(int code, struct request *req) {\n  use(code);\n}\n'
 
-  const diff = await diffEntities({path: 'src/handle.c', oldSource, newSource})
+  const diff = await diffSymbols({path: 'src/handle.c', oldSource, newSource})
 
   expect(diff.changes).toMatchObject([
     {type: 'modified', kind: 'function', qualifiedName: 'handle'},
@@ -524,7 +524,7 @@ test('reports a new struct parameter as a change to its function only', async ()
 })
 
 // The cspell.jsonc shape that once cascaded: objects in an array all carry the
-// same keys, so their entities collide on qualified name and an insertion used
+// same keys, so their symbols collide on qualified name and an insertion used
 // to shift every later sibling's ordinal into a bogus modified row.
 test('reports an array insertion as one edit per array, not a cascade', async () => {
   const oldSource = `{
@@ -547,7 +547,7 @@ test('reports an array insertion as one edit per array, not a cascade', async ()
   "words": ["burndown", "ciphertext", "codegen", "frontmatter"]
 }`
 
-  const diff = await diffEntities({path: '.config/cspell.json', oldSource, newSource})
+  const diff = await diffSymbols({path: '.config/cspell.json', oldSource, newSource})
 
   expect(diff.changes.map((change) => `${change.type}:${change.qualifiedName}`)).toEqual([
     'modified:dictionaries',
@@ -587,7 +587,7 @@ test('blames the edited overload, not the one after the deleted overload', async
     '',
   ].join('\n')
 
-  const diff = await diffEntities({path: 'src/parse.ts', oldSource, newSource})
+  const diff = await diffSymbols({path: 'src/parse.ts', oldSource, newSource})
 
   expect(diff.changes).toMatchObject([
     {type: 'modified', qualifiedName: 'parse#2', oldRange: {startLine: 3}},
@@ -615,7 +615,7 @@ test('blames the edited workflow step, not the one after the deleted step', asyn
     '',
   ].join('\n')
 
-  const diff = await diffEntities({path: '.github/workflows/ci.yml', oldSource, newSource})
+  const diff = await diffSymbols({path: '.github/workflows/ci.yml', oldSource, newSource})
 
   expect(diff.changes).toMatchObject([
     {type: 'modified', qualifiedName: 'steps'},
@@ -629,7 +629,7 @@ test('keeps a number that the author wrote in a heading as part of its name', as
   const oldSource = '# Notes\n\n## Verified on Depot (PR #406)\n\nFirst.\n'
   const newSource = '# Notes\n\n## Verified on Depot (PR #407)\n\nFirst.\n'
 
-  const diff = await diffEntities({path: 'docs/notes.md', oldSource, newSource})
+  const diff = await diffSymbols({path: 'docs/notes.md', oldSource, newSource})
 
   expect(diff.changes).toMatchObject([
     {
@@ -644,7 +644,7 @@ test('reports an added test once, not once per local inside its callback', async
   const oldSource = "test('first', () => {\n  const value = 1\n  expect(value).toBe(1)\n})\n"
   const newSource = `${oldSource}test('second', () => {\n  const other = 2\n  expect(other).toBe(2)\n})\n`
 
-  const diff = await diffEntities({path: 'src/example.test.ts', oldSource, newSource})
+  const diff = await diffSymbols({path: 'src/example.test.ts', oldSource, newSource})
 
   expect(diff.changes).toMatchObject([
     {type: 'added', kind: 'call', qualifiedName: "test('second')"},
@@ -652,7 +652,7 @@ test('reports an added test once, not once per local inside its callback', async
 })
 
 test('reports an unknown extension as an unsupported language', async () => {
-  const diff = await diffEntities({path: 'notes.bin', oldSource: 'a', newSource: 'b'})
+  const diff = await diffSymbols({path: 'notes.bin', oldSource: 'a', newSource: 'b'})
 
   expect(diff).toEqual({
     path: 'notes.bin',
@@ -662,12 +662,12 @@ test('reports an unknown extension as an unsupported language', async () => {
   })
 })
 
-test('declines to report on a file with more entities than the cap', async () => {
+test('declines to report on a file with more symbols than the cap', async () => {
   const entries = Array.from({length: 2500}, (_, index) => `"key${index}": ${index}`).join(',')
   const oldSource = `{${entries}}`
   const newSource = `{${entries.replace('"key0": 0', '"key0": 99')}}`
 
-  const diff = await diffEntities({path: 'generated.json', oldSource, newSource})
+  const diff = await diffSymbols({path: 'generated.json', oldSource, newSource})
 
   expect(diff.language).toBe('json')
   expect(diff.changes).toEqual([])
@@ -680,7 +680,7 @@ test('orders changes by bucket then by position in the new file', async () => {
   const newSource =
     'export function stays() {\n  return 100\n}\nexport function arrives() {\n  return 3\n}\n'
 
-  const diff = await diffEntities({path: 'src/order.ts', oldSource, newSource})
+  const diff = await diffSymbols({path: 'src/order.ts', oldSource, newSource})
 
   expect(diff.changes.map((change) => `${change.type}:${change.qualifiedName}`)).toEqual([
     'added:arrives',

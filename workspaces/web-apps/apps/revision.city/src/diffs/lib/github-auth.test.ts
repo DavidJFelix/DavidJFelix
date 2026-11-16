@@ -13,6 +13,7 @@ import {
 import {decodeProxyState, encodeProxyState} from './preview-auth'
 
 const ORIGIN = 'https://revision.city'
+const OTHER_ORIGIN = 'https://example.com'
 const CREDENTIALS = {clientId: 'Iv1.test-client', clientSecret: 'shh-secret'}
 
 // fetch by call signature only: lib.dom types `typeof fetch` with a required
@@ -239,6 +240,7 @@ test('callback surfaces a token-exchange error response as a 502 and logs its ca
     outcome: 'refused',
     error: 'bad_verification_code',
     errorDescription: 'The code passed is incorrect or expired.',
+    headers: {'content-type': 'application/json'},
   })
   consoleError.mockRestore()
 })
@@ -257,8 +259,6 @@ test('callback logs the error body of a failed code exchange status', async () =
   consoleError.mockRestore()
 })
 
-// github.com throttles by IP address, and a Worker shares its addresses, so
-// the next attempt often gets through with the same code.
 test('callback retries a throttled code exchange and signs in', async () => {
   const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
   const stub = stubGitHubFetch()
@@ -271,6 +271,42 @@ test('callback retries a throttled code exchange and signs in', async () => {
   expect(sessionCookie).not.toBe('')
   expect(consoleError).toHaveBeenCalledExactlyOnceWith(
     expect.objectContaining({step: 'code exchange', status: 429, retryAfter: '300'}),
+  )
+  consoleError.mockRestore()
+})
+
+test('callback logs the headers and the start of a block page that refuses the exchange', async () => {
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+  const blockPage = `<html><title>Access to this site has been restricted</title>${'x'.repeat(600)}</html>`
+  const stub = stubGitHubFetch()
+  stub.mockImplementation(
+    async () =>
+      new Response(blockPage, {
+        status: 429,
+        headers: {'Content-Type': 'text/html', 'Retry-After': '300', 'Set-Cookie': 'session=1'},
+      }),
+  )
+
+  await signIn(stub)
+
+  const failure = consoleError.mock.calls[0]?.[0]
+  expect(failure).toMatchObject({
+    step: 'code exchange',
+    status: 429,
+    headers: {'content-type': 'text/html', 'retry-after': '300'},
+    bodyStart: blockPage.slice(0, 500),
+  })
+  expect(failure).not.toHaveProperty('headers.set-cookie')
+  consoleError.mockRestore()
+})
+
+test('callback never logs a JSON body that the exchange refuses', async () => {
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+  await signIn(stubGitHubFetch({tokenStatus: 500, token: {access_token: 'ghu_token'}}))
+
+  expect(consoleError).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({status: 500, bodyStart: undefined}),
   )
   consoleError.mockRestore()
 })
@@ -406,6 +442,36 @@ test('logout still clears the cookie and logs the cause when the revoke request 
     error: 'TypeError: network down',
   })
   consoleError.mockRestore()
+})
+
+test('logout refuses a request from another site without a GitHub call or a cleared cookie', async () => {
+  const {sessionCookie} = await signIn()
+  const fetchImpl = vi.fn<FetchLike>()
+  const request = new Request(`${ORIGIN}/api/auth/github/logout`, {
+    method: 'POST',
+    headers: {cookie: sessionCookie, origin: OTHER_ORIGIN},
+  })
+
+  const response = await handleGitHubLogoutRequest(request, {
+    credentials: CREDENTIALS,
+    fetch: fetchImpl,
+  })
+
+  expect(response.status).toBe(403)
+  expect(fetchImpl).not.toHaveBeenCalled()
+  expect(getSetCookies(response)).toEqual([])
+})
+
+test('logout accepts a request from this site', async () => {
+  const request = new Request(`${ORIGIN}/api/auth/github/logout?returnTo=/diffs/o/r/pull/1`, {
+    method: 'POST',
+    headers: {origin: ORIGIN},
+  })
+
+  const response = await handleGitHubLogoutRequest(request, {credentials: CREDENTIALS})
+
+  expect(response.status).toBe(302)
+  expectClearedSessionCookie(response)
 })
 
 test('logout without a session makes no GitHub call', async () => {

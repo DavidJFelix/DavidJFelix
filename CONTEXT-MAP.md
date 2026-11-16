@@ -6,10 +6,11 @@ design decisions) and `docs/adr/` (architecture decisions). System-wide decision
 
 ## Contexts
 
-| Context                       | `CONTEXT.md`                                                                             | ADRs                                                                                   |
-| ----------------------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| Repository organization       | [CONTEXT.md](CONTEXT.md)                                                                 | none yet                                                                               |
-| djf.io (personal site + blog) | [workspaces/web-apps/apps/djf.io/CONTEXT.md](workspaces/web-apps/apps/djf.io/CONTEXT.md) | [workspaces/web-apps/apps/djf.io/docs/adr/](workspaces/web-apps/apps/djf.io/docs/adr/) |
+| Context                       | `CONTEXT.md`                                                                                           | ADRs                                                                                   |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| Repository organization       | [CONTEXT.md](CONTEXT.md)                                                                               | none yet                                                                               |
+| djf.io (personal site + blog) | [workspaces/web-apps/apps/djf.io/CONTEXT.md](workspaces/web-apps/apps/djf.io/CONTEXT.md)               | [workspaces/web-apps/apps/djf.io/docs/adr/](workspaces/web-apps/apps/djf.io/docs/adr/) |
+| revision.city (diff viewer)   | [workspaces/web-apps/apps/revision.city/CONTEXT.md](workspaces/web-apps/apps/revision.city/CONTEXT.md) | none yet                                                                               |
 
 Add a row when a new app grows context worth recording. Apps without a `CONTEXT.md` simply aren't
 listed yet -- created lazily as terms and decisions get resolved.

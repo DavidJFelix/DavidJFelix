@@ -18,7 +18,7 @@ export function getRouter() {
   // the worker bundle. Each observability integration is off until the build
   // sets its VITE_PUBLIC_* var (see src/observability).
   if (!import.meta.env.SSR) {
-    initClientObservability()
+    initClientObservability({router})
     installMissingChunkReload()
   }
 

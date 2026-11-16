@@ -101,7 +101,7 @@ export const GitHubAuthControl = memo(function GitHubAuthControl({
                 Manage repository access
               </a>
             </Button>
-            <Button type="button" variant="outline" size="sm" onClick={navigateToLogout}>
+            <Button type="button" variant="outline" size="sm" onClick={submitLogout}>
               Sign out
             </Button>
           </div>
@@ -141,6 +141,12 @@ function navigateToLogin(): void {
   window.location.assign(getGitHubLoginURL(getCurrentReturnPath()))
 }
 
-function navigateToLogout(): void {
-  window.location.assign(getGitHubLogoutURL(getCurrentReturnPath()))
+// Sign-out is a POST, so it goes as a form submission, and the browser follows
+// the redirect and applies the cleared cookie as it does for a link.
+function submitLogout(): void {
+  const form = document.createElement('form')
+  form.method = 'post'
+  form.action = getGitHubLogoutURL(getCurrentReturnPath())
+  document.body.appendChild(form)
+  form.submit()
 }

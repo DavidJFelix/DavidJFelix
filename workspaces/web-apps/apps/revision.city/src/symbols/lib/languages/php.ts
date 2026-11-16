@@ -1,9 +1,9 @@
 import {parser} from '@lezer/php'
 
-import type {EntityKind, EntitySpec, ResolveEntityNameParams} from '../entity'
-import {anonymousScopeProp, entityProp} from '../entity'
+import type {ResolveSymbolNameParams, SymbolKind, SymbolSpec} from '../code-symbol'
+import {anonymousScopeProp, symbolProp} from '../code-symbol'
 
-const SPECS: Record<string, EntitySpec> = {
+const SPECS: Record<string, SymbolSpec> = {
   FunctionDefinition: {kind: 'function', name: ['Name'], container: true},
   ClassDeclaration: {kind: 'class', name: ['Name'], container: true},
   InterfaceDeclaration: {kind: 'interface', name: ['Name'], container: true},
@@ -19,7 +19,7 @@ const SPECS: Record<string, EntitySpec> = {
   ConstDeclaration: {kind: 'constant', name: ['VariableDeclarator>Name'], scope: 'top-level'},
 }
 
-function resolveMethodKind({node, source}: ResolveEntityNameParams): EntityKind {
+function resolveMethodKind({node, source}: ResolveSymbolNameParams): SymbolKind {
   const name = node.getChild('Name')
   return name !== null && source.slice(name.from, name.to) === '__construct'
     ? 'constructor'
@@ -28,7 +28,7 @@ function resolveMethodKind({node, source}: ResolveEntityNameParams): EntityKind 
 
 export const phpParser = parser.configure({
   props: [
-    entityProp.add(SPECS),
+    symbolProp.add(SPECS),
     anonymousScopeProp.add({ArrowFunction: true, FunctionExpression: true}),
   ],
 })

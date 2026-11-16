@@ -8,8 +8,8 @@ export {docsThemeCatalog} from '../components/theme-catalog'
 // The single owner of the diffs app's theming state. Color mode (light/
 // dark/system), the light/dark theme-name picks, and their persistence all
 // live here, so there is no parallel state ownership. The controller creates
-// and owns the resolver; consumers that need an explicit resolver use the
-// docsThemeResolver alias below rather than creating a second cache.
+// and owns the resolver; a consumer that needs an explicit resolver reads
+// themeController.resolver and does not create a second cache.
 //
 // It is a module singleton: created once per process on the server (where the
 // browser guards make it a constant) and once per page-load on the client,
@@ -103,5 +103,3 @@ function handleStorage(event: StorageEvent): void {
 if (typeof globalThis.addEventListener === 'function') {
   globalThis.addEventListener('storage', handleStorage)
 }
-
-export const docsThemeResolver = themeController.resolver

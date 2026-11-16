@@ -14,13 +14,10 @@ export const Route = createFileRoute('/diffs')({
       {title: `${SITE_NAME} · revision.city`},
       {name: 'description', content: SITE_DESCRIPTION},
       ...ogTags({title: `${SITE_NAME} · revision.city`, description: SITE_DESCRIPTION}),
-      // The diffs surface is a full-viewport app; lock the scale and extend
-      // into the safe areas like the source app did.
-      {
-        name: 'viewport',
-        content:
-          'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover',
-      },
+      // The diffs surface is a full-viewport app, so it extends into the safe
+      // areas. Do not lock the scale: people must be able to zoom. The text
+      // boxes are 16px on phones, so iOS does not zoom the page on focus.
+      {name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover'},
     ],
     links: [{rel: 'stylesheet', href: diffsCss}],
   }),

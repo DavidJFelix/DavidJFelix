@@ -64,6 +64,12 @@ jobs:
       fail-fast: false
       matrix:
         app: ${{ fromJSON(needs.plan.outputs.apps) }}
+    # One deploy per worker at a time: a burst of merges queues behind the
+    # running deploy instead of overlapping it, so the D1 migrations step
+    # never runs twice at once. Keyed on worker, so other apps do not wait.
+    concurrency:
+      group: cd-deploy-${{ matrix.app.worker }}
+      cancel-in-progress: false
     runs-on: depot-ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -161,16 +167,18 @@ jobs:
       # Fetch the live site after the deploy: each smoke route must serve a
       # complete page and its first hashed asset (bin/smoke-url.ts). Only a
       # production entry of an app with a custom domain names a URL
-      # (bin/plan-affected-apps.ts, `productionUrl`). A failure marks the job
-      # red and does not roll back. The Access service token is the one the
-      # previews use: onvibes.org sits behind Cloudflare Access in production
-      # too, and hosts without Access ignore the headers.
+      # (bin/plan-affected-apps.ts, `productionUrl`). After the pages pass, the
+      # entry's `probes` must each answer their exact status. A failure marks
+      # the job red and does not roll back. The Access service token is the one
+      # the previews use: onvibes.org sits behind Cloudflare Access in
+      # production too, and hosts without Access ignore the headers.
       - name: smoke production
         if: matrix.app.productionUrl != ''
         working-directory: ${{ github.workspace }}
         env:
           SMOKE_URL: ${{ matrix.app.productionUrl }}
           SMOKE_ROUTES: ${{ matrix.app.smokeRoutes }}
+          SMOKE_PROBES: ${{ toJSON(matrix.app.probes) }}
           CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
           CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
         run: bun bin/smoke-url.ts

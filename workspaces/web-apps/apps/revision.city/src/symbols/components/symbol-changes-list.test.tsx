@@ -2,7 +2,7 @@ import {act} from 'react'
 import {createRoot} from 'react-dom/client'
 import {expect, test, vi} from 'vitest'
 
-import type {EntityChange} from '@/symbols/lib/entity'
+import type {EntityChange} from '@/symbols/lib/code-symbol'
 import type * as SequenceEditRowsModule from './sequence-edit-rows'
 import {SequenceEditRows} from './sequence-edit-rows'
 import {SymbolChangesList, type SymbolSelection} from './symbol-changes-list'

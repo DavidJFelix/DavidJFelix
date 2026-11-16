@@ -1,16 +1,16 @@
 import type {Parser} from '@lezer/common'
 import {expect, test, vi} from 'vitest'
 
-import type {CodeEntity} from './entity'
-import type * as EntitySignatureModule from './entity-signature'
-import {computeSignature} from './entity-signature'
-import type {ExtractEntitiesParams} from './extract-entities'
-import {extractEntities} from './extract-entities'
+import type {CodeSymbol} from './code-symbol'
+import type {ExtractSymbolsParams} from './extract-symbols'
+import {extractSymbols} from './extract-symbols'
 import {LANGUAGES} from './language-registry'
+import type * as SymbolSignatureModule from './symbol-signature'
+import {computeSignature} from './symbol-signature'
 
 // The real signature, wrapped so a test can prove it was never called.
-vi.mock('./entity-signature', async (importOriginal) => {
-  const actual = await importOriginal<typeof EntitySignatureModule>()
+vi.mock('./symbol-signature', async (importOriginal) => {
+  const actual = await importOriginal<typeof SymbolSignatureModule>()
   return {
     ...actual,
     computeSignature: vi.fn<typeof actual.computeSignature>(actual.computeSignature),
@@ -31,12 +31,12 @@ const tsxParser = await parserFor('tsx')
 const markdownParser = await parserFor('markdown')
 const jsonParser = await parserFor('json')
 
-function extractWithinLimits(params: ExtractEntitiesParams): readonly CodeEntity[] {
-  const extraction = extractEntities(params)
+function extractWithinLimits(params: ExtractSymbolsParams): readonly CodeSymbol[] {
+  const extraction = extractSymbols(params)
   if (extraction.tooLarge) {
     throw new Error('The source is too large to extract.')
   }
-  return extraction.entities
+  return extraction.symbols
 }
 
 interface ExtractionCase {
@@ -412,18 +412,18 @@ jobs:
   },
 ]
 
-test.each(CASES)('extracts entities from $language', async ({language, source, expected}) => {
-  const entities = extractWithinLimits({source, parser: await parserFor(language)})
+test.each(CASES)('extracts symbols from $language', async ({language, source, expected}) => {
+  const symbols = extractWithinLimits({source, parser: await parserFor(language)})
 
-  expect(entities.map((entity) => `${entity.kind} ${entity.qualifiedName}`)).toEqual(expected)
+  expect(symbols.map((symbol) => `${symbol.kind} ${symbol.qualifiedName}`)).toEqual(expected)
 })
 
-test('reports 1-based line ranges spanning the whole entity', () => {
+test('reports 1-based line ranges spanning the whole symbol', () => {
   const source = 'const a = 1\nfunction greet() {\n  return 1\n}\n'
 
-  const entities = extractWithinLimits({source, parser: tsxParser})
+  const symbols = extractWithinLimits({source, parser: tsxParser})
 
-  expect(entities.find((entity) => entity.name === 'greet')?.range).toEqual({
+  expect(symbols.find((symbol) => symbol.name === 'greet')?.range).toEqual({
     startLine: 2,
     endLine: 4,
   })
@@ -435,9 +435,9 @@ test.each([
   {heading: '# a ## b ##', name: 'a ## b'},
   {heading: '### foo \\###', name: 'foo \\###'},
 ])('names the heading "$heading" as "$name"', ({heading, name}) => {
-  const entities = extractWithinLimits({source: `${heading}\n`, parser: markdownParser})
+  const symbols = extractWithinLimits({source: `${heading}\n`, parser: markdownParser})
 
-  expect(entities.map((entity) => entity.name)).toEqual([name])
+  expect(symbols.map((symbol) => symbol.name)).toEqual([name])
 })
 
 test.each([
@@ -446,9 +446,9 @@ test.each([
   {source: 'Two line\nheading\n=====\n', name: 'Two line heading'},
   {source: 'Title\r\n---\r\n', name: 'Title'},
 ])('names the setext heading in $source as "$name"', ({source, name}) => {
-  const entities = extractWithinLimits({source, parser: markdownParser})
+  const symbols = extractWithinLimits({source, parser: markdownParser})
 
-  expect(entities.map((entity) => entity.name)).toEqual([name])
+  expect(symbols.map((symbol) => symbol.name)).toEqual([name])
 })
 
 test.each([
@@ -457,49 +457,49 @@ test.each([
   {source: '---\ntags:\n  - one\n---\n\n# Body\n'},
   {source: '---\r\ntitle: Notes\r\n---\r\n\r\n# Body\r\n'},
 ])('does not name front matter as a heading in $source', ({source}) => {
-  const entities = extractWithinLimits({source, parser: markdownParser})
+  const symbols = extractWithinLimits({source, parser: markdownParser})
 
-  expect(entities.map((entity) => entity.name)).toEqual(['Body'])
+  expect(symbols.map((symbol) => symbol.name)).toEqual(['Body'])
 })
 
 test('names a heading with a long run of spaces before the test times out', () => {
   const name = `a${' '.repeat(4000)}b`
 
-  const entities = extractWithinLimits({source: `# ${name}\n`, parser: markdownParser})
+  const symbols = extractWithinLimits({source: `# ${name}\n`, parser: markdownParser})
 
-  expect(entities.map((entity) => entity.name)).toEqual([name])
+  expect(symbols.map((symbol) => symbol.name)).toEqual([name])
 })
 
 test('parses a long run of spaces in a paragraph before the test times out', () => {
   const source = `# Title\n\na${' '.repeat(100_000)}b\n`
 
-  const entities = extractWithinLimits({source, parser: markdownParser})
+  const symbols = extractWithinLimits({source, parser: markdownParser})
 
-  expect(entities.map((entity) => entity.name)).toEqual(['Title'])
+  expect(symbols.map((symbol) => symbol.name)).toEqual(['Title'])
 })
 
 test('disambiguates same-named siblings with an ordinal suffix', () => {
   const source = '# Notes\n\n## Notes\n'
 
-  const entities = extractWithinLimits({source, parser: markdownParser})
+  const symbols = extractWithinLimits({source, parser: markdownParser})
 
-  expect(entities.map((entity) => entity.qualifiedName)).toEqual(['Notes', 'Notes#2'])
+  expect(symbols.map((symbol) => symbol.qualifiedName)).toEqual(['Notes', 'Notes#2'])
 })
 
 test('ignores locals declared inside a function body', () => {
   const source = 'export function outer() {\n  const hidden = 1\n  return hidden\n}\n'
 
-  const entities = extractWithinLimits({source, parser: tsxParser})
+  const symbols = extractWithinLimits({source, parser: tsxParser})
 
-  expect(entities.map((entity) => entity.name)).toEqual(['outer'])
+  expect(symbols.map((symbol) => symbol.name)).toEqual(['outer'])
 })
 
-test('gives a named default export one entity, not a second default row', () => {
+test('gives a named default export one symbol, not a second default row', () => {
   const source = 'export default class Widget {\n  render() {}\n}\n'
 
-  const entities = extractWithinLimits({source, parser: tsxParser})
+  const symbols = extractWithinLimits({source, parser: tsxParser})
 
-  expect(entities.map((entity) => `${entity.kind} ${entity.qualifiedName}`)).toEqual([
+  expect(symbols.map((symbol) => `${symbol.kind} ${symbol.qualifiedName}`)).toEqual([
     'class Widget',
     'method Widget.render',
   ])
@@ -510,13 +510,13 @@ test.each([
   {language: 'python', source: '@app.route("/")\n@login\ndef index():\n    pass\n', name: 'index'},
   {language: 'rust', source: '#[derive(Debug)]\n#[repr(C)]\nstruct Point {}\n', name: 'Point'},
 ])(
-  'starts a decorated $language entity at its first decorator',
+  'starts a decorated $language symbol at its first decorator',
   async ({language, source, name}) => {
-    const entities = extractWithinLimits({source, parser: await parserFor(language)})
-    const entity = entities.find((entry) => entry.name === name)
+    const symbols = extractWithinLimits({source, parser: await parserFor(language)})
+    const symbol = symbols.find((entry) => entry.name === name)
 
-    expect(entity?.range.startLine).toBe(1)
-    expect(entity?.span.from).toBe(0)
+    expect(symbol?.range.startLine).toBe(1)
+    expect(symbol?.span.from).toBe(0)
   },
 )
 
@@ -545,9 +545,9 @@ test('pins how the parser recovers from a decorator ahead of export', async () =
 test('reports a module-level call once, without the locals in its callback', () => {
   const source = "register('event', () => {\n  const hidden = 1\n  use(hidden)\n})\n"
 
-  const entities = extractWithinLimits({source, parser: tsxParser})
+  const symbols = extractWithinLimits({source, parser: tsxParser})
 
-  expect(entities.map((entity) => `${entity.kind} ${entity.qualifiedName}`)).toEqual([
+  expect(symbols.map((symbol) => `${symbol.kind} ${symbol.qualifiedName}`)).toEqual([
     "call register('event')",
   ])
 })
@@ -564,9 +564,9 @@ test('labels calls by callee path and first literal argument', () => {
     '',
   ].join('\n')
 
-  const entities = extractWithinLimits({source, parser: tsxParser})
+  const symbols = extractWithinLimits({source, parser: tsxParser})
 
-  expect(entities.map((entity) => `${entity.kind} ${entity.qualifiedName}`)).toEqual([
+  expect(symbols.map((symbol) => `${symbol.kind} ${symbol.qualifiedName}`)).toEqual([
     "call test('adds numbers')",
     "call it.only('focused case')",
     "call test.each('runs $value')",
@@ -574,7 +574,7 @@ test('labels calls by callee path and first literal argument', () => {
   ])
 })
 
-test('treats nested and non-statement calls as part of their enclosing entity', () => {
+test('treats nested and non-statement calls as part of their enclosing symbol', () => {
   const source = [
     "describe('math', () => {",
     "  test('adds', () => {})",
@@ -583,9 +583,9 @@ test('treats nested and non-statement calls as part of their enclosing entity', 
     '',
   ].join('\n')
 
-  const entities = extractWithinLimits({source, parser: tsxParser})
+  const symbols = extractWithinLimits({source, parser: tsxParser})
 
-  expect(entities.map((entity) => `${entity.kind} ${entity.qualifiedName}`)).toEqual([
+  expect(symbols.map((symbol) => `${symbol.kind} ${symbol.qualifiedName}`)).toEqual([
     "call describe('math')",
     'constant client',
   ])
@@ -594,38 +594,38 @@ test('treats nested and non-statement calls as part of their enclosing entity', 
 test('parses a file with syntax errors instead of throwing', () => {
   const source = 'export function broken( {\n  return\n'
 
-  const entities = extractWithinLimits({source, parser: tsxParser})
+  const symbols = extractWithinLimits({source, parser: tsxParser})
 
-  expect(entities.map((entity) => entity.name)).toContain('broken')
+  expect(symbols.map((symbol) => symbol.name)).toContain('broken')
 })
 
 test('fingerprints the elements of an array-valued property', () => {
   const source = '{"words": ["alpha", "beta"], "limit": 3}'
 
-  const entities = extractWithinLimits({source, parser: jsonParser})
+  const symbols = extractWithinLimits({source, parser: jsonParser})
 
-  const words = entities.find((entity) => entity.qualifiedName === 'words')
+  const words = symbols.find((symbol) => symbol.qualifiedName === 'words')
   expect(words?.elements?.map((element) => element.preview)).toEqual(['"alpha"', '"beta"'])
-  expect(words?.elements?.map((element) => element.hasEntities)).toEqual([false, false])
-  expect(entities.find((entity) => entity.qualifiedName === 'limit')?.elements).toBeUndefined()
+  expect(words?.elements?.map((element) => element.hasSymbols)).toEqual([false, false])
+  expect(symbols.find((symbol) => symbol.qualifiedName === 'limit')?.elements).toBeUndefined()
 })
 
-test('marks array elements that contain entities of their own', () => {
+test('marks array elements that contain symbols of their own', () => {
   const source = '{"defs": [{"name": "dns"}, "plain"]}'
 
-  const entities = extractWithinLimits({source, parser: jsonParser})
+  const symbols = extractWithinLimits({source, parser: jsonParser})
 
-  const defs = entities.find((entity) => entity.qualifiedName === 'defs')
-  expect(defs?.elements?.map((element) => element.hasEntities)).toEqual([true, false])
+  const defs = symbols.find((symbol) => symbol.qualifiedName === 'defs')
+  expect(defs?.elements?.map((element) => element.hasSymbols)).toEqual([true, false])
 })
 
 test.each([
   {count: 2000, tooLarge: false},
   {count: 2001, tooLarge: true},
-])('$count entities are too large: $tooLarge', ({count, tooLarge}) => {
+])('$count symbols are too large: $tooLarge', ({count, tooLarge}) => {
   const keys = Array.from({length: count}, (_, index) => `"k${index}": 0`)
 
-  const extraction = extractEntities({source: `{${keys.join(', ')}}`, parser: jsonParser})
+  const extraction = extractSymbols({source: `{${keys.join(', ')}}`, parser: jsonParser})
 
   expect(extraction.tooLarge).toBe(tooLarge)
 })
@@ -639,12 +639,12 @@ test.each([
     (length, index) => `"a${index}": [${Array.from({length}, () => '0').join(', ')}]`,
   )
 
-  const extraction = extractEntities({source: `{${properties.join(', ')}}`, parser: jsonParser})
+  const extraction = extractSymbols({source: `{${properties.join(', ')}}`, parser: jsonParser})
 
   expect(extraction.tooLarge).toBe(tooLarge)
 })
 
-// The entity spans the quoted key, `: `, and the value, and its qualified name is
+// The symbol spans the quoted key, `: `, and the value, and its qualified name is
 // the key. So the total is exactly 2,000,000 characters with 10, and one more with 100.
 test.each([
   {value: '10', tooLarge: false},
@@ -652,24 +652,24 @@ test.each([
 ])('a long key with the value $value is too large: $tooLarge', ({value, tooLarge}) => {
   const source = `{"${'k'.repeat(999_997)}": ${value}}`
 
-  expect(extractEntities({source, parser: jsonParser}).tooLarge).toBe(tooLarge)
+  expect(extractSymbols({source, parser: jsonParser}).tooLarge).toBe(tooLarge)
 })
 
 test('counts qualified names toward the character limit', () => {
   const key = 'k'.repeat(600_000)
 
-  const oneChild = extractEntities({source: `{"${key}": {"a": 0}}`, parser: jsonParser})
-  const twoChildren = extractEntities({source: `{"${key}": {"a": 0, "b": 0}}`, parser: jsonParser})
+  const oneChild = extractSymbols({source: `{"${key}": {"a": 0}}`, parser: jsonParser})
+  const twoChildren = extractSymbols({source: `{"${key}": {"a": 0, "b": 0}}`, parser: jsonParser})
 
   expect(oneChild.tooLarge).toBe(false)
   expect(twoChildren.tooLarge).toBe(true)
 })
 
-test('reports a small file of deeply nested entities as too large without hashing', () => {
+test('reports a small file of deeply nested symbols as too large without hashing', () => {
   vi.mocked(computeSignature).mockClear()
   const source = `${'namespace n { '.repeat(200)}${'x;\n'.repeat(5000)}${'}'.repeat(200)}\n`
 
-  expect(extractEntities({source, parser: tsxParser})).toEqual({tooLarge: true})
+  expect(extractSymbols({source, parser: tsxParser})).toEqual({tooLarge: true})
   expect(computeSignature).not.toHaveBeenCalled()
 })
 
@@ -678,7 +678,7 @@ test('reports a parser stack overflow as too large', () => {
     throw new RangeError('Maximum call stack size exceeded')
   })
 
-  expect(extractEntities({source: '[[0]]', parser: jsonParser})).toEqual({tooLarge: true})
+  expect(extractSymbols({source: '[[0]]', parser: jsonParser})).toEqual({tooLarge: true})
 })
 
 test('passes through a parser error that is not a stack overflow', () => {
@@ -686,5 +686,5 @@ test('passes through a parser error that is not a stack overflow', () => {
     throw new TypeError('The grammar is broken')
   })
 
-  expect(() => extractEntities({source: '[[0]]', parser: jsonParser})).toThrow(TypeError)
+  expect(() => extractSymbols({source: '[[0]]', parser: jsonParser})).toThrow(TypeError)
 })

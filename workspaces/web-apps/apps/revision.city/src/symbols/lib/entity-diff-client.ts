@@ -1,4 +1,4 @@
-import type {EntityChange, EntityDiff, EntityDiffSummary} from './entity'
+import type {EntityChange, EntityDiff, EntityDiffSummary} from './code-symbol'
 
 export interface EntityDiffRequest {
   itemId: string

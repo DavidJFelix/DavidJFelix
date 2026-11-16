@@ -1,12 +1,12 @@
 import {parser} from '@lezer/python'
 
-import type {EntitySpec} from '../entity'
-import {entityProp} from '../entity'
+import type {SymbolSpec} from '../code-symbol'
+import {symbolProp} from '../code-symbol'
 import {wrapperChildren} from './wrapper-children'
 
 const decorators = wrapperChildren({wrapper: 'DecoratedStatement', type: 'Decorator'})
 
-const SPECS: Record<string, EntitySpec> = {
+const SPECS: Record<string, SymbolSpec> = {
   FunctionDefinition: {
     kind: 'function',
     name: ['VariableName'],
@@ -19,4 +19,4 @@ const SPECS: Record<string, EntitySpec> = {
   AssignStatement: {kind: 'constant', name: ['VariableName'], scope: 'top-level'},
 }
 
-export const pythonParser = parser.configure({props: [entityProp.add(SPECS)]})
+export const pythonParser = parser.configure({props: [symbolProp.add(SPECS)]})

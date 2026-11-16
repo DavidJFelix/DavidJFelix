@@ -20,6 +20,7 @@ const target = (overrides: Partial<WebAppTarget> = {}): WebAppTarget => ({
   devEnv: '',
   d1Database: '',
   productionUrl: '',
+  probes: [],
   ...overrides,
 })
 
@@ -89,6 +90,7 @@ test('deploys an auxiliary Worker of an app as its own entry', () => {
     devEnv: 'dev',
     d1Database: 'example-com',
     productionUrl: 'https://example.com',
+    probes: [{method: 'POST', path: '/hook', status: 401}],
   })
   const targets = [{...app, auxiliaryWorkers}]
 
@@ -101,6 +103,7 @@ test('deploys an auxiliary Worker of an app as its own entry', () => {
       cloudflareEnv: '',
       d1Database: '',
       productionUrl: '',
+      probes: [],
     },
     {
       ...app,
@@ -108,6 +111,7 @@ test('deploys an auxiliary Worker of an app as its own entry', () => {
       cloudflareEnv: 'dev',
       d1Database: '',
       productionUrl: '',
+      probes: [],
     },
   ])
 })
@@ -129,6 +133,32 @@ test('previews no auxiliary Worker', () => {
       targets,
     }).map((entry) => entry.worker),
   ).toEqual(['example-com', 'example-com-dev'])
+})
+
+test('keeps the probes on the production deploy entry only', () => {
+  // The dev worker binds no review Workflow, so its webhook answers 503 by
+  // design, and previews do not serve the custom domain.
+  const probes = [{method: 'POST', path: '/hook', status: 401}]
+  const withDev = [target({devEnv: 'dev', productionUrl: 'https://example.com', probes})]
+  const plannedProbes = (kind: 'preview' | 'deploy') =>
+    planAffected({affectedPaths: ['apps/example.com'], kind, targets: withDev}).map(
+      (entry) => entry.probes,
+    )
+
+  expect(plannedProbes('deploy')).toEqual([probes, []])
+  expect(plannedProbes('preview')).toEqual([[]])
+})
+
+test('probes revision.city production sign-in and the review webhook', () => {
+  const deploy = planAffected({affectedPaths: ['apps/revision.city'], kind: 'deploy'})
+  const production = deploy.find((entry) => entry.worker === 'revision-city')
+
+  expect(
+    production?.probes.map((probe) => `${probe.method} ${probe.path} ${probe.status}`),
+  ).toEqual(['GET /api/auth/github/config 200', 'POST /api/github/webhook 401'])
+  expect(WEB_APP_TARGETS.filter((app) => app.probes.length > 0).map((app) => app.dir)).toEqual([
+    'revision.city',
+  ])
 })
 
 test('skips apps that opt out of the shared matrix for that kind', () => {

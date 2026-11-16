@@ -1,13 +1,13 @@
 import type {SyntaxNode} from '@lezer/common'
 import {parser} from '@lezer/go'
 
-import type {EntityKind, EntitySpec, ResolveEntityNameParams} from '../entity'
-import {anonymousScopeProp, entityProp} from '../entity'
+import type {ResolveSymbolNameParams, SymbolKind, SymbolSpec} from '../code-symbol'
+import {anonymousScopeProp, symbolProp} from '../code-symbol'
 
 // The declaration keyword wraps one or more specs (`var ( a = 1; b = 2 )`), so
-// the specs are the entities -- registering the wrapper would collapse a group
+// the specs are the symbols -- registering the wrapper would collapse a group
 // into a single symbol.
-const SPECS: Record<string, EntitySpec> = {
+const SPECS: Record<string, SymbolSpec> = {
   FunctionDecl: {kind: 'function', name: ['DefName'], container: true},
   MethodDecl: {
     kind: 'method',
@@ -20,7 +20,7 @@ const SPECS: Record<string, EntitySpec> = {
   VarSpec: {kind: 'variable', name: ['DefName'], scope: 'top-level'},
 }
 
-function resolveTypeKind({node}: ResolveEntityNameParams): EntityKind {
+function resolveTypeKind({node}: ResolveSymbolNameParams): SymbolKind {
   for (let child: SyntaxNode | null = node.firstChild; child !== null; child = child.nextSibling) {
     if (child.type.name === 'StructType') {
       return 'struct'
@@ -36,7 +36,7 @@ function resolveTypeKind({node}: ResolveEntityNameParams): EntityKind {
 const RECEIVER_WRAPPERS = new Set(['PointerType', 'ParameterizedType'])
 
 // `func (w *Widget) Render()` belongs to `Widget`.
-function resolveReceiverType({node, source}: ResolveEntityNameParams): string | undefined {
+function resolveReceiverType({node, source}: ResolveSymbolNameParams): string | undefined {
   let current = node.getChild('Parameters')?.getChild('Parameter')?.lastChild ?? null
   while (current !== null && RECEIVER_WRAPPERS.has(current.type.name)) {
     current = current.getChild('TypeName') ?? current.getChild('ParameterizedType')
@@ -45,5 +45,5 @@ function resolveReceiverType({node, source}: ResolveEntityNameParams): string | 
 }
 
 export const goParser = parser.configure({
-  props: [entityProp.add(SPECS), anonymousScopeProp.add({FunctionLiteral: true})],
+  props: [symbolProp.add(SPECS), anonymousScopeProp.add({FunctionLiteral: true})],
 })

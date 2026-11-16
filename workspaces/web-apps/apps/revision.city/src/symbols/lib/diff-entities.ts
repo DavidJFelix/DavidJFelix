@@ -1,7 +1,7 @@
-import type {EntityChange, EntityDiff, EntityDiffSummary} from './entity'
-import {extractEntities} from './extract-entities'
+import type {EntityChange, EntityDiff, EntityDiffSummary} from './code-symbol'
+import {extractSymbols} from './extract-symbols'
 import {detectLanguage} from './language-registry'
-import {matchEntities} from './match-entities'
+import {matchSymbols} from './match-symbols'
 
 // Report order: the buckets a reviewer scans first, and within a bucket the
 // order the symbols appear in the new file.
@@ -33,16 +33,16 @@ export async function diffEntities({
   }
 
   const parser = await language.loadParser()
-  const oldExtraction = extractEntities({source: oldSource, parser})
-  const newExtraction = extractEntities({source: newSource, parser})
+  const oldExtraction = extractSymbols({source: oldSource, parser})
+  const newExtraction = extractSymbols({source: newSource, parser})
 
   if (oldExtraction.tooLarge || newExtraction.tooLarge) {
     return createTooLargeEntityDiff(path)
   }
 
-  const changes = matchEntities({
-    oldEntities: oldExtraction.entities,
-    newEntities: newExtraction.entities,
+  const changes = matchSymbols({
+    oldSymbols: oldExtraction.symbols,
+    newSymbols: newExtraction.symbols,
   }).toSorted(compareChanges)
   return {path, language: language.id, changes, summary: createSummary(changes)}
 }

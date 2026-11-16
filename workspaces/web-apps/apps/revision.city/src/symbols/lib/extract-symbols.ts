@@ -1,36 +1,36 @@
 import type {Parser, SyntaxNode} from '@lezer/common'
 
-import type {CodeEntity, EntityKind, EntitySpan, EntitySpec, SequenceElement} from './entity'
-import {anonymousScopeProp, entityProp} from './entity'
-import {computeSignature} from './entity-signature'
+import type {CodeSymbol, SequenceElement, SymbolKind, SymbolSpan, SymbolSpec} from './code-symbol'
+import {anonymousScopeProp, symbolProp} from './code-symbol'
+import {computeSignature} from './symbol-signature'
 
 // A generated file, such as a lockfile or a bundled asset, can hold tens of
-// thousands of entities. Parsing it is fine; reporting each entity is not.
-const MAX_ENTITIES_PER_FILE = 2000
+// thousands of symbols. Parsing it is fine; reporting each symbol is not.
+const MAX_SYMBOLS_PER_FILE = 2000
 
-// A signature reads all the text of its entity, including each nested entity.
+// A signature reads all the text of its symbol, including each nested symbol.
 // A qualified name repeats the names of its containers. This limit on the total
-// length of entity text and qualified names stops a small, deeply nested file
+// length of symbol text and qualified names stops a small, deeply nested file
 // from using hundreds of MB.
-const MAX_ENTITY_CHARACTERS_PER_FILE = 2_000_000
+const MAX_SYMBOL_CHARACTERS_PER_FILE = 2_000_000
 
 // Fingerprinting is linear but not free; a generated array past this size gets
 // no element fingerprints and its property falls back to a bare `modified`.
 const MAX_SEQUENCE_ELEMENTS = 2000
 
 // The extractor keeps an object for each fingerprinted element and compares the
-// element with each entity. This limit stops a file of many arrays from using
+// element with each symbol. This limit stops a file of many arrays from using
 // seconds of CPU and hundreds of MB.
 const MAX_FINGERPRINTED_ELEMENTS_PER_FILE = 10_000
 
 // Sequence-edit previews are one-line labels, not content.
 const PREVIEW_LENGTH = 48
 
-// Entities whose bodies hold executable code. Anything declared inside one is a
+// Symbols whose bodies hold executable code. Anything declared inside one is a
 // local, not part of the file's public shape.
-const EXECUTABLE_KINDS = new Set<EntityKind>(['constructor', 'function', 'method'])
+const EXECUTABLE_KINDS = new Set<SymbolKind>(['constructor', 'function', 'method'])
 
-// A deep name search must not wander into an entity's body, where it would find
+// A deep name search must not wander into a symbol's body, where it would find
 // local variables instead of the declarator it was aiming for.
 const BODY_NODE_TYPES = new Set([
   'Block',
@@ -44,20 +44,20 @@ const BODY_NODE_TYPES = new Set([
   'InterfaceBody',
 ])
 
-export interface ExtractEntitiesParams {
+export interface ExtractSymbolsParams {
   source: string
   parser: Parser
 }
 
-export type EntityExtraction =
+export type SymbolExtraction =
   | {readonly tooLarge: true}
-  | {readonly tooLarge: false; readonly entities: readonly CodeEntity[]}
+  | {readonly tooLarge: false; readonly symbols: readonly CodeSymbol[]}
 
-// Walks a parsed tree once, emitting an entity for every node whose type carries
-// an `entityProp`. Because the spec lives on the node type, a tree stitched from
+// Walks a parsed tree once, emitting a symbol for every node whose type carries
+// an `symbolProp`. Because the spec lives on the node type, a tree stitched from
 // several grammars (script tags, template blocks) needs no special handling.
 // For a file over a `_PER_FILE` limit, the result is `{tooLarge: true}`.
-export function extractEntities({source, parser}: ExtractEntitiesParams): EntityExtraction {
+export function extractSymbols({source, parser}: ExtractSymbolsParams): SymbolExtraction {
   try {
     return extractFromTree({source, parser})
   } catch (error) {
@@ -70,25 +70,25 @@ export function extractEntities({source, parser}: ExtractEntitiesParams): Entity
   }
 }
 
-function extractFromTree({source, parser}: ExtractEntitiesParams): EntityExtraction {
-  const found = collectEntityNodes({source, parser})
+function extractFromTree({source, parser}: ExtractSymbolsParams): SymbolExtraction {
+  const found = collectSymbolNodes({source, parser})
   if (found === undefined) {
     return {tooLarge: true}
   }
   const emitted = new Set(found.flatMap(ownedNodes).map((node) => nodeKey(node)))
-  // Only nodes that survived `accept` and `scope` count as nested entities --
+  // Only nodes that survived `accept` and `scope` count as nested symbols --
   // a skipped local must still contribute to its enclosing function's content.
-  const isNestedEntity = (node: SyntaxNode): boolean => emitted.has(nodeKey(node))
+  const isNestedSymbol = (node: SyntaxNode): boolean => emitted.has(nodeKey(node))
   const lineStarts = createLineStarts(source)
-  const entitySpans = found.map(entitySpan)
+  const symbolSpans = found.map(symbolSpan)
 
-  const entities = found.map(({node, leading, sequence, ...identity}) => {
-    const span = entitySpan({node, leading})
-    const signature = computeSignature({nodes: [...leading, node], source, isNestedEntity})
+  const symbols = found.map(({node, leading, sequence, ...identity}) => {
+    const span = symbolSpan({node, leading})
+    const signature = computeSignature({nodes: [...leading, node], source, isNestedSymbol})
     const elements =
       sequence === undefined
         ? undefined
-        : fingerprintSequence({sequence, source, lineStarts, entitySpans})
+        : fingerprintSequence({sequence, source, lineStarts, symbolSpans})
     return {
       ...identity,
       range: {startLine: lineAt(lineStarts, span.from), endLine: lineAt(lineStarts, span.to)},
@@ -100,15 +100,15 @@ function extractFromTree({source, parser}: ExtractEntitiesParams): EntityExtract
       ...(elements === undefined ? {} : {elements}),
     }
   })
-  return {tooLarge: false, entities}
+  return {tooLarge: false, symbols}
 }
 
-// The nodes that an enclosing entity does not count as its own: the entity's
+// The nodes that an enclosing symbol does not count as its own: the symbol's
 // node, its leading nodes, and a parent that wraps only these (a Python
-// `DecoratedStatement`). So an added or changed decorator goes to the entity
+// `DecoratedStatement`). So an added or changed decorator goes to the symbol
 // that it decorates, not to the enclosing class.
-function ownedNodes({node, leading}: FoundEntity): readonly SyntaxNode[] {
-  const span = entitySpan({node, leading})
+function ownedNodes({node, leading}: FoundSymbol): readonly SyntaxNode[] {
+  const span = symbolSpan({node, leading})
   const parent = node.parent
   const wrapper =
     leading.length > 0 && parent !== null && parent.from === span.from && parent.to === span.to
@@ -117,9 +117,9 @@ function ownedNodes({node, leading}: FoundEntity): readonly SyntaxNode[] {
   return [...wrapper, ...leading, node]
 }
 
-// The span starts at the first leading node, so a decorated entity starts at
+// The span starts at the first leading node, so a decorated symbol starts at
 // its first decorator.
-function entitySpan({node, leading}: Pick<FoundEntity, 'node' | 'leading'>): EntitySpan {
+function symbolSpan({node, leading}: Pick<FoundSymbol, 'node' | 'leading'>): SymbolSpan {
   return {from: leading[0]?.from ?? node.from, to: node.to}
 }
 
@@ -127,24 +127,24 @@ interface FingerprintSequenceParams {
   sequence: readonly SyntaxNode[]
   source: string
   lineStarts: readonly number[]
-  entitySpans: readonly EntitySpan[]
+  symbolSpans: readonly SymbolSpan[]
 }
 
-// Fingerprints for the elements of a sequence-valued entity. Hashes use full
-// content -- an element is matched across revisions as a whole, unlike entities,
-// whose nested changes are attributed to the nested entity itself.
+// Fingerprints for the elements of a sequence-valued symbol. Hashes use full
+// content -- an element is matched across revisions as a whole, unlike symbols,
+// whose nested changes are attributed to the nested symbol itself.
 function fingerprintSequence({
   sequence,
   source,
   lineStarts,
-  entitySpans,
+  symbolSpans,
 }: FingerprintSequenceParams): readonly SequenceElement[] {
   return sequence.map((element) => ({
-    hash: computeSignature({nodes: [element], source, isNestedEntity: () => false}).contentHash,
+    hash: computeSignature({nodes: [element], source, isNestedSymbol: () => false}).contentHash,
     preview: createPreview(source.slice(element.from, element.to)),
     range: {startLine: lineAt(lineStarts, element.from), endLine: lineAt(lineStarts, element.to)},
     span: {from: element.from, to: element.to},
-    hasEntities: entitySpans.some((span) => span.from >= element.from && span.to <= element.to),
+    hasSymbols: symbolSpans.some((span) => span.from >= element.from && span.to <= element.to),
   }))
 }
 
@@ -155,8 +155,8 @@ function createPreview(text: string): string {
     : collapsed
 }
 
-interface FoundEntity {
-  readonly kind: EntityKind
+interface FoundSymbol {
+  readonly kind: SymbolKind
   readonly name: string
   readonly qualifiedName: string
   readonly basePath: string
@@ -166,27 +166,27 @@ interface FoundEntity {
   readonly sequence?: readonly SyntaxNode[]
 }
 
-interface EntityFrame {
+interface SymbolFrame {
   readonly name: string
-  readonly kind: EntityKind
+  readonly kind: SymbolKind
   readonly from: number
   readonly to: number
   readonly container: boolean
 }
 
-function collectEntityNodes({
+function collectSymbolNodes({
   source,
   parser,
-}: ExtractEntitiesParams): readonly FoundEntity[] | undefined {
+}: ExtractSymbolsParams): readonly FoundSymbol[] | undefined {
   const tree = parser.parse(source)
-  const found: FoundEntity[] = []
-  const open: EntityFrame[] = []
+  const found: FoundSymbol[] = []
+  const open: SymbolFrame[] = []
   const nameCounts = new Map<string, number>()
   // Anonymous callables (an arrow passed to `test`, a Go func literal) open an
-  // executable scope without contributing an entity frame, so they get their
+  // executable scope without contributing a symbol frame, so they get their
   // own depth counter.
   let anonymousScopes = 0
-  let entityCharacters = 0
+  let symbolCharacters = 0
   let fingerprintedElements = 0
   let tooLarge = false
 
@@ -198,7 +198,7 @@ function collectEntityNodes({
       if (ref.type.prop(anonymousScopeProp) === true) {
         anonymousScopes += 1
       }
-      const spec = ref.type.prop(entityProp)
+      const spec = ref.type.prop(symbolProp)
       if (spec === undefined) {
         return true
       }
@@ -225,11 +225,11 @@ function collectEntityNodes({
       const occurrence = countOccurrence({kind, path: basePath, counts: nameCounts})
       const qualifiedName = occurrence === 1 ? basePath : `${basePath}#${occurrence}`
       const leading = spec.leading?.({node, source}) ?? []
-      const span = entitySpan({node, leading})
-      entityCharacters += span.to - span.from + qualifiedName.length
+      const span = symbolSpan({node, leading})
+      symbolCharacters += span.to - span.from + qualifiedName.length
       if (
-        found.length === MAX_ENTITIES_PER_FILE ||
-        entityCharacters > MAX_ENTITY_CHARACTERS_PER_FILE
+        found.length === MAX_SYMBOLS_PER_FILE ||
+        symbolCharacters > MAX_SYMBOL_CHARACTERS_PER_FILE
       ) {
         tooLarge = true
         return false
@@ -274,7 +274,7 @@ function nodeKey(node: SyntaxNode): string {
 interface ResolveNameParams {
   node: SyntaxNode
   source: string
-  spec: EntitySpec
+  spec: SymbolSpec
 }
 
 function resolveName({node, source, spec}: ResolveNameParams): string | undefined {
@@ -308,7 +308,7 @@ function findChildByPath(node: SyntaxNode, selector: string): SyntaxNode | null 
 }
 
 // First match in document order, skipping bodies so a declarator wins over
-// anything declared inside the entity.
+// anything declared inside the symbol.
 function findDescendant(node: SyntaxNode, type: string): SyntaxNode | null {
   for (let child = node.firstChild; child !== null; child = child.nextSibling) {
     if (child.type.name === type) {
@@ -325,20 +325,20 @@ function findDescendant(node: SyntaxNode, type: string): SyntaxNode | null {
   return null
 }
 
-function joinPath(open: readonly EntityFrame[], name: string): string {
+function joinPath(open: readonly SymbolFrame[], name: string): string {
   const path = open.filter((frame) => frame.container).map((frame) => frame.name)
   return path.length === 0 ? name : `${path.join('.')}.${name}`
 }
 
 interface CountOccurrenceParams {
-  kind: EntityKind
+  kind: SymbolKind
   path: string
   counts: Map<string, number>
 }
 
 // Overloads and repeated markdown headings would otherwise share one display
 // name. Counted per kind, because a Rust `struct Widget` and its `impl Widget`
-// are separate entities that legitimately share a name.
+// are separate symbols that legitimately share a name.
 function countOccurrence({kind, path, counts}: CountOccurrenceParams): number {
   const key = `${kind}\0${path}`
   const occurrence = (counts.get(key) ?? 0) + 1

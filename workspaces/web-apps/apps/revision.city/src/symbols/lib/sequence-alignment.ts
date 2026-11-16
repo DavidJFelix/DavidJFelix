@@ -1,4 +1,4 @@
-import type {SequenceDetail, SequenceEdit, SequenceElement} from './entity'
+import type {SequenceDetail, SequenceEdit, SequenceElement} from './code-symbol'
 
 // The LCS table is quadratic over whatever survives the common head and tail
 // strip. A middle past this bound is first split on hashes that occur once on
@@ -37,7 +37,7 @@ export interface DiffSequenceElementsParams {
 export interface SequenceElementsDiff {
   readonly detail: SequenceDetail
   // Whole elements the diff reported inserted or deleted -- the caller uses
-  // their spans to suppress entity rows that would restate the same fact.
+  // their spans to suppress symbol rows that would restate the same fact.
   readonly insertedElements: readonly SequenceElement[]
   readonly deletedElements: readonly SequenceElement[]
 }
@@ -46,7 +46,7 @@ export interface SequenceElementsDiff {
 // blocks between matches. Within a block leftovers zip in order -- the same
 // replace heuristic line diffs use -- and whole-element extras become inserted
 // or deleted edits. Undefined when the sequences match, or when every
-// difference is an in-place pair owned by nested entities, whose rows carry
+// difference is an in-place pair owned by nested symbols, whose rows carry
 // the report.
 export function diffSequenceElements({
   before,
@@ -79,10 +79,10 @@ export function diffSequenceElements({
     for (let offset = 0; offset < zipped; offset += 1) {
       const old = before[oldCursor + offset]
       const next = after[newCursor + offset]
-      // An in-place edit to an element that carries entities is reported by
-      // those entities' own rows; restating it as element churn would be the
+      // An in-place edit to an element that carries symbols is reported by
+      // those symbols' own rows; restating it as element churn would be the
       // same fact twice.
-      if (old.hasEntities || next.hasEntities) {
+      if (old.hasSymbols || next.hasSymbols) {
         continue
       }
       edits.push(

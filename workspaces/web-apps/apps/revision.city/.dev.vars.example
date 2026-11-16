@@ -1,0 +1,20 @@
+# Local secrets for `vite dev` and `vite preview` (read by the Cloudflare Vite
+# plugin). Copy to .dev.vars (gitignored) and fill in. Production sets the same
+# names with `wrangler secret put`. See README.md.
+
+# GitHub App sign-in (src/diffs/lib/github-auth.ts). Leave unset and the
+# /api/auth/github routes answer 503. Placeholders are enough for the sign-in
+# e2e tests.
+GITHUB_APP_CLIENT_ID=
+GITHUB_APP_CLIENT_SECRET=
+
+# Pull request reviews (src/routes/api/github/webhook.ts,
+# src/reviews/review-workflow.ts). Without GITHUB_WEBHOOK_SECRET the webhook
+# answers 503. A review also needs the other three names and
+# GITHUB_APP_CLIENT_ID.
+# GITHUB_APP_PRIVATE_KEY is the PEM key that GitHub generates for the app.
+# REVIEW_MODEL is an OpenRouter model slug that supports tool calls.
+GITHUB_APP_PRIVATE_KEY=
+GITHUB_WEBHOOK_SECRET=
+OPENROUTER_API_KEY=
+REVIEW_MODEL=

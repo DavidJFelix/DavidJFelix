@@ -1,5 +1,6 @@
 import {
   IconBraces,
+  IconBranch,
   IconComment,
   IconFileTree,
   IconFilter,
@@ -53,6 +54,7 @@ import {DiffsStats} from './diffs-stats'
 import {useChromeThemeProps} from './hooks/use-chrome-theme-props'
 import {MOBILE_MEDIA_QUERY, useMobileOverlay} from './hooks/use-mobile-overlay'
 import type {ThemeCycleControls} from './hooks/use-theme-cycle'
+import {StatusRow} from './status-row'
 import {WorkerPoolStatus} from './worker-pool-status'
 
 type SidebarTab = 'files' | 'comments' | 'symbols'
@@ -66,6 +68,8 @@ const ICON_SIZE_CLASS = css({
 })
 
 interface DiffsSidebarProps {
+  // A notice that the compare's base branch moved on after the merge base.
+  baseMovedOn?: string
   className?: string
   commentSections: readonly DiffsSavedCommentItem[]
   diffStats: DiffsStatsData | null
@@ -86,6 +90,7 @@ interface DiffsSidebarProps {
 }
 
 export const DiffsSidebar = memo(function DiffsSidebar({
+  baseMovedOn,
   className,
   commentSections,
   diffStats,
@@ -361,6 +366,13 @@ export const DiffsSidebar = memo(function DiffsSidebar({
             />
           </section>
         </div>
+        {!isNullish(baseMovedOn) && (
+          <StatusRow icon={IconBranch}>
+            <output className={css({fontSize: 'sm', lineHeight: '[1.25rem]'})}>
+              {baseMovedOn}
+            </output>
+          </StatusRow>
+        )}
         <DiffsStats
           expanded={activeStatusPanel === 'diffStats'}
           onToggle={() => {

@@ -21,11 +21,12 @@ export function useBaseMovedOn({domain, path, signedIn}: UseBaseMovedOnParams): 
   // The answer keeps the path it is for, so a new path shows nothing until its own answer.
   const [answer, setAnswer] = useState<{path: string; notice: string} | undefined>(undefined)
   const source = isNullish(domain) ? parseGitHubDiffSource(path) : undefined
-  const range = source?.kind === 'compare' ? source.range : undefined
+  // Undefined when the view gets no count, so a notice kept from an earlier view does not show.
+  const range = signedIn && source?.kind === 'compare' ? source.range : undefined
 
   useEffect(() => {
     let cancelled = false
-    if (signedIn && !isNullish(range)) {
+    if (!isNullish(range)) {
       void fetchBehindBy(path).then((behindBy) => {
         if (!cancelled && !isNullish(behindBy) && behindBy > 0) {
           setAnswer({path, notice: baseMovedOnText({range, behindBy})})
@@ -35,9 +36,9 @@ export function useBaseMovedOn({domain, path, signedIn}: UseBaseMovedOnParams): 
     return () => {
       cancelled = true
     }
-  }, [path, range, signedIn])
+  }, [path, range])
 
-  return answer?.path === path ? answer.notice : undefined
+  return !isNullish(range) && answer?.path === path ? answer.notice : undefined
 }
 
 async function fetchBehindBy(path: string): Promise<number | undefined> {

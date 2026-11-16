@@ -108,3 +108,21 @@ test('a new path shows no notice until its own answer', async () => {
     expect(hook.result.current).toBe('The base branch moved on 3 commits since the merge base')
   })
 })
+
+test('the same path under an alternate domain hides the notice', async () => {
+  serveStatus(() => HttpResponse.json({behindBy: 3}))
+  const hook = renderHook(
+    ({domain}) => useBaseMovedOn({domain, path: COMPARE_PATH, signedIn: true}),
+    {
+      initialProps: {domain: undefined as string | undefined},
+    },
+  )
+  onTestFinished(cleanup)
+  await waitFor(() => {
+    expect(hook.result.current).toBeDefined()
+  })
+
+  hook.rerender({domain: 'codeberg.org'})
+
+  expect(hook.result.current).toBeUndefined()
+})

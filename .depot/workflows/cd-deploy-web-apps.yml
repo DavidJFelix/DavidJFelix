@@ -64,6 +64,12 @@ jobs:
       fail-fast: false
       matrix:
         app: ${{ fromJSON(needs.plan.outputs.apps) }}
+    # One deploy per worker at a time: a burst of merges queues behind the
+    # running deploy instead of overlapping it, so the D1 migrations step
+    # never runs twice at once. Keyed on worker, so other apps do not wait.
+    concurrency:
+      group: cd-deploy-${{ matrix.app.worker }}
+      cancel-in-progress: false
     runs-on: depot-ubuntu-latest
     timeout-minutes: 20
     permissions:

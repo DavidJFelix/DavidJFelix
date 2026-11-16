@@ -17,7 +17,7 @@ const SESSION_COOKIE = `diffs-github-auth=${encodeCookiePayload({accessToken: 'g
 type FetchLike = (...args: Parameters<typeof fetch>) => ReturnType<typeof fetch>
 
 function createRequest(body: unknown, cookie?: string): Request {
-  return new Request(`${ORIGIN}/api/diffs/entity-diff`, {
+  return new Request(`${ORIGIN}/api/diffs/symbol-diff`, {
     method: 'POST',
     headers: {'Content-Type': 'application/json', ...(cookie === undefined ? {} : {cookie})},
     body: typeof body === 'string' ? body : JSON.stringify(body),

@@ -65,7 +65,7 @@ async function stubDiffRoutes(page: Page): Promise<void> {
   await page.route('**/api/diffs/diff?**', (route) =>
     route.fulfill({body: PATCH, contentType: 'text/plain'}),
   )
-  await page.route('**/api/diffs/entity-diff', (route) =>
+  await page.route('**/api/diffs/symbol-diff', (route) =>
     route.fulfill({body: createNdjson(route.request()), contentType: 'application/x-ndjson'}),
   )
 }
@@ -86,7 +86,7 @@ test('the symbols tab reads no files until it is opened', async ({page}) => {
   await stubDiffRoutes(page)
   let symbolDiffRequests = 0
   page.on('request', (request) => {
-    if (request.url().includes('/api/diffs/entity-diff')) {
+    if (request.url().includes('/api/diffs/symbol-diff')) {
       symbolDiffRequests += 1
     }
   })
@@ -128,7 +128,7 @@ test('a signed-out visitor still gets symbols for a public diff', async ({page})
 
 test('a diff that cannot be read says why instead of showing nothing', async ({page}) => {
   await stubDiffRoutes(page)
-  await page.route('**/api/diffs/entity-diff', (route) =>
+  await page.route('**/api/diffs/symbol-diff', (route) =>
     route.fulfill({
       status: 502,
       json: {error: 'GitHub rate limit exceeded. Sign in with GitHub to raise the limit.'},

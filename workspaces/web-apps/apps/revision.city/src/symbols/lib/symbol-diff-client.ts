@@ -35,7 +35,7 @@ export interface StreamSymbolDiffsParams {
   sourcePath: string
 }
 
-const DEFAULT_ENDPOINT = '/api/diffs/entity-diff'
+const DEFAULT_ENDPOINT = '/api/diffs/symbol-diff'
 
 // A 429 comes from the rate limiting rule on the revision.city zone (#871). It
 // blocks a client for 10 seconds once the client sends more than 20 requests in

@@ -13,7 +13,7 @@ import {useChromeThemeProps} from './hooks/use-chrome-theme-props'
 import {ThemedCodeView} from './themed-code-view'
 
 // jsdom (the vitest environment configured for this app) does not implement
-// ResizeObserver; stub it so a mounted CodeView/surface that observes its
+// ResizeObserver; stub it so a mounted CodeView that observes its
 // container doesn't throw. Module-level rather than a hook: document/window
 // already exist under the jsdom environment, this just fills the one gap.
 class MockResizeObserver {

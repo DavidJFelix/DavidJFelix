@@ -39,7 +39,7 @@
     {
       "name": "lezer",
       "path": "dictionaries/lezer.txt",
-      "description": "Lezer parser vocabulary (entity-diff engine)",
+      "description": "Lezer parser vocabulary (symbol diff engine)",
     },
     {
       "name": "licenses",

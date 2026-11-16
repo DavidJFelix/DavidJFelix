@@ -1,5 +1,5 @@
 # Vocabulary from the Lezer parser system (the incremental parser behind
-# CodeMirror), used by the revision.city entity-diff engine in src/symbols/.
+# CodeMirror), used by the revision.city symbol diff engine in src/symbols/.
 # Covers the parser's own name plus markup terms its grammars expose as node
 # types. Used in code, tests, changelog entries, and project docs.
 lezer

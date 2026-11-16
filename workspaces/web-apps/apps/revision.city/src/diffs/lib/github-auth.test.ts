@@ -112,6 +112,28 @@ test('login returns 503 when the app credentials are not configured', () => {
   expect(response.status).toBe(503)
 })
 
+test('login reads the app credentials from the environment', () => {
+  vi.stubEnv('GITHUB_APP_CLIENT_ID', CREDENTIALS.clientId)
+  vi.stubEnv('GITHUB_APP_CLIENT_SECRET', CREDENTIALS.clientSecret)
+  const response = handleGitHubLoginRequest(new Request(`${ORIGIN}/api/auth/github/login`))
+
+  expect(response.status).toBe(302)
+  const location = new URL(response.headers.get('location') ?? '')
+  expect(location.searchParams.get('client_id')).toBe(CREDENTIALS.clientId)
+})
+
+test('callback returns 503 when the app credentials are not configured', async () => {
+  withoutAppCredentials()
+  const fetchImpl = stubGitHubFetch()
+  const response = await handleGitHubOAuthCallbackRequest(
+    new Request(`${ORIGIN}/api/auth/github/callback?code=abc&state=any`),
+    {fetch: fetchImpl},
+  )
+
+  expect(response.status).toBe(503)
+  expect(fetchImpl).not.toHaveBeenCalled()
+})
+
 test('callback exchanges the code, stores the session cookie, and returns to the diff', async () => {
   const fetchImpl = stubGitHubFetch()
   const {sessionCookie, callbackResponse} = await signIn(fetchImpl)
@@ -339,6 +361,48 @@ test('callback logs the status and message when the user lookup fails', async ()
   consoleError.mockRestore()
 })
 
+// Answers the code exchange, then gives the user lookup the response that `user` makes.
+const stubUserLookup = (user: () => Promise<Response>) =>
+  vi.fn<FetchLike>(async (input) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
+    return url.startsWith('https://api.github.com/user')
+      ? user()
+      : jsonResponse({access_token: 'ghu_token', token_type: 'bearer'})
+  })
+
+test('callback logs no login when the user lookup answers with a body that is not JSON', async () => {
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+  const {callbackResponse} = await signIn(
+    stubUserLookup(async () => new Response('<html>down</html>', {status: 503})),
+  )
+
+  expect(callbackResponse.status).toBe(502)
+  expect(consoleError).toHaveBeenCalledExactlyOnceWith({
+    event: 'github auth failure',
+    step: 'user lookup',
+    status: 503,
+    error: 'no login',
+  })
+  consoleError.mockRestore()
+})
+
+test('callback logs the cause when the user lookup request throws', async () => {
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+  const {callbackResponse} = await signIn(
+    stubUserLookup(async () => {
+      throw new TypeError('fetch failed')
+    }),
+  )
+
+  expect(callbackResponse.status).toBe(502)
+  expect(consoleError).toHaveBeenCalledExactlyOnceWith({
+    event: 'github auth failure',
+    step: 'user lookup',
+    error: 'TypeError: fetch failed',
+  })
+  consoleError.mockRestore()
+})
+
 test('session reports the signed-in login without exposing the token', async () => {
   const {sessionCookie} = await signIn()
   const response = await handleGitHubSessionRequest(
@@ -537,6 +601,22 @@ test('resolveGitHubAuth drops the session when the refresh fails', async () => {
 
   expect(auth.session).toBeUndefined()
   expect(auth.setCookieHeaders[0]).toContain('diffs-github-auth=;')
+})
+
+test('resolveGitHubAuth drops an expired session that has no refresh token', async () => {
+  const {sessionCookie} = await signIn(
+    stubGitHubFetch({token: {access_token: 'ghu_old', expires_in: 1}}),
+  )
+  const refreshFetch = stubGitHubFetch()
+
+  const auth = await resolveGitHubAuth(
+    new Request(`${ORIGIN}/api/diffs/diff`, {headers: {cookie: sessionCookie}}),
+    {credentials: CREDENTIALS, fetch: refreshFetch},
+  )
+
+  expect(auth.session).toBeUndefined()
+  expect(auth.setCookieHeaders[0]).toContain('diffs-github-auth=;')
+  expect(refreshFetch).not.toHaveBeenCalled()
 })
 
 const signInWithExpiredToken = async (): Promise<string> => {

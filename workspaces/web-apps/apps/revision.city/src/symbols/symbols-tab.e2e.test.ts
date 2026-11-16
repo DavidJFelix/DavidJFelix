@@ -24,7 +24,7 @@ index 1111111..2222222 100644
  }
 `
 
-const ENTITY_DIFF = {
+const SYMBOL_DIFF = {
   path: 'src/widget.ts',
   language: 'typescript',
   changes: [
@@ -54,7 +54,7 @@ const ENTITY_DIFF = {
 function createNdjson(request: {postData(): string | null}): string {
   const body: {files: {itemId: string; name: string}[]} = JSON.parse(request.postData() ?? '{}')
   return body.files
-    .map((file) => `${JSON.stringify({itemId: file.itemId, name: file.name, diff: ENTITY_DIFF})}\n`)
+    .map((file) => `${JSON.stringify({itemId: file.itemId, name: file.name, diff: SYMBOL_DIFF})}\n`)
     .join('')
 }
 
@@ -65,12 +65,12 @@ async function stubDiffRoutes(page: Page): Promise<void> {
   await page.route('**/api/diffs/diff?**', (route) =>
     route.fulfill({body: PATCH, contentType: 'text/plain'}),
   )
-  await page.route('**/api/diffs/entity-diff', (route) =>
+  await page.route('**/api/diffs/symbol-diff', (route) =>
     route.fulfill({body: createNdjson(route.request()), contentType: 'application/x-ndjson'}),
   )
 }
 
-test('the symbols tab names the entities a diff changed', async ({page}) => {
+test('the symbols tab names the symbols a diff changed', async ({page}) => {
   await stubDiffRoutes(page)
   await page.goto(DIFF_PATH)
 
@@ -84,21 +84,21 @@ test('the symbols tab names the entities a diff changed', async ({page}) => {
 
 test('the symbols tab reads no files until it is opened', async ({page}) => {
   await stubDiffRoutes(page)
-  let entityDiffRequests = 0
+  let symbolDiffRequests = 0
   page.on('request', (request) => {
-    if (request.url().includes('/api/diffs/entity-diff')) {
-      entityDiffRequests += 1
+    if (request.url().includes('/api/diffs/symbol-diff')) {
+      symbolDiffRequests += 1
     }
   })
 
   await page.goto(DIFF_PATH)
   await expect(page.getByRole('region', {name: 'Files'})).toBeVisible()
 
-  expect(entityDiffRequests).toBe(0)
+  expect(symbolDiffRequests).toBe(0)
 
   await page.getByRole('button', {name: 'Symbols'}).click()
   await expect(page.getByRole('region', {name: 'Symbols'}).getByText('Widget.render')).toBeVisible()
-  expect(entityDiffRequests).toBeGreaterThan(0)
+  expect(symbolDiffRequests).toBeGreaterThan(0)
 })
 
 test('choosing a symbol moves the viewer to it', async ({page}) => {
@@ -128,7 +128,7 @@ test('a signed-out visitor still gets symbols for a public diff', async ({page})
 
 test('a diff that cannot be read says why instead of showing nothing', async ({page}) => {
   await stubDiffRoutes(page)
-  await page.route('**/api/diffs/entity-diff', (route) =>
+  await page.route('**/api/diffs/symbol-diff', (route) =>
     route.fulfill({
       status: 502,
       json: {error: 'GitHub rate limit exceeded. Sign in with GitHub to raise the limit.'},

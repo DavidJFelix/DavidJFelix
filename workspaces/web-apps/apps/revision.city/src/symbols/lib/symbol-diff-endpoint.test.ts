@@ -2,8 +2,8 @@ import {expect, test, vi} from 'vitest'
 
 import {encodeCookiePayload} from '@/diffs/lib/github-auth'
 import {clearGitHubDiffFileServerCache} from '@/diffs/lib/github-diff-file-server'
-import {MAX_FILES_PER_REQUEST} from './entity-diff-client'
-import {handleEntityDiffRequest} from './entity-diff-endpoint'
+import {MAX_FILES_PER_REQUEST} from './symbol-diff-client'
+import {handleSymbolDiffRequest} from './symbol-diff-endpoint'
 
 const ORIGIN = 'https://revision.city'
 const CODEBERG_PULL = '/acme/widgets/pulls/7'
@@ -17,7 +17,7 @@ const SESSION_COOKIE = `diffs-github-auth=${encodeCookiePayload({accessToken: 'g
 type FetchLike = (...args: Parameters<typeof fetch>) => ReturnType<typeof fetch>
 
 function createRequest(body: unknown, cookie?: string): Request {
-  return new Request(`${ORIGIN}/api/diffs/entity-diff`, {
+  return new Request(`${ORIGIN}/api/diffs/symbol-diff`, {
     method: 'POST',
     headers: {'Content-Type': 'application/json', ...(cookie === undefined ? {} : {cookie})},
     body: typeof body === 'string' ? body : JSON.stringify(body),
@@ -99,7 +99,7 @@ test.each([
     {domain: 'codeberg.org', path: '/acme/widgets/compare/main...dev', files: []},
   ],
 ])('rejects %s', async (_case, body) => {
-  const response = await handleEntityDiffRequest(createRequest(body))
+  const response = await handleSymbolDiffRequest(createRequest(body))
 
   expect(response.status).toBe(400)
 })
@@ -111,7 +111,7 @@ test('rejects a batch larger than one request should carry', async () => {
     type: 'change',
   }))
 
-  const response = await handleEntityDiffRequest(createRequest({path: 'o/r/pull/1', files}))
+  const response = await handleSymbolDiffRequest(createRequest({path: 'o/r/pull/1', files}))
 
   expect(response.status).toBe(400)
   await expect(response.json()).resolves.toMatchObject({
@@ -120,7 +120,7 @@ test('rejects a batch larger than one request should carry', async () => {
 })
 
 test('streams newline-delimited results', async () => {
-  const response = await handleEntityDiffRequest(
+  const response = await handleSymbolDiffRequest(
     createRequest({
       path: 'o/r/pull/1',
       files: [{itemId: 'item-1', name: 'src/moved.ts', type: 'rename-pure'}],
@@ -137,7 +137,7 @@ test('streams newline-delimited results', async () => {
 test('answers a pure rename without contacting GitHub', async () => {
   // No session cookie rides along, so a GitHub read would fail rather than
   // return an empty diff.
-  const response = await handleEntityDiffRequest(
+  const response = await handleSymbolDiffRequest(
     createRequest({
       path: 'o/r/pull/1',
       files: [{itemId: 'item-1', name: 'src/moved.ts', type: 'rename-pure'}],
@@ -153,7 +153,7 @@ test('reads a GitHub diff signed out without an Authorization header', async () 
   clearGitHubDiffFileServerCache()
   const fetcher = stubGitHub()
 
-  const response = await handleEntityDiffRequest(createGitHubRequest(), {
+  const response = await handleSymbolDiffRequest(createGitHubRequest(), {
     credentials: CREDENTIALS,
     fetch: fetcher,
   })
@@ -170,10 +170,10 @@ test('reads a GitHub diff signed in with the session token and keeps it out of t
   const fetcher = stubGitHub()
   const options = {credentials: CREDENTIALS, fetch: fetcher}
 
-  const signedIn = await handleEntityDiffRequest(createGitHubRequest(SESSION_COOKIE), options)
+  const signedIn = await handleSymbolDiffRequest(createGitHubRequest(SESSION_COOKIE), options)
   await readLines(signedIn)
   const signedInCalls = fetcher.mock.calls.length
-  const signedOut = await handleEntityDiffRequest(createGitHubRequest(), options)
+  const signedOut = await handleSymbolDiffRequest(createGitHubRequest(), options)
   await readLines(signedOut)
 
   expect(signedInCalls).toBeGreaterThan(0)
@@ -195,7 +195,7 @@ test('a refreshed session cookie reaches the browser', async () => {
     login: 'reviewer',
   })}`
 
-  const response = await handleEntityDiffRequest(createGitHubRequest(expiredCookie), {
+  const response = await handleSymbolDiffRequest(createGitHubRequest(expiredCookie), {
     credentials: CREDENTIALS,
     fetch: fetcher,
   })
@@ -205,8 +205,8 @@ test('a refreshed session cookie reaches the browser', async () => {
   expect(authorizationHeaders(fetcher)).toContain('Bearer ghu_new')
 })
 
-test('keeps entity diffs out of shared caches', async () => {
-  const response = await handleEntityDiffRequest(
+test('keeps symbol diffs out of shared caches', async () => {
+  const response = await handleSymbolDiffRequest(
     createRequest({
       path: 'o/r/pull/1',
       files: [{itemId: 'item-1', name: 'src/moved.ts', type: 'rename-pure'}],
@@ -220,7 +220,7 @@ test('keeps entity diffs out of shared caches', async () => {
 test('reads a Codeberg diff from Codeberg with one lookup for the batch', async () => {
   const fetcher = stubCodeberg()
 
-  const response = await handleEntityDiffRequest(
+  const response = await handleSymbolDiffRequest(
     createRequest({
       domain: 'codeberg.org',
       path: CODEBERG_PULL,
@@ -251,7 +251,7 @@ test('reads a Codeberg diff from Codeberg with one lookup for the batch', async 
 test('answers a file with no grammar without reading it', async () => {
   const fetcher = vi.fn<FetchLike>()
 
-  const response = await handleEntityDiffRequest(
+  const response = await handleSymbolDiffRequest(
     createRequest({
       path: 'o/r/pull/1',
       files: [{itemId: 'item-1', name: 'assets/logo.png', type: 'change'}],
@@ -295,7 +295,7 @@ test('stops reading a GitHub file past the size limit and gives an empty diff', 
     return url.includes('head-sha') ? new Response(large.body) : new Response('')
   })
 
-  const response = await handleEntityDiffRequest(
+  const response = await handleSymbolDiffRequest(
     createRequest({
       path: '/acme/large/pull/1',
       files: [{itemId: 'item-1', name: 'src/generated.ts', type: 'change'}],
@@ -329,7 +329,7 @@ test('refuses a Codeberg file by its Content-Length and gives an empty diff', as
     return new Response(large.body, {headers: {'Content-Length': String(4 * 1024 * 1024)}})
   })
 
-  const response = await handleEntityDiffRequest(
+  const response = await handleSymbolDiffRequest(
     createRequest({
       domain: 'codeberg.org',
       path: CODEBERG_PULL,

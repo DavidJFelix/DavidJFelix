@@ -31,7 +31,7 @@ import type {
 import {upsertSavedCommentSidebarEntry} from '@/diffs/lib/upsert-saved-comment-sidebar-entry'
 import {docsThemeCatalog, themeController} from '@/diffs/state/theme-controller'
 import type {SymbolSelection} from '@/symbols/components/symbol-changes-list'
-import type {EntityDiffRequest} from '@/symbols/lib/entity-diff-client'
+import type {SymbolDiffRequest} from '@/symbols/lib/symbol-diff-client'
 import {OverridableThemeSourceProvider} from './contexts/overridable-theme-source-provider'
 import {DiffsHeader} from './diffs-header'
 import {DiffsSidebar} from './diffs-sidebar'
@@ -226,7 +226,7 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
   }, [])
   // Only diff items carry two revisions to compare; a plain file item in the
   // viewer has nothing to diff against.
-  const entityDiffRequests = useMemo<readonly EntityDiffRequest[]>(
+  const symbolDiffRequests = useMemo<readonly SymbolDiffRequest[]>(
     () =>
       allItems.flatMap((item) =>
         item.type === 'diff'
@@ -332,7 +332,7 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
             commentSections={commentSections}
             diffStats={diffStats}
             domain={domain}
-            entityDiffRequests={entityDiffRequests}
+            symbolDiffRequests={symbolDiffRequests}
             mobileOverlayOpen={fileTreeOverlayOpen}
             onMobileClose={handleCloseFileTreeOverlay}
             onSelectComment={handleSelectComment}

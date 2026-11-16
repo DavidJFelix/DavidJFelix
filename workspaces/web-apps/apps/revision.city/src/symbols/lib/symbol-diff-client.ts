@@ -1,13 +1,13 @@
 import type {SymbolChange, SymbolDiff, SymbolDiffSummary} from './code-symbol'
 
-export interface EntityDiffRequest {
+export interface SymbolDiffRequest {
   itemId: string
   name: string
   prevName?: string
   type: string
 }
 
-export interface EntityDiffStreamResult {
+export interface SymbolDiffStreamResult {
   itemId: string
   name: string
   diff?: SymbolDiff
@@ -17,25 +17,25 @@ export interface EntityDiffStreamResult {
 // By call signature only: lib.dom types `typeof fetch` with a required static
 // `preconnect`, which a test stub cannot (and need not) satisfy. Mirrors the
 // diffs file loader's own fetch type.
-type EntityDiffFetch = (
+type SymbolDiffFetch = (
   input: Parameters<typeof fetch>[0],
   init?: Parameters<typeof fetch>[1],
 ) => ReturnType<typeof fetch>
 
-export interface StreamEntityDiffsParams {
+export interface StreamSymbolDiffsParams {
   // The host of a diff that is not on GitHub, such as `codeberg.org`.
   domain?: string
   endpoint?: string
-  fetcher?: EntityDiffFetch
-  files: readonly EntityDiffRequest[]
-  onResult: (result: EntityDiffStreamResult) => void
+  fetcher?: SymbolDiffFetch
+  files: readonly SymbolDiffRequest[]
+  onResult: (result: SymbolDiffStreamResult) => void
   // One wait per retry after a 429, so the length sets the retry count.
   rateLimitDelaysMs?: readonly number[]
   signal?: AbortSignal
   sourcePath: string
 }
 
-const DEFAULT_ENDPOINT = '/api/diffs/entity-diff'
+const DEFAULT_ENDPOINT = '/api/diffs/symbol-diff'
 
 // A 429 comes from the rate limiting rule on the revision.city zone (#871). It
 // blocks a client for 10 seconds once the client sends more than 20 requests in
@@ -53,7 +53,7 @@ export const MAX_FILES_PER_REQUEST = 20
 // as it arrives, so the panel fills in progressively rather than at the end.
 // Talks only to the same-origin route; GitHub auth, when there is any, rides
 // along on the session cookie and never reaches the browser.
-export async function streamEntityDiffs({
+export async function streamSymbolDiffs({
   domain,
   endpoint = DEFAULT_ENDPOINT,
   fetcher = fetch,
@@ -62,7 +62,7 @@ export async function streamEntityDiffs({
   rateLimitDelaysMs = DEFAULT_RATE_LIMIT_DELAYS_MS,
   signal,
   sourcePath,
-}: StreamEntityDiffsParams): Promise<void> {
+}: StreamSymbolDiffsParams): Promise<void> {
   const response = await postBatchWithRetry({
     body: JSON.stringify({domain, path: sourcePath, files}),
     delaysMs: rateLimitDelaysMs,
@@ -105,7 +105,7 @@ interface PostBatchWithRetryParams {
   body: string
   delaysMs: readonly number[]
   endpoint: string
-  fetcher: EntityDiffFetch
+  fetcher: SymbolDiffFetch
   signal?: AbortSignal
 }
 
@@ -132,7 +132,7 @@ async function postBatchWithRetry({
   return postBatchWithRetry({body, delaysMs: laterDelaysMs, endpoint, fetcher, signal})
 }
 
-function emitLine(line: string, onResult: (result: EntityDiffStreamResult) => void): void {
+function emitLine(line: string, onResult: (result: SymbolDiffStreamResult) => void): void {
   const trimmed = line.trim()
   if (trimmed === '') {
     return
@@ -150,25 +150,25 @@ function emitLine(line: string, onResult: (result: EntityDiffStreamResult) => vo
 
 // The route is same-origin and typed, but the response still crosses a network
 // boundary; normalizing keeps a malformed payload from reaching the renderer.
-function normalizeResult(data: unknown): EntityDiffStreamResult | undefined {
+function normalizeResult(data: unknown): SymbolDiffStreamResult | undefined {
   if (!isRecord(data) || typeof data.itemId !== 'string' || typeof data.name !== 'string') {
     return undefined
   }
   if (typeof data.error === 'string') {
     return {itemId: data.itemId, name: data.name, error: data.error}
   }
-  const diff = normalizeEntityDiff(data.diff)
+  const diff = normalizeSymbolDiff(data.diff)
   return diff === undefined
     ? {itemId: data.itemId, name: data.name, error: 'Symbol lookup returned an invalid result.'}
     : {itemId: data.itemId, name: data.name, diff}
 }
 
-function normalizeEntityDiff(data: unknown): SymbolDiff | undefined {
+function normalizeSymbolDiff(data: unknown): SymbolDiff | undefined {
   if (!isRecord(data) || typeof data.path !== 'string' || !Array.isArray(data.changes)) {
     return undefined
   }
 
-  const changes = data.changes.filter(isEntityChange)
+  const changes = data.changes.filter(isSymbolChange)
   return {
     path: data.path,
     language: typeof data.language === 'string' ? data.language : null,
@@ -193,7 +193,7 @@ async function readErrorDetail(response: Response): Promise<string> {
   return `Symbol lookup failed (${response.status}).`
 }
 
-function isEntityChange(value: unknown): value is SymbolChange {
+function isSymbolChange(value: unknown): value is SymbolChange {
   return (
     isRecord(value) &&
     typeof value.type === 'string' &&

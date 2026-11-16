@@ -1,6 +1,6 @@
 import {expect, test, vi} from 'vitest'
 
-import {type EntityDiffStreamResult, streamEntityDiffs} from './entity-diff-client'
+import {type SymbolDiffStreamResult, streamSymbolDiffs} from './symbol-diff-client'
 
 // fetch by call signature only: lib.dom types `typeof fetch` with a required
 // static `preconnect`, which a plain stub cannot (and need not) satisfy.
@@ -39,9 +39,9 @@ function stubStream(chunks: readonly string[], status = 200) {
   )
 }
 
-async function collect(fetcher: ReturnType<typeof stubStream>): Promise<EntityDiffStreamResult[]> {
-  const results: EntityDiffStreamResult[] = []
-  await streamEntityDiffs({
+async function collect(fetcher: ReturnType<typeof stubStream>): Promise<SymbolDiffStreamResult[]> {
+  const results: SymbolDiffStreamResult[] = []
+  await streamSymbolDiffs({
     fetcher,
     files: FILES,
     onResult: (result) => results.push(result),
@@ -64,7 +64,7 @@ test('posts the batch of files to the route', async () => {
 test('names the forge of a diff that is not on GitHub', async () => {
   const fetcher = stubStream([])
 
-  await streamEntityDiffs({
+  await streamSymbolDiffs({
     domain: 'codeberg.org',
     fetcher,
     files: FILES,
@@ -154,7 +154,7 @@ test('surfaces the error the route reported', async () => {
   )
 
   await expect(
-    streamEntityDiffs({fetcher, files: FILES, onResult: () => {}, sourcePath: 'o/r/pull/1'}),
+    streamSymbolDiffs({fetcher, files: FILES, onResult: () => {}, sourcePath: 'o/r/pull/1'}),
   ).rejects.toThrow('At most 20 files per request.')
 })
 
@@ -162,7 +162,7 @@ test('falls back to the status when the body carries no message', async () => {
   const fetcher = vi.fn<FetchLike>(async () => new Response('', {status: 502}))
 
   await expect(
-    streamEntityDiffs({fetcher, files: FILES, onResult: () => {}, sourcePath: 'o/r/pull/1'}),
+    streamSymbolDiffs({fetcher, files: FILES, onResult: () => {}, sourcePath: 'o/r/pull/1'}),
   ).rejects.toThrow('Symbol lookup failed (502).')
 })
 
@@ -179,9 +179,9 @@ test('sends the batch again after a 429', async () => {
     .fn<FetchLike>()
     .mockResolvedValueOnce(createRateLimitedResponse())
     .mockResolvedValueOnce(new Response(`${line}\n`))
-  const results: EntityDiffStreamResult[] = []
+  const results: SymbolDiffStreamResult[] = []
 
-  await streamEntityDiffs({
+  await streamSymbolDiffs({
     fetcher,
     files: FILES,
     onResult: (result) => results.push(result),
@@ -197,7 +197,7 @@ test('surfaces the 429 when the retries run out', async () => {
   const fetcher = vi.fn<FetchLike>(async () => createRateLimitedResponse())
 
   await expect(
-    streamEntityDiffs({
+    streamSymbolDiffs({
       fetcher,
       files: FILES,
       onResult: () => {},

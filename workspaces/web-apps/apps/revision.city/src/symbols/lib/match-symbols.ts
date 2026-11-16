@@ -1,8 +1,8 @@
 import type {CodeSymbol, EntityChange, SequenceDetail, SymbolKind, SymbolSpan} from './code-symbol'
-import {hashString, tokenSimilarity} from './entity-signature'
 import {alignByHash, diffSequenceElements} from './sequence-alignment'
+import {hashString, tokenSimilarity} from './symbol-signature'
 
-// Below this token overlap a pair is two different entities that happen to look
+// Below this token overlap a pair is two different symbols that happen to look
 // alike, not a rename. Matches sem's stated threshold.
 const RENAME_SIMILARITY_THRESHOLD = 0.8
 
@@ -10,7 +10,7 @@ const RENAME_SIMILARITY_THRESHOLD = 0.8
 // Such a diff is a rewrite; naming which function became which adds nothing.
 const MAX_FUZZY_CANDIDATES = 200
 
-// A nested entity holds the tokens of each entity inside it, so the entity count
+// A nested symbol holds the tokens of each symbol inside it, so the symbol count
 // alone does not keep the phase fast. Two 11 KB files of 200 nested namespaces
 // need 624 million reads, and a renamed 92 KB class with 150 edited methods needs
 // 7.7 million.
@@ -20,34 +20,34 @@ const MAX_FUZZY_TOKEN_READS = 20_000_000
 // rounding in a different order of additions could break a tie the wrong way.
 const LIKENESS_TIE_TOLERANCE = 1e-9
 
-// Short entities share a node skeleton with every other entity of their shape --
+// Short symbols share a node skeleton with every other symbol of their shape --
 // every one-line getter hashes alike -- so structural matching is reserved for
 // bodies with enough substance for the hash to mean something. Smaller ones fall
 // through to token similarity, which compares the actual text.
 const MIN_STRUCTURAL_TOKENS = 12
 
-export interface MatchEntitiesParams {
-  oldEntities: readonly CodeSymbol[]
-  newEntities: readonly CodeSymbol[]
+export interface MatchSymbolsParams {
+  oldSymbols: readonly CodeSymbol[]
+  newSymbols: readonly CodeSymbol[]
 }
 
 // Three phases, cheapest and most certain first, each removing its matches from
 // the pool the next one sees:
-//   1. occurrence alignment  -- entities grouped by kind + base path, occurrence
-//      sequences aligned by content, so the entity is the same entity even when
+//   1. occurrence alignment  -- symbols grouped by kind + base path, occurrence
+//      sequences aligned by content, so the symbol is the same symbol even when
 //      an insertion shifted its ordinal
 //   2. same structural hash and same body -- a rename or move, proven by an
 //      identical body
 //   3. token overlap over 0.8 -- a probable rename, body edited in place
-// When phase 2 or 3 pairs two entities whose paths differ, the members inside
+// When phase 2 or 3 pairs two symbols whose paths differ, the members inside
 // them pair by identity under the new path, see `matchMembers`.
 // Whatever is unclaimed at the end is genuinely added or deleted -- minus rows
 // that sit inside an element the sequence diff already reported, which would be
 // the same fact restated.
-export function matchEntities({oldEntities, newEntities}: MatchEntitiesParams): EntityChange[] {
+export function matchSymbols({oldSymbols, newSymbols}: MatchSymbolsParams): EntityChange[] {
   const changes: EntityChange[] = []
-  const unmatchedOld = new Set(oldEntities)
-  const unmatchedNew = new Set(newEntities)
+  const unmatchedOld = new Set(oldSymbols)
+  const unmatchedNew = new Set(newSymbols)
   const covered: CoveredSpans = {inserted: [], deleted: []}
   const phase: RenamePhase = {
     unmatchedOld,
@@ -69,22 +69,22 @@ export function matchEntities({oldEntities, newEntities}: MatchEntitiesParams): 
     }
   }
 
-  for (const entity of unmatchedNew) {
+  for (const symbol of unmatchedNew) {
     changes.push({
       type: 'added',
-      kind: entity.kind,
-      name: entity.name,
-      qualifiedName: entity.qualifiedName,
-      newRange: entity.range,
+      kind: symbol.kind,
+      name: symbol.name,
+      qualifiedName: symbol.qualifiedName,
+      newRange: symbol.range,
     })
   }
-  for (const entity of unmatchedOld) {
+  for (const symbol of unmatchedOld) {
     changes.push({
       type: 'deleted',
-      kind: entity.kind,
-      name: entity.name,
-      qualifiedName: entity.qualifiedName,
-      oldRange: entity.range,
+      kind: symbol.kind,
+      name: symbol.name,
+      qualifiedName: symbol.qualifiedName,
+      oldRange: symbol.range,
     })
   }
 
@@ -92,7 +92,7 @@ export function matchEntities({oldEntities, newEntities}: MatchEntitiesParams): 
 }
 
 // Spans the sequence diff reported as whole-element insertions or deletions,
-// tagged with the owning entity's base path so only descendants suppress.
+// tagged with the owning symbol's base path so only descendants suppress.
 interface OwnedSpan {
   ownerBase: string
   span: SymbolSpan
@@ -108,9 +108,9 @@ interface IdentityPhaseParams {
   unmatchedNew: Set<CodeSymbol>
   changes: EntityChange[]
   covered: CoveredSpans
-  // The path that groups an old entity. A member of a renamed container
+  // The path that groups an old symbol. A member of a renamed container
   // groups under the path that it has after the rename.
-  oldPath?: (entity: CodeSymbol) => string
+  oldPath?: (symbol: CodeSymbol) => string
 }
 
 // The `#n` ordinal that disambiguates name collisions cannot be identity: one
@@ -123,22 +123,22 @@ function matchByIdentity({
   unmatchedNew,
   changes,
   covered,
-  oldPath = (entity) => entity.basePath,
+  oldPath = (symbol) => symbol.basePath,
 }: IdentityPhaseParams): void {
   const groups = new Map<string, {old: CodeSymbol[]; new: CodeSymbol[]}>()
-  for (const entity of unmatchedOld) {
-    getGroup(groups, baseKey({kind: entity.kind, path: oldPath(entity)})).old.push(entity)
+  for (const symbol of unmatchedOld) {
+    getGroup(groups, baseKey({kind: symbol.kind, path: oldPath(symbol)})).old.push(symbol)
   }
-  for (const entity of unmatchedNew) {
-    getGroup(groups, baseKey({kind: entity.kind, path: entity.basePath})).new.push(entity)
+  for (const symbol of unmatchedNew) {
+    getGroup(groups, baseKey({kind: symbol.kind, path: symbol.basePath})).new.push(symbol)
   }
 
   for (const group of groups.values()) {
     // Content-identical occurrences pair first, preserving order: however far
-    // an insertion shifted one, it is the same entity and reports nothing.
+    // an insertion shifted one, it is the same symbol and reports nothing.
     const matched = alignByHash(
-      group.old.map((entity) => entity.contentHash),
-      group.new.map((entity) => entity.contentHash),
+      group.old.map((symbol) => symbol.contentHash),
+      group.new.map((symbol) => symbol.contentHash),
     )
     const pairedOld = new Set(matched.map(([old]) => old))
     const pairedNew = new Set(matched.map(([, next]) => next))
@@ -154,17 +154,17 @@ function matchByIdentity({
     // already reported inserted or deleted stay out of the pairing -- pairing
     // the keys of one deleted object with another inserted object's would
     // invent a modification neither had. Groups arrive in document order, so a
-    // sequence owner runs before the entities inside its elements and `covered`
+    // sequence owner runs before the symbols inside its elements and `covered`
     // is populated by the time they pair.
     const restOld = group.old.filter(
-      (entity, index) =>
+      (symbol, index) =>
         !pairedOld.has(index) &&
-        !isCovered({span: entity.span, path: oldPath(entity), spans: covered.deleted}),
+        !isCovered({span: symbol.span, path: oldPath(symbol), spans: covered.deleted}),
     )
     const restNew = group.new.filter(
-      (entity, index) =>
+      (symbol, index) =>
         !pairedNew.has(index) &&
-        !isCovered({span: entity.span, path: entity.basePath, spans: covered.inserted}),
+        !isCovered({span: symbol.span, path: symbol.basePath, spans: covered.inserted}),
     )
     for (const [previous, candidate] of pairLeftovers({restOld, restNew})) {
       unmatchedOld.delete(previous)
@@ -200,8 +200,8 @@ function pairLeftovers({restOld, restNew}: PairLeftoversParams): Array<[CodeSymb
   if (short.length === long.length) {
     return zip()
   }
-  const shortWords = short.map(entityWords)
-  const longWords = long.map(entityWords)
+  const shortWords = short.map(symbolWords)
+  const longWords = long.map(symbolWords)
   const reads = long.length * countWords(shortWords) + short.length * countWords(longWords)
   if (reads > MAX_FUZZY_TOKEN_READS) {
     return zip()
@@ -233,8 +233,8 @@ function pairLeftovers({restOld, restNew}: PairLeftoversParams): Array<[CodeSymb
   return pairs.toReversed()
 }
 
-function entityWords(entity: CodeSymbol): string[] {
-  return entity.tokens.flatMap((token) => token.split(/\s+/).filter((word) => word !== ''))
+function symbolWords(symbol: CodeSymbol): string[] {
+  return symbol.tokens.flatMap((token) => token.split(/\s+/).filter((word) => word !== ''))
 }
 
 function countWords(lists: readonly (readonly string[])[]): number {
@@ -261,7 +261,7 @@ interface DiffSequenceParams {
 }
 
 // Runs the element-level diff on a sequence-valued pair and records the spans
-// of whole-element insertions and deletions, which later suppress the entity
+// of whole-element insertions and deletions, which later suppress the symbol
 // rows inside them.
 function diffSequence({
   previous,
@@ -291,19 +291,19 @@ interface SuppressPhaseParams {
   covered: CoveredSpans
 }
 
-// Runs before the rename phases so an entity inside a deleted element cannot be
+// Runs before the rename phases so a symbol inside a deleted element cannot be
 // fuzzily paired with something unrelated across the file.
 // Safe to mutate while iterating: the only element removed from each set is the
 // one currently being visited.
 function suppressCoveredRows({unmatchedOld, unmatchedNew, covered}: SuppressPhaseParams): void {
-  for (const entity of unmatchedNew) {
-    if (isCovered({span: entity.span, path: entity.basePath, spans: covered.inserted})) {
-      unmatchedNew.delete(entity)
+  for (const symbol of unmatchedNew) {
+    if (isCovered({span: symbol.span, path: symbol.basePath, spans: covered.inserted})) {
+      unmatchedNew.delete(symbol)
     }
   }
-  for (const entity of unmatchedOld) {
-    if (isCovered({span: entity.span, path: entity.basePath, spans: covered.deleted})) {
-      unmatchedOld.delete(entity)
+  for (const symbol of unmatchedOld) {
+    if (isCovered({span: symbol.span, path: symbol.basePath, spans: covered.deleted})) {
+      unmatchedOld.delete(symbol)
     }
   }
 }
@@ -368,14 +368,14 @@ interface MatchMembersParams {
 // path, so a Rust `struct Foo` and its `impl Foo` keep their own members.
 function matchMembers({phase, container}: MatchMembersParams): void {
   const {previous, candidate} = container
-  const newPathOf = (entity: CodeSymbol): string =>
-    `${candidate.basePath}${entity.basePath.slice(previous.basePath.length)}`
+  const newPathOf = (symbol: CodeSymbol): string =>
+    `${candidate.basePath}${symbol.basePath.slice(previous.basePath.length)}`
 
   for (const pair of phase.renames) {
     if (
       !phase.released.has(pair) &&
-      isMember({entity: pair.previous, container: previous}) &&
-      isMember({entity: pair.candidate, container: candidate}) &&
+      isMember({symbol: pair.previous, container: previous}) &&
+      isMember({symbol: pair.candidate, container: candidate}) &&
       newPathOf(pair.previous) === pair.candidate.basePath
     ) {
       phase.released.add(pair)
@@ -384,11 +384,11 @@ function matchMembers({phase, container}: MatchMembersParams): void {
     }
   }
 
-  const oldMembers = [...phase.unmatchedOld].filter((entity) =>
-    isMember({entity, container: previous}),
+  const oldMembers = [...phase.unmatchedOld].filter((symbol) =>
+    isMember({symbol, container: previous}),
   )
-  const newMembers = [...phase.unmatchedNew].filter((entity) =>
-    isMember({entity, container: candidate}),
+  const newMembers = [...phase.unmatchedNew].filter((symbol) =>
+    isMember({symbol, container: candidate}),
   )
   const unmatchedOld = new Set(oldMembers)
   const unmatchedNew = new Set(newMembers)
@@ -401,38 +401,38 @@ function matchMembers({phase, container}: MatchMembersParams): void {
   })
   // A paired member leaves the sets. So does a member inside an element that
   // the sequence diff reported, as in `suppressCoveredRows`.
-  for (const entity of oldMembers) {
+  for (const symbol of oldMembers) {
     const covered = isCovered({
-      span: entity.span,
-      path: newPathOf(entity),
+      span: symbol.span,
+      path: newPathOf(symbol),
       spans: phase.covered.deleted,
     })
-    if (!unmatchedOld.has(entity) || covered) {
-      phase.unmatchedOld.delete(entity)
+    if (!unmatchedOld.has(symbol) || covered) {
+      phase.unmatchedOld.delete(symbol)
     }
   }
-  for (const entity of newMembers) {
+  for (const symbol of newMembers) {
     const covered = isCovered({
-      span: entity.span,
-      path: entity.basePath,
+      span: symbol.span,
+      path: symbol.basePath,
       spans: phase.covered.inserted,
     })
-    if (!unmatchedNew.has(entity) || covered) {
-      phase.unmatchedNew.delete(entity)
+    if (!unmatchedNew.has(symbol) || covered) {
+      phase.unmatchedNew.delete(symbol)
     }
   }
 }
 
 interface IsMemberParams {
-  entity: CodeSymbol
+  symbol: CodeSymbol
   container: CodeSymbol
 }
 
-function isMember({entity, container}: IsMemberParams): boolean {
+function isMember({symbol, container}: IsMemberParams): boolean {
   return (
-    entity.span.from >= container.span.from &&
-    entity.span.to <= container.span.to &&
-    entity.basePath.startsWith(`${container.basePath}.`)
+    symbol.span.from >= container.span.from &&
+    symbol.span.to <= container.span.to &&
+    symbol.basePath.startsWith(`${container.basePath}.`)
   )
 }
 
@@ -442,15 +442,15 @@ function isMember({entity, container}: IsMemberParams): boolean {
 function matchByStructure(phase: RenamePhase): void {
   const {unmatchedOld, unmatchedNew} = phase
   const byHash = new Map<string, CodeSymbol[]>()
-  for (const entity of unmatchedOld) {
-    if (entity.tokens.length < MIN_STRUCTURAL_TOKENS) {
+  for (const symbol of unmatchedOld) {
+    if (symbol.tokens.length < MIN_STRUCTURAL_TOKENS) {
       continue
     }
-    const bucket = byHash.get(entity.structuralHash)
+    const bucket = byHash.get(symbol.structuralHash)
     if (bucket === undefined) {
-      byHash.set(entity.structuralHash, [entity])
+      byHash.set(symbol.structuralHash, [symbol])
     } else {
-      bucket.push(entity)
+      bucket.push(symbol)
     }
   }
 
@@ -463,10 +463,10 @@ function matchByStructure(phase: RenamePhase): void {
     }
     const bucket = byHash.get(candidate.structuralHash)
     const previous = bucket?.find(
-      (entity) =>
-        entity.kind === candidate.kind &&
-        unmatchedOld.has(entity) &&
-        bodyHash(entity) === bodyHash(candidate),
+      (symbol) =>
+        symbol.kind === candidate.kind &&
+        unmatchedOld.has(symbol) &&
+        bodyHash(symbol) === bodyHash(candidate),
     )
     if (previous === undefined) {
       continue
@@ -480,8 +480,8 @@ function matchByStructure(phase: RenamePhase): void {
   }
 }
 
-// Last resort: an entity that was renamed *and* edited. Each new entity takes
-// its single best-scoring partner, so one old entity cannot be claimed twice.
+// Last resort: a symbol that was renamed *and* edited. Each new symbol takes
+// its single best-scoring partner, so one old symbol cannot be claimed twice.
 function matchByTokens(phase: RenamePhase): void {
   const {unmatchedOld, unmatchedNew} = phase
   if (
@@ -537,24 +537,24 @@ function countWorstCaseFuzzyTokenReads({
   for (const [kind, old] of oldTotals) {
     const next = newTotals.get(kind)
     if (next !== undefined) {
-      reads += next.entities * old.tokens + old.entities * next.tokens
+      reads += next.symbols * old.tokens + old.symbols * next.tokens
     }
   }
   return reads
 }
 
 interface TokenTotal {
-  readonly entities: number
+  readonly symbols: number
   readonly tokens: number
 }
 
-function totalTokensByKind(entities: ReadonlySet<CodeSymbol>): Map<SymbolKind, TokenTotal> {
+function totalTokensByKind(symbols: ReadonlySet<CodeSymbol>): Map<SymbolKind, TokenTotal> {
   const totals = new Map<SymbolKind, TokenTotal>()
-  for (const entity of entities) {
-    const total = totals.get(entity.kind) ?? {entities: 0, tokens: 0}
-    totals.set(entity.kind, {
-      entities: total.entities + 1,
-      tokens: total.tokens + entity.tokens.length,
+  for (const symbol of symbols) {
+    const total = totals.get(symbol.kind) ?? {symbols: 0, tokens: 0}
+    totals.set(symbol.kind, {
+      symbols: total.symbols + 1,
+      tokens: total.tokens + symbol.tokens.length,
     })
   }
   return totals
@@ -593,18 +593,18 @@ function createChange({
   }
 }
 
-// Entities are immutable, so the hash of each one is computed once.
+// Symbols are immutable, so the hash of each one is computed once.
 const bodyHashes = new WeakMap<CodeSymbol, string>()
 
-// The hash of an entity's tokens without its own name: two bodies that hash
+// The hash of a symbol's tokens without its own name: two bodies that hash
 // alike differ only in the name.
-function bodyHash(entity: CodeSymbol): string {
-  const cached = bodyHashes.get(entity)
+function bodyHash(symbol: CodeSymbol): string {
+  const cached = bodyHashes.get(symbol)
   if (cached !== undefined) {
     return cached
   }
-  const hash = hashString(withoutName(entity).join('\0'))
-  bodyHashes.set(entity, hash)
+  const hash = hashString(withoutName(symbol).join('\0'))
+  bodyHashes.set(symbol, hash)
   return hash
 }
 
@@ -612,14 +612,14 @@ function bodyHash(entity: CodeSymbol): string {
 // `Fix` and `#12`), and a JSON key token keeps the quotes that its name drops.
 // So a token that is the whole name is removed. If no token is, the first
 // tokens, in order, that spell the name without its white space are removed.
-function withoutName(entity: CodeSymbol): readonly string[] {
-  const name = compact(entity.name)
-  const whole = entity.tokens.findIndex((token) => tokenForms(token).includes(name))
+function withoutName(symbol: CodeSymbol): readonly string[] {
+  const name = compact(symbol.name)
+  const whole = symbol.tokens.findIndex((token) => tokenForms(token).includes(name))
   if (whole !== -1) {
-    return entity.tokens.toSpliced(whole, 1)
+    return symbol.tokens.toSpliced(whole, 1)
   }
   let spelled = 0
-  return entity.tokens.filter((token) => {
+  return symbol.tokens.filter((token) => {
     const form = tokenForms(token).find(
       (text) => text !== '' && spelled < name.length && name.startsWith(text, spelled),
     )

@@ -55,7 +55,7 @@ export interface SequenceElement {
   // True when the element contains symbols of its own (an object in an array).
   // An in-place edit to such an element is reported by those symbols' rows, so
   // the sequence diff stays quiet about the pair rather than double-reporting.
-  readonly hasEntities: boolean
+  readonly hasSymbols: boolean
 }
 
 export interface SequenceEdit {

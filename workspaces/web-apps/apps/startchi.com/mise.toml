@@ -1,5 +1,6 @@
-# Canonical check tasks for this app. CI and automation discover checks here;
-# tasks delegate to package.json scripts. Assumes `bun install` has run.
+# Canonical check tasks for this app. CI runs the package scripts through turbo,
+# and only the preview build runs a task here. Tasks delegate to package.json
+# scripts. Assumes `bun install` has run.
 
 [tasks.typecheck]
 description = "Type-check with tsc"
@@ -18,7 +19,7 @@ description = "Apply formatting fixes"
 run = "bun run format:fix"
 
 [tasks.test]
-description = "Unit tests with Vitest (passWithNoTests until the first test lands)"
+description = "Unit tests with Vitest"
 run = "bun run test"
 
 [tasks.build]
@@ -36,5 +37,6 @@ depends = ["build"]
 run = "bun run test:e2e"
 
 [tasks.check]
-description = "Run all checks"
-depends = ["typecheck", "lint", "format", "test", "build"]
+description = "Run all checks; typecheck waits for build, as in turbo, because build writes files that typecheck reads"
+depends = ["lint", "format", "test", "build"]
+run = "bun run typecheck"

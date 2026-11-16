@@ -68,6 +68,9 @@ jobs:
         if: steps.push.outputs.pushed == 'true'
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          # The Depot Code checkout adds no github.com remote, so gh cannot
+          # infer the repository from git.
+          GH_REPO: ${{ github.repository }}
         run: |
           open_prs=$(gh pr list --head cron/changelog-rollup --state open --json number --jq length)
           if [ "$open_prs" = '0' ]; then

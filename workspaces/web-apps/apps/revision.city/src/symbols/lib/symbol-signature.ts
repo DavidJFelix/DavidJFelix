@@ -7,7 +7,7 @@ const WHITE_SPACE_PATTERN = /\s+/u
 // Ends the children of a node in the skeleton, so nesting is part of the shape.
 const CLOSE_MARKER = ')'
 
-export interface EntitySignature {
+export interface SymbolSignature {
   readonly structuralHash: string
   readonly contentHash: string
   readonly ownContentHash: string
@@ -28,14 +28,14 @@ export function hashString(value: string): string {
 }
 
 export interface ComputeSignatureParams {
-  // Walked in order as one entity: the leading nodes (decorators), then the
+  // Walked in order as one symbol: the leading nodes (decorators), then the
   // node.
   nodes: readonly SyntaxNode[]
   source: string
-  // True for a descendant that was itself reported as an entity. Its content is
+  // True for a descendant that was itself reported as a symbol. Its content is
   // excluded from `ownContentHash`, so a class is not called modified merely
   // because one of its methods was.
-  isNestedEntity: (node: SyntaxNode) => boolean
+  isNestedSymbol: (node: SyntaxNode) => boolean
 }
 
 // One walk yields every hash the matcher needs:
@@ -48,13 +48,13 @@ export interface ComputeSignatureParams {
 //     does not. The tokens are the leaf text and the text that a node holds
 //     between its children (an escaped string, a template literal, a CSS
 //     length), split on white space.
-//   - own content: the same, minus nested entities -- what separates "this
-//     entity changed" from "something declared inside it did".
+//   - own content: the same, minus nested symbols -- what separates "this
+//     symbol changed" from "something declared inside it did".
 export function computeSignature({
   nodes,
   source,
-  isNestedEntity,
-}: ComputeSignatureParams): EntitySignature {
+  isNestedSymbol,
+}: ComputeSignatureParams): SymbolSignature {
   const types: string[] = []
   const ownTypes: string[] = []
   const tokens: string[] = []
@@ -97,7 +97,7 @@ export function computeSignature({
       child = child.nextSibling
     ) {
       pushText(source.slice(cursor, child.from), nested)
-      walk(child, nested || isNestedEntity(child))
+      walk(child, nested || isNestedSymbol(child))
       cursor = child.to
     }
     pushText(source.slice(cursor, current.to), nested)

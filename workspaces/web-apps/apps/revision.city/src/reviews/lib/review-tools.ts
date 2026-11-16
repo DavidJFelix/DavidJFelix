@@ -1,6 +1,6 @@
 import {z} from 'zod'
 import type {CodeSymbol, SymbolRange} from '../../symbols/lib/code-symbol'
-import {extractEntities} from '../../symbols/lib/extract-entities'
+import {extractSymbols} from '../../symbols/lib/extract-symbols'
 import {detectLanguage} from '../../symbols/lib/language-registry'
 import type {ToolCall, ToolDefinition} from './openrouter'
 import {type FileRead, type RepositorySnapshot, recordFileRead} from './repository-snapshot'
@@ -291,38 +291,36 @@ async function readDefinition({snapshot, path, name}: ReadDefinitionParams): Pro
   if (language === undefined) {
     return {content: `read_definition does not support ${path}. Use read_file.`, read: file.read}
   }
-  const extraction = extractEntities({source: file.text, parser: await language.loadParser()})
+  const extraction = extractSymbols({source: file.text, parser: await language.loadParser()})
   if (extraction.tooLarge) {
     return {content: `${path} is too large for read_definition. Use read_file.`, read: file.read}
   }
-  const {entities} = extraction
-  const matches = entities.filter((entity) => entity.name === name || entity.qualifiedName === name)
+  const {symbols} = extraction
+  const matches = symbols.filter((symbol) => symbol.name === name || symbol.qualifiedName === name)
   if (matches.length === 0) {
-    const names = [
-      ...new Set(entities.map((entity) => clip(entity.qualifiedName, MAX_NAME_LENGTH))),
-    ]
+    const names = [...new Set(symbols.map((symbol) => clip(symbol.qualifiedName, MAX_NAME_LENGTH)))]
     return {
       content: `${path} has no definition named "${name}". Names in the file: ${names.slice(0, MAX_LISTED_NAMES).join(', ')}`,
       read: file.read,
     }
   }
   const lines = splitLines(file.text)
-  const sections = matches.slice(0, MAX_DEFINITIONS).map((entity) => {
-    const {startLine, endLine} = definitionLines(entity, file.text)
+  const sections = matches.slice(0, MAX_DEFINITIONS).map((symbol) => {
+    const {startLine, endLine} = definitionLines(symbol, file.text)
     const lastLine = Math.min(endLine, startLine + MAX_DEFINITION_LINES - 1)
     const shown = lines
       .slice(startLine - 1, lastLine)
       .map((line, index) => numberLine(line, startLine + index))
     const notShown = lastLine < endLine ? [`(${endLine - lastLine} more lines.)`] : []
     return [
-      `${path}: ${entity.kind} ${clip(entity.qualifiedName, MAX_NAME_LENGTH)}, lines ${startLine}-${endLine}:`,
+      `${path}: ${symbol.kind} ${clip(symbol.qualifiedName, MAX_NAME_LENGTH)}, lines ${startLine}-${endLine}:`,
       ...shown,
       ...notShown,
     ].join('\n')
   })
-  const others = matches.slice(MAX_DEFINITIONS).map((entity) => {
-    const {startLine, endLine} = definitionLines(entity, file.text)
-    return `${clip(entity.qualifiedName, MAX_NAME_LENGTH)} at lines ${startLine}-${endLine}`
+  const others = matches.slice(MAX_DEFINITIONS).map((symbol) => {
+    const {startLine, endLine} = definitionLines(symbol, file.text)
+    return `${clip(symbol.qualifiedName, MAX_NAME_LENGTH)} at lines ${startLine}-${endLine}`
   })
   const othersNotShown =
     others.length === 0

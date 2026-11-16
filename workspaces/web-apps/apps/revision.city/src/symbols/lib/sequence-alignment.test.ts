@@ -17,7 +17,7 @@ function toElements(values: readonly string[]): SequenceElement[] {
     preview: hash,
     range: {startLine: index + 1, endLine: index + 1},
     span: {from: index, to: index + 1},
-    hasEntities: false,
+    hasSymbols: false,
   }))
 }
 

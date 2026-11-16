@@ -505,7 +505,11 @@ async function resolveGitHubCompareRefs({
     fetcher,
     options,
   )
-  const baseSha = readStringPath(data, ['base_commit', 'sha'])
+  // The patch of a three-dot or one-ref compare starts at the merge base, as a pull request does.
+  const baseSha = readStringPath(
+    data,
+    isTwoDotRange(range) ? ['base_commit', 'sha'] : ['merge_base_commit', 'sha'],
+  )
   const headSha = await readCompareHeadSha({repo, range, data, fetcher, options})
 
   if (isNullish(baseSha) || isNullish(headSha)) {
@@ -516,6 +520,11 @@ async function resolveGitHubCompareRefs({
     oldRef: {...repo, ref: baseSha},
     newRef: {...repo, ref: headSha},
   }
+}
+
+// A Git ref name cannot hold "..", so two dots without a third mark a two-dot range.
+function isTwoDotRange(range: string): boolean {
+  return range.includes('..') && !range.includes('...')
 }
 
 interface ReadCompareHeadShaParams {

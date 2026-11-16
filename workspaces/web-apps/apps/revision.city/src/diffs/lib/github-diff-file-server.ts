@@ -218,6 +218,37 @@ function resolveGitHubDiffRefsForRequest({
   return resolveCachedGitHubDiffRefs(source, fetcher, options)
 }
 
+interface LoadGitHubCompareBehindByParams {
+  path: string
+  token: string
+  fetch?: GitHubServerFetch
+}
+
+// Counts the base branch commits that came after a compare's merge base. The
+// diff starts at the merge base, so these commits are not in it. A two-dot range
+// diffs from the base tip, so it gets no count. A path that is not a compare
+// also gets no count.
+export async function loadGitHubCompareBehindBy({
+  path,
+  token,
+  fetch: fetcher = fetch,
+}: LoadGitHubCompareBehindByParams): Promise<number | undefined> {
+  const source = parseGitHubDiffSource(path)
+  if (source?.kind !== 'compare' || isTwoDotRange(source.range)) {
+    return undefined
+  }
+  const {repo, range} = source
+  const data = await fetchGitHubJSON(
+    createGitHubApiUrl(
+      `/repos/${encodeURLSegment(repo.owner)}/${encodeURLSegment(repo.repo)}/compare/${encodeURLSegment(range)}`,
+      {per_page: '1'},
+    ),
+    fetcher,
+    {tokenSource: 'request', token},
+  )
+  return readNumberPath(data, ['behind_by'])
+}
+
 export function clearGitHubDiffFileServerCache(): void {
   refsCache.clear()
   fileCache.clear()

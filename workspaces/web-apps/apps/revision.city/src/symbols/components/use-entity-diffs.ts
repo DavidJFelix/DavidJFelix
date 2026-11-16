@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useRef, useState} from 'react'
 
-import type {EntityDiff} from '@/symbols/lib/code-symbol'
+import type {SymbolDiff} from '@/symbols/lib/code-symbol'
 import {
   type EntityDiffRequest,
   MAX_FILES_PER_REQUEST,
@@ -10,7 +10,7 @@ import {
 export type EntityDiffStatus = 'pending' | 'loading' | 'ready' | 'error'
 
 export interface EntityDiffEntry {
-  readonly diff?: EntityDiff
+  readonly diff?: SymbolDiff
   readonly error?: string
   readonly itemId: string
   readonly name: string

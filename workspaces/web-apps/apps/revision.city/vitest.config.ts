@@ -50,7 +50,7 @@ export default defineConfig({
         'src/reviews/lib/**',
         'src/diffs/lib/{annotation,codeberg-diff-file-endpoint,codeberg-diff-source,diff-share-text,get-patch-viewer-href,github-access-remedy,github-app-budget,github-app-installations,github-diff-file-endpoint,github-diff-source,loader-error,normalize-github-path,nullish,pull-request-reference,read-limited-text,resolve-diffs-viewer-route,site,status-panel-text,theme-names,types,worker-failure}.ts',
         'src/diffs/lib/theme/chrome-theme-props.ts',
-        'src/symbols/lib/{change-presentation,code-symbol,diff-entities,language-registry}.ts',
+        'src/symbols/lib/{change-presentation,code-symbol,diff-symbols,language-registry}.ts',
         'src/symbols/lib/languages/{css,java,markdown,php,python,rust}.ts',
       ],
       reporter: ['text', 'text-summary'],

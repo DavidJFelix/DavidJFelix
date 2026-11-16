@@ -1,4 +1,4 @@
-import type {CodeSymbol, EntityChange, SequenceDetail, SymbolKind, SymbolSpan} from './code-symbol'
+import type {CodeSymbol, SequenceDetail, SymbolChange, SymbolKind, SymbolSpan} from './code-symbol'
 import {alignByHash, diffSequenceElements} from './sequence-alignment'
 import {hashString, tokenSimilarity} from './symbol-signature'
 
@@ -44,8 +44,8 @@ export interface MatchSymbolsParams {
 // Whatever is unclaimed at the end is genuinely added or deleted -- minus rows
 // that sit inside an element the sequence diff already reported, which would be
 // the same fact restated.
-export function matchSymbols({oldSymbols, newSymbols}: MatchSymbolsParams): EntityChange[] {
-  const changes: EntityChange[] = []
+export function matchSymbols({oldSymbols, newSymbols}: MatchSymbolsParams): SymbolChange[] {
+  const changes: SymbolChange[] = []
   const unmatchedOld = new Set(oldSymbols)
   const unmatchedNew = new Set(newSymbols)
   const covered: CoveredSpans = {inserted: [], deleted: []}
@@ -106,7 +106,7 @@ interface CoveredSpans {
 interface IdentityPhaseParams {
   unmatchedOld: Set<CodeSymbol>
   unmatchedNew: Set<CodeSymbol>
-  changes: EntityChange[]
+  changes: SymbolChange[]
   covered: CoveredSpans
   // The path that groups an old symbol. A member of a renamed container
   // groups under the path that it has after the rename.
@@ -328,13 +328,13 @@ function isCovered({span, path, spans}: IsCoveredParams): boolean {
 interface RenamePair {
   previous: CodeSymbol
   candidate: CodeSymbol
-  change: EntityChange
+  change: SymbolChange
 }
 
 interface RenamePhase {
   unmatchedOld: Set<CodeSymbol>
   unmatchedNew: Set<CodeSymbol>
-  changes: EntityChange[]
+  changes: SymbolChange[]
   covered: CoveredSpans
   renames: RenamePair[]
   released: Set<RenamePair>
@@ -561,7 +561,7 @@ function totalTokensByKind(symbols: ReadonlySet<CodeSymbol>): Map<SymbolKind, To
 }
 
 interface CreateChangeParams {
-  type: EntityChange['type']
+  type: SymbolChange['type']
   previous: CodeSymbol
   candidate: CodeSymbol
   similarity?: number
@@ -576,7 +576,7 @@ function createChange({
   similarity,
   bodyChanged = false,
   detail,
-}: CreateChangeParams): EntityChange {
+}: CreateChangeParams): SymbolChange {
   return {
     type,
     kind: candidate.kind,

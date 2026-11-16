@@ -1,5 +1,6 @@
-# Canonical check tasks for this app. CI and automation discover checks here;
-# tasks delegate to package.json scripts. Assumes `bun install` has run.
+# Canonical check tasks for this app. CI runs the package scripts through turbo,
+# and only the preview build runs a task here. Tasks delegate to package.json
+# scripts. Assumes `bun install` has run.
 
 [tasks.typecheck]
 description = "Type-check with astro check"
@@ -38,8 +39,9 @@ description = "Fail on em-dashes or curly quotes in blog content"
 run = "bun bin/check-prose.ts"
 
 [tasks.check]
-description = "Run all checks"
-depends = ["typecheck", "lint", "format", "lint:prose", "test", "build"]
+description = "Run all checks; typecheck waits for build, as in turbo, because build writes files that typecheck reads"
+depends = ["lint", "format", "lint:prose", "test", "build"]
+run = "bun run typecheck"
 
 # Not part of `check` -- needs ATPROTO_APP_PASSWORD and writes to bsky.social.
 # Wired into the djf.io deploy workflow in Phase 3; runnable locally meanwhile.

@@ -5,7 +5,7 @@ import {handleSymbolDiffRequest} from '@/symbols/lib/symbol-diff-endpoint'
 // newline-delimited JSON result per file as it lands. Parses both revisions in
 // the worker, so the browser never loads a grammar and never issues one request
 // per file.
-export const Route = createFileRoute('/api/diffs/entity-diff')({
+export const Route = createFileRoute('/api/diffs/symbol-diff')({
   server: {
     handlers: {
       POST: ({request}) => handleSymbolDiffRequest(request),

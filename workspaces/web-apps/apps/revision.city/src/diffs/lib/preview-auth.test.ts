@@ -52,7 +52,7 @@ test.each([
   ],
   ['plain http', `http://${PREVIEW}/api/auth/github/callback`],
   ['the dev worker itself', `${DEV_WORKER}/api/auth/github/callback`],
-  ['some other path on a real preview', `https://${PREVIEW}/api/diffs/entity-diff`],
+  ['some other path on a real preview', `https://${PREVIEW}/api/diffs/symbol-diff`],
   ['not a URL at all', PREVIEW],
   ['an empty value', ''],
   ['nothing', null],

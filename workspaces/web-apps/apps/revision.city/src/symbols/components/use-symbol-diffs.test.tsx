@@ -6,7 +6,7 @@ import {expect, type Mock, onTestFinished, test, vi} from 'vitest'
 import type {SymbolDiffRequest} from '@/symbols/lib/symbol-diff-client'
 import {useSymbolDiffs} from './use-symbol-diffs'
 
-const ENDPOINT = '/api/diffs/entity-diff'
+const ENDPOINT = '/api/diffs/symbol-diff'
 
 const REQUESTS: readonly SymbolDiffRequest[] = [
   {itemId: 'item-1', name: 'src/a.ts', type: 'change'},

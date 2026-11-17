@@ -1,9 +1,10 @@
+import type {GitHubFetch} from '@/lib/github-http'
+
 import {type AppInstallation, readAppInstallations} from './github-app-installations'
 import {type GitHubAuthOptions, resolveGitHubAuth, withSetCookieHeaders} from './github-auth'
 import {
   fetchGitHubJSON,
   isRecord,
-  type PullRequestFetch,
   type PullRequestSearchResult,
   type PullRequestSummary,
   readGitHubSearchFailure,
@@ -103,7 +104,7 @@ function createSearchFailureResponse(error: unknown): Response {
 }
 
 interface ListPullRequestGroupsParams {
-  fetcher: PullRequestFetch
+  fetcher: GitHubFetch
   login: string
   token: string
 }
@@ -165,7 +166,7 @@ async function listPullRequestGroups({
 }
 
 interface SearchWatchedPullRequestsParams {
-  fetcher: PullRequestFetch
+  fetcher: GitHubFetch
   installationsByAccount: ReadonlyMap<string, AppInstallation>
   token: string
   uncoveredWatchedRepos: readonly WatchedRepo[]
@@ -240,10 +241,7 @@ function createPullRequestGroup(
 // A failure here means the app was not granted organization visibility (or the
 // account has none), which reads as "no member repositories" rather than an
 // error worth failing the whole list over.
-async function fetchOrganizationLogins(
-  token: string,
-  fetcher: PullRequestFetch,
-): Promise<string[]> {
+async function fetchOrganizationLogins(token: string, fetcher: GitHubFetch): Promise<string[]> {
   const data = await fetchGitHubJSON('/user/orgs?per_page=100', token, fetcher)
   if (!Array.isArray(data)) {
     return []
@@ -262,7 +260,7 @@ interface WatchedRepo {
 // simply reports no watched repositories.
 async function fetchWatchedRepositories(
   token: string,
-  fetcher: PullRequestFetch,
+  fetcher: GitHubFetch,
 ): Promise<WatchedRepo[]> {
   const data = await fetchGitHubJSON(
     `/user/subscriptions?per_page=${WATCHED_REPO_PAGE_SIZE}`,
@@ -289,7 +287,7 @@ interface InstallationRepositoryNames {
 async function fetchInstallationRepositoryNames(
   installationId: number,
   token: string,
-  fetcher: PullRequestFetch,
+  fetcher: GitHubFetch,
 ): Promise<InstallationRepositoryNames> {
   const data = await fetchGitHubJSON(
     `/user/installations/${installationId}/repositories?per_page=${INSTALLATION_PAGE_SIZE}`,

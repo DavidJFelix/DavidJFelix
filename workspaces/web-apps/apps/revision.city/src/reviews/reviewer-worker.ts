@@ -1,6 +1,6 @@
 import type {ReviewAgent, ReviewAgentEnv} from './review-agent'
 
-// The entry of the `revision-city-reviewer` Worker (wrangler.reviewer.toml).
+// The entry of the `revision-city-reviewer` Worker (wrangler.reviewer.jsonc).
 // The Durable Object class must be a named export of the main module.
 export {ReviewAgent} from './review-agent'
 

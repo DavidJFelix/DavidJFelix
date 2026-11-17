@@ -1,6 +1,6 @@
 /// <reference types="bun" />
 // Pre-merge smoke gate for the `revision-city-reviewer` Worker
-// (wrangler.reviewer.toml): boots the built Worker in workerd (`wrangler dev`)
+// (wrangler.reviewer.jsonc): boots the built Worker in workerd (`wrangler dev`)
 // and sends one prompt through the ReviewAgent Durable Object. OpenCode starts
 // in the object, calls the model, and returns the answer with its usage. A
 // local server answers in place of OpenRouter, so the test needs no secret and

@@ -245,7 +245,7 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
       // Reviews are set up: an unsigned delivery gets 401, not 503.
       {method: 'POST', path: '/api/github/webhook', status: 401},
     ],
-    // The review harness (wrangler.reviewer.toml). It has no public host, so it
+    // The review harness (wrangler.reviewer.jsonc). It has no public host, so it
     // has no preview and no route to fetch.
     auxiliaryWorkers: [
       {

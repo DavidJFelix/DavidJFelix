@@ -41,7 +41,7 @@ const sentrySourceMaps = perEnvironmentPlugin(
 )
 
 // The production build also builds the `revision-city-reviewer` Worker
-// (wrangler.reviewer.toml). The dev worker and the previews have no reviews, so
+// (wrangler.reviewer.jsonc). The dev worker and the previews have no reviews, so
 // a build for them (CLOUDFLARE_ENV is set) builds only the app.
 const buildsDevWorker = Boolean(process.env.CLOUDFLARE_ENV)
 
@@ -59,7 +59,7 @@ const config = defineConfig({
     devtools(),
     cloudflare({
       viteEnvironment: {name: 'ssr'},
-      auxiliaryWorkers: buildsDevWorker ? [] : [{configPath: './wrangler.reviewer.toml'}],
+      auxiliaryWorkers: buildsDevWorker ? [] : [{configPath: './wrangler.reviewer.jsonc'}],
     }),
     tanstackStart({importProtection: {client: {files: serverOnlyFiles}}}),
     viteReact(),

@@ -7,7 +7,7 @@ in the SQLite database of the object and calls DeepSeek V4.1 Flash on OpenRouter
 sends one prompt in a new session and returns the answer with the tokens and the cost of the model
 calls.
 
-The second Worker has its own config, `wrangler.reviewer.toml`, and `vite build` makes it together
+The second Worker has its own config, `wrangler.reviewer.jsonc`, and `vite build` makes it together
 with the app (the `auxiliaryWorkers` option of the Cloudflare vite plugin). It has no public host:
 no route, no workers.dev host, and no preview URLs. revision.city will call the Durable Object
 through a binding in a later change, and no review uses the harness yet.
@@ -35,4 +35,7 @@ Without the secret, `ask` returns the status `unanswered`.
 
 The app declares `@opentelemetry/sdk-trace-node`, which it does not import. Without the direct
 dependency, bun 1.4.4 stops with a panic when an install must download that package, as in CI.
-`bunfig.toml` has the details.
+
+The spell checker has a new topic dictionary for company names that the bundled `companies`
+dictionary lacks: `.config/dictionaries/companies-extra.txt`. It holds `deepseek`, and the spelling
+guide names it.

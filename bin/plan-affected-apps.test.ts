@@ -342,16 +342,16 @@ test('registry names the production URL of every app with a custom domain', asyn
 })
 
 test('registry names the auxiliary Workers of every app', async () => {
-  // An auxiliary Worker has its own source config, `wrangler.<name>.toml`, in
+  // An auxiliary Worker has its own source config, `wrangler.<name>.jsonc`, in
   // the app directory. A Worker that is added or renamed there must also change
   // in the registry, or the deploy does not ship it.
   const {readdirSync} = await import('node:fs')
   for (const app of WEB_APP_TARGETS) {
     const appUrl = new URL(`../workspaces/web-apps/apps/${app.dir}/`, import.meta.url)
-    const configs = readdirSync(appUrl).filter((name) => /^wrangler\..+\.toml$/.test(name))
+    const configs = readdirSync(appUrl).filter((name) => /^wrangler\..+\.jsonc$/.test(name))
     const names = await Promise.all(
       configs.map(async (name) => {
-        const config = Bun.TOML.parse(await Bun.file(new URL(name, appUrl)).text()) as {
+        const config = Bun.JSONC.parse(await Bun.file(new URL(name, appUrl)).text()) as {
           readonly name?: string
         }
         return config.name

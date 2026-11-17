@@ -82,59 +82,6 @@ test('keeps the production URL on the production deploy entry only', () => {
   expect(urls({kind: 'preview', targets: productionOnly})).toEqual([''])
 })
 
-test('deploys an auxiliary Worker of an app as its own entry', () => {
-  const auxiliaryWorkers = [
-    {worker: 'example-com-jobs', wranglerConfig: 'dist/example_com_jobs/wrangler.json'},
-  ]
-  const app = target({
-    devEnv: 'dev',
-    d1Database: 'example-com',
-    productionUrl: 'https://example.com',
-    probes: [{method: 'POST', path: '/hook', status: 401}],
-  })
-  const targets = [{...app, auxiliaryWorkers}]
-
-  expect(planAffected({affectedPaths: ['apps/example.com'], kind: 'deploy', targets})).toEqual([
-    {...app, cloudflareEnv: ''},
-    {
-      ...app,
-      ...auxiliaryWorkers[0],
-      smokeRoutes: '',
-      cloudflareEnv: '',
-      d1Database: '',
-      productionUrl: '',
-      probes: [],
-    },
-    {
-      ...app,
-      worker: 'example-com-dev',
-      cloudflareEnv: 'dev',
-      d1Database: '',
-      productionUrl: '',
-      probes: [],
-    },
-  ])
-})
-
-test('previews no auxiliary Worker', () => {
-  // A preview is a version of one worker. An auxiliary Worker has no preview.
-  const auxiliaryWorkers = [
-    {worker: 'example-com-jobs', wranglerConfig: 'dist/example_com_jobs/wrangler.json'},
-  ]
-  const targets = [
-    target({auxiliaryWorkers}),
-    target({dir: 'dev.example.com', devEnv: 'dev', auxiliaryWorkers}),
-  ]
-
-  expect(
-    planAffected({
-      affectedPaths: ['apps/example.com', 'apps/dev.example.com'],
-      kind: 'preview',
-      targets,
-    }).map((entry) => entry.worker),
-  ).toEqual(['example-com', 'example-com-dev'])
-})
-
 test('keeps the probes on the production deploy entry only', () => {
   // The dev worker binds no review Workflow, so its webhook answers 503 by
   // design, and previews do not serve the custom domain.
@@ -153,9 +100,10 @@ test('probes revision.city production sign-in and the review webhook', () => {
   const deploy = planAffected({affectedPaths: ['apps/revision.city'], kind: 'deploy'})
   const production = deploy.find((entry) => entry.worker === 'revision-city')
 
-  expect(
-    production?.probes.map((probe) => `${probe.method} ${probe.path} ${probe.status}`),
-  ).toEqual(['GET /api/auth/github/config 200', 'POST /api/github/webhook 401'])
+  expect(production?.probes.map((probe) => `${probe.method} ${probe.path} ${probe.status}`)).toEqual([
+    'GET /api/auth/github/config 200',
+    'POST /api/github/webhook 401',
+  ])
   expect(WEB_APP_TARGETS.filter((app) => app.probes.length > 0).map((app) => app.dir)).toEqual([
     'revision.city',
   ])
@@ -228,11 +176,7 @@ test('plans every matrix app when only a shared package is affected', () => {
   // as a repo-root tooling change.
   const targets = [target({dir: 'ravrun'})]
 
-  const {apps, all} = planAffectedOrAll({
-    affectedPaths: ['packages/theme'],
-    kind: 'deploy',
-    targets,
-  })
+  const {apps, all} = planAffectedOrAll({affectedPaths: ['packages/theme'], kind: 'deploy', targets})
   expect(all).toBe(true)
   expect(apps.map((app) => app.dir)).toEqual(['ravrun'])
 })
@@ -255,13 +199,7 @@ test('parses turbo ls output past its version banner', () => {
     '• turbo 2.10.8',
     JSON.stringify({
       packageManager: 'bun',
-      packages: {
-        count: 2,
-        items: [
-          {name: 'a', path: 'apps/djf.io'},
-          {name: 'b', path: 'packages/theme'},
-        ],
-      },
+      packages: {count: 2, items: [{name: 'a', path: 'apps/djf.io'}, {name: 'b', path: 'packages/theme'}]},
     }),
   ].join('\n')
 
@@ -337,29 +275,6 @@ test('registry names the production URL of every app with a custom domain', asyn
     expect({dir: app.dir, productionUrl: app.productionUrl}).toEqual({
       dir: app.dir,
       productionUrl: domain ? `https://${domain}` : '',
-    })
-  }
-})
-
-test('registry names the auxiliary Workers of every app', async () => {
-  // An auxiliary Worker has its own source config, `wrangler.<name>.jsonc`, in
-  // the app directory. A Worker that is added or renamed there must also change
-  // in the registry, or the deploy does not ship it.
-  const {readdirSync} = await import('node:fs')
-  for (const app of WEB_APP_TARGETS) {
-    const appUrl = new URL(`../workspaces/web-apps/apps/${app.dir}/`, import.meta.url)
-    const configs = readdirSync(appUrl).filter((name) => /^wrangler\..+\.jsonc$/.test(name))
-    const names = await Promise.all(
-      configs.map(async (name) => {
-        const config = Bun.JSONC.parse(await Bun.file(new URL(name, appUrl)).text()) as {
-          readonly name?: string
-        }
-        return config.name
-      }),
-    )
-    expect({dir: app.dir, workers: names.toSorted()}).toEqual({
-      dir: app.dir,
-      workers: (app.auxiliaryWorkers ?? []).map((worker) => worker.worker).toSorted(),
     })
   }
 })

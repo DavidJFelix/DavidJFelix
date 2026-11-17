@@ -76,6 +76,11 @@
       "groupName": "bun patch/minor"
     },
     {
+      "description": "each harness in workspaces/harnesses/ is its own install root, so that its versions do not move together with the web apps or with another harness. This rule puts every update of the OpenCode harness in a PR of its own; the tool groups below still take the packages that they name. Add one rule for each new harness",
+      "matchFileNames": ["workspaces/harnesses/opencode/**"],
+      "groupName": "harness opencode"
+    },
+    {
       "matchUpdateTypes": ["patch", "minor"],
       "matchManagers": ["cargo"],
       "groupName": "cargo patch/minor"

@@ -1,0 +1,47 @@
+name: CD Deploy harnesses
+# Production deploys of the harness Workers in workspaces/harnesses/. A push
+# that changes a harness deploys each harness in the matrix. The Workers have
+# no public host, so no smoke step fetches them after the deploy.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'workspaces/harnesses/**'
+      - '.depot/workflows/cd-deploy-harnesses.yml'
+env:
+  MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
+jobs:
+  deploy:
+    name: deploy ${{ matrix.harness }}
+    strategy:
+      fail-fast: false
+      matrix:
+        harness: [opencode]
+    # One deploy for each harness at a time. A second merge waits for the
+    # deploy that runs.
+    concurrency:
+      group: cd-deploy-harness-${{ matrix.harness }}
+      cancel-in-progress: false
+    runs-on: depot-ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: workspaces/harnesses/${{ matrix.harness }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: bun install
+        run: bun install --frozen-lockfile
+      - name: wrangler deploy
+        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4.1.3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+          workingDirectory: workspaces/harnesses/${{ matrix.harness }}

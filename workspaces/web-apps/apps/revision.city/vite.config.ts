@@ -40,11 +40,6 @@ const sentrySourceMaps = perEnvironmentPlugin(
     }),
 )
 
-// The production build also builds the `revision-city-reviewer` Worker
-// (wrangler.reviewer.jsonc). The dev worker and the previews have no reviews, so
-// a build for them (CLOUDFLARE_ENV is set) builds only the app.
-const buildsDevWorker = Boolean(process.env.CLOUDFLARE_ENV)
-
 // The cloudflare() plugin runs the SSR environment in workerd and must come
 // before tanstackStart() so the server build targets Workers.
 const config = defineConfig({
@@ -57,10 +52,7 @@ const config = defineConfig({
   environments: uploadsSourceMaps ? {client: {build: {sourcemap: 'hidden'}}} : {},
   plugins: [
     devtools(),
-    cloudflare({
-      viteEnvironment: {name: 'ssr'},
-      auxiliaryWorkers: buildsDevWorker ? [] : [{configPath: './wrangler.reviewer.jsonc'}],
-    }),
+    cloudflare({viteEnvironment: {name: 'ssr'}}),
     tanstackStart({importProtection: {client: {files: serverOnlyFiles}}}),
     viteReact(),
     sentrySourceMaps,

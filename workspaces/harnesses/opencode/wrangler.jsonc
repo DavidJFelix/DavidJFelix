@@ -1,9 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  // The second Worker of this app. It holds the review harness, which would
-  // make each start of the `revision-city` Worker (wrangler.toml) slower.
-  "name": "revision-city-reviewer",
-  "main": "src/reviews/reviewer-worker.ts",
+  "name": "revision-city-harness-opencode",
+  "main": "src/index.ts",
   "compatibility_date": "2026-06-01",
   "compatibility_flags": ["nodejs_compat"],
   // Without `workers_dev: false`, wrangler gives a Worker that has no route a

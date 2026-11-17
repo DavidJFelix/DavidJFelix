@@ -127,28 +127,29 @@ Cloudflare Agents SDK (`agents/harness/opencode`) runs it in a Durable Object. T
 V4.1 Flash on OpenRouter. When `REVIEW_MODEL` names the same model, a comparison with the tool loop
 measures only the harness.
 
-- **A second Worker of the same app.** `vite build` makes two Workers from the revision.city app:
-  `revision-city` and `revision-city-reviewer` (`wrangler.reviewer.jsonc`, entry
-  `src/reviews/reviewer-worker.ts`). The harness is in the second one. The Workers runtime parses
-  each module of a Worker when the Worker starts, also a module that no code imports. OpenCode adds
-  23 MiB, and a dynamic import does not prevent the parse. In a local measurement, the
-  `revision-city` Worker with OpenCode parses for about 555 ms at each start. Without OpenCode, it
-  parses for about 190 ms. The second Worker has no public host. revision.city will call its
-  `ReviewAgent` Durable Object through a binding.
+- **A Worker and an install root of its own.** The harness is the Worker
+  `revision-city-harness-opencode`, in `workspaces/harnesses/opencode/`. That directory has its own
+  `package.json` and `bun.lock`, and it is not a part of the web-apps workspace. More harnesses are
+  planned, each in its own directory there, so that a harness does not move the versions of another
+  harness or of the apps. The Worker has no public host. revision.city will call its `ReviewAgent`
+  Durable Object through a binding.
+- **Not in the `revision-city` Worker.** The Workers runtime parses each module of a Worker when the
+  Worker starts, also a module that no code imports. OpenCode adds 23 MiB, and a dynamic import does
+  not prevent the parse. In a local measurement, the `revision-city` Worker with OpenCode parses for
+  about 555 ms at each start. Without OpenCode, it parses for about 190 ms.
 - **The model provider is the one in OpenCode.** The provider in the Agents SDK
-  (`agents/models/opencode`) needs a package that OpenCode included only until 2.2.0. That version
-  of OpenCode needs `effect` 4.0.1, and this workspace has `effect` 4.1. Thus the Worker uses the
-  OpenRouter provider of OpenCode with the `OPENROUTER_API_KEY` secret.
+  (`agents/models/opencode`) needs a package that OpenCode included only until 2.2.0. Thus the
+  Worker uses the OpenRouter provider of OpenCode with the `OPENROUTER_API_KEY` secret.
 - **OpenCode loads on the first prompt.** An import at the top of the module runs all of OpenCode
-  when the reviewer Worker starts: about 250 ms of the 1 second that Cloudflare allows. With the
+  when the harness Worker starts: about 250 ms of the 1 second that Cloudflare allows. With the
   dynamic import, the start runs about 20 ms of code.
 
 Steps, each a small PR:
 
-1. **Reviewer Worker.** The `ReviewAgent` Durable Object, which answers one prompt and reports the
+1. **Harness Worker.** The `ReviewAgent` Durable Object, which answers one prompt and reports the
    tokens and the cost. A smoke test sends a prompt through OpenCode to a local model server. Done.
 2. **Live proof.** revision.city binds `ReviewAgent` and sends one prompt in each review run. It
-   logs the answer as a wide event. This step needs the `OPENROUTER_API_KEY` secret on the reviewer
+   logs the answer as a wide event. This step needs the `OPENROUTER_API_KEY` secret on the harness
    Worker.
 3. **Reviewer tools.** The tools of OpenCode need a local disk. Read-only tools for the pull request
    head and a tool that submits the findings replace them.

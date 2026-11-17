@@ -31,7 +31,7 @@ description = "Build with Vite"
 run = "bun run build"
 
 [tasks.smoke]
-description = "Smoke-test a local production boot (vite preview on workerd) and one prompt through the reviewer Worker"
+description = "Smoke-test a local production boot (vite preview on workerd)"
 depends = ["build"]
 run = "bun run smoke"
 

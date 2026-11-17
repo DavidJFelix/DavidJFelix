@@ -1,5 +1,7 @@
+import type {GitHubFetch} from '@/lib/github-http'
+
 import {encodeURLSegment} from './github-diff-source'
-import {fetchGitHubJSON, isRecord, type PullRequestFetch} from './github-pull-request-search'
+import {fetchGitHubJSON, isRecord} from './github-pull-request-search'
 
 const GITHUB_INSTALLATION_SETTINGS_ROOT = 'https://github.com/settings/installations'
 const GITHUB_ORGANIZATIONS_ROOT = 'https://github.com/organizations'
@@ -18,7 +20,7 @@ export interface AppInstallation {
 }
 
 export interface ReadAppInstallationsParams {
-  fetcher: PullRequestFetch
+  fetcher: GitHubFetch
   token: string
 }
 

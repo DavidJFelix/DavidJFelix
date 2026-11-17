@@ -1,18 +1,17 @@
+import {
+  createGitHubApiUrl,
+  createGitHubHeaders,
+  GITHUB_API_ROOT,
+  type GitHubFetch,
+} from '@/lib/github-http'
+
 import {isNullish} from './nullish'
 
-const GITHUB_API_ROOT = 'https://api.github.com'
-const GITHUB_API_VERSION = '2022-11-28'
-const USER_AGENT = 'revision-city-diffs'
 // GitHub rejects search queries longer than 256 characters, so repository
 // qualifiers are packed into as few queries as fit.
 const SEARCH_QUERY_MAX_LENGTH = 256
 const SEARCH_BASE_QUERY = 'is:pr is:open archived:false'
 export const SEARCH_PAGE_SIZE = 20
-
-export type PullRequestFetch = (
-  input: Parameters<typeof fetch>[0],
-  init?: Parameters<typeof fetch>[1],
-) => ReturnType<typeof fetch>
 
 export interface PullRequestSummary {
   owner: string
@@ -31,7 +30,7 @@ export interface PullRequestSearchResult {
 }
 
 export interface SearchPullRequestsParams {
-  fetcher: PullRequestFetch
+  fetcher: GitHubFetch
   qualifiers: readonly string[]
   token: string
 }
@@ -55,13 +54,17 @@ export async function searchPullRequests({
   qualifiers,
   token,
 }: SearchPullRequestsParams): Promise<PullRequestSearchResult> {
-  const url = new URL('/search/issues', GITHUB_API_ROOT)
-  url.searchParams.set('q', [SEARCH_BASE_QUERY, ...qualifiers].join(' '))
-  url.searchParams.set('sort', 'updated')
-  url.searchParams.set('order', 'desc')
-  url.searchParams.set('per_page', String(SEARCH_PAGE_SIZE))
+  const url = createGitHubApiUrl({
+    path: '/search/issues',
+    searchParams: {
+      q: [SEARCH_BASE_QUERY, ...qualifiers].join(' '),
+      sort: 'updated',
+      order: 'desc',
+      per_page: String(SEARCH_PAGE_SIZE),
+    },
+  })
 
-  const response = await fetcher(url.href, {
+  const response = await fetcher(url, {
     cache: 'no-store',
     headers: createGitHubJSONHeaders(token),
   })
@@ -247,10 +250,10 @@ function parseRepositoryURL(value: unknown): {owner: string; repo: string} | und
 export async function fetchGitHubJSON(
   path: string,
   token: string,
-  fetcher: PullRequestFetch,
+  fetcher: GitHubFetch,
 ): Promise<unknown> {
   try {
-    const response = await fetcher(new URL(path, GITHUB_API_ROOT).href, {
+    const response = await fetcher(createGitHubApiUrl({path}), {
       cache: 'no-store',
       headers: createGitHubJSONHeaders(token),
     })
@@ -261,12 +264,7 @@ export async function fetchGitHubJSON(
 }
 
 function createGitHubJSONHeaders(token: string): Record<string, string> {
-  return {
-    Accept: 'application/vnd.github+json',
-    Authorization: `Bearer ${token}`,
-    'User-Agent': USER_AGENT,
-    'X-GitHub-Api-Version': GITHUB_API_VERSION,
-  }
+  return createGitHubHeaders({media: 'json', authorization: {kind: 'token', token}})
 }
 
 function readOptionalString(value: unknown): string | undefined {

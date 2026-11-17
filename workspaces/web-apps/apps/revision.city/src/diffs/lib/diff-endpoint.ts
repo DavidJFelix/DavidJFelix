@@ -4,6 +4,7 @@ import {
   type GitHubAuthorization,
   type GitHubFetch,
 } from '@/lib/github-http'
+import {readStringPath} from '@/lib/json-read'
 import {
   CODEBERG_HOST,
   createCodebergPageURL,
@@ -993,21 +994,6 @@ function isSameGitHubRepo(a: GitHubRepo, b: GitHubRepo): boolean {
   return (
     a.owner.toLowerCase() === b.owner.toLowerCase() && a.repo.toLowerCase() === b.repo.toLowerCase()
   )
-}
-
-function readStringPath(data: unknown, path: readonly string[]): string | undefined {
-  let current = data
-  for (const key of path) {
-    if (!isRecord(current)) {
-      return undefined
-    }
-    current = current[key]
-  }
-  return typeof current === 'string' ? current : undefined
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
 }
 
 function isDiffContentType(contentType: string): boolean {

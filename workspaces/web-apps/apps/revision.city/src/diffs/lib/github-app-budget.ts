@@ -1,3 +1,4 @@
+import {isRecord} from '@/lib/json-read'
 import {isNullish} from './nullish'
 
 // Entries are keyed on the site's own origin, which is the zone the Workers
@@ -174,8 +175,4 @@ export function defaultResponseCache(): ResponseCache | undefined {
 
 function isResponseCache(value: unknown): value is ResponseCache {
   return isRecord(value) && typeof value.match === 'function' && typeof value.put === 'function'
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
 }

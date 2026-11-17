@@ -1,3 +1,4 @@
+import {isRecord} from '@/lib/json-read'
 export interface PullRequestReference {
   owner: string
   repo: string
@@ -29,8 +30,4 @@ export function validatePullRequestReference(input: unknown): PullRequestReferen
 // into its neighbors.
 function isName(value: unknown): value is string {
   return typeof value === 'string' && NAME_PATTERN.test(value) && value !== '.' && value !== '..'
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
 }

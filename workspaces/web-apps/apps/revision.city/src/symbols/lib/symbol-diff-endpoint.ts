@@ -1,5 +1,4 @@
 import type {ChangeTypes, FileContents} from '@pierre/diffs'
-
 import {
   type CodebergDiffFileServerOptions,
   createCodebergFileReader,
@@ -13,6 +12,7 @@ import {
 import {createGitHubFileReader} from '@/diffs/lib/github-diff-file-server'
 import {isNullish} from '@/diffs/lib/nullish'
 import {isFileTooLargeError} from '@/diffs/lib/read-limited-text'
+import {isRecord} from '@/lib/json-read'
 import type {SymbolDiff} from './code-symbol'
 import {createTooLargeSymbolDiff, diffSymbols} from './diff-symbols'
 import {detectLanguage} from './language-registry'
@@ -267,8 +267,4 @@ function createEmptySymbolDiff(path: string): SymbolDiff {
 
 function createErrorResponse(error: string, status: number): Response {
   return Response.json({error}, {status, headers: {'Cache-Control': CACHE_CONTROL}})
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
 }

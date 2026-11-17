@@ -1,4 +1,5 @@
 import {useEffect, useState} from 'react'
+import {isRecord} from '@/lib/json-read'
 
 const SESSION_ENDPOINT = '/api/auth/github/session'
 const LOGIN_ENDPOINT = '/api/auth/github/login'
@@ -82,8 +83,4 @@ async function fetchGitHubSession(): Promise<GitHubSession> {
     login: data.login,
     avatarUrl: typeof data.avatarUrl === 'string' ? data.avatarUrl : undefined,
   }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
 }

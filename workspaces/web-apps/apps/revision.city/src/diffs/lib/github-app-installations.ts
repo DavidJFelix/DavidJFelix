@@ -1,7 +1,8 @@
 import type {GitHubFetch} from '@/lib/github-http'
+import {isRecord} from '@/lib/json-read'
 
 import {encodeURLSegment} from './github-diff-source'
-import {fetchGitHubJSON, isRecord} from './github-pull-request-search'
+import {fetchGitHubJSON} from './github-pull-request-search'
 
 const GITHUB_INSTALLATION_SETTINGS_ROOT = 'https://github.com/settings/installations'
 const GITHUB_ORGANIZATIONS_ROOT = 'https://github.com/organizations'

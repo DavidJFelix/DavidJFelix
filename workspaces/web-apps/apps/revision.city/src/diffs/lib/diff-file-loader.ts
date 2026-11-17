@@ -4,6 +4,7 @@ import type {
   FileDiffLoadedFiles,
   FileDiffMetadata,
 } from '@pierre/diffs'
+import {isRecord} from '@/lib/json-read'
 
 import {canReadCodebergFiles} from './codeberg-diff-source'
 import {parseGitHubDiffSource} from './github-diff-source'
@@ -221,8 +222,4 @@ function normalizeFileContents(value: unknown): FileContents | null {
     contents,
     cacheKey: typeof cacheKey === 'string' ? cacheKey : undefined,
   }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
 }

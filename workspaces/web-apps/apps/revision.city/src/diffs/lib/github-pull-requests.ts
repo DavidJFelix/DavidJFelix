@@ -1,10 +1,10 @@
 import type {GitHubFetch} from '@/lib/github-http'
+import {isRecord} from '@/lib/json-read'
 
 import {type AppInstallation, readAppInstallations} from './github-app-installations'
 import {type GitHubAuthOptions, resolveGitHubAuth, withSetCookieHeaders} from './github-auth'
 import {
   fetchGitHubJSON,
-  isRecord,
   type PullRequestSearchResult,
   type PullRequestSummary,
   readGitHubSearchFailure,

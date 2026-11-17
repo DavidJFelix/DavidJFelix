@@ -1,7 +1,8 @@
 /// <reference types="bun" />
 // Pre-merge smoke gate: boots the production build and checks the critical path
 // serves a working bundle -- the route returns 200, the response is a complete
-// HTML document, and any hashed client asset it references itself serves.
+// HTML document, and any hashed client asset it references itself serves with an
+// immutable Cache-Control header.
 //
 // revision.city is a TanStack Start app on Cloudflare Workers; its
 // @cloudflare/vite-plugin makes `vite preview` serve the built worker (SSR) in

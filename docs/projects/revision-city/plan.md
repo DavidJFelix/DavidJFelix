@@ -86,15 +86,15 @@ TanStack Start (React 19) + PandaCSS + Ark UI, Cloudflare Worker.
 
 ### Symbol tracking (diffs half — independent of the Phase 2 gate)
 
-Entity-level diffing, so a review reads in functions rather than hunks. The engine exists; the rest
+Symbol-level diffing, so a review reads in functions rather than hunks. The engine exists; the rest
 is wiring and reach.
 
-- [x] Entity-diff engine over Lezer: extraction tables per grammar, sem's three-phase matcher, all
+- [x] Symbol diff engine over Lezer: extraction tables per grammar, sem's three-phase matcher, all
       fifteen first-party CodeMirror grammars that carry symbols. (done 2026-08-03)
-- [x] `/api/diffs/entity-diff` route that expands one diff entry into an entity diff, parsed in the
+- [x] `/api/diffs/symbol-diff` route that expands one diff entry into a symbol diff, parsed in the
       worker so no grammar reaches the browser. (done 2026-08-04)
 - [x] Symbols tab in the viewer's sidebar: changes grouped by file, clicking a row scrolls to the
-      entity. Fetches nothing until the tab is opened. (done 2026-08-04)
+      symbol. Fetches nothing until the tab is opened. (done 2026-08-04)
 - [x] Works signed out on public repos, matching how the viewer already loads patches. A session
       adds private repos and a higher rate limit. (done 2026-08-04)
 - [x] Results stream from the worker as newline-delimited JSON, one line per file, batched twenty at
@@ -103,11 +103,11 @@ is wiring and reach.
       prototype-validated, and implemented in [2026-08-06-progress.md](2026-08-06-progress.md):
       occurrence alignment in the matcher (kills the `#n` positional-identity cascade on array
       insertions), element-level sequence detail on array-valued properties
-      (`words: 167 -> 169,     "ciphertext" inserted at 9`), and rollup of entity rows inside
+      (`words: 167 -> 169,     "ciphertext" inserted at 9`), and rollup of symbol rows inside
       inserted/deleted elements. Cuts PR #409's cspell.jsonc report from 21 rows to 3. (done
       2026-08-06; follow-ups -- YAML sequences, coalesced `changed` edits, indexed display names --
       listed in the progress note)
-- [ ] Cache entity diffs across page loads, keyed by blob SHA pair. Results are currently held only
+- [ ] Cache symbol diffs across page loads, keyed by blob SHA pair. Results are currently held only
       for the life of the page; the answer is immutable per revision pair, so KV or the Cache API
       would make a revisited PR free.
 - [ ] Summary counts on the tab itself (a badge like Comments has), which needs a cheap way to know

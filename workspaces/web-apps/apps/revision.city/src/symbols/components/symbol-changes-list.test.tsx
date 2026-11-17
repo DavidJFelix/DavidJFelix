@@ -2,11 +2,11 @@ import {act} from 'react'
 import {createRoot} from 'react-dom/client'
 import {expect, test, vi} from 'vitest'
 
-import type {EntityChange} from '@/symbols/lib/code-symbol'
+import type {SymbolChange} from '@/symbols/lib/code-symbol'
 import type * as SequenceEditRowsModule from './sequence-edit-rows'
 import {SequenceEditRows} from './sequence-edit-rows'
 import {SymbolChangesList, type SymbolSelection} from './symbol-changes-list'
-import type {EntityDiffEntry} from './use-entity-diffs'
+import type {SymbolDiffEntry} from './use-symbol-diffs'
 
 // @pierre/icons ships ESM whose relative imports omit file extensions, which
 // Node's loader rejects, and its sourcemaps point at unpublished sources. The
@@ -23,7 +23,7 @@ vi.mock('./sequence-edit-rows', async (importOriginal) => {
 })
 ;(globalThis as {IS_REACT_ACT_ENVIRONMENT?: boolean}).IS_REACT_ACT_ENVIRONMENT = true
 
-function createEntry(changes: readonly EntityChange[]): EntityDiffEntry {
+function createEntry(changes: readonly SymbolChange[]): SymbolDiffEntry {
   return {
     itemId: 'item-1',
     name: 'src/widget.ts',
@@ -37,7 +37,7 @@ function createEntry(changes: readonly EntityChange[]): EntityDiffEntry {
   }
 }
 
-const MODIFIED_METHOD: EntityChange = {
+const MODIFIED_METHOD: SymbolChange = {
   type: 'modified',
   kind: 'method',
   name: 'render',
@@ -48,12 +48,12 @@ const MODIFIED_METHOD: EntityChange = {
 
 interface ListHarness {
   container: HTMLElement
-  rerender: (entries: readonly EntityDiffEntry[]) => void
+  rerender: (entries: readonly SymbolDiffEntry[]) => void
   unmount: () => void
 }
 
 interface RenderListParams {
-  entries?: readonly EntityDiffEntry[]
+  entries?: readonly SymbolDiffEntry[]
   onRetry?: () => void
   onSelectSymbol?: (selection: SymbolSelection) => void
   supported?: boolean
@@ -68,7 +68,7 @@ function renderList({
   const container = document.createElement('div')
   document.body.appendChild(container)
   const root = createRoot(container)
-  const render = (nextEntries: readonly EntityDiffEntry[]) => {
+  const render = (nextEntries: readonly SymbolDiffEntry[]) => {
     act(() => {
       root.render(
         <SymbolChangesList
@@ -219,7 +219,7 @@ test('says so when a diff changed no nameable symbol', () => {
   harness.unmount()
 })
 
-const TOO_LARGE_FILE: EntityDiffEntry = {
+const TOO_LARGE_FILE: SymbolDiffEntry = {
   itemId: 'item-2',
   name: 'src/generated.ts',
   status: 'ready',
@@ -232,7 +232,7 @@ const TOO_LARGE_FILE: EntityDiffEntry = {
   },
 }
 
-const FAILED_FILE: EntityDiffEntry = {
+const FAILED_FILE: SymbolDiffEntry = {
   itemId: 'item-3',
   name: 'src/failed.ts',
   status: 'error',
@@ -272,7 +272,7 @@ test('does not claim no changes for a file it did not read', () => {
   harness.unmount()
 })
 
-const MODIFIED_ARRAY: EntityChange = {
+const MODIFIED_ARRAY: SymbolChange = {
   type: 'modified',
   kind: 'property',
   name: 'words',

@@ -31,12 +31,13 @@ import type {
 import {upsertSavedCommentSidebarEntry} from '@/diffs/lib/upsert-saved-comment-sidebar-entry'
 import {docsThemeCatalog, themeController} from '@/diffs/state/theme-controller'
 import type {SymbolSelection} from '@/symbols/components/symbol-changes-list'
-import type {EntityDiffRequest} from '@/symbols/lib/entity-diff-client'
+import type {SymbolDiffRequest} from '@/symbols/lib/symbol-diff-client'
 import {OverridableThemeSourceProvider} from './contexts/overridable-theme-source-provider'
 import {DiffsHeader} from './diffs-header'
 import {DiffsSidebar} from './diffs-sidebar'
 import {DiffsStatusPanel} from './diffs-status-panel'
 import {DiffsViewer} from './diffs-viewer'
+import {useBaseMovedOn} from './hooks/use-base-moved-on'
 import {useGitHubSession} from './hooks/use-github-session'
 import {usePatchLoader} from './hooks/use-patch-loader'
 import {useThemeCycle} from './hooks/use-theme-cycle'
@@ -70,6 +71,11 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
   // of this component; the cookie rides along on the same-origin API fetches
   // without any client-side token plumbing.
   const githubSession = useGitHubSession()
+  const baseMovedOn = useBaseMovedOn({
+    domain,
+    path,
+    signedIn: githubSession.status === 'authenticated',
+  })
   // All theming state — color mode and the light/dark theme-name picks — lives
   // in the single @pierre/theming controller (the same instance the app-wide
   // ThemeProvider is bound to). Reading it here means picking Auto/Light/Dark
@@ -220,7 +226,7 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
   }, [])
   // Only diff items carry two revisions to compare; a plain file item in the
   // viewer has nothing to diff against.
-  const entityDiffRequests = useMemo<readonly EntityDiffRequest[]>(
+  const symbolDiffRequests = useMemo<readonly SymbolDiffRequest[]>(
     () =>
       allItems.flatMap((item) =>
         item.type === 'diff'
@@ -321,11 +327,12 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
       {viewerAvailable && !isNullish(treeSource) ? (
         <>
           <DiffsSidebar
+            baseMovedOn={baseMovedOn}
             className={css({gridArea: {base: 'viewer', md: 'tree'}})}
             commentSections={commentSections}
             diffStats={diffStats}
             domain={domain}
-            entityDiffRequests={entityDiffRequests}
+            symbolDiffRequests={symbolDiffRequests}
             mobileOverlayOpen={fileTreeOverlayOpen}
             onMobileClose={handleCloseFileTreeOverlay}
             onSelectComment={handleSelectComment}

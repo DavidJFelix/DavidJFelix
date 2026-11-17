@@ -29,7 +29,7 @@ export type SymbolKind =
 
 // How a symbol fared between two revisions. Mirrors sem's change buckets so a
 // higher-fidelity backend could later fill the same shape.
-export type EntityChangeType = 'added' | 'deleted' | 'modified' | 'moved' | 'renamed'
+export type SymbolChangeType = 'added' | 'deleted' | 'modified' | 'moved' | 'renamed'
 
 export interface SymbolRange {
   readonly startLine: number
@@ -107,8 +107,8 @@ export interface CodeSymbol {
   readonly elements?: readonly SequenceElement[]
 }
 
-export interface EntityChange {
-  readonly type: EntityChangeType
+export interface SymbolChange {
+  readonly type: SymbolChangeType
   readonly kind: SymbolKind
   readonly name: string
   readonly qualifiedName: string
@@ -124,7 +124,7 @@ export interface EntityChange {
   readonly detail?: SequenceDetail
 }
 
-export interface EntityDiffSummary {
+export interface SymbolDiffSummary {
   readonly added: number
   readonly deleted: number
   readonly modified: number
@@ -132,11 +132,11 @@ export interface EntityDiffSummary {
   readonly renamed: number
 }
 
-export interface EntityDiff {
+export interface SymbolDiff {
   readonly path: string
   readonly language: string | null
-  readonly changes: readonly EntityChange[]
-  readonly summary: EntityDiffSummary
+  readonly changes: readonly SymbolChange[]
+  readonly summary: SymbolDiffSummary
   // Set when the file was too large to diff. The change list is then empty, but
   // the file can still hold changes.
   readonly skipped?: 'too-large'

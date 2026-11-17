@@ -18,9 +18,10 @@ import { Route as DiffsSplatRouteImport } from './routes/diffs/$'
 import { Route as OgDefaultDotpngRouteImport } from './routes/og/default[.]png'
 import { Route as ApiDiffsCodebergDiffFileRouteImport } from './routes/api/diffs/codeberg-diff-file'
 import { Route as ApiDiffsDiffRouteImport } from './routes/api/diffs/diff'
-import { Route as ApiDiffsEntityDiffRouteImport } from './routes/api/diffs/entity-diff'
+import { Route as ApiDiffsGithubCompareStatusRouteImport } from './routes/api/diffs/github-compare-status'
 import { Route as ApiDiffsGithubDiffFileRouteImport } from './routes/api/diffs/github-diff-file'
 import { Route as ApiDiffsPullRequestsRouteImport } from './routes/api/diffs/pull-requests'
+import { Route as ApiDiffsSymbolDiffRouteImport } from './routes/api/diffs/symbol-diff'
 import { Route as ApiGithubWebhookRouteImport } from './routes/api/github/webhook'
 import { Route as OgDiffsSplatRouteImport } from './routes/og/diffs/$'
 import { Route as ApiAuthGithubCallbackRouteImport } from './routes/api/auth/github/callback'
@@ -76,11 +77,12 @@ const ApiDiffsDiffRoute = ApiDiffsDiffRouteImport.update({
   path: '/api/diffs/diff',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiDiffsEntityDiffRoute = ApiDiffsEntityDiffRouteImport.update({
-  id: '/api/diffs/entity-diff',
-  path: '/api/diffs/entity-diff',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const ApiDiffsGithubCompareStatusRoute =
+  ApiDiffsGithubCompareStatusRouteImport.update({
+    id: '/api/diffs/github-compare-status',
+    path: '/api/diffs/github-compare-status',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiDiffsGithubDiffFileRoute = ApiDiffsGithubDiffFileRouteImport.update({
   id: '/api/diffs/github-diff-file',
   path: '/api/diffs/github-diff-file',
@@ -89,6 +91,11 @@ const ApiDiffsGithubDiffFileRoute = ApiDiffsGithubDiffFileRouteImport.update({
 const ApiDiffsPullRequestsRoute = ApiDiffsPullRequestsRouteImport.update({
   id: '/api/diffs/pull-requests',
   path: '/api/diffs/pull-requests',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDiffsSymbolDiffRoute = ApiDiffsSymbolDiffRouteImport.update({
+  id: '/api/diffs/symbol-diff',
+  path: '/api/diffs/symbol-diff',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiGithubWebhookRoute = ApiGithubWebhookRouteImport.update({
@@ -143,9 +150,10 @@ export interface FileRoutesByFullPath {
   '/diffs/': typeof DiffsIndexRoute
   '/api/diffs/codeberg-diff-file': typeof ApiDiffsCodebergDiffFileRoute
   '/api/diffs/diff': typeof ApiDiffsDiffRoute
-  '/api/diffs/entity-diff': typeof ApiDiffsEntityDiffRoute
+  '/api/diffs/github-compare-status': typeof ApiDiffsGithubCompareStatusRoute
   '/api/diffs/github-diff-file': typeof ApiDiffsGithubDiffFileRoute
   '/api/diffs/pull-requests': typeof ApiDiffsPullRequestsRoute
+  '/api/diffs/symbol-diff': typeof ApiDiffsSymbolDiffRoute
   '/api/github/webhook': typeof ApiGithubWebhookRoute
   '/og/diffs/$': typeof OgDiffsSplatRoute
   '/api/auth/github/callback': typeof ApiAuthGithubCallbackRoute
@@ -164,9 +172,10 @@ export interface FileRoutesByTo {
   '/diffs': typeof DiffsIndexRoute
   '/api/diffs/codeberg-diff-file': typeof ApiDiffsCodebergDiffFileRoute
   '/api/diffs/diff': typeof ApiDiffsDiffRoute
-  '/api/diffs/entity-diff': typeof ApiDiffsEntityDiffRoute
+  '/api/diffs/github-compare-status': typeof ApiDiffsGithubCompareStatusRoute
   '/api/diffs/github-diff-file': typeof ApiDiffsGithubDiffFileRoute
   '/api/diffs/pull-requests': typeof ApiDiffsPullRequestsRoute
+  '/api/diffs/symbol-diff': typeof ApiDiffsSymbolDiffRoute
   '/api/github/webhook': typeof ApiGithubWebhookRoute
   '/og/diffs/$': typeof OgDiffsSplatRoute
   '/api/auth/github/callback': typeof ApiAuthGithubCallbackRoute
@@ -187,9 +196,10 @@ export interface FileRoutesById {
   '/diffs/': typeof DiffsIndexRoute
   '/api/diffs/codeberg-diff-file': typeof ApiDiffsCodebergDiffFileRoute
   '/api/diffs/diff': typeof ApiDiffsDiffRoute
-  '/api/diffs/entity-diff': typeof ApiDiffsEntityDiffRoute
+  '/api/diffs/github-compare-status': typeof ApiDiffsGithubCompareStatusRoute
   '/api/diffs/github-diff-file': typeof ApiDiffsGithubDiffFileRoute
   '/api/diffs/pull-requests': typeof ApiDiffsPullRequestsRoute
+  '/api/diffs/symbol-diff': typeof ApiDiffsSymbolDiffRoute
   '/api/github/webhook': typeof ApiGithubWebhookRoute
   '/og/diffs/$': typeof OgDiffsSplatRoute
   '/api/auth/github/callback': typeof ApiAuthGithubCallbackRoute
@@ -211,9 +221,10 @@ export interface FileRouteTypes {
     | '/diffs/'
     | '/api/diffs/codeberg-diff-file'
     | '/api/diffs/diff'
-    | '/api/diffs/entity-diff'
+    | '/api/diffs/github-compare-status'
     | '/api/diffs/github-diff-file'
     | '/api/diffs/pull-requests'
+    | '/api/diffs/symbol-diff'
     | '/api/github/webhook'
     | '/og/diffs/$'
     | '/api/auth/github/callback'
@@ -232,9 +243,10 @@ export interface FileRouteTypes {
     | '/diffs'
     | '/api/diffs/codeberg-diff-file'
     | '/api/diffs/diff'
-    | '/api/diffs/entity-diff'
+    | '/api/diffs/github-compare-status'
     | '/api/diffs/github-diff-file'
     | '/api/diffs/pull-requests'
+    | '/api/diffs/symbol-diff'
     | '/api/github/webhook'
     | '/og/diffs/$'
     | '/api/auth/github/callback'
@@ -254,9 +266,10 @@ export interface FileRouteTypes {
     | '/diffs/'
     | '/api/diffs/codeberg-diff-file'
     | '/api/diffs/diff'
-    | '/api/diffs/entity-diff'
+    | '/api/diffs/github-compare-status'
     | '/api/diffs/github-diff-file'
     | '/api/diffs/pull-requests'
+    | '/api/diffs/symbol-diff'
     | '/api/github/webhook'
     | '/og/diffs/$'
     | '/api/auth/github/callback'
@@ -275,9 +288,10 @@ export interface RootRouteChildren {
   OgDefaultDotpngRoute: typeof OgDefaultDotpngRoute
   ApiDiffsCodebergDiffFileRoute: typeof ApiDiffsCodebergDiffFileRoute
   ApiDiffsDiffRoute: typeof ApiDiffsDiffRoute
-  ApiDiffsEntityDiffRoute: typeof ApiDiffsEntityDiffRoute
+  ApiDiffsGithubCompareStatusRoute: typeof ApiDiffsGithubCompareStatusRoute
   ApiDiffsGithubDiffFileRoute: typeof ApiDiffsGithubDiffFileRoute
   ApiDiffsPullRequestsRoute: typeof ApiDiffsPullRequestsRoute
+  ApiDiffsSymbolDiffRoute: typeof ApiDiffsSymbolDiffRoute
   ApiGithubWebhookRoute: typeof ApiGithubWebhookRoute
   OgDiffsSplatRoute: typeof OgDiffsSplatRoute
   ApiAuthGithubCallbackRoute: typeof ApiAuthGithubCallbackRoute
@@ -353,11 +367,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDiffsDiffRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/diffs/entity-diff': {
-      id: '/api/diffs/entity-diff'
-      path: '/api/diffs/entity-diff'
-      fullPath: '/api/diffs/entity-diff'
-      preLoaderRoute: typeof ApiDiffsEntityDiffRouteImport
+    '/api/diffs/github-compare-status': {
+      id: '/api/diffs/github-compare-status'
+      path: '/api/diffs/github-compare-status'
+      fullPath: '/api/diffs/github-compare-status'
+      preLoaderRoute: typeof ApiDiffsGithubCompareStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/diffs/github-diff-file': {
@@ -372,6 +386,13 @@ declare module '@tanstack/react-router' {
       path: '/api/diffs/pull-requests'
       fullPath: '/api/diffs/pull-requests'
       preLoaderRoute: typeof ApiDiffsPullRequestsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/diffs/symbol-diff': {
+      id: '/api/diffs/symbol-diff'
+      path: '/api/diffs/symbol-diff'
+      fullPath: '/api/diffs/symbol-diff'
+      preLoaderRoute: typeof ApiDiffsSymbolDiffRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/github/webhook': {
@@ -455,9 +476,10 @@ const rootRouteChildren: RootRouteChildren = {
   OgDefaultDotpngRoute: OgDefaultDotpngRoute,
   ApiDiffsCodebergDiffFileRoute: ApiDiffsCodebergDiffFileRoute,
   ApiDiffsDiffRoute: ApiDiffsDiffRoute,
-  ApiDiffsEntityDiffRoute: ApiDiffsEntityDiffRoute,
+  ApiDiffsGithubCompareStatusRoute: ApiDiffsGithubCompareStatusRoute,
   ApiDiffsGithubDiffFileRoute: ApiDiffsGithubDiffFileRoute,
   ApiDiffsPullRequestsRoute: ApiDiffsPullRequestsRoute,
+  ApiDiffsSymbolDiffRoute: ApiDiffsSymbolDiffRoute,
   ApiGithubWebhookRoute: ApiGithubWebhookRoute,
   OgDiffsSplatRoute: OgDiffsSplatRoute,
   ApiAuthGithubCallbackRoute: ApiAuthGithubCallbackRoute,

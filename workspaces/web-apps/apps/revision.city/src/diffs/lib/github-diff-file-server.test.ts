@@ -3,6 +3,7 @@ import {expect, test, vi} from 'vitest'
 import {
   clearGitHubDiffFileServerCache,
   createGitHubFileReader,
+  loadGitHubCompareBehindBy,
   loadGitHubDiffFiles,
 } from './github-diff-file-server'
 import {getLoaderErrorStatus} from './loader-error'
@@ -179,6 +180,20 @@ test.each([
     .map(([input]) => toHref(input))
     .filter((url) => url.includes('src/gone.ts'))
   expect(fileUrls).toEqual([expect.stringContaining(`/${oldRef}/`)])
+})
+
+test.each([
+  {name: 'a three-dot compare', path: '/owner/repo/compare/main...feature', behindBy: 4},
+  {name: 'a one-ref compare', path: '/owner/repo/compare/feature', behindBy: 4},
+  {name: 'a two-dot compare', path: '/owner/repo/compare/main..feature', behindBy: undefined},
+  {name: 'a pull request', path: SOURCE, behindBy: undefined},
+])('$name counts $behindBy base commits after the merge base', async ({path, behindBy}) => {
+  const fetcher = vi.fn<FetchLike>(async () => Response.json({behind_by: 4}))
+
+  const result = await loadGitHubCompareBehindBy({path, token: 'user-token', fetch: fetcher})
+
+  expect(result).toBe(behindBy)
+  expect(fetcher).toHaveBeenCalledTimes(behindBy === undefined ? 0 : 1)
 })
 
 test('a signed-in reader looks up the refs once for a batch of files', async () => {

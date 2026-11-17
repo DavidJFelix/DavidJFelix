@@ -42,19 +42,48 @@ export const modelAnswerSchema = z.union([
     .transform(({answer}) => answer),
 ])
 
-// A model that sends the list as JSON text can close the text with the braces
-// of the object around it, for example `[{...}]}`. An array never ends with a
-// brace, so these braces are removed before the parse.
+// A model that sends the list as JSON text can add text after the array: the
+// braces of the object around it (`[{...}]}`), a closing Markdown fence, or
+// prose such as "I'll report the empty list." It can also open the text with a
+// Markdown fence. Only the array is parsed, from its `[` to the matching `]`.
 function parseJsonArrayText(value: unknown): unknown {
-  return typeof value === 'string' ? parseJsonText(removeTrailingBraces(value)) : value
+  return typeof value === 'string' ? parseJsonText(leadingJsonArray(value)) : value
 }
 
-function removeTrailingBraces(text: string): string {
-  let end = text.length
-  while (end > 0 && /[\s}]/.test(text.charAt(end - 1))) {
-    end -= 1
+const LEADING_FENCE = /^\s*(?:```[a-z]*\n)?\s*/i
+
+function leadingJsonArray(text: string): string {
+  const start = LEADING_FENCE.exec(text)?.[0].length ?? 0
+  if (text.charAt(start) !== '[') {
+    return text
   }
-  return text.slice(0, end)
+  const end = closingBracketIndex(text, start)
+  return end === undefined ? text : text.slice(start, end + 1)
+}
+
+function closingBracketIndex(text: string, start: number): number | undefined {
+  let depth = 0
+  let inString = false
+  for (let index = start; index < text.length; index++) {
+    const char = text.charAt(index)
+    if (inString) {
+      if (char === '\\') {
+        index++
+      } else if (char === '"') {
+        inString = false
+      }
+    } else if (char === '"') {
+      inString = true
+    } else if (char === '[') {
+      depth++
+    } else if (char === ']') {
+      depth--
+      if (depth === 0) {
+        return index
+      }
+    }
+  }
+  return undefined
 }
 
 function parseJsonText(value: unknown): unknown {

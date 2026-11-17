@@ -820,6 +820,18 @@ test.each([
     name: 'a findings list as JSON text with stray closing braces after it',
     answer: {findings: `${JSON.stringify([LOW_FINDING])}} }`},
   },
+  {
+    name: 'a findings list as JSON text with prose after it',
+    answer: {findings: `${JSON.stringify([LOW_FINDING])}\n\nI'll report the empty list.`},
+  },
+  {
+    name: 'a findings list as JSON text inside a Markdown fence',
+    answer: {findings: `\`\`\`json\n${JSON.stringify([LOW_FINDING])}\n\`\`\``},
+  },
+  {
+    name: 'a findings list as JSON text with brackets in a string and prose after it',
+    answer: {findings: `${JSON.stringify([{...LOW_FINDING, body: 'Reads a[0] and "]"'}])} Done.`},
+  },
   {name: 'a findings list under the key finding', answer: {finding: [LOW_FINDING]}},
   {name: 'a findings list under an answer key', answer: {answer: {findings: [LOW_FINDING]}}},
   {
@@ -863,6 +875,10 @@ test.each([
   {name: 'text that is not JSON', answer: {findings: 'none'}},
   {name: 'JSON text that is cut', answer: {findings: JSON.stringify([LOW_FINDING]).slice(0, 20)}},
   {name: 'JSON text that is not an array', answer: {findings: JSON.stringify(LOW_FINDING)}},
+  {
+    name: 'prose before a JSON array',
+    answer: {findings: `Findings: ${JSON.stringify([LOW_FINDING])}`},
+  },
   {name: 'text under the key finding', answer: {finding: 'none'}},
 ])('reviewPullRequest reports a findings list sent as $name', async ({answer}) => {
   const review = await reviewWithOneReviewer(answering(JSON.stringify(answer)))

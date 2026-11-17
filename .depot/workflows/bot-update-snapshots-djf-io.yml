@@ -86,10 +86,13 @@ jobs:
           # persist-credentials is false (ghalint policy 013), so push via an
           # explicit token URL instead of a stored credential.
           git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${HEAD_REF}"
+      # The Depot Code checkout adds no github.com remote, so gh cannot infer
+      # the repository from git.
       - name: gh pr comment
         working-directory: ${{ github.workspace }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
           PR: ${{ github.event.pull_request.number }}
         run: |
           gh pr comment "$PR" --body 'Regenerated the Playwright visual baselines and pushed them to this branch. Re-run the **playwright** check once (Actions tab) so it picks up the new commit -- bot-token pushes do not auto-trigger it.'
@@ -98,5 +101,6 @@ jobs:
         working-directory: ${{ github.workspace }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
           PR: ${{ github.event.pull_request.number }}
         run: gh pr edit "$PR" --remove-label update-snapshots

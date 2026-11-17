@@ -1,5 +1,6 @@
 import {
   IconBraces,
+  IconBranch,
   IconComment,
   IconFileTree,
   IconFilter,
@@ -44,8 +45,8 @@ import type {
   DiffsViewerHandle,
 } from '@/diffs/lib/types'
 import {SymbolChangesList, type SymbolSelection} from '@/symbols/components/symbol-changes-list'
-import {useEntityDiffs} from '@/symbols/components/use-entity-diffs'
-import type {EntityDiffRequest} from '@/symbols/lib/entity-diff-client'
+import {useSymbolDiffs} from '@/symbols/components/use-symbol-diffs'
+import type {SymbolDiffRequest} from '@/symbols/lib/symbol-diff-client'
 import {CHROME_ICON_BUTTON_CLASS} from './chrome-button-styles'
 import {DiffsCommentsList} from './diffs-comments-list'
 import {DiffsFileTree} from './diffs-file-tree'
@@ -53,6 +54,7 @@ import {DiffsStats} from './diffs-stats'
 import {useChromeThemeProps} from './hooks/use-chrome-theme-props'
 import {MOBILE_MEDIA_QUERY, useMobileOverlay} from './hooks/use-mobile-overlay'
 import type {ThemeCycleControls} from './hooks/use-theme-cycle'
+import {StatusRow} from './status-row'
 import {WorkerPoolStatus} from './worker-pool-status'
 
 type SidebarTab = 'files' | 'comments' | 'symbols'
@@ -66,11 +68,13 @@ const ICON_SIZE_CLASS = css({
 })
 
 interface DiffsSidebarProps {
+  // A notice that the compare's base branch moved on after the merge base.
+  baseMovedOn?: string
   className?: string
   commentSections: readonly DiffsSavedCommentItem[]
   diffStats: DiffsStatsData | null
   domain?: string
-  entityDiffRequests: readonly EntityDiffRequest[]
+  symbolDiffRequests: readonly SymbolDiffRequest[]
   mobileOverlayOpen?: boolean
   onMobileClose: () => void
   onSelectComment: (comment: DiffsSavedCommentEntry) => void
@@ -86,11 +90,12 @@ interface DiffsSidebarProps {
 }
 
 export const DiffsSidebar = memo(function DiffsSidebar({
+  baseMovedOn,
   className,
   commentSections,
   diffStats,
   domain,
-  entityDiffRequests,
+  symbolDiffRequests,
   mobileOverlayOpen = false,
   onMobileClose,
   onSelectComment,
@@ -109,10 +114,10 @@ export const DiffsSidebar = memo(function DiffsSidebar({
   // requests. Once opened it stays enabled so results survive tab switches.
   // Reads wait until the patch stops streaming, then cover every file.
   const [symbolsRequested, setSymbolsRequested] = useState(false)
-  const entityDiffs = useEntityDiffs({
+  const symbolDiffs = useSymbolDiffs({
     domain,
     enabled: symbolsRequested && symbolsAvailable && !streaming,
-    requests: entityDiffRequests,
+    requests: symbolDiffRequests,
     sourcePath,
   })
   let totalCommentCount = 0
@@ -353,14 +358,21 @@ export const DiffsSidebar = memo(function DiffsSidebar({
             className={css({h: 'full', minH: '0'})}
           >
             <SymbolChangesList
-              entries={entityDiffs.entries}
-              onRetry={entityDiffs.retry}
+              entries={symbolDiffs.entries}
+              onRetry={symbolDiffs.retry}
               onSelectItem={onSelectItem}
               onSelectSymbol={onSelectSymbol}
               supported={symbolsAvailable}
             />
           </section>
         </div>
+        {!isNullish(baseMovedOn) && (
+          <StatusRow icon={IconBranch}>
+            <output className={css({fontSize: 'sm', lineHeight: '[1.25rem]'})}>
+              {baseMovedOn}
+            </output>
+          </StatusRow>
+        )}
         <DiffsStats
           expanded={activeStatusPanel === 'diffStats'}
           onToggle={() => {

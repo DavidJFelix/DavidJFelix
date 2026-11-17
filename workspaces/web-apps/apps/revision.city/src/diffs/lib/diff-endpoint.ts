@@ -1,4 +1,10 @@
 import {
+  createGitHubApiUrl,
+  createGitHubHeaders,
+  type GitHubAuthorization,
+  type GitHubFetch,
+} from '@/lib/github-http'
+import {
   CODEBERG_HOST,
   createCodebergPageURL,
   createCodebergPatchURL,
@@ -31,10 +37,6 @@ import {isNullish} from './nullish'
 
 const CACHE_CONTROL = 'no-store'
 const EMPTY_PATCH_MESSAGE = 'GitHub returned an empty diff.'
-const GITHUB_API_ROOT = 'https://api.github.com'
-const GITHUB_API_VERSION = '2022-11-28'
-const GITHUB_DIFF_MEDIA_TYPE = 'application/vnd.github.diff'
-const GITHUB_JSON_MEDIA_TYPE = 'application/vnd.github+json'
 const GITHUB_HOST = 'github.com'
 const GITHUB_RAW_DIFF_HOST = 'patch-diff.githubusercontent.com'
 const NON_DIFF_RESPONSE_MESSAGE = 'GitHub did not return a diff for this URL.'
@@ -46,11 +48,6 @@ const APP_FALLBACK_WITHHELD_LOG_MESSAGE = 'diff app fallback withheld'
 
 const HIDDEN_PATCH_DOMAIN_RULES = [{domainRoot: 'tangled.org', defaultExtension: '.patch'}] as const
 
-type DiffFetch = (
-  input: Parameters<typeof fetch>[0],
-  init?: Parameters<typeof fetch>[1],
-) => ReturnType<typeof fetch>
-
 export interface DiffRequestOptions {
   // The app's own client id and secret. A signed-out visitor's diff falls back
   // to GitHub's API with these as basic auth, which GitHub answers with public
@@ -58,7 +55,7 @@ export interface DiffRequestOptions {
   // the Worker shares with every other Worker. Read from the worker env when
   // not given.
   credentials?: GitHubAppCredentials
-  fetch?: DiffFetch
+  fetch?: GitHubFetch
   // Where the edge remembers GitHub's verdicts on those credentials, shared
   // with the share-card lookup so both back off together. The Workers cache
   // when not given.
@@ -91,7 +88,7 @@ interface DirectPatchFetchTarget {
 interface GitHubPullPatchFetchTarget {
   kind: 'github-pull'
   auth: GitHubAPIAuthKind
-  authorization: string
+  authorization: GitHubAuthorization
   compareLabel: string
   label?: string
   pullURL: string
@@ -148,7 +145,7 @@ interface CreateDiffResponseParams {
   request: Request
   session: GitHubAuthSession | undefined
   credentials: GitHubAppCredentials | undefined
-  fetcher: DiffFetch
+  fetcher: GitHubFetch
   cache: ResponseCache | undefined
 }
 
@@ -364,7 +361,7 @@ function resolveAuthenticatedGitHubWebPatchRequest(
     auth: 'visitor',
     label: 'authenticated github.com diff URL',
     patchURL,
-    requestHeaders: createGitHubAuthHeaders(token),
+    requestHeaders: createGitHubHeaders({authorization: {kind: 'token', token}}),
   }
 }
 
@@ -379,7 +376,7 @@ function resolveGitHubAPIPatchRequest(
   }
 
   const sourceURL = createGitHubSourceURL(path)
-  const authorization = createAuthorizationHeader(apiAuth)
+  const authorization = toGitHubAuthorization(apiAuth)
   const labelPrefix = apiAuth.kind === 'visitor' ? 'authenticated' : 'app-authenticated'
   const skipAfterNotFound = apiAuth.kind === 'app'
   if (source.kind === 'pull') {
@@ -391,7 +388,7 @@ function resolveGitHubAPIPatchRequest(
       label: `${labelPrefix} pull metadata`,
       pullURL: createGitHubDiffApiUrl(source),
       repo: source.repo,
-      requestHeaders: createGitHubJSONAPIHeaders(authorization),
+      requestHeaders: createGitHubHeaders({media: 'json', authorization}),
       skipAfterNotFound,
       sourceURL,
     }
@@ -401,7 +398,7 @@ function resolveGitHubAPIPatchRequest(
     auth: apiAuth.kind,
     label: `${labelPrefix} ${source.kind} diff API`,
     patchURL: createGitHubDiffApiUrl(source),
-    requestHeaders: createGitHubDiffAPIHeaders(authorization),
+    requestHeaders: createGitHubHeaders({media: 'diff', authorization}),
     skipAfterNotFound,
     sourceURL,
   }
@@ -498,50 +495,24 @@ function isAllowedHttpsUrl(url: URL): boolean {
 function createGitHubDiffApiUrl(source: GitHubDiffSource): string {
   switch (source.kind) {
     case 'pull':
-      return createGitHubApiUrl(
-        `/repos/${encodeURLSegment(source.repo.owner)}/${encodeURLSegment(source.repo.repo)}/pulls/${encodeURLSegment(source.number)}`,
-      )
+      return createGitHubApiUrl({
+        path: `/repos/${encodeURLSegment(source.repo.owner)}/${encodeURLSegment(source.repo.repo)}/pulls/${encodeURLSegment(source.number)}`,
+      })
     case 'commit':
-      return createGitHubApiUrl(
-        `/repos/${encodeURLSegment(source.repo.owner)}/${encodeURLSegment(source.repo.repo)}/commits/${encodeURLSegment(source.sha)}`,
-      )
+      return createGitHubApiUrl({
+        path: `/repos/${encodeURLSegment(source.repo.owner)}/${encodeURLSegment(source.repo.repo)}/commits/${encodeURLSegment(source.sha)}`,
+      })
     case 'compare':
-      return createGitHubApiUrl(
-        `/repos/${encodeURLSegment(source.repo.owner)}/${encodeURLSegment(source.repo.repo)}/compare/${encodeURLSegment(source.range)}`,
-      )
+      return createGitHubApiUrl({
+        path: `/repos/${encodeURLSegment(source.repo.owner)}/${encodeURLSegment(source.repo.repo)}/compare/${encodeURLSegment(source.range)}`,
+      })
   }
 }
 
-function createAuthorizationHeader(apiAuth: GitHubAPIAuth): string {
+function toGitHubAuthorization(apiAuth: GitHubAPIAuth): GitHubAuthorization {
   return apiAuth.kind === 'visitor'
-    ? `Bearer ${apiAuth.token}`
-    : `Basic ${btoa(`${apiAuth.credentials.clientId}:${apiAuth.credentials.clientSecret}`)}`
-}
-
-function createGitHubAuthHeaders(token: string): Record<string, string> {
-  return {
-    Authorization: `Bearer ${token}`,
-  }
-}
-
-function createGitHubApiUrl(path: string): string {
-  return new URL(path, GITHUB_API_ROOT).href
-}
-
-function createGitHubDiffAPIHeaders(authorization: string): Record<string, string> {
-  return {
-    Accept: GITHUB_DIFF_MEDIA_TYPE,
-    Authorization: authorization,
-    'X-GitHub-Api-Version': GITHUB_API_VERSION,
-  }
-}
-
-function createGitHubJSONAPIHeaders(authorization: string): Record<string, string> {
-  return {
-    Accept: GITHUB_JSON_MEDIA_TYPE,
-    Authorization: authorization,
-    'X-GitHub-Api-Version': GITHUB_API_VERSION,
-  }
+    ? {kind: 'token', token: apiAuth.token}
+    : {kind: 'app', credentials: apiAuth.credentials}
 }
 
 interface TextResponseOptions {
@@ -567,7 +538,7 @@ interface CreatePatchStreamResponseParams {
   patchRequest: ResolvedPatchRequest
   requestSignal: AbortSignal
   viewer: DiffViewerAuth
-  fetcher: DiffFetch
+  fetcher: GitHubFetch
   cache: ResponseCache | undefined
 }
 
@@ -749,7 +720,7 @@ async function takeNextFallback({
 interface FetchPatchTargetParams<T extends PatchFetchTarget> {
   target: T
   signal: AbortSignal
-  fetcher: DiffFetch
+  fetcher: GitHubFetch
 }
 
 function fetchPatchTarget({
@@ -771,7 +742,7 @@ async function fetchDirectPatchTarget({
 }: FetchPatchTargetParams<DirectPatchFetchTarget>): Promise<PatchFetchResult> {
   const response = await fetcher(target.patchURL, {
     cache: 'no-store',
-    headers: {'User-Agent': 'revision-city-diffs', ...target.requestHeaders},
+    headers: {...createGitHubHeaders({}), ...target.requestHeaders},
     signal,
   })
   return {response, target}
@@ -784,7 +755,7 @@ async function fetchGitHubPullPatchTarget({
 }: FetchPatchTargetParams<GitHubPullPatchFetchTarget>): Promise<PatchFetchResult> {
   const pullResponse = await fetcher(target.pullURL, {
     cache: 'no-store',
-    headers: {'User-Agent': 'revision-city-diffs', ...target.requestHeaders},
+    headers: {...createGitHubHeaders({}), ...target.requestHeaders},
     signal,
   })
 
@@ -822,11 +793,11 @@ async function fetchGitHubPullPatchTarget({
   return fetchDirectPatchTarget({
     target: {
       auth: target.auth,
-      patchURL: createGitHubApiUrl(
-        `/repos/${encodeURLSegment(compareBaseRepo.owner)}/${encodeURLSegment(compareBaseRepo.repo)}/compare/${encodeURLSegment(compareRange)}`,
-      ),
+      patchURL: createGitHubApiUrl({
+        path: `/repos/${encodeURLSegment(compareBaseRepo.owner)}/${encodeURLSegment(compareBaseRepo.repo)}/compare/${encodeURLSegment(compareRange)}`,
+      }),
       label: target.compareLabel,
-      requestHeaders: createGitHubDiffAPIHeaders(target.authorization),
+      requestHeaders: createGitHubHeaders({media: 'diff', authorization: target.authorization}),
       sourceURL: target.sourceURL,
     },
     signal,
@@ -864,7 +835,7 @@ interface ExplainPatchFailureParams {
   response: Response
   target: DirectPatchFetchTarget
   viewer: DiffViewerAuth
-  fetcher: DiffFetch
+  fetcher: GitHubFetch
 }
 
 // Turns the last attempt's failure on a github.com source into something the

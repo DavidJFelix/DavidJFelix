@@ -54,7 +54,7 @@ export type SymbolExtraction =
   | {readonly tooLarge: false; readonly symbols: readonly CodeSymbol[]}
 
 // Walks a parsed tree once, emitting a symbol for every node whose type carries
-// an `symbolProp`. Because the spec lives on the node type, a tree stitched from
+// a `symbolProp`. Because the spec lives on the node type, a tree stitched from
 // several grammars (script tags, template blocks) needs no special handling.
 // For a file over a `_PER_FILE` limit, the result is `{tooLarge: true}`.
 export function extractSymbols({source, parser}: ExtractSymbolsParams): SymbolExtraction {

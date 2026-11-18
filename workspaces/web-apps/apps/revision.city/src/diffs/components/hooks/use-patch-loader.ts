@@ -26,12 +26,14 @@ import {
 } from '@/diffs/lib/diffs-data-accumulator'
 import {getPatchTreePathPrefix} from '@/diffs/lib/git-patch-metadata'
 import {type GitHubAccessRemedy, parseGitHubAccessRemedy} from '@/diffs/lib/github-access-remedy'
+import {isDiffItem} from '@/diffs/lib/is-diff-item'
 import {
   type DiffsLineHashTarget,
   formatDiffsLineHash,
   parseDiffsLineHash,
 } from '@/diffs/lib/line-hash'
 import {isNullish} from '@/diffs/lib/nullish'
+import {createGrammarPreloader} from '@/diffs/lib/preload-grammars'
 import {getStreamedPatchMetadata, streamGitPatchFiles} from '@/diffs/lib/stream-git-patch-files'
 import type {
   CommentMetadata,
@@ -230,6 +232,7 @@ export function usePatchLoader({
     async function loadPatch() {
       try {
         const cacheKeyPrefix = encodeURIComponent(patchRequestKey)
+        const preloadGrammar = createGrammarPreloader()
         const commitFullPatch = async (patchContent: string) => {
           if (!isCurrentRequest()) {
             return
@@ -243,6 +246,9 @@ export function usePatchLoader({
           const loadedData = buildDiffsData(patchContent, patchRequestKey)
           if (!isCurrentRequest()) {
             return
+          }
+          for (const item of loadedData.items.filter(isDiffItem)) {
+            preloadGrammar(item.fileDiff)
           }
 
           setTreeSource(loadedData.treeSource)
@@ -401,6 +407,7 @@ export function usePatchLoader({
           if (isNullish(fileDiff)) {
             return
           }
+          preloadGrammar(fileDiff)
 
           const itemIdRename = appendFileDiffToDiffsData(
             accumulator,

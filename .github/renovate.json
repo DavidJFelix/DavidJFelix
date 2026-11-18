@@ -149,8 +149,9 @@
       "groupName": "react major"
     },
     {
-      "description": "the @sentry javascript sdks (astro, browser, cloudflare, react) release in lockstep, and warden -- the same org's review tooling -- is pinned twice (@sentry/warden in the repo-root package.json and the getsentry/warden action in the Depot workflows), so group every update type into a single org PR across both managers",
+      "description": "the @sentry javascript sdks (astro, browser, cloudflare, react, vite-plugin) release in lockstep, and warden -- the same org's review tooling -- is pinned twice (@sentry/warden in the repo-root package.json and the getsentry/warden action in the Depot workflows), so group every update type into a single org PR across both managers. Pin every @sentry package to an exact version. Each sdk depends on an exact @sentry/core. When lock file maintenance moved only the ranged sdks, bun installed two @sentry/core copies, and their types did not match",
       "matchPackageNames": ["@sentry/**", "getsentry/warden"],
+      "rangeStrategy": "pin",
       "groupName": "sentry packages"
     },
     {

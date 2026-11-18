@@ -53,9 +53,6 @@ export function parseGitHubDiffSource(path: string): GitHubDiffSource | undefine
   return undefined
 }
 
-// A range arrives percent-encoded from a URL but already decoded from a
-// router param, and a ref may carry a percent sign of its own, so a range that
-// does not decode is taken as written rather than thrown at the caller.
 export function readRepoFullName(value: unknown): GitHubRepo | undefined {
   if (typeof value !== 'string') {
     return undefined
@@ -106,6 +103,9 @@ export function readPullRequestRange({
   return {baseSha, headSha, baseRepo, headRepo}
 }
 
+// A range arrives percent-encoded from a URL but already decoded from a
+// router param, and a ref may carry a percent sign of its own, so a range that
+// does not decode is taken as written rather than thrown at the caller.
 export function decodeRange(range: string): string {
   try {
     return decodeURIComponent(range)

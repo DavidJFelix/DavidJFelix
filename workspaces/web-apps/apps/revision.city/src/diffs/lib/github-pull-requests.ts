@@ -57,10 +57,31 @@ export interface PullRequestListBody {
 // is unavailable, so the client can tell "sign in" from "try again later". A
 // visitor with nothing searchable (no pull requests, or no repositories
 // granted to the app) gets 200 with empty groups, not an error.
-export async function handlePullRequestListRequest(
+export function handlePullRequestListRequest(
   request: Request,
   options: GitHubAuthOptions = {},
 ): Promise<Response> {
+  return handlePullRequestSearchRequest({
+    list: async (params) => ({groups: await listPullRequestGroups(params)}),
+    options,
+    request,
+  })
+}
+
+export interface PullRequestSearchRequestParams {
+  // Makes the body of the 200 answer from the searches for the signed-in visitor.
+  list: (params: VisitorSearchParams) => Promise<unknown>
+  options: GitHubAuthOptions
+  request: Request
+}
+
+// Answers 401 to a signed-out visitor, else the body from `list`, or the status for a failed
+// search. Each answer carries the cookie headers of the sign-in check, such as a refreshed session.
+export async function handlePullRequestSearchRequest({
+  list,
+  options,
+  request,
+}: PullRequestSearchRequestParams): Promise<Response> {
   const auth = await resolveGitHubAuth(request, options)
   if (isNullish(auth.session)) {
     return withSetCookieHeaders(
@@ -69,14 +90,13 @@ export async function handlePullRequestListRequest(
     )
   }
 
-  const fetcher = options.fetch ?? fetch
   try {
-    const groups = await listPullRequestGroups({
-      fetcher,
+    const body = await list({
+      fetcher: options.fetch ?? fetch,
       login: auth.session.login,
       token: auth.session.accessToken,
     })
-    return withSetCookieHeaders(createJSONResponse({groups}, 200), auth.setCookieHeaders)
+    return withSetCookieHeaders(createJSONResponse(body, 200), auth.setCookieHeaders)
   } catch (error) {
     return withSetCookieHeaders(createSearchFailureResponse(error), auth.setCookieHeaders)
   }
@@ -104,17 +124,31 @@ function createSearchFailureResponse(error: unknown): Response {
   return createJSONResponse({message: 'GitHub could not list pull requests right now.'}, 502)
 }
 
-interface ListPullRequestGroupsParams {
+export interface VisitorSearchParams {
   fetcher: GitHubFetch
   login: string
   token: string
 }
 
-async function listPullRequestGroups({
+async function listPullRequestGroups(params: VisitorSearchParams): Promise<PullRequestGroup[]> {
+  const {assigned, owned, member, watched} = await searchPullRequestGroups(params)
+  const seen = new Set<string>()
+  return [
+    createPullRequestGroup('assigned', assigned, seen),
+    createPullRequestGroup('owned', owned, seen),
+    createPullRequestGroup('member', member, seen),
+    createPullRequestGroup('watched', watched, seen),
+  ]
+}
+
+// The search result of each group. A pull request can be in more than one of them.
+export type PullRequestGroupSearches = Record<PullRequestGroupKind, PullRequestSearchResult>
+
+export async function searchPullRequestGroups({
   fetcher,
   login,
   token,
-}: ListPullRequestGroupsParams): Promise<PullRequestGroup[]> {
+}: VisitorSearchParams): Promise<PullRequestGroupSearches> {
   // The org, subscription, and installation lists gate the member and watched
   // searches, so the fixed searches run alongside them and the dependent ones
   // follow.
@@ -152,18 +186,12 @@ async function listPullRequestGroups({
     searchWatchedPullRequests({fetcher, installationsByAccount, token, uncoveredWatchedRepos}),
   ])
   const watchedListTruncated = watchedRepos.length === WATCHED_REPO_PAGE_SIZE
-
-  const seen = new Set<string>()
-  return [
-    createPullRequestGroup('assigned', assigned, seen),
-    createPullRequestGroup('owned', owned, seen),
-    createPullRequestGroup('member', member, seen),
-    createPullRequestGroup(
-      'watched',
-      {...watched, truncated: watched.truncated || watchedListTruncated},
-      seen,
-    ),
-  ]
+  return {
+    assigned,
+    owned,
+    member,
+    watched: {...watched, truncated: watched.truncated || watchedListTruncated},
+  }
 }
 
 interface SearchWatchedPullRequestsParams {
@@ -224,7 +252,7 @@ function createPullRequestGroup(
 ): PullRequestGroup {
   const pullRequests: PullRequestSummary[] = []
   for (const item of search.items) {
-    const key = `${item.owner.toLowerCase()}/${item.repo.toLowerCase()}#${item.number}`
+    const key = createPullRequestKey(item)
     if (seen.has(key)) {
       continue
     }
@@ -237,6 +265,11 @@ function createPullRequestGroup(
 
   const group: PullRequestGroup = {kind, pullRequests, totalCount: search.totalCount}
   return search.truncated === true ? {...group, truncated: true} : group
+}
+
+// GitHub owner and repository names ignore letter case, so the key does too.
+export function createPullRequestKey({owner, repo, number}: PullRequestSummary): string {
+  return `${owner.toLowerCase()}/${repo.toLowerCase()}#${number}`
 }
 
 // A failure here means the app was not granted organization visibility (or the

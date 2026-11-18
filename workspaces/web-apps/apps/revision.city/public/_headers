@@ -1,0 +1,5 @@
+# Every file in /assets/ has a content hash in its name, so a changed file gets a new URL.
+# Without this rule, Workers static assets send `max-age=0, must-revalidate`, and each visit asks
+# again for each file.
+/assets/*
+  Cache-Control: public, max-age=86400, immutable

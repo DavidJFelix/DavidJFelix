@@ -15,6 +15,7 @@ import {
   RESOLVABLE_EXTERNAL_ID,
   syncCheckRunWithThreads,
 } from './resolved-threads'
+import {probeReviewAgent, type ReviewAgent} from './review-agent-probe'
 import {renderFileList, renderPullRequestDescription} from './review-chunks'
 import {
   type CheckRunOutput,
@@ -76,6 +77,7 @@ export interface RunReviewParams extends ReviewRunParams {
   store: ChunkReviewStore
   summaryCommentLock: SummaryCommentLock
   model: string
+  reviewAgent?: ReviewAgent
   log?: LogWideEvent
 }
 
@@ -94,6 +96,7 @@ export async function runReview({
   store,
   summaryCommentLock,
   model,
+  reviewAgent,
   log: unsafeLog = logWideEvent,
 }: RunReviewParams): Promise<void> {
   // Logging is best effort: a failed log must not change the review.
@@ -144,6 +147,18 @@ export async function runReview({
   const isCurrentHead = async () => (await openHeadSha()) === headSha
   const complete = (conclusion: 'success' | 'failure' | 'neutral', output: CheckRunOutput) =>
     completeCheckRun({request, repository, checkRunId, conclusion, output})
+  // The probe runs at the same time as the review, and the review does not use
+  // its answer.
+  const probe =
+    reviewAgent &&
+    step('probe review agent', async () => {
+      await probeReviewAgent({
+        agent: reviewAgent,
+        log,
+        sharedFields: {...runFields, ...startedFields},
+      })
+      return null
+    }).catch(() => null)
   try {
     const selection = await step('read pull request and guides', async ({isLastAttempt}) => {
       const [files, details] = await Promise.all([
@@ -338,6 +353,8 @@ export async function runReview({
       }),
     )
     throw error
+  } finally {
+    await probe
   }
 }
 

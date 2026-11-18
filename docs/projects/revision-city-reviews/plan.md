@@ -148,9 +148,9 @@ Steps, each a small PR:
 
 1. **Harness Worker.** The `ReviewAgent` Durable Object, which answers one prompt and reports the
    tokens and the cost. A smoke test sends a prompt through OpenCode to a local model server. Done.
-2. **Live proof.** revision.city binds `ReviewAgent` and sends one prompt in each review run. It
-   logs the answer as a wide event. This step needs the `OPENROUTER_API_KEY` secret on the harness
-   Worker.
+2. **Live proof.** revision.city binds `ReviewAgent` and sends one probe prompt in each review run.
+   It logs the answer as a `review agent probe` event, and the review does not use the answer. The
+   probe gets an answer only after the harness Worker has the `OPENROUTER_API_KEY` secret. Done.
 3. **Reviewer tools.** The tools of OpenCode need a local disk. Read-only tools for the pull request
    head and a tool that submits the findings replace them.
 4. **Reviews through the agent.** The Workflow sends each chunk review to `ReviewAgent`, behind a

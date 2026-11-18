@@ -10,13 +10,27 @@ import {createSqliteChunkReviewStore} from './lib/chunk-review-store'
 import {createGitHubRequest} from './lib/github-api'
 import {createInstallationTokenSource} from './lib/github-app-auth'
 import {createOpenRouterChat} from './lib/openrouter'
+import type {ReviewAgent} from './lib/review-agent-probe'
 import {runReview} from './lib/run-review'
 import {createSqliteSummaryCommentLock} from './lib/summary-comment-lock'
 import type {ReviewRunParams} from './lib/webhook'
 import {createRunStep} from './lib/workflow-step'
 
+// The generated type of the binding does not have the methods of a class in
+// another Worker.
+interface ReviewAgentNamespace {
+  getByName: (name: string) => ReviewAgent
+}
+
+const isObject = (value: unknown) => typeof value === 'object' && value !== null
+
+// One object answers the probes of all runs, so the sessions of the probes are
+// in one database.
+const PROBE_AGENT_NAME = 'probe'
+
 const reviewWorkflowEnvSchema = z.object({
-  DB: z.custom<D1Database>((value) => typeof value === 'object' && value !== null),
+  DB: z.custom<D1Database>(isObject),
+  REVIEW_AGENT: z.custom<ReviewAgentNamespace>(isObject).optional(),
   GITHUB_APP_CLIENT_ID: z.string().min(1),
   GITHUB_APP_PRIVATE_KEY: z.string().min(1),
   OPENROUTER_API_KEY: z.string().min(1),
@@ -53,6 +67,7 @@ export class ReviewWorkflow extends WorkflowEntrypoint<Env, ReviewRunParams> {
       store: createSqliteChunkReviewStore(db),
       summaryCommentLock: createSqliteSummaryCommentLock(db),
       model: env.REVIEW_MODEL,
+      reviewAgent: env.REVIEW_AGENT?.getByName(PROBE_AGENT_NAME),
     })
   }
 }

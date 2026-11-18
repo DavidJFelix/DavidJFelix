@@ -5,6 +5,7 @@ import {z} from 'zod'
 import {createMemoryChunkReviewStore} from './chunk-review-store'
 import {GitHubApiError, type GitHubRequest} from './github-api'
 import {type Chat, OpenRouterError} from './openrouter'
+import type {ReviewAgent} from './review-agent-probe'
 import {REVIEWERS} from './reviewers'
 import {type RunReviewParams, type RunStep, runReview} from './run-review'
 import {createMemorySummaryCommentLock} from './summary-comment-lock'
@@ -1006,6 +1007,67 @@ test('runReview logs the model calls of each attempt of a review step with that 
     ...REVIEWERS.slice(1).map(() => [1, 1, 'success']),
     [1, 2, 'success'],
   ])
+})
+
+const readyAgent = (): ReviewAgent => ({
+  ask: async () => ({
+    status: 'done',
+    text: 'ready',
+    model: 'vendor/agent-model',
+    inputTokens: 12,
+    outputTokens: 3,
+    reasoningTokens: 0,
+    cachedInputTokens: 0,
+    costUsd: 0.0002,
+  }),
+})
+
+test('runReview sends one probe to the review agent in a step and logs it with the run fields', async () => {
+  const {log, named} = recordingLog()
+  const {step, names} = recordingStep()
+
+  await runReview(runParams({step, log, reviewAgent: readyAgent()}))
+
+  expect(names.filter((name) => name === 'probe review agent')).toHaveLength(1)
+  expect(named('review agent probe')).toEqual([
+    expect.objectContaining({
+      runId,
+      repository: 'acme/repo',
+      pullNumber: 7,
+      headSha,
+      checkRunId: 31,
+      outcome: 'success',
+      answer: 'ready',
+      agentModel: 'vendor/agent-model',
+      costUsd: 0.0002,
+    }),
+  ])
+  expect(named('review run')).toEqual([expect.objectContaining({outcome: 'success'})])
+})
+
+test('runReview sends no probe when it has no review agent, or when it skips the run', async () => {
+  const {log, named} = recordingLog()
+  const closed = fakeGitHub({[PULL]: () => ({state: 'closed', head: {sha: headSha}})})
+
+  await runReview(runParams({log}))
+  await runReview(runParams({request: closed.request, log, reviewAgent: readyAgent()}))
+
+  expect(named('review agent probe')).toEqual([])
+})
+
+test('runReview passes the check when the probe step fails', async () => {
+  const github = fakeGitHub()
+  const recording = recordingStep()
+  const step: RunStep = async (name, run) => {
+    if (name === 'probe review agent') {
+      throw new Error('The step timed out')
+    }
+    return recording.step(name, run)
+  }
+
+  await runReview(runParams({request: github.request, step, reviewAgent: readyAgent()}))
+
+  expect(github.sent(CHECK_RUN).at(-1)?.body).toMatchObject({conclusion: 'success'})
 })
 
 test.each<{name: string; outcome: string; routes: Record<string, Route>}>([

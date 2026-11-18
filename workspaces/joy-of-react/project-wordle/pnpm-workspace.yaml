@@ -7,7 +7,7 @@ allowBuilds:
 # Tooling pins, referenced from package.json as `catalog:` so the version
 # lives in one place per project.
 catalog:
-  '@biomejs/biome': 2.6.6
+  '@biomejs/biome': 2.6.8
   '@cspell/dict-typescript': 3.2.3
   cspell: 10.5.1
   oxlint: 1.93.0

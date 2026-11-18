@@ -1,13 +1,19 @@
 name: CD Deploy harnesses
 # Production deploys of the harness Workers in workspaces/harnesses/. A push
-# that changes a harness deploys each harness in the matrix. The Workers have
-# no public host, so no smoke step fetches them after the deploy.
+# that changes a harness or the tool pins of the repo deploys each harness in
+# the matrix. The Workers have no public host, so no smoke step fetches them
+# after the deploy.
 on:
   push:
     branches: [main]
     paths:
       - 'workspaces/harnesses/**'
+      - '.config/mise.toml'
+      - '.config/mise.lock'
+      - 'package.json'
+      - 'bun.lock'
       - '.depot/workflows/cd-deploy-harnesses.yml'
+      - '.depot/actions/setup-mise/**'
 env:
   MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
 jobs:

@@ -28,9 +28,11 @@ worktrunk = "latest"
 [env]
 _.path = ["{{config_root}}/node_modules/.bin"]
 
-# Repo-root checks, scoped to the config files the root owns. Legacy project
-# dirs and isolated workspace trees are intentionally out of scope; the
-# web-apps workspace shadows these tasks per project, orchestrated by turbo.
+# Repo-root checks. The format tasks are scoped to the config files the root
+# owns. Legacy project dirs and isolated workspace trees are intentionally out
+# of their scope; the web-apps workspace shadows these tasks per project,
+# orchestrated by turbo. The spell tasks also read the web-apps workspace and
+# the harness trees.
 # biome.jsonc and .oxlintrc.jsonc live at the web-apps workspace root (turbo
 # hashes them there) but the repo-root task still formats and lints them.
 # Biome refuses to lint its own config as a *nested* root config, so this runs

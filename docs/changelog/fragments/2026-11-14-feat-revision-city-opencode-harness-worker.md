@@ -23,9 +23,9 @@ OpenCode, it parses for about 190 ms.
 Two workflows are new. `ci-harnesses.yml` installs a harness from its lockfile and runs the
 typecheck, the linters, the format check, the tests, a dry-run build, and the smoke test.
 `cd-deploy-harnesses.yml` deploys the harness Workers after a push to `main` that changes
-`workspaces/harnesses/`. The lint configs of a harness extend the configs of the web-apps workspace,
-and the spell check now reads `workspaces/harnesses/`. A Renovate rule puts the updates of the
-OpenCode harness in a PR of their own.
+`workspaces/harnesses/` or the tool pins of the repo. The lint configs of a harness extend the
+configs of the web-apps workspace, and the spell check now reads `workspaces/harnesses/`. A Renovate
+rule puts the updates of the OpenCode harness in a PR of their own.
 
 The model provider is the OpenRouter provider of OpenCode, not the provider of the Agents SDK
 (`agents/models/opencode`). The latter needs a package that OpenCode included only until 2.2.0.

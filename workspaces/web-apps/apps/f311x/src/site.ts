@@ -6,5 +6,5 @@ export const site = {
   description: 'A small chat playground on Cloudflare.',
 }
 
-// f311x deploys through alchemy without the Cloudflare Vite plugin, so it has
-// no wasm module rule -- no cardTheme or og/default.png route here.
+// No share card: f311x deploys through alchemy, not the Cloudflare Vite plugin
+// that @davidjfelix/og/runtime/vite needs.

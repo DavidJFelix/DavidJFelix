@@ -15,6 +15,8 @@
     "css",
     "bash",
     "software-terms",
+    "companies",
+    "companies-extra",
     "dns",
     "ics",
     "lezer",
@@ -30,6 +32,11 @@
   // named `<bundled>-extra` and enabled beside the bundled one above; a repo
   // definition that reuses a bundled name replaces that dictionary silently.
   "dictionaryDefinitions": [
+    {
+      "name": "companies-extra",
+      "path": "dictionaries/companies-extra.txt",
+      "description": "Company names the bundled companies dictionary lacks",
+    },
     {"name": "dns", "path": "dictionaries/dns.txt", "description": "DNS response codes"},
     {
       "name": "golang-extra",
@@ -39,7 +46,7 @@
     {
       "name": "lezer",
       "path": "dictionaries/lezer.txt",
-      "description": "Lezer parser vocabulary (entity-diff engine)",
+      "description": "Lezer parser vocabulary (symbol diff engine)",
     },
     {
       "name": "licenses",
@@ -119,6 +126,9 @@
     // Bluesky DID identifiers (did:plc:...) -- prefix-anchored so the pattern
     // can never swallow prose.
     "did:plc:[a-z0-9]+",
+    // GitHub security advisory identifiers (GHSA-xxxx-xxxx-xxxx) --
+    // prefix-anchored like the DID entry.
+    "GHSA(-[0-9a-z]{4}){3}",
     // Inline SVG data URIs.
     "data:image/svg\\+xml[^\"]+",
   ],
@@ -186,10 +196,12 @@
     "respawned",
     "rollouts",
     "rulebook",
+    "SaaSpocalypse", // the 2026 AI-driven software stock selloff
     "slsa", // Supply-chain Levels for Software Artifacts (slsa.dev)
     "stepback",
     "stepbacks",
     "subrequest",
+    "subrequests",
     "subsetting",
     "templatize",
     "templatized",

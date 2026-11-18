@@ -25,6 +25,11 @@ test.each([
     expected: 'owner/repo/pull/123',
   },
   {
+    name: 'full GitHub URLs: dotted repository PR URL',
+    input: 'https://github.com/owner/repo.js/pull/1',
+    expected: 'owner/repo.js/pull/1',
+  },
+  {
     name: 'full GitHub URLs: compare URL',
     input: 'https://github.com/torvalds/linux/compare/v6.0...v7.0',
     expected: 'torvalds/linux/compare/v6.0...v7.0',
@@ -66,6 +71,11 @@ test.each([
     expected: 'owner/repo/pull/123',
   },
   {
+    name: 'domain-relative URLs (no protocol): github.com dotted repository pull path',
+    input: 'github.com/owner/repo.js/pull/1',
+    expected: 'owner/repo.js/pull/1',
+  },
+  {
     name: 'domain-relative URLs (no protocol): github.com compare path',
     input: 'github.com/torvalds/linux/compare/v6.0...v7.0',
     expected: 'torvalds/linux/compare/v6.0...v7.0',
@@ -96,6 +106,36 @@ test.each([
     expected: 'owner/repo',
   },
   {
+    name: 'bare GitHub paths (no domain): dotted repository pull path',
+    input: 'owner/repo.js/pull/1',
+    expected: 'owner/repo.js/pull/1',
+  },
+  {
+    name: 'bare GitHub paths (no domain): dotted repository pull changes tab',
+    input: 'owner/repo.js/pull/1/changes',
+    expected: 'owner/repo.js/pull/1',
+  },
+  {
+    name: 'bare GitHub paths (no domain): dotted repository commit path',
+    input: 'owner/repo.js/commit/abc123def',
+    expected: 'owner/repo.js/commit/abc123def',
+  },
+  {
+    name: 'bare GitHub paths (no domain): dotted repository compare path',
+    input: 'owner/repo.js/compare/v14.0.0...v15.0.0',
+    expected: 'owner/repo.js/compare/v14.0.0...v15.0.0',
+  },
+  {
+    name: 'bare GitHub paths (no domain): dotted repository only',
+    input: 'owner/repo.js',
+    expected: 'owner/repo.js',
+  },
+  {
+    name: 'bare GitHub paths (no domain): repository name with two dots',
+    input: 'owner/repo.config.js/pull/5',
+    expected: 'owner/repo.config.js/pull/5',
+  },
+  {
     name: 'GitHub shorthand (owner/repo#number): pierrecomputer/pierre#673',
     input: 'pierrecomputer/pierre#673',
     expected: 'pierrecomputer/pierre/pull/673',
@@ -104,6 +144,11 @@ test.each([
     name: 'GitHub shorthand (owner/repo#number): nodejs/node#59805',
     input: 'nodejs/node#59805',
     expected: 'nodejs/node/pull/59805',
+  },
+  {
+    name: 'GitHub shorthand (owner/repo#number): dotted repository',
+    input: 'owner/repo.js#1',
+    expected: 'owner/repo.js/pull/1',
   },
   {
     name: 'raw GitHub diff URLs: raw diff URL',

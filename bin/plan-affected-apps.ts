@@ -1,7 +1,9 @@
 #!/usr/bin/env bun
 // Emits the GitHub Actions matrix of web-apps affected by a change, so the
 // preview and deploy workflows fan out over exactly the apps that changed
-// instead of one hand-written workflow per app.
+// instead of one hand-written workflow per app. When no app is affected (a
+// repo-root tooling change), it emits every app in the matrix, because that
+// change can change every build.
 //
 // Affectedness comes from `turbo ls --affected`, which walks the workspace
 // dependency graph: touching packages/theme marks every app that depends on
@@ -14,6 +16,7 @@
 
 import {appendFileSync} from 'node:fs'
 import {join, resolve} from 'node:path'
+import type {SmokeProbe} from './smoke-url'
 
 export type WebAppTarget = {
   // Directory under workspaces/web-apps/apps, and the tail of the package
@@ -21,7 +24,8 @@ export type WebAppTarget = {
   readonly dir: string
   // wrangler.toml `name`: the deploy target and the preview alias's base.
   readonly worker: string
-  // Routes the preview smoke gate fetches, comma-separated.
+  // Routes the preview smoke gate and the production smoke fetch,
+  // comma-separated.
   readonly smokeRoutes: string
   // Explicit wrangler config, for builds that emit a resolved one (Astro's
   // Cloudflare adapter). Empty means the app's own wrangler.toml.
@@ -45,6 +49,22 @@ export type WebAppTarget = {
   // to wrangler as `--env`; for a build that already resolved it into a
   // redirected config (the Cloudflare vite plugin) wrangler accepts the match.
   readonly devEnv: string
+  // `database_name` of the production D1 database whose wrangler.toml entry
+  // sets `migrations_dir`, '' for apps with no D1. The deploy applies its
+  // pending migrations before `wrangler deploy`. Dev workers bind no D1, so
+  // their matrix entries carry ''.
+  readonly d1Database: string
+  // Base URL of the live production site, from the first custom domain in the
+  // app's wrangler.toml. The deploy smokes it after `wrangler deploy`. '' for
+  // apps with no custom domain, which skips that step. Only the production
+  // deploy entry carries it: dev and preview entries carry ''.
+  readonly productionUrl: string
+  // Requests the production smoke sends after the pages pass, each with the
+  // one status it must answer. No probe sends a credential or changes data.
+  // Only the production deploy entry carries them: dev and preview entries
+  // carry none (revision.city's dev worker binds no review Workflow, so its
+  // webhook answers 503 by design).
+  readonly probes: readonly SmokeProbe[]
 }
 
 // What the matrix jobs actually consume: a target plus the CLOUDFLARE_ENV its
@@ -70,6 +90,9 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     deploy: 'wrangler',
     envSuffix: 'ALCHEMY_STATE_VIEWER',
     devEnv: '',
+    d1Database: '',
+    productionUrl: '',
+    probes: [],
   },
   {
     dir: 'calendar-visualizer',
@@ -80,6 +103,9 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     deploy: 'wrangler',
     envSuffix: 'CALENDAR_VISUALIZER',
     devEnv: '',
+    d1Database: '',
+    productionUrl: '',
+    probes: [],
   },
   {
     dir: 'davidjfelix.com',
@@ -90,6 +116,9 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     deploy: 'wrangler',
     envSuffix: 'DAVIDJFELIX_COM',
     devEnv: '',
+    d1Database: '',
+    productionUrl: 'https://davidjfelix.com',
+    probes: [],
   },
   {
     dir: 'djf.io',
@@ -100,6 +129,9 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     deploy: 'wrangler',
     envSuffix: 'DJF_IO',
     devEnv: '',
+    d1Database: '',
+    productionUrl: '',
+    probes: [],
   },
   {
     dir: 'f311x',
@@ -110,6 +142,9 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     deploy: 'none',
     envSuffix: 'F311X',
     devEnv: '',
+    d1Database: '',
+    productionUrl: '',
+    probes: [],
   },
   {
     dir: 'forzamonica.com',
@@ -120,6 +155,9 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     deploy: 'wrangler',
     envSuffix: 'FORZAMONICA_COM',
     devEnv: '',
+    d1Database: '',
+    productionUrl: '',
+    probes: [],
   },
   {
     dir: 'monicandavid.com',
@@ -130,6 +168,9 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     deploy: 'wrangler',
     envSuffix: 'MONICANDAVID_COM',
     devEnv: 'dev',
+    d1Database: 'monicandavid-com',
+    productionUrl: 'https://monicandavid.com',
+    probes: [],
   },
   {
     dir: 'onvibes.org',
@@ -140,6 +181,9 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     deploy: 'wrangler',
     envSuffix: 'ONVIBES_ORG',
     devEnv: '',
+    d1Database: '',
+    productionUrl: 'https://onvibes.org',
+    probes: [],
   },
   {
     dir: 'pkg.dog',
@@ -150,6 +194,9 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     deploy: 'wrangler',
     envSuffix: 'PKG_DOG',
     devEnv: '',
+    d1Database: '',
+    productionUrl: 'https://pkg.dog',
+    probes: [],
   },
   {
     dir: 'ravrun',
@@ -160,16 +207,32 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     deploy: 'wrangler',
     envSuffix: 'RAVRUN',
     devEnv: '',
+    d1Database: '',
+    productionUrl: 'https://ravrun.com',
+    probes: [],
   },
   {
     dir: 'revision.city',
     worker: 'revision-city',
-    smokeRoutes: '/',
+    smokeRoutes: '/,/diffs',
     wranglerConfig: '',
     preview: 'wrangler',
     deploy: 'wrangler',
     envSuffix: 'REVISION_CITY',
     devEnv: 'dev',
+    d1Database: 'revision-city',
+    productionUrl: 'https://revision.city',
+    probes: [
+      // Sign-in has its GitHub App credentials. The route always answers 200.
+      {
+        method: 'GET',
+        path: '/api/auth/github/config',
+        status: 200,
+        bodyIncludes: '"configured":true',
+      },
+      // Reviews are set up: an unsigned delivery gets 401, not 503.
+      {method: 'POST', path: '/api/github/webhook', status: 401},
+    ],
   },
   {
     dir: 'startchi.com',
@@ -180,6 +243,9 @@ export const WEB_APP_TARGETS: readonly WebAppTarget[] = [
     deploy: 'wrangler',
     envSuffix: 'STARTCHI_COM',
     devEnv: '',
+    d1Database: '',
+    productionUrl: 'https://startchi.com',
+    probes: [],
   },
 ]
 
@@ -199,17 +265,44 @@ export const planAffected = ({
   return targets
     .filter((target) => target[kind] !== 'none' && affected.has(`apps/${target.dir}`))
     .flatMap((target) => {
-      if (target.devEnv === '') return [{...target, cloudflareEnv: ''}]
+      const production = {
+        ...target,
+        cloudflareEnv: '',
+        productionUrl: kind === 'deploy' ? target.productionUrl : '',
+        probes: kind === 'deploy' ? target.probes : [],
+      }
+      if (target.devEnv === '') return [production]
       const dev = {
         ...target,
         worker: `${target.worker}-${target.devEnv}`,
         cloudflareEnv: target.devEnv,
+        d1Database: '',
+        productionUrl: '',
+        probes: [],
       }
       // A preview is a version of the dev worker only -- it must share the dev
       // GitHub App, never production's. A deploy ships both workers so the dev
       // worker's stable URL keeps tracking main.
-      return kind === 'preview' ? [dev] : [{...target, cloudflareEnv: ''}, dev]
+      return kind === 'preview' ? [dev] : [production, dev]
     })
+}
+
+// Turbo cannot see repo-root tooling (bin/, the composite actions, the tool
+// pins), so a change to it affects no app. That change can still change every
+// build, so the plan then takes every app in the matrix for that kind: the
+// preview tests the change on every app before it merges, and the deploy ships
+// every app built with it. A change to an app outside the matrix (f311x) is not
+// a tooling change, so it plans nothing here.
+export const planAffectedOrAll = ({
+  affectedPaths,
+  kind,
+  targets = WEB_APP_TARGETS,
+}: PlanAffectedParams): {readonly apps: WebAppMatrixEntry[]; readonly all: boolean} => {
+  if (affectedPaths.some((path) => path.startsWith('apps/'))) {
+    return {apps: planAffected({affectedPaths, kind, targets}), all: false}
+  }
+  const everyApp = targets.map((target) => `apps/${target.dir}`)
+  return {apps: planAffected({affectedPaths: everyApp, kind, targets}), all: true}
 }
 
 type TurboPackageList = {
@@ -247,8 +340,12 @@ if (import.meta.main) {
     process.exit(1)
   }
 
-  const apps = planAffected({affectedPaths: parseAffectedPaths(turbo.stdout.toString()), kind})
-  console.log(`affected ${kind} apps: ${apps.map((app) => app.dir).join(', ') || '(none)'}`)
+  const {apps, all} = planAffectedOrAll({
+    affectedPaths: parseAffectedPaths(turbo.stdout.toString()),
+    kind,
+  })
+  const names = apps.map((app) => app.dir).join(', ') || '(none)'
+  console.log(`affected ${kind} apps: ${names}${all ? ' (no app affected, so every app)' : ''}`)
 
   const output = process.env.GITHUB_OUTPUT
   if (output) appendFileSync(output, `apps=${JSON.stringify(apps)}\n`)

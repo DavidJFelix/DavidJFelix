@@ -1,9 +1,10 @@
 import {parser} from '@lezer/rust'
 
-import type {EntitySpec, ResolveEntityNameParams} from '../entity'
-import {anonymousScopeProp, entityProp} from '../entity'
+import type {ResolveSymbolNameParams, SymbolSpec} from '../code-symbol'
+import {anonymousScopeProp, symbolProp} from '../code-symbol'
+import {wrapperChildren} from './wrapper-children'
 
-const SPECS: Record<string, EntitySpec> = {
+const ITEM_SPECS: Record<string, SymbolSpec> = {
   StructItem: {kind: 'struct', name: ['TypeIdentifier'], container: true},
   EnumItem: {kind: 'enum', name: ['TypeIdentifier'], container: true},
   TraitItem: {kind: 'trait', name: ['TypeIdentifier'], container: true},
@@ -16,15 +17,31 @@ const SPECS: Record<string, EntitySpec> = {
   StaticItem: {kind: 'constant', name: ['BoundIdentifier'], scope: 'top-level'},
 }
 
-// `impl Widget` has one type; `impl Draw for Widget` has two, and the second is
-// the implementing type -- the name a reader looks for. Taking the last
-// TypeIdentifier covers both.
-function resolveImplName({node, source}: ResolveEntityNameParams): string | undefined {
-  const types = node.getChildren('TypeIdentifier')
-  const target = types.at(-1)
-  return target === undefined ? undefined : source.slice(target.from, target.to)
+// Every item can carry attributes (`#[derive(...)]`, `#[inline]`).
+const attributes = wrapperChildren({wrapper: 'AttributeItem', type: 'Attribute'})
+const SPECS: Record<string, SymbolSpec> = Object.fromEntries(
+  Object.entries(ITEM_SPECS).map(([type, spec]) => [type, {...spec, leading: attributes}]),
+)
+
+// Nodes that wrap the type name: `Stack<T>`, `&Widget`, `*const Widget`, `fmt::Debug`.
+const WRAPPER_TYPES = new Set([
+  'GenericType',
+  'ReferenceType',
+  'PointerType',
+  'ScopedTypeIdentifier',
+])
+
+// `impl Widget` has one type; `impl Draw for Widget` has two, and the type after
+// `for` is the implementing type -- the name a reader looks for. A type that is
+// not a named type (`impl Draw for [u8]`) gives no name.
+function resolveImplName({node, source}: ResolveSymbolNameParams): string | undefined {
+  let target = node.getChild('Type', 'for') ?? node.getChild('Type')
+  while (target !== null && WRAPPER_TYPES.has(target.type.name)) {
+    target = target.getChild('TypeIdentifier') ?? target.getChild('Type')
+  }
+  return target?.type.name === 'TypeIdentifier' ? source.slice(target.from, target.to) : undefined
 }
 
 export const rustParser = parser.configure({
-  props: [entityProp.add(SPECS), anonymousScopeProp.add({ClosureExpression: true})],
+  props: [symbolProp.add(SPECS), anonymousScopeProp.add({ClosureExpression: true})],
 })

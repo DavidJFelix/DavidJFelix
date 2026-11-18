@@ -13,6 +13,7 @@ import {
 import {decodeProxyState, encodeProxyState} from './preview-auth'
 
 const ORIGIN = 'https://revision.city'
+const OTHER_ORIGIN = 'https://example.com'
 const CREDENTIALS = {clientId: 'Iv1.test-client', clientSecret: 'shh-secret'}
 
 // fetch by call signature only: lib.dom types `typeof fetch` with a required
@@ -45,6 +46,12 @@ const stubGitHubFetch = (
 const getSetCookies = (response: Response): string[] => response.headers.getSetCookie()
 
 const cookiePair = (setCookie: string): string => setCookie.split(';', 1)[0] ?? ''
+
+// Empty values read as missing, so a shell that exports the app credentials does not change the result.
+const withoutAppCredentials = () => {
+  vi.stubEnv('GITHUB_APP_CLIENT_ID', '')
+  vi.stubEnv('GITHUB_APP_CLIENT_SECRET', '')
+}
 
 // Runs login then callback and returns the session Set-Cookie so other tests
 // can exercise cookie-bearing requests through the real flow.
@@ -100,10 +107,31 @@ test('login omits Secure on plain-HTTP local dev', () => {
 })
 
 test('login returns 503 when the app credentials are not configured', () => {
-  const response = handleGitHubLoginRequest(new Request(`${ORIGIN}/api/auth/github/login`), {
-    credentials: undefined,
-  })
+  withoutAppCredentials()
+  const response = handleGitHubLoginRequest(new Request(`${ORIGIN}/api/auth/github/login`))
   expect(response.status).toBe(503)
+})
+
+test('login reads the app credentials from the environment', () => {
+  vi.stubEnv('GITHUB_APP_CLIENT_ID', CREDENTIALS.clientId)
+  vi.stubEnv('GITHUB_APP_CLIENT_SECRET', CREDENTIALS.clientSecret)
+  const response = handleGitHubLoginRequest(new Request(`${ORIGIN}/api/auth/github/login`))
+
+  expect(response.status).toBe(302)
+  const location = new URL(response.headers.get('location') ?? '')
+  expect(location.searchParams.get('client_id')).toBe(CREDENTIALS.clientId)
+})
+
+test('callback returns 503 when the app credentials are not configured', async () => {
+  withoutAppCredentials()
+  const fetchImpl = stubGitHubFetch()
+  const response = await handleGitHubOAuthCallbackRequest(
+    new Request(`${ORIGIN}/api/auth/github/callback?code=abc&state=any`),
+    {fetch: fetchImpl},
+  )
+
+  expect(response.status).toBe(503)
+  expect(fetchImpl).not.toHaveBeenCalled()
 })
 
 test('callback exchanges the code, stores the session cookie, and returns to the diff', async () => {
@@ -122,9 +150,7 @@ test('callback exchanges the code, stores the session cookie, and returns to the
 
   const exchangeCall = fetchImpl.mock.calls[0]
 
-  // BACKLOG(davidjfelix) dude?
-  // oxlint-disable-next-line typescript/no-base-to-string -- this is already fucked and in a test. who cares
-  expect(String(exchangeCall?.[0])).toBe('https://github.com/login/oauth/access_token')
+  expect(exchangeCall?.[0]).toBe('https://github.com/login/oauth/access_token')
   const body = exchangeCall?.[1]?.body as URLSearchParams
   expect(body.get('client_id')).toBe(CREDENTIALS.clientId)
   expect(body.get('client_secret')).toBe(CREDENTIALS.clientSecret)
@@ -233,8 +259,10 @@ test('callback surfaces a token-exchange error response as a 502 and logs its ca
     event: 'github auth failure',
     step: 'code exchange',
     status: 200,
+    outcome: 'refused',
     error: 'bad_verification_code',
     errorDescription: 'The code passed is incorrect or expired.',
+    headers: {'content-type': 'application/json'},
   })
   consoleError.mockRestore()
 })
@@ -253,6 +281,70 @@ test('callback logs the error body of a failed code exchange status', async () =
   consoleError.mockRestore()
 })
 
+test('callback retries a throttled code exchange and signs in', async () => {
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+  const stub = stubGitHubFetch()
+  stub.mockImplementationOnce(async () =>
+    Response.json({}, {status: 429, headers: {'Retry-After': '300'}}),
+  )
+
+  const {sessionCookie} = await signIn(stub)
+
+  expect(sessionCookie).not.toBe('')
+  expect(consoleError).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({step: 'code exchange', status: 429, retryAfter: '300'}),
+  )
+  consoleError.mockRestore()
+})
+
+test('callback logs the headers and the start of a block page that refuses the exchange', async () => {
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+  const blockPage = `<html><title>Access to this site has been restricted</title>${'x'.repeat(600)}</html>`
+  const stub = stubGitHubFetch()
+  stub.mockImplementation(
+    async () =>
+      new Response(blockPage, {
+        status: 429,
+        headers: {'Content-Type': 'text/html', 'Retry-After': '300', 'Set-Cookie': 'session=1'},
+      }),
+  )
+
+  await signIn(stub)
+
+  const failure = consoleError.mock.calls[0]?.[0]
+  expect(failure).toMatchObject({
+    step: 'code exchange',
+    status: 429,
+    headers: {'content-type': 'text/html', 'retry-after': '300'},
+    bodyStart: blockPage.slice(0, 500),
+  })
+  expect(failure).not.toHaveProperty('headers.set-cookie')
+  consoleError.mockRestore()
+})
+
+test('callback never logs a JSON body that the exchange refuses', async () => {
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+  await signIn(stubGitHubFetch({tokenStatus: 500, token: {access_token: 'ghu_token'}}))
+
+  expect(consoleError).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({status: 500, bodyStart: undefined}),
+  )
+  consoleError.mockRestore()
+})
+
+test('callback names the GitHub rate limit when every exchange attempt is throttled', async () => {
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+  const stub = stubGitHubFetch({tokenStatus: 429, token: {}})
+
+  const {callbackResponse} = await signIn(stub)
+
+  expect(callbackResponse.status).toBe(503)
+  expect(await callbackResponse.text()).toContain('GitHub is limiting sign-in requests')
+  expect(stub).toHaveBeenCalledTimes(3)
+  consoleError.mockRestore()
+})
+
 test('callback logs the status and message when the user lookup fails', async () => {
   const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
   const {callbackResponse} = await signIn(
@@ -265,6 +357,48 @@ test('callback logs the status and message when the user lookup fails', async ()
     step: 'user lookup',
     status: 401,
     error: 'Bad credentials',
+  })
+  consoleError.mockRestore()
+})
+
+// Answers the code exchange, then gives the user lookup the response that `user` makes.
+const stubUserLookup = (user: () => Promise<Response>) =>
+  vi.fn<FetchLike>(async (input) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
+    return url.startsWith('https://api.github.com/user')
+      ? user()
+      : jsonResponse({access_token: 'ghu_token', token_type: 'bearer'})
+  })
+
+test('callback logs no login when the user lookup answers with a body that is not JSON', async () => {
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+  const {callbackResponse} = await signIn(
+    stubUserLookup(async () => new Response('<html>down</html>', {status: 503})),
+  )
+
+  expect(callbackResponse.status).toBe(502)
+  expect(consoleError).toHaveBeenCalledExactlyOnceWith({
+    event: 'github auth failure',
+    step: 'user lookup',
+    status: 503,
+    error: 'no login',
+  })
+  consoleError.mockRestore()
+})
+
+test('callback logs the cause when the user lookup request throws', async () => {
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+  const {callbackResponse} = await signIn(
+    stubUserLookup(async () => {
+      throw new TypeError('fetch failed')
+    }),
+  )
+
+  expect(callbackResponse.status).toBe(502)
+  expect(consoleError).toHaveBeenCalledExactlyOnceWith({
+    event: 'github auth failure',
+    step: 'user lookup',
+    error: 'TypeError: fetch failed',
   })
   consoleError.mockRestore()
 })
@@ -293,8 +427,8 @@ test('session reports anonymous without a cookie', async () => {
   expect(await response.json()).toEqual({authenticated: false})
 })
 
-test('logout clears the session cookie and returns to the diff', () => {
-  const response = handleGitHubLogoutRequest(
+test('logout clears the session cookie and returns to the diff', async () => {
+  const response = await handleGitHubLogoutRequest(
     new Request(`${ORIGIN}/api/auth/github/logout?returnTo=/diffs/o/r/pull/1`),
   )
   expect(response.status).toBe(302)
@@ -302,6 +436,118 @@ test('logout clears the session cookie and returns to the diff', () => {
   const [cleared] = getSetCookies(response)
   expect(cleared).toContain('diffs-github-auth=;')
   expect(cleared).toContain('Max-Age=0')
+})
+
+const logoutRequest = (sessionCookie: string): Request =>
+  new Request(`${ORIGIN}/api/auth/github/logout?returnTo=/diffs/o/r/pull/1`, {
+    headers: {cookie: sessionCookie},
+  })
+
+const expectClearedSessionCookie = (response: Response) => {
+  expect(response.headers.get('location')).toBe('/diffs/o/r/pull/1')
+  expect(getSetCookies(response)[0]).toContain('diffs-github-auth=;')
+}
+
+test('logout revokes the session token at GitHub before it clears the cookie', async () => {
+  const {sessionCookie} = await signIn()
+  const fetchImpl = vi.fn<FetchLike>(async () => new Response(null, {status: 204}))
+
+  const response = await handleGitHubLogoutRequest(logoutRequest(sessionCookie), {
+    credentials: CREDENTIALS,
+    fetch: fetchImpl,
+  })
+
+  expect(fetchImpl).toHaveBeenCalledOnce()
+  const [url, init] = fetchImpl.mock.calls[0] ?? []
+  expect(url).toBe(`https://api.github.com/applications/${CREDENTIALS.clientId}/token`)
+  expect(init?.method).toBe('DELETE')
+  expect(new Headers(init?.headers).get('authorization')).toBe(
+    `Basic ${btoa(`${CREDENTIALS.clientId}:${CREDENTIALS.clientSecret}`)}`,
+  )
+  expect(init?.body).toBe(JSON.stringify({access_token: 'ghu_token'}))
+  expect(init?.signal).toBeInstanceOf(AbortSignal)
+  expectClearedSessionCookie(response)
+})
+
+test('logout still clears the cookie and logs the cause when GitHub refuses the revoke', async () => {
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+  const {sessionCookie} = await signIn()
+
+  const response = await handleGitHubLogoutRequest(logoutRequest(sessionCookie), {
+    credentials: CREDENTIALS,
+    fetch: async () => jsonResponse({message: 'Validation Failed'}, 422),
+  })
+
+  expectClearedSessionCookie(response)
+  expect(consoleError).toHaveBeenCalledExactlyOnceWith({
+    event: 'github auth failure',
+    step: 'token revoke',
+    status: 422,
+    error: 'Validation Failed',
+  })
+  consoleError.mockRestore()
+})
+
+test('logout still clears the cookie and logs the cause when the revoke request throws', async () => {
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+  const {sessionCookie} = await signIn()
+
+  const response = await handleGitHubLogoutRequest(logoutRequest(sessionCookie), {
+    credentials: CREDENTIALS,
+    fetch: async () => {
+      throw new TypeError('network down')
+    },
+  })
+
+  expectClearedSessionCookie(response)
+  expect(consoleError).toHaveBeenCalledExactlyOnceWith({
+    event: 'github auth failure',
+    step: 'token revoke',
+    error: 'TypeError: network down',
+  })
+  consoleError.mockRestore()
+})
+
+test('logout refuses a request from another site without a GitHub call or a cleared cookie', async () => {
+  const {sessionCookie} = await signIn()
+  const fetchImpl = vi.fn<FetchLike>()
+  const request = new Request(`${ORIGIN}/api/auth/github/logout`, {
+    method: 'POST',
+    headers: {cookie: sessionCookie, origin: OTHER_ORIGIN},
+  })
+
+  const response = await handleGitHubLogoutRequest(request, {
+    credentials: CREDENTIALS,
+    fetch: fetchImpl,
+  })
+
+  expect(response.status).toBe(403)
+  expect(fetchImpl).not.toHaveBeenCalled()
+  expect(getSetCookies(response)).toEqual([])
+})
+
+test('logout accepts a request from this site', async () => {
+  const request = new Request(`${ORIGIN}/api/auth/github/logout?returnTo=/diffs/o/r/pull/1`, {
+    method: 'POST',
+    headers: {origin: ORIGIN},
+  })
+
+  const response = await handleGitHubLogoutRequest(request, {credentials: CREDENTIALS})
+
+  expect(response.status).toBe(302)
+  expectClearedSessionCookie(response)
+})
+
+test('logout without a session makes no GitHub call', async () => {
+  const fetchImpl = vi.fn<FetchLike>()
+
+  const response = await handleGitHubLogoutRequest(logoutRequest(''), {
+    credentials: CREDENTIALS,
+    fetch: fetchImpl,
+  })
+
+  expect(fetchImpl).not.toHaveBeenCalled()
+  expectClearedSessionCookie(response)
 })
 
 test('resolveGitHubAuth returns the access token for a non-expiring session', async () => {
@@ -357,6 +603,77 @@ test('resolveGitHubAuth drops the session when the refresh fails', async () => {
   expect(auth.setCookieHeaders[0]).toContain('diffs-github-auth=;')
 })
 
+test('resolveGitHubAuth drops an expired session that has no refresh token', async () => {
+  const {sessionCookie} = await signIn(
+    stubGitHubFetch({token: {access_token: 'ghu_old', expires_in: 1}}),
+  )
+  const refreshFetch = stubGitHubFetch()
+
+  const auth = await resolveGitHubAuth(
+    new Request(`${ORIGIN}/api/diffs/diff`, {headers: {cookie: sessionCookie}}),
+    {credentials: CREDENTIALS, fetch: refreshFetch},
+  )
+
+  expect(auth.session).toBeUndefined()
+  expect(auth.setCookieHeaders[0]).toContain('diffs-github-auth=;')
+  expect(refreshFetch).not.toHaveBeenCalled()
+})
+
+const signInWithExpiredToken = async (): Promise<string> => {
+  const {sessionCookie} = await signIn(
+    stubGitHubFetch({
+      token: {access_token: 'ghu_old', expires_in: 1, refresh_token: 'ghr_refresh'},
+    }),
+  )
+  return sessionCookie
+}
+
+test.each([
+  {name: 'an HTML 503', fetch: async () => new Response('<html>down</html>', {status: 503})},
+  {name: 'a 502 with no error field', fetch: async () => jsonResponse({message: 'down'}, 502)},
+  {
+    name: 'a network error',
+    fetch: async () => {
+      throw new TypeError('fetch failed')
+    },
+  },
+])('resolveGitHubAuth keeps the cookie when the refresh gets $name', async ({fetch}) => {
+  const sessionCookie = await signInWithExpiredToken()
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+  const auth = await resolveGitHubAuth(
+    new Request(`${ORIGIN}/api/diffs/diff`, {headers: {cookie: sessionCookie}}),
+    {credentials: CREDENTIALS, fetch: vi.fn<FetchLike>(fetch)},
+  )
+
+  expect(auth.session).toBeUndefined()
+  expect(auth.setCookieHeaders).toEqual([])
+  expect(consoleError).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({step: 'token refresh', outcome: 'unavailable'}),
+  )
+  consoleError.mockRestore()
+})
+
+test('resolveGitHubAuth drops the session when GitHub refuses the refresh with a 400', async () => {
+  const sessionCookie = await signInWithExpiredToken()
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+  const auth = await resolveGitHubAuth(
+    new Request(`${ORIGIN}/api/diffs/diff`, {headers: {cookie: sessionCookie}}),
+    {
+      credentials: CREDENTIALS,
+      fetch: stubGitHubFetch({token: {error: 'bad_refresh_token'}, tokenStatus: 400}),
+    },
+  )
+
+  expect(auth.session).toBeUndefined()
+  expect(auth.setCookieHeaders[0]).toContain('diffs-github-auth=;')
+  expect(consoleError).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({step: 'token refresh', status: 400, outcome: 'refused'}),
+  )
+  consoleError.mockRestore()
+})
+
 test('resolveGitHubAuth ignores a malformed cookie', async () => {
   const auth = await resolveGitHubAuth(
     new Request(`${ORIGIN}/api/diffs/diff`, {headers: {cookie: 'diffs-github-auth=not-json'}}),
@@ -365,13 +682,41 @@ test('resolveGitHubAuth ignores a malformed cookie', async () => {
   expect(auth.session).toBeUndefined()
 })
 
-test('unsafe returnTo values fall back to /diffs', () => {
-  for (const returnTo of ['https://evil.test/x', '//evil.test/x', 'diffs', '/a\\b']) {
-    const response = handleGitHubLogoutRequest(
-      new Request(`${ORIGIN}/api/auth/github/logout?returnTo=${encodeURIComponent(returnTo)}`),
-    )
-    expect(response.headers.get('location')).toBe('/diffs')
-  }
+const logoutWithReturnTo = (returnTo: string): Promise<Response> =>
+  handleGitHubLogoutRequest(
+    new Request(`${ORIGIN}/api/auth/github/logout?returnTo=${encodeURIComponent(returnTo)}`),
+  )
+
+test('unsafe returnTo values fall back to /diffs', async () => {
+  const unsafe = [
+    'https://evil.test/x',
+    '//evil.test/x',
+    'diffs',
+    '/\\evil.test/x',
+    '/\t/evil.test/x',
+    '/\n/evil.test/x',
+    '/\r/evil.test/x',
+    '//[',
+    '/.//evil.test/x',
+    '/..//evil.test/x',
+  ]
+  const responses = await Promise.all(unsafe.map((returnTo) => logoutWithReturnTo(returnTo)))
+  expect(responses.map((response) => response.headers.get('location'))).toEqual(
+    unsafe.map(() => '/diffs'),
+  )
+})
+
+test('safe returnTo values redirect to their normalized same-site path', async () => {
+  const cases = [
+    ['/diffs/o/r/pull/1?tab=files#top', '/diffs/o/r/pull/1?tab=files#top'],
+    ['/a\\b', '/a/b'],
+    ['/a/../b', '/b'],
+    ['/a\tb', '/ab'],
+  ]
+  const responses = await Promise.all(cases.map(([returnTo]) => logoutWithReturnTo(returnTo)))
+  expect(responses.map((response) => response.headers.get('location'))).toEqual(
+    cases.map(([, location]) => location),
+  )
 })
 
 test('manage-access redirects a signed-in visitor to their installation on GitHub', async () => {
@@ -427,9 +772,8 @@ test('config reports the callback URL this origin will ask GitHub for', () => {
 })
 
 test('config reports missing credentials without inventing a failure', async () => {
-  const response = handleGitHubAuthConfigRequest(new Request(`${ORIGIN}/api/auth/github/config`), {
-    credentials: undefined,
-  })
+  withoutAppCredentials()
+  const response = handleGitHubAuthConfigRequest(new Request(`${ORIGIN}/api/auth/github/config`))
 
   await expect(response.json()).resolves.toMatchObject({configured: false})
 })
@@ -476,7 +820,10 @@ test('the dev worker stuffs state and keeps no cookie of its own', () => {
   login.searchParams.set('proxyAuthTo', PREVIEW_CALLBACK)
   login.searchParams.set('state', 'preview-csrf')
 
-  const response = handleGitHubLoginRequest(new Request(login), {credentials: CREDENTIALS})
+  const response = handleGitHubLoginRequest(new Request(login), {
+    credentials: CREDENTIALS,
+    previewConfig: PROXY_CONFIG,
+  })
 
   const authorize = new URL(response.headers.get('location') ?? '')
   expect(authorize.origin).toBe('https://github.com')
@@ -499,7 +846,10 @@ test.each([
   login.searchParams.set('proxyAuthTo', proxyAuthTo)
   login.searchParams.set('state', 'preview-csrf')
 
-  const response = handleGitHubLoginRequest(new Request(login), {credentials: CREDENTIALS})
+  const response = handleGitHubLoginRequest(new Request(login), {
+    credentials: CREDENTIALS,
+    previewConfig: PROXY_CONFIG,
+  })
 
   // Falls back to an ordinary sign-in here rather than carrying a target it
   // would later aim a live code at.
@@ -514,7 +864,7 @@ test('the dev worker hands the code back without exchanging it', async () => {
 
   const response = await handleGitHubOAuthCallbackRequest(
     new Request(`${DEV_WORKER}/api/auth/github/callback?code=the-code&state=${state}`),
-    {credentials: CREDENTIALS, fetch: fetchImpl},
+    {credentials: CREDENTIALS, fetch: fetchImpl, previewConfig: PROXY_CONFIG},
   )
 
   const location = new URL(response.headers.get('location') ?? '')
@@ -536,11 +886,72 @@ test('the dev worker refuses a target that is not a preview callback', async () 
 
   const response = await handleGitHubOAuthCallbackRequest(
     new Request(`${DEV_WORKER}/api/auth/github/callback?code=the-code&state=${state}`),
-    {credentials: CREDENTIALS, fetch: stubGitHubFetch()},
+    {credentials: CREDENTIALS, fetch: stubGitHubFetch(), previewConfig: PROXY_CONFIG},
   )
 
   expect(response.status).toBe(400)
   expect(response.headers.get('location')).toBe(null)
+})
+
+// A preview-shaped host on some other workers.dev subdomain, which this
+// account does not control.
+const FOREIGN_PREVIEW_CALLBACK =
+  'https://pr-40-revision-city-dev.other.workers.dev/api/auth/github/callback'
+
+test('the dev worker will not proxy to a preview on another subdomain', () => {
+  const login = new URL(`${DEV_WORKER}/api/auth/github/login`)
+  login.searchParams.set('proxyAuthTo', FOREIGN_PREVIEW_CALLBACK)
+  login.searchParams.set('state', 'preview-csrf')
+
+  const response = handleGitHubLoginRequest(new Request(login), {
+    credentials: CREDENTIALS,
+    previewConfig: PROXY_CONFIG,
+  })
+
+  const authorize = new URL(response.headers.get('location') ?? '')
+  expect(decodeProxyState(authorize.searchParams.get('state'))).toBeUndefined()
+})
+
+test('the dev worker refuses to hand a code to a preview on another subdomain', async () => {
+  const state = encodeProxyState({csrf: 'preview-csrf', proxyAuthTo: FOREIGN_PREVIEW_CALLBACK})
+
+  const response = await handleGitHubOAuthCallbackRequest(
+    new Request(`${DEV_WORKER}/api/auth/github/callback?code=the-code&state=${state}`),
+    {credentials: CREDENTIALS, fetch: stubGitHubFetch(), previewConfig: PROXY_CONFIG},
+  )
+
+  expect(response.status).toBe(400)
+  expect(response.headers.get('location')).toBe(null)
+})
+
+test('production runs an ordinary sign-in when asked to proxy', () => {
+  const login = new URL(`${ORIGIN}/api/auth/github/login`)
+  login.searchParams.set('proxyAuthTo', PREVIEW_CALLBACK)
+  login.searchParams.set('state', 'preview-csrf')
+
+  const response = handleGitHubLoginRequest(new Request(login), {
+    credentials: CREDENTIALS,
+    previewConfig: PROXY_CONFIG,
+  })
+
+  const authorize = new URL(response.headers.get('location') ?? '')
+  expect(authorize.origin).toBe('https://github.com')
+  expect(decodeProxyState(authorize.searchParams.get('state'))).toBeUndefined()
+  expect(getSetCookies(response)[0]).toContain('diffs-github-oauth-state')
+})
+
+test('production never forwards a code off the site', async () => {
+  const state = encodeProxyState({csrf: 'preview-csrf', proxyAuthTo: PREVIEW_CALLBACK})
+  const fetchImpl = stubGitHubFetch()
+
+  const response = await handleGitHubOAuthCallbackRequest(
+    new Request(`${ORIGIN}/api/auth/github/callback?code=the-code&state=${state}`),
+    {credentials: CREDENTIALS, fetch: fetchImpl},
+  )
+
+  expect(response.status).toBe(400)
+  expect(response.headers.get('location')).toBe(null)
+  expect(fetchImpl).not.toHaveBeenCalled()
 })
 
 test('the preview exchanges the code against the redirect_uri that authorized it', async () => {
@@ -563,9 +974,8 @@ test('the preview exchanges the code against the redirect_uri that authorized it
   // used, which was the dev worker's callback, not the preview's.
   const [, init] = fetchImpl.mock.calls[0] ?? []
 
-  // BACKLOG(davidjfelix) dude?
-  // oxlint-disable-next-line typescript/no-base-to-string -- this is already fucked and in a test. who cares
-  expect(String(init?.body)).toContain(encodeURIComponent(`${DEV_WORKER}/api/auth/github/callback`))
+  const body = init?.body instanceof URLSearchParams ? init.body : undefined
+  expect(body?.get('redirect_uri')).toBe(`${DEV_WORKER}/api/auth/github/callback`)
   expect(response.headers.get('location')).toBe('/diffs/o/r/pull/1')
   expect(getSetCookies(response).some((header) => header.startsWith('diffs-github-auth='))).toBe(
     true,

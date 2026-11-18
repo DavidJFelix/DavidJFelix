@@ -7,6 +7,7 @@ import {
   extractJson,
   type Fetch,
   findJsonSyntaxError,
+  matchTopLevelJson,
   OpenRouterError,
 } from './openrouter'
 
@@ -327,6 +328,15 @@ test('extractJson throws the schema error of the first object when no object mat
   expect(() => extractJson('{"type": "module"} {"findings": "none"}', answerSchema)).toThrow(
     'expected array, received undefined',
   )
+})
+
+test('matchTopLevelJson returns every top-level match and skips nested objects', () => {
+  expect(
+    matchTopLevelJson(
+      '{"findings": [1]} {"type": "module"} {"data": {"findings": [2]}} {"findings": [3]}',
+      answerSchema,
+    ),
+  ).toEqual([{findings: [1]}, {findings: [3]}])
 })
 
 test.each<{name: string; text: string; expected: string | undefined}>([

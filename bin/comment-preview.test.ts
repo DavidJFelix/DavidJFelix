@@ -1,5 +1,5 @@
 import {expect, test} from 'bun:test'
-import {buildCommentBody} from './comment-preview'
+import {buildCommentBody, upsertStickyComment} from './comment-preview'
 
 const base = {
   marker: '<!-- preview-app -->',
@@ -100,4 +100,26 @@ test('the body opens with the sticky marker and heading the upsert scans for', (
 
   expect(body.startsWith('<!-- preview-app -->\n### app preview\n\n')).toBe(true)
   expect(body.endsWith(`_${base.footer}_`)).toBe(true)
+})
+
+test('the upsert edits only the bot marker comment and leaves comments by people alone', async () => {
+  const repo = 'owner/repo'
+  const bot = {type: 'Bot'}
+  const person = {type: 'User'}
+  const calls: {method: string; path: string; payload?: unknown}[] = []
+  const gh = async (method: string, path: string, payload?: unknown): Promise<unknown> => {
+    calls.push({method, path, payload})
+    if (method !== 'GET') return undefined
+    return [
+      {id: 1, body: `${base.marker}\nolder`, user: person},
+      {id: 2, body: `${base.marker}\nlast run`, user: bot},
+      {id: 3, body: `> ${base.marker}\nquoted`, user: person},
+    ]
+  }
+
+  await upsertStickyComment({gh, repo, prNumber: '7', marker: base.marker, body: 'new body'})
+
+  expect(calls.filter((call) => call.method !== 'GET')).toEqual([
+    {method: 'PATCH', path: `/repos/${repo}/issues/comments/2`, payload: {body: 'new body'}},
+  ])
 })

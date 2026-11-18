@@ -1,6 +1,8 @@
+import type {AnyRouter} from '@tanstack/react-router'
 import {INGEST_PREFIX} from '@/lib/posthog-proxy'
 import {SENTRY_TUNNEL_ROUTE} from '@/lib/sentry-tunnel'
-import {resolvePostHog, resolveSentry} from './config'
+import {scrubSentryEvent, scrubSentrySpan} from '@/lib/telemetry-scrub'
+import {resolvePostHog, resolveSentry, resolveSentryEnvironment} from './config'
 
 // Starts client-side error monitoring (Sentry) and product analytics (PostHog),
 // each only when configured. Both ride a same-origin relay so ad/tracker blockers
@@ -13,16 +15,23 @@ import {resolvePostHog, resolveSentry} from './config'
 // dead-code-eliminates the dynamic import -- and the SDK chunk -- in keyless
 // builds: dev/CI/preview ship zero vendor code. resolve* re-checks (and trims) at
 // runtime.
-export function initClientObservability(): void {
+interface InitClientObservabilityParams {
+  router: AnyRouter
+}
+
+export function initClientObservability({router}: InitClientObservabilityParams): void {
   if (import.meta.env.VITE_PUBLIC_SENTRY_DSN) {
     const sentry = resolveSentry({sentryDsn: import.meta.env.VITE_PUBLIC_SENTRY_DSN})
     if (sentry.enabled) {
       void import('@sentry/react').then((Sentry) => {
         Sentry.init({
           dsn: sentry.dsn,
-          environment: import.meta.env.MODE,
-          integrations: [Sentry.browserTracingIntegration()],
+          environment: resolveSentryEnvironment(import.meta.env.VITE_PUBLIC_DEPLOY_ENV),
+          // The router integration names page loads and route changes by route, not by URL.
+          integrations: [Sentry.tanstackRouterBrowserTracingIntegration(router)],
           tracesSampleRate: 1,
+          beforeSendSpan: (span) => scrubSentrySpan({span, origin: location.origin}),
+          beforeSend: (event) => scrubSentryEvent({event, origin: location.origin}),
           // Relay envelopes through our own origin (src/routes/bugs.ts) so
           // blockers that drop *.ingest.sentry.io can't drop real-user errors.
           tunnel: SENTRY_TUNNEL_ROUTE,

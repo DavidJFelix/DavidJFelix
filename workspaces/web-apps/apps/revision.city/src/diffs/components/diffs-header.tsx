@@ -23,6 +23,7 @@ import {Link} from '@tanstack/react-router'
 import {
   type CSSProperties,
   type Dispatch,
+  type KeyboardEvent,
   memo,
   type SetStateAction,
   useLayoutEffect,
@@ -73,12 +74,12 @@ const ICON_SIZE_CLASS = css({
   h: {base: '4', md: '3'},
 })
 
-// Menu items that must keep a transparent focus background (setting rows that
-// host their own controls). The [role] selector outranks the DropdownMenuItem
-// recipe's own focus background, since Panda's cx concatenates rather than
-// merges conflicting utilities.
-const MENU_ITEM_FOCUS_TRANSPARENT_CLASS = css({
-  '&[role="menuitem"]': {_focus: {bg: 'transparent'}},
+// Menu items that must keep a transparent highlight background (setting rows
+// that host their own controls). The [role] selector outranks the
+// DropdownMenuItem recipe's own highlight background, since Panda's cx
+// concatenates rather than merges conflicting utilities.
+const MENU_ITEM_HIGHLIGHT_TRANSPARENT_CLASS = css({
+  '&[role="menuitem"]': {_highlighted: {bg: 'transparent'}},
 })
 
 interface HeaderProps {
@@ -297,7 +298,7 @@ export const DiffsHeader = memo(function DiffsHeader({
               setLightThemeName={setLightThemeName}
               themeDropdownStyle={dropdownThemeStyle}
             />
-            <DropdownMenu>
+            <DropdownMenu align="end">
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
@@ -309,65 +310,53 @@ export const DiffsHeader = memo(function DiffsHeader({
                   <IconGearFill className={ICON_SIZE_CLASS} />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className={css({w: '72', p: '2'})}
-                style={dropdownThemeStyle}
-              >
+              <DropdownMenuContent className={css({w: '72', p: '2'})} style={dropdownThemeStyle}>
                 <GitHubAuthControl />
                 <div className={css({bg: 'diffs.border/70', my: '2', h: '[1px]'})} />
                 <DropdownMenuItem
                   className={css({cursor: 'default', p: '0'})}
-                  onSelect={(e) => {
-                    e.preventDefault()
-                  }}
+                  closeOnSelect={false}
                 >
-                  <label htmlFor="diffs-setting-backgrounds" className={SETTING_ROW_CLASS}>
-                    <span className={css({minW: '0', flex: '1'})}>Backgrounds</span>
-                    <Switch
-                      id="diffs-setting-backgrounds"
-                      checked={showBackgrounds}
-                      onCheckedChange={setShowBackgrounds}
-                    />
-                  </label>
+                  <Switch
+                    className={SETTING_ROW_CLASS}
+                    labelClassName={css({minW: '0', flex: '1'})}
+                    checked={showBackgrounds}
+                    onCheckedChange={setShowBackgrounds}
+                  >
+                    Backgrounds
+                  </Switch>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className={css({cursor: 'default', p: '0'})}
-                  onSelect={(e) => {
-                    e.preventDefault()
-                  }}
+                  closeOnSelect={false}
                 >
-                  <label htmlFor="diffs-setting-line-numbers" className={SETTING_ROW_CLASS}>
-                    <span className={css({minW: '0', flex: '1'})}>Line numbers</span>
-                    <Switch
-                      id="diffs-setting-line-numbers"
-                      checked={lineNumbers}
-                      onCheckedChange={setLineNumbers}
-                    />
-                  </label>
+                  <Switch
+                    className={SETTING_ROW_CLASS}
+                    labelClassName={css({minW: '0', flex: '1'})}
+                    checked={lineNumbers}
+                    onCheckedChange={setLineNumbers}
+                  >
+                    Line numbers
+                  </Switch>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className={css({cursor: 'default', p: '0'})}
-                  onSelect={(e) => {
-                    e.preventDefault()
-                  }}
+                  closeOnSelect={false}
                 >
-                  <label htmlFor="diffs-setting-word-wrap" className={SETTING_ROW_CLASS}>
-                    <span className={css({minW: '0', flex: '1'})}>Word wrap</span>
-                    <Switch
-                      id="diffs-setting-word-wrap"
-                      checked={overflow === 'wrap'}
-                      onCheckedChange={(checked) => {
-                        setOverflow(checked ? 'wrap' : 'scroll')
-                      }}
-                    />
-                  </label>
+                  <Switch
+                    className={SETTING_ROW_CLASS}
+                    labelClassName={css({minW: '0', flex: '1'})}
+                    checked={overflow === 'wrap'}
+                    onCheckedChange={(checked) => {
+                      setOverflow(checked ? 'wrap' : 'scroll')
+                    }}
+                  >
+                    Word wrap
+                  </Switch>
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  className={cx(css({w: 'full', px: '2'}), MENU_ITEM_FOCUS_TRANSPARENT_CLASS)}
-                  onSelect={(e) => {
-                    e.preventDefault()
-                  }}
+                  className={cx(css({w: 'full', px: '2'}), MENU_ITEM_HIGHLIGHT_TRANSPARENT_CLASS)}
+                  closeOnSelect={false}
                 >
                   <span>Indicator style</span>
                   <ButtonGroup
@@ -413,6 +402,13 @@ function ColorModeIcon({colorMode, ...props}: ColorModeIconProps) {
   return <IconColorAuto {...props} />
 }
 
+// The menu content takes Enter and Space for its highlighted row and cancels
+// the click of the focused button. Stop these keys before they reach the menu,
+// so that the button gets its usual click.
+function keepPressKeysOnButton(event: KeyboardEvent) {
+  if (event.key === 'Enter' || event.key === ' ') event.stopPropagation()
+}
+
 interface ThemeDropdownProps {
   colorMode: ColorMode
   darkThemeName: DarkThemeName
@@ -430,7 +426,7 @@ interface ThemeDropdownProps {
 // corresponding row, picks a theme, and is returned to the main view. The
 // menu auto-resets to the main view whenever it closes so the next open
 // always starts from the top.
-function ThemeDropdown({
+export function ThemeDropdown({
   colorMode,
   darkThemeName,
   lightThemeName,
@@ -446,12 +442,8 @@ function ThemeDropdown({
     lightThemeName !== docsThemeCatalog.defaultLightThemeName ||
     darkThemeName !== docsThemeCatalog.defaultDarkThemeName
   return (
-    // `modal={false}` lets the user scroll and click the code view while the
-    // theme picker is open. The default Radix DropdownMenu blocks pointer
-    // events outside its content (incl. wheel/scroll), which made the diff
-    // feel frozen while previewing themes.
     <DropdownMenu
-      modal={false}
+      align="end"
       onOpenChange={(open) => {
         if (!open) setView('main')
       }}
@@ -467,21 +459,19 @@ function ThemeDropdown({
           <ColorModeIcon colorMode={colorMode} className={ICON_SIZE_CLASS} />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        className={css({w: '72', p: '2'})}
-        style={themeDropdownStyle}
-      >
+      <DropdownMenuContent className={css({w: '72', p: '2'})} style={themeDropdownStyle}>
         {view === 'main' ? (
           <>
             <DropdownMenuItem
-              className={cx(css({cursor: 'default', p: '0'}), MENU_ITEM_FOCUS_TRANSPARENT_CLASS)}
-              onSelect={(event) => {
-                event.preventDefault()
-              }}
+              className={cx(
+                css({cursor: 'default', p: '0'}),
+                MENU_ITEM_HIGHLIGHT_TRANSPARENT_CLASS,
+              )}
+              closeOnSelect={false}
             >
               <ButtonGroup
                 className={css({w: 'full'})}
+                onKeyDown={keepPressKeysOnButton}
                 value={colorMode}
                 onValueChange={(value) => {
                   if (value === 'system' || value === 'light' || value === 'dark') {
@@ -511,8 +501,8 @@ function ThemeDropdown({
                 alignItems: 'center',
                 gap: '2',
               })}
-              onSelect={(event) => {
-                event.preventDefault()
+              closeOnSelect={false}
+              onSelect={() => {
                 setView('light')
               }}
             >
@@ -533,8 +523,8 @@ function ThemeDropdown({
                 alignItems: 'center',
                 gap: '2',
               })}
-              onSelect={(event) => {
-                event.preventDefault()
+              closeOnSelect={false}
+              onSelect={() => {
                 setView('dark')
               }}
             >
@@ -560,10 +550,10 @@ function ThemeDropdown({
                     lineHeight: '[1rem]',
                     _hover: {color: 'diffs.foreground'},
                   }),
-                  MENU_ITEM_FOCUS_TRANSPARENT_CLASS,
+                  MENU_ITEM_HIGHLIGHT_TRANSPARENT_CLASS,
                 )}
-                onSelect={(event) => {
-                  event.preventDefault()
+                closeOnSelect={false}
+                onSelect={() => {
                   setLightThemeName(docsThemeCatalog.defaultLightThemeName)
                   setDarkThemeName(docsThemeCatalog.defaultDarkThemeName)
                 }}
@@ -626,7 +616,7 @@ function ThemeList({
   const HeaderIcon = isLight ? IconColorLight : IconColorDark
   // Auto-scroll so the currently-selected row sits at the second visible
   // position when the list opens. The current theme lands right under the
-  // user's cursor (Radix opens the menu under the trigger) and the row
+  // user's cursor (the menu opens under the trigger) and the row
   // above it makes the previous theme easy to reach with one tap of the
   // up arrow — sequential browsing through themes feels natural without
   // the user having to hunt for the active row first.
@@ -656,8 +646,8 @@ function ThemeList({
           alignItems: 'center',
           gap: '2',
         })}
-        onSelect={(event) => {
-          event.preventDefault()
+        closeOnSelect={false}
+        onSelect={() => {
           onBack()
         }}
       >
@@ -689,8 +679,8 @@ function ThemeList({
           <DropdownMenuItem
             key={theme}
             ref={current === theme ? selectedItemRef : undefined}
-            onSelect={(event) => {
-              event.preventDefault()
+            closeOnSelect={false}
+            onSelect={() => {
               if (isLight) {
                 onPickLight(theme)
               } else {

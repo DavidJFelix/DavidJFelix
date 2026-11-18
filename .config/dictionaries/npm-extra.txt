@@ -1,6 +1,7 @@
 harfbuzzjs
 libdom
 resvg
+takumi
 tsgolint
 unenv
 unwasm

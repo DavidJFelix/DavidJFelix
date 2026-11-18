@@ -1,4 +1,4 @@
-import type {EntityChangeType, EntityKind} from './entity'
+import type {SymbolChangeType, SymbolKind} from './code-symbol'
 
 export interface ChangeStyle {
   readonly color: string
@@ -10,7 +10,7 @@ export interface ChangeStyle {
 // the file tree's Git-status vocabulary, so a symbol row and a file row mean the
 // same thing by the same mark -- `M` is modified in both. Moved has no Git-status
 // counterpart, so it takes an arrow rather than stealing a letter.
-export const CHANGE_STYLES: Record<EntityChangeType, ChangeStyle> = {
+export const CHANGE_STYLES: Record<SymbolChangeType, ChangeStyle> = {
   added: {color: 'light-dark(#16a994, #00cab1)', label: 'added', sigil: 'A'},
   modified: {color: 'light-dark(#1ca1c7, #08c0ef)', label: 'modified', sigil: 'M'},
   renamed: {color: 'light-dark(#d5a910, #ffd452)', label: 'renamed', sigil: 'R'},
@@ -19,7 +19,7 @@ export const CHANGE_STYLES: Record<EntityChangeType, ChangeStyle> = {
 }
 
 // Bucket order for the summary line, matching how the rows themselves sort.
-export const CHANGE_ORDER: readonly EntityChangeType[] = [
+export const CHANGE_ORDER: readonly SymbolChangeType[] = [
   'added',
   'modified',
   'renamed',
@@ -29,7 +29,7 @@ export const CHANGE_ORDER: readonly EntityChangeType[] = [
 
 // Short kind labels, so a row reads "fn parseUrl" rather than spelling out each
 // grammar's own vocabulary.
-export const KIND_LABELS: Record<EntityKind, string> = {
+export const KIND_LABELS: Record<SymbolKind, string> = {
   call: 'call',
   class: 'class',
   constant: 'const',
@@ -49,5 +49,6 @@ export const KIND_LABELS: Record<EntityKind, string> = {
   struct: 'struct',
   trait: 'trait',
   type: 'type',
+  union: 'union',
   variable: 'var',
 }

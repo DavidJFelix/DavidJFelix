@@ -1,4 +1,7 @@
+import {readStringPath} from '@/lib/json-read'
+
 import {isNullish} from './nullish'
+
 export interface GitHubRepo {
   owner: string
   repo: string
@@ -11,6 +14,10 @@ export type GitHubDiffSource =
 
 export function parseGitHubDiffSource(path: string): GitHubDiffSource | undefined {
   const normalizedPath = path.replace(/\/+$/, '')
+  if (hasDotSegment(normalizedPath)) {
+    return undefined
+  }
+
   const pullMatch = /^\/([^/]+)\/([^/]+)\/pull\/(\d+)(?:\.(?:diff|patch))?$/i.exec(normalizedPath)
   if (!isNullish(pullMatch)) {
     return {
@@ -35,14 +42,65 @@ export function parseGitHubDiffSource(path: string): GitHubDiffSource | undefine
     normalizedPath,
   )
   if (!isNullish(compareMatch)) {
-    return {
-      kind: 'compare',
-      range: decodeRange(compareMatch[3]),
-      repo: {owner: compareMatch[1], repo: compareMatch[2]},
+    // An encoded dot segment such as `%2e%2e` appears only after the decode.
+    const range = decodeRange(compareMatch[3])
+    if (hasDotSegment(range)) {
+      return undefined
     }
+    return {kind: 'compare', range, repo: {owner: compareMatch[1], repo: compareMatch[2]}}
   }
 
   return undefined
+}
+
+export function readRepoFullName(value: unknown): GitHubRepo | undefined {
+  if (typeof value !== 'string') {
+    return undefined
+  }
+
+  const separatorIndex = value.indexOf('/')
+  if (separatorIndex <= 0 || separatorIndex === value.length - 1) {
+    return undefined
+  }
+  return {owner: value.slice(0, separatorIndex), repo: value.slice(separatorIndex + 1)}
+}
+
+export function isSameGitHubRepo(a: GitHubRepo, b: GitHubRepo): boolean {
+  return (
+    a.owner.toLowerCase() === b.owner.toLowerCase() && a.repo.toLowerCase() === b.repo.toLowerCase()
+  )
+}
+
+export interface PullRequestRange {
+  baseSha: string
+  headSha: string
+  baseRepo: GitHubRepo
+  headRepo: GitHubRepo
+}
+
+export interface ReadPullRequestRangeParams {
+  // GitHub's answer for one pull request.
+  data: unknown
+  // The repository in the pull request's URL.
+  urlRepo: GitHubRepo
+}
+
+// GitHub gives no head repository when the fork is deleted. The head side then
+// reads from the base repository, which keeps each pull request's head commit
+// under refs/pull. The base side falls back to the URL's repository.
+export function readPullRequestRange({
+  data,
+  urlRepo,
+}: ReadPullRequestRangeParams): PullRequestRange | undefined {
+  const baseSha = readStringPath(data, ['base', 'sha'])
+  const headSha = readStringPath(data, ['head', 'sha'])
+  if (isNullish(baseSha) || isNullish(headSha)) {
+    return undefined
+  }
+
+  const baseRepo = readRepoFullName(readStringPath(data, ['base', 'repo', 'full_name'])) ?? urlRepo
+  const headRepo = readRepoFullName(readStringPath(data, ['head', 'repo', 'full_name'])) ?? baseRepo
+  return {baseSha, headSha, baseRepo, headRepo}
 }
 
 // A range arrives percent-encoded from a URL but already decoded from a
@@ -54,6 +112,12 @@ export function decodeRange(range: string): string {
   } catch {
     return range
   }
+}
+
+// `new URL` resolves `.` and `..` segments, so a path with one can leave the
+// repository and reach another API route.
+export function hasDotSegment(path: string): boolean {
+  return path.split('/').some((segment) => segment === '.' || segment === '..')
 }
 
 export function encodeURLSegment(value: string): string {

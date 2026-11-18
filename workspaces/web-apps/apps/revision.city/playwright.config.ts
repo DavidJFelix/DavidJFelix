@@ -1,7 +1,8 @@
 import {defineConfig, devices} from '@playwright/test'
 
 // revision.city's visual-regression suite. It runs against either:
-//   - a deployed per-PR preview (PREVIEW_URL set by cd-preview-revision-city.yml), or
+//   - a deployed per-PR preview (PREVIEW_URL set by the preview-wrangler action
+//     in cd-preview-web-apps.yml), or
 //   - a local production boot (no PREVIEW_URL) for writing/checking baselines.
 //
 // The local boot serves the built SSR worker in workerd via `vite preview` (the

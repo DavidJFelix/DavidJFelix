@@ -6,10 +6,6 @@ export interface ScrollbarGutterSize {
 
 const cachedGutterSizes = new Map<string, ScrollbarGutterSize>()
 
-export function getGutterSize(className: string): ScrollbarGutterSize | undefined {
-  return cachedGutterSizes.get(className)
-}
-
 const PROBE_SIZE = 100
 const PROBE_CHILD_SIZE = PROBE_SIZE * 2
 

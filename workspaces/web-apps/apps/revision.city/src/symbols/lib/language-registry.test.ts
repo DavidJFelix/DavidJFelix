@@ -16,6 +16,7 @@ test.each([
   ['src/index.php', 'php'],
   ['styles/app.css', 'css'],
   ['styles/app.scss', 'sass'],
+  ['styles/app.sass', 'sass-indented'],
   ['README.md', 'markdown'],
   ['package.json', 'json'],
   ['.github/workflows/ci.yml', 'yaml'],

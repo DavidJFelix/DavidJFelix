@@ -1,5 +1,3 @@
-// @vitest-environment node
-
 import {DatabaseSync, type SQLInputValue} from 'node:sqlite'
 import {fileURLToPath} from 'node:url'
 import {drizzle} from 'drizzle-orm/sqlite-proxy'

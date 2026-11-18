@@ -1,12 +1,33 @@
+import type {SyntaxNode} from '@lezer/common'
 import {parser} from '@lezer/markdown'
 
-import type {EntitySpec, ResolveEntityNameParams} from '../entity'
-import {entityProp} from '../entity'
+import type {ResolveSymbolNameParams, SymbolSpec} from '../code-symbol'
+import {symbolProp} from '../code-symbol'
 
-// Headings carry their marker (`##`) and, for setext, an underline; the entity
+// The match ends where the closing `---` line of YAML front matter starts.
+const FRONT_MATTER = /^---\r?\n[\s\S]*?\n(?=---\r?(?:\n|$))/u
+
+// The parser reads YAML front matter as a rule and then a setext heading that
+// the closing `---` underlines. That heading is not a heading of the document.
+function isFrontMatter(mark: SyntaxNode | null, source: string): boolean {
+  const close = FRONT_MATTER.exec(source)?.[0].length
+  return close !== undefined && mark?.from === close
+}
+
+// Headings carry their marker (`##`) and, for setext, an underline; the symbol
 // name is what is left once those are removed.
-function resolveHeadingText({node, source}: ResolveEntityNameParams): string | undefined {
+function resolveHeadingText({node, source}: ResolveSymbolNameParams): string | undefined {
   const mark = node.getChild('HeaderMark')
+  if (node.name.startsWith('Setext')) {
+    if (isFrontMatter(mark, source)) {
+      return undefined
+    }
+    const text = source
+      .slice(node.from, mark?.from ?? node.to)
+      .trim()
+      .replaceAll(/\s+/gu, ' ')
+    return text === '' ? undefined : text
+  }
   const start = mark === null ? node.from : mark.to
   const text = removeClosingSequence(source.slice(start, node.to).split('\n')[0]).trim()
   return text === '' ? undefined : text
@@ -36,15 +57,15 @@ const HEADING_TYPES = [
   'SetextHeading2',
 ]
 
-const SPECS: Record<string, EntitySpec> = Object.fromEntries(
+const SPECS: Record<string, SymbolSpec> = Object.fromEntries(
   HEADING_TYPES.map((type) => [type, {kind: 'heading', resolveName: resolveHeadingText}]),
 )
 
 // Markdown headings are siblings rather than nested nodes, so they stay flat --
 // a heading is never a container for the ones that follow it.
 export const markdownParser = parser.configure({
-  props: [entityProp.add(SPECS)],
+  props: [symbolProp.add(SPECS)],
   // The hard-break rule reads a run of spaces again from each space in it, so
-  // 40,000 spaces take 5 s to parse with it. No entity needs hard breaks.
+  // 40,000 spaces take 5 s to parse with it. No symbol needs hard breaks.
   remove: ['HardBreak'],
 })

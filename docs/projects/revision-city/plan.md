@@ -4,18 +4,18 @@ A centralized version-control service that manages reviews and diffs.
 
 ## Status
 
-**Placeholder** (2026-06-19). Live at revision.city serving a single centered `<h1>`; TanStack
-Start + Panda/Ark scaffold. Near-term work is a basic layout + positioning, then scoping the MVP.
+**Live** (2026-11-09). revision.city serves a landing page, a diff viewer with symbol tracking under
+`/diffs`, and automated pull request reviews through its GitHub App. The reviews have their own
+plan: [revision-city-reviews](../revision-city-reviews/plan.md).
 
 ## Vision
 
 A centralized home for version control focused on the _review_ experience — managing reviews and
 diffs as first-class objects.
 
-> ⚠️ **Open question — MVP shape (deferred 2026-06-29).** The product shape is _not_ yet captured
-> here. It is a nuanced vision David will articulate himself, in his own words; it does not reduce
-> to a multiple-choice pick, so this plan deliberately does not propose or pin a direction. Until
-> David writes it up, the MVP shape is the open, blocking question — nothing downstream is scoped.
+> **Open question — MVP shape (deferred 2026-06-29).** The product shape is _not_ yet captured here.
+> It is a nuanced vision David will articulate himself, in his own words; it does not reduce to a
+> multiple-choice pick, so this plan deliberately does not propose or pin a direction.
 
 ## Current state (2026-08-04)
 
@@ -32,7 +32,34 @@ diffs as first-class objects.
   at `/og/diffs/<path>.png` derived from the URL, plus the public pull request title, author, state,
   and counts where GitHub shows them to anyone. Private diffs unfurl with only what the link already
   says.
-- Reviews remain unscoped pending the MVP-shape doc (the Phase 2 gate below).
+- Automated pull request reviews are built and tracked in
+  [revision-city-reviews](../revision-city-reviews/plan.md).
+
+## Telemetry and privacy
+
+A signed-in visitor can open a private repository. The rule for what each telemetry service may hold
+(decided 2026-11-14):
+
+- PostHog, Honeycomb and Cloudflare Workers Logs may hold the repository owner, the repository name,
+  the pull number and file paths. PostHog keeps full paths, so page views can be broken down by
+  repository.
+- Sentry holds route templates such as `/diffs/$path`, not repository paths.
+- No service holds private code or model reasoning about private code.
+
+What the code does:
+
+- PostHog page views carry the full viewer path.
+- Cloudflare's automatic traces in Honeycomb carry the full URL of each request and of each GitHub
+  call. App code cannot remove these URLs. The failed upstream log line holds the full patch URL.
+  The `webhook delivery` event names any repository that is not allowed.
+- Sentry in the browser names page loads and API calls by route template.
+- Sentry on the server names requests and 5xx messages by route template, such as
+  `GET /diffs/$path answered 502`. Outgoing calls to GitHub, Codeberg and the model provider keep
+  only their origin, such as `https://api.github.com`. Before Sentry gets the console breadcrumbs of
+  a request, the server changes each URL to its origin or to a route template, removes `repository`
+  fields, and drops the breadcrumbs of wide events. Workers Logs and Honeycomb keep the full lines.
+- No service gets private code today. The one risk is the `reasoningTail` of a cut model reply in
+  the `model call` event. Today it can quote only the one allowed repository, which is public.
 
 ## Stack
 
@@ -55,20 +82,19 @@ TanStack Start (React 19) + PandaCSS + Ark UI, Cloudflare Worker.
 
 - [ ] Build the smallest version of the shape David defines.
 
-> Note: this is a large idea; near-term is layout + clear positioning. No build starts until the MVP
-> shape is written down — and that shape is David's to articulate, not something this plan pins.
+> Note: the MVP shape is David's to articulate, not something this plan pins.
 
 ### Symbol tracking (diffs half — independent of the Phase 2 gate)
 
-Entity-level diffing, so a review reads in functions rather than hunks. The engine exists; the rest
+Symbol-level diffing, so a review reads in functions rather than hunks. The engine exists; the rest
 is wiring and reach.
 
-- [x] Entity-diff engine over Lezer: extraction tables per grammar, sem's three-phase matcher, all
+- [x] Symbol diff engine over Lezer: extraction tables per grammar, sem's three-phase matcher, all
       fifteen first-party CodeMirror grammars that carry symbols. (done 2026-08-03)
-- [x] `/api/diffs/entity-diff` route that expands one diff entry into an entity diff, parsed in the
+- [x] `/api/diffs/symbol-diff` route that expands one diff entry into a symbol diff, parsed in the
       worker so no grammar reaches the browser. (done 2026-08-04)
 - [x] Symbols tab in the viewer's sidebar: changes grouped by file, clicking a row scrolls to the
-      entity. Fetches nothing until the tab is opened. (done 2026-08-04)
+      symbol. Fetches nothing until the tab is opened. (done 2026-08-04)
 - [x] Works signed out on public repos, matching how the viewer already loads patches. A session
       adds private repos and a higher rate limit. (done 2026-08-04)
 - [x] Results stream from the worker as newline-delimited JSON, one line per file, batched twenty at
@@ -77,11 +103,11 @@ is wiring and reach.
       prototype-validated, and implemented in [2026-08-06-progress.md](2026-08-06-progress.md):
       occurrence alignment in the matcher (kills the `#n` positional-identity cascade on array
       insertions), element-level sequence detail on array-valued properties
-      (`words: 167 -> 169,     "ciphertext" inserted at 9`), and rollup of entity rows inside
+      (`words: 167 -> 169,     "ciphertext" inserted at 9`), and rollup of symbol rows inside
       inserted/deleted elements. Cuts PR #409's cspell.jsonc report from 21 rows to 3. (done
       2026-08-06; follow-ups -- YAML sequences, coalesced `changed` edits, indexed display names --
       listed in the progress note)
-- [ ] Cache entity diffs across page loads, keyed by blob SHA pair. Results are currently held only
+- [ ] Cache symbol diffs across page loads, keyed by blob SHA pair. Results are currently held only
       for the life of the page; the answer is immutable per revision pair, so KV or the Cache API
       would make a revisited PR free.
 - [ ] Summary counts on the tab itself (a badge like Comments has), which needs a cheap way to know
@@ -96,6 +122,6 @@ is wiring and reach.
 
 ## Related
 
-- App: [`apps/revision.city`](../../../apps/revision.city/)
+- App: [`workspaces/web-apps/apps/revision.city`](../../../workspaces/web-apps/apps/revision.city/)
 - Cross-cutting: Sentry + PostHog observability are live fleet-wide (projects closed 2026-07-30; see
   the [changelog](../../changelog/)).

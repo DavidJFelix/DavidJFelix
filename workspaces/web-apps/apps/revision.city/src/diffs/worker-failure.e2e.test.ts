@@ -1,8 +1,8 @@
 import {expect, test} from '@playwright/test'
 
-// The worker script's name is `worker-` and an eight-character hash. Other chunks also start with
-// `worker-`, for example `worker-pool-context-<hash>.js`.
-const WORKER_SCRIPT = /\/assets\/worker-[\w-]{8}\.js$/
+// The worker script's name is `worker-portable-` and an eight-character hash. Other chunks also
+// start with `worker-`, for example `worker-pool-context-<hash>.js`.
+const WORKER_SCRIPT = /\/assets\/worker-portable-[\w-]{8}\.js$/
 
 test('a diffs worker script that fails to load with a server error is reported once with its refetch status', async ({
   page,

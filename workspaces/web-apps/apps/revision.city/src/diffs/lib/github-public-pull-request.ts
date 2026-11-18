@@ -1,3 +1,6 @@
+import {createGitHubApiUrl, createGitHubHeaders, type GitHubFetch} from '@/lib/github-http'
+import {isRecord, readOptionalNumber, readOptionalString} from '@/lib/json-read'
+
 import {
   defaultResponseCache,
   GITHUB_CACHE_KEY_ROOT,
@@ -9,9 +12,6 @@ import type {GitHubAppCredentials} from './github-auth'
 import {encodeURLSegment, type GitHubRepo} from './github-diff-source'
 import {isNullish} from './nullish'
 
-const GITHUB_API_ROOT = 'https://api.github.com'
-const GITHUB_API_VERSION = '2022-11-28'
-const USER_AGENT = 'revision-city-diffs'
 // A human page load waits on this lookup for its title, so past this the page
 // falls back to what the URL already says rather than holding the reader. One
 // deadline covers the whole lookup: every attempt, and reading the body.
@@ -22,11 +22,6 @@ const DEFAULT_TIMEOUT_MS = 2_000
 const HIT_MAX_AGE_SECONDS = 60 * 60
 const MISS_MAX_AGE_SECONDS = 5 * 60
 const PULLS_CACHE_KEY_ROOT = `${GITHUB_CACHE_KEY_ROOT}pulls/`
-
-type PullRequestFetch = (
-  input: Parameters<typeof fetch>[0],
-  init?: Parameters<typeof fetch>[1],
-) => ReturnType<typeof fetch>
 
 export type PullRequestState = 'open' | 'closed' | 'merged'
 
@@ -43,7 +38,7 @@ export interface PublicPullRequest {
 export interface FetchPublicPullRequestParams {
   repo: GitHubRepo
   number: string
-  fetch?: PullRequestFetch
+  fetch?: GitHubFetch
   // The app's own client id and secret, sent as basic auth. GitHub answers
   // such requests with public data only, at the app's rate limit instead of
   // the anonymous per-address one the Worker shares with every other Worker.
@@ -89,7 +84,7 @@ export async function fetchPublicPullRequest({
 interface LookupPullRequestParams {
   repo: GitHubRepo
   number: string
-  fetcher: PullRequestFetch
+  fetcher: GitHubFetch
   credentials: GitHubAppCredentials | undefined
   cache: ResponseCache | undefined
   timeoutMs: number
@@ -103,7 +98,9 @@ async function lookupPullRequest({
   cache,
   timeoutMs,
 }: LookupPullRequestParams): Promise<PullRequestLookup> {
-  const url = `${GITHUB_API_ROOT}/repos/${encodeURLSegment(repo.owner)}/${encodeURLSegment(repo.repo)}/pulls/${encodeURLSegment(number)}`
+  const url = createGitHubApiUrl({
+    path: `/repos/${encodeURLSegment(repo.owner)}/${encodeURLSegment(repo.repo)}/pulls/${encodeURLSegment(number)}`,
+  })
   const controller = new AbortController()
   const timer = setTimeout(() => {
     controller.abort()
@@ -160,7 +157,7 @@ function noteAnswer({cache, answer, offered}: NoteAnswerParams) {
 
 interface FetchJSONParams {
   url: string
-  fetcher: PullRequestFetch
+  fetcher: GitHubFetch
   credentials: GitHubAppCredentials | undefined
   signal: AbortSignal
 }
@@ -198,15 +195,10 @@ async function fetchJSON({
 }
 
 function createHeaders(credentials: GitHubAppCredentials | undefined): Record<string, string> {
-  const headers: Record<string, string> = {
-    Accept: 'application/vnd.github+json',
-    'User-Agent': USER_AGENT,
-    'X-GitHub-Api-Version': GITHUB_API_VERSION,
-  }
-  if (!isNullish(credentials)) {
-    headers.Authorization = `Basic ${btoa(`${credentials.clientId}:${credentials.clientSecret}`)}`
-  }
-  return headers
+  return createGitHubHeaders({
+    media: 'json',
+    authorization: isNullish(credentials) ? undefined : {kind: 'app', credentials},
+  })
 }
 
 function parseGitHubPullRequest(data: unknown): PublicPullRequest | undefined {
@@ -283,16 +275,4 @@ async function writeCachedLookup(
   } catch {
     // Nothing to do: the next lookup asks GitHub again.
   }
-}
-
-function readOptionalString(value: unknown): string | undefined {
-  return typeof value === 'string' && value !== '' ? value : undefined
-}
-
-function readOptionalNumber(value: unknown): number | undefined {
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
 }

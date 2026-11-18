@@ -1,18 +1,18 @@
+import {
+  createGitHubApiUrl,
+  createGitHubHeaders,
+  GITHUB_API_ROOT,
+  type GitHubFetch,
+} from '@/lib/github-http'
+import {isRecord, readOptionalString} from '@/lib/json-read'
+
 import {isNullish} from './nullish'
 
-const GITHUB_API_ROOT = 'https://api.github.com'
-const GITHUB_API_VERSION = '2022-11-28'
-const USER_AGENT = 'revision-city-diffs'
 // GitHub rejects search queries longer than 256 characters, so repository
 // qualifiers are packed into as few queries as fit.
 const SEARCH_QUERY_MAX_LENGTH = 256
 const SEARCH_BASE_QUERY = 'is:pr is:open archived:false'
 export const SEARCH_PAGE_SIZE = 20
-
-export type PullRequestFetch = (
-  input: Parameters<typeof fetch>[0],
-  init?: Parameters<typeof fetch>[1],
-) => ReturnType<typeof fetch>
 
 export interface PullRequestSummary {
   owner: string
@@ -31,7 +31,7 @@ export interface PullRequestSearchResult {
 }
 
 export interface SearchPullRequestsParams {
-  fetcher: PullRequestFetch
+  fetcher: GitHubFetch
   qualifiers: readonly string[]
   token: string
 }
@@ -55,13 +55,17 @@ export async function searchPullRequests({
   qualifiers,
   token,
 }: SearchPullRequestsParams): Promise<PullRequestSearchResult> {
-  const url = new URL('/search/issues', GITHUB_API_ROOT)
-  url.searchParams.set('q', [SEARCH_BASE_QUERY, ...qualifiers].join(' '))
-  url.searchParams.set('sort', 'updated')
-  url.searchParams.set('order', 'desc')
-  url.searchParams.set('per_page', String(SEARCH_PAGE_SIZE))
+  const url = createGitHubApiUrl({
+    path: '/search/issues',
+    searchParams: {
+      q: [SEARCH_BASE_QUERY, ...qualifiers].join(' '),
+      sort: 'updated',
+      order: 'desc',
+      per_page: String(SEARCH_PAGE_SIZE),
+    },
+  })
 
-  const response = await fetcher(url.href, {
+  const response = await fetcher(url, {
     cache: 'no-store',
     headers: createGitHubJSONHeaders(token),
   })
@@ -69,7 +73,11 @@ export async function searchPullRequests({
     return qualifiers.length > 1 ? {...EMPTY_SEARCH_RESULT, truncated: true} : EMPTY_SEARCH_RESULT
   }
   if (!response.ok) {
-    throw new Error(`GitHub search answered ${response.status}`)
+    const failure: GitHubSearchFailure = {
+      status: response.status,
+      rateLimited: isRateLimited(response),
+    }
+    throw new Error(`GitHub search answered ${response.status}`, {cause: failure})
   }
 
   const data: unknown = await response.json()
@@ -82,6 +90,37 @@ export async function searchPullRequests({
   const totalCount =
     isRecord(data) && typeof data.total_count === 'number' ? data.total_count : items.length
   return {items, totalCount}
+}
+
+// What a failed search answered: GitHub's status, and whether that status
+// is a spent rate limit rather than a refusal.
+export interface GitHubSearchFailure {
+  status: number
+  rateLimited: boolean
+}
+
+// The failure that searchPullRequests put on an error it threw. Undefined for
+// any other error, such as a network failure.
+export function readGitHubSearchFailure(error: unknown): GitHubSearchFailure | undefined {
+  const cause: unknown = error instanceof Error ? error.cause : undefined
+  return isRecord(cause) &&
+    typeof cause.status === 'number' &&
+    typeof cause.rateLimited === 'boolean'
+    ? {status: cause.status, rateLimited: cause.rateLimited}
+    : undefined
+}
+
+// GitHub answers a spent rate limit with 429, or with 403 and a zero remaining
+// count (the primary limit) or a retry-after (the secondary limit). Any other
+// 403, such as an organization that enforces SSO, is a refusal.
+function isRateLimited(response: Response): boolean {
+  if (response.status === 429) {
+    return true
+  }
+  return (
+    response.status === 403 &&
+    (response.headers.get('x-ratelimit-remaining') === '0' || response.headers.has('retry-after'))
+  )
 }
 
 export interface SearchChunkedPullRequestsParams extends SearchPullRequestsParams {
@@ -212,10 +251,10 @@ function parseRepositoryURL(value: unknown): {owner: string; repo: string} | und
 export async function fetchGitHubJSON(
   path: string,
   token: string,
-  fetcher: PullRequestFetch,
+  fetcher: GitHubFetch,
 ): Promise<unknown> {
   try {
-    const response = await fetcher(new URL(path, GITHUB_API_ROOT).href, {
+    const response = await fetcher(createGitHubApiUrl({path}), {
       cache: 'no-store',
       headers: createGitHubJSONHeaders(token),
     })
@@ -226,18 +265,5 @@ export async function fetchGitHubJSON(
 }
 
 function createGitHubJSONHeaders(token: string): Record<string, string> {
-  return {
-    Accept: 'application/vnd.github+json',
-    Authorization: `Bearer ${token}`,
-    'User-Agent': USER_AGENT,
-    'X-GitHub-Api-Version': GITHUB_API_VERSION,
-  }
-}
-
-function readOptionalString(value: unknown): string | undefined {
-  return typeof value === 'string' && value !== '' ? value : undefined
-}
-
-export function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
+  return createGitHubHeaders({media: 'json', authorization: {kind: 'token', token}})
 }

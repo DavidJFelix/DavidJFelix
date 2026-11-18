@@ -9,10 +9,11 @@ main = "src/server.ts"
 compatibility_date = "2026-06-01"
 compatibility_flags = ["nodejs_compat"]
 
-# This worker serves via custom domains; explicitly keep workers.dev preview
-# URLs on so `wrangler versions upload --preview-alias` (cd-preview) gets a
-# reachable pr-<N> URL. Does not affect production routing.
-preview_urls = true
+# Version URLs stay off for production. Previews upload as versions of the dev
+# worker ([env.dev] below), so no production version needs a public workers.dev
+# host. Keep this key: without it, a deploy does not change the setting in the
+# account.
+preview_urls = false
 
 # GitHub App sign-in (src/diffs/lib/github-auth.ts, served under /api/auth/github)
 # reads two secrets from the worker env: GITHUB_APP_CLIENT_ID and
@@ -32,9 +33,9 @@ routes = [
 # Pull request reviews (src/reviews). GitHub sends the app's webhooks to
 # /api/github/webhook, which starts one ReviewWorkflow instance for each review.
 # D1 keeps each chunk review. A saved review stays valid while the chunk and the
-# files that its reviewer read do not change. The one-time setup in #790 creates
-# the database and applies the drizzle/ migrations with
-# `wrangler d1 migrations apply revision-city --remote`. The reviews read five
+# files that its reviewer read do not change. The one-time setup in #790 created
+# the database. The production deploy applies pending drizzle/ migrations
+# before `wrangler deploy` (cd-deploy-web-apps.yml). The reviews read five
 # secrets: GITHUB_APP_CLIENT_ID (above), GITHUB_APP_PRIVATE_KEY,
 # GITHUB_WEBHOOK_SECRET, OPENROUTER_API_KEY, and REVIEW_MODEL (an OpenRouter
 # model slug that supports tool calls). Environments do not inherit bindings, so
@@ -45,30 +46,45 @@ name = "revision-city-review"
 binding = "REVIEW_WORKFLOW"
 class_name = "ReviewWorkflow"
 
+# Cloudflare lets a Workflow instance make 10,000 subrequests by default. Each
+# fetch and each D1 query counts, and after the limit each call fails. A review
+# run at its size limits needs more. The worst case of one run:
+# - `MAX_REVIEWED_CHUNKS` (150) x 3 reviewers gives 450 chunk reviews.
+# - A chunk review runs 1 review loop and `MAX_VERIFIED_FINDINGS` (5) check loops.
+# - A loop makes at most 6 model calls and `MAX_TOOL_ROUNDS` (4) x
+#   `MAX_TOOL_CALLS_PER_ROUND` (6) = 24 tool runs. A tool run reads at most 1 blob.
+# - The OpenRouter client sends a model call at most 3 times
+#   (`DEFAULT_RETRY_DELAYS_MS`).
+# - So one chunk review makes 6 x 6 x 3 = 108 OpenRouter requests, 6 x 24 = 144
+#   blob reads and 2 D1 queries: 254 subrequests.
+# 450 x 254 = 114,300, plus about 1,000 for the rest of the run. The remainder,
+# about 34,700, lets about 45 review steps (3 chunk reviews each) run again.
+# The limit applies to the whole Worker, and `[env.dev]` inherits it, so the
+# viewer routes get the same limit.
+[limits]
+subrequests = 150_000
+
 [[d1_databases]]
 binding = "DB"
 database_name = "revision-city"
 database_id = "e62e3ce1-5045-4b3f-a557-b05a13b0095f"
 migrations_dir = "drizzle"
 
-# The deployed version's id, read by the share-card routes (src/routes/og) to
-# key their edge cache: a rendered card lives at the edge for its whole cache
-# life, and without the version in the key a deploy would keep serving the
-# previous version's cards until they expired. Bindings are not inherited by
-# environments, so the dev environment below declares it again.
+# The deployed version's id, for the share card routes (src/deployed-version.ts).
+# Bindings are not inherited by environments, so the dev environment below
+# declares it again.
 [version_metadata]
 binding = "CF_VERSION_METADATA"
 
-# Logs and traces ship to Grafana Cloud and Honeycomb through the
-# account-level observability destinations configured in the dashboard.
-# Grafana stays for a side-by-side week, then goes.
+# Logs and traces ship to Honeycomb through the account-level
+# observability destinations configured in the dashboard.
 [observability.logs]
 enabled = true
-destinations = ["2026-aug-16-grafana-cloud-logs", "honeycomb-logs"]
+destinations = ["honeycomb-logs"]
 
 [observability.traces]
 enabled = true
-destinations = ["2026-aug-16-grafana-cloud-traces", "honeycomb-traces"]
+destinations = ["honeycomb-traces"]
 
 # The dev worker: a second deployment of this same app on a stable workers.dev
 # host, used as the OAuth redirect target for per-PR previews. Previews cannot
@@ -97,9 +113,10 @@ binding = "CF_VERSION_METADATA"
 [env.dev.vars]
 # Where a per-PR preview (an uploaded version of this same worker) proxies
 # sign-in. Previews share this worker's GitHub App secrets, so only the
-# authorization code ever crosses origins. Production has no value here and
-# never proxies. The stable host itself is not a preview hostname, so it runs
-# the ordinary flow despite carrying the variable.
+# authorization code ever crosses origins. Only this stable host runs sign-in
+# for previews, and only for pr-<N> previews of this worker on this subdomain.
+# Production has no value here, so it never proxies or runs sign-in for
+# previews.
 PREVIEW_AUTH_PROXY_URL = "https://revision-city-dev.nullserve.workers.dev"
 
 # Same export as production. `observability` is inheritable,
@@ -107,8 +124,8 @@ PREVIEW_AUTH_PROXY_URL = "https://revision-city-dev.nullserve.workers.dev"
 # wholesale -- so the config is repeated in full rather than partially.
 [env.dev.observability.logs]
 enabled = true
-destinations = ["2026-aug-16-grafana-cloud-logs", "honeycomb-logs"]
+destinations = ["honeycomb-logs"]
 
 [env.dev.observability.traces]
 enabled = true
-destinations = ["2026-aug-16-grafana-cloud-traces", "honeycomb-traces"]
+destinations = ["honeycomb-traces"]

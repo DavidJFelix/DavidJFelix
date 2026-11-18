@@ -10,15 +10,29 @@
 // broken" class this catches before merge. Assumes `vite build` has run (the
 // `smoke` task depends on `build`); parameterized via SMOKE_ROUTES / SMOKE_PORT.
 
-import {existsSync} from 'node:fs'
+import {existsSync, readdirSync, statSync} from 'node:fs'
+import {join} from 'node:path'
 
 const PORT = Number(process.env.SMOKE_PORT ?? 4389)
 const BASE_URL = `http://127.0.0.1:${PORT}`
 const ROUTES = (process.env.SMOKE_ROUTES ?? '/,/diffs').split(',')
 const READY_TIMEOUT_MS = 60_000
+const CLIENT_ASSETS_DIR = 'dist/client/assets'
+// The largest client asset is the diffs worker, at about 1.3 MiB. An asset over this limit is most
+// likely a worker that includes the shiki grammars again, for example after an update of
+// @pierre/diffs.
+const MAX_CLIENT_ASSET_BYTES = 2 * 1024 * 1024
 
 if (!existsSync('dist')) {
   console.error('::error::dist is missing -- run `mise run build` first')
+  process.exit(1)
+}
+
+const oversizedAssets = readdirSync(CLIENT_ASSETS_DIR).filter(
+  (name) => statSync(join(CLIENT_ASSETS_DIR, name)).size > MAX_CLIENT_ASSET_BYTES,
+)
+if (oversizedAssets.length > 0) {
+  console.error(`::error::client assets are larger than 2 MiB: ${oversizedAssets.join(', ')}`)
   process.exit(1)
 }
 

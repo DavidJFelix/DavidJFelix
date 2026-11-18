@@ -52,6 +52,9 @@ it (`djf.io`):
   focus, and scrolling -- see `onvibes.org`'s `vitest.config.ts` for the two-project split. The
   browser project needs Chromium on the runner: the `ci-web-apps` check job runs `setup-playwright`
   for it.
+- **File names pick the environment.** An app that splits its tests into Vitest projects matches
+  each project by file name, not by an environment comment in the file. revision.city runs
+  `*.test.tsx` and `*.dom.test.ts` in jsdom and the other `*.test.ts` files in node.
 
 ## Coverage and the monorepo aggregator
 

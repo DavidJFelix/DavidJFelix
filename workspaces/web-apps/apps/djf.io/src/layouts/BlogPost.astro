@@ -80,12 +80,18 @@ const neighborLink = css({
           class={css({
             fontSize: '4xl',
             fontWeight: 'bold',
-            mb: '4',
+            mb: hero?.tagline ? '2' : '4',
             lineHeight: '[1.2]',
           })}
         >
           {title}
         </h1>
+
+        {
+          hero?.tagline && (
+            <p class={css({fontSize: 'xl', color: 'text.muted', mb: '4'})}>{hero.tagline}</p>
+          )
+        }
 
         <div
           class={css({

@@ -35,7 +35,7 @@ replaces Warden in this repository. This project started as part of
      finding. The chunk review is not saved, so the next run checks it again.
   4. Map findings back to new-file lines. When findings end on the same line, keep the most severe.
   5. Report checked findings at `medium` and above. Fail on a checked finding at `high` and above,
-     or when a chunk review fails.
+     when a chunk review fails, or when a file has a diff line longer than 5,000 characters.
 - **Chunk-local line labels.** The prompt numbers lines from 1 inside the chunk, not by file line. A
   chunk that only moves in the file, for example after a rebase, keeps its text and its saved
   result. A push that grows or shrinks a hunk above it in the same file can still move the chunk
@@ -44,13 +44,15 @@ replaces Warden in this repository. This project started as part of
   request's head commit, for up to 4 rounds in each chunk review. The tools read through the GitHub
   API, so the Worker needs no container. `read_definition` uses the Lezer entity extractor of the
   Symbols tab, not a code index.
+- **Answer tool.** A reviewer with tools answers through a `submit_answer` call. On the last round,
+  `submit_answer` is the only tool, and the model must call it. A text answer is still accepted.
 - **Agent guides.** The system prompt of each chunk review has the root `AGENTS.md` and the
   `AGENTS.md` nearest to the chunk's file. Each guide stops at 12,000 characters, and all of them
   together at 50,000, so the step result stays under 1 MiB. The guides are read at the base commit,
   so a pull request cannot change the rules that review it. A pull request whose base is not the
   default branch gets no guides, because anyone who can push a branch can make it the base. When
-  they cannot be read, the review runs without them. A document that a guide links to is read at the
-  head, so the prompt calls it author text.
+  they cannot be read after the step's retries, the review runs without them. A document that a
+  guide links to is read at the head, so the prompt calls it author text.
 - **Saved results** in D1 (`chunk_reviews`, a drizzle schema with its migrations in `drizzle/`). The
   key is a SHA-256 of the scope, model, reviewer, system prompt, and user prompt. The user prompt is
   the pull request's title and description (at most 4,000 characters), the file list, then the
@@ -72,10 +74,11 @@ replaces Warden in this repository. This project started as part of
   The review removes the label, so adding it again starts another review.
 - **Untrusted text.** The pull request's author can steer the reviewers, so the prompts treat the
   title, the description, the diff, and the files as text to review. In posted text, a zero-width
-  space goes after `@`, `#`, `GH-`, `<`, and the `&` of an entity. So model text and file paths
-  cannot mention users, reference issues, or add HTML. Links to github.com go through
-  redirect.github.com, so they do not show in the timeline of the linked issue. The check run is not
-  a security gate by itself.
+  space goes after `@`, `#`, `GH-`, `<`, the `&` of an entity, and the `]` of `](` and `]:`. So
+  model text and file paths cannot mention users, reference issues, add HTML, or show an image or a
+  link whose text hides its address. A link shows as its Markdown source, and its address stays a
+  link that shows its host. Links to github.com go through redirect.github.com, so they do not show
+  in the timeline of the linked issue. The check run is not a security gate by itself.
 - **Posted comments.** Each comment starts with a fingerprint, and a run does not post a finding
   again on a line where the app already posted it. The finding's body goes last, so a code block
   that it leaves open cannot take in the suggestion.
@@ -84,15 +87,21 @@ replaces Warden in this repository. This project started as part of
   resolved by a user who can push, the check run passes, with `Resolved:` before its title. A thread
   that opens again fails it again. The app gets these changes from the `pull_request_review_thread`
   event, so its webhook must subscribe to "Pull request review thread". A review whose findings are
-  all in resolved threads from an earlier run also passes. A failed chunk review has no thread, so
-  it keeps the check red. A failed check run also shows a `Dismiss findings` button. When a user who
-  can push clicks it, the app gets a `check_run` event with the `requested_action` action, and the
-  check run passes, with `Dismissed:` before its title and the external id `dismissed`. Resolved
-  threads no longer change a dismissed check run. The webhook must subscribe to "Check run" for the
-  button.
+  all in resolved threads from an earlier run also passes. A failed chunk review or a too-long line
+  has no thread, so it keeps the check red. A failed check run also shows a `Dismiss findings`
+  button. When a user who can push clicks it, the app gets a `check_run` event with the
+  `requested_action` action, and the check run passes, with `Dismissed:` before its title and the
+  external id `dismissed`. Resolved threads no longer change a dismissed check run. The webhook must
+  subscribe to "Check run" for the button.
+- **Summary comment.** Each pull request has one `## Revision City` comment, with one section for
+  each run. A run edits the comment in place. Before the edit, the run takes a lock in D1
+  (`summary_comment_locks`, migration `drizzle/0001_summary-comment-locks.sql`) with a lease of 60
+  seconds, so two runs cannot overwrite each other.
 - **Limits.** For each pull request, at most 150 chunks and 700,000 bytes of paths and patches get a
-  review. A file whose diff is longer than 1,500 lines gets no review. One review posts at most 50
-  new comments. The check run lists every finding, and it cuts its text at 65,000 characters, below
+  review. A file whose diff is longer than 1,500 lines, or has a line longer than 5,000 characters,
+  gets no review, and a chunk stops at 40,000 characters of diff text. A file with such a long line
+  also fails the check, because the line can hide a change. One review posts at most 50 new
+  comments. The check run lists every finding, and it cuts its text at 65,000 characters, below
   GitHub's limit of 65,535.
 
 ## Phases
@@ -104,12 +113,51 @@ replaces Warden in this repository. This project started as part of
    needs the one-time setup in #790: the D1 database and its migrations, the app's permissions and
    webhook, and the secrets.
 3. **Retire Warden.** After a few PRs where both reviewers agree, delete `warden.toml`,
-   `.depot/workflows/ci-warden.yml`, and the summary script, and update CONTRIBUTING and the
+   `.depot/workflows/ci-warden.yml`, and Warden's summary script, and update CONTRIBUTING and the
    [review consolidation](../review-consolidation/plan.md) plan.
 
 Later: a manual review request that can go over the 1,500-line limit, then billing per installation,
 then open the allowlist. `REVIEW_MODEL` is not secret, so it becomes a plain variable instead of a
 secret, and later a config value.
+
+## Harness reviewer
+
+The review moves from its own tool loop to a coding harness. The harness is OpenCode, and the
+Cloudflare Agents SDK (`agents/harness/opencode`) runs it in a Durable Object. The model is DeepSeek
+V4.1 Flash on OpenRouter. When `REVIEW_MODEL` names the same model, a comparison with the tool loop
+measures only the harness.
+
+- **A Worker and an install root of its own.** The harness is the Worker
+  `revision-city-harness-opencode`, in `workspaces/harnesses/opencode/`. That directory has its own
+  `package.json` and `bun.lock`, and it is not a part of the web-apps workspace. More harnesses are
+  planned, each in its own directory there, so that a harness does not move the versions of another
+  harness or of the apps. The Worker has no public host. revision.city will call its `ReviewAgent`
+  Durable Object through a binding.
+- **Not in the `revision-city` Worker.** The Workers runtime parses each module of a Worker when the
+  Worker starts, also a module that no code imports. OpenCode adds 23 MiB, and a dynamic import does
+  not prevent the parse. In a local measurement, the `revision-city` Worker with OpenCode parses for
+  about 555 ms at each start. Without OpenCode, it parses for about 190 ms.
+- **The model provider is the one in OpenCode.** The provider in the Agents SDK
+  (`agents/models/opencode`) needs a package that OpenCode included only until 2.2.0. Thus the
+  Worker uses the OpenRouter provider of OpenCode with the `OPENROUTER_API_KEY` secret.
+- **OpenCode loads on the first prompt.** An import at the top of the module runs all of OpenCode
+  when the harness Worker starts: about 250 ms of the 1 second that Cloudflare allows. With the
+  dynamic import, the start runs about 20 ms of code.
+
+Steps, each a small PR:
+
+1. **Harness Worker.** The `ReviewAgent` Durable Object, which answers one prompt and reports the
+   tokens and the cost. A smoke test sends a prompt through OpenCode to a local model server. Done.
+2. **Live proof.** revision.city binds `ReviewAgent` and sends one prompt in each review run. It
+   logs the answer as a wide event. This step needs the `OPENROUTER_API_KEY` secret on the harness
+   Worker.
+3. **Reviewer tools.** The tools of OpenCode need a local disk. Read-only tools for the pull request
+   head and a tool that submits the findings replace them.
+4. **Reviews through the agent.** The Workflow sends each chunk review to `ReviewAgent`, behind a
+   setting.
+5. **Comparison.** Findings, cost, and time for the harness and the tool loop on the same pull
+   requests.
+6. **Delete the tool loop.**
 
 ## Open questions
 

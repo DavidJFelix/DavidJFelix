@@ -1,21 +1,26 @@
 import type {SyntaxNode} from '@lezer/common'
 import {parser} from '@lezer/go'
 
-import type {EntityKind, EntitySpec, ResolveEntityNameParams} from '../entity'
-import {anonymousScopeProp, entityProp} from '../entity'
+import type {ResolveSymbolNameParams, SymbolKind, SymbolSpec} from '../code-symbol'
+import {anonymousScopeProp, symbolProp} from '../code-symbol'
 
 // The declaration keyword wraps one or more specs (`var ( a = 1; b = 2 )`), so
-// the specs are the entities -- registering the wrapper would collapse a group
+// the specs are the symbols -- registering the wrapper would collapse a group
 // into a single symbol.
-const SPECS: Record<string, EntitySpec> = {
+const SPECS: Record<string, SymbolSpec> = {
   FunctionDecl: {kind: 'function', name: ['DefName'], container: true},
-  MethodDecl: {kind: 'method', name: ['FieldName'], container: true},
+  MethodDecl: {
+    kind: 'method',
+    name: ['FieldName'],
+    container: true,
+    resolveOwner: resolveReceiverType,
+  },
   TypeSpec: {kind: 'type', name: ['DefName'], container: true, resolveKind: resolveTypeKind},
   ConstSpec: {kind: 'constant', name: ['DefName'], scope: 'top-level'},
   VarSpec: {kind: 'variable', name: ['DefName'], scope: 'top-level'},
 }
 
-function resolveTypeKind({node}: ResolveEntityNameParams): EntityKind {
+function resolveTypeKind({node}: ResolveSymbolNameParams): SymbolKind {
   for (let child: SyntaxNode | null = node.firstChild; child !== null; child = child.nextSibling) {
     if (child.type.name === 'StructType') {
       return 'struct'
@@ -27,6 +32,18 @@ function resolveTypeKind({node}: ResolveEntityNameParams): EntityKind {
   return 'type'
 }
 
+// Nodes that wrap the receiver type name: `*Widget`, `Stack[T]`.
+const RECEIVER_WRAPPERS = new Set(['PointerType', 'ParameterizedType'])
+
+// `func (w *Widget) Render()` belongs to `Widget`.
+function resolveReceiverType({node, source}: ResolveSymbolNameParams): string | undefined {
+  let current = node.getChild('Parameters')?.getChild('Parameter')?.lastChild ?? null
+  while (current !== null && RECEIVER_WRAPPERS.has(current.type.name)) {
+    current = current.getChild('TypeName') ?? current.getChild('ParameterizedType')
+  }
+  return current?.type.name === 'TypeName' ? source.slice(current.from, current.to) : undefined
+}
+
 export const goParser = parser.configure({
-  props: [entityProp.add(SPECS), anonymousScopeProp.add({FunctionLiteral: true})],
+  props: [symbolProp.add(SPECS), anonymousScopeProp.add({FunctionLiteral: true})],
 })

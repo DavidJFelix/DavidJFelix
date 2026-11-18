@@ -1,11 +1,16 @@
-import {IconArrowRightShort} from '@pierre/icons'
+import {IconArrowRightShort, IconBrandGithub} from '@pierre/icons'
 import {Link} from '@tanstack/react-router'
 import {memo} from 'react'
 
 import {css} from 'styled-system/css'
 
-import {useGitHubSession} from '@/diffs/components/hooks/use-github-session'
+import {
+  getCurrentReturnPath,
+  getGitHubLoginURL,
+  useGitHubSession,
+} from '@/diffs/components/hooks/use-github-session'
 import {usePullRequestGroups} from '@/diffs/components/hooks/use-pull-request-groups'
+import {Button} from '@/diffs/components/ui/button'
 import type {
   PullRequestGroup,
   PullRequestGroupKind,
@@ -43,6 +48,25 @@ export const PullRequestList = memo(function PullRequestList() {
     return <p className={mutedTextClass}>GitHub could not list your pull requests just now.</p>
   }
 
+  if (state.status === 'sign-in-again') {
+    return (
+      <div
+        className={css({
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          gap: '2',
+        })}
+      >
+        <p className={mutedTextClass}>GitHub rejected your sign-in. Sign in again.</p>
+        <Button type="button" size="sm" onClick={navigateToLogin}>
+          <IconBrandGithub className={css({w: '3.5', h: '3.5', mr: '1.5'})} />
+          Sign in again
+        </Button>
+      </div>
+    )
+  }
+
   const groups = state.groups.filter((group) => group.pullRequests.length > 0)
   if (groups.length === 0) {
     return <p className={mutedTextClass}>No open pull requests in your reach right now.</p>
@@ -56,6 +80,10 @@ export const PullRequestList = memo(function PullRequestList() {
     </div>
   )
 })
+
+function navigateToLogin(): void {
+  window.location.assign(getGitHubLoginURL(getCurrentReturnPath()))
+}
 
 function PullRequestGroupSection({group}: {group: PullRequestGroup}) {
   return (

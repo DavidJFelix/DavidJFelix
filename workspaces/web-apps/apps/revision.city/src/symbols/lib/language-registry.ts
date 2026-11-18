@@ -9,9 +9,9 @@ export interface LanguageDefinition {
   readonly loadParser: () => Promise<Parser>
 }
 
-// Every first-party CodeMirror grammar that yields nameable entities. The
+// Every first-party CodeMirror grammar that yields nameable symbols. The
 // remaining first-party grammars (html, xml, lezer) parse fine but have no
-// entity vocabulary worth reporting in a review, so they are left out rather
+// symbol vocabulary worth reporting in a review, so they are left out rather
 // than shipped as empty results.
 export const LANGUAGES: readonly LanguageDefinition[] = [
   {
@@ -83,8 +83,14 @@ export const LANGUAGES: readonly LanguageDefinition[] = [
   {
     id: 'sass',
     label: 'Sass',
-    extensions: ['.scss', '.sass'],
+    extensions: ['.scss'],
     loadParser: async () => (await import('./languages/css')).sassParser,
+  },
+  {
+    id: 'sass-indented',
+    label: 'Sass (indented)',
+    extensions: ['.sass'],
+    loadParser: async () => (await import('./languages/css')).indentedSassParser,
   },
   {
     id: 'markdown',

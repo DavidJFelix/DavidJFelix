@@ -59,6 +59,7 @@ export function DraftAnnotation({annotation, itemId, onCancel, onSave}: DraftAnn
         <CommentAuthorAvatar seed={persona.name} />
         <textarea
           ref={textareaRef}
+          aria-label="Comment"
           value={message}
           onChange={({currentTarget}) => {
             setMessage(currentTarget.value)
@@ -86,7 +87,7 @@ export function DraftAnnotation({annotation, itemId, onCancel, onSave}: DraftAnn
             rounded: 'diffs.sm',
             bg: 'transparent',
             py: '1.5',
-            fontSize: '[14px]',
+            fontSize: {base: '[16px]', md: '[14px]'},
             color: '[inherit]',
             _placeholder: {
               color: 'var(--diffs-popover-muted-fg, var(--muted-foreground))',
@@ -128,6 +129,7 @@ export function DraftAnnotation({annotation, itemId, onCancel, onSave}: DraftAnn
           type="submit"
           variant="default"
           size="icon-md"
+          aria-label="Submit"
           disabled={trimmedMessage.length === 0}
           className={css({
             display: {base: 'none', md: 'flex'},

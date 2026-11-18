@@ -1,16 +1,14 @@
+import {createGitHubApiUrl, createGitHubHeaders, type GitHubFetch} from '@/lib/github-http'
+
 import type {GitHubAccessRemedy} from './github-access-remedy'
+import {type AppInstallation, readAppInstallations} from './github-app-installations'
 import {encodeURLSegment, type GitHubDiffSource, type GitHubRepo} from './github-diff-source'
 import {isNullish} from './nullish'
 
-const GITHUB_API_ROOT = 'https://api.github.com'
-const GITHUB_API_VERSION = '2022-11-28'
 // The app's install page. Its slug is public -- the tail of the app's
 // github.com/apps URL -- and hardcoded because there is one app today. Running a
 // second environment would mean a second app, and this would become config.
 const GITHUB_APP_INSTALL_URL = 'https://github.com/apps/revisioncity/installations/new'
-const GITHUB_INSTALLATION_SETTINGS_ROOT = 'https://github.com/settings/installations'
-const GITHUB_ORGANIZATIONS_ROOT = 'https://github.com/organizations'
-const USER_AGENT = 'revision-city-diffs'
 // GitHub answers 404 rather than 403 for repositories a token cannot see, so
 // all three statuses mean "look closer" rather than "the diff is missing".
 const ACCESS_FAILURE_STATUSES = new Set([401, 403, 404])
@@ -19,18 +17,13 @@ const SIGN_IN_AGAIN_FAILURE: GitHubAccessFailure = {
   remedy: {kind: 'sign-in-again'},
 }
 
-type AccessFetch = (
-  input: Parameters<typeof fetch>[0],
-  init?: Parameters<typeof fetch>[1],
-) => ReturnType<typeof fetch>
-
 export interface GitHubAccessFailure {
   message: string
   remedy?: GitHubAccessRemedy
 }
 
 export interface DiagnoseGitHubAccessParams {
-  fetch?: AccessFetch
+  fetch?: GitHubFetch
   // The signed-in login, used only to tell the visitor's own account apart from
   // someone else's, where granting access may be another person's call.
   login?: string
@@ -115,7 +108,7 @@ async function describeSignedInFailure({
 }
 
 interface DescribeMissingRepoAccessParams {
-  fetcher: AccessFetch
+  fetcher: GitHubFetch
   login?: string
   repo: GitHubRepo
   token: string
@@ -132,13 +125,13 @@ async function describeMissingRepoAccess({
   token,
 }: DescribeMissingRepoAccessParams): Promise<GitHubAccessFailure> {
   const repoName = formatRepo(repo)
-  const installations = await readGitHubAppInstallations(token, fetcher)
+  const installations = await readAppInstallations({fetcher, token})
   const ownerInstallation = findInstallationForOwner(installations, repo.owner)
   const grantURL =
     !isNullish(ownerInstallation) &&
     !isNullish(login) &&
     canConfigureInstallation(ownerInstallation, login)
-      ? ownerInstallation.configureURL
+      ? ownerInstallation.settingsURL
       : GITHUB_APP_INSTALL_URL
   // Granting access to someone else's account or organization may be a
   // permission the visitor does not hold; GitHub turns the same flow into a
@@ -155,7 +148,7 @@ async function describeMissingRepoAccess({
 }
 
 export interface ResolveGitHubManageAccessURLParams {
-  fetch?: AccessFetch
+  fetch?: GitHubFetch
   // The signed-in login, which decides whether an installation's own settings
   // page is one the visitor can open.
   login: string
@@ -171,16 +164,11 @@ export async function resolveGitHubManageAccessURL({
   login,
   token,
 }: ResolveGitHubManageAccessURLParams): Promise<string> {
-  const installations = await readGitHubAppInstallations(token, fetcher)
+  const installations = await readAppInstallations({fetcher, token})
   const soleInstallation = installations.length === 1 ? installations[0] : undefined
   return !isNullish(soleInstallation) && canConfigureInstallation(soleInstallation, login)
-    ? soleInstallation.configureURL
+    ? soleInstallation.settingsURL
     : GITHUB_APP_INSTALL_URL
-}
-
-interface GitHubAppInstallation {
-  accountLogin?: string
-  configureURL: string
 }
 
 // The installation list covers every installation the visitor can reach through
@@ -189,59 +177,23 @@ interface GitHubAppInstallation {
 // member of an organization, gets a 404 there. The visitor is an admin of their
 // own account and nothing else is knowable, so everyone else goes through the
 // install page, where GitHub picks the account and handles who may configure it.
-function canConfigureInstallation(installation: GitHubAppInstallation, login: string): boolean {
-  return installation.accountLogin?.toLowerCase() === login.toLowerCase()
-}
-
-// Lists the app's installations this token can see, each paired with the page
-// where its repository selection is edited.
-async function readGitHubAppInstallations(
-  token: string,
-  fetcher: AccessFetch,
-): Promise<GitHubAppInstallation[]> {
-  const data = await fetchGitHubJSON('/user/installations', token, fetcher)
-  const entries = isRecord(data) && Array.isArray(data.installations) ? data.installations : []
-
-  return entries.filter(isRecord).map((entry) => ({
-    accountLogin: readAccountLogin(entry),
-    configureURL: readInstallationConfigureURL(entry),
-  }))
+function canConfigureInstallation(installation: AppInstallation, login: string): boolean {
+  return installation.accountLogin.toLowerCase() === login.toLowerCase()
 }
 
 function findInstallationForOwner(
-  installations: readonly GitHubAppInstallation[],
+  installations: readonly AppInstallation[],
   owner: string,
-): GitHubAppInstallation | undefined {
+): AppInstallation | undefined {
   return installations.find(
-    (installation) => installation.accountLogin?.toLowerCase() === owner.toLowerCase(),
+    (installation) => installation.accountLogin.toLowerCase() === owner.toLowerCase(),
   )
-}
-
-function readAccountLogin(installation: Record<string, unknown>): string | undefined {
-  const account = installation.account
-  return isRecord(account) ? readOptionalString(account.login) : undefined
-}
-
-// GitHub reports the installation's own settings page, which is where
-// repository selection is edited. The URL is reconstructed only if that field
-// is missing, since the personal and organization forms differ.
-function readInstallationConfigureURL(installation: Record<string, unknown>): string {
-  const htmlURL = readOptionalString(installation.html_url)
-  if (!isNullish(htmlURL)) {
-    return htmlURL
-  }
-
-  const id = typeof installation.id === 'number' ? String(installation.id) : ''
-  const account = readAccountLogin(installation) ?? ''
-  return installation.target_type === 'Organization'
-    ? `${GITHUB_ORGANIZATIONS_ROOT}/${encodeURLSegment(account)}/settings/installations/${id}`
-    : `${GITHUB_INSTALLATION_SETTINGS_ROOT}/${id}`
 }
 
 async function fetchGitHubStatus(
   path: string,
   token: string,
-  fetcher: AccessFetch,
+  fetcher: GitHubFetch,
 ): Promise<number> {
   try {
     const response = await fetchGitHub(path, token, fetcher)
@@ -251,39 +203,13 @@ async function fetchGitHubStatus(
   }
 }
 
-async function fetchGitHubJSON(
-  path: string,
-  token: string,
-  fetcher: AccessFetch,
-): Promise<unknown> {
-  try {
-    const response = await fetchGitHub(path, token, fetcher)
-    return response.ok ? await response.json() : undefined
-  } catch {
-    return undefined
-  }
-}
-
-function fetchGitHub(path: string, token: string, fetcher: AccessFetch): Promise<Response> {
-  return fetcher(new URL(path, GITHUB_API_ROOT).href, {
+function fetchGitHub(path: string, token: string, fetcher: GitHubFetch): Promise<Response> {
+  return fetcher(createGitHubApiUrl({path}), {
     cache: 'no-store',
-    headers: {
-      Accept: 'application/vnd.github+json',
-      Authorization: `Bearer ${token}`,
-      'User-Agent': USER_AGENT,
-      'X-GitHub-Api-Version': GITHUB_API_VERSION,
-    },
+    headers: createGitHubHeaders({media: 'json', authorization: {kind: 'token', token}}),
   })
 }
 
 function formatRepo(repo: GitHubRepo): string {
   return `${repo.owner}/${repo.repo}`
-}
-
-function readOptionalString(value: unknown): string | undefined {
-  return typeof value === 'string' && value !== '' ? value : undefined
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
 }

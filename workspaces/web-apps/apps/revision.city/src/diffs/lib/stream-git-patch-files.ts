@@ -86,6 +86,9 @@ async function consumeAvailableStreamedFiles(
 // each parsed file is complete before it is appended to the viewer.
 function createGitPatchFileStreamParser(): GitPatchFileStreamParser {
   let buffer = ''
+  // A search on a string built with += copies all of it, so chunks with no file start wait here.
+  let heldChunks: string[] = []
+  let streamTail = ''
   let currentFileBoundaryIndex: number | undefined
   let nextBoundarySearchIndex = 0
   let sawFileBoundary = false
@@ -133,10 +136,22 @@ function createGitPatchFileStreamParser(): GitPatchFileStreamParser {
       if (chunk.length === 0) {
         return
       }
-      buffer += chunk
+      const scanText = streamTail + chunk
+      streamTail = scanText.slice(-GIT_FILE_BOUNDARY_SCAN_OVERLAP)
+      if (
+        buffer.length >= GIT_FILE_BOUNDARY_WITH_NEWLINE.length &&
+        !scanText.includes(GIT_FILE_BOUNDARY_WITH_NEWLINE)
+      ) {
+        heldChunks.push(chunk)
+        return
+      }
+      buffer += heldChunks.join('') + chunk
+      heldChunks = []
     },
     takeAvailableFile,
     finish() {
+      buffer += heldChunks.join('')
+      heldChunks = []
       const fileText = takeAvailableFile()
       if (!isNullish(fileText)) {
         return {fileText}

@@ -1,12 +1,12 @@
 import {IconBraces} from '@pierre/icons'
-import {memo} from 'react'
+import {memo, type ReactNode} from 'react'
 
 import {css, cx} from 'styled-system/css'
 import {isNullish} from '@/diffs/lib/nullish'
 import {CHANGE_ORDER, CHANGE_STYLES, KIND_LABELS} from '@/symbols/lib/change-presentation'
-import type {EntityChange} from '@/symbols/lib/entity'
+import type {SymbolChange} from '@/symbols/lib/code-symbol'
 import {SequenceEditRows} from './sequence-edit-rows'
-import type {EntityDiffEntry} from './use-entity-diffs'
+import type {SymbolDiffEntry} from './use-symbol-diffs'
 
 export interface SymbolSelection {
   itemId: string
@@ -15,7 +15,8 @@ export interface SymbolSelection {
 }
 
 interface SymbolChangesListProps {
-  entries: readonly EntityDiffEntry[]
+  entries: readonly SymbolDiffEntry[]
+  onRetry?: () => void
   onSelectItem?: (itemId: string) => void
   onSelectSymbol?: (selection: SymbolSelection) => void
   // False for diff sources this cannot read at all: a Codeberg compare, and the
@@ -25,6 +26,7 @@ interface SymbolChangesListProps {
 
 export const SymbolChangesList = memo(function SymbolChangesList({
   entries,
+  onRetry,
   onSelectItem,
   onSelectSymbol,
   supported,
@@ -32,8 +34,10 @@ export const SymbolChangesList = memo(function SymbolChangesList({
   if (!supported) {
     return (
       <EmptyState title="No symbols for this diff">
-        Reading a diff by symbol needs both revisions of each file. This viewer can read them for
-        GitHub diffs, and for Codeberg pull requests and commits.
+        <p>
+          Reading a diff by symbol needs both revisions of each file. This viewer can read them for
+          GitHub diffs, and for Codeberg pull requests and commits.
+        </p>
       </EmptyState>
     )
   }
@@ -42,22 +46,35 @@ export const SymbolChangesList = memo(function SymbolChangesList({
   const pendingCount = entries.filter(
     (entry) => entry.status === 'pending' || entry.status === 'loading',
   ).length
-  const failure = entries.find((entry) => entry.status === 'error')?.error
+  const notRead = findNotRead(entries)
+  const failed = notRead.filter((entry) => entry.status === 'error')
 
   if (sections.length === 0 && pendingCount === 0) {
     // GitHub's own message is the useful one here: it says whether the repo was
     // unreachable or the anonymous rate limit ran out, and signing in fixes both.
-    return failure === undefined ? (
+    if (entries.length > 0 && failed.length === entries.length) {
+      return (
+        <EmptyState title="Could not read this diff">
+          <p>{failed[0]?.error}</p>
+          {!isNullish(onRetry) && <RetryButton onRetry={onRetry} />}
+        </EmptyState>
+      )
+    }
+    return notRead.length === 0 ? (
       <EmptyState title="No symbol changes">
-        Nothing in this diff changed a function, class, or key that can be named.
+        <p>Nothing in this diff changed a function, class, or key that can be named.</p>
       </EmptyState>
     ) : (
-      <EmptyState title="Could not read this diff">{failure}</EmptyState>
+      <EmptyState title="No symbol changes in the files that were read">
+        <NotReadNote entries={entries} onRetry={onRetry} />
+      </EmptyState>
     )
   }
 
   return (
     <SymbolSections
+      entries={entries}
+      onRetry={onRetry}
       onSelectItem={onSelectItem}
       onSelectSymbol={onSelectSymbol}
       pendingCount={pendingCount}
@@ -67,13 +84,17 @@ export const SymbolChangesList = memo(function SymbolChangesList({
 })
 
 interface SymbolSectionsProps {
+  entries: readonly SymbolDiffEntry[]
+  onRetry?: () => void
   onSelectItem?: (itemId: string) => void
   onSelectSymbol?: (selection: SymbolSelection) => void
   pendingCount: number
-  sections: readonly EntityDiffEntry[]
+  sections: readonly SymbolDiffEntry[]
 }
 
 function SymbolSections({
+  entries,
+  onRetry,
   onSelectItem,
   onSelectSymbol,
   pendingCount,
@@ -104,26 +125,92 @@ function SymbolSections({
         />
       ))}
       {pendingCount > 0 && (
-        <p
-          aria-live="polite"
-          className={css({
-            color: 'diffs.muted.foreground',
-            px: '3',
-            py: '2',
-            fontSize: 'xs',
-            lineHeight: '[1rem]',
-          })}
-        >
+        <p aria-live="polite" className={MUTED_LINE}>
           Reading {pendingCount} more {pendingCount === 1 ? 'file' : 'files'}...
         </p>
       )}
+      <NotReadNote entries={entries} onRetry={onRetry} />
     </div>
+  )
+}
+
+const MUTED_LINE = css({
+  color: 'diffs.muted.foreground',
+  px: '3',
+  py: '2',
+  fontSize: 'xs',
+  lineHeight: '[1rem]',
+})
+
+// A file with no grammar (language null) is not in this list: the tab never
+// reads such files, and that is a known limit.
+function findNotRead(entries: readonly SymbolDiffEntry[]): readonly SymbolDiffEntry[] {
+  return entries.filter((entry) => entry.status === 'error' || entry.diff?.skipped === 'too-large')
+}
+
+interface NotReadNoteProps {
+  entries: readonly SymbolDiffEntry[]
+  onRetry?: () => void
+}
+
+// One closed line, so a diff with many skipped files stays quiet until the
+// reader opens it.
+function NotReadNote({entries, onRetry}: NotReadNoteProps) {
+  const files = findNotRead(entries)
+  if (files.length === 0) {
+    return null
+  }
+  const canRetry = files.some((entry) => entry.status === 'error')
+  return (
+    <details className={cx(MUTED_LINE, css({textAlign: 'left'}))}>
+      <summary
+        className={css({
+          cursor: 'pointer',
+          rounded: 'sm',
+          outline: 'none',
+          _hover: {color: 'diffs.foreground'},
+          _focusVisible: {boxShadow: '[0 0 0 2px var(--ring)]'},
+        })}
+      >
+        {files.length} {files.length === 1 ? 'file' : 'files'} not read
+      </summary>
+      <ul className={css({display: 'flex', flexDirection: 'column', gap: '1', pt: '2'})}>
+        {files.map((entry) => (
+          <li key={entry.itemId} className={css({wordBreak: 'break-all'})}>
+            <span className={css({color: 'diffs.foreground'})}>{entry.name}</span>:{' '}
+            {entry.status === 'error' ? entry.error : 'too large'}
+          </li>
+        ))}
+      </ul>
+      {canRetry && !isNullish(onRetry) && <RetryButton onRetry={onRetry} />}
+    </details>
+  )
+}
+
+function RetryButton({onRetry}: {onRetry: () => void}) {
+  return (
+    <button
+      type="button"
+      className={css({
+        mt: '2',
+        cursor: 'pointer',
+        rounded: 'sm',
+        fontWeight: 'medium',
+        textDecoration: 'underline',
+        outline: 'none',
+        _hover: {color: 'diffs.foreground'},
+        _focusVisible: {boxShadow: '[0 0 0 2px var(--ring)]'},
+      })}
+      onClick={onRetry}
+    >
+      Retry
+    </button>
   )
 }
 
 // Totals across the whole diff, in the same colors and words the rows use, so
 // it reads as a legend as much as a count.
-function ChangeSummary({sections}: {sections: readonly EntityDiffEntry[]}) {
+function ChangeSummary({sections}: {sections: readonly SymbolDiffEntry[]}) {
   const changes = sections.flatMap((entry) => entry.diff?.changes ?? [])
   const buckets = CHANGE_ORDER.map((type) => ({
     type,
@@ -152,12 +239,19 @@ function ChangeSummary({sections}: {sections: readonly EntityDiffEntry[]}) {
 }
 
 interface FileSectionProps {
-  entry: EntityDiffEntry
+  entry: SymbolDiffEntry
   onSelectItem?: (itemId: string) => void
   onSelectSymbol?: (selection: SymbolSelection) => void
 }
 
-function FileSection({entry, onSelectItem, onSelectSymbol}: FileSectionProps) {
+// Results stream in one file at a time. The memo stops each result from drawing
+// every earlier file again, but only while an unchanged file gets the same entry
+// object and the same callbacks.
+const FileSection = memo(function FileSection({
+  entry,
+  onSelectItem,
+  onSelectSymbol,
+}: FileSectionProps) {
   const changes = entry.diff?.changes ?? []
   return (
     <section>
@@ -205,17 +299,17 @@ function FileSection({entry, onSelectItem, onSelectSymbol}: FileSectionProps) {
       </div>
     </section>
   )
-}
+})
 
 interface SymbolRowProps {
-  change: EntityChange
+  change: SymbolChange
   itemId: string
   onSelectSymbol?: (selection: SymbolSelection) => void
 }
 
 function SymbolRow({change, itemId, onSelectSymbol}: SymbolRowProps) {
   const style = CHANGE_STYLES[change.type]
-  // A deleted entity only exists on the left; everything else is anchored to
+  // A deleted symbol only exists on the left; everything else is anchored to
   // where it now lives.
   const side = change.type === 'deleted' ? 'deletions' : 'additions'
   const lineNumber =
@@ -298,6 +392,7 @@ function SymbolRow({change, itemId, onSelectSymbol}: SymbolRowProps) {
           >
             <span style={{color: style.color}}>{style.label}</span> {KIND_LABELS[change.kind]}
             {!isNullish(change.previousQualifiedName) && ` · was ${change.previousQualifiedName}`}
+            {change.bodyChanged === true && ' · body edited'}
             {!isNullish(change.detail) &&
               ` · ${change.detail.lengthBefore} → ${change.detail.lengthAfter} elements`}
           </span>
@@ -315,7 +410,7 @@ function SymbolRow({change, itemId, onSelectSymbol}: SymbolRowProps) {
 }
 
 interface EmptyStateProps {
-  children: string
+  children: ReactNode
   title: string
 }
 
@@ -340,7 +435,7 @@ function EmptyState({children, title}: EmptyStateProps) {
       <IconBraces size={24} className={css({mb: '2'})} />
       <div className={css({display: 'flex', flexDirection: 'column'})}>
         <strong className={css({fontWeight: 'medium'})}>{title}</strong>
-        <p>{children}</p>
+        {children}
       </div>
     </div>
   )

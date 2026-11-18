@@ -108,6 +108,9 @@ export default defineConfig({
               color: 'text.muted',
             },
             '& ul, & ol': {pl: '6', mb: '4', color: 'text'},
+            // Preflight sets list-style to none; long-form lists and footnotes need their markers.
+            '& ul': {listStyleType: 'disc'},
+            '& ol': {listStyleType: 'decimal'},
             '& li': {mb: '2'},
             '& code': {
               bg: 'bg.element',

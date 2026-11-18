@@ -1,10 +1,12 @@
 import {expect, test} from 'bun:test'
 import {
+  type PlanAffectedParams,
   WEB_APP_TARGETS,
   type WebAppTarget,
   isUsableScmBase,
   parseAffectedPaths,
   planAffected,
+  planAffectedOrAll,
 } from './plan-affected-apps'
 
 const target = (overrides: Partial<WebAppTarget> = {}): WebAppTarget => ({
@@ -16,6 +18,9 @@ const target = (overrides: Partial<WebAppTarget> = {}): WebAppTarget => ({
   deploy: 'wrangler',
   envSuffix: 'EXAMPLE_COM',
   devEnv: '',
+  d1Database: '',
+  productionUrl: '',
+  probes: [],
   ...overrides,
 })
 
@@ -49,6 +54,61 @@ test('deploys an app with a dev environment as both workers', () => {
   ])
 })
 
+test('keeps the D1 database on the production entry only', () => {
+  // The deploy applies migrations for the entry's database. The dev worker
+  // binds no D1, so its entry must not apply production's migrations again.
+  const targets = [target({devEnv: 'dev', d1Database: 'example-com'})]
+
+  expect(
+    planAffected({affectedPaths: ['apps/example.com'], kind: 'deploy', targets}).map(
+      (entry) => entry.d1Database,
+    ),
+  ).toEqual(['example-com', ''])
+})
+
+test('keeps the production URL on the production deploy entry only', () => {
+  // The deploy smokes the entry's production URL. The dev worker and the
+  // previews do not serve the custom domain, so their entries must skip it.
+  const withDev = [target({devEnv: 'dev', productionUrl: 'https://example.com'})]
+  const productionOnly = [target({productionUrl: 'https://example.com'})]
+  const urls = (params: Omit<PlanAffectedParams, 'affectedPaths'>) =>
+    planAffected({affectedPaths: ['apps/example.com'], ...params}).map(
+      (entry) => entry.productionUrl,
+    )
+
+  expect(urls({kind: 'deploy', targets: withDev})).toEqual(['https://example.com', ''])
+  expect(urls({kind: 'deploy', targets: productionOnly})).toEqual(['https://example.com'])
+  expect(urls({kind: 'preview', targets: withDev})).toEqual([''])
+  expect(urls({kind: 'preview', targets: productionOnly})).toEqual([''])
+})
+
+test('keeps the probes on the production deploy entry only', () => {
+  // The dev worker binds no review Workflow, so its webhook answers 503 by
+  // design, and previews do not serve the custom domain.
+  const probes = [{method: 'POST', path: '/hook', status: 401}]
+  const withDev = [target({devEnv: 'dev', productionUrl: 'https://example.com', probes})]
+  const plannedProbes = (kind: 'preview' | 'deploy') =>
+    planAffected({affectedPaths: ['apps/example.com'], kind, targets: withDev}).map(
+      (entry) => entry.probes,
+    )
+
+  expect(plannedProbes('deploy')).toEqual([probes, []])
+  expect(plannedProbes('preview')).toEqual([[]])
+})
+
+test('probes revision.city production sign-in and the review webhook', () => {
+  const deploy = planAffected({affectedPaths: ['apps/revision.city'], kind: 'deploy'})
+  const production = deploy.find((entry) => entry.worker === 'revision-city')
+
+  expect(production?.probes.map((probe) => `${probe.method} ${probe.path} ${probe.status}`)).toEqual([
+    'GET /api/auth/github/config 200',
+    'POST /api/github/webhook 401',
+  ])
+  expect(WEB_APP_TARGETS.filter((app) => app.probes.length > 0).map((app) => app.dir)).toEqual([
+    'revision.city',
+  ])
+})
+
 test('skips apps that opt out of the shared matrix for that kind', () => {
   // onvibes.org's preview is a real worker with a teardown, so it keeps its
   // own workflow while still deploying through the matrix.
@@ -70,6 +130,68 @@ test('ignores affected packages that are not deployable apps', () => {
 
 test('returns nothing when no app is affected', () => {
   expect(planAffected({affectedPaths: [], kind: 'deploy', targets: [target()]})).toEqual([])
+})
+
+test('plans every matrix app when no app is affected', () => {
+  // A change to repo-root tooling affects no app in turbo's graph, but it can
+  // change every build, so every app previews and deploys with it.
+  const targets = [
+    target({dir: 'djf.io'}),
+    target({dir: 'onvibes.org', preview: 'none'}),
+    target({dir: 'ravrun'}),
+  ]
+
+  const preview = planAffectedOrAll({affectedPaths: [], kind: 'preview', targets})
+  expect(preview.all).toBe(true)
+  expect(preview.apps.map((app) => app.dir)).toEqual(['djf.io', 'ravrun'])
+
+  const deploy = planAffectedOrAll({affectedPaths: [], kind: 'deploy', targets})
+  expect(deploy.all).toBe(true)
+  expect(deploy.apps.map((app) => app.dir)).toEqual(['djf.io', 'onvibes.org', 'ravrun'])
+})
+
+test('plans only the affected app when one is affected', () => {
+  const targets = [target({dir: 'djf.io'}), target({dir: 'ravrun'})]
+
+  const {apps, all} = planAffectedOrAll({affectedPaths: ['apps/djf.io'], kind: 'preview', targets})
+  expect(all).toBe(false)
+  expect(apps.map((app) => app.dir)).toEqual(['djf.io'])
+})
+
+test('plans nothing when only an app outside the matrix is affected', () => {
+  // f311x previews and deploys through its own workflow. A change to it is not
+  // a tooling change, so it must not preview or deploy every other app.
+  const targets = [target({dir: 'f311x', preview: 'none', deploy: 'none'}), target({dir: 'ravrun'})]
+
+  for (const kind of ['preview', 'deploy'] as const) {
+    expect(planAffectedOrAll({affectedPaths: ['apps/f311x'], kind, targets})).toEqual({
+      apps: [],
+      all: false,
+    })
+  }
+})
+
+test('plans every matrix app when only a shared package is affected', () => {
+  // A package that no app depends on reaches no app in turbo's graph, the same
+  // as a repo-root tooling change.
+  const targets = [target({dir: 'ravrun'})]
+
+  const {apps, all} = planAffectedOrAll({affectedPaths: ['packages/theme'], kind: 'deploy', targets})
+  expect(all).toBe(true)
+  expect(apps.map((app) => app.dir)).toEqual(['ravrun'])
+})
+
+test('every app keeps its dev worker shape when every app is planned', () => {
+  // The registry's dev-environment apps still preview as their dev worker
+  // only, and still deploy as both workers.
+  const preview = planAffectedOrAll({affectedPaths: [], kind: 'preview'})
+  expect(preview.apps.map((app) => app.worker)).toContain('revision-city-dev')
+  expect(preview.apps.map((app) => app.worker)).not.toContain('revision-city')
+
+  const deploy = planAffectedOrAll({affectedPaths: [], kind: 'deploy'})
+  expect(deploy.apps.map((app) => app.worker)).toEqual(
+    expect.arrayContaining(['revision-city', 'revision-city-dev']),
+  )
 })
 
 test('parses turbo ls output past its version banner', () => {
@@ -115,4 +237,44 @@ test('registry covers every app in the workspace', async () => {
     .map((entry) => entry.name)
 
   expect(dirs.toSorted()).toEqual(WEB_APP_TARGETS.map((app) => app.dir).toSorted())
+})
+
+test('registry names the D1 database of every app with migrations', async () => {
+  // An app that adds `migrations_dir` without a registry entry would deploy
+  // with its migrations unapplied, which is the gap this field closes.
+  type WranglerToml = {
+    readonly d1_databases?: readonly {
+      readonly database_name: string
+      readonly migrations_dir?: string
+    }[]
+  }
+  for (const app of WEB_APP_TARGETS) {
+    const file = Bun.file(
+      new URL(`../workspaces/web-apps/apps/${app.dir}/wrangler.toml`, import.meta.url),
+    )
+    const config = (await file.exists()) ? (Bun.TOML.parse(await file.text()) as WranglerToml) : {}
+    const migrated = (config.d1_databases ?? []).filter((database) => database.migrations_dir)
+    expect(migrated.map((database) => database.database_name)).toEqual(
+      app.d1Database ? [app.d1Database] : [],
+    )
+  }
+})
+
+test('registry names the production URL of every app with a custom domain', async () => {
+  // The deploy smokes this URL. It must be the first custom domain in the
+  // app's wrangler.toml, so a domain added or removed there is not forgotten.
+  type WranglerToml = {
+    readonly routes?: readonly {readonly pattern: string; readonly custom_domain?: boolean}[]
+  }
+  for (const app of WEB_APP_TARGETS) {
+    const file = Bun.file(
+      new URL(`../workspaces/web-apps/apps/${app.dir}/wrangler.toml`, import.meta.url),
+    )
+    const config = (await file.exists()) ? (Bun.TOML.parse(await file.text()) as WranglerToml) : {}
+    const domain = (config.routes ?? []).find((route) => route.custom_domain)?.pattern
+    expect({dir: app.dir, productionUrl: app.productionUrl}).toEqual({
+      dir: app.dir,
+      productionUrl: domain ? `https://${domain}` : '',
+    })
+  }
 })

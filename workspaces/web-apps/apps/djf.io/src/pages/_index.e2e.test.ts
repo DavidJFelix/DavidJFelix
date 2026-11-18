@@ -11,8 +11,12 @@ test('home page renders heading and tagline', async ({page}) => {
 test('clicking anywhere on a recent-post card opens the post', async ({page}) => {
   await page.goto('/')
 
-  await page.locator('article').first().click()
-  await expect(page).toHaveURL(/\/blog\/2025-12-07-on-running\/?$/)
+  const card = page.locator('article').first()
+  const href = await card.getByRole('link').first().getAttribute('href')
+  expect(href).toMatch(/^\/blog\/[^/]+$/)
+
+  await card.click()
+  await expect(page).toHaveURL(new RegExp(`${href}/?$`))
 })
 
 test('home page links to blog', async ({page}) => {

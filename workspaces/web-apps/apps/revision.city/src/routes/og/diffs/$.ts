@@ -17,10 +17,9 @@ const CARD_MAX_AGE_SECONDS = 60 * 60
 // passing failure is not baked into the edge for the full hour.
 const FALLBACK_CARD_MAX_AGE_SECONDS = 5 * 60
 
-// The share card behind every /diffs/<path> link, at /og/diffs/<path>.png:
-// rendered on the Worker from the same text the page's og: tags carry, and
-// kept in the edge cache under the deployed version. Scrapers fetch it without
-// the visitor's cookie, so it asks GitHub only for what GitHub shows to anyone.
+// The card behind every /diffs/<path> link, at /og/diffs/<path>.png, drawn
+// from the same text as the page's og: tags. Scrapers fetch it without the
+// visitor's cookie, so it asks GitHub only for what GitHub shows to anyone.
 const card = ogCards({
   runtime: viteRuntime,
   version: readDeployedVersion,
@@ -47,8 +46,6 @@ const card = ogCards({
   },
 })
 
-// HEAD is registered beside GET, not left to Start's HEAD-to-GET fallback: the
-// handler answers both, so the route says so.
 export const Route = createFileRoute('/og/diffs/$')({
   server: {handlers: {GET: ({request}) => card(request), HEAD: ({request}) => card(request)}},
 })

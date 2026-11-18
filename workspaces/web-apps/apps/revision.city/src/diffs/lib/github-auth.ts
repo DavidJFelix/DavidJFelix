@@ -1,8 +1,12 @@
+import {createGitHubApiUrl, createGitHubHeaders, type GitHubFetch} from '@/lib/github-http'
+import {isRecord, readOptionalNumber, readOptionalString} from '@/lib/json-read'
+
 import {resolveGitHubManageAccessURL} from './github-repo-access'
 import {isNullish} from './nullish'
 import {
   decodeProxyState,
   encodeProxyState,
+  isSignInBroker,
   type PreviewAuthConfig,
   parseProxyCallbackURL,
   readPreviewAuthConfig,
@@ -11,9 +15,8 @@ import {
 
 const GITHUB_AUTHORIZE_URL = 'https://github.com/login/oauth/authorize'
 const GITHUB_TOKEN_URL = 'https://github.com/login/oauth/access_token'
-const GITHUB_USER_URL = 'https://api.github.com/user'
-const GITHUB_API_VERSION = '2022-11-28'
-const USER_AGENT = 'revision-city-diffs'
+// A slow GitHub must not hold up sign-out.
+const TOKEN_REVOKE_TIMEOUT_MS = 3000
 
 const AUTH_COOKIE_NAME = 'diffs-github-auth'
 const STATE_COOKIE_NAME = 'diffs-github-oauth-state'
@@ -32,11 +35,6 @@ const LOGIN_PATH = '/api/auth/github/login'
 // the cookie is site-wide rather than scoped to either subtree.
 const COOKIE_PATH = '/'
 
-type AuthFetch = (
-  input: Parameters<typeof fetch>[0],
-  init?: Parameters<typeof fetch>[1],
-) => ReturnType<typeof fetch>
-
 export interface GitHubAppCredentials {
   clientId: string
   clientSecret: string
@@ -44,7 +42,7 @@ export interface GitHubAppCredentials {
 
 export interface GitHubAuthOptions {
   credentials?: GitHubAppCredentials
-  fetch?: AuthFetch
+  fetch?: GitHubFetch
   previewConfig?: PreviewAuthConfig
 }
 
@@ -103,10 +101,13 @@ export function handleGitHubLoginRequest(
     ])
   }
 
-  // Running the dance for a preview: everything needed to finish rides in the
-  // `state` GitHub echoes back, so nothing is stored here. The requested
-  // callback is validated now and again on the way back.
-  const proxyAuthTo = parseProxyCallbackURL(requestURL.searchParams.get('proxyAuthTo'))
+  // Running the dance for a preview, on the dev worker only: everything needed
+  // to finish rides in the `state` GitHub echoes back, so nothing is stored
+  // here. The requested callback is validated now and again on the way back.
+  const isBroker = isSignInBroker(requestURL, previewConfig)
+  const proxyAuthTo = isBroker
+    ? parseProxyCallbackURL(requestURL.searchParams.get('proxyAuthTo'), previewConfig)
+    : undefined
   const proxyCSRF = requestURL.searchParams.get('state')
   const isProxying = !isNullish(proxyAuthTo) && !isNullish(proxyCSRF) && proxyCSRF !== ''
 
@@ -162,14 +163,16 @@ export async function handleGitHubOAuthCallbackRequest(
   const code = requestURL.searchParams.get('code')
   const state = requestURL.searchParams.get('state')
 
-  // Running the dance for a preview: hand the code to the callback it asked for
-  // and stop. Checked before the state cookie because there is deliberately no
-  // cookie here -- `state` carried everything across the round trip. The target
-  // is re-validated rather than trusted: it came back through GitHub, and the
-  // allowlist is what keeps a code from being aimed anywhere else.
-  const proxyState = decodeProxyState(state)
+  // Running the dance for a preview, on the dev worker only: hand the code to
+  // the callback it asked for and stop. Checked before the state cookie because
+  // there is deliberately no cookie here -- `state` carried everything across
+  // the round trip. The target is re-validated rather than trusted: it came back
+  // through GitHub, and the allowlist is what keeps a code from being aimed
+  // anywhere else.
+  const previewConfig = options.previewConfig ?? readPreviewAuthConfig()
+  const proxyState = isSignInBroker(requestURL, previewConfig) ? decodeProxyState(state) : undefined
   if (!isNullish(code) && !isNullish(proxyState)) {
-    const proxyAuthTo = parseProxyCallbackURL(proxyState.proxyAuthTo)
+    const proxyAuthTo = parseProxyCallbackURL(proxyState.proxyAuthTo, previewConfig)
     if (isNullish(proxyAuthTo)) {
       return createAuthTextResponse('Invalid sign-in target. Start the sign-in again.', 400, [
         clearStateCookie,
@@ -210,16 +213,23 @@ export async function handleGitHubOAuthCallbackRequest(
     },
     fetcher,
   )
-  if (isNullish(grant)) {
+  if (grant.kind === 'unavailable' && grant.status === 429) {
+    return createAuthTextResponse(
+      'GitHub is limiting sign-in requests from revision.city right now. Try again in a few minutes.',
+      503,
+      [clearStateCookie],
+    )
+  }
+  if (grant.kind !== 'granted') {
     return createAuthTextResponse('GitHub sign-in failed. Try again.', 502, [clearStateCookie])
   }
 
-  const user = await fetchGitHubUser(grant.accessToken, fetcher)
+  const user = await fetchGitHubUser(grant.grant.accessToken, fetcher)
   if (isNullish(user)) {
     return createAuthTextResponse('GitHub sign-in failed. Try again.', 502, [clearStateCookie])
   }
 
-  const session: GitHubAuthSession = {...grant, ...user}
+  const session: GitHubAuthSession = {...grant.grant, ...user}
   return createRedirectResponse(returnPath, [
     clearStateCookie,
     serializeSessionCookie(session, secure),
@@ -256,9 +266,29 @@ async function handleGitHubInstallationSetupRedirect({
   return handleGitHubLoginRequest(new Request(loginURL), options)
 }
 
-export function handleGitHubLogoutRequest(request: Request): Response {
+// Asks GitHub to revoke the token of this session, then clears the cookie, so a
+// copy of the cookie stops working at sign-out. The revoke is best effort: a
+// failure is logged and the sign-out continues. A browser sends its Origin
+// header with every POST, so a request that names another site is refused.
+export async function handleGitHubLogoutRequest(
+  request: Request,
+  options: GitHubAuthOptions = {},
+): Promise<Response> {
   const requestURL = new URL(request.url)
+  const origin = request.headers.get('origin')
+  if (!isNullish(origin) && origin !== requestURL.origin) {
+    return createAuthTextResponse('Sign out from this site.', 403)
+  }
   const returnPath = sanitizeReturnPath(requestURL.searchParams.get('returnTo'))
+  const session = readSessionCookie(request)
+  const credentials = options.credentials ?? readGitHubAppCredentials()
+  if (!isNullish(session) && !isNullish(credentials)) {
+    await revokeGitHubToken({
+      token: session.accessToken,
+      credentials,
+      fetcher: options.fetch ?? fetch,
+    })
+  }
   return createRedirectResponse(returnPath, [
     serializeExpiredCookie(AUTH_COOKIE_NAME, isSecureRequest(requestURL)),
   ])
@@ -368,12 +398,17 @@ export async function resolveGitHubAuth(
     },
     options.fetch ?? fetch,
   )
-  if (isNullish(grant)) {
+  // A transient failure keeps the cookie, so that the next request tries the
+  // refresh again. Only a refusal from GitHub ends the session.
+  if (grant.kind === 'unavailable') {
+    return {session: undefined, setCookieHeaders: []}
+  }
+  if (grant.kind === 'refused') {
     return {session: undefined, setCookieHeaders: expiredCookies}
   }
 
   const refreshed: GitHubAuthSession = {
-    ...grant,
+    ...grant.grant,
     login: session.login,
     avatarUrl: session.avatarUrl,
   }
@@ -410,45 +445,85 @@ interface GitHubTokenGrant {
   refreshTokenExpiresAt?: number
 }
 
+type GitHubTokenGrantOutcome = 'refused' | 'unavailable'
+
+type GitHubTokenGrantResult =
+  | {kind: 'granted'; grant: GitHubTokenGrant}
+  | {kind: 'refused'}
+  | {kind: 'unavailable'; status?: number}
+
+// github.com sometimes answers the exchange with 429 (three in a row on
+// 2026-11-12). Which layer sends it is not known yet, so the failure log keeps
+// the headers. A retry sends the same code. If the 429 used up the code, the
+// retry gets bad_verification_code and the sign-in fails as it did before.
+const TOKEN_GRANT_ATTEMPTS = 3
+
 // Calls GitHub's token endpoint for both the initial code exchange and refresh
 // grants. GitHub reports failures as 200s with an `error` field, so both paths
-// are checked.
+// are checked. A body with an `error` field is a refusal. Any other failure
+// (a 5xx, a body that is not JSON, a network error) is unavailable.
 async function requestGitHubTokenGrant(
   body: Record<string, string>,
-  fetcher: AuthFetch,
-): Promise<GitHubTokenGrant | undefined> {
+  fetcher: GitHubFetch,
+  attemptsLeft = TOKEN_GRANT_ATTEMPTS,
+): Promise<GitHubTokenGrantResult> {
+  const result = await requestGitHubTokenGrantOnce(body, fetcher)
+  const isThrottled = result.kind === 'unavailable' && result.status === 429
+  return isThrottled && attemptsLeft > 1
+    ? requestGitHubTokenGrant(body, fetcher, attemptsLeft - 1)
+    : result
+}
+
+async function requestGitHubTokenGrantOnce(
+  body: Record<string, string>,
+  fetcher: GitHubFetch,
+): Promise<GitHubTokenGrantResult> {
   try {
     const response = await fetcher(GITHUB_TOKEN_URL, {
       method: 'POST',
-      headers: {Accept: 'application/json', 'User-Agent': USER_AGENT},
+      headers: {...createGitHubHeaders({}), Accept: 'application/json'},
       body: new URLSearchParams(body),
     })
-    const data = await readJSONBody(response)
+    const text = await response.text()
+    const data = parseJSON(text)
     if (
       !response.ok ||
       !isRecord(data) ||
       typeof data.access_token !== 'string' ||
       data.access_token === ''
     ) {
+      const error = isRecord(data) ? readOptionalString(data.error) : undefined
+      const outcome = isNullish(error) ? 'unavailable' : 'refused'
       logGitHubAuthFailure({
         step: grantStep(body),
         status: response.status,
-        error: isRecord(data) ? readOptionalString(data.error) : undefined,
+        outcome,
+        error,
         errorDescription: isRecord(data) ? readOptionalString(data.error_description) : undefined,
+        retryAfter: response.headers.get('retry-after') ?? undefined,
+        headers: readHeadersForLog(response.headers),
+        // Only a body that is not JSON, such as an HTML block page. A JSON body
+        // can hold a token, and its error fields are logged above.
+        bodyStart: isNullish(data) ? text.slice(0, BODY_LOG_LENGTH) : undefined,
       })
-      return undefined
+      return outcome === 'refused'
+        ? {kind: 'refused'}
+        : {kind: 'unavailable', status: response.status}
     }
 
     const now = Date.now()
     return {
-      accessToken: data.access_token,
-      accessTokenExpiresAt: readExpiry(now, data.expires_in),
-      refreshToken: typeof data.refresh_token === 'string' ? data.refresh_token : undefined,
-      refreshTokenExpiresAt: readExpiry(now, data.refresh_token_expires_in),
+      kind: 'granted',
+      grant: {
+        accessToken: data.access_token,
+        accessTokenExpiresAt: readExpiry(now, data.expires_in),
+        refreshToken: typeof data.refresh_token === 'string' ? data.refresh_token : undefined,
+        refreshTokenExpiresAt: readExpiry(now, data.refresh_token_expires_in),
+      },
     }
   } catch (error) {
-    logGitHubAuthFailure({step: grantStep(body), error: String(error)})
-    return undefined
+    logGitHubAuthFailure({step: grantStep(body), outcome: 'unavailable', error: String(error)})
+    return {kind: 'unavailable'}
   }
 }
 
@@ -458,16 +533,11 @@ function grantStep(body: Record<string, string>): GitHubAuthStep {
 
 async function fetchGitHubUser(
   token: string,
-  fetcher: AuthFetch,
+  fetcher: GitHubFetch,
 ): Promise<{login: string; avatarUrl?: string} | undefined> {
   try {
-    const response = await fetcher(GITHUB_USER_URL, {
-      headers: {
-        Accept: 'application/vnd.github+json',
-        Authorization: `Bearer ${token}`,
-        'User-Agent': USER_AGENT,
-        'X-GitHub-Api-Version': GITHUB_API_VERSION,
-      },
+    const response = await fetcher(createGitHubApiUrl({path: '/user'}), {
+      headers: createGitHubHeaders({media: 'json', authorization: {kind: 'token', token}}),
     })
     const data = await readJSONBody(response)
     if (!response.ok || !isRecord(data) || typeof data.login !== 'string' || data.login === '') {
@@ -488,6 +558,59 @@ async function fetchGitHubUser(
   }
 }
 
+interface RevokeGitHubTokenParams {
+  token: string
+  credentials: GitHubAppCredentials
+  fetcher: GitHubFetch
+}
+
+async function revokeGitHubToken({
+  token,
+  credentials,
+  fetcher,
+}: RevokeGitHubTokenParams): Promise<void> {
+  try {
+    const url = createGitHubApiUrl({path: `/applications/${credentials.clientId}/token`})
+    const response = await fetcher(url, {
+      method: 'DELETE',
+      headers: {
+        ...createGitHubHeaders({media: 'json', authorization: {kind: 'app', credentials}}),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({access_token: token}),
+      signal: AbortSignal.timeout(TOKEN_REVOKE_TIMEOUT_MS),
+    })
+    if (response.status !== 204) {
+      const data = await readJSONBody(response)
+      logGitHubAuthFailure({
+        step: 'token revoke',
+        status: response.status,
+        error: isRecord(data) ? readOptionalString(data.message) : undefined,
+      })
+    }
+  } catch (error) {
+    logGitHubAuthFailure({step: 'token revoke', error: String(error)})
+  }
+}
+
+// Enough of a block page to name who sent it, short enough for one log line.
+const BODY_LOG_LENGTH = 500
+
+// Every response header except Set-Cookie, so a throttled answer shows which
+// layer sent it (Server, X-GitHub-Request-Id, CF-Ray and the rate limit headers).
+function readHeadersForLog(headers: Headers): Record<string, string> {
+  return Object.fromEntries([...headers].filter(([name]) => name !== 'set-cookie'))
+}
+
+function parseJSON(text: string): unknown {
+  try {
+    const data: unknown = JSON.parse(text)
+    return data
+  } catch {
+    return undefined
+  }
+}
+
 // GitHub also puts the cause of a 4xx or 5xx in a JSON body, so the body is
 // read on every status. A body that is not JSON gives undefined.
 async function readJSONBody(response: Response): Promise<unknown> {
@@ -499,20 +622,24 @@ async function readJSONBody(response: Response): Promise<unknown> {
   }
 }
 
-type GitHubAuthStep = 'code exchange' | 'token refresh' | 'user lookup'
+type GitHubAuthStep = 'code exchange' | 'token refresh' | 'user lookup' | 'token revoke'
 
 interface GitHubAuthFailure {
   step: GitHubAuthStep
   status?: number
+  outcome?: GitHubTokenGrantOutcome
   // GitHub's error name or message, such as bad_verification_code. Never the
   // code or a token.
   error?: string
   errorDescription?: string
+  retryAfter?: string
+  headers?: Record<string, string>
+  bodyStart?: string
 }
 
-// The sign-in answers a failed GitHub call with a generic message, so the log
-// is the only place that keeps the cause. Workers Logs keeps each field of the
-// object separate.
+// The sign-in answers most failed GitHub calls with a generic message, so the
+// log is the only place that keeps the cause. Workers Logs keeps each field of
+// the object separate.
 function logGitHubAuthFailure(failure: GitHubAuthFailure): void {
   console.error({event: 'github auth failure', ...failure})
 }
@@ -565,18 +692,7 @@ function readStateCookie(request: Request): GitHubOAuthStateCookie | undefined {
   }
 }
 
-function readOptionalString(value: unknown): string | undefined {
-  return typeof value === 'string' && value !== '' ? value : undefined
-}
-
-function readOptionalNumber(value: unknown): number | undefined {
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined
-}
-
-export function readCookiePayload(
-  request: Request,
-  name: string,
-): Record<string, unknown> | undefined {
+function readCookiePayload(request: Request, name: string): Record<string, unknown> | undefined {
   const value = parseCookies(request.headers.get('cookie')).get(name)
   if (isNullish(value)) {
     return undefined
@@ -606,9 +722,7 @@ function parseCookies(header: string | null): Map<string, string> {
   return cookies
 }
 
-// Exported for the preview sign-in broker, which sets the same session cookie
-// from a handoff rather than from a fresh OAuth exchange.
-export function serializeSessionCookie(session: GitHubAuthSession, secure: boolean): string {
+function serializeSessionCookie(session: GitHubAuthSession, secure: boolean): string {
   const now = Date.now()
   const expiry = session.refreshTokenExpiresAt ?? session.accessTokenExpiresAt
   const maxAgeSeconds = isNullish(expiry)
@@ -636,12 +750,7 @@ interface SerializeCookieParams {
 // HttpOnly keeps the token out of reach of page scripts; SameSite=Lax still
 // sends the cookie on the top-level redirect back from github.com. `Secure` is
 // dropped only for plain-HTTP local dev.
-export function serializeCookie({
-  name,
-  value,
-  maxAgeSeconds,
-  secure,
-}: SerializeCookieParams): string {
+function serializeCookie({name, value, maxAgeSeconds, secure}: SerializeCookieParams): string {
   const attributes = [
     `${name}=${value}`,
     `Max-Age=${maxAgeSeconds}`,
@@ -659,29 +768,27 @@ export function encodeCookiePayload(payload: Record<string, unknown>): string {
   return encodeURIComponent(JSON.stringify(payload))
 }
 
-// Only same-site absolute paths are allowed as post-auth destinations, so the
-// flow cannot be used as an open redirect.
-export function sanitizeReturnPath(value: string | null): string {
-  if (
-    isNullish(value) ||
-    !value.startsWith('/') ||
-    value.startsWith('//') ||
-    value.includes('\\') ||
-    /[\n\r]/u.test(value)
-  ) {
+const RETURN_PATH_BASE = new URL('https://return-path.invalid')
+
+// The browser resolves the Location header with the URL rules. This parses the
+// value with the same rules and sends only the parsed path, so the redirect
+// after sign-in or sign-out stays on this site.
+function sanitizeReturnPath(value: string | null): string {
+  if (isNullish(value) || !value.startsWith('/')) {
     return DEFAULT_RETURN_PATH
   }
-  return value
+  const resolved = URL.parse(value, RETURN_PATH_BASE)
+  if (resolved?.origin !== RETURN_PATH_BASE.origin || resolved.pathname.startsWith('//')) {
+    return DEFAULT_RETURN_PATH
+  }
+  return `${resolved.pathname}${resolved.search}${resolved.hash}`
 }
 
-export function isSecureRequest(url: URL): boolean {
+function isSecureRequest(url: URL): boolean {
   return url.protocol === 'https:'
 }
 
-export function createRedirectResponse(
-  location: string,
-  setCookieHeaders: readonly string[],
-): Response {
+function createRedirectResponse(location: string, setCookieHeaders: readonly string[]): Response {
   const response = new Response(null, {
     status: 302,
     headers: {Location: location, 'Cache-Control': 'no-store'},
@@ -706,8 +813,4 @@ function createAuthUnavailableResponse(): Response {
     'GitHub sign-in is not configured. Set GITHUB_APP_CLIENT_ID and GITHUB_APP_CLIENT_SECRET.',
     503,
   )
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
 }

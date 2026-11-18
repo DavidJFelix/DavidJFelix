@@ -1,15 +1,28 @@
 import type {Parser, SyntaxNode} from '@lezer/common'
 import {parser} from '@lezer/javascript'
 
-import type {EntityKind, EntitySpec, ResolveEntityNameParams} from '../entity'
-import {anonymousScopeProp, entityProp} from '../entity'
+import type {ResolveSymbolNameParams, SymbolKind, SymbolSpec} from '../code-symbol'
+import {anonymousScopeProp, symbolProp} from '../code-symbol'
 
-// Initializers that make a binding a function rather than a value.
-const FUNCTION_INITIALIZERS = new Set(['ArrowFunction', 'FunctionExpression', 'ClassExpression'])
+// Initializers that make a binding a function rather than a value. The
+// declarations are the values of `export default function () {}` and
+// `export default class {}`.
+const FUNCTION_INITIALIZERS = new Set([
+  'ArrowFunction',
+  'FunctionExpression',
+  'ClassExpression',
+  'FunctionDeclaration',
+  'ClassDeclaration',
+])
 
-const SPECS: Record<string, EntitySpec> = {
+const SPECS: Record<string, SymbolSpec> = {
   FunctionDeclaration: {kind: 'function', name: ['VariableDefinition'], container: true},
-  ClassDeclaration: {kind: 'class', name: ['VariableDefinition'], container: true},
+  ClassDeclaration: {
+    kind: 'class',
+    name: ['VariableDefinition'],
+    container: true,
+    leading: decoratorsBeforeExport,
+  },
   MethodDeclaration: {
     kind: 'method',
     name: ['PropertyDefinition', 'PrivatePropertyDefinition'],
@@ -24,6 +37,16 @@ const SPECS: Record<string, EntitySpec> = {
   TypeAliasDeclaration: {kind: 'type', name: ['TypeDefinition']},
   EnumDeclaration: {kind: 'enum', name: ['TypeDefinition']},
   NamespaceDeclaration: {kind: 'module', name: ['VariableDefinition'], container: true},
+  AmbientFunctionDeclaration: {kind: 'function', name: ['VariableDefinition']},
+  // `export default defineConfig({...})` has no name of its own. A named default
+  // function or class is already a symbol, so it gets no second row.
+  ExportDeclaration: {
+    kind: 'constant',
+    accept: isAnonymousDefaultExport,
+    resolveName: () => 'default',
+    resolveKind: resolveBindingKind,
+    container: true,
+  },
   // Only module- and class-level bindings; `scope` keeps function locals out.
   VariableDeclaration: {
     kind: 'constant',
@@ -42,12 +65,47 @@ const SPECS: Record<string, EntitySpec> = {
     accept: isStatementCall,
     resolveName: resolveCallLabel,
   },
+  // `module.exports = ...`, `exports.load = ...`, `Button.displayName = ...`:
+  // a module-level assignment to a member, named by the member path.
+  AssignmentExpression: {
+    kind: 'constant',
+    scope: 'top-level',
+    accept: isMemberAssignmentStatement,
+    resolveName: ({node, source}) => calleePath(node.firstChild, source),
+    resolveKind: resolveBindingKind,
+  },
 }
 
-// Statement position only: an initializer or argument is part of the entity
+// The grammar has no decorators ahead of `export`. It parses `@Dec() export
+// class A {}` as a class with no name that holds only the decorators, then the
+// export. Those decorators belong to the exported class.
+function decoratorsBeforeExport({node}: ResolveSymbolNameParams): readonly SyntaxNode[] {
+  const recovered = node.parent?.type.name === 'ExportDeclaration' ? node.parent.prevSibling : null
+  return recovered?.type.name === 'ClassDeclaration' &&
+    recovered.getChild('VariableDefinition') === null
+    ? recovered.getChildren('Decorator')
+    : []
+}
+
+function isAnonymousDefaultExport({node}: ResolveSymbolNameParams): boolean {
+  if (node.getChild('default') === null) {
+    return false
+  }
+  const declaration = node.getChild('FunctionDeclaration') ?? node.getChild('ClassDeclaration')
+  return declaration === null || declaration.getChild('VariableDefinition') === null
+}
+
+function isMemberAssignmentStatement({node}: ResolveSymbolNameParams): boolean {
+  return (
+    node.parent?.type.name === 'ExpressionStatement' &&
+    node.firstChild?.type.name === 'MemberExpression'
+  )
+}
+
+// Statement position only: an initializer or argument is part of the symbol
 // that contains it, not a module-level action of its own. Top-level `await`
 // still counts -- the statement is the call.
-function isStatementCall({node}: ResolveEntityNameParams): boolean {
+function isStatementCall({node}: ResolveSymbolNameParams): boolean {
   const parent = node.parent
   if (parent === null) {
     return false
@@ -63,7 +121,7 @@ function isStatementCall({node}: ResolveEntityNameParams): boolean {
 // Callee identifier path plus the first literal argument when there is one:
 // `test('adds numbers')`, `vi.mock('@pierre/icons')`, `startServer`. The
 // literal is what keeps twenty sibling `test(...)` calls tellable apart.
-function resolveCallLabel({node, source}: ResolveEntityNameParams): string | undefined {
+function resolveCallLabel({node, source}: ResolveSymbolNameParams): string | undefined {
   const path = calleePath(node.firstChild, source)
   if (path === undefined) {
     return undefined
@@ -98,14 +156,14 @@ function calleePath(callee: SyntaxNode | null, source: string): string | undefin
 }
 
 // A class member named `constructor` is reported as one so the diff can say so.
-function resolveMethodKind({node, source}: ResolveEntityNameParams): EntityKind {
+function resolveMethodKind({node, source}: ResolveSymbolNameParams): SymbolKind {
   const name = node.getChild('PropertyDefinition')
   return name !== null && source.slice(name.from, name.to) === 'constructor'
     ? 'constructor'
     : 'method'
 }
 
-function resolveBindingKind({node}: ResolveEntityNameParams): EntityKind {
+function resolveBindingKind({node}: ResolveSymbolNameParams): SymbolKind {
   return hasFunctionInitializer(node) ? 'function' : 'constant'
 }
 
@@ -120,12 +178,12 @@ function hasFunctionInitializer(node: SyntaxNode): boolean {
 
 // Dialects are configured per file type rather than parsed once: the `ts`
 // dialect rejects JSX-ambiguous syntax and vice versa, so each gets its own
-// parser instance with the entity table attached.
+// parser instance with the symbol table attached.
 function createParser(dialect: string): Parser {
   return parser.configure({
     dialect,
     props: [
-      entityProp.add(SPECS),
+      symbolProp.add(SPECS),
       anonymousScopeProp.add({ArrowFunction: true, FunctionExpression: true}),
     ],
   })

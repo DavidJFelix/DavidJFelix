@@ -15,6 +15,8 @@ export const modelFindingSchema = z.object({
   // A malformed finding fails the chunk review, so a missing value or one that
   // is not a boolean becomes false.
   checked: z.boolean().catch(false),
+  // Saved answers from before this field do not have it.
+  path: z.string().nullish(),
   label: z.int().positive(),
   endLabel: z.int().positive().nullish(),
   suggestion: z.string().nullish(),
@@ -24,7 +26,7 @@ export type ModelFinding = z.infer<typeof modelFindingSchema>
 
 // The items stay unknown here, so that the caller can check each finding on its
 // own. Then one malformed finding does not hide the valid ones.
-const findingItemsSchema = z.preprocess(parseJsonText, z.array(z.unknown()))
+const findingItemsSchema = z.preprocess(parseJsonArrayText, z.array(z.unknown()))
 
 // A review model can send the list as JSON text, under the key `finding`, or
 // under the key `answer`. These answers also count as a findings list.
@@ -39,6 +41,50 @@ export const modelAnswerSchema = z.union([
     .object({answer: z.preprocess(parseJsonText, findingListSchema)})
     .transform(({answer}) => answer),
 ])
+
+// A model that sends the list as JSON text can add text after the array: the
+// braces of the object around it (`[{...}]}`), a closing Markdown fence, or
+// prose such as "I'll report the empty list." It can also open the text with a
+// Markdown fence. Only the array is parsed, from its `[` to the matching `]`.
+function parseJsonArrayText(value: unknown): unknown {
+  return typeof value === 'string' ? parseJsonText(leadingJsonArray(value)) : value
+}
+
+const LEADING_FENCE = /^\s*(?:```[a-z]*\n)?\s*/i
+
+function leadingJsonArray(text: string): string {
+  const start = LEADING_FENCE.exec(text)?.[0].length ?? 0
+  if (text.charAt(start) !== '[') {
+    return text
+  }
+  const end = closingBracketIndex(text, start)
+  return end === undefined ? text : text.slice(start, end + 1)
+}
+
+function closingBracketIndex(text: string, start: number): number | undefined {
+  let depth = 0
+  let inString = false
+  for (let index = start; index < text.length; index++) {
+    const char = text.charAt(index)
+    if (inString) {
+      if (char === '\\') {
+        index++
+      } else if (char === '"') {
+        inString = false
+      }
+    } else if (char === '"') {
+      inString = true
+    } else if (char === '[') {
+      depth++
+    } else if (char === ']') {
+      depth--
+      if (depth === 0) {
+        return index
+      }
+    }
+  }
+  return undefined
+}
 
 function parseJsonText(value: unknown): unknown {
   if (typeof value !== 'string') {
@@ -88,8 +134,22 @@ const MAX_TITLE_LENGTH = 200
 const MAX_BODY_LENGTH = 3000
 const MAX_SUGGESTION_LENGTH = 3000
 
-// Maps chunk-local labels back to new-file lines. A finding whose label is not
-// in the chunk cannot become an inline comment, so it is dropped.
+export interface IsInChunkParams {
+  chunk: ReviewChunk
+  rendered: RenderedChunk
+  finding: ModelFinding
+}
+
+// A finding about another file is not in the chunk, even with a label of the
+// chunk. Its comment would show on an unrelated line.
+export function isInChunk({chunk, rendered, finding}: IsInChunkParams): boolean {
+  const {path, label} = finding
+  const isSameFile = path === undefined || path === null || path === chunk.path
+  return isSameFile && rendered.newLineByLabel.has(label)
+}
+
+// Maps chunk-local labels back to new-file lines. A finding that is not in the
+// chunk cannot become an inline comment, so it is dropped.
 export function anchorFindings({
   reviewerId,
   chunk,
@@ -99,7 +159,7 @@ export function anchorFindings({
   return findings
     .flatMap((finding) => {
       const startLine = rendered.newLineByLabel.get(finding.label)
-      if (startLine === undefined) {
+      if (startLine === undefined || !isInChunk({chunk, rendered, finding})) {
         return []
       }
       const endLine = rangeEndLine({newLineByLabel: rendered.newLineByLabel, finding, startLine})
@@ -184,14 +244,16 @@ export interface ReviewOutcome {
 
 export interface DecideOutcomeOptions {
   failedChunkReviewCount?: number
+  lineTooLongCount?: number
 }
 
 // A review with a failed chunk is incomplete, so it fails even when no finding
-// reaches the fail severity. A finding that the reviewer did not check cannot
+// reaches the fail severity. A file with a diff line that is too long gets no
+// review, so it also fails the review: such a line can hide a change. A finding that the reviewer did not check cannot
 // fail the review, and it cannot hide a checked finding on the same line.
 export function decideOutcome(
   findings: readonly Finding[],
-  {failedChunkReviewCount = 0}: DecideOutcomeOptions = {},
+  {failedChunkReviewCount = 0, lineTooLongCount = 0}: DecideOutcomeOptions = {},
 ): ReviewOutcome {
   const atReportSeverity = findings.filter((finding) =>
     isAtLeast({severity: finding.severity, threshold: REPORT_SEVERITY}),
@@ -202,6 +264,7 @@ export function decideOutcome(
     unchecked: dedupeFindings(atReportSeverity.filter((finding) => !finding.checked)),
     failed:
       failedChunkReviewCount > 0 ||
+      lineTooLongCount > 0 ||
       reported.some((finding) => isAtLeast({severity: finding.severity, threshold: FAIL_SEVERITY})),
   }
 }

@@ -3,6 +3,7 @@ import {type ChunkReviewStore, chunkReviewKey} from './chunk-review-store'
 import {
   anchorFindings,
   type Finding,
+  isInChunk,
   type ModelFinding,
   modelAnswerSchema,
   modelFindingSchema,
@@ -15,6 +16,7 @@ import {
   findJsonSyntaxError,
   hasJsonObjectStart,
   isRetryable,
+  matchTopLevelJson,
   NO_USAGE,
 } from './openrouter'
 import {selectGuides} from './repository-guides'
@@ -48,6 +50,8 @@ export interface ChunkReviewContext {
 
 export interface ChunkReviewUnit {
   chunk: ReviewChunk
+  // The position of the chunk in the plan, counted from 0.
+  chunkIndex: number
   reviewer: Reviewer
 }
 
@@ -65,6 +69,7 @@ export interface ChunkReviewOutcome {
 
 export async function reviewChunk({
   chunk,
+  chunkIndex,
   reviewer,
   model,
   scope,
@@ -101,6 +106,7 @@ export async function reviewChunk({
   const eventFields = {
     reviewer: reviewer.id,
     path: chunk.path,
+    chunk: chunkIndex + 1,
     chunkLines: chunk.hunks.reduce((total, hunk) => total + hunk.lines.length, 0),
   }
   const result = await runToolLoop({chat, model, system, prompt, tools, eventFields})
@@ -117,10 +123,10 @@ export async function reviewChunk({
     }
   }
   const answer = parseModelAnswer(result.text)
-  // A finding whose label is not in the chunk cannot post, so it is not checked.
-  // The valid findings of an answer with a malformed one are checked too.
+  // A finding that is not in the chunk cannot post, so it is not checked. The
+  // valid findings of an answer with a malformed one are checked too.
   const verified = await verifyFindings({
-    findings: answer.findings.filter(({label}) => rendered.newLineByLabel.has(label)),
+    findings: answer.findings.filter((finding) => isInChunk({chunk, rendered, finding})),
     prompt,
     chat,
     model,
@@ -170,17 +176,45 @@ function parseModelAnswer(text: string): ParsedModelAnswer {
     : {findings}
 }
 
-// A model can answer with one finding and no findings list around it. That
-// finding counts as a list of one. An answer that the token limit cut can hold
-// a complete finding before the cut, so a cut answer does not count.
+// A model can answer with a JSON array and no object around it. That array, or
+// the first Markdown fence that holds only that array, is the findings list. A
+// model can also answer with one finding and no list around
+// it. That finding counts as a list of one. Two or more findings with no list do
+// not count, because the text can quote finding-shaped JSON. An answer that the
+// token limit cut can hold a complete finding before the cut, so a cut answer
+// does not count.
 function readFindingItems(text: string): unknown[] | undefined {
   const answer = tryExtractJson(text, modelAnswerSchema)
   if (answer !== undefined) {
     return answer.findings
   }
-  const finding =
-    findJsonSyntaxError(text) === undefined ? tryExtractJson(text, modelFindingSchema) : undefined
+  if (findJsonSyntaxError(text) !== undefined) {
+    return undefined
+  }
+  const list = tryParseJsonArray(text) ?? tryParseJsonArray(firstFenceContent(text))
+  if (list !== undefined) {
+    return list
+  }
+  if (matchTopLevelJson(text, modelFindingSchema).length > 1) {
+    return undefined
+  }
+  const finding = tryExtractJson(text, modelFindingSchema)
   return finding === undefined ? undefined : [finding]
+}
+
+const MARKDOWN_FENCE = /```[a-z]*\n([\s\S]*?)```/i
+
+function firstFenceContent(text: string): string {
+  return MARKDOWN_FENCE.exec(text)?.[1] ?? ''
+}
+
+function tryParseJsonArray(text: string): unknown[] | undefined {
+  try {
+    const value: unknown = JSON.parse(text)
+    return Array.isArray(value) ? value : undefined
+  } catch {
+    return undefined
+  }
 }
 
 function tryExtractJson<Value>(text: string, schema: z.ZodType<Value>): Value | undefined {
@@ -207,6 +241,10 @@ const findingsTextSchema = z.union([
 ])
 
 function describeMissingFindingsList(text: string): string {
+  const looseFindingCount = matchTopLevelJson(text, modelFindingSchema).length
+  if (looseFindingCount > 1) {
+    return `No findings list: ${looseFindingCount} findings without a list around them`
+  }
   if (tryExtractJson(text, findingsTextSchema) !== undefined) {
     return 'No findings list: the findings are a string that is not a JSON array'
   }
@@ -244,8 +282,8 @@ export function planChunkReviews({
   reviewers = REVIEWERS,
   ...chunkOptions
 }: PlanChunkReviewsParams): ChunkReviewUnit[] {
-  return chunkPullRequestFiles(files, chunkOptions).flatMap((chunk) =>
-    reviewers.map((reviewer) => ({chunk, reviewer})),
+  return chunkPullRequestFiles(files, chunkOptions).flatMap((chunk, chunkIndex) =>
+    reviewers.map((reviewer) => ({chunk, chunkIndex, reviewer})),
   )
 }
 
@@ -264,8 +302,8 @@ export async function reviewChunks({
   return mapWithConcurrency({
     items: units,
     limit: concurrency,
-    run: ({chunk, reviewer}) =>
-      reviewChunk({chunk, reviewer, ...context}).catch((error: unknown): ChunkReviewOutcome => ({
+    run: (unit) =>
+      reviewChunk({...unit, ...context}).catch((error: unknown): ChunkReviewOutcome => ({
         findings: [],
         cached: false,
         usage: NO_USAGE,

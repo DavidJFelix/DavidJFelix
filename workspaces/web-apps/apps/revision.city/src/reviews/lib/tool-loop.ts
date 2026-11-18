@@ -5,6 +5,7 @@ import {
   type ChatReply,
   type ChatRequest,
   type CompletionUsage,
+  hasJsonObjectStart,
   NO_USAGE,
   OpenRouterError,
   type ToolCall,
@@ -200,9 +201,17 @@ function toAnswer({reply, usage, reads}: ToAnswerParams): ToolLoopResult {
 }
 
 // A provider that does not support a required tool call can still answer in
-// text, and a submit_answer call with empty arguments does not hide that text.
+// text. A submit_answer call with empty arguments or an empty object does not
+// hide a JSON answer in that text.
 function answerText(reply: ChatReply): string {
-  return reply.toolCalls.find(isSubmitAnswer)?.arguments || reply.content
+  const submitted = reply.toolCalls.find(isSubmitAnswer)?.arguments ?? ''
+  return isEmptyObjectText(submitted) && hasJsonObjectStart(reply.content)
+    ? reply.content
+    : submitted || reply.content
+}
+
+function isEmptyObjectText(text: string): boolean {
+  return /^\s*(\{\s*\})?\s*$/.test(text)
 }
 
 function answerNowRequest(messages: readonly ChatMessage[]): Omit<ChatRequest, 'model'> {

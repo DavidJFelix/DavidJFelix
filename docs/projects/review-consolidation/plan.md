@@ -1,5 +1,9 @@
 # Review Consolidation
 
+> Superseded in part (2026-11-02): revision.city reviews each push and posts its own inline
+> comments, and Warden runs only on its label. This plan is rewritten when Warden retires in phase 3
+> of [revision.city Reviews](../revision-city-reviews/plan.md).
+
 Consolidate the repo's code-review and quality-gate surfaces around **Warden** as the single
 canonical automated reviewer. Everything else — the built-in Claude commands, the local `/review`
 skill — is positioned to _complement_ Warden, not compete with or duplicate it.

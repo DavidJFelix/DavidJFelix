@@ -1,10 +1,14 @@
+import type {GitHubFetch} from '@/lib/github-http'
+import {isRecord} from '@/lib/json-read'
+
+import {type AppInstallation, readAppInstallations} from './github-app-installations'
 import {type GitHubAuthOptions, resolveGitHubAuth, withSetCookieHeaders} from './github-auth'
+import {readRepoFullName} from './github-diff-source'
 import {
   fetchGitHubJSON,
-  isRecord,
-  type PullRequestFetch,
   type PullRequestSearchResult,
   type PullRequestSummary,
+  readGitHubSearchFailure,
   SEARCH_PAGE_SIZE,
   searchChunkedPullRequests,
   searchPullRequests,
@@ -15,13 +19,14 @@ export type {PullRequestSummary} from './github-pull-request-search'
 
 // Search is limited to 30 requests per minute per user, so the chunked groups
 // are bounded rather than exhaustive: two fixed queries (assigned, owned) plus
-// at most these many per chunked group keeps a page load well inside it.
+// at most these many per chunked group keeps one load well inside it. Loads
+// that come quickly one after another can still spend it.
 const MEMBER_SEARCH_CHUNK_LIMIT = 2
 const WATCHED_SEARCH_CHUNK_LIMIT = 3
 // One page of watch subscriptions; a full page means the list was cut there.
 const WATCHED_REPO_PAGE_SIZE = 100
-// One page each of the app's installations and of a selected-repository
-// installation's grants; anything past a page reads as not searchable.
+// One page of a selected-repository installation's grants; anything past a
+// page reads as not searchable.
 const INSTALLATION_PAGE_SIZE = 100
 
 // Why the signed-in visitor can see a pull request, in the order the groups
@@ -47,7 +52,8 @@ export interface PullRequestListBody {
 
 // Lists open pull requests the signed-in visitor can reach, grouped by why
 // they can reach them. Each pull request is reported once, under the first
-// group that claims it. Answers 401 signed out and 502 when GitHub's search
+// group that claims it. Answers 401 signed out or when GitHub rejects the
+// token, 429 when GitHub's search rate limit is spent, and 502 when the search
 // is unavailable, so the client can tell "sign in" from "try again later". A
 // visitor with nothing searchable (no pull requests, or no repositories
 // granted to the app) gets 200 with empty groups, not an error.
@@ -71,16 +77,35 @@ export async function handlePullRequestListRequest(
       token: auth.session.accessToken,
     })
     return withSetCookieHeaders(createJSONResponse({groups}, 200), auth.setCookieHeaders)
-  } catch {
-    return withSetCookieHeaders(
-      createJSONResponse({message: 'GitHub could not list pull requests right now.'}, 502),
-      auth.setCookieHeaders,
-    )
+  } catch (error) {
+    return withSetCookieHeaders(createSearchFailureResponse(error), auth.setCookieHeaders)
   }
 }
 
+// GitHub's search limit counts requests per minute, so one minute is the wait.
+const RATE_LIMITED_RETRY_AFTER_SECONDS = 60
+
+function createSearchFailureResponse(error: unknown): Response {
+  const failure = readGitHubSearchFailure(error)
+  if (failure?.status === 401) {
+    return createJSONResponse(
+      {message: 'GitHub rejected your sign-in. Sign in again.', reason: 'sign-in-again'},
+      401,
+    )
+  }
+  if (failure?.rateLimited === true) {
+    const response = createJSONResponse(
+      {message: 'GitHub asked to wait before listing pull requests again.'},
+      429,
+    )
+    response.headers.set('Retry-After', String(RATE_LIMITED_RETRY_AFTER_SECONDS))
+    return response
+  }
+  return createJSONResponse({message: 'GitHub could not list pull requests right now.'}, 502)
+}
+
 interface ListPullRequestGroupsParams {
-  fetcher: PullRequestFetch
+  fetcher: GitHubFetch
   login: string
   token: string
 }
@@ -98,7 +123,7 @@ async function listPullRequestGroups({
     searchPullRequests({fetcher, qualifiers: ['user:@me'], token}),
     fetchOrganizationLogins(token, fetcher),
     fetchWatchedRepositories(token, fetcher),
-    fetchAppInstallations(token, fetcher),
+    readAppInstallations({fetcher, token}),
   ])
 
   // The search API reaches only repositories the app is installed on, and
@@ -142,8 +167,8 @@ async function listPullRequestGroups({
 }
 
 interface SearchWatchedPullRequestsParams {
-  fetcher: PullRequestFetch
-  installationsByAccount: ReadonlyMap<string, GitHubAppInstallation>
+  fetcher: GitHubFetch
+  installationsByAccount: ReadonlyMap<string, AppInstallation>
   token: string
   uncoveredWatchedRepos: readonly WatchedRepo[]
 }
@@ -217,10 +242,7 @@ function createPullRequestGroup(
 // A failure here means the app was not granted organization visibility (or the
 // account has none), which reads as "no member repositories" rather than an
 // error worth failing the whole list over.
-async function fetchOrganizationLogins(
-  token: string,
-  fetcher: PullRequestFetch,
-): Promise<string[]> {
+async function fetchOrganizationLogins(token: string, fetcher: GitHubFetch): Promise<string[]> {
   const data = await fetchGitHubJSON('/user/orgs?per_page=100', token, fetcher)
   if (!Array.isArray(data)) {
     return []
@@ -239,7 +261,7 @@ interface WatchedRepo {
 // simply reports no watched repositories.
 async function fetchWatchedRepositories(
   token: string,
-  fetcher: PullRequestFetch,
+  fetcher: GitHubFetch,
 ): Promise<WatchedRepo[]> {
   const data = await fetchGitHubJSON(
     `/user/subscriptions?per_page=${WATCHED_REPO_PAGE_SIZE}`,
@@ -250,50 +272,8 @@ async function fetchWatchedRepositories(
     return []
   }
   return data
-    .map((repo) => (isRecord(repo) ? parseFullName(repo.full_name) : undefined))
+    .map((repo) => (isRecord(repo) ? readRepoFullName(repo.full_name) : undefined))
     .filter((repo): repo is WatchedRepo => repo !== undefined)
-}
-
-interface GitHubAppInstallation {
-  id: number
-  accountLogin: string
-  repositorySelection: 'all' | 'selected'
-}
-
-// The app's installations this token can see, each naming the account it is
-// installed on and whether it reaches every repository there or a selection.
-// A failure reads as no installations, which leaves the member and watched
-// groups empty rather than failing the list.
-async function fetchAppInstallations(
-  token: string,
-  fetcher: PullRequestFetch,
-): Promise<GitHubAppInstallation[]> {
-  const data = await fetchGitHubJSON(
-    `/user/installations?per_page=${INSTALLATION_PAGE_SIZE}`,
-    token,
-    fetcher,
-  )
-  const entries = isRecord(data) && Array.isArray(data.installations) ? data.installations : []
-  return entries
-    .map((entry) => parseInstallation(entry))
-    .filter((installation): installation is GitHubAppInstallation => installation !== undefined)
-}
-
-function parseInstallation(entry: unknown): GitHubAppInstallation | undefined {
-  if (!isRecord(entry) || typeof entry.id !== 'number' || !isRecord(entry.account)) {
-    return undefined
-  }
-  const accountLogin = entry.account.login
-  if (typeof accountLogin !== 'string' || accountLogin === '') {
-    return undefined
-  }
-  // Anything but an explicit "all" is read as a selection, which costs one
-  // more request but never searches a repository the app was not granted.
-  return {
-    id: entry.id,
-    accountLogin,
-    repositorySelection: entry.repository_selection === 'all' ? 'all' : 'selected',
-  }
 }
 
 interface InstallationRepositoryNames {
@@ -308,7 +288,7 @@ interface InstallationRepositoryNames {
 async function fetchInstallationRepositoryNames(
   installationId: number,
   token: string,
-  fetcher: PullRequestFetch,
+  fetcher: GitHubFetch,
 ): Promise<InstallationRepositoryNames> {
   const data = await fetchGitHubJSON(
     `/user/installations/${installationId}/repositories?per_page=${INSTALLATION_PAGE_SIZE}`,
@@ -325,18 +305,6 @@ async function fetchInstallationRepositoryNames(
     .map((name) => name.toLowerCase())
   const totalCount = typeof data.total_count === 'number' ? data.total_count : names.length
   return {names, truncated: totalCount > names.length}
-}
-
-function parseFullName(value: unknown): WatchedRepo | undefined {
-  if (typeof value !== 'string') {
-    return undefined
-  }
-
-  const separatorIndex = value.indexOf('/')
-  if (separatorIndex <= 0 || separatorIndex === value.length - 1) {
-    return undefined
-  }
-  return {owner: value.slice(0, separatorIndex), repo: value.slice(separatorIndex + 1)}
 }
 
 function createJSONResponse(body: unknown, status: number): Response {

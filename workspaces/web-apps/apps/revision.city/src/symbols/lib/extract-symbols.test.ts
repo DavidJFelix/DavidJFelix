@@ -1,0 +1,690 @@
+import type {Parser} from '@lezer/common'
+import {expect, test, vi} from 'vitest'
+
+import type {CodeSymbol} from './code-symbol'
+import type {ExtractSymbolsParams} from './extract-symbols'
+import {extractSymbols} from './extract-symbols'
+import {LANGUAGES} from './language-registry'
+import type * as SymbolSignatureModule from './symbol-signature'
+import {computeSignature} from './symbol-signature'
+
+// The real signature, wrapped so a test can prove it was never called.
+vi.mock('./symbol-signature', async (importOriginal) => {
+  const actual = await importOriginal<typeof SymbolSignatureModule>()
+  return {
+    ...actual,
+    computeSignature: vi.fn<typeof actual.computeSignature>(actual.computeSignature),
+  }
+})
+
+// Resolved through the registry rather than imported directly, so these cases
+// also prove each language is reachable the way the differ reaches it.
+function parserFor(id: string): Promise<Parser> {
+  const language = LANGUAGES.find((entry) => entry.id === id)
+  if (language === undefined) {
+    throw new Error(`No language registered for ${id}`)
+  }
+  return language.loadParser()
+}
+
+const tsxParser = await parserFor('tsx')
+const markdownParser = await parserFor('markdown')
+const jsonParser = await parserFor('json')
+
+function extractWithinLimits(params: ExtractSymbolsParams): readonly CodeSymbol[] {
+  const extraction = extractSymbols(params)
+  if (extraction.tooLarge) {
+    throw new Error('The source is too large to extract.')
+  }
+  return extraction.symbols
+}
+
+interface ExtractionCase {
+  readonly language: string
+  readonly source: string
+  readonly expected: readonly string[]
+}
+
+const CASES: readonly ExtractionCase[] = [
+  {
+    language: 'tsx',
+    source: `export interface Options {timeout: number}
+export type Result = string | null
+export enum Level {Info}
+export function greet(name: string) {
+  const local = 1
+  return local
+}
+export const double = (value: number) => value * 2
+export const LIMIT = 10
+export class Widget {
+  #count = 0
+  constructor() {}
+  render() { return null }
+}
+namespace Utils {
+  export function inner() {}
+}
+`,
+    expected: [
+      'interface Options',
+      'type Result',
+      'enum Level',
+      'function greet',
+      'function double',
+      'constant LIMIT',
+      'class Widget',
+      'property Widget.#count',
+      'constructor Widget.constructor',
+      'method Widget.render',
+      'module Utils',
+      'function Utils.inner',
+    ],
+  },
+  {
+    language: 'typescript',
+    source: `declare function load(path: string): string
+export default defineConfig({server: {port: 3000}})
+`,
+    expected: ['function load', 'constant default'],
+  },
+  {
+    language: 'javascript',
+    source: `module.exports = {load}
+exports.load = function () {}
+Button.displayName = 'Button'
+this.ignored = 1
+list[0] = 1
+count = 1
+function setup() {
+  exports.inner = 1
+}
+export default function () {
+  const local = 1
+  return local
+}
+`,
+    expected: [
+      'constant module.exports',
+      'function exports.load',
+      'constant Button.displayName',
+      'function setup',
+      'function default',
+    ],
+  },
+  {
+    language: 'python',
+    source: `CONST = 3
+def greet(name):
+    local = 1
+    return local
+class Widget(Base):
+    attr = 1
+    def method(self):
+        pass
+`,
+    expected: [
+      'constant CONST',
+      'function greet',
+      'class Widget',
+      'constant Widget.attr',
+      'function Widget.method',
+    ],
+  },
+  {
+    language: 'rust',
+    source: `pub struct Widget {field: u32}
+pub enum Color {Red}
+pub trait Draw {fn draw(&self);}
+impl Draw for Widget {fn draw(&self) {}}
+pub fn make() -> Widget {Widget {field: 0}}
+mod inner {pub const X: u32 = 1;}
+type Alias = u32;
+`,
+    expected: [
+      'struct Widget',
+      'enum Color',
+      'trait Draw',
+      'function Draw.draw',
+      'impl Widget',
+      'function Widget.draw',
+      'function make',
+      'module inner',
+      'constant inner.X',
+      'type Alias',
+    ],
+  },
+  {
+    language: 'rust',
+    source: `impl<T> Stack<T> {fn new() {}}
+impl<T> Default for Stack<T> {fn default() {}}
+impl Draw for &Widget {fn draw(&self) {}}
+impl fmt::Debug for Plain {}
+impl Draw for [u8] {}
+`,
+    expected: [
+      'impl Stack',
+      'function Stack.new',
+      'impl Stack#2',
+      'function Stack.default',
+      'impl Widget',
+      'function Widget.draw',
+      'impl Plain',
+    ],
+  },
+  {
+    language: 'go',
+    source: `package main
+type Widget struct {Field int}
+type Draw interface {Draw()}
+const Pi = 3.14
+var Global = 1
+func Make() *Widget {return nil}
+func (w *Widget) Method() int {return 0}
+`,
+    expected: [
+      'struct Widget',
+      'interface Draw',
+      'constant Pi',
+      'variable Global',
+      'function Make',
+      'method Widget.Method',
+    ],
+  },
+  {
+    language: 'go',
+    source: `package main
+func (s *Stack[T]) Push() {}
+func (s Stack[T]) Len() int {return 0}
+func (b B) String() string {return ""}
+func (*Widget) Reset() {}
+`,
+    expected: ['method Stack.Push', 'method Stack.Len', 'method B.String', 'method Widget.Reset'],
+  },
+  {
+    language: 'java',
+    source: `public class Widget {
+  private int count;
+  public Widget() {}
+  public int getCount() {return count;}
+}
+interface Draw {void draw();}
+enum Color {RED}
+`,
+    expected: [
+      'class Widget',
+      'field Widget.count',
+      'constructor Widget.Widget',
+      'method Widget.getCount',
+      'interface Draw',
+      'method Draw.draw',
+      'enum Color',
+    ],
+  },
+  {
+    language: 'java',
+    source: `class Widget {
+  static final int MAX = 1;
+  record Point(int x) {
+    Point {}
+    int sum() {return x;}
+  }
+}
+@interface Marker {}
+interface Limits {int LIMIT = 2;}
+`,
+    expected: [
+      'class Widget',
+      'field Widget.MAX',
+      'class Widget.Point',
+      'constructor Widget.Point.Point',
+      'method Widget.Point.sum',
+      'interface Marker',
+      'interface Limits',
+      'constant Limits.LIMIT',
+    ],
+  },
+  {
+    language: 'cpp',
+    source: `namespace ns {
+struct Widget {int field; void method();};
+enum Color {Red};
+int make(int a) {return a;}
+using Alias = int;
+}
+`,
+    expected: [
+      'module ns',
+      'struct ns.Widget',
+      'field ns.Widget.field',
+      'method ns.Widget.method',
+      'enum ns.Color',
+      'function ns.make',
+      'type ns.Alias',
+    ],
+  },
+  {
+    language: 'cpp',
+    source: `void handle(struct request *req) {struct context *ctx;}
+struct Forward;
+class Widget {
+public:
+  Widget(int size) : size_(size) {}
+  Widget& operator=(const Widget& other);
+  Widget& operator+=(int amount) {return *this;}
+  int size_;
+};
+bool operator==(const Widget& left, const Widget& right) {return true;}
+Widget make(int count = Limits::max) {return Widget(count);}
+typedef int Count;
+typedef struct {int value;} Anonymous;
+typedef struct node {int value;} node_t;
+typedef int (*callback_t)(int);
+union Number {int whole; float real;};
+`,
+    expected: [
+      'function handle',
+      'class Widget',
+      'function Widget.Widget',
+      'method Widget.operator=',
+      'function Widget.operator+=',
+      'field Widget.size_',
+      'function operator==',
+      'function make',
+      'type Count',
+      'type Anonymous',
+      'field Anonymous.value',
+      'type node_t',
+      'struct node_t.node',
+      'field node_t.node.value',
+      'type callback_t',
+      'union Number',
+      'field Number.whole',
+      'field Number.real',
+    ],
+  },
+  {
+    language: 'cpp',
+    source: `#include <stdio.h>
+#define LIMIT 10
+#define SQUARE(x) ((x) * (x))
+int add(int a, int b);
+static int counter = 0;
+extern const char *names[];
+namespace ns {int inner;}
+int main(void) {int local = 1; return local;}
+`,
+    expected: [
+      'macro LIMIT',
+      'macro SQUARE',
+      'function add',
+      'variable counter',
+      'variable names',
+      'module ns',
+      'variable ns.inner',
+      'function main',
+    ],
+  },
+  {
+    language: 'php',
+    source: `<?php
+const VERSION = '1';
+function greet(string $n) {return $n;}
+class Widget {
+  public int $count = 0;
+  public function __construct() {}
+  public function render() {return '';}
+}
+interface Draw {public function draw();}
+trait Logger {public function log() {}}
+`,
+    expected: [
+      'constant VERSION',
+      'function greet',
+      'class Widget',
+      'property Widget.$count',
+      'constructor Widget.__construct',
+      'method Widget.render',
+      'interface Draw',
+      'method Draw.draw',
+      'trait Logger',
+      'method Logger.log',
+    ],
+  },
+  {
+    language: 'css',
+    source: `.button, .btn {color: red;}
+#id > .child::before {content: '';}
+@keyframes spin {from {opacity: 0}}
+`,
+    expected: ['rule .button, .btn', 'rule #id > .child::before', 'rule spin'],
+  },
+  {
+    language: 'sass',
+    source: `@mixin center {display: flex;}
+.button {color: red;}
+`,
+    expected: ['mixin center', 'rule .button'],
+  },
+  {
+    language: 'sass-indented',
+    source: `@mixin rounded($radius)
+  border-radius: $radius
+
+.card
+  color: red
+  &:hover
+    color: blue
+    +rounded(2px)
+`,
+    expected: ['mixin rounded', 'rule .card', 'rule .card.&:hover'],
+  },
+  {
+    language: 'markdown',
+    source: `# Title
+
+Body text.
+
+## Section ##
+
+### Sub
+`,
+    expected: ['heading Title', 'heading Section', 'heading Sub'],
+  },
+  {
+    language: 'json',
+    source: `{"name": "app", "dependencies": {"react": "19"}}`,
+    expected: ['property name', 'property dependencies', 'property dependencies.react'],
+  },
+  {
+    language: 'yaml',
+    source: `name: build
+jobs:
+  test:
+    runs-on: ubuntu
+`,
+    expected: [
+      'property name',
+      'property jobs',
+      'property jobs.test',
+      'property jobs.test.runs-on',
+    ],
+  },
+]
+
+test.each(CASES)('extracts symbols from $language', async ({language, source, expected}) => {
+  const symbols = extractWithinLimits({source, parser: await parserFor(language)})
+
+  expect(symbols.map((symbol) => `${symbol.kind} ${symbol.qualifiedName}`)).toEqual(expected)
+})
+
+test('reports 1-based line ranges spanning the whole symbol', () => {
+  const source = 'const a = 1\nfunction greet() {\n  return 1\n}\n'
+
+  const symbols = extractWithinLimits({source, parser: tsxParser})
+
+  expect(symbols.find((symbol) => symbol.name === 'greet')?.range).toEqual({
+    startLine: 2,
+    endLine: 4,
+  })
+})
+
+test.each([
+  {heading: '# Title #   ', name: 'Title'},
+  {heading: '## Title##', name: 'Title##'},
+  {heading: '# a ## b ##', name: 'a ## b'},
+  {heading: '### foo \\###', name: 'foo \\###'},
+])('names the heading "$heading" as "$name"', ({heading, name}) => {
+  const symbols = extractWithinLimits({source: `${heading}\n`, parser: markdownParser})
+
+  expect(symbols.map((symbol) => symbol.name)).toEqual([name])
+})
+
+test.each([
+  {source: 'Title\n=====\n', name: 'Title'},
+  {source: 'Title\n---\n', name: 'Title'},
+  {source: 'Two line\nheading\n=====\n', name: 'Two line heading'},
+  {source: 'Title\r\n---\r\n', name: 'Title'},
+])('names the setext heading in $source as "$name"', ({source, name}) => {
+  const symbols = extractWithinLimits({source, parser: markdownParser})
+
+  expect(symbols.map((symbol) => symbol.name)).toEqual([name])
+})
+
+test.each([
+  {source: '---\ntitle: Notes\n---\n\n# Body\n'},
+  {source: '---\ntitle: Notes\n\ntags: one\n---\n\n# Body\n'},
+  {source: '---\ntags:\n  - one\n---\n\n# Body\n'},
+  {source: '---\r\ntitle: Notes\r\n---\r\n\r\n# Body\r\n'},
+])('does not name front matter as a heading in $source', ({source}) => {
+  const symbols = extractWithinLimits({source, parser: markdownParser})
+
+  expect(symbols.map((symbol) => symbol.name)).toEqual(['Body'])
+})
+
+test('names a heading with a long run of spaces before the test times out', () => {
+  const name = `a${' '.repeat(4000)}b`
+
+  const symbols = extractWithinLimits({source: `# ${name}\n`, parser: markdownParser})
+
+  expect(symbols.map((symbol) => symbol.name)).toEqual([name])
+})
+
+test('parses a long run of spaces in a paragraph before the test times out', () => {
+  const source = `# Title\n\na${' '.repeat(100_000)}b\n`
+
+  const symbols = extractWithinLimits({source, parser: markdownParser})
+
+  expect(symbols.map((symbol) => symbol.name)).toEqual(['Title'])
+})
+
+test('disambiguates same-named siblings with an ordinal suffix', () => {
+  const source = '# Notes\n\n## Notes\n'
+
+  const symbols = extractWithinLimits({source, parser: markdownParser})
+
+  expect(symbols.map((symbol) => symbol.qualifiedName)).toEqual(['Notes', 'Notes#2'])
+})
+
+test('ignores locals declared inside a function body', () => {
+  const source = 'export function outer() {\n  const hidden = 1\n  return hidden\n}\n'
+
+  const symbols = extractWithinLimits({source, parser: tsxParser})
+
+  expect(symbols.map((symbol) => symbol.name)).toEqual(['outer'])
+})
+
+test('gives a named default export one symbol, not a second default row', () => {
+  const source = 'export default class Widget {\n  render() {}\n}\n'
+
+  const symbols = extractWithinLimits({source, parser: tsxParser})
+
+  expect(symbols.map((symbol) => `${symbol.kind} ${symbol.qualifiedName}`)).toEqual([
+    'class Widget',
+    'method Widget.render',
+  ])
+})
+
+test.each([
+  {language: 'typescript', source: '@Dec()\nexport class Widget {}\n', name: 'Widget'},
+  {language: 'python', source: '@app.route("/")\n@login\ndef index():\n    pass\n', name: 'index'},
+  {language: 'rust', source: '#[derive(Debug)]\n#[repr(C)]\nstruct Point {}\n', name: 'Point'},
+])(
+  'starts a decorated $language symbol at its first decorator',
+  async ({language, source, name}) => {
+    const symbols = extractWithinLimits({source, parser: await parserFor(language)})
+    const symbol = symbols.find((entry) => entry.name === name)
+
+    expect(symbol?.range.startLine).toBe(1)
+    expect(symbol?.span.from).toBe(0)
+  },
+)
+
+// `@lezer/javascript` has no rule for a decorator ahead of `export`. The
+// extractor reads how the parser recovers: a class with no name that holds
+// the decorators, then the export. A grammar upgrade that changes this shape
+// must fail here, not drop the decorator row in silence.
+test('pins how the parser recovers from a decorator ahead of export', async () => {
+  const parser = await parserFor('typescript')
+  const source = '@Dec export class Widget {}\n'
+
+  const top = parser.parse(source).topNode
+  const recovered = top.firstChild
+  const exported = recovered?.nextSibling
+
+  expect(recovered?.type.name).toBe('ClassDeclaration')
+  expect(recovered?.getChild('VariableDefinition')).toBeNull()
+  expect(
+    recovered?.getChildren('Decorator').map((node) => source.slice(node.from, node.to)),
+  ).toEqual(['@Dec '])
+  expect(exported?.type.name).toBe('ExportDeclaration')
+  expect(exported?.getChild('ClassDeclaration')?.getChild('VariableDefinition')).not.toBeNull()
+  expect(exported?.nextSibling).toBeNull()
+})
+
+test('reports a module-level call once, without the locals in its callback', () => {
+  const source = "register('event', () => {\n  const hidden = 1\n  use(hidden)\n})\n"
+
+  const symbols = extractWithinLimits({source, parser: tsxParser})
+
+  expect(symbols.map((symbol) => `${symbol.kind} ${symbol.qualifiedName}`)).toEqual([
+    "call register('event')",
+  ])
+})
+
+test('labels calls by callee path and first literal argument', () => {
+  const source = [
+    "test('adds numbers', () => {",
+    '  const sum = 1 + 1',
+    '  expect(sum).toBe(2)',
+    '})',
+    "it.only('focused case', () => {})",
+    "test.each(rows)('runs $value', () => {})",
+    'startServer()',
+    '',
+  ].join('\n')
+
+  const symbols = extractWithinLimits({source, parser: tsxParser})
+
+  expect(symbols.map((symbol) => `${symbol.kind} ${symbol.qualifiedName}`)).toEqual([
+    "call test('adds numbers')",
+    "call it.only('focused case')",
+    "call test.each('runs $value')",
+    'call startServer',
+  ])
+})
+
+test('treats nested and non-statement calls as part of their enclosing symbol', () => {
+  const source = [
+    "describe('math', () => {",
+    "  test('adds', () => {})",
+    '})',
+    'const client = createClient()',
+    '',
+  ].join('\n')
+
+  const symbols = extractWithinLimits({source, parser: tsxParser})
+
+  expect(symbols.map((symbol) => `${symbol.kind} ${symbol.qualifiedName}`)).toEqual([
+    "call describe('math')",
+    'constant client',
+  ])
+})
+
+test('parses a file with syntax errors instead of throwing', () => {
+  const source = 'export function broken( {\n  return\n'
+
+  const symbols = extractWithinLimits({source, parser: tsxParser})
+
+  expect(symbols.map((symbol) => symbol.name)).toContain('broken')
+})
+
+test('fingerprints the elements of an array-valued property', () => {
+  const source = '{"words": ["alpha", "beta"], "limit": 3}'
+
+  const symbols = extractWithinLimits({source, parser: jsonParser})
+
+  const words = symbols.find((symbol) => symbol.qualifiedName === 'words')
+  expect(words?.elements?.map((element) => element.preview)).toEqual(['"alpha"', '"beta"'])
+  expect(words?.elements?.map((element) => element.hasSymbols)).toEqual([false, false])
+  expect(symbols.find((symbol) => symbol.qualifiedName === 'limit')?.elements).toBeUndefined()
+})
+
+test('marks array elements that contain symbols of their own', () => {
+  const source = '{"defs": [{"name": "dns"}, "plain"]}'
+
+  const symbols = extractWithinLimits({source, parser: jsonParser})
+
+  const defs = symbols.find((symbol) => symbol.qualifiedName === 'defs')
+  expect(defs?.elements?.map((element) => element.hasSymbols)).toEqual([true, false])
+})
+
+test.each([
+  {count: 2000, tooLarge: false},
+  {count: 2001, tooLarge: true},
+])('$count symbols are too large: $tooLarge', ({count, tooLarge}) => {
+  const keys = Array.from({length: count}, (_, index) => `"k${index}": 0`)
+
+  const extraction = extractSymbols({source: `{${keys.join(', ')}}`, parser: jsonParser})
+
+  expect(extraction.tooLarge).toBe(tooLarge)
+})
+
+test.each([
+  {lengths: [2000, 2000, 2000, 2000, 2000], tooLarge: false},
+  {lengths: [2000, 2000, 2000, 2000, 2000, 1], tooLarge: true},
+  {lengths: [2001, 2001, 2001, 2001, 2001, 2001], tooLarge: false},
+])('arrays of $lengths elements are too large: $tooLarge', ({lengths, tooLarge}) => {
+  const properties = lengths.map(
+    (length, index) => `"a${index}": [${Array.from({length}, () => '0').join(', ')}]`,
+  )
+
+  const extraction = extractSymbols({source: `{${properties.join(', ')}}`, parser: jsonParser})
+
+  expect(extraction.tooLarge).toBe(tooLarge)
+})
+
+// The symbol spans the quoted key, `: `, and the value, and its qualified name is
+// the key. So the total is exactly 2,000,000 characters with 10, and one more with 100.
+test.each([
+  {value: '10', tooLarge: false},
+  {value: '100', tooLarge: true},
+])('a long key with the value $value is too large: $tooLarge', ({value, tooLarge}) => {
+  const source = `{"${'k'.repeat(999_997)}": ${value}}`
+
+  expect(extractSymbols({source, parser: jsonParser}).tooLarge).toBe(tooLarge)
+})
+
+test('counts qualified names toward the character limit', () => {
+  const key = 'k'.repeat(600_000)
+
+  const oneChild = extractSymbols({source: `{"${key}": {"a": 0}}`, parser: jsonParser})
+  const twoChildren = extractSymbols({source: `{"${key}": {"a": 0, "b": 0}}`, parser: jsonParser})
+
+  expect(oneChild.tooLarge).toBe(false)
+  expect(twoChildren.tooLarge).toBe(true)
+})
+
+test('reports a small file of deeply nested symbols as too large without hashing', () => {
+  vi.mocked(computeSignature).mockClear()
+  const source = `${'namespace n { '.repeat(200)}${'x;\n'.repeat(5000)}${'}'.repeat(200)}\n`
+
+  expect(extractSymbols({source, parser: tsxParser})).toEqual({tooLarge: true})
+  expect(computeSignature).not.toHaveBeenCalled()
+})
+
+test('reports a parser stack overflow as too large', () => {
+  vi.spyOn(jsonParser, 'parse').mockImplementationOnce(() => {
+    throw new RangeError('Maximum call stack size exceeded')
+  })
+
+  expect(extractSymbols({source: '[[0]]', parser: jsonParser})).toEqual({tooLarge: true})
+})
+
+test('passes through a parser error that is not a stack overflow', () => {
+  vi.spyOn(jsonParser, 'parse').mockImplementationOnce(() => {
+    throw new TypeError('The grammar is broken')
+  })
+
+  expect(() => extractSymbols({source: '[[0]]', parser: jsonParser})).toThrow(TypeError)
+})

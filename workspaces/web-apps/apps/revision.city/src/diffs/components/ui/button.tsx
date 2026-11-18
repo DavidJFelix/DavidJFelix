@@ -1,5 +1,5 @@
-import {Slot} from '@radix-ui/react-slot'
-import * as React from 'react'
+import {ark} from '@ark-ui/react/factory'
+import type * as React from 'react'
 
 import {cva, cx, type RecipeVariantProps} from 'styled-system/css'
 
@@ -141,10 +141,9 @@ export type ButtonProps = React.ComponentProps<'button'> &
   }
 
 function Button({className, variant, size, asChild = false, ...props}: ButtonProps) {
-  const Comp = asChild ? Slot : 'button'
-
   return (
-    <Comp
+    <ark.button
+      asChild={asChild}
       data-slot="button"
       className={cx(buttonVariants({variant, size}), className)}
       {...props}

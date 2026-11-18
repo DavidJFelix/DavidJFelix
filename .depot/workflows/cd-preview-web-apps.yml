@@ -2,8 +2,12 @@ name: CD Preview web-apps
 # Per-PR preview deploys, fanned out over the apps a change actually affects.
 # The plan job asks turbo which workspace packages the PR touched -- including
 # everything downstream of a shared package like packages/theme -- and the
-# matrix deploys exactly those. Adding an app means adding a registry entry in
-# bin/plan-affected-apps.ts, not another workflow file.
+# matrix deploys exactly those. When a change affects no app (repo-root tooling
+# such as bin/, the actions and the tool pins, which turbo cannot see), the plan
+# previews every app in the matrix, because that change can change every
+# build.
+# Adding an app means adding a registry entry in bin/plan-affected-apps.ts, not
+# another workflow file.
 #
 # Each preview uploads a non-active version with a pr-<N> alias, smokes it, runs
 # the app's Playwright suite against it, and posts the URL. No teardown --

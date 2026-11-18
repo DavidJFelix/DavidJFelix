@@ -1,4 +1,3 @@
-// @vitest-environment node
 // cSpell:ignore unixepoch -- the SQLite date function
 
 import {DatabaseSync, type SQLInputValue} from 'node:sqlite'

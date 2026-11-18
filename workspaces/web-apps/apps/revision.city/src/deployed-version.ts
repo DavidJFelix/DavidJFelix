@@ -1,8 +1,6 @@
 // The id of the Worker version serving this request, from the version
-// metadata binding wrangler.toml declares. The share-card routes key their
-// edge cache on it, so a deploy starts from an empty card cache instead of
-// serving the previous version's cards until they expire. Undefined where the
-// binding is absent or empty, and a caller then keys nothing on it.
+// metadata binding wrangler.toml declares, for the share card routes'
+// `version`. Undefined where the binding is absent or empty.
 export async function readDeployedVersion(): Promise<string | undefined> {
   // Dynamic import: `cloudflare:workers` only resolves in the workerd SSR
   // environment, and this keeps it out of the client bundle entirely.

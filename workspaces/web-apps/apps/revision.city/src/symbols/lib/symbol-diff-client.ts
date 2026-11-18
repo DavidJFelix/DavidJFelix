@@ -1,0 +1,230 @@
+import {isRecord} from '@/lib/json-read'
+import type {SymbolChange, SymbolDiff, SymbolDiffSummary} from './code-symbol'
+
+export interface SymbolDiffRequest {
+  itemId: string
+  name: string
+  prevName?: string
+  type: string
+}
+
+export interface SymbolDiffStreamResult {
+  itemId: string
+  name: string
+  diff?: SymbolDiff
+  error?: string
+}
+
+// By call signature only: lib.dom types `typeof fetch` with a required static
+// `preconnect`, which a test stub cannot (and need not) satisfy. Mirrors the
+// diffs file loader's own fetch type.
+type SymbolDiffFetch = (
+  input: Parameters<typeof fetch>[0],
+  init?: Parameters<typeof fetch>[1],
+) => ReturnType<typeof fetch>
+
+export interface StreamSymbolDiffsParams {
+  // The host of a diff that is not on GitHub, such as `codeberg.org`.
+  domain?: string
+  endpoint?: string
+  fetcher?: SymbolDiffFetch
+  files: readonly SymbolDiffRequest[]
+  onResult: (result: SymbolDiffStreamResult) => void
+  // One wait per retry after a 429, so the length sets the retry count.
+  rateLimitDelaysMs?: readonly number[]
+  signal?: AbortSignal
+  sourcePath: string
+}
+
+const DEFAULT_ENDPOINT = '/api/diffs/symbol-diff'
+
+// A 429 comes from the rate limiting rule on the revision.city zone (#871). It
+// blocks a client for 10 seconds once the client sends more than 20 requests in
+// 10 seconds. So 10 seconds after a 429 the client can send again.
+const DEFAULT_RATE_LIMIT_DELAYS_MS = [10_000, 10_000, 10_000]
+
+// A worker request has a bounded subrequest budget and each file costs up to two
+// file reads (the refs lookup is once per request), so a caller sends its file
+// list in batches. Declared here rather
+// than in the endpoint so the browser can read it without pulling the server
+// module -- and with it every grammar -- into the client bundle.
+export const MAX_FILES_PER_REQUEST = 20
+
+// Reads one newline-delimited JSON result per file and hands each to `onResult`
+// as it arrives, so the panel fills in progressively rather than at the end.
+// Talks only to the same-origin route; GitHub auth, when there is any, rides
+// along on the session cookie and never reaches the browser.
+export async function streamSymbolDiffs({
+  domain,
+  endpoint = DEFAULT_ENDPOINT,
+  fetcher = fetch,
+  files,
+  onResult,
+  rateLimitDelaysMs = DEFAULT_RATE_LIMIT_DELAYS_MS,
+  signal,
+  sourcePath,
+}: StreamSymbolDiffsParams): Promise<void> {
+  const response = await postBatchWithRetry({
+    body: JSON.stringify({domain, path: sourcePath, files}),
+    delaysMs: rateLimitDelaysMs,
+    endpoint,
+    fetcher,
+    signal,
+  })
+
+  if (!response.ok) {
+    throw new Error(await readErrorDetail(response))
+  }
+  if (response.body === null) {
+    throw new Error('Symbol lookup returned no results.')
+  }
+
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+
+  for (;;) {
+    const {done, value} = await reader.read()
+    if (done) {
+      break
+    }
+    buffer += decoder.decode(value, {stream: true})
+
+    // A chunk can split a line, so only whole lines are parsed; the remainder
+    // stays buffered for the next read.
+    let newline = buffer.indexOf('\n')
+    while (newline !== -1) {
+      emitLine(buffer.slice(0, newline), onResult)
+      buffer = buffer.slice(newline + 1)
+      newline = buffer.indexOf('\n')
+    }
+  }
+  emitLine(buffer, onResult)
+}
+
+interface PostBatchWithRetryParams {
+  body: string
+  delaysMs: readonly number[]
+  endpoint: string
+  fetcher: SymbolDiffFetch
+  signal?: AbortSignal
+}
+
+// A viewer over the zone's rate limit (#871) reads its files later instead of
+// losing them.
+async function postBatchWithRetry({
+  body,
+  delaysMs,
+  endpoint,
+  fetcher,
+  signal,
+}: PostBatchWithRetryParams): Promise<Response> {
+  const response = await fetcher(endpoint, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body,
+    signal,
+  })
+  const [delayMs, ...laterDelaysMs] = delaysMs
+  if (response.status !== 429 || delayMs === undefined) {
+    return response
+  }
+  await new Promise((resolve) => setTimeout(resolve, delayMs))
+  return postBatchWithRetry({body, delaysMs: laterDelaysMs, endpoint, fetcher, signal})
+}
+
+function emitLine(line: string, onResult: (result: SymbolDiffStreamResult) => void): void {
+  const trimmed = line.trim()
+  if (trimmed === '') {
+    return
+  }
+
+  try {
+    const result = normalizeResult(JSON.parse(trimmed))
+    if (result !== undefined) {
+      onResult(result)
+    }
+  } catch {
+    // A truncated or malformed line loses one file, not the whole stream.
+  }
+}
+
+// The route is same-origin and typed, but the response still crosses a network
+// boundary; normalizing keeps a malformed payload from reaching the renderer.
+function normalizeResult(data: unknown): SymbolDiffStreamResult | undefined {
+  if (!isRecord(data) || typeof data.itemId !== 'string' || typeof data.name !== 'string') {
+    return undefined
+  }
+  if (typeof data.error === 'string') {
+    return {itemId: data.itemId, name: data.name, error: data.error}
+  }
+  const diff = normalizeSymbolDiff(data.diff)
+  return diff === undefined
+    ? {itemId: data.itemId, name: data.name, error: 'Symbol lookup returned an invalid result.'}
+    : {itemId: data.itemId, name: data.name, diff}
+}
+
+function normalizeSymbolDiff(data: unknown): SymbolDiff | undefined {
+  if (!isRecord(data) || typeof data.path !== 'string' || !Array.isArray(data.changes)) {
+    return undefined
+  }
+
+  const changes = data.changes.filter(isSymbolChange)
+  return {
+    path: data.path,
+    language: typeof data.language === 'string' ? data.language : null,
+    changes,
+    summary: isSummary(data.summary) ? data.summary : createSummary(changes),
+    ...(data.skipped === 'too-large' ? {skipped: 'too-large'} : {}),
+  }
+}
+
+async function readErrorDetail(response: Response): Promise<string> {
+  const text = (await response.text()).trim()
+  if (text !== '') {
+    try {
+      const data: unknown = JSON.parse(text)
+      if (isRecord(data) && typeof data.error === 'string') {
+        return data.error
+      }
+    } catch {
+      // Fall through to the status-only message below.
+    }
+  }
+  return `Symbol lookup failed (${response.status}).`
+}
+
+function isSymbolChange(value: unknown): value is SymbolChange {
+  return (
+    isRecord(value) &&
+    typeof value.type === 'string' &&
+    typeof value.kind === 'string' &&
+    typeof value.name === 'string' &&
+    typeof value.qualifiedName === 'string'
+  )
+}
+
+function isSummary(value: unknown): value is SymbolDiffSummary {
+  return (
+    isRecord(value) &&
+    typeof value.added === 'number' &&
+    typeof value.deleted === 'number' &&
+    typeof value.modified === 'number' &&
+    typeof value.moved === 'number' &&
+    typeof value.renamed === 'number'
+  )
+}
+
+function createSummary(changes: readonly SymbolChange[]): SymbolDiffSummary {
+  return {
+    added: countOf(changes, 'added'),
+    deleted: countOf(changes, 'deleted'),
+    modified: countOf(changes, 'modified'),
+    moved: countOf(changes, 'moved'),
+    renamed: countOf(changes, 'renamed'),
+  }
+}
+
+function countOf(changes: readonly SymbolChange[], type: SymbolChange['type']): number {
+  return changes.filter((change) => change.type === type).length
+}

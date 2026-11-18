@@ -1,4 +1,10 @@
 import {
+  createGitHubApiUrl,
+  createGitHubHeaders,
+  type GitHubAuthorization,
+  type GitHubFetch,
+} from '@/lib/github-http'
+import {
   CODEBERG_HOST,
   createCodebergPageURL,
   createCodebergPatchURL,
@@ -23,32 +29,26 @@ import {
   encodeURLSegment,
   type GitHubDiffSource,
   type GitHubRepo,
+  isSameGitHubRepo,
   parseGitHubDiffSource,
+  readPullRequestRange,
 } from './github-diff-source'
 import {diagnoseGitHubAccess} from './github-repo-access'
+import {normalizeGitHubPath} from './normalize-github-path'
 import {isNullish} from './nullish'
 
 const CACHE_CONTROL = 'no-store'
 const EMPTY_PATCH_MESSAGE = 'GitHub returned an empty diff.'
-const GITHUB_API_ROOT = 'https://api.github.com'
-const GITHUB_API_VERSION = '2022-11-28'
-const GITHUB_DIFF_MEDIA_TYPE = 'application/vnd.github.diff'
-const GITHUB_JSON_MEDIA_TYPE = 'application/vnd.github+json'
 const GITHUB_HOST = 'github.com'
 const GITHUB_RAW_DIFF_HOST = 'patch-diff.githubusercontent.com'
 const NON_DIFF_RESPONSE_MESSAGE = 'GitHub did not return a diff for this URL.'
 const NON_WHITESPACE_PATTERN = /\S/
+const URL_DROPPED_CHARACTER_PATTERN = /[\t\n\r]/
 const RAW_GITHUB_DIFF_PATH_PATTERN = /^\/raw\/[^/]+\/[^/]+\/pull\/[^/]+\.(?:diff|patch)$/
-const GITHUB_PULL_TAB_PATH_PATTERN = /^\/([^/]+)\/([^/]+)\/pull\/(\d+)\/(?:changes|files)$/
 const UPSTREAM_FAILURE_LOG_MESSAGE = 'diff upstream attempt failed'
 const APP_FALLBACK_WITHHELD_LOG_MESSAGE = 'diff app fallback withheld'
 
 const HIDDEN_PATCH_DOMAIN_RULES = [{domainRoot: 'tangled.org', defaultExtension: '.patch'}] as const
-
-type DiffFetch = (
-  input: Parameters<typeof fetch>[0],
-  init?: Parameters<typeof fetch>[1],
-) => ReturnType<typeof fetch>
 
 export interface DiffRequestOptions {
   // The app's own client id and secret. A signed-out visitor's diff falls back
@@ -57,7 +57,7 @@ export interface DiffRequestOptions {
   // the Worker shares with every other Worker. Read from the worker env when
   // not given.
   credentials?: GitHubAppCredentials
-  fetch?: DiffFetch
+  fetch?: GitHubFetch
   // Where the edge remembers GitHub's verdicts on those credentials, shared
   // with the share-card lookup so both back off together. The Workers cache
   // when not given.
@@ -90,7 +90,7 @@ interface DirectPatchFetchTarget {
 interface GitHubPullPatchFetchTarget {
   kind: 'github-pull'
   auth: GitHubAPIAuthKind
-  authorization: string
+  authorization: GitHubAuthorization
   compareLabel: string
   label?: string
   pullURL: string
@@ -147,7 +147,7 @@ interface CreateDiffResponseParams {
   request: Request
   session: GitHubAuthSession | undefined
   credentials: GitHubAppCredentials | undefined
-  fetcher: DiffFetch
+  fetcher: GitHubFetch
   cache: ResponseCache | undefined
 }
 
@@ -251,6 +251,12 @@ function resolvePatchURLInput(
   input: string,
   apiAuth: GitHubAPIAuth | undefined,
 ): ResolvedPatchRequest | undefined {
+  // The URL parser drops tabs and line breaks without an error, so a ref with
+  // one would fetch a different ref.
+  if (URL_DROPPED_CHARACTER_PATTERN.test(input)) {
+    return undefined
+  }
+
   if (input.startsWith('/')) {
     return resolveGitHubPatchRequest(input, apiAuth)
   }
@@ -294,7 +300,7 @@ function resolveDomainPatchRequest(domain: string, path: string): ResolvedPatchR
   }
 
   const patchURL = resolveDomainPatchURL(domain, path)
-  return isNullish(patchURL) ? undefined : {patchURL}
+  return isNullish(patchURL) ? undefined : {patchURL, sourceURL: patchURL}
 }
 
 function resolveCodebergPatchRequest(path: string): ResolvedPatchRequest | undefined {
@@ -357,7 +363,7 @@ function resolveAuthenticatedGitHubWebPatchRequest(
     auth: 'visitor',
     label: 'authenticated github.com diff URL',
     patchURL,
-    requestHeaders: createGitHubAuthHeaders(token),
+    requestHeaders: createGitHubHeaders({authorization: {kind: 'token', token}}),
   }
 }
 
@@ -372,7 +378,7 @@ function resolveGitHubAPIPatchRequest(
   }
 
   const sourceURL = createGitHubSourceURL(path)
-  const authorization = createAuthorizationHeader(apiAuth)
+  const authorization = toGitHubAuthorization(apiAuth)
   const labelPrefix = apiAuth.kind === 'visitor' ? 'authenticated' : 'app-authenticated'
   const skipAfterNotFound = apiAuth.kind === 'app'
   if (source.kind === 'pull') {
@@ -384,7 +390,7 @@ function resolveGitHubAPIPatchRequest(
       label: `${labelPrefix} pull metadata`,
       pullURL: createGitHubDiffApiUrl(source),
       repo: source.repo,
-      requestHeaders: createGitHubJSONAPIHeaders(authorization),
+      requestHeaders: createGitHubHeaders({media: 'json', authorization}),
       skipAfterNotFound,
       sourceURL,
     }
@@ -394,7 +400,7 @@ function resolveGitHubAPIPatchRequest(
     auth: apiAuth.kind,
     label: `${labelPrefix} ${source.kind} diff API`,
     patchURL: createGitHubDiffApiUrl(source),
-    requestHeaders: createGitHubDiffAPIHeaders(authorization),
+    requestHeaders: createGitHubHeaders({media: 'diff', authorization}),
     skipAfterNotFound,
     sourceURL,
   }
@@ -446,7 +452,7 @@ function resolveGitHubPath(path: string): string | undefined {
   }
 
   let patchPath = normalizeGitHubPath(path)
-  if (patchPath === '') {
+  if (patchPath === '/') {
     return undefined
   }
 
@@ -454,13 +460,22 @@ function resolveGitHubPath(path: string): string | undefined {
     patchPath += '.diff'
   }
 
-  return `https://${GITHUB_HOST}${patchPath}`
+  return createGitHubURL(patchPath)
 }
 
 // The human-facing github.com URL a patch attempt stands for, which is what the
 // access diagnosis parses back into an owner, repository, and diff source.
 function createGitHubSourceURL(path: string): string {
-  return `https://${GITHUB_HOST}${removeDiffExtension(normalizeGitHubPath(path))}`
+  return createGitHubURL(removeDiffExtension(normalizeGitHubPath(path)))
+}
+
+// The pathname setter escapes `#`, `?` and non-ASCII characters and keeps an
+// existing `%XX` as written. So a ref with a raw `#` and a ref with `%23` get
+// the same URL, and the URL is safe in a response header.
+function createGitHubURL(path: string): string {
+  const url = new URL(`https://${GITHUB_HOST}`)
+  url.pathname = path
+  return url.href
 }
 
 function removeDiffExtension(path: string): string {
@@ -475,16 +490,6 @@ function removeDiffExtension(path: string): string {
   return path
 }
 
-function normalizeGitHubPath(path: string): string {
-  const trimmedPath = path.replace(/\/+$/, '')
-  const pullTabMatch = GITHUB_PULL_TAB_PATH_PATTERN.exec(trimmedPath)
-  if (isNullish(pullTabMatch)) {
-    return trimmedPath
-  }
-
-  return `/${pullTabMatch[1]}/${pullTabMatch[2]}/pull/${pullTabMatch[3]}`
-}
-
 function isAllowedHttpsUrl(url: URL): boolean {
   return url.protocol === 'https:' && url.port === '' && url.username === '' && url.password === ''
 }
@@ -492,50 +497,24 @@ function isAllowedHttpsUrl(url: URL): boolean {
 function createGitHubDiffApiUrl(source: GitHubDiffSource): string {
   switch (source.kind) {
     case 'pull':
-      return createGitHubApiUrl(
-        `/repos/${encodeURLSegment(source.repo.owner)}/${encodeURLSegment(source.repo.repo)}/pulls/${encodeURLSegment(source.number)}`,
-      )
+      return createGitHubApiUrl({
+        path: `/repos/${encodeURLSegment(source.repo.owner)}/${encodeURLSegment(source.repo.repo)}/pulls/${encodeURLSegment(source.number)}`,
+      })
     case 'commit':
-      return createGitHubApiUrl(
-        `/repos/${encodeURLSegment(source.repo.owner)}/${encodeURLSegment(source.repo.repo)}/commits/${encodeURLSegment(source.sha)}`,
-      )
+      return createGitHubApiUrl({
+        path: `/repos/${encodeURLSegment(source.repo.owner)}/${encodeURLSegment(source.repo.repo)}/commits/${encodeURLSegment(source.sha)}`,
+      })
     case 'compare':
-      return createGitHubApiUrl(
-        `/repos/${encodeURLSegment(source.repo.owner)}/${encodeURLSegment(source.repo.repo)}/compare/${encodeURLSegment(source.range)}`,
-      )
+      return createGitHubApiUrl({
+        path: `/repos/${encodeURLSegment(source.repo.owner)}/${encodeURLSegment(source.repo.repo)}/compare/${encodeURLSegment(source.range)}`,
+      })
   }
 }
 
-function createAuthorizationHeader(apiAuth: GitHubAPIAuth): string {
+function toGitHubAuthorization(apiAuth: GitHubAPIAuth): GitHubAuthorization {
   return apiAuth.kind === 'visitor'
-    ? `Bearer ${apiAuth.token}`
-    : `Basic ${btoa(`${apiAuth.credentials.clientId}:${apiAuth.credentials.clientSecret}`)}`
-}
-
-function createGitHubAuthHeaders(token: string): Record<string, string> {
-  return {
-    Authorization: `Bearer ${token}`,
-  }
-}
-
-function createGitHubApiUrl(path: string): string {
-  return new URL(path, GITHUB_API_ROOT).href
-}
-
-function createGitHubDiffAPIHeaders(authorization: string): Record<string, string> {
-  return {
-    Accept: GITHUB_DIFF_MEDIA_TYPE,
-    Authorization: authorization,
-    'X-GitHub-Api-Version': GITHUB_API_VERSION,
-  }
-}
-
-function createGitHubJSONAPIHeaders(authorization: string): Record<string, string> {
-  return {
-    Accept: GITHUB_JSON_MEDIA_TYPE,
-    Authorization: authorization,
-    'X-GitHub-Api-Version': GITHUB_API_VERSION,
-  }
+    ? {kind: 'token', token: apiAuth.token}
+    : {kind: 'app', credentials: apiAuth.credentials}
 }
 
 interface TextResponseOptions {
@@ -561,7 +540,7 @@ interface CreatePatchStreamResponseParams {
   patchRequest: ResolvedPatchRequest
   requestSignal: AbortSignal
   viewer: DiffViewerAuth
-  fetcher: DiffFetch
+  fetcher: GitHubFetch
   cache: ResponseCache | undefined
 }
 
@@ -665,15 +644,45 @@ async function createPatchStreamResponse({
     }
   }
 
+  // Reads GitHub only when the client asks for more, so a slow client does not
+  // make the Worker hold the rest of the diff in memory.
+  const reader = responseBody.getReader()
+  let sawContent = false
+  const stopListening = () => {
+    requestSignal.removeEventListener('abort', abortUpstream)
+  }
   const stream = new ReadableStream<Uint8Array>({
-    start(controller) {
-      void pumpPatchBody(responseBody, controller).finally(() => {
-        requestSignal.removeEventListener('abort', abortUpstream)
-      })
+    async pull(controller) {
+      try {
+        // The stream does not call pull again after a pull that enqueues nothing,
+        // so skip empty chunks here.
+        for (;;) {
+          const result = await reader.read()
+          if (result.done) {
+            stopListening()
+            if (sawContent) {
+              controller.close()
+            } else {
+              controller.error(new Error(EMPTY_PATCH_MESSAGE))
+            }
+            return
+          }
+
+          if (result.value.byteLength > 0) {
+            sawContent = true
+            controller.enqueue(result.value)
+            return
+          }
+        }
+      } catch (error) {
+        stopListening()
+        controller.error(error)
+      }
     },
-    cancel() {
+    async cancel(reason) {
       abortUpstream()
-      requestSignal.removeEventListener('abort', abortUpstream)
+      stopListening()
+      await reader.cancel(reason).catch(() => {})
     },
   })
 
@@ -713,7 +722,7 @@ async function takeNextFallback({
 interface FetchPatchTargetParams<T extends PatchFetchTarget> {
   target: T
   signal: AbortSignal
-  fetcher: DiffFetch
+  fetcher: GitHubFetch
 }
 
 function fetchPatchTarget({
@@ -735,7 +744,7 @@ async function fetchDirectPatchTarget({
 }: FetchPatchTargetParams<DirectPatchFetchTarget>): Promise<PatchFetchResult> {
   const response = await fetcher(target.patchURL, {
     cache: 'no-store',
-    headers: {'User-Agent': 'revision-city-diffs', ...target.requestHeaders},
+    headers: {...createGitHubHeaders({}), ...target.requestHeaders},
     signal,
   })
   return {response, target}
@@ -748,7 +757,7 @@ async function fetchGitHubPullPatchTarget({
 }: FetchPatchTargetParams<GitHubPullPatchFetchTarget>): Promise<PatchFetchResult> {
   const pullResponse = await fetcher(target.pullURL, {
     cache: 'no-store',
-    headers: {'User-Agent': 'revision-city-diffs', ...target.requestHeaders},
+    headers: {...createGitHubHeaders({}), ...target.requestHeaders},
     signal,
   })
 
@@ -763,12 +772,8 @@ async function fetchGitHubPullPatchTarget({
     return {response: pullResponse, target: pullTarget}
   }
 
-  const pullData = await pullResponse.json()
-  const baseSha = readStringPath(pullData, ['base', 'sha'])
-  const headSha = readStringPath(pullData, ['head', 'sha'])
-  const baseRepo = readRepoFullName(pullData, ['base', 'repo', 'full_name'])
-  const headRepo = readRepoFullName(pullData, ['head', 'repo', 'full_name'])
-  if (isNullish(baseSha) || isNullish(headSha)) {
+  const range = readPullRequestRange({data: await pullResponse.json(), urlRepo: target.repo})
+  if (isNullish(range)) {
     return {
       response: new Response('GitHub pull response did not include refs.', {
         status: 502,
@@ -777,8 +782,7 @@ async function fetchGitHubPullPatchTarget({
     }
   }
 
-  const compareBaseRepo = baseRepo ?? target.repo
-  const compareHeadRepo = headRepo ?? compareBaseRepo
+  const {baseSha, headSha, baseRepo: compareBaseRepo, headRepo: compareHeadRepo} = range
   const compareRange = isSameGitHubRepo(compareBaseRepo, compareHeadRepo)
     ? `${baseSha}...${headSha}`
     : `${compareBaseRepo.owner}:${baseSha}...${compareHeadRepo.owner}:${headSha}`
@@ -786,11 +790,11 @@ async function fetchGitHubPullPatchTarget({
   return fetchDirectPatchTarget({
     target: {
       auth: target.auth,
-      patchURL: createGitHubApiUrl(
-        `/repos/${encodeURLSegment(compareBaseRepo.owner)}/${encodeURLSegment(compareBaseRepo.repo)}/compare/${encodeURLSegment(compareRange)}`,
-      ),
+      patchURL: createGitHubApiUrl({
+        path: `/repos/${encodeURLSegment(compareBaseRepo.owner)}/${encodeURLSegment(compareBaseRepo.repo)}/compare/${encodeURLSegment(compareRange)}`,
+      }),
       label: target.compareLabel,
-      requestHeaders: createGitHubDiffAPIHeaders(target.authorization),
+      requestHeaders: createGitHubHeaders({media: 'diff', authorization: target.authorization}),
       sourceURL: target.sourceURL,
     },
     signal,
@@ -828,7 +832,7 @@ interface ExplainPatchFailureParams {
   response: Response
   target: DirectPatchFetchTarget
   viewer: DiffViewerAuth
-  fetcher: DiffFetch
+  fetcher: GitHubFetch
 }
 
 // Turns the last attempt's failure on a github.com source into something the
@@ -966,43 +970,6 @@ function readGitHubSourceFromURL(sourceURL: string | undefined): GitHubDiffSourc
   }
 }
 
-function readRepoFullName(data: unknown, path: readonly string[]): GitHubRepo | undefined {
-  const fullName = readStringPath(data, path)
-  if (isNullish(fullName)) {
-    return undefined
-  }
-
-  const separatorIndex = fullName.indexOf('/')
-  if (separatorIndex <= 0 || separatorIndex === fullName.length - 1) {
-    return undefined
-  }
-  return {
-    owner: fullName.slice(0, separatorIndex),
-    repo: fullName.slice(separatorIndex + 1),
-  }
-}
-
-function isSameGitHubRepo(a: GitHubRepo, b: GitHubRepo): boolean {
-  return (
-    a.owner.toLowerCase() === b.owner.toLowerCase() && a.repo.toLowerCase() === b.repo.toLowerCase()
-  )
-}
-
-function readStringPath(data: unknown, path: readonly string[]): string | undefined {
-  let current = data
-  for (const key of path) {
-    if (!isRecord(current)) {
-      return undefined
-    }
-    current = current[key]
-  }
-  return typeof current === 'string' ? current : undefined
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
-}
-
 function isDiffContentType(contentType: string): boolean {
   const normalizedContentType = contentType.toLowerCase()
   return (
@@ -1010,40 +977,6 @@ function isDiffContentType(contentType: string): boolean {
     (normalizedContentType.includes('application/vnd.github') &&
       normalizedContentType.includes('diff'))
   )
-}
-
-// Forwards each validated upstream diff chunk into the client stream.
-async function pumpPatchBody(
-  body: ReadableStream<Uint8Array>,
-  controller: ReadableStreamDefaultController<Uint8Array>,
-): Promise<void> {
-  try {
-    const reader = body.getReader()
-    let sawContent = false
-    try {
-      for (;;) {
-        const result = await reader.read()
-        if (result.done) {
-          break
-        }
-
-        if (result.value.byteLength > 0) {
-          sawContent = true
-          controller.enqueue(result.value)
-        }
-      }
-    } finally {
-      reader.releaseLock()
-    }
-
-    if (!sawContent) {
-      throw new Error(EMPTY_PATCH_MESSAGE)
-    }
-
-    controller.close()
-  } catch (error) {
-    controller.error(error)
-  }
 }
 
 // Centralizes text response headers for both stream and error bodies. Diff

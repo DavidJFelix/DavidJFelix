@@ -1,5 +1,3 @@
-// @vitest-environment node
-
 import {generateKeyPairSync, verify} from 'node:crypto'
 import {expect, test, vi} from 'vitest'
 import {createAppJwt, createInstallationTokenSource} from './github-app-auth'

@@ -102,8 +102,9 @@ conversations, no database yet); the site, endpoint included, sits behind Cloudf
 #### [revision.city](./projects/revision-city/plan.md)
 
 A centralized version-control service for managing reviews and diffs. The diffs half is live: a
-GitHub diff viewer (ported from Pierre's diffshub) under `/diffs`. Reviews MVP shape still to be
-scoped.
+GitHub diff viewer (ported from Pierre's diffshub) under `/diffs`. Automated pull request reviews
+are built; see revision.city Reviews below. Local setup:
+[the app's README](../workspaces/web-apps/apps/revision.city/README.md).
 
 **Status**: Functional
 
@@ -187,17 +188,20 @@ retire the bespoke freshness skill + cron once coverage is proven.
 
 Consolidate the repo's code-review surfaces around **Warden** as the canonical automated PR gate,
 with the built-in `/code-review` + `/security-review` (local inner loop) and `/review` (Standards +
-Spec) positioned to complement it, not compete. Warden landed 2026-06-30; the gate goes live once
-its secrets exist (#302). Next: encode the repo's own standards as custom Warden skills.
+Spec) positioned to complement it, not compete. Superseded in part: since 2026-11-02 revision.city
+reviews each push and Warden runs only on its `Warden` label. Warden retires in phase 3 of
+revision.city Reviews.
 
-**Status**: Active · Blocked (human activation, #302)
+**Status**: Active
 
 ### [revision.city Reviews](./projects/revision-city-reviews/plan.md)
 
 Turn revision.city into a standalone GitHub App reviewer that replaces Warden. A webhook starts each
 review, a Cloudflare Workflow runs it, and D1 saves each chunk's result. OpenRouter serves the
 models. The review engine and the GitHub App wiring are built, and the one-time setup in #790 is
-done. Next: a comparison with Warden on a few pull requests.
+done. Next: a comparison with Warden on a few pull requests, and a move of the model work to a
+coding harness. The harness is OpenCode in a Durable Object. It is a Worker of its own,
+`revision-city-harness-opencode`, in `workspaces/harnesses/opencode/`, and it has no public host.
 
 **Status**: Active
 

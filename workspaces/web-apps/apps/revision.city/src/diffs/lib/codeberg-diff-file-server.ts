@@ -1,14 +1,16 @@
 import type {ChangeTypes, FileContents} from '@pierre/diffs'
+import {readStringPath, readUnknownPath} from '@/lib/json-read'
 
 import {
   CODEBERG_API_ROOT,
   type CodebergDiffSource,
   type CodebergRepo,
-  hasDotSegment,
   parseCodebergDiffSource,
 } from './codeberg-diff-source'
-import {encodePath, encodeURLSegment} from './github-diff-source'
+import {encodePath, encodeURLSegment, hasDotSegment} from './github-diff-source'
+import {createLoaderError} from './loader-error'
 import {isNullish} from './nullish'
+import {readLimitedText} from './read-limited-text'
 
 type CodebergServerFetch = (
   input: Parameters<typeof fetch>[0],
@@ -24,6 +26,9 @@ export interface CodebergDiffFileRequest {
 
 export interface CodebergDiffFileServerOptions {
   fetch?: CodebergServerFetch
+  // A file over this size fails with an error that `isFileTooLargeError`
+  // recognizes. With no limit, the whole file is read.
+  maxFileBytes?: number
 }
 
 interface CodebergDiffRefs {
@@ -61,14 +66,15 @@ export function createCodebergFileReader(
 ): CodebergFileReader {
   const source = parseCodebergDiffSource(path)
   const fetcher = options.fetch ?? fetch
+  const maxBytes = options.maxFileBytes
   let refsPromise: Promise<CodebergDiffRefs> | undefined
 
   return async (file) => {
     if (isNullish(source) || source.kind === 'compare') {
-      throw new Error('Unsupported Codeberg diff path.')
+      throw createLoaderError({message: 'Unsupported Codeberg diff path.', status: 400})
     }
     if (hasDotSegment(file.name) || hasDotSegment(file.prevName ?? '')) {
-      throw new Error('Unsupported Codeberg file path.')
+      throw createLoaderError({message: 'Unsupported Codeberg file path.', status: 400})
     }
 
     // The reader does not keep a failed lookup, so the next read tries again.
@@ -78,13 +84,14 @@ export function createCodebergFileReader(
     })
     const refs = await refsPromise
     const readNewFile = () =>
-      fetchCodebergFile({repo: source.repo, ref: refs.newRef, path: file.name, fetcher})
+      fetchCodebergFile({repo: source.repo, ref: refs.newRef, path: file.name, fetcher, maxBytes})
     const readOldFile = (oldPath: string) =>
       fetchCodebergFile({
         repo: source.repo,
         ref: requireOldRef(refs, oldPath),
         path: oldPath,
         fetcher,
+        maxBytes,
       })
 
     if (file.type === 'new' || file.type === 'rename-pure') {
@@ -156,6 +163,7 @@ interface FetchCodebergFileParams {
   ref: string
   path: string
   fetcher: CodebergServerFetch
+  maxBytes: number | undefined
 }
 
 async function fetchCodebergFile({
@@ -163,6 +171,7 @@ async function fetchCodebergFile({
   ref,
   path,
   fetcher,
+  maxBytes,
 }: FetchCodebergFileParams): Promise<FileContents> {
   const url = new URL(`${createRepoApiUrl(repo)}/raw/${encodePath(path)}`)
   url.searchParams.set('ref', ref)
@@ -170,7 +179,7 @@ async function fetchCodebergFile({
   assertCodebergResponseOK(response, `Codeberg file ${repo.owner}/${repo.repo}/${path}@${ref}`)
   return {
     name: path,
-    contents: await response.text(),
+    contents: await readLimitedText({response, maxBytes, fileName: path}),
     cacheKey: `codeberg:${repo.owner}/${repo.repo}:${ref}:${path}`,
   }
 }
@@ -189,7 +198,10 @@ async function fetchCodebergJSON({url, label, fetcher}: FetchCodebergJSONParams)
 
 function assertCodebergResponseOK(response: Response, label: string): void {
   if (!response.ok) {
-    throw new Error(`${label} failed (${response.status}).`)
+    throw createLoaderError({
+      message: `${label} failed (${response.status}).`,
+      status: response.status,
+    })
   }
 }
 
@@ -202,24 +214,4 @@ function requireOldRef(refs: CodebergDiffRefs, path: string): string {
 
 function createRepoApiUrl(repo: CodebergRepo): string {
   return `${CODEBERG_API_ROOT}/repos/${encodeURLSegment(repo.owner)}/${encodeURLSegment(repo.repo)}`
-}
-
-function readStringPath(data: unknown, path: readonly string[]): string | undefined {
-  const value = readUnknownPath(data, path)
-  return typeof value === 'string' ? value : undefined
-}
-
-function readUnknownPath(data: unknown, path: readonly string[]): unknown {
-  let current = data
-  for (const key of path) {
-    if (!isRecord(current)) {
-      return undefined
-    }
-    current = current[key]
-  }
-  return current
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
 }

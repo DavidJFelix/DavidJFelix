@@ -18,12 +18,36 @@ test('reportServerErrorResponse captures a 5xx with the method, path, and status
   )
 })
 
+test('reportServerErrorResponse titles a viewer failure by its route, not the repository path', () => {
+  const captureMessage = vi.fn<CaptureMessage>()
+
+  reportServerErrorResponse({
+    request: new Request('https://revision.city/diffs/github.com/owner/repo/pull/7'),
+    response: new Response(null, {status: 502}),
+    captureMessage,
+  })
+
+  expect(captureMessage).toHaveBeenCalledExactlyOnceWith('GET /diffs/$path answered 502', 'error')
+})
+
 test.each([200, 302, 400, 404])('reportServerErrorResponse ignores a %i', (status) => {
   const captureMessage = vi.fn<CaptureMessage>()
 
   reportServerErrorResponse({
     request: new Request(callback),
     response: new Response(null, {status}),
+    captureMessage,
+  })
+
+  expect(captureMessage).not.toHaveBeenCalled()
+})
+
+test('reportServerErrorResponse ignores a 5xx from the Sentry tunnel', () => {
+  const captureMessage = vi.fn<CaptureMessage>()
+
+  reportServerErrorResponse({
+    request: new Request('https://revision.city/bugs', {method: 'POST'}),
+    response: new Response(null, {status: 503}),
     captureMessage,
   })
 

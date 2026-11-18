@@ -59,6 +59,10 @@ interface UsePatchLoaderOptions {
 }
 
 interface UsePatchLoaderResult {
+  // Every item of the loaded diff, set once the load ends. `initialItems` can
+  // hold only the first streamed batch, because later batches go straight to
+  // the mounted viewer.
+  allItems: readonly CodeViewItem<CommentMetadata>[]
   applyCollapseModeToLoaded: (mode: 'expanded' | 'collapsed') => void
   commentFileByItemId: DiffsCommentFileByItemId | null
   commentSections: DiffsSavedCommentItem[]
@@ -83,6 +87,7 @@ export function usePatchLoader({
   viewerRef,
 }: UsePatchLoaderOptions): UsePatchLoaderResult {
   const [initialItems, setInitialItems] = useState<CodeViewItem<CommentMetadata>[]>([])
+  const [allItems, setAllItems] = useState<readonly CodeViewItem<CommentMetadata>[]>([])
   // Tree data is intentionally stored separately from items so annotation
   // updates do not cascade into the file tree and trigger needless rebuilds.
   // It is updated by fetch/stream batches in this viewer route.
@@ -212,6 +217,7 @@ export function usePatchLoader({
     loadedItemIdsRef.current = new Set()
     setViewerKey(requestId)
     setInitialItems([])
+    setAllItems([])
     setTreeSource(null)
     setDiffStats(null)
     setCommentFileByItemId(null)
@@ -245,6 +251,7 @@ export function usePatchLoader({
           setDiffStats(loadedData.diffStats)
           prepareItemsForViewer(loadedData.items)
           setInitialItems(loadedData.items)
+          setAllItems(loadedData.items)
           setLoadState('ready')
           await yieldToBrowser()
           if (isCurrentRequest()) {
@@ -436,6 +443,7 @@ export function usePatchLoader({
 
         setCommentFileByItemId(new Map(accumulator.itemIdToFile))
         setDiffStats({...accumulator.diffStats})
+        setAllItems([...accumulator.items])
         setLoadState('ready')
       } catch (error) {
         if (!isCurrentRequest()) {
@@ -467,6 +475,7 @@ export function usePatchLoader({
   }, [])
 
   return {
+    allItems,
     applyCollapseModeToLoaded,
     commentFileByItemId,
     commentSections,

@@ -119,6 +119,59 @@ test('shortens a long title on the card but not in the tags', () => {
   expect(share.card.title.endsWith('…')).toBe(true)
 })
 
+// The joiners are escapes so that they stay visible. cSpell:ignore Правка
+const CYRILLIC_TITLE = 'Правка'
+const ROCKET = '🚀'
+const FAMILY = '👨\u{200D}👩\u{200D}👧'
+const THUMBS_UP_DARK = '👍🏿'
+const SPARKLES = '✨\u{FE0F}'
+const FLAG = '🇳🇴'
+
+test.each([
+  {name: 'a Cyrillic title', title: CYRILLIC_TITLE},
+  {name: 'a title with a letter outside the card font', title: 'Fix Ł'},
+  {name: 'a title with an arrow', title: 'Move a → b'},
+  {name: 'a title of emoji only', title: `${ROCKET} ${SPARKLES}`},
+])('shows the label on the card for $name but keeps the title in the tags', ({title}) => {
+  const share = getDiffShareText({source: PULL, pull: {...PUBLIC_PULL, title}})
+
+  expect(share.title).toBe(`${title} · acme/widgets #7`)
+  expect(share.card).toEqual({
+    title: 'acme/widgets #7',
+    description: '2 files changed, +12 -3',
+    author: 'by maintainer',
+  })
+})
+
+test('shows "Pull request" under the label when GitHub sent no counts', () => {
+  const share = getDiffShareText({
+    source: PULL,
+    pull: {title: CYRILLIC_TITLE, state: 'open', draft: false},
+  })
+
+  expect(share.card).toEqual({title: 'acme/widgets #7', description: 'Pull request'})
+})
+
+test.each([
+  {name: 'a leading emoji', title: `${SPARKLES} feat: add widgets`},
+  {name: 'a joined emoji sequence', title: `feat: add widgets ${FAMILY}`},
+  {name: 'an emoji with a skin tone', title: `feat: ${THUMBS_UP_DARK} add widgets`},
+  {name: 'a flag', title: `feat: add widgets ${FLAG}`},
+  {name: 'a rocket', title: `${ROCKET}feat: add widgets`},
+])('removes $name from the card title and keeps its words', ({title}) => {
+  const share = getDiffShareText({source: PULL, pull: {...PUBLIC_PULL, title}})
+
+  expect(share.title).toBe(`${title} · acme/widgets #7`)
+  expect(share.card.title).toBe('feat: add widgets')
+})
+
+test('keeps the pictographs that the card font draws', () => {
+  const title = 'Add the ™ and © marks'
+  const share = getDiffShareText({source: PULL, pull: {...PUBLIC_PULL, title}})
+
+  expect(share.card.title).toBe(title)
+})
+
 // The card route reads the diff back out of the path the tags point at, so
 // the two must agree for every shape of diff, including ranges that carry the
 // characters a path would otherwise split on.

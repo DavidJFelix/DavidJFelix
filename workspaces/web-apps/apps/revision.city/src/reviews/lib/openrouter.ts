@@ -329,6 +329,17 @@ export function extractJson<Value>(text: string, schema: z.ZodType<Value>): Valu
   throw results[0]?.error ?? new Error('Model response has no JSON object')
 }
 
+// Returns every top-level object that matches the schema, in text order.
+// Objects inside other objects do not count.
+export function matchTopLevelJson<Value>(text: string, schema: z.ZodType<Value>): Value[] {
+  return parseJsonObjects(text)
+    .filter((object) => !object.nested)
+    .flatMap((object) => {
+      const result = schema.safeParse(object.value)
+      return result.success ? [result.data] : []
+    })
+}
+
 // Returns the parse error of the longest top-level object that is not valid JSON,
 // to show why `extractJson` found no answer. The answer is most likely the longest
 // object, so an invalid example in the prose does not hide the error of the

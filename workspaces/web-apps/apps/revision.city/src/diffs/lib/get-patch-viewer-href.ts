@@ -5,9 +5,10 @@ import {isNullish} from './nullish'
 // Matches GitHub shorthand "owner/repo#123" -> /owner/repo/pull/123.
 const GITHUB_SHORTHAND_PATTERN = /^([^/\s]+)\/([^/\s#]+)#(\d+)$/
 
-// Matches bare paths like "owner/repo/pull/123" where neither of the first two
-// segments contains a dot; a dot would indicate a domain like "github.com".
-const BARE_GITHUB_PATH_PATTERN = /^([^/\s.]+)\/([^/\s.]+)(\/[^\s]*)?$/
+// Matches bare paths like "owner/repo/pull/123". The owner segment has no dot,
+// because a dot there shows a host name like "github.com". A repository name
+// can have a dot, like "owner/repo.js".
+const BARE_GITHUB_PATH_PATTERN = /^([^/\s.]+)\/([^/\s]+)(\/[^\s]*)?$/
 
 export interface PatchViewerLocation {
   domain?: string

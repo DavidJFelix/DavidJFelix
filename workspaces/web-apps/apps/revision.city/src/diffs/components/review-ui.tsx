@@ -31,12 +31,13 @@ import type {
 import {upsertSavedCommentSidebarEntry} from '@/diffs/lib/upsert-saved-comment-sidebar-entry'
 import {docsThemeCatalog, themeController} from '@/diffs/state/theme-controller'
 import type {SymbolSelection} from '@/symbols/components/symbol-changes-list'
-import type {EntityDiffRequest} from '@/symbols/lib/entity-diff-client'
+import type {SymbolDiffRequest} from '@/symbols/lib/symbol-diff-client'
 import {OverridableThemeSourceProvider} from './contexts/overridable-theme-source-provider'
 import {DiffsHeader} from './diffs-header'
 import {DiffsSidebar} from './diffs-sidebar'
 import {DiffsStatusPanel} from './diffs-status-panel'
 import {DiffsViewer} from './diffs-viewer'
+import {useBaseMovedOn} from './hooks/use-base-moved-on'
 import {useGitHubSession} from './hooks/use-github-session'
 import {usePatchLoader} from './hooks/use-patch-loader'
 import {useThemeCycle} from './hooks/use-theme-cycle'
@@ -70,6 +71,11 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
   // of this component; the cookie rides along on the same-origin API fetches
   // without any client-side token plumbing.
   const githubSession = useGitHubSession()
+  const baseMovedOn = useBaseMovedOn({
+    domain,
+    path,
+    signedIn: githubSession.status === 'authenticated',
+  })
   // All theming state — color mode and the light/dark theme-name picks — lives
   // in the single @pierre/theming controller (the same instance the app-wide
   // ThemeProvider is bound to). Reading it here means picking Auto/Light/Dark
@@ -135,6 +141,7 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
     setFileTreeOverlayOpen(false)
   }, [])
   const {
+    allItems,
     applyCollapseModeToLoaded,
     commentFileByItemId,
     commentSections,
@@ -219,9 +226,9 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
   }, [])
   // Only diff items carry two revisions to compare; a plain file item in the
   // viewer has nothing to diff against.
-  const entityDiffRequests = useMemo<readonly EntityDiffRequest[]>(
+  const symbolDiffRequests = useMemo<readonly SymbolDiffRequest[]>(
     () =>
-      initialItems.flatMap((item) =>
+      allItems.flatMap((item) =>
         item.type === 'diff'
           ? [
               {
@@ -233,7 +240,7 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
             ]
           : [],
       ),
-    [initialItems],
+    [allItems],
   )
   const handleSelectSymbol = useCallback((selection: SymbolSelection) => {
     setFileTreeOverlayOpen(false)
@@ -273,50 +280,59 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
       behavior: 'smooth-auto',
     })
   }, [])
+  const patchShown = loadState === 'ready' || (loadState === 'streaming' && initialItems.length > 0)
   // Withhold the viewer until the persisted themes have been read from
   // localStorage. Otherwise on client-side navigation back into a diff the
   // CodeView would mount during the brief render where lightThemeName/darkThemeName
   // are still at their `DEFAULT_*_THEME` initial values and tokenize the
   // first batch of files against the wrong palette.
+  // Also withhold it until the session is known. The session decides
+  // `loadDiffFiles`, which adds a "more unchanged context" row to each partial
+  // file. CodeView does not compute its file heights again when that option
+  // changes. So a late session makes the scroll height too short for the last file.
   const viewerAvailable =
     workerPoolState !== 'initializing' &&
     themesHydrated &&
-    (loadState === 'ready' || (loadState === 'streaming' && initialItems.length > 0))
+    githubSession.status !== 'loading' &&
+    patchShown
 
   return (
     <ReviewGrid>
-      <DiffsHeader
-        className={css({gridArea: 'header'})}
-        collapseMode={collapseMode}
-        colorMode={colorMode}
-        darkThemeName={darkThemeName}
-        diffIndicators={diffIndicators}
-        diffStyle={diffStyle}
-        lightThemeName={lightThemeName}
-        lineNumbers={lineNumbers}
-        overflow={overflow}
-        fileTreeOverlayOpen={fileTreeOverlayOpen}
-        fileTreeAvailable={!isNullish(treeSource)}
-        onToggleCollapseMode={handleToggleCollapseMode}
-        onToggleFileTreeOverlay={handleToggleFileTreeOverlay}
-        setColorMode={setColorMode}
-        setDarkThemeName={setDarkThemeName}
-        setDiffIndicators={setDiffIndicators}
-        setDiffStyle={setDiffStyle}
-        setLightThemeName={setLightThemeName}
-        setLineNumbers={setLineNumbers}
-        setOverflow={setOverflow}
-        setShowBackgrounds={setShowBackgrounds}
-        showBackgrounds={showBackgrounds}
-      />
+      <InertContents inert={fileTreeOverlayOpen}>
+        <DiffsHeader
+          className={css({gridArea: 'header'})}
+          collapseMode={collapseMode}
+          colorMode={colorMode}
+          darkThemeName={darkThemeName}
+          diffIndicators={diffIndicators}
+          diffStyle={diffStyle}
+          lightThemeName={lightThemeName}
+          lineNumbers={lineNumbers}
+          overflow={overflow}
+          fileTreeOverlayOpen={fileTreeOverlayOpen}
+          fileTreeAvailable={!isNullish(treeSource)}
+          onToggleCollapseMode={handleToggleCollapseMode}
+          onToggleFileTreeOverlay={handleToggleFileTreeOverlay}
+          setColorMode={setColorMode}
+          setDarkThemeName={setDarkThemeName}
+          setDiffIndicators={setDiffIndicators}
+          setDiffStyle={setDiffStyle}
+          setLightThemeName={setLightThemeName}
+          setLineNumbers={setLineNumbers}
+          setOverflow={setOverflow}
+          setShowBackgrounds={setShowBackgrounds}
+          showBackgrounds={showBackgrounds}
+        />
+      </InertContents>
       {viewerAvailable && !isNullish(treeSource) ? (
         <>
           <DiffsSidebar
+            baseMovedOn={baseMovedOn}
             className={css({gridArea: {base: 'viewer', md: 'tree'}})}
             commentSections={commentSections}
             diffStats={diffStats}
             domain={domain}
-            entityDiffRequests={entityDiffRequests}
+            symbolDiffRequests={symbolDiffRequests}
             mobileOverlayOpen={fileTreeOverlayOpen}
             onMobileClose={handleCloseFileTreeOverlay}
             onSelectComment={handleSelectComment}
@@ -332,35 +348,39 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
             viewerRef={viewerRef}
             onSelectItem={handleSelectTreeItem}
           />
-          <DiffsViewer
-            key={viewerKey}
-            className={css({gridArea: 'viewer'})}
-            diffStyle={diffStyle}
-            // A viewer that uses a failed pool starts a new initialization each
-            // time it sets its theme. Without the pool, the viewer highlights on
-            // the main thread with its own theme.
-            disableWorkerPool={workerPoolState === 'failed'}
-            overflow={overflow}
-            showBackgrounds={showBackgrounds}
-            diffIndicators={diffIndicators}
-            lineNumbers={lineNumbers}
-            scrollRef={scrollRef}
-            themeType={colorMode}
-            viewerRef={viewerRef}
-            initialItems={initialItems}
-            loadDiffFiles={loadDiffFiles}
-            onCommentDeleted={handleCommentDeleted}
-            onCommentSaved={handleCommentSaved}
-            onLineLinkChange={onLineLinkChange}
-            onViewerReady={onViewerReady}
-          />
+          <InertContents inert={fileTreeOverlayOpen}>
+            <DiffsViewer
+              key={viewerKey}
+              className={css({gridArea: 'viewer'})}
+              diffStyle={diffStyle}
+              // A viewer that uses a failed pool starts a new initialization each
+              // time it sets its theme. Without the pool, the viewer highlights on
+              // the main thread with its own theme.
+              disableWorkerPool={workerPoolState === 'failed'}
+              overflow={overflow}
+              showBackgrounds={showBackgrounds}
+              diffIndicators={diffIndicators}
+              lineNumbers={lineNumbers}
+              scrollRef={scrollRef}
+              themeType={colorMode}
+              viewerRef={viewerRef}
+              initialItems={initialItems}
+              loadDiffFiles={loadDiffFiles}
+              onCommentDeleted={handleCommentDeleted}
+              onCommentSaved={handleCommentSaved}
+              onLineLinkChange={onLineLinkChange}
+              onViewerReady={onViewerReady}
+            />
+          </InertContents>
         </>
       ) : (
         <DiffsStatusPanel
           errorMessage={errorMessage}
           onRetry={retryLoad}
           remedy={errorRemedy}
+          sourceName={isNullish(domain) ? 'GitHub' : domain}
           state={loadState}
+          waitingFor={patchShown ? 'highlighter' : 'patch'}
         />
       )}
     </ReviewGrid>
@@ -397,6 +417,22 @@ function useWorkerPoolState(): WorkerPoolState {
 
 interface ReviewGridProps {
   children: ReactNode
+}
+
+interface InertContentsProps {
+  children: ReactNode
+  inert: boolean
+}
+
+// A box with no layout of its own, so its child stays a grid item of
+// ReviewGrid. While the phone file tree is open, `inert` keeps the parts
+// behind it out of focus and out of the accessibility tree.
+function InertContents({children, inert}: InertContentsProps) {
+  return (
+    <div className={css({display: 'contents'})} inert={inert}>
+      {children}
+    </div>
+  )
 }
 
 function ReviewGrid({children}: ReviewGridProps) {

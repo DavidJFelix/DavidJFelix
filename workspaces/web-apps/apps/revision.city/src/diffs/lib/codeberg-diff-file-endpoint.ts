@@ -4,6 +4,7 @@ import {
   type CodebergDiffFileServerOptions,
   loadCodebergDiffFiles,
 } from './codeberg-diff-file-server'
+import {getLoaderErrorStatus} from './loader-error'
 import {isNullish} from './nullish'
 
 const CHANGE_TYPES: readonly ChangeTypes[] = [
@@ -42,7 +43,7 @@ export async function handleCodebergDiffFileRequest(
   } catch (error) {
     return createJSONResponse(
       {error: error instanceof Error ? error.message : 'Unknown error'},
-      502,
+      getLoaderErrorStatus(error),
     )
   }
 }

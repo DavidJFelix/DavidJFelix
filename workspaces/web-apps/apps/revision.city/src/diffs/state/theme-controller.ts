@@ -1,22 +1,15 @@
+import {themeModeSchema} from '@davidjfelix/theme/schema'
 import {createThemeController, type ThemePersistence} from '@pierre/theming'
-import * as z from 'zod/mini'
 import {isNullish} from '@/diffs/lib/nullish'
 import {docsThemeCatalog} from '../components/theme-catalog'
-
-// The repo theming contract's storage schema (zod 4, see
-// docs/projects/theme-switcher-unification/plan.md): the mode key holds a raw
-// string -- never JSON, the pre-paint bootstrap reads it without parsing --
-// and anything invalid parses to system. The literal check in
-// lib/theme-bootstrap.ts is this schema's compiled twin; keep them agreeing.
-const themeModeSchema = z.catch(z.enum(['light', 'dark', 'system']), 'system')
 
 export {docsThemeCatalog} from '../components/theme-catalog'
 
 // The single owner of the diffs app's theming state. Color mode (light/
 // dark/system), the light/dark theme-name picks, and their persistence all
 // live here, so there is no parallel state ownership. The controller creates
-// and owns the resolver; consumers that need an explicit resolver use the
-// docsThemeResolver alias below rather than creating a second cache.
+// and owns the resolver; a consumer that needs an explicit resolver reads
+// themeController.resolver and does not create a second cache.
 //
 // It is a module singleton: created once per process on the server (where the
 // browser guards make it a constant) and once per page-load on the client,
@@ -27,7 +20,7 @@ export {docsThemeCatalog} from '../components/theme-catalog'
 // would orphan saved preferences.
 // TODO(theming): migrate off these legacy keys and use
 // createThemeController's built-in `storageKey` persistence shape instead.
-const MODE_KEY = 'theme'
+export const MODE_KEY = 'theme'
 const LIGHT_THEME_KEY = 'diffs-light-theme'
 const DARK_THEME_KEY = 'diffs-dark-theme'
 
@@ -110,5 +103,3 @@ function handleStorage(event: StorageEvent): void {
 if (typeof globalThis.addEventListener === 'function') {
   globalThis.addEventListener('storage', handleStorage)
 }
-
-export const docsThemeResolver = themeController.resolver

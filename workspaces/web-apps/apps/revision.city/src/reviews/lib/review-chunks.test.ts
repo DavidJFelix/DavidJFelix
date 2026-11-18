@@ -1,6 +1,8 @@
 import {expect, test} from 'vitest'
 import {
   chunkPullRequestFiles,
+  DEFAULT_MAX_CHARS_PER_CHUNK,
+  DEFAULT_MAX_PATCH_LINE_CHARS,
   DEFAULT_MAX_PATCH_LINES_PER_FILE,
   DESCRIPTION_END,
   DESCRIPTION_START,
@@ -18,6 +20,11 @@ const addedLines = (start: number, count: number) =>
   [`@@ -0,0 +${start},${count} @@`, ...Array.from({length: count}, (_, i) => `+line ${i}`)].join(
     '\n',
   )
+
+const oneLongLine = (length: number) => `@@ -0,0 +1 @@\n+${'x'.repeat(length)}`
+
+const twoLines = (start: number, width: number) =>
+  [`@@ -0,0 +${start},2 @@`, `+${'x'.repeat(width)}`, `+${'x'.repeat(width)}`].join('\n')
 
 test.each([
   {path: 'src/app.ts', status: 'modified', patch: '@@ -1 +1 @@\n+a', expected: true},
@@ -51,6 +58,25 @@ test.each([
     patch: addedLines(1, DEFAULT_MAX_PATCH_LINES_PER_FILE - 1),
     expected: 'reviewable',
   },
+  {
+    path: 'src/data.json',
+    status: 'added',
+    patch: oneLongLine(DEFAULT_MAX_PATCH_LINE_CHARS + 1),
+    expected: 'line-too-long',
+  },
+  {
+    path: 'src/wide.ts',
+    status: 'added',
+    patch: oneLongLine(DEFAULT_MAX_PATCH_LINE_CHARS),
+    expected: 'reviewable',
+  },
+  {path: 'src/bundle.js', status: 'added', patch: oneLongLine(650_000), expected: 'line-too-long'},
+  {
+    path: 'src/padded.js',
+    status: 'added',
+    patch: `${addedLines(1, DEFAULT_MAX_PATCH_LINES_PER_FILE)}\n+${'x'.repeat(DEFAULT_MAX_PATCH_LINE_CHARS + 1)}`,
+    expected: 'line-too-long',
+  },
 ] as const)('fileReviewStatus($path) is $expected', ({expected, ...file}) => {
   expect(fileReviewStatus(file)).toBe(expected)
 })
@@ -66,6 +92,16 @@ test('fileReviewStatus reviews a diff over the default limit when the caller rai
   expect(fileReviewStatus(file, {maxPatchLinesPerFile: Number.POSITIVE_INFINITY})).toBe(
     'reviewable',
   )
+})
+
+test('fileReviewStatus reviews a long diff line when the caller raises the limit', () => {
+  const file: PullRequestFile = {
+    path: 'src/data.json',
+    status: 'added',
+    patch: oneLongLine(DEFAULT_MAX_PATCH_LINE_CHARS + 1),
+  }
+
+  expect(fileReviewStatus(file, {maxPatchLineChars: Number.POSITIVE_INFINITY})).toBe('reviewable')
 })
 
 test('chunkPullRequestFiles keeps small hunks of one file in one chunk', () => {
@@ -100,6 +136,32 @@ test('chunkPullRequestFiles splits a hunk larger than the line budget', () => {
   const chunks = chunkPullRequestFiles(files, {maxLinesPerChunk: 4})
 
   expect(chunks.map((chunk) => chunk.hunks[0].lines.length)).toEqual([4, 4, 2])
+})
+
+test('chunkPullRequestFiles splits a hunk of long lines at the character budget', () => {
+  const line = `+${'x'.repeat(1_000)}`
+  const files: PullRequestFile[] = [
+    {
+      path: 'a.ts',
+      status: 'added',
+      patch: ['@@ -0,0 +1,150 @@', ...Array.from({length: 150}, () => line)].join('\n'),
+    },
+  ]
+
+  const chunks = chunkPullRequestFiles(files)
+
+  // 40 lines of 1,000 characters fill the budget.
+  expect(DEFAULT_MAX_CHARS_PER_CHUNK).toBe(40_000)
+  expect(chunks.map((chunk) => chunk.hunks[0].lines.length)).toEqual([40, 40, 40, 30])
+})
+
+test('chunkPullRequestFiles starts a new chunk when the character budget is spent', () => {
+  const files: PullRequestFile[] = [
+    {path: 'a.ts', status: 'modified', patch: `${twoLines(1, 5)}\n${twoLines(50, 5)}`},
+  ]
+
+  expect(chunkPullRequestFiles(files, {maxCharsPerChunk: 20})).toHaveLength(1)
+  expect(chunkPullRequestFiles(files, {maxCharsPerChunk: 19})).toHaveLength(2)
 })
 
 test('chunkPullRequestFiles drops a slice that holds only removed lines', () => {

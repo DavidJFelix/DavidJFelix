@@ -12,9 +12,12 @@ const GITHUB_HOST = /(?:(?<![\w.-])|(?<=_)(?=www))(?:www\\?\.)?github\\?\.com(?=
 
 // A zero-width space after "@", "#", "GH-", and "<" stops mentions, issue
 // references, and HTML. One after the "&" of an entity stops an entity that
-// decodes to one of those characters. The space is invisible, but it also goes
-// into code spans and code blocks, and code that a reader copies keeps it.
-const UNSAFE_MARKDOWN = /@(?=[a-z0-9])|#(?=\d)|GH\\?-(?=\d)|<(?=[a-z/!?])|&(?=#?[a-z0-9]+;)/gi
+// decodes to one of those characters. One after the "]" of "](" or "]:" stops
+// a link, an image, and a link definition, so that a link shows its address.
+// The space is invisible, but it also goes into code spans and code blocks,
+// and code that a reader copies keeps it.
+const UNSAFE_MARKDOWN =
+  /@(?=[a-z0-9])|#(?=\d)|GH\\?-(?=\d)|<(?=[a-z/!?])|&(?=#?[a-z0-9]+;)|\](?=[(:])/gi
 
 // GitHub shows a code block whose info string is "suggestion" as a change that
 // a reader can commit. The app adds a suggestion only after it checks the
@@ -32,7 +35,7 @@ export function neutralizeMarkdown(text: string): string {
 }
 
 export function oneLine(text: string): string {
-  return text.replaceAll(/\s*[\r\n]\s*/g, ' ')
+  return text.replaceAll(/\s*[\r\n\u2028\u2029]\s*/g, ' ')
 }
 
 const FINGERPRINT_PATTERN = /^<!-- revision-city:([0-9a-f]{16}) -->/
@@ -137,6 +140,7 @@ export interface FormatCheckRunOutputParams {
   outcome: ReviewOutcome
   review: PullRequestReview
   notReviewed: readonly NotReviewedFile[]
+  lineTooLongCount?: number
   postedCount: number
 }
 
@@ -144,6 +148,7 @@ export function formatCheckRunOutput({
   outcome,
   review,
   notReviewed,
+  lineTooLongCount = 0,
   postedCount,
 }: FormatCheckRunOutputParams): CheckRunOutput {
   const counts = [
@@ -152,6 +157,7 @@ export function formatCheckRunOutput({
       ? [plural(outcome.unchecked.length, 'unchecked finding')]
       : []),
     ...(review.failures.length > 0 ? [plural(review.failures.length, 'failed chunk review')] : []),
+    ...(lineTooLongCount > 0 ? [`${plural(lineTooLongCount, 'file')} with a too-long line`] : []),
   ]
   const sections = [
     section('Findings', outcome.reported.map(findingLine)),
@@ -175,7 +181,7 @@ export function formatCheckRunOutput({
     summary: [
       `${plural(review.chunkReviewCount, 'chunk review')}, ${review.cachedCount} from saved results, cost $${review.usage.costUsd.toFixed(4)}.`,
       `${plural(postedCount, 'new finding')} posted.`,
-      'This check fails on a checked finding at high or above, or on a failed chunk review.',
+      'This check fails on a checked finding at high or above, on a failed chunk review, or on a file with a too-long diff line.',
     ].join(' '),
     ...(sections.length > 0 ? {text: clip(neutralizeMarkdown(sections.join('\n\n')))} : {}),
   }

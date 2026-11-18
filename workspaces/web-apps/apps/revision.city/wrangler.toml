@@ -64,6 +64,15 @@ class_name = "ReviewWorkflow"
 [limits]
 subrequests = 150_000
 
+# The harness Worker `revision-city-harness-opencode`
+# (workspaces/harnesses/opencode) has the `ReviewAgent` Durable Object. Each
+# review run sends it one probe prompt (src/reviews/lib/review-agent-probe.ts).
+# A deploy of this Worker fails when that Worker or its class does not exist.
+[[durable_objects.bindings]]
+name = "REVIEW_AGENT"
+class_name = "ReviewAgent"
+script_name = "revision-city-harness-opencode"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "revision-city"

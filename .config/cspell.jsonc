@@ -28,7 +28,7 @@
   ],
   // Topic dictionaries: system vocabularies and names shared by more than one
   // file. Entries and the reasons for them live in the .txt files themselves.
-  // A repo dictionary that extends one cspell bundles (npm, golang, rust) is
+  // A repo dictionary that extends one cspell bundles (npm, golang, rust, companies) is
   // named `<bundled>-extra` and enabled beside the bundled one above; a repo
   // definition that reuses a bundled name replaces that dictionary silently.
   "dictionaryDefinitions": [

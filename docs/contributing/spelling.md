@@ -25,10 +25,10 @@ ladder and stop at the first rung that fits:
 4. **Is it a token required by a downstream system** -- a wire-format field name, a spec property, a
    file-name convention? Keep it with the system that requires it. Vocabulary shared by more than
    one file gets a named topic dictionary in `.config/dictionaries/` (iCalendar property names, DNS
-   response codes). When cspell already bundles a dictionary for the ecosystem (`npm`, `golang`,
-   `rust`), enable the bundled one and name the repo's additions `<bundled>-extra` (`npm-extra`); a
-   repo dictionary that reuses a bundled name replaces it silently instead of extending it. A
-   one-file token gets a `cSpell:words` comment in the file that speaks the protocol
+   response codes). When cspell already bundles a dictionary for the subject (`npm`, `golang`,
+   `rust`, `companies`), enable the bundled one and name the repo's additions `<bundled>-extra`
+   (`npm-extra`); a repo dictionary that reuses a bundled name replaces it silently instead of
+   extending it. A one-file token gets a `cSpell:words` comment in the file that speaks the protocol
    (`// cSpell:words millis` for Effect's Duration field, `wght` in fontsource file names). If a
    cluster of flags is just compound words in one area, `cSpell:enableCompoundWords` scoped there
    beats listing them one by one.

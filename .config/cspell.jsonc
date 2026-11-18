@@ -15,6 +15,8 @@
     "css",
     "bash",
     "software-terms",
+    "companies",
+    "companies-extra",
     "dns",
     "ics",
     "lezer",
@@ -30,6 +32,11 @@
   // named `<bundled>-extra` and enabled beside the bundled one above; a repo
   // definition that reuses a bundled name replaces that dictionary silently.
   "dictionaryDefinitions": [
+    {
+      "name": "companies-extra",
+      "path": "dictionaries/companies-extra.txt",
+      "description": "Company names the bundled companies dictionary lacks",
+    },
     {"name": "dns", "path": "dictionaries/dns.txt", "description": "DNS response codes"},
     {
       "name": "golang-extra",

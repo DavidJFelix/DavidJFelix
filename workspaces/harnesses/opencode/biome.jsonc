@@ -1,0 +1,6 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.6.6/schema.json",
+  "extends": ["../../web-apps/biome.jsonc"],
+  // oxfmt formats every file type of this folder.
+  "formatter": {"enabled": false},
+}

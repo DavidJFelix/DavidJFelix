@@ -13,11 +13,12 @@ ladder and stop at the first rung that fits:
    Spellings the repo has deliberately rejected live in `flagWords` in the config; cspell reports
    those with the preferred replacement (this repo writes `falsey`), so take the suggestion.
 2. **Is it a word you'd recognize globally** -- a real word the dictionaries lack, a domain term, a
-   company or product name (`burndown`, `posthog`, `workerd`)? Add it to `words` in
-   `.config/cspell.jsonc`, in the section it belongs to, with a comment when the reason isn't
-   obvious. This is the only repo-wide list, so it holds nothing but words that stand on their own;
-   anything you'd need the source file open to understand does not belong here. Person names go in
-   `.config/dictionaries/people-names.txt` instead, each above a comment saying who they are.
+   product name (`burndown`, `posthog`, `workerd`)? Add it to `words` in `.config/cspell.jsonc`, in
+   the section it belongs to, with a comment when the reason isn't obvious. This is the only
+   repo-wide list, so it holds nothing but words that stand on their own; anything you'd need the
+   source file open to understand does not belong here. Person names go in
+   `.config/dictionaries/people-names.txt` instead, and company names in
+   `.config/dictionaries/companies-extra.txt`, each above a comment saying who they are.
 3. **Is it an abbreviation?** Prefer the full word: `millis` becomes `milliseconds`, `creds` becomes
    `credentials`, `impls` becomes `implementations`. Established short forms (`ms`) are fine where
    the context expects them. Abbreviations do not go in the global dictionary.

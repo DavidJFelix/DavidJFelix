@@ -1,6 +1,7 @@
 import {useMemo} from 'react'
 
 import {usePullRequestGroups} from '@/diffs/components/hooks/use-pull-request-groups'
+import {SEARCH_PAGE_SIZE} from '@/diffs/lib/github-pull-request-search'
 import type {PullRequestGroup} from '@/diffs/lib/github-pull-requests'
 import {INBOX_REASONS, type InboxItem, type InboxReason} from '@/inbox/lib/inbox-item'
 
@@ -48,6 +49,8 @@ function readUpdateTime(item: InboxItem): number {
   return Number.isNaN(time) ? 0 : time
 }
 
+// A group drops the rows of an earlier group, but its `totalCount` still counts them. So only a
+// count above one search page shows that GitHub has more.
 function isGroupTruncated(group: PullRequestGroup): boolean {
-  return group.truncated === true || group.totalCount > group.pullRequests.length
+  return group.truncated === true || group.totalCount > SEARCH_PAGE_SIZE
 }

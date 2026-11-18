@@ -99,7 +99,12 @@ test('items are in the order of their last update, newest first, and an item wit
 test.each([
   {name: 'every group is complete', fields: {}, truncated: false},
   {name: 'a group is truncated', fields: {truncated: true}, truncated: true},
-  {name: 'GitHub counts more than the rows of a group', fields: {totalCount: 21}, truncated: true},
+  {name: 'GitHub counts more than one search page', fields: {totalCount: 21}, truncated: true},
+  {
+    name: 'a group counts a pull request of an earlier group',
+    fields: {totalCount: 2},
+    truncated: false,
+  },
 ])('the list is truncated when $name: $truncated', async ({fields, truncated}) => {
   serveGroups([group('assigned', [pullRequest(1)]), group('watched', [pullRequest(2)], fields)])
 

@@ -3,7 +3,7 @@ import {OpenCodeHarness} from 'agents/harness/opencode'
 import {Lifecycle} from 'agents/lifecycle'
 import {type ReviewAgentAnswer, summarizeUsage} from './lib/review-agent-answer'
 
-const REVIEW_AGENT_MODEL = {providerID: 'openrouter', id: 'deepseek/deepseek-v4.1-flash-1017'}
+const REVIEW_AGENT_MODEL = {providerID: 'openrouter', id: 'deepseek/deepseek-v4.1-flash'}
 
 export interface ReviewAgentEnv {
   // A Worker secret. Without it, OpenRouter refuses each model call.

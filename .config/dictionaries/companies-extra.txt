@@ -1,0 +1,4 @@
+# Company names the bundled companies dictionary lacks. One name per line, with
+# the company above it, so every entry stays tied to who it is.
+# DeepSeek, the maker of the review model of revision.city
+deepseek

@@ -1,6 +1,11 @@
 import {expect, test} from 'vitest'
 
-import {parseGitHubDiffSource} from './github-diff-source'
+import {
+  isSameGitHubRepo,
+  parseGitHubDiffSource,
+  readPullRequestRange,
+  readRepoFullName,
+} from './github-diff-source'
 
 const REPO = {owner: 'acme', repo: 'widgets'}
 
@@ -70,4 +75,85 @@ test.each([
   {name: 'an encoded dot segment inside a range', path: '/acme/widgets/compare/main%2F%2e%2e%2Fx'},
 ])('names no source for $name', ({path}) => {
   expect(parseGitHubDiffSource(path)).toBeUndefined()
+})
+
+test.each([
+  {name: 'a full name', value: 'acme/widgets', repo: REPO},
+  {
+    name: 'a repository name with a slash kept',
+    value: 'acme/widgets/extra',
+    repo: {owner: 'acme', repo: 'widgets/extra'},
+  },
+  {name: 'no owner', value: '/widgets', repo: undefined},
+  {name: 'no repository', value: 'acme/', repo: undefined},
+  {name: 'no slash', value: 'acme', repo: undefined},
+  {name: 'a value that is not text', value: 7, repo: undefined},
+])('readRepoFullName reads $name', ({value, repo}) => {
+  expect(readRepoFullName(value)).toEqual(repo)
+})
+
+test.each([
+  {name: 'the same name in another case', other: {owner: 'Acme', repo: 'Widgets'}, same: true},
+  {name: 'another owner', other: {owner: 'fork', repo: 'widgets'}, same: false},
+  {name: 'another repository', other: {owner: 'acme', repo: 'gadgets'}, same: false},
+])('isSameGitHubRepo compares $name', ({other, same}) => {
+  expect(isSameGitHubRepo(REPO, other)).toBe(same)
+})
+
+const FORK = {owner: 'fork', repo: 'widgets'}
+const RENAMED = {owner: 'acme', repo: 'gizmos'}
+
+function createPullData(baseName: string | null, headName: string | null) {
+  return {
+    base: {sha: 'base-sha', repo: baseName === null ? null : {full_name: baseName}},
+    head: {sha: 'head-sha', repo: headName === null ? null : {full_name: headName}},
+  }
+}
+
+test.each([
+  {
+    name: 'a pull request in one repository',
+    data: createPullData('acme/widgets', 'acme/widgets'),
+    baseRepo: REPO,
+    headRepo: REPO,
+  },
+  {
+    name: 'a pull request from a fork',
+    data: createPullData('acme/widgets', 'fork/widgets'),
+    baseRepo: REPO,
+    headRepo: FORK,
+  },
+  {
+    name: 'a pull request from a deleted fork',
+    data: createPullData('acme/widgets', null),
+    baseRepo: REPO,
+    headRepo: REPO,
+  },
+  {
+    name: 'a deleted fork of a renamed base repository',
+    data: createPullData('acme/gizmos', null),
+    baseRepo: RENAMED,
+    headRepo: RENAMED,
+  },
+  {
+    name: 'an answer with no repository names',
+    data: createPullData(null, null),
+    baseRepo: REPO,
+    headRepo: REPO,
+  },
+])('readPullRequestRange reads $name', ({data, baseRepo, headRepo}) => {
+  expect(readPullRequestRange({data, urlRepo: REPO})).toEqual({
+    baseSha: 'base-sha',
+    headSha: 'head-sha',
+    baseRepo,
+    headRepo,
+  })
+})
+
+test.each([
+  {name: 'no base sha', data: {head: {sha: 'head-sha'}}},
+  {name: 'no head sha', data: {base: {sha: 'base-sha'}}},
+  {name: 'an answer that is not an object', data: 'not found'},
+])('readPullRequestRange gives no range for $name', ({data}) => {
+  expect(readPullRequestRange({data, urlRepo: REPO})).toBeUndefined()
 })

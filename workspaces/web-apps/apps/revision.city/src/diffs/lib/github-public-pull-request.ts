@@ -1,4 +1,5 @@
 import {createGitHubApiUrl, createGitHubHeaders, type GitHubFetch} from '@/lib/github-http'
+import {isRecord, readOptionalNumber, readOptionalString} from '@/lib/json-read'
 
 import {
   defaultResponseCache,
@@ -274,16 +275,4 @@ async function writeCachedLookup(
   } catch {
     // Nothing to do: the next lookup asks GitHub again.
   }
-}
-
-function readOptionalString(value: unknown): string | undefined {
-  return typeof value === 'string' && value !== '' ? value : undefined
-}
-
-function readOptionalNumber(value: unknown): number | undefined {
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
 }

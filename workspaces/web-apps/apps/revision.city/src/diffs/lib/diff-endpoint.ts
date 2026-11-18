@@ -29,7 +29,9 @@ import {
   encodeURLSegment,
   type GitHubDiffSource,
   type GitHubRepo,
+  isSameGitHubRepo,
   parseGitHubDiffSource,
+  readPullRequestRange,
 } from './github-diff-source'
 import {diagnoseGitHubAccess} from './github-repo-access'
 import {normalizeGitHubPath} from './normalize-github-path'
@@ -770,12 +772,8 @@ async function fetchGitHubPullPatchTarget({
     return {response: pullResponse, target: pullTarget}
   }
 
-  const pullData = await pullResponse.json()
-  const baseSha = readStringPath(pullData, ['base', 'sha'])
-  const headSha = readStringPath(pullData, ['head', 'sha'])
-  const baseRepo = readRepoFullName(pullData, ['base', 'repo', 'full_name'])
-  const headRepo = readRepoFullName(pullData, ['head', 'repo', 'full_name'])
-  if (isNullish(baseSha) || isNullish(headSha)) {
+  const range = readPullRequestRange({data: await pullResponse.json(), urlRepo: target.repo})
+  if (isNullish(range)) {
     return {
       response: new Response('GitHub pull response did not include refs.', {
         status: 502,
@@ -784,8 +782,7 @@ async function fetchGitHubPullPatchTarget({
     }
   }
 
-  const compareBaseRepo = baseRepo ?? target.repo
-  const compareHeadRepo = headRepo ?? compareBaseRepo
+  const {baseSha, headSha, baseRepo: compareBaseRepo, headRepo: compareHeadRepo} = range
   const compareRange = isSameGitHubRepo(compareBaseRepo, compareHeadRepo)
     ? `${baseSha}...${headSha}`
     : `${compareBaseRepo.owner}:${baseSha}...${compareHeadRepo.owner}:${headSha}`
@@ -971,43 +968,6 @@ function readGitHubSourceFromURL(sourceURL: string | undefined): GitHubDiffSourc
   } catch {
     return undefined
   }
-}
-
-function readRepoFullName(data: unknown, path: readonly string[]): GitHubRepo | undefined {
-  const fullName = readStringPath(data, path)
-  if (isNullish(fullName)) {
-    return undefined
-  }
-
-  const separatorIndex = fullName.indexOf('/')
-  if (separatorIndex <= 0 || separatorIndex === fullName.length - 1) {
-    return undefined
-  }
-  return {
-    owner: fullName.slice(0, separatorIndex),
-    repo: fullName.slice(separatorIndex + 1),
-  }
-}
-
-function isSameGitHubRepo(a: GitHubRepo, b: GitHubRepo): boolean {
-  return (
-    a.owner.toLowerCase() === b.owner.toLowerCase() && a.repo.toLowerCase() === b.repo.toLowerCase()
-  )
-}
-
-function readStringPath(data: unknown, path: readonly string[]): string | undefined {
-  let current = data
-  for (const key of path) {
-    if (!isRecord(current)) {
-      return undefined
-    }
-    current = current[key]
-  }
-  return typeof current === 'string' ? current : undefined
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
 }
 
 function isDiffContentType(contentType: string): boolean {

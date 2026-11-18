@@ -1,11 +1,11 @@
 import type {ChangeTypes, FileContents} from '@pierre/diffs'
-
 import {
   createGitHubApiUrl,
   createGitHubHeaders,
   type GitHubAuthorization,
   type GitHubFetch,
 } from '@/lib/github-http'
+import {readStringPath, readUnknownPath} from '@/lib/json-read'
 
 import {
   encodePath,
@@ -13,7 +13,9 @@ import {
   type GitHubDiffSource,
   type GitHubRepo,
   hasDotSegment,
+  isSameGitHubRepo,
   parseGitHubDiffSource,
+  readPullRequestRange,
 } from './github-diff-source'
 import {createLoaderError} from './loader-error'
 import {isNullish} from './nullish'
@@ -404,17 +406,12 @@ async function resolveGitHubPullRefs({
     fetcher,
     options,
   )
-  const baseSha = readStringPath(data, ['base', 'sha'])
-  const headSha = readStringPath(data, ['head', 'sha'])
-  const baseRepo = readRepoFullName(data, ['base', 'repo', 'full_name'])
-  const headRepo = readRepoFullName(data, ['head', 'repo', 'full_name'])
-
-  if (isNullish(baseSha) || isNullish(headSha)) {
+  const range = readPullRequestRange({data, urlRepo: repo})
+  if (isNullish(range)) {
     throw new Error(`GitHub pull ${repo.owner}/${repo.repo}#${number} did not include refs.`)
   }
 
-  const oldRepo = baseRepo ?? repo
-  const newRepo = headRepo ?? repo
+  const {baseSha, headSha, baseRepo: oldRepo, headRepo: newRepo} = range
   const mergeBaseSha = await resolveGitHubPullMergeBaseSha({
     baseRepo: oldRepo,
     headRepo: newRepo,
@@ -734,37 +731,10 @@ function getSourceCacheKey(source: GitHubDiffSource): string {
   }
 }
 
-function readRepoFullName(data: unknown, path: readonly string[]): GitHubRepo | undefined {
-  const fullName = readStringPath(data, path)
-  if (isNullish(fullName)) {
-    return undefined
-  }
-
-  const separatorIndex = fullName.indexOf('/')
-  if (separatorIndex <= 0 || separatorIndex === fullName.length - 1) {
-    return undefined
-  }
-  return {
-    owner: fullName.slice(0, separatorIndex),
-    repo: fullName.slice(separatorIndex + 1),
-  }
-}
-
-function isSameGitHubRepo(a: GitHubRepo, b: GitHubRepo): boolean {
-  return (
-    a.owner.toLowerCase() === b.owner.toLowerCase() && a.repo.toLowerCase() === b.repo.toLowerCase()
-  )
-}
-
 function readFirstParentSha(data: unknown): string | undefined {
   const parents = readArrayPath(data, ['parents'])
   const firstParent = parents?.[0]
   return isNullish(firstParent) ? undefined : readStringPath(firstParent, ['sha'])
-}
-
-function readStringPath(data: unknown, path: readonly string[]): string | undefined {
-  const value = readUnknownPath(data, path)
-  return typeof value === 'string' ? value : undefined
 }
 
 function readNumberPath(data: unknown, path: readonly string[]): number | undefined {
@@ -775,21 +745,6 @@ function readNumberPath(data: unknown, path: readonly string[]): number | undefi
 function readArrayPath(data: unknown, path: readonly string[]): unknown[] | undefined {
   const value = readUnknownPath(data, path)
   return Array.isArray(value) ? value : undefined
-}
-
-function readUnknownPath(data: unknown, path: readonly string[]): unknown {
-  let current = data
-  for (const key of path) {
-    if (!isRecord(current)) {
-      return undefined
-    }
-    current = current[key]
-  }
-  return current
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
 }
 
 function readRequestToken(options: GitHubReadCredentials): string | undefined {

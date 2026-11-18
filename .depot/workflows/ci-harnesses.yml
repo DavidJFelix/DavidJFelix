@@ -1,0 +1,70 @@
+name: CI harnesses
+# One job for each harness in workspaces/harnesses/. Each harness is its own
+# install root with its own bun.lock, so the versions of one harness do not
+# move with another harness or with the web-apps workspace. A new harness adds
+# its directory name to the matrix here and in cd-deploy-harnesses.yml.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'workspaces/harnesses/**'
+      - 'workspaces/web-apps/biome.jsonc'
+      - 'workspaces/web-apps/.oxlintrc.jsonc'
+      - '.oxfmtrc.json'
+      - '.config/mise.toml'
+      - '.config/mise.lock'
+      - 'package.json'
+      - 'bun.lock'
+      - '.depot/workflows/ci-harnesses.yml'
+      - '.depot/actions/setup-mise/**'
+  pull_request:
+    paths:
+      - 'workspaces/harnesses/**'
+      - 'workspaces/web-apps/biome.jsonc'
+      - 'workspaces/web-apps/.oxlintrc.jsonc'
+      - '.oxfmtrc.json'
+      - '.config/mise.toml'
+      - '.config/mise.lock'
+      - 'package.json'
+      - 'bun.lock'
+      - '.depot/workflows/ci-harnesses.yml'
+      - '.depot/actions/setup-mise/**'
+env:
+  MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
+jobs:
+  check:
+    name: check ${{ matrix.harness }}
+    runs-on: depot-ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        harness: [opencode]
+    defaults:
+      run:
+        working-directory: workspaces/harnesses/${{ matrix.harness }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: bun install
+        run: bun install --frozen-lockfile
+      - name: tsc
+        run: bun run typecheck
+      - name: biome + oxlint
+        run: bun run lint
+      - name: oxfmt
+        run: bun run format
+      - name: vitest
+        run: bun run test
+      - name: wrangler deploy --dry-run
+        run: bun run build
+      # Starts the Worker in workerd and sends one prompt through the harness
+      # to a local server that answers in place of the model provider.
+      - name: smoke
+        run: bun run smoke

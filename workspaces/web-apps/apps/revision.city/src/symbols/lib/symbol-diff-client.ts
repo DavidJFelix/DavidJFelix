@@ -1,3 +1,4 @@
+import {isRecord} from '@/lib/json-read'
 import type {SymbolChange, SymbolDiff, SymbolDiffSummary} from './code-symbol'
 
 export interface SymbolDiffRequest {
@@ -226,8 +227,4 @@ function createSummary(changes: readonly SymbolChange[]): SymbolDiffSummary {
 
 function countOf(changes: readonly SymbolChange[], type: SymbolChange['type']): number {
   return changes.filter((change) => change.type === type).length
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
 }

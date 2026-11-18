@@ -28,9 +28,11 @@ worktrunk = "latest"
 [env]
 _.path = ["{{config_root}}/node_modules/.bin"]
 
-# Repo-root checks, scoped to the config files the root owns. Legacy project
-# dirs and isolated workspace trees are intentionally out of scope; the
-# web-apps workspace shadows these tasks per project, orchestrated by turbo.
+# Repo-root checks. The format tasks are scoped to the config files the root
+# owns. Legacy project dirs and isolated workspace trees are intentionally out
+# of their scope; the web-apps workspace shadows these tasks per project,
+# orchestrated by turbo. The spell tasks also read the web-apps workspace and
+# the harness trees.
 # biome.jsonc and .oxlintrc.jsonc live at the web-apps workspace root (turbo
 # hashes them there) but the repo-root task still formats and lints them.
 # Biome refuses to lint its own config as a *nested* root config, so this runs
@@ -73,7 +75,7 @@ dir = "{{config_root}}"
 
 [tasks.spell]
 description = "Spell-check repo-owned sources (cspell)"
-run = "cspell --config .config/cspell.jsonc --no-progress --dot 'workspaces/web-apps/**' 'docs/**' 'bin/**' '*.md' '.agents/agents/**' '.config/**' '.github/**'"
+run = "cspell --config .config/cspell.jsonc --no-progress --dot 'workspaces/web-apps/**' 'workspaces/harnesses/**' 'docs/**' 'bin/**' '*.md' '.agents/agents/**' '.config/**' '.github/**'"
 dir = "{{config_root}}"
 
 # Same check, reported as JUnit XML for Depot's test results view. The reporter
@@ -83,7 +85,7 @@ dir = "{{config_root}}"
 description = "Spell-check like `spell`, writing a JUnit report to test-results/ instead of the console (CI)"
 run = [
   "mkdir -p test-results",
-  "cspell --config .config/cspell.jsonc --no-progress --dot --reporter @cspell/cspell-junit-reporter 'workspaces/web-apps/**' 'docs/**' 'bin/**' '*.md' '.agents/agents/**' '.config/**' '.github/**' > test-results/cspell-junit.xml",
+  "cspell --config .config/cspell.jsonc --no-progress --dot --reporter @cspell/cspell-junit-reporter 'workspaces/web-apps/**' 'workspaces/harnesses/**' 'docs/**' 'bin/**' '*.md' '.agents/agents/**' '.config/**' '.github/**' > test-results/cspell-junit.xml",
 ]
 dir = "{{config_root}}"
 

@@ -1,10 +1,11 @@
 import type {GitHubFetch} from '@/lib/github-http'
+import {isRecord} from '@/lib/json-read'
 
 import {type AppInstallation, readAppInstallations} from './github-app-installations'
 import {type GitHubAuthOptions, resolveGitHubAuth, withSetCookieHeaders} from './github-auth'
+import {readRepoFullName} from './github-diff-source'
 import {
   fetchGitHubJSON,
-  isRecord,
   type PullRequestSearchResult,
   type PullRequestSummary,
   readGitHubSearchFailure,
@@ -271,7 +272,7 @@ async function fetchWatchedRepositories(
     return []
   }
   return data
-    .map((repo) => (isRecord(repo) ? parseFullName(repo.full_name) : undefined))
+    .map((repo) => (isRecord(repo) ? readRepoFullName(repo.full_name) : undefined))
     .filter((repo): repo is WatchedRepo => repo !== undefined)
 }
 
@@ -304,18 +305,6 @@ async function fetchInstallationRepositoryNames(
     .map((name) => name.toLowerCase())
   const totalCount = typeof data.total_count === 'number' ? data.total_count : names.length
   return {names, truncated: totalCount > names.length}
-}
-
-function parseFullName(value: unknown): WatchedRepo | undefined {
-  if (typeof value !== 'string') {
-    return undefined
-  }
-
-  const separatorIndex = value.indexOf('/')
-  if (separatorIndex <= 0 || separatorIndex === value.length - 1) {
-    return undefined
-  }
-  return {owner: value.slice(0, separatorIndex), repo: value.slice(separatorIndex + 1)}
 }
 
 function createJSONResponse(body: unknown, status: number): Response {

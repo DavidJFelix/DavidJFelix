@@ -1,4 +1,5 @@
 import type {ChangeTypes, FileContents} from '@pierre/diffs'
+import {readStringPath, readUnknownPath} from '@/lib/json-read'
 
 import {
   CODEBERG_API_ROOT,
@@ -213,24 +214,4 @@ function requireOldRef(refs: CodebergDiffRefs, path: string): string {
 
 function createRepoApiUrl(repo: CodebergRepo): string {
   return `${CODEBERG_API_ROOT}/repos/${encodeURLSegment(repo.owner)}/${encodeURLSegment(repo.repo)}`
-}
-
-function readStringPath(data: unknown, path: readonly string[]): string | undefined {
-  const value = readUnknownPath(data, path)
-  return typeof value === 'string' ? value : undefined
-}
-
-function readUnknownPath(data: unknown, path: readonly string[]): unknown {
-  let current = data
-  for (const key of path) {
-    if (!isRecord(current)) {
-      return undefined
-    }
-    current = current[key]
-  }
-  return current
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
 }

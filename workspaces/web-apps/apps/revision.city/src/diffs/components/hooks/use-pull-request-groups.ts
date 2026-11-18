@@ -1,10 +1,10 @@
 import {useEffect, useState} from 'react'
-
 import type {
   PullRequestGroup,
   PullRequestGroupKind,
   PullRequestSummary,
 } from '@/diffs/lib/github-pull-requests'
+import {isRecord} from '@/lib/json-read'
 
 const PULL_REQUESTS_ENDPOINT = '/api/diffs/pull-requests'
 const GROUP_KINDS: ReadonlySet<string> = new Set(['assigned', 'owned', 'member', 'watched'])
@@ -142,8 +142,4 @@ function parseSummary(value: unknown): PullRequestSummary | undefined {
     updatedAt: typeof value.updatedAt === 'string' ? value.updatedAt : undefined,
     draft: value.draft === true,
   }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
 }

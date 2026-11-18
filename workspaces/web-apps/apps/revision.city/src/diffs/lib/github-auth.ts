@@ -1,4 +1,5 @@
 import {createGitHubApiUrl, createGitHubHeaders, type GitHubFetch} from '@/lib/github-http'
+import {isRecord, readOptionalNumber, readOptionalString} from '@/lib/json-read'
 
 import {resolveGitHubManageAccessURL} from './github-repo-access'
 import {isNullish} from './nullish'
@@ -691,14 +692,6 @@ function readStateCookie(request: Request): GitHubOAuthStateCookie | undefined {
   }
 }
 
-function readOptionalString(value: unknown): string | undefined {
-  return typeof value === 'string' && value !== '' ? value : undefined
-}
-
-function readOptionalNumber(value: unknown): number | undefined {
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined
-}
-
 function readCookiePayload(request: Request, name: string): Record<string, unknown> | undefined {
   const value = parseCookies(request.headers.get('cookie')).get(name)
   if (isNullish(value)) {
@@ -820,8 +813,4 @@ function createAuthUnavailableResponse(): Response {
     'GitHub sign-in is not configured. Set GITHUB_APP_CLIENT_ID and GITHUB_APP_CLIENT_SECRET.',
     503,
   )
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
 }

@@ -1,3 +1,5 @@
+import {isRecord} from '@/lib/json-read'
+
 const GITHUB_ORIGIN = 'https://github.com'
 
 // The single action that unblocks a visitor who cannot read a diff. The server
@@ -37,8 +39,4 @@ function isGitHubURL(value: string): boolean {
   } catch {
     return false
   }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
 }

@@ -1,11 +1,11 @@
 import type {ChangeTypes, FileContents} from '@pierre/diffs'
-
 import {
   createGitHubApiUrl,
   createGitHubHeaders,
   type GitHubAuthorization,
   type GitHubFetch,
 } from '@/lib/github-http'
+import {readStringPath, readUnknownPath} from '@/lib/json-read'
 
 import {
   encodePath,
@@ -762,11 +762,6 @@ function readFirstParentSha(data: unknown): string | undefined {
   return isNullish(firstParent) ? undefined : readStringPath(firstParent, ['sha'])
 }
 
-function readStringPath(data: unknown, path: readonly string[]): string | undefined {
-  const value = readUnknownPath(data, path)
-  return typeof value === 'string' ? value : undefined
-}
-
 function readNumberPath(data: unknown, path: readonly string[]): number | undefined {
   const value = readUnknownPath(data, path)
   return typeof value === 'number' ? value : undefined
@@ -775,21 +770,6 @@ function readNumberPath(data: unknown, path: readonly string[]): number | undefi
 function readArrayPath(data: unknown, path: readonly string[]): unknown[] | undefined {
   const value = readUnknownPath(data, path)
   return Array.isArray(value) ? value : undefined
-}
-
-function readUnknownPath(data: unknown, path: readonly string[]): unknown {
-  let current = data
-  for (const key of path) {
-    if (!isRecord(current)) {
-      return undefined
-    }
-    current = current[key]
-  }
-  return current
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
 }
 
 function readRequestToken(options: GitHubReadCredentials): string | undefined {

@@ -4,6 +4,7 @@ import {
   GITHUB_API_ROOT,
   type GitHubFetch,
 } from '@/lib/github-http'
+import {isRecord, readOptionalString} from '@/lib/json-read'
 
 import {isNullish} from './nullish'
 
@@ -265,12 +266,4 @@ export async function fetchGitHubJSON(
 
 function createGitHubJSONHeaders(token: string): Record<string, string> {
   return createGitHubHeaders({media: 'json', authorization: {kind: 'token', token}})
-}
-
-function readOptionalString(value: unknown): string | undefined {
-  return typeof value === 'string' && value !== '' ? value : undefined
-}
-
-export function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
 }

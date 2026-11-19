@@ -221,8 +221,8 @@ function failUnanswered(context: ReadingContext, error: string): SymbolDiffsCont
   return {...context, batch: undefined, results, status: 'idle'}
 }
 
-// The key includes `prevName` and `type`, because a rename changes which blobs
-// the diff compares while the file name stays the same.
+// A later request for the same `name` can have a different `prevName` or `type`,
+// and then the diff compares other blobs. So the key holds all three.
 function resultKey(request: SymbolDiffRequest): string {
   return `${request.type}\0${request.prevName ?? ''}\0${request.name}`
 }

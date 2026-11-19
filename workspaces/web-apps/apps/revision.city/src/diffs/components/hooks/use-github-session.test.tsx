@@ -1,6 +1,7 @@
 import {cleanup, renderHook, waitFor} from '@testing-library/react'
 import {HttpResponse, http} from 'msw'
 import {setupServer} from 'msw/node'
+import {renderToString} from 'react-dom/server'
 import {expect, type Mock, onTestFinished, test, vi} from 'vitest'
 
 import type {GitHubSession} from './use-github-session'
@@ -27,8 +28,8 @@ function serveSession(...responses: Respond[]): Mock<Respond> {
   return respond
 }
 
-// The session cache is module state, so each test imports a fresh copy of the
-// module to start with an empty cache.
+// The session store is module state, so each test imports fresh copies of the
+// modules to start with an idle store.
 async function importFreshHook(): Promise<() => GitHubSession> {
   vi.resetModules()
   const module = await import('./use-github-session')
@@ -108,4 +109,37 @@ test('a network error shows anonymous and the next mount asks again', async () =
   expect(first.status).toBe('anonymous')
   expect(second.status).toBe('authenticated')
   expect(respond).toHaveBeenCalledTimes(2)
+})
+
+test('a failed lookup asks again on window focus, and a mounted hook shows the answer', async () => {
+  const respond = serveSession(
+    () => HttpResponse.error(),
+    () => HttpResponse.json(SIGNED_IN),
+  )
+  const useGitHubSession = await importFreshHook()
+  const hook = renderHook(() => useGitHubSession())
+  onTestFinished(cleanup)
+  await waitFor(() => {
+    expect(hook.result.current.status).toBe('anonymous')
+  })
+
+  window.dispatchEvent(new Event('focus'))
+
+  await waitFor(() => {
+    expect(hook.result.current.status).toBe('authenticated')
+  })
+  expect(respond).toHaveBeenCalledTimes(2)
+})
+
+test('a server render gives loading and leaves the shared store idle', async () => {
+  const useGitHubSession = await importFreshHook()
+  const {githubSessionStore} = await import('@/diffs/state/github-session-store')
+  function SessionStatus() {
+    return useGitHubSession().status
+  }
+
+  const html = renderToString(<SessionStatus />)
+
+  expect(html).toBe('loading')
+  expect(githubSessionStore.getSnapshot().context.status).toBe('idle')
 })

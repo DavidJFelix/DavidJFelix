@@ -1,8 +1,8 @@
 # revision.city — Context
 
 revision.city (`apps/revision.city`) is a version control service centered on review. This glossary
-holds the words of the diff viewer under `/diffs` and its Symbols tab. The words of the review
-engine join it later.
+holds the words of the diff viewer under `/diffs`, its Symbols tab and the inbox. The words of the
+review engine join it later.
 
 ## Language
 
@@ -37,8 +37,14 @@ file list, file browser
 **Comment**: A note that a visitor adds on one line of a file diff. Today a comment stays in the
 page, and the viewer does not post it to GitHub or Codeberg. _Avoid_: annotation
 
-**Pull request list**: The open pull requests that a signed-in visitor can open in the viewer,
-grouped by how the visitor is connected to each one. _Avoid_: inbox, dashboard
+### Inbox
+
+**Inbox**: The page at `/inbox` that lists the open pull requests that a signed-in visitor can open
+in the viewer, each with the reasons it is there. _Avoid_: pull request list, dashboard
+
+**Inbox reason**: Why a pull request is in the inbox: GitHub asked the visitor for a review, the
+visitor is an assignee, the repository belongs to the visitor or to one of the organizations of the
+visitor, or the visitor watches the repository. _Avoid_: group, kind
 
 ### Symbols
 

@@ -16,7 +16,7 @@ import {join} from 'node:path'
 
 const PORT = Number(process.env.SMOKE_PORT ?? 4389)
 const BASE_URL = `http://127.0.0.1:${PORT}`
-const ROUTES = (process.env.SMOKE_ROUTES ?? '/,/diffs').split(',')
+const ROUTES = (process.env.SMOKE_ROUTES ?? '/,/diffs,/inbox').split(',')
 const READY_TIMEOUT_MS = 60_000
 const CLIENT_ASSETS_DIR = 'dist/client/assets'
 // The largest client asset is the diffs worker, at about 1.3 MiB. An asset over this limit is most

@@ -8,16 +8,30 @@ export interface SignedInVisitor {
   avatarUrl?: string
 }
 
+export type GitHubSessionAnswer =
+  | ({status: 'authenticated'} & SignedInVisitor)
+  | {status: 'anonymous'}
+
+// No event changes `firstAnswer` after the first lookup ends. A failed first
+// lookup counts as `anonymous`.
+interface AfterFirstLookup {
+  firstAnswer: GitHubSessionAnswer
+}
+
+type LookupResult = GitHubSessionAnswer | {status: 'unknown'}
+
 // `unknown` follows a failed lookup, so the visitor can be signed in or signed out.
 export type GitHubSessionContext =
   | {status: 'idle'}
   | {status: 'loading'}
-  | ({status: 'authenticated'} & SignedInVisitor)
-  | {status: 'anonymous'}
-  | {status: 'unknown'}
+  | (GitHubSessionAnswer & AfterFirstLookup)
+  | ({status: 'unknown'} & AfterFirstLookup)
+  | ({status: 'retrying'} & AfterFirstLookup)
+
+const ANONYMOUS_ANSWER: GitHubSessionAnswer = {status: 'anonymous'}
 
 // Signing in or out reloads the page, so one lookup per page load is enough.
-// After a failed lookup, the next hook mount or window focus asks again.
+// After a failed lookup, the next hook mount asks again.
 export const githubSessionLogic = createStoreLogic({
   context: (): GitHubSessionContext => ({status: 'idle'}),
   on: {
@@ -31,27 +45,36 @@ export const githubSessionLogic = createStoreLogic({
           () => trigger.failed(),
         )
       })
-      return {status: 'loading'}
+      return context.status === 'idle'
+        ? {status: 'loading'}
+        : {status: 'retrying', firstAnswer: context.firstAnswer}
     },
     signedIn: (context, visitor: SignedInVisitor) =>
-      context.status === 'loading'
-        ? {status: 'authenticated', login: visitor.login, avatarUrl: visitor.avatarUrl}
-        : undefined,
-    signedOut: (context) => (context.status === 'loading' ? {status: 'anonymous'} : undefined),
-    failed: (context, _event, enqueue) => {
-      if (context.status !== 'loading') {
-        return undefined
-      }
-      enqueue.effect(({trigger}) => {
-        window.addEventListener('focus', () => trigger.requested(), {once: true})
-      })
-      return {status: 'unknown'}
-    },
+      settle(context, {
+        status: 'authenticated',
+        login: visitor.login,
+        avatarUrl: visitor.avatarUrl,
+      }),
+    signedOut: (context) => settle(context, ANONYMOUS_ANSWER),
+    failed: (context) => settle(context, {status: 'unknown'}),
   },
 })
 
 // The server shares this module across visitors, so trigger events only from browser code.
 export const githubSessionStore = githubSessionLogic.createStore()
+
+function settle(
+  context: GitHubSessionContext,
+  result: LookupResult,
+): GitHubSessionContext | undefined {
+  if (context.status === 'loading') {
+    return {...result, firstAnswer: result.status === 'unknown' ? ANONYMOUS_ANSWER : result}
+  }
+  if (context.status === 'retrying') {
+    return {...result, firstAnswer: context.firstAnswer}
+  }
+  return undefined
+}
 
 // The session route answers 200 for signed-in and signed-out visitors, so an
 // error status is a failed lookup.

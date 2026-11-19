@@ -4,7 +4,7 @@ import {setupServer} from 'msw/node'
 import {renderToString} from 'react-dom/server'
 import {expect, type Mock, onTestFinished, test, vi} from 'vitest'
 
-import type {GitHubSession} from './use-github-session'
+import type {GitHubSession, GitHubSessionStatus} from './use-github-session'
 
 const ENDPOINT = '/api/auth/github/session'
 
@@ -43,6 +43,23 @@ async function mountSettled(useGitHubSession: () => GitHubSession): Promise<GitH
     expect(hook.result.current.status).not.toBe('loading')
   })
   return hook.result.current
+}
+
+// A mount during a retry shows `anonymous` until the retry answers.
+async function mountUntil(
+  useGitHubSession: () => GitHubSession,
+  status: GitHubSessionStatus,
+): Promise<GitHubSession> {
+  const hook = renderHook(() => useGitHubSession())
+  onTestFinished(cleanup)
+  await waitFor(() => {
+    expect(hook.result.current.status).toBe(status)
+  })
+  return hook.result.current
+}
+
+function withoutRepeats(statuses: readonly GitHubSessionStatus[]): GitHubSessionStatus[] {
+  return statuses.filter((status, index) => status !== statuses[index - 1])
 }
 
 const LOGIN = 'reviewer'
@@ -89,7 +106,7 @@ test('a failed status shows anonymous and the next mount asks again', async () =
   const useGitHubSession = await importFreshHook()
 
   const first = await mountSettled(useGitHubSession)
-  const second = await mountSettled(useGitHubSession)
+  const second = await mountUntil(useGitHubSession, 'authenticated')
 
   expect(first.status).toBe('anonymous')
   expect(second.status).toBe('authenticated')
@@ -104,42 +121,51 @@ test('a network error shows anonymous and the next mount asks again', async () =
   const useGitHubSession = await importFreshHook()
 
   const first = await mountSettled(useGitHubSession)
-  const second = await mountSettled(useGitHubSession)
+  const second = await mountUntil(useGitHubSession, 'authenticated')
 
   expect(first.status).toBe('anonymous')
   expect(second.status).toBe('authenticated')
   expect(respond).toHaveBeenCalledTimes(2)
 })
 
-test('a failed lookup asks again on window focus, and a mounted hook shows the answer', async () => {
-  const respond = serveSession(
+test('a retry does not show loading again, and the first session keeps the first answer', async () => {
+  serveSession(
     () => HttpResponse.error(),
     () => HttpResponse.json(SIGNED_IN),
   )
   const useGitHubSession = await importFreshHook()
-  const hook = renderHook(() => useGitHubSession())
+  const {useFirstGitHubSession} = await import('./use-github-session')
+  const latestStatuses: GitHubSessionStatus[] = []
+  const firstStatuses: GitHubSessionStatus[] = []
+  const mounted = renderHook(() => {
+    const sessions = {latest: useGitHubSession(), first: useFirstGitHubSession()}
+    latestStatuses.push(sessions.latest.status)
+    firstStatuses.push(sessions.first.status)
+    return sessions
+  })
   onTestFinished(cleanup)
   await waitFor(() => {
-    expect(hook.result.current.status).toBe('anonymous')
+    expect(mounted.result.current.first.status).toBe('anonymous')
   })
 
-  window.dispatchEvent(new Event('focus'))
+  await mountUntil(useGitHubSession, 'authenticated')
 
-  await waitFor(() => {
-    expect(hook.result.current.status).toBe('authenticated')
-  })
-  expect(respond).toHaveBeenCalledTimes(2)
+  expect(mounted.result.current.latest.status).toBe('authenticated')
+  expect(mounted.result.current.first).toEqual({status: 'anonymous'})
+  expect(withoutRepeats(latestStatuses)).toEqual(['loading', 'anonymous', 'authenticated'])
+  expect(withoutRepeats(firstStatuses)).toEqual(['loading', 'anonymous'])
 })
 
 test('a server render gives loading and leaves the shared store idle', async () => {
   const useGitHubSession = await importFreshHook()
+  const {useFirstGitHubSession} = await import('./use-github-session')
   const {githubSessionStore} = await import('@/diffs/state/github-session-store')
   function SessionStatus() {
-    return useGitHubSession().status
+    return `${useGitHubSession().status} ${useFirstGitHubSession().status}`
   }
 
   const html = renderToString(<SessionStatus />)
 
-  expect(html).toBe('loading')
+  expect(html).toBe('loading loading')
   expect(githubSessionStore.getSnapshot().context.status).toBe('idle')
 })

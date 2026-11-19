@@ -1,4 +1,4 @@
-import {useSelector} from '@xstate/store-react'
+import {shallowEqual, useSelector} from '@xstate/store-react'
 import {useEffect} from 'react'
 import {type GitHubSessionContext, githubSessionStore} from '@/diffs/state/github-session-store'
 
@@ -22,7 +22,21 @@ const ANONYMOUS_SESSION: GitHubSession = {status: 'anonymous'}
 // Reports whether the browser holds a GitHub session cookie. The token itself
 // is HttpOnly and never reaches this code; server routes read it directly.
 export function useGitHubSession(): GitHubSession {
-  const session = useSelector(githubSessionStore, (snapshot) => toGitHubSession(snapshot.context))
+  return useSessionFromStore(toLatestSession)
+}
+
+export function useFirstGitHubSession(): GitHubSession {
+  return useSessionFromStore(toFirstSession)
+}
+
+function useSessionFromStore(
+  toSession: (context: GitHubSessionContext) => GitHubSession,
+): GitHubSession {
+  const session = useSelector(
+    githubSessionStore,
+    (snapshot) => toSession(snapshot.context),
+    shallowEqual,
+  )
   // Effects do not run on the server, so a server render gives `loading` and
   // does not touch the store.
   useEffect(() => {
@@ -31,8 +45,8 @@ export function useGitHubSession(): GitHubSession {
   return session
 }
 
-// The callers know only `GitHubSessionStatus`, so a failed lookup (`unknown`)
-// shows as `anonymous`.
+// The callers know only `GitHubSessionStatus`, so a failed lookup and its retry
+// show as `anonymous`.
 const SESSION_BY_STATUS: Record<
   Exclude<GitHubSessionContext['status'], 'authenticated'>,
   GitHubSession
@@ -41,10 +55,17 @@ const SESSION_BY_STATUS: Record<
   loading: LOADING_SESSION,
   anonymous: ANONYMOUS_SESSION,
   unknown: ANONYMOUS_SESSION,
+  retrying: ANONYMOUS_SESSION,
 }
 
-function toGitHubSession(context: GitHubSessionContext): GitHubSession {
-  return context.status === 'authenticated' ? context : SESSION_BY_STATUS[context.status]
+function toLatestSession(context: GitHubSessionContext): GitHubSession {
+  return context.status === 'authenticated'
+    ? {status: 'authenticated', login: context.login, avatarUrl: context.avatarUrl}
+    : SESSION_BY_STATUS[context.status]
+}
+
+function toFirstSession(context: GitHubSessionContext): GitHubSession {
+  return 'firstAnswer' in context ? context.firstAnswer : LOADING_SESSION
 }
 
 export function getGitHubLoginURL(returnTo: string): string {

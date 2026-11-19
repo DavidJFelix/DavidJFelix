@@ -1,6 +1,7 @@
 import {expect, test, vi} from 'vitest'
 
 import {
+  type GitHubSessionAnswer,
   type GitHubSessionContext,
   githubSessionLogic,
   githubSessionStore,
@@ -8,15 +9,19 @@ import {
 
 type Status = GitHubSessionContext['status']
 type EventType = 'requested' | 'signedIn' | 'signedOut' | 'failed'
+type SessionStore = ReturnType<typeof githubSessionLogic.createStore>
 
 const VISITOR = {login: 'reviewer', avatarUrl: 'https://example.com/avatar.png'}
+const SIGNED_IN: GitHubSessionAnswer = {status: 'authenticated', ...VISITOR}
+const ANONYMOUS: GitHubSessionAnswer = {status: 'anonymous'}
 
 const CONTEXTS: Record<Status, GitHubSessionContext> = {
   idle: {status: 'idle'},
   loading: {status: 'loading'},
-  authenticated: {status: 'authenticated', ...VISITOR},
-  anonymous: {status: 'anonymous'},
-  unknown: {status: 'unknown'},
+  authenticated: {...SIGNED_IN, firstAnswer: SIGNED_IN},
+  anonymous: {status: 'anonymous', firstAnswer: ANONYMOUS},
+  unknown: {status: 'unknown', firstAnswer: ANONYMOUS},
+  retrying: {status: 'retrying', firstAnswer: ANONYMOUS},
 }
 
 const EVENTS = {
@@ -31,14 +36,18 @@ interface LegalTransition {
   type: EventType
   to: Status
   effectCount: number
+  firstAnswer: GitHubSessionAnswer | undefined
 }
 
 const LEGAL: readonly LegalTransition[] = [
-  {from: 'idle', type: 'requested', to: 'loading', effectCount: 1},
-  {from: 'unknown', type: 'requested', to: 'loading', effectCount: 1},
-  {from: 'loading', type: 'signedIn', to: 'authenticated', effectCount: 0},
-  {from: 'loading', type: 'signedOut', to: 'anonymous', effectCount: 0},
-  {from: 'loading', type: 'failed', to: 'unknown', effectCount: 1},
+  {from: 'idle', type: 'requested', to: 'loading', effectCount: 1, firstAnswer: undefined},
+  {from: 'unknown', type: 'requested', to: 'retrying', effectCount: 1, firstAnswer: ANONYMOUS},
+  {from: 'loading', type: 'signedIn', to: 'authenticated', effectCount: 0, firstAnswer: SIGNED_IN},
+  {from: 'loading', type: 'signedOut', to: 'anonymous', effectCount: 0, firstAnswer: ANONYMOUS},
+  {from: 'loading', type: 'failed', to: 'unknown', effectCount: 0, firstAnswer: ANONYMOUS},
+  {from: 'retrying', type: 'signedIn', to: 'authenticated', effectCount: 0, firstAnswer: ANONYMOUS},
+  {from: 'retrying', type: 'signedOut', to: 'anonymous', effectCount: 0, firstAnswer: ANONYMOUS},
+  {from: 'retrying', type: 'failed', to: 'unknown', effectCount: 0, firstAnswer: ANONYMOUS},
 ]
 
 const ILLEGAL = Object.values(CONTEXTS).flatMap((context) =>
@@ -55,27 +64,31 @@ function transitionFrom(status: Status, type: EventType) {
   return {snapshot, next, effects}
 }
 
+function firstAnswerOf(context: GitHubSessionContext): GitHubSessionAnswer | undefined {
+  return 'firstAnswer' in context ? context.firstAnswer : undefined
+}
+
 function stubFetch(answer: () => Promise<Response>) {
   const fetchSession = vi.fn<() => Promise<Response>>(answer)
   vi.stubGlobal('fetch', fetchSession)
   return fetchSession
 }
 
-function requestSettled() {
-  const store = githubSessionLogic.createStore()
+function requestSettled(store: SessionStore = githubSessionLogic.createStore()) {
   store.trigger.requested()
   return vi.waitFor(() => {
-    expect(store.getSnapshot().context.status).not.toBe('loading')
+    expect(['loading', 'retrying']).not.toContain(store.getSnapshot().context.status)
     return store
   })
 }
 
 test.each(LEGAL)(
-  '$from + $type goes to $to with $effectCount effects',
-  ({from, type, to, effectCount}) => {
+  '$from + $type goes to $to and sets the first answer',
+  ({from, type, to, effectCount, firstAnswer}) => {
     const {next, effects} = transitionFrom(from, type)
 
     expect(next.context.status).toBe(to)
+    expect(firstAnswerOf(next.context)).toEqual(firstAnswer)
     expect(effects).toHaveLength(effectCount)
   },
 )
@@ -83,7 +96,7 @@ test.each(LEGAL)(
 test('signedIn keeps the login and the avatar', () => {
   const {next} = transitionFrom('loading', 'signedIn')
 
-  expect(next.context).toEqual({status: 'authenticated', ...VISITOR})
+  expect(next.context).toEqual({...SIGNED_IN, firstAnswer: SIGNED_IN})
 })
 
 test.each(ILLEGAL)('%s ignores %s', (from, type) => {
@@ -99,7 +112,7 @@ test('a signed-in answer authenticates, and a second request does not fetch agai
   const store = await requestSettled()
   store.trigger.requested()
 
-  expect(store.getSnapshot().context).toEqual({status: 'authenticated', ...VISITOR})
+  expect(store.getSnapshot().context).toEqual({...SIGNED_IN, firstAnswer: SIGNED_IN})
   expect(store.can.requested()).toBe(false)
   expect(fetchSession).toHaveBeenCalledTimes(1)
   expect(fetchSession).toHaveBeenCalledWith('/api/auth/github/session', {cache: 'no-store'})
@@ -114,7 +127,7 @@ test.each([
 
   const store = await requestSettled()
 
-  expect(store.getSnapshot().context).toEqual({status: 'anonymous'})
+  expect(store.getSnapshot().context).toEqual({status: 'anonymous', firstAnswer: ANONYMOUS})
 })
 
 test('an avatar that is not a string is dropped', async () => {
@@ -122,40 +135,32 @@ test('an avatar that is not a string is dropped', async () => {
 
   const store = await requestSettled()
 
-  expect(store.getSnapshot().context).toEqual({
-    status: 'authenticated',
-    login: 'reviewer',
-    avatarUrl: undefined,
-  })
+  const answer = {status: 'authenticated', login: 'reviewer', avatarUrl: undefined}
+  expect(store.getSnapshot().context).toEqual({...answer, firstAnswer: answer})
 })
 
 test.each([
   ['an error status', async () => Response.json({}, {status: 503})],
   ['a body that does not parse', async () => new Response('not json')],
   ['a network error', async () => Promise.reject(new TypeError('Failed to fetch'))],
-])('%s is unknown, and a request asks again', async (_name, answer) => {
-  vi.stubGlobal('window', new EventTarget())
+])('%s is unknown with an anonymous first answer', async (_name, answer) => {
   const fetchSession = stubFetch(answer)
 
   const store = await requestSettled()
 
-  expect(store.getSnapshot().context).toEqual({status: 'unknown'})
+  expect(store.getSnapshot().context).toEqual({status: 'unknown', firstAnswer: ANONYMOUS})
   expect(store.can.requested()).toBe(true)
   expect(fetchSession).toHaveBeenCalledTimes(1)
 })
 
-test('after a failed lookup, the next window focus asks again once', async () => {
-  const focusTarget = new EventTarget()
-  vi.stubGlobal('window', focusTarget)
+test('a retry that signs in changes the latest answer and keeps the first answer', async () => {
   const fetchSession = stubFetch(async () => Response.json({}, {status: 503}))
   const store = await requestSettled()
   fetchSession.mockImplementation(async () => Response.json({authenticated: true, ...VISITOR}))
 
-  focusTarget.dispatchEvent(new Event('focus'))
-  await vi.waitFor(() => {
-    expect(store.getSnapshot().context.status).toBe('authenticated')
-  })
-  focusTarget.dispatchEvent(new Event('focus'))
+  await requestSettled(store)
 
+  expect(store.getSnapshot().context).toEqual({...SIGNED_IN, firstAnswer: ANONYMOUS})
+  expect(store.can.requested()).toBe(false)
   expect(fetchSession).toHaveBeenCalledTimes(2)
 })

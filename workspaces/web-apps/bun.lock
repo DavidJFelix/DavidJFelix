@@ -427,6 +427,8 @@
         "@tanstack/react-store": "^0.11.1",
         "@tanstack/react-virtual": "^3.14.10",
         "@tanstack/store": "^0.11.1",
+        "@xstate/store": "^4.3.0",
+        "@xstate/store-react": "^2.1.0",
         "drizzle-orm": "0.45.4",
         "lucide-react": "1.66.0",
         "posthog-js": "^1.418.10",
@@ -1918,6 +1920,10 @@
     "@vue/server-renderer": ["@vue/server-renderer@3.5.44", "", { "dependencies": { "@vue/compiler-ssr": "3.5.44", "@vue/runtime-dom": "3.5.44", "@vue/shared": "3.5.44" } }, "sha512-R4S1UoH4h5Frrauv8Z5XE5TxV9oBiUSgWIC4TyVK1FK+RocRnOLwFA5Xcmo2011RlgJp+AbZCnw6afrhlgRuUQ=="],
 
     "@vue/shared": ["@vue/shared@3.5.44", "", {}, "sha512-H82XLH0DjmSOdbEwO15x3QTo1f5PWEtv237eLpYKc0mqLu+B8hnq16lFWmuBmNurkeiG3wr+oM1FhOll/YVFRg=="],
+
+    "@xstate/store": ["@xstate/store@4.3.0", "", { "peerDependencies": { "xstate": "^5.0.0" }, "optionalPeers": ["xstate"] }, "sha512-Zoe4h8aqsSZLV8KRmwdpfYbfkmHrfZZunKLAB09xz5LwfPQRKyZhDBnQiTaXV3nKe0defaDg+L2N0XHcsa60AQ=="],
+
+    "@xstate/store-react": ["@xstate/store-react@2.1.0", "", { "dependencies": { "@xstate/store": "^4.3.0" }, "peerDependencies": { "react": "^18.0.0 || ^19.0.0" } }, "sha512-pKuPpgSvWF7BWJ6U2/sJC5/CpmcDQ9W8sQgZr/kgZ6zpjmTCoqvfStN/Q99wWnAcx2aDUZMf08aCMyZI7GmQHQ=="],
 
     "@zag-js/accordion": ["@zag-js/accordion@1.47.0", "", { "dependencies": { "@zag-js/anatomy": "1.47.0", "@zag-js/core": "1.47.0", "@zag-js/dom-query": "1.47.0", "@zag-js/types": "1.47.0", "@zag-js/utils": "1.47.0" } }, "sha512-rXij62gBLdmhMYsTiygavOL83xP2MfmD8HpArtZxW30icQeXn1mgWq9xKL/DWqNEnYj/J9W2RpZk/7Q16ckN+Q=="],
 

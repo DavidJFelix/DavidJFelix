@@ -17,11 +17,18 @@ const CHECK_RUN = '/repos/acme/repo/check-runs/31'
 const permission = (login: string) => `GET /repos/acme/repo/collaborators/${login}/permission`
 
 interface SetupParams {
-  conclusion?: string
+  status?: string
+  conclusion?: string | null
+  externalId?: string | null
   slug?: string
 }
 
-function fakeGitHub({conclusion = 'failure', slug = 'revisioncity'}: SetupParams = {}) {
+function fakeGitHub({
+  status = 'completed',
+  conclusion = 'failure',
+  externalId = null,
+  slug = 'revisioncity',
+}: SetupParams = {}) {
   const routes: Record<string, Route> = {
     [permission('maintainer')]: () => ({permission: 'write'}),
     [permission('author')]: () => ({permission: 'read'}),
@@ -29,7 +36,9 @@ function fakeGitHub({conclusion = 'failure', slug = 'revisioncity'}: SetupParams
       throw new GitHubApiError(404, 'Not Found')
     },
     [`GET ${CHECK_RUN}`]: () => ({
+      status,
       conclusion,
+      external_id: externalId,
       app: {slug},
       output: {title: '2 failed chunk reviews', summary: 'Cost $0.01.', text: '### Failed'},
     }),
@@ -92,6 +101,11 @@ test.each(['author', 'stranger'])(
 
 test.each([
   {name: 'the check run passes', setup: {conclusion: 'success'}},
+  {
+    name: 'resolved threads passed the check run',
+    setup: {conclusion: 'success', externalId: 'resolvable-findings'},
+  },
+  {name: 'the review is running', setup: {status: 'in_progress', conclusion: null}},
   {name: 'another app made the check run', setup: {slug: 'other-app'}},
 ])('dismissCheckRun changes nothing when $name', async ({setup}) => {
   const github = fakeGitHub(setup)

@@ -1,7 +1,8 @@
-// The usage fields of a message in the harness transcript. Only an assistant
-// message has the tokens and the cost.
+// The fields of a message in the harness transcript that an answer reads. Only
+// an assistant message has the content parts, the tokens and the cost.
 export interface TranscriptMessage {
   type: string
+  content?: readonly {type: string}[]
   tokens?: {
     input: number
     output: number
@@ -24,6 +25,7 @@ export interface ReviewAgentAnswer extends AnswerUsage {
   text?: string
   reason?: string
   model: string
+  toolCalls: number
 }
 
 const NO_USAGE: AnswerUsage = {
@@ -47,3 +49,6 @@ export const summarizeUsage = (messages: readonly TranscriptMessage[]): AnswerUs
     }),
     NO_USAGE,
   )
+
+export const countToolCalls = (messages: readonly TranscriptMessage[]): number =>
+  messages.flatMap(({content = []}) => content).filter(({type}) => type === 'tool').length

@@ -24,8 +24,14 @@ export interface PullRequestSummary {
   draft: boolean
 }
 
+// A search item also gives the GitHub logins of the assignees. They are not on `PullRequestSummary`,
+// because the client parses summaries that have no assignees.
+export interface PullRequestSearchItem extends PullRequestSummary {
+  assignees: string[]
+}
+
 export interface PullRequestSearchResult {
-  items: PullRequestSummary[]
+  items: PullRequestSearchItem[]
   totalCount: number
   truncated?: boolean
 }
@@ -84,8 +90,8 @@ export async function searchPullRequests({
   const items =
     isRecord(data) && Array.isArray(data.items)
       ? data.items
-          .map((item) => parsePullRequestSummary(item))
-          .filter((item): item is PullRequestSummary => item !== undefined)
+          .map((item) => parsePullRequestSearchItem(item))
+          .filter((item): item is PullRequestSearchItem => item !== undefined)
       : []
   const totalCount =
     isRecord(data) && typeof data.total_count === 'number' ? data.total_count : items.length
@@ -210,7 +216,7 @@ export function chunkSearchQualifiers(
   return {chunks, truncated}
 }
 
-function parsePullRequestSummary(item: unknown): PullRequestSummary | undefined {
+function parsePullRequestSearchItem(item: unknown): PullRequestSearchItem | undefined {
   if (!isRecord(item) || typeof item.number !== 'number' || typeof item.title !== 'string') {
     return undefined
   }
@@ -220,15 +226,21 @@ function parsePullRequestSummary(item: unknown): PullRequestSummary | undefined 
     return undefined
   }
 
-  const user = item.user
   return {
     ...repo,
     number: item.number,
     title: item.title,
-    author: isRecord(user) ? readOptionalString(user.login) : undefined,
+    author: readLogin(item.user),
     updatedAt: readOptionalString(item.updated_at),
     draft: item.draft === true,
+    assignees: Array.isArray(item.assignees)
+      ? item.assignees.map(readLogin).filter((login) => login !== undefined)
+      : [],
   }
+}
+
+function readLogin(user: unknown): string | undefined {
+  return isRecord(user) ? readOptionalString(user.login) : undefined
 }
 
 // Search items name their repository as an API URL:

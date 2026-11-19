@@ -3,8 +3,9 @@ import * as z from 'zod/mini'
 
 import {getPatchViewerHref, toPatchViewerLocation} from '@/diffs/lib/get-patch-viewer-href'
 
-// `submitting` lasts from the Enter key press to the submit event. A blur in
-// that time comes from Enter, so it does not restore the committed URL.
+// `submitting` starts at the Enter key press. A blur in that status comes from
+// Enter, so it does not restore the committed URL. The submit event ends the
+// status, and so do typing, Escape, and the clear button.
 export type DiffUrlFormStatus = 'editing' | 'invalid' | 'submitting'
 
 export interface DiffUrlFormContext {

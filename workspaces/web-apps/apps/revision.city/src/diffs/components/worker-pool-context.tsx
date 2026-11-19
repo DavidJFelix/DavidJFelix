@@ -1,25 +1,26 @@
 // cSpell:ignore ASTLRU -- worker pool option name from @pierre/diffs
-import {DEFAULT_THEMES} from '@pierre/diffs'
+import {areWorkerStatsEqual, DEFAULT_THEMES} from '@pierre/diffs'
 import {
   useWorkerPool,
   type WorkerInitializationRenderOptions,
   WorkerPoolContextProvider,
   type WorkerPoolOptions,
 } from '@pierre/diffs/react'
+import type {WorkerStats} from '@pierre/diffs/worker'
 // The portable build of the highlight worker is one script with no imports. The standard build
 // makes Vite put every shiki grammar into the worker chunk. A worker cannot load those grammars:
 // the main thread resolves the languages and sends them to the workers. `workerFactory` below
 // constructs the worker, only in the browser.
 import * as DiffsRenderWorkerUrlModule from '@pierre/diffs/worker/worker-portable.js?worker&url'
-import {type ReactNode, useEffect, useSyncExternalStore} from 'react'
+import {useSelector} from '@xstate/store-react'
+import {type ReactNode, useEffect} from 'react'
 import {isNullish} from '@/diffs/lib/nullish'
+import {describeWorkerThrow, reloadWorkerScript} from '@/diffs/lib/worker-failure'
 import {
-  chooseWorkerRecovery,
-  describeWorkerLoadFailure,
-  describeWorkerThrow,
-  reloadWorkerScript,
-  type WorkerRecovery,
-} from '@/diffs/lib/worker-failure'
+  createWorkerPoolStore,
+  selectWorkerPoolState,
+  type WorkerPoolState,
+} from '@/diffs/state/worker-pool-store'
 import {claimPageReload} from '@/lib/claim-page-reload'
 
 // Vite's ?worker transform creates the default export, and vite/client types it with
@@ -29,86 +30,37 @@ import {claimPageReload} from '@/lib/claim-page-reload'
 // oxlint-disable-next-line import/namespace -- resolver false positive, see above
 const DiffsRenderWorkerUrl = DiffsRenderWorkerUrlModule.default
 
-// Every worker in the pool sends the same load failure, so the page reports each failure only once.
-// This also limits the page to one recovery: a second load failure has the same key.
-const reportedWorkerFailures = new Set<string>()
+// On the server, this store lives across the requests of different visitors. Trigger its events only
+// from browser code, never during a render.
+const workerPoolStore = createWorkerPoolStore({
+  scriptUrl: DiffsRenderWorkerUrl,
+  reloadWorkerScript: () => reloadWorkerScript({scriptUrl: DiffsRenderWorkerUrl}),
+  claimPageReload: () => claimPageReload({assetUrl: DiffsRenderWorkerUrl}),
+  reloadPage: () => location.reload(),
+  // reportError raises the error like an uncaught one, so it reaches Sentry's onerror handler.
+  reportFailure: (description) => reportError(new Error(description)),
+})
 
-// While the page recovers from a load failure, the review UI holds the viewer as if the pool is
-// still starting. A viewer that mounts without the pool keeps the main thread highlighter after the
-// pool works again.
-let recoveringFromLoadFailure = false
-const recoveryListeners = new Set<() => void>()
-let restartPool: (() => Promise<void>) | undefined
-
-function setRecoveringFromLoadFailure(recovering: boolean): void {
-  recoveringFromLoadFailure = recovering
-  for (const listener of recoveryListeners) listener()
+export function useWorkerPoolState(): WorkerPoolState {
+  return useSelector(workerPoolStore, selectWorkerPoolState)
 }
 
-function subscribeToRecovery(listener: () => void): () => void {
-  recoveryListeners.add(listener)
-  return () => {
-    recoveryListeners.delete(listener)
-  }
-}
-
-export function useWorkerPoolRecovering(): boolean {
-  return useSyncExternalStore(
-    subscribeToRecovery,
-    () => recoveringFromLoadFailure,
-    () => false,
-  )
+export function useWorkerPoolStats(): WorkerStats | undefined {
+  return useSelector(workerPoolStore, (snapshot) => snapshot.context.stats, areWorkerStatsEqual)
 }
 
 function handleWorkerFailure(event: Event): void {
   // The report below replaces the browser's own report of an uncaught worker error.
   event.preventDefault()
-  const failureKey = event instanceof ErrorEvent ? event.message : event.type
-  if (reportedWorkerFailures.has(failureKey)) {
-    return
-  }
-
-  reportedWorkerFailures.add(failureKey)
   if (event instanceof ErrorEvent) {
-    reportWorkerFailure(describeWorkerThrow(event))
+    workerPoolStore.trigger.workerThrew({
+      message: event.message,
+      description: describeWorkerThrow(event),
+    })
     return
   }
 
-  setRecoveringFromLoadFailure(true)
-  void recoverFromLoadFailure()
-}
-
-async function recoverFromLoadFailure(): Promise<void> {
-  const reload = await reloadWorkerScript({scriptUrl: DiffsRenderWorkerUrl})
-  const recovery = confirmRecovery(chooseWorkerRecovery(reload))
-  reportWorkerFailure(
-    describeWorkerLoadFailure({scriptUrl: DiffsRenderWorkerUrl, reload, recovery}),
-  )
-  if (recovery === 'reload-page') {
-    location.reload()
-    return
-  }
-
-  if (recovery === 'retry-pool') {
-    // A failed restart is the second load failure, which the pool reports as failed.
-    await restartPool?.().catch(() => undefined)
-  }
-  setRecoveringFromLoadFailure(false)
-}
-
-function confirmRecovery(recovery: WorkerRecovery): WorkerRecovery {
-  if (recovery === 'reload-page') {
-    return claimPageReload({assetUrl: DiffsRenderWorkerUrl}) ? recovery : 'none'
-  }
-  if (recovery === 'retry-pool') {
-    return isNullish(restartPool) ? 'none' : recovery
-  }
-  return recovery
-}
-
-function reportWorkerFailure(description: string): void {
-  // reportError raises the error like an uncaught one, so it reaches Sentry's onerror handler.
-  reportError(new Error(description))
+  workerPoolStore.trigger.workerLoadFailed()
 }
 
 function isMobileBrowser(): boolean {
@@ -170,23 +122,31 @@ export function WorkerPoolContext({
 }: WorkerPoolProps) {
   return (
     <WorkerPoolContextProvider poolOptions={poolOptions} highlighterOptions={highlighterOptions}>
-      <PoolRestart langs={highlighterOptions.langs} />
+      <PoolStoreConnection langs={highlighterOptions.langs} />
       {children}
     </WorkerPoolContextProvider>
   )
 }
 
-interface PoolRestartProps {
+interface PoolStoreConnectionProps {
   langs: WorkerInitializationRenderOptions['langs']
 }
 
-// Gives the load failure handler a way to start the pool again with the same languages.
-function PoolRestart({langs}: PoolRestartProps) {
+// Sends the stats of the pool to the store, and gives the store a way to start the pool again with
+// the same languages.
+function PoolStoreConnection({langs}: PoolStoreConnectionProps) {
   const workerPool = useWorkerPool()
   useEffect(() => {
-    restartPool = isNullish(workerPool) ? undefined : () => workerPool.initialize(langs)
+    if (isNullish(workerPool)) {
+      return undefined
+    }
+    workerPoolStore.trigger.poolAttached({restartPool: () => workerPool.initialize(langs)})
+    const unsubscribe = workerPool.subscribeToStatChanges((stats) => {
+      workerPoolStore.trigger.poolStatsChanged({stats})
+    })
     return () => {
-      restartPool = undefined
+      unsubscribe()
+      workerPoolStore.trigger.poolDetached()
     }
   }, [langs, workerPool])
   return null

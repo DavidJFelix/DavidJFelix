@@ -11,6 +11,7 @@ export const DISMISS_ACTION = {
 
 const RESOLVABLE_EXTERNAL_ID = 'resolvable-findings'
 const DISMISSED_EXTERNAL_ID = 'dismissed'
+const FAILED_EXTERNAL_ID = 'failed'
 const RESOLVED_TITLE_PREFIX = 'Resolved: '
 const RESOLVED_SUMMARY_PREFIX =
   'Every current Revision City thread on this pull request is resolved, so this check passes. '
@@ -125,12 +126,14 @@ export function decodeCheckRun({
   return {status: 'passed', reviewOutput: written}
 }
 
-const OUTCOME_CONCLUSIONS = {
-  superseded: 'neutral',
-  passed: 'success',
-  failed: 'failure',
-  'failed-resolvable': 'failure',
-} satisfies Record<CheckRunOutcome, Conclusion>
+const OUTCOME_FIELDS = {
+  superseded: {conclusion: 'neutral'},
+  passed: {conclusion: 'success'},
+  // GitHub keeps an external id that an update does not send. A failure report
+  // can follow an earlier result, so it must replace that external id.
+  failed: {conclusion: 'failure', externalId: FAILED_EXTERNAL_ID},
+  'failed-resolvable': {conclusion: 'failure', externalId: RESOLVABLE_EXTERNAL_ID},
+} satisfies Record<CheckRunOutcome, Omit<CompletedFieldsParams, 'output'>>
 
 export function encodeCheckRun(state: CheckRunState): CheckRunFields {
   if (state.status === 'in-progress') {
@@ -158,11 +161,7 @@ export function encodeCheckRun(state: CheckRunState): CheckRunFields {
       externalId: DISMISSED_EXTERNAL_ID,
     })
   }
-  return completedFields({
-    conclusion: OUTCOME_CONCLUSIONS[state.status],
-    output: state.reviewOutput,
-    ...(state.status === 'failed-resolvable' ? {externalId: RESOLVABLE_EXTERNAL_ID} : {}),
-  })
+  return completedFields({...OUTCOME_FIELDS[state.status], output: state.reviewOutput})
 }
 
 interface CompletedFieldsParams {

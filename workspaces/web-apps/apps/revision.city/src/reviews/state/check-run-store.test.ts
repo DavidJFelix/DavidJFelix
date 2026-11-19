@@ -137,22 +137,24 @@ const states: Arbitrary<CheckRunState> = oneof(
   }),
 )
 
-// The check run as GitHub returns it after the app writes the fields to a new
-// check run.
-function written(fields: CheckRunFields): GitHubCheckRun {
+const newCheckRun: GitHubCheckRun = {
+  status: 'in_progress',
+  conclusion: null,
+  external_id: null,
+  output: {title: null, summary: null, text: null},
+}
+
+// The check run as GitHub returns it after the app writes the fields. GitHub
+// keeps the external id when the fields do not send one.
+function updated(before: GitHubCheckRun, fields: CheckRunFields): GitHubCheckRun {
   if (fields.status === 'in_progress') {
-    return {
-      status: 'in_progress',
-      conclusion: null,
-      external_id: null,
-      output: {title: null, summary: null, text: null},
-    }
+    return {...before, status: 'in_progress'}
   }
   const {conclusion, external_id: externalId, output} = fields
   return {
     status: 'completed',
     conclusion,
-    external_id: externalId ?? null,
+    external_id: externalId ?? before.external_id,
     output: {title: output.title, summary: output.summary, text: output.text ?? null},
   }
 }
@@ -160,7 +162,18 @@ function written(fields: CheckRunFields): GitHubCheckRun {
 test('decodeCheckRun reads back each state that encodeCheckRun writes', () => {
   assert(
     property(states, (state) => {
-      expect(decodeCheckRun(written(encodeCheckRun(state)))).toEqual(state)
+      expect(decodeCheckRun(updated(newCheckRun, encodeCheckRun(state)))).toEqual(state)
     }),
   )
 })
+
+test.each(['resolvable-findings', 'dismissed'])(
+  'a failure report on a check run with the external id %s reads as failed',
+  (externalId) => {
+    const before = githubCheckRun({external_id: externalId})
+
+    const after = updated(before, encodeCheckRun(STATES.failed))
+
+    expect(decodeCheckRun(after)).toEqual(STATES.failed)
+  },
+)

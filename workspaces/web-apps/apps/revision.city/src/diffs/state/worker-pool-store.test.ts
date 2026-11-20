@@ -186,7 +186,9 @@ test.each([
     pageReloadClaimed: row.pageReloadClaimed,
   })
   const {restartPool} = controlledRestart()
-  if (row.attached) store.trigger.poolAttached({restartPool})
+  if (row.attached) {
+    store.trigger.poolAttached({restartPool})
+  }
   store.trigger.poolStatsChanged({stats: FAILED})
 
   store.trigger.workerLoadFailed()

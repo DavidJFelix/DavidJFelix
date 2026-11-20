@@ -42,7 +42,9 @@ const initialContext: WorkerPoolStoreContext = {
 }
 
 function getWorkerPoolState(stats: WorkerStats | undefined): WorkerPoolState {
-  if (stats?.workersFailed === true) return 'failed'
+  if (stats?.workersFailed === true) {
+    return 'failed'
+  }
   return stats?.managerState === 'initialized' ? 'ready' : 'initializing'
 }
 
@@ -80,8 +82,12 @@ export function createWorkerPoolStore({
   restartTimeLimitMs = RESTART_TIME_LIMIT_MS,
 }: WorkerPoolStoreParams) {
   function confirmRecovery(recovery: WorkerRecovery, canRestartPool: boolean): WorkerRecovery {
-    if (recovery === 'reload-page') return claimPageReload() ? recovery : 'none'
-    if (recovery === 'retry-pool') return canRestartPool ? recovery : 'none'
+    if (recovery === 'reload-page') {
+      return claimPageReload() ? recovery : 'none'
+    }
+    if (recovery === 'retry-pool') {
+      return canRestartPool ? recovery : 'none'
+    }
     return recovery
   }
 
@@ -95,7 +101,9 @@ export function createWorkerPoolStore({
       poolDetached: (context) => ({...withStats(context, undefined), restartPool: undefined}),
       poolStatsChanged: (context, event: {stats: WorkerStats}) => withStats(context, event.stats),
       workerThrew: (context, event: {message: string; description: string}, enqueue) => {
-        if (context.reportedThrowMessages.includes(event.message)) return undefined
+        if (context.reportedThrowMessages.includes(event.message)) {
+          return undefined
+        }
         enqueue.effect(() => reportFailure(event.description))
         return {
           ...context,
@@ -103,7 +111,9 @@ export function createWorkerPoolStore({
         }
       },
       workerLoadFailed: (context, _event, enqueue) => {
-        if (context.recovery !== 'available') return undefined
+        if (context.recovery !== 'available') {
+          return undefined
+        }
         enqueue.effect(({trigger, getSnapshot}) => {
           void reloadWorkerScript().then((reload) => {
             const canRestartPool = !isNullish(getSnapshot().context.restartPool)
@@ -115,13 +125,17 @@ export function createWorkerPoolStore({
         return {...context, status: 'recovering', recovery: 'reloading-script'}
       },
       recoveryChosen: (context, event: {recovery: WorkerRecovery}, enqueue) => {
-        if (context.recovery !== 'reloading-script') return undefined
+        if (context.recovery !== 'reloading-script') {
+          return undefined
+        }
         if (event.recovery === 'reload-page') {
           enqueue.effect(reloadPage)
           return {...context, recovery: 'reloading-page'}
         }
         const {restartPool} = context
-        if (event.recovery === 'none' || isNullish(restartPool)) return endRecovery(context)
+        if (event.recovery === 'none' || isNullish(restartPool)) {
+          return endRecovery(context)
+        }
         enqueue.effect(({trigger}) => {
           void restartPool().then(
             () => trigger.restartFinished(),

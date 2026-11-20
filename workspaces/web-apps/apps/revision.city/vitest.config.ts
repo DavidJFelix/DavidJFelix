@@ -39,9 +39,10 @@ export default defineConfig({
     // Node cannot load. Vite transforms the package so that the imports resolve.
     server: {deps: {inline: ['@pierre/icons']}},
     // The coverage gate covers the unit-tested logic: the helpers in src/lib, the
-    // client-config resolver, the PR review engine (src/reviews/lib), and the
-    // viewer and Symbols modules that have full coverage. The build and the smoke
-    // test exercise the route glue and the client bootstrap instead.
+    // client-config resolver, the PR review engine (src/reviews/lib), the XState
+    // stores (src/**/state), and the viewer and Symbols modules that have full
+    // coverage. The build and the smoke test exercise the route glue and the
+    // client bootstrap instead.
     coverage: {
       provider: 'v8',
       include: [
@@ -50,6 +51,7 @@ export default defineConfig({
         'src/reviews/lib/**',
         'src/diffs/lib/{annotation,base-moved-on-text,codeberg-diff-file-endpoint,codeberg-diff-source,constants,diff-share-text,get-patch-viewer-href,github-access-remedy,github-app-budget,github-app-installations,github-auth,github-compare-status-endpoint,github-diff-file-endpoint,github-diff-source,gutter-detector,loader-error,normalize-github-path,nullish,pull-request-reference,read-limited-text,resolve-diffs-viewer-route,site,status-panel-text,theme-names,types,worker-failure}.ts',
         'src/diffs/lib/theme/chrome-theme-props.ts',
+        'src/**/state/*-store.ts',
         'src/symbols/lib/{change-presentation,code-symbol,diff-symbols,language-registry}.ts',
         'src/symbols/lib/languages/{css,java,markdown,php,python,rust}.ts',
       ],

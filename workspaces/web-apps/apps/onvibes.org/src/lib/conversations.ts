@@ -35,9 +35,15 @@ export interface FormatRelativeTimeParams {
 // Compact "how long ago" label for the sidebar: 'now', '12m', '3h', '2d'.
 export function formatRelativeTime({updatedAt, now}: FormatRelativeTimeParams): string {
   const minutesAgo = (now - updatedAt) / MS_PER_MINUTE
-  if (minutesAgo < 1) return 'now'
-  if (minutesAgo < MINUTES_PER_HOUR) return `${Math.floor(minutesAgo)}m`
-  if (minutesAgo < MINUTES_PER_DAY) return `${Math.floor(minutesAgo / MINUTES_PER_HOUR)}h`
+  if (minutesAgo < 1) {
+    return 'now'
+  }
+  if (minutesAgo < MINUTES_PER_HOUR) {
+    return `${Math.floor(minutesAgo)}m`
+  }
+  if (minutesAgo < MINUTES_PER_DAY) {
+    return `${Math.floor(minutesAgo / MINUTES_PER_HOUR)}h`
+  }
   return `${Math.floor(minutesAgo / MINUTES_PER_DAY)}d`
 }
 
@@ -50,7 +56,9 @@ export function previewOf(conversation: Conversation): string {
 // A conversation is titled after its first message, trimmed to fit the row.
 export function titleFrom(text: string): string {
   const oneLine = text.replaceAll(/\s+/gu, ' ').trim()
-  if (oneLine.length <= TITLE_MAX_LENGTH) return oneLine
+  if (oneLine.length <= TITLE_MAX_LENGTH) {
+    return oneLine
+  }
   const cut = oneLine.slice(0, TITLE_MAX_LENGTH)
   const lastSpace = cut.lastIndexOf(' ')
   return `${lastSpace > 0 ? cut.slice(0, lastSpace) : cut}…`
@@ -84,7 +92,9 @@ export interface WithMessagesParams {
 // otherwise refreshes the row metadata, and an untitled conversation takes its
 // title from the first message.
 export function withMessages({conversation, messages, now}: WithMessagesParams): Conversation {
-  if (sameMessages(conversation.messages, messages)) return conversation
+  if (sameMessages(conversation.messages, messages)) {
+    return conversation
+  }
   const first = messages[0]
   const untitled = conversation.messages.length === 0 && first !== undefined
   return {

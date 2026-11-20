@@ -33,9 +33,15 @@ function reply(text: string, {hang = false} = {}): Response {
   const encoder = new TextEncoder()
   const body = new ReadableStream<Uint8Array>({
     async start(controller) {
-      for (const chunk of chunks) controller.enqueue(encoder.encode(encode(chunk)))
-      if (hang) await forever
-      for (const chunk of tail) controller.enqueue(encoder.encode(encode(chunk)))
+      for (const chunk of chunks) {
+        controller.enqueue(encoder.encode(encode(chunk)))
+      }
+      if (hang) {
+        await forever
+      }
+      for (const chunk of tail) {
+        controller.enqueue(encoder.encode(encode(chunk)))
+      }
       controller.close()
     },
   })
@@ -63,7 +69,9 @@ function stubChat(...responses: Array<() => Response>) {
       expect(typeof init?.body).toBe('string')
       requests.push(JSON.parse(typeof init?.body === 'string' ? init.body : '{}') as WireRequest)
       const respond = responses[Math.min(requests.length, responses.length) - 1]
-      if (respond === undefined) throw new Error('no response staged')
+      if (respond === undefined) {
+        throw new Error('no response staged')
+      }
       return respond()
     },
   )

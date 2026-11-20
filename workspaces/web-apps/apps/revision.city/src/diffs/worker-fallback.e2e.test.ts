@@ -56,7 +56,9 @@ test('a diff renders highlighted on the main thread when the worker script fails
   await openPullWithPatch(page)
   let workerScriptLoads = 0
   await page.route(WORKER_SCRIPT, (route) => {
-    if (isWorkerLoad(route)) workerScriptLoads += 1
+    if (isWorkerLoad(route)) {
+      workerScriptLoads += 1
+    }
     return route.fulfill(UNAVAILABLE)
   })
 
@@ -75,7 +77,9 @@ test('the pool starts again when the worker script fails to load but its refetch
   await openPullWithPatch(page)
   let workerScriptLoads = 0
   await page.route(WORKER_SCRIPT, (route) => {
-    if (!isWorkerLoad(route)) return route.continue()
+    if (!isWorkerLoad(route)) {
+      return route.continue()
+    }
     workerScriptLoads += 1
     return workerScriptLoads <= POOL_SIZE ? route.fulfill(NOT_FOUND) : route.continue()
   })
@@ -97,7 +101,9 @@ test('the page reloads once when a deploy removed the worker script, then render
   await openPullWithPatch(page)
   let workerScriptLoads = 0
   await page.route(WORKER_SCRIPT, (route) => {
-    if (isWorkerLoad(route)) workerScriptLoads += 1
+    if (isWorkerLoad(route)) {
+      workerScriptLoads += 1
+    }
     return route.fulfill(NOT_FOUND)
   })
   let pageLoads = 0

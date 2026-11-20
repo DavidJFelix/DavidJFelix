@@ -27,8 +27,12 @@ interface SiteUrlParams {
 
 // The part of `url` after the origin, or undefined when `url` is not on this site.
 function sitePath({url, origin}: SiteUrlParams): string | undefined {
-  if (url.startsWith(`${origin}/`)) return url.slice(origin.length)
-  if (url.startsWith('/') && !url.startsWith('//')) return url
+  if (url.startsWith(`${origin}/`)) {
+    return url.slice(origin.length)
+  }
+  if (url.startsWith('/') && !url.startsWith('//')) {
+    return url
+  }
   return undefined
 }
 
@@ -42,7 +46,9 @@ const isDiffApiUrl = (params: SiteUrlParams): boolean =>
 
 export function templateSiteUrl({url, origin}: SiteUrlParams): string {
   const path = sitePath({url, origin})
-  if (path === undefined) return url
+  if (path === undefined) {
+    return url
+  }
   const pathAndQuery = beforeFirst(path, '#')
   const pathname = beforeFirst(pathAndQuery, '?')
   const query = pathname.startsWith(DIFF_API_PREFIX) ? '' : pathAndQuery.slice(pathname.length)
@@ -61,13 +67,17 @@ const isOtherHostUrl = ({url, origin}: SiteUrlParams): boolean =>
   sitePath({url, origin}) === undefined && HTTP_URL.test(url) && URL.canParse(url)
 
 function templateUrl({url, origin, otherHostUrls}: TemplateParams): string {
-  if (otherHostUrls === 'origin' && isOtherHostUrl({url, origin})) return new URL(url).origin
+  if (otherHostUrls === 'origin' && isOtherHostUrl({url, origin})) {
+    return new URL(url).origin
+  }
   return templateSiteUrl({url, origin})
 }
 
 function templateUrlOrName(params: TemplateParams): string {
   const match = METHOD_AND_URL.exec(params.url)
-  if (match === null) return templateUrl(params)
+  if (match === null) {
+    return templateUrl(params)
+  }
   const [, method, url] = match
   return `${method} ${templateUrl({...params, url})}`
 }
@@ -98,8 +108,12 @@ export function scrubSentrySpan({
     !FRAGMENT_ATTRIBUTES.has(key) &&
     !(dropsQuery && QUERY_ATTRIBUTES.has(key))
   const templateValue = (value: unknown): unknown => {
-    if (typeof value === 'string') return template(value)
-    if (isStringAttributeObject(value)) return {...value, value: template(value.value)}
+    if (typeof value === 'string') {
+      return template(value)
+    }
+    if (isStringAttributeObject(value)) {
+      return {...value, value: template(value.value)}
+    }
     return value
   }
   const attributes = Object.fromEntries(
@@ -144,7 +158,9 @@ interface TemplateBreadcrumbParams {
 }
 
 function templateBreadcrumb({breadcrumb, ...params}: TemplateBreadcrumbParams): Breadcrumb {
-  if (breadcrumb.data === undefined) return breadcrumb
+  if (breadcrumb.data === undefined) {
+    return breadcrumb
+  }
   return {...breadcrumb, data: templateStrings({record: breadcrumb.data, ...params})}
 }
 
@@ -190,11 +206,15 @@ interface ScrubLogValueParams {
 }
 
 function scrubLogValue({value, origin}: ScrubLogValueParams): unknown {
-  if (typeof value === 'string')
+  if (typeof value === 'string') {
     return templateUrlOrName({url: value, origin, otherHostUrls: 'origin'})
-  if (Array.isArray(value))
+  }
+  if (Array.isArray(value)) {
     return value.map((item: unknown) => scrubLogValue({value: item, origin}))
-  if (typeof value !== 'object' || value === null) return value
+  }
+  if (typeof value !== 'object' || value === null) {
+    return value
+  }
   return Object.fromEntries(
     Object.entries(value)
       .filter(([key]) => key !== REPOSITORY_KEY)
@@ -217,7 +237,9 @@ export function scrubServerBreadcrumb({
   origin,
 }: ScrubServerBreadcrumbParams): Breadcrumb | null {
   if (breadcrumb.category === 'console') {
-    if (breadcrumb.level === WIDE_EVENT_LEVEL) return null
+    if (breadcrumb.level === WIDE_EVENT_LEVEL) {
+      return null
+    }
     const logged: unknown = breadcrumb.data?.arguments
     const values = Array.isArray(logged)
       ? logged.map((value: unknown) => scrubLogValue({value, origin}))
@@ -229,7 +251,9 @@ export function scrubServerBreadcrumb({
     }
   }
   const templated = templateBreadcrumb({breadcrumb, origin, otherHostUrls: 'origin'})
-  if (templated.type !== HTTP_BREADCRUMB_TYPE || templated.data === undefined) return templated
+  if (templated.type !== HTTP_BREADCRUMB_TYPE || templated.data === undefined) {
+    return templated
+  }
   const data = Object.fromEntries(
     Object.entries(templated.data).filter(
       ([key]) => !QUERY_ATTRIBUTES.has(key) && !FRAGMENT_ATTRIBUTES.has(key),

@@ -93,5 +93,5 @@ const monitorVisibility = css({display: 'none', '[data-theme-mode=system] &': {d
   // Behavior (mode cycling, labels, live OS tracking, cross-tab sync) lives in
   // the package; this component owns only the markup and styling above.
   const toggle = document.querySelector<HTMLButtonElement>('#theme-toggle')
-  if (toggle) bindThemeToggle(toggle)
+  if (toggle) {bindThemeToggle(toggle)}
 </script>

@@ -7,6 +7,8 @@ const UNCONFIGURED_STATUS = 503
 
 export function describeChatError(error: Error): string {
   const status = Number(/status: (\d{3})/u.exec(error.message)?.[1])
-  if (status === UNCONFIGURED_STATUS) return 'Chat is not set up on this server yet.'
+  if (status === UNCONFIGURED_STATUS) {
+    return 'Chat is not set up on this server yet.'
+  }
   return 'The reply did not come through.'
 }

@@ -26,9 +26,13 @@ const isSecretBinding = (value: unknown): value is SecretsStoreSecretBinding =>
 
 const stringValue = (key: string, params: ResolveStateStoreSettingsParams): string | undefined => {
   const fromEnv = params.env[key]?.trim()
-  if (fromEnv) return fromEnv
+  if (fromEnv) {
+    return fromEnv
+  }
   const fromPlatform = params.platformEnv?.[key]
-  if (typeof fromPlatform === 'string' && fromPlatform.trim()) return fromPlatform.trim()
+  if (typeof fromPlatform === 'string' && fromPlatform.trim()) {
+    return fromPlatform.trim()
+  }
   return undefined
 }
 
@@ -63,9 +67,13 @@ export const resolveStateStoreSettings = async (
   params: ResolveStateStoreSettingsParams,
 ): Promise<StateStoreSettings | undefined> => {
   const url = stringValue('ALCHEMY_STATE_URL', params)
-  if (!url) return undefined
+  if (!url) {
+    return undefined
+  }
   const envToken = stringValue('ALCHEMY_STATE_TOKEN', params)
-  if (envToken) return {url, authToken: envToken}
+  if (envToken) {
+    return {url, authToken: envToken}
+  }
   const binding = params.platformEnv?.ALCHEMY_STATE_TOKEN_SECRET
   if (isSecretBinding(binding)) {
     const authToken = (await binding.get()).trim()

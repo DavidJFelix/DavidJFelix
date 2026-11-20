@@ -19,7 +19,7 @@
         (module) => module.default,
         () => undefined,
       )
-      if (!posthog) return
+      if (!posthog) {return}
       // Same-origin reverse proxy: events and the lazily-loaded SDK assets
       // travel through /diag on this domain (see src/worker.ts), so content
       // blockers that drop *.posthog.com don't drop our analytics. api_host is

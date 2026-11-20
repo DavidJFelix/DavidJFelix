@@ -16,7 +16,9 @@ export async function createLoopsContact(
   {email, apiKey}: CreateLoopsContactParams,
   fetchImpl: typeof fetch = fetch,
 ): Promise<boolean> {
-  if (!apiKey) return false
+  if (!apiKey) {
+    return false
+  }
   try {
     const response = await fetchImpl(CONTACTS_CREATE_URL, {
       method: 'POST',

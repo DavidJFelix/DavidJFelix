@@ -59,10 +59,16 @@ function dsnIdentity(dsn: string): DsnIdentity | undefined {
   } catch {
     return undefined
   }
-  if (url.protocol !== 'https:') return undefined
-  if (!SENTRY_INGEST_HOST.test(url.hostname)) return undefined
+  if (url.protocol !== 'https:') {
+    return undefined
+  }
+  if (!SENTRY_INGEST_HOST.test(url.hostname)) {
+    return undefined
+  }
   const projectId = url.pathname.replace(/^\/+/, '')
-  if (!/^\d+$/.test(projectId)) return undefined
+  if (!/^\d+$/.test(projectId)) {
+    return undefined
+  }
   return {host: url.hostname, projectId}
 }
 
@@ -75,14 +81,20 @@ export async function forwardEnvelope(
   options: TunnelOptions = {},
   fetchImpl: typeof fetch = fetch,
 ): Promise<Response> {
-  if (request.method !== 'POST') return new Response(null, {status: 405, headers: {allow: 'POST'}})
+  if (request.method !== 'POST') {
+    return new Response(null, {status: 405, headers: {allow: 'POST'}})
+  }
 
   const envelope = await request.text()
   const dsn = readEnvelopeDsn(envelope)
-  if (!dsn) return new Response(null, {status: 400})
+  if (!dsn) {
+    return new Response(null, {status: 400})
+  }
 
   const target = dsnIdentity(dsn)
-  if (!target) return new Response(null, {status: 400})
+  if (!target) {
+    return new Response(null, {status: 400})
+  }
 
   if (options.allowedDsn) {
     const allowed = dsnIdentity(options.allowedDsn)

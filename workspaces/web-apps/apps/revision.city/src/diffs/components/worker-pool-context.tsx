@@ -42,7 +42,9 @@ let restartPool: (() => Promise<void>) | undefined
 
 function setRecoveringFromLoadFailure(recovering: boolean): void {
   recoveringFromLoadFailure = recovering
-  for (const listener of recoveryListeners) listener()
+  for (const listener of recoveryListeners) {
+    listener()
+  }
 }
 
 function subscribeToRecovery(listener: () => void): () => void {

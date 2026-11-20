@@ -32,7 +32,9 @@ async function openDiff(page: Page): Promise<void> {
 
 async function tabTo(page: Page, target: Locator): Promise<void> {
   for (let press = 0; press < MAX_TAB_PRESSES; press += 1) {
-    if (await target.evaluate((element) => element === document.activeElement)) return
+    if (await target.evaluate((element) => element === document.activeElement)) {
+      return
+    }
     await page.keyboard.press('Tab')
   }
   throw new Error(`Tab did not reach the target in ${MAX_TAB_PRESSES} presses`)

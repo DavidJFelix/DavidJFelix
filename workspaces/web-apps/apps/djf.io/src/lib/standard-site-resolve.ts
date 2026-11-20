@@ -28,7 +28,9 @@ function resolutionEnabled(): boolean {
 
 async function getJson(url: string): Promise<unknown> {
   const response = await fetch(url, {signal: AbortSignal.timeout(FETCH_TIMEOUT_MS)})
-  if (!response.ok) throw new Error(`${url} -> ${response.status}`)
+  if (!response.ok) {
+    throw new Error(`${url} -> ${response.status}`)
+  }
   return response.json()
 }
 
@@ -40,7 +42,9 @@ export async function resolvePdsEndpoint(did: string): Promise<string> {
   const endpoint = doc.service?.find((service) =>
     service.id?.endsWith('atproto_pds'),
   )?.serviceEndpoint
-  if (!endpoint) throw new Error(`no #atproto_pds service in DID doc for ${did}`)
+  if (!endpoint) {
+    throw new Error(`no #atproto_pds service in DID doc for ${did}`)
+  }
   return endpoint
 }
 
@@ -58,9 +62,13 @@ async function listAllRecords(pdsBase: string, collection: string): Promise<Arra
     url.searchParams.set('repo', ATPROTO_DID)
     url.searchParams.set('collection', collection)
     url.searchParams.set('limit', '100')
-    if (cursor) url.searchParams.set('cursor', cursor)
+    if (cursor) {
+      url.searchParams.set('cursor', cursor)
+    }
     const page = (await getJson(url.toString())) as {cursor?: string; records?: Array<RepoRecord>}
-    if (page.records) records.push(...page.records)
+    if (page.records) {
+      records.push(...page.records)
+    }
     cursor = page.cursor
   } while (cursor)
   return records
@@ -77,7 +85,9 @@ export function documentUriMap(): Promise<Map<string, string>> {
 
 async function buildDocumentUriMap(): Promise<Map<string, string>> {
   const map = new Map<string, string>()
-  if (!resolutionEnabled()) return map
+  if (!resolutionEnabled()) {
+    return map
+  }
   try {
     const pds = await resolvePdsEndpoint(ATPROTO_DID)
     // djf.io's publication is the one whose url is PUBLICATION.url (found by url,
@@ -86,7 +96,9 @@ async function buildDocumentUriMap(): Promise<Map<string, string>> {
     const ownPublicationUri = publications.find(
       (record) => record.value.url === PUBLICATION.url,
     )?.uri
-    if (!ownPublicationUri) return map
+    if (!ownPublicationUri) {
+      return map
+    }
     const records = await listAllRecords(pds, DOCUMENT_COLLECTION)
     for (const record of records) {
       const {path, site} = record.value

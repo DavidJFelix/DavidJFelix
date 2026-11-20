@@ -397,8 +397,12 @@ interface ColorModeIconProps extends IconProps {
   colorMode: ColorMode
 }
 function ColorModeIcon({colorMode, ...props}: ColorModeIconProps) {
-  if (colorMode === 'light') return <IconColorLight {...props} />
-  if (colorMode === 'dark') return <IconColorDark {...props} />
+  if (colorMode === 'light') {
+    return <IconColorLight {...props} />
+  }
+  if (colorMode === 'dark') {
+    return <IconColorDark {...props} />
+  }
   return <IconColorAuto {...props} />
 }
 
@@ -406,7 +410,9 @@ function ColorModeIcon({colorMode, ...props}: ColorModeIconProps) {
 // the click of the focused button. Stop these keys before they reach the menu,
 // so that the button gets its usual click.
 function keepPressKeysOnButton(event: KeyboardEvent) {
-  if (event.key === 'Enter' || event.key === ' ') event.stopPropagation()
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.stopPropagation()
+  }
 }
 
 interface ThemeDropdownProps {
@@ -445,7 +451,9 @@ export function ThemeDropdown({
     <DropdownMenu
       align="end"
       onOpenChange={(open) => {
-        if (!open) setView('main')
+        if (!open) {
+          setView('main')
+        }
       }}
     >
       <DropdownMenuTrigger asChild>
@@ -625,7 +633,9 @@ function ThemeList({
   useLayoutEffect(() => {
     const container = scrollContainerRef.current
     const selected = selectedItemRef.current
-    if (isNullish(container) || isNullish(selected)) return
+    if (isNullish(container) || isNullish(selected)) {
+      return
+    }
     // `offsetTop` measures from the nearest positioned ancestor, which the
     // scroll container is not — use bounding rects so the math works
     // regardless of where ancestors set `position`. Subtract one row

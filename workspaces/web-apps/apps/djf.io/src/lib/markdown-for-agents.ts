@@ -52,20 +52,28 @@ function bestQuality(ranges: Array<MediaRange>, type: string): number | undefine
 // strongly as text/html. Wildcards (`*/*`, `text/*`) do not count as asking --
 // browsers send those on every navigation, and they must keep getting HTML.
 export function prefersMarkdown(accept: string | null): boolean {
-  if (accept === null) return false
+  if (accept === null) {
+    return false
+  }
   const ranges = mediaRanges(accept)
   const markdown = bestQuality(ranges, MARKDOWN_TYPE)
-  if (markdown === undefined || markdown === 0) return false
+  if (markdown === undefined || markdown === 0) {
+    return false
+  }
   const html = bestQuality(ranges, HTML_TYPE)
   return html === undefined || markdown >= html
 }
 
 function findElement(node: Nodes, match: (element: Element) => boolean): Element | undefined {
-  if (node.type === 'element' && match(node)) return node
+  if (node.type === 'element' && match(node)) {
+    return node
+  }
   if ('children' in node) {
     for (const child of node.children) {
       const found = findElement(child, match)
-      if (found !== undefined) return found
+      if (found !== undefined) {
+        return found
+      }
     }
   }
   return undefined
@@ -104,7 +112,9 @@ export function htmlPageToMarkdown(html: string): MarkdownPage {
   const description = descriptionMeta?.properties.content
 
   const frontmatterLines: Array<string> = []
-  if (title !== '') frontmatterLines.push(`title: ${JSON.stringify(title)}`)
+  if (title !== '') {
+    frontmatterLines.push(`title: ${JSON.stringify(title)}`)
+  }
   if (typeof description === 'string') {
     frontmatterLines.push(`description: ${JSON.stringify(description)}`)
   }
@@ -124,11 +134,19 @@ export function htmlPageToMarkdown(html: string): MarkdownPage {
 // hand every other response back untouched. Only successful GETs of HTML are
 // converted -- errors, redirects, and non-HTML assets pass through.
 export async function negotiateMarkdown(request: Request, response: Response): Promise<Response> {
-  if (request.method !== 'GET') return response
-  if (!prefersMarkdown(request.headers.get('accept'))) return response
-  if (!response.ok) return response
+  if (request.method !== 'GET') {
+    return response
+  }
+  if (!prefersMarkdown(request.headers.get('accept'))) {
+    return response
+  }
+  if (!response.ok) {
+    return response
+  }
   const contentType = response.headers.get('content-type')
-  if (contentType === null || !contentType.toLowerCase().includes(HTML_TYPE)) return response
+  if (contentType === null || !contentType.toLowerCase().includes(HTML_TYPE)) {
+    return response
+  }
 
   const {markdown, tokens} = htmlPageToMarkdown(await response.text())
   // Carry the page's headers through -- caching policy and anything upstream

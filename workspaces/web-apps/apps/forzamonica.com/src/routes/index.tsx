@@ -135,7 +135,9 @@ function NewsletterSignup() {
           onSubmit={(event) => {
             event.preventDefault()
             const email = new FormData(event.currentTarget).get('email')
-            if (typeof email !== 'string' || email === '') return
+            if (typeof email !== 'string' || email === '') {
+              return
+            }
             setStatus('sending')
             void subscribeToNewsletter({data: {email}}).then((subscribed) =>
               setStatus(subscribed ? 'subscribed' : 'error'),

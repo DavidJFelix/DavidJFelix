@@ -56,7 +56,9 @@ export function planToIcs(plan: TrainingPlan): string {
   ]
   for (const week of plan.weeks) {
     for (const day of week.days) {
-      if (day.workout === undefined) continue
+      if (day.workout === undefined) {
+        continue
+      }
       const nextDay = format(addDays(parseISO(day.date), 1), 'yyyy-MM-dd')
       lines.push(
         'BEGIN:VEVENT',

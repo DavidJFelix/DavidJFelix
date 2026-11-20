@@ -52,15 +52,23 @@ const server = Bun.spawn(
 
 async function check(route: string): Promise<string | null> {
   const page = await fetch(new URL(route, BASE_URL), {signal: AbortSignal.timeout(15_000)})
-  if (!page.ok) return `${route} -> HTTP ${page.status}`
+  if (!page.ok) {
+    return `${route} -> HTTP ${page.status}`
+  }
   const html = await page.text()
-  if (!/<\/html>/iu.test(html)) return `${route} -> response is not a complete HTML document`
+  if (!/<\/html>/iu.test(html)) {
+    return `${route} -> response is not a complete HTML document`
+  }
   // SvelteKit always references hashed immutable assets from a server-rendered
   // page; a missing reference means the build is broken, not minimal.
   const asset = html.match(/(?:src|href)="([^"]*\/_app\/immutable\/[^"]+\.(?:js|css))"/u)?.[1]
-  if (!asset) return `${route} -> no hashed client asset referenced in HTML`
+  if (!asset) {
+    return `${route} -> no hashed client asset referenced in HTML`
+  }
   const res = await fetch(new URL(asset, BASE_URL), {signal: AbortSignal.timeout(15_000)})
-  if (!res.ok) return `${route} asset ${asset} -> HTTP ${res.status}`
+  if (!res.ok) {
+    return `${route} asset ${asset} -> HTTP ${res.status}`
+  }
   return null
 }
 
@@ -70,7 +78,9 @@ async function waitForReady(): Promise<boolean> {
     try {
       // oxlint-disable-next-line no-await-in-loop -- this is genuinely an await loop
       const res = await fetch(BASE_URL, {signal: AbortSignal.timeout(2_000)})
-      if (res.ok) return true
+      if (res.ok) {
+        return true
+      }
     } catch {
       // not up yet -- keep polling
     }

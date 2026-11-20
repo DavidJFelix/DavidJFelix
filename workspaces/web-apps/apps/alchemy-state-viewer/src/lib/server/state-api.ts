@@ -80,7 +80,9 @@ const getJson = async (
     })
   }
   const body = await response.text()
-  if (body === '') return undefined
+  if (body === '') {
+    return undefined
+  }
   try {
     return JSON.parse(body) as unknown
   } catch (cause) {
@@ -112,7 +114,9 @@ export const createStateApi = (config: StateApiConfig): StateApi => {
       asStringArray(await get(`${stagePath(stack, stage)}/resources`)),
     getResource: async (stack, stage, fqn) => {
       const body = await get(`${stagePath(stack, stage)}/resources/${encodeURIComponent(fqn)}`)
-      if (body === undefined || body === null) return
+      if (body === undefined || body === null) {
+        return
+      }
       return body as PersistedStateView
     },
     getStackOutput: async (stack, stage) => {
@@ -145,7 +149,9 @@ export const mapWithConcurrency = async <T, R>(
   const worker = async (): Promise<void> => {
     const index = next
     next += 1
-    if (index >= items.length) return
+    if (index >= items.length) {
+      return
+    }
     results[index] = await mapper(items[index] as T)
     return worker()
   }

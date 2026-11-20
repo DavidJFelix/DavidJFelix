@@ -16,7 +16,9 @@ export interface Finding {
 function goalGapFinding(request: PlanRequest): Finding | undefined {
   const {goalTimeSeconds} = request.race
   const {recentRace} = request.runner
-  if (goalTimeSeconds === undefined || recentRace === undefined) return undefined
+  if (goalTimeSeconds === undefined || recentRace === undefined) {
+    return undefined
+  }
 
   const predicted = predictRaceTime(recentRace, RACE_DISTANCE_MILES[request.race.distance])
   const gap = (predicted - goalTimeSeconds) / predicted
@@ -51,11 +53,15 @@ function rampFinding(request: PlanRequest): Finding | undefined {
     PLAN_RULES.peakLongRunMiles[distance] / PLAN_RULES.longRunShareOfWeek,
   )
   const current = request.runner.weeklyMileage
-  if (current >= peakVolume) return undefined
+  if (current >= peakVolume) {
+    return undefined
+  }
 
   const growthPerStep = (weeks: number) =>
     (peakVolume / current) ** (1 / progressionSteps(weeks, distance)) - 1
-  if (growthPerStep(durationWeeks) <= PLAN_RULES.weeklyRampCap) return undefined
+  if (growthPerStep(durationWeeks) <= PLAN_RULES.weeklyRampCap) {
+    return undefined
+  }
 
   let suggestedWeeks = durationWeeks
   while (
@@ -76,7 +82,9 @@ function durationFinding(request: PlanRequest): Finding | undefined {
   const {distance} = request.race
   const durationWeeks = request.durationWeeks ?? DEFAULT_DURATION_WEEKS[distance]
   const minimum = PLAN_RULES.minDurationWeeks[distance]
-  if (durationWeeks >= minimum) return undefined
+  if (durationWeeks >= minimum) {
+    return undefined
+  }
   return {
     level: 'warning',
     code: 'plan-too-short',
@@ -86,7 +94,9 @@ function durationFinding(request: PlanRequest): Finding | undefined {
 }
 
 function timingFinding(request: PlanRequest, today: string | undefined): Finding | undefined {
-  if (today === undefined) return undefined
+  if (today === undefined) {
+    return undefined
+  }
   const durationWeeks = request.durationWeeks ?? DEFAULT_DURATION_WEEKS[request.race.distance]
   const raceDate = parseISO(request.race.date)
   const todayDate = parseISO(today)
@@ -98,7 +108,9 @@ function timingFinding(request: PlanRequest, today: string | undefined): Finding
     }
   }
   const daysUnderway = durationWeeks * 7 - 1 - differenceInCalendarDays(raceDate, todayDate)
-  if (daysUnderway <= 0) return undefined
+  if (daysUnderway <= 0) {
+    return undefined
+  }
   const weeksUnderway = Math.floor(daysUnderway / 7)
   return {
     level: 'warning',

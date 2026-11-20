@@ -18,7 +18,9 @@ const wasmModules = (): Plugin => ({
   enforce: 'pre',
   applyToEnvironment: (environment) => environment.name === 'ssr',
   async resolveId(source, importer) {
-    if (!source.endsWith('.wasm')) return null
+    if (!source.endsWith('.wasm')) {
+      return null
+    }
     const resolved = await this.resolve(source, importer, {skipSelf: true})
     return resolved && {id: `__wasm_module__${resolved.id}`, external: true}
   },

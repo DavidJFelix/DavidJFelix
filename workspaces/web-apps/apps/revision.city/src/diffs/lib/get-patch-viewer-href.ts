@@ -30,7 +30,9 @@ export function toPatchViewerLocation(href: string): PatchViewerLocation {
 // GitHub shorthand ("owner/repo#123").
 export function getPatchViewerHref(input: string): string | undefined {
   const trimmed = input.trim()
-  if (trimmed === '') return undefined
+  if (trimmed === '') {
+    return undefined
+  }
 
   // GitHub shorthand: "owner/repo#123" -> "/owner/repo/pull/123"
   const shorthandMatch = GITHUB_SHORTHAND_PATTERN.exec(trimmed)
@@ -42,7 +44,9 @@ export function getPatchViewerHref(input: string): string | undefined {
   try {
     const parsedURL = new URL(trimmed)
     const githubPath = getGitHubPathFromURL(parsedURL)
-    if (!isNullish(githubPath)) return `${githubPath}`
+    if (!isNullish(githubPath)) {
+      return `${githubPath}`
+    }
     if (parsedURL.pathname !== '/') {
       return `${parsedURL.pathname.slice(1)}?domain=${encodeURIComponent(parsedURL.hostname)}`
     }
@@ -60,7 +64,9 @@ export function getPatchViewerHref(input: string): string | undefined {
     try {
       const parsedURL = new URL(`https://${trimmed}`)
       const githubPath = getGitHubPathFromURL(parsedURL)
-      if (!isNullish(githubPath)) return `${githubPath}`
+      if (!isNullish(githubPath)) {
+        return `${githubPath}`
+      }
       if (parsedURL.pathname !== '/') {
         return `${parsedURL.pathname.slice(1)}?domain=${encodeURIComponent(parsedURL.hostname)}`
       }

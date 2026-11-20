@@ -38,7 +38,9 @@ export function useMobileOverlay({open, onClose, panelRef, scrollRef}: UseMobile
     // jumps.
     panelRef.current?.focus({preventScroll: true})
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
+      if (event.key === 'Escape') {
+        onClose()
+      }
     }
     document.addEventListener('keydown', handleKeyDown)
 

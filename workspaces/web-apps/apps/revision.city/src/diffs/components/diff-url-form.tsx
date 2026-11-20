@@ -60,11 +60,15 @@ export function DiffUrlForm({
   // Resize (including DevTools opening) and scroll both change the input's
   // viewport position, so we re-measure on those events.
   useEffect(() => {
-    if (errorAnchor === null) return
+    if (errorAnchor === null) {
+      return
+    }
 
     const updatePosition = () => {
       const rect = inputRef.current?.getBoundingClientRect()
-      if (isNullish(rect)) return
+      if (isNullish(rect)) {
+        return
+      }
       setErrorAnchor((anchor) =>
         anchor?.top === rect.bottom && anchor.left === rect.left
           ? anchor
@@ -87,7 +91,9 @@ export function DiffUrlForm({
     const viewerHref = getPatchViewerHref(normalizedURL)
     if (viewerHref === undefined) {
       const rect = inputRef.current?.getBoundingClientRect()
-      if (!isNullish(rect)) setErrorAnchor({top: rect.bottom, left: rect.left})
+      if (!isNullish(rect)) {
+        setErrorAnchor({top: rect.bottom, left: rect.left})
+      }
       setValidationError('Please enter a valid URL')
       return
     }
@@ -148,10 +154,14 @@ export function DiffUrlForm({
         type="url"
         onChange={({currentTarget}) => {
           setURL(currentTarget.value)
-          if (validationError) setValidationError(null)
+          if (validationError) {
+            setValidationError(null)
+          }
         }}
         onBlur={() => {
-          if (isSubmittingRef.current) return
+          if (isSubmittingRef.current) {
+            return
+          }
           // Only restore the committed URL when the field is empty — if the
           // user typed something and clicked away, keep their draft.
           if (url.trim() === '') {
@@ -225,7 +235,9 @@ export function DiffUrlForm({
               validationError === null ? css({opacity: '0'}) : css({opacity: '1'}),
             )}
             onTransitionEnd={() => {
-              if (validationError === null) setErrorAnchor(null)
+              if (validationError === null) {
+                setErrorAnchor(null)
+              }
             }}
           >
             <div

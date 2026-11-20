@@ -57,7 +57,9 @@ function asDistance(value: unknown): RaceDistance | undefined {
 // Shape alone is not enough: "2026-02-30" matches the pattern but is not a
 // real date, and an invalid Date would throw inside date-fns during render.
 function asIsoDate(value: unknown): string | undefined {
-  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return undefined
+  }
   const parsed = parseISO(value)
   return isValid(parsed) && format(parsed, 'yyyy-MM-dd') === value ? value : undefined
 }
@@ -67,13 +69,17 @@ function asDurationText(value: unknown): string | undefined {
 }
 
 function asNumber(value: unknown): number | undefined {
-  if (value === '' || value === undefined || value === null) return undefined
+  if (value === '' || value === undefined || value === null) {
+    return undefined
+  }
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : undefined
 }
 
 function durationSeconds(text: string | undefined): number | undefined {
-  if (text === undefined) return undefined
+  if (text === undefined) {
+    return undefined
+  }
   const seconds = parseDuration(text)
   return Number.isFinite(seconds) && seconds > 0 ? seconds : undefined
 }
@@ -289,7 +295,9 @@ interface FindingsListProps {
 }
 
 function FindingsList({findings, onUseSuggestedWeeks}: FindingsListProps) {
-  if (findings.length === 0) return null
+  if (findings.length === 0) {
+    return null
+  }
   return (
     <div className="flex flex-col gap-2">
       {findings.map((finding) => (

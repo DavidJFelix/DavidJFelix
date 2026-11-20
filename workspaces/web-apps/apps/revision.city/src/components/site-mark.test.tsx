@@ -16,7 +16,9 @@ function renderMark(): SVGSVGElement {
     root.render(<SiteMark />)
   })
   const svg = container.querySelector('svg')
-  if (svg === null) throw new Error('SiteMark rendered no svg')
+  if (svg === null) {
+    throw new Error('SiteMark rendered no svg')
+  }
   return svg
 }
 

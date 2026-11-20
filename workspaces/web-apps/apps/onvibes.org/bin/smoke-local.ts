@@ -39,15 +39,24 @@ const DEV_ENTRY = 'virtual:tanstack-start-dev-client-entry'
 
 async function check(route: string): Promise<string | null> {
   const page = await fetch(new URL(route, BASE_URL), {signal: AbortSignal.timeout(15_000)})
-  if (!page.ok) return `${route} -> HTTP ${page.status}`
+  if (!page.ok) {
+    return `${route} -> HTTP ${page.status}`
+  }
   const html = await page.text()
-  if (!/<\/html>/i.test(html)) return `${route} -> response is not a complete HTML document`
-  if (html.includes(DEV_ENTRY))
+  if (!/<\/html>/i.test(html)) {
+    return `${route} -> response is not a complete HTML document`
+  }
+  if (html.includes(DEV_ENTRY)) {
     return `${route} -> serves a dev-mode bundle (dev virtual entry present)`
+  }
   const asset = html.match(/(?:src|href)="(\/[^"]+\.(?:js|css))"/)?.[1]
-  if (!asset) return `${route} -> no hashed client asset referenced in HTML`
+  if (!asset) {
+    return `${route} -> no hashed client asset referenced in HTML`
+  }
   const res = await fetch(new URL(asset, BASE_URL), {signal: AbortSignal.timeout(15_000)})
-  if (!res.ok) return `${route} asset ${asset} -> HTTP ${res.status}`
+  if (!res.ok) {
+    return `${route} asset ${asset} -> HTTP ${res.status}`
+  }
   return null
 }
 
@@ -64,12 +73,15 @@ async function checkChat(): Promise<string | null> {
       signal: AbortSignal.timeout(15_000),
     })
   const rejected = await post({messages: []})
-  if (rejected.status !== 400) return `/api/chat accepted an invalid body (HTTP ${rejected.status})`
+  if (rejected.status !== 400) {
+    return `/api/chat accepted an invalid body (HTTP ${rejected.status})`
+  }
   const accepted = await post({messages: [{role: 'user', content: 'smoke'}]})
   // Never read a real reply to its end: the status is the check.
   await accepted.body?.cancel()
-  if (accepted.status !== 200 && accepted.status !== 503)
+  if (accepted.status !== 200 && accepted.status !== 503) {
     return `/api/chat -> HTTP ${accepted.status}`
+  }
   return null
 }
 
@@ -78,7 +90,9 @@ async function waitForReady(): Promise<boolean> {
   while (Date.now() < deadline) {
     try {
       const res = await fetch(BASE_URL, {signal: AbortSignal.timeout(2_000)})
-      if (res.ok) return true
+      if (res.ok) {
+        return true
+      }
     } catch {
       // not up yet -- keep polling
     }

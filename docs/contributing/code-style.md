@@ -23,6 +23,8 @@ Two tiers decide any formatting question:
    - **No semicolons** wherever the language makes them optional
    - **Single quotes**, except where the ecosystem norm is double (JSX attributes, Rust, Go)
    - **K&R braces** -- opening brace on the same line, closing brace on its own line
+   - **Braces on every block** -- no braceless `if`, `else`, `for`, `while`, or `do` body, even for
+     one statement; enforced as an error by oxlint `curly` (`"all"`) in `.oxlintrc.jsonc`
    - **100-column lines**, LF endings, trailing commas in multiline literals
 
 For JS/TS the house defaults are already encoded in the root `.oxfmtrc.json` (`singleQuote: true`,

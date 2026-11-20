@@ -48,7 +48,9 @@ function Home() {
   const handleMessagesChange = useCallback(({id, messages}: MessagesChange) => {
     setConversations((current) => {
       const conversation = current.find((c) => c.id === id)
-      if (conversation === undefined) return current
+      if (conversation === undefined) {
+        return current
+      }
       const next = withMessages({conversation, messages, now: Date.now()})
       return next === conversation
         ? current

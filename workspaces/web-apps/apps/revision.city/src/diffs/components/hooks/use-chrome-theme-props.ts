@@ -15,7 +15,9 @@ export function useChromeThemeProps(
   const resolver = useThemeResolver()
   const colorScheme = providerSource.activeTheme.colorScheme
   const override = useMemo(() => {
-    if (isNullish(theme)) return
+    if (isNullish(theme)) {
+      return
+    }
     return fixedSource(theme, {resolver, colorScheme})
   }, [theme, resolver, colorScheme])
   const {activeTheme} = useThemeSource(override)

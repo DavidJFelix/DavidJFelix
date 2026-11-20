@@ -54,10 +54,18 @@ function assignPhases(durationWeeks: number, distance: RaceDistance): WeekPhase[
   const baseWeeks = Math.round(progressionWeeks * PLAN_RULES.basePortion)
   const buildWeeks = Math.round(progressionWeeks * PLAN_RULES.buildPortion)
   return Array.from({length: durationWeeks}, (_, weekIndex): WeekPhase => {
-    if (weekIndex === durationWeeks - 1) return 'race'
-    if (weekIndex >= progressionWeeks) return 'taper'
-    if (weekIndex >= baseWeeks + buildWeeks) return 'peak'
-    if (weekIndex >= baseWeeks) return 'build'
+    if (weekIndex === durationWeeks - 1) {
+      return 'race'
+    }
+    if (weekIndex >= progressionWeeks) {
+      return 'taper'
+    }
+    if (weekIndex >= baseWeeks + buildWeeks) {
+      return 'peak'
+    }
+    if (weekIndex >= baseWeeks) {
+      return 'build'
+    }
     return 'base'
   })
 }
@@ -109,7 +117,9 @@ function longRunMilesByWeek(args: {
   let previousFullLong = start
   let taperWeekNumber = 0
   return phases.map((phase, weekIndex) => {
-    if (phase === 'race') return undefined
+    if (phase === 'race') {
+      return undefined
+    }
     if (phase === 'taper') {
       const factors = PLAN_RULES.taperLongRunFactors
       const factor = factors[Math.min(taperWeekNumber, factors.length - 1)] ?? 1
@@ -134,7 +144,9 @@ function racePaceBand(request: PlanRequest): PaceBand | undefined {
     (request.runner.recentRace
       ? predictRaceTime(request.runner.recentRace, distanceMiles)
       : undefined)
-  if (goalSeconds === undefined) return undefined
+  if (goalSeconds === undefined) {
+    return undefined
+  }
   const pace = goalSeconds / distanceMiles
   return {minSecondsPerMile: pace, maxSecondsPerMile: pace}
 }
@@ -144,8 +156,12 @@ function paceBandFor(
   paces: TrainingPaces | undefined,
   raceBand: PaceBand | undefined,
 ): PaceBand | undefined {
-  if (type === 'race') return raceBand
-  if (type === 'shakeout') return undefined
+  if (type === 'race') {
+    return raceBand
+  }
+  if (type === 'shakeout') {
+    return undefined
+  }
   return paces?.[type]
 }
 
@@ -155,9 +171,13 @@ function paceBandFor(
 function goalFitnessPaces(request: PlanRequest): TrainingPaces | undefined {
   const {recentRace} = request.runner
   const {goalTimeSeconds} = request.race
-  if (recentRace === undefined || goalTimeSeconds === undefined) return undefined
+  if (recentRace === undefined || goalTimeSeconds === undefined) {
+    return undefined
+  }
   const distanceMiles = RACE_DISTANCE_MILES[request.race.distance]
-  if (goalTimeSeconds >= predictRaceTime(recentRace, distanceMiles)) return undefined
+  if (goalTimeSeconds >= predictRaceTime(recentRace, distanceMiles)) {
+    return undefined
+  }
   return trainingPaces({distanceMiles, timeSeconds: goalTimeSeconds})
 }
 
@@ -175,7 +195,9 @@ function driftedPaces(
   goalPaces: TrainingPaces | undefined,
   fraction: number,
 ): TrainingPaces | undefined {
-  if (paces === undefined || goalPaces === undefined) return paces
+  if (paces === undefined || goalPaces === undefined) {
+    return paces
+  }
   return {
     easy: lerpBand(paces.easy, goalPaces.easy, fraction),
     long: lerpBand(paces.long, goalPaces.long, fraction),
@@ -186,11 +208,19 @@ function driftedPaces(
 }
 
 function raceWeekWorkout(dayIndex: number, distance: RaceDistance): Workout | undefined {
-  if (dayIndex === 6) return {type: 'race', distanceMiles: RACE_DISTANCE_MILES[distance]}
-  if (dayIndex === 5) return {type: 'shakeout', distanceMiles: PLAN_RULES.shakeoutMiles}
-  if (dayIndex === 4) return undefined
+  if (dayIndex === 6) {
+    return {type: 'race', distanceMiles: RACE_DISTANCE_MILES[distance]}
+  }
+  if (dayIndex === 5) {
+    return {type: 'shakeout', distanceMiles: PLAN_RULES.shakeoutMiles}
+  }
+  if (dayIndex === 4) {
+    return undefined
+  }
   const firstEasyIndex = 4 - PLAN_RULES.raceWeekEasyRunCount
-  if (dayIndex < firstEasyIndex) return undefined
+  if (dayIndex < firstEasyIndex) {
+    return undefined
+  }
   const peakVolume = Math.round(
     PLAN_RULES.peakLongRunMiles[distance] / PLAN_RULES.longRunShareOfWeek,
   )
@@ -235,11 +265,17 @@ export function generatePlan(request: PlanRequest): TrainingPlan {
     const remainder = weekVolume - longMiles
 
     const workouts = weekDates.map((_, dayIndex): Workout | undefined => {
-      if (isRaceWeek) return raceWeekWorkout(dayIndex, request.race.distance)
+      if (isRaceWeek) {
+        return raceWeekWorkout(dayIndex, request.race.distance)
+      }
       const slot = (dayIndex - longRunIndex + 7) % 7
       const templateType = PLAN_RULES.weekTemplate[slot]
-      if (templateType === 'rest') return undefined
-      if (templateType === 'long') return {type: 'long', distanceMiles: longMiles}
+      if (templateType === 'rest') {
+        return undefined
+      }
+      if (templateType === 'long') {
+        return {type: 'long', distanceMiles: longMiles}
+      }
       const type: WorkoutType =
         templateType === 'quality'
           ? phase === 'base'

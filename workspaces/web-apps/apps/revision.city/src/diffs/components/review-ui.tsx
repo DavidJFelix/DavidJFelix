@@ -168,7 +168,9 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
     const mediaQuery = window.matchMedia('(max-width: 767px)')
     const updateMobileState = (matches: boolean) => {
       setDiffStyle(matches ? 'unified' : 'split')
-      if (!matches) setFileTreeOverlayOpen(false)
+      if (!matches) {
+        setFileTreeOverlayOpen(false)
+      }
     }
     const handleChange = (event: MediaQueryListEvent) => {
       updateMobileState(event.matches)
@@ -390,7 +392,9 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
 type WorkerPoolState = 'initializing' | 'ready' | 'failed'
 
 function getWorkerPoolState(stats: WorkerStats): WorkerPoolState {
-  if (stats.workersFailed) return 'failed'
+  if (stats.workersFailed) {
+    return 'failed'
+  }
   return stats.managerState === 'initialized' ? 'ready' : 'initializing'
 }
 

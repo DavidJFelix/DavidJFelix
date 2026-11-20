@@ -301,7 +301,7 @@ const iconMenuOpen = css({display: 'none', '#nav-toggle[aria-expanded=true] &': 
             with it, collapse before first paint and let the toggle take over. */}
         <script is:inline>
           const navMenu = document.querySelector('#nav-menu')
-          if (navMenu) navMenu.hidden = true
+          if (navMenu) {navMenu.hidden = true}
         </script>
       </nav>
     </header>
@@ -350,7 +350,7 @@ const iconMenuOpen = css({display: 'none', '#nav-toggle[aria-expanded=true] &': 
         }
         toggle.addEventListener('click', () => setOpen(Boolean(menu.hidden)))
         window.addEventListener('keydown', (event) => {
-          if (event.key === 'Escape' && !menu.hidden) setOpen(false)
+          if (event.key === 'Escape' && !menu.hidden) {setOpen(false)}
         })
       }
     </script>

@@ -20,7 +20,9 @@ export function sortPostsByDateDesc<T extends DatedPost>(posts: ReadonlyArray<T>
 export function collectTags(posts: ReadonlyArray<TaggedPost>): Array<string> {
   const tags = new Set<string>()
   for (const post of posts) {
-    for (const tag of post.data.tags ?? []) tags.add(tag)
+    for (const tag of post.data.tags ?? []) {
+      tags.add(tag)
+    }
   }
   return [...tags]
 }
@@ -29,7 +31,9 @@ export function collectTags(posts: ReadonlyArray<TaggedPost>): Array<string> {
 export function tagCountsDesc(posts: ReadonlyArray<TaggedPost>): Array<[string, number]> {
   const counts = new Map<string, number>()
   for (const post of posts) {
-    for (const tag of post.data.tags ?? []) counts.set(tag, (counts.get(tag) ?? 0) + 1)
+    for (const tag of post.data.tags ?? []) {
+      counts.set(tag, (counts.get(tag) ?? 0) + 1)
+    }
   }
   return [...counts.entries()].sort((a, b) => b[1] - a[1])
 }
@@ -50,7 +54,9 @@ export function postNeighbors<T extends DatedPost & {id: string}>(
 ): {prev?: T; next?: T} {
   const sorted = sortPostsByDateDesc(posts)
   const index = sorted.findIndex((post) => post.id === id)
-  if (index === -1) return {}
+  if (index === -1) {
+    return {}
+  }
   return {prev: sorted[index + 1], next: sorted[index - 1]}
 }
 

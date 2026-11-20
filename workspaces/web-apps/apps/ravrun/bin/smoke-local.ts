@@ -33,13 +33,19 @@ const server = Bun.spawn(
 
 async function check(route: string): Promise<string | null> {
   const page = await fetch(new URL(route, BASE_URL), {signal: AbortSignal.timeout(15_000)})
-  if (!page.ok) return `${route} -> HTTP ${page.status}`
+  if (!page.ok) {
+    return `${route} -> HTTP ${page.status}`
+  }
   const html = await page.text()
-  if (!/<\/html>/i.test(html)) return `${route} -> response is not a complete HTML document`
+  if (!/<\/html>/i.test(html)) {
+    return `${route} -> response is not a complete HTML document`
+  }
   const asset = html.match(/(?:src|href)="(\/[^"]+\.(?:js|css))"/)?.[1]
   if (asset) {
     const res = await fetch(new URL(asset, BASE_URL), {signal: AbortSignal.timeout(15_000)})
-    if (!res.ok) return `${route} asset ${asset} -> HTTP ${res.status}`
+    if (!res.ok) {
+      return `${route} asset ${asset} -> HTTP ${res.status}`
+    }
   }
   return null
 }
@@ -49,7 +55,9 @@ async function waitForReady(): Promise<boolean> {
   while (Date.now() < deadline) {
     try {
       const res = await fetch(BASE_URL, {signal: AbortSignal.timeout(2_000)})
-      if (res.ok) return true
+      if (res.ok) {
+        return true
+      }
     } catch {
       // not up yet -- keep polling
     }

@@ -31,7 +31,9 @@ class AutoScrollTester {
   ) {}
 
   start() {
-    if (this.running > 0) return
+    if (this.running > 0) {
+      return
+    }
     this.running = 1
     this.onStateChange?.(true)
     this.render()

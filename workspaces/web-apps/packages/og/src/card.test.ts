@@ -20,7 +20,9 @@ const fakeCache = () => {
   const cache: OgCache = {
     match: async (key) => (key.method === 'GET' ? entries.get(key.url) : undefined),
     put: async (key, response) => {
-      if (key.method !== 'GET') throw new TypeError('Cannot cache response to non-GET request.')
+      if (key.method !== 'GET') {
+        throw new TypeError('Cannot cache response to non-GET request.')
+      }
       entries.set(key.url, response)
     },
   }

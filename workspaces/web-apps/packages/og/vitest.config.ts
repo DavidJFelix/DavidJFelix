@@ -15,14 +15,18 @@ const VIRTUAL = '\0og-bundler/'
 type AssetKind = 'inline' | 'raw' | 'wasm'
 
 const classify = (source: string): {kind: AssetKind; specifier: string} | undefined => {
-  if (source.startsWith('raw:')) return {kind: 'raw', specifier: source.slice('raw:'.length)}
+  if (source.startsWith('raw:')) {
+    return {kind: 'raw', specifier: source.slice('raw:'.length)}
+  }
   if (source.endsWith('?inline')) {
     return {kind: 'inline', specifier: source.slice(0, -'?inline'.length)}
   }
   if (source.endsWith('.wasm?module')) {
     return {kind: 'wasm', specifier: source.slice(0, -'?module'.length)}
   }
-  if (source.endsWith('.wasm')) return {kind: 'wasm', specifier: source}
+  if (source.endsWith('.wasm')) {
+    return {kind: 'wasm', specifier: source}
+  }
   return undefined
 }
 
@@ -33,16 +37,22 @@ const bundlerModules = (): Plugin => {
     enforce: 'pre',
     async resolveId(source, importer) {
       const asset = classify(source)
-      if (!asset) return null
+      if (!asset) {
+        return null
+      }
       const resolved = await this.resolve(asset.specifier, importer, {skipSelf: true})
-      if (!resolved) return null
+      if (!resolved) {
+        return null
+      }
       const id = `${VIRTUAL}${asset.kind}/${asset.specifier}`
       files.set(id, {kind: asset.kind, file: resolved.id})
       return id
     },
     async load(id) {
       const asset = files.get(id)
-      if (!asset) return null
+      if (!asset) {
+        return null
+      }
       if (asset.kind === 'wasm') {
         return `import {readFileSync} from 'node:fs'\nexport default new WebAssembly.Module(readFileSync(${JSON.stringify(asset.file)}))`
       }

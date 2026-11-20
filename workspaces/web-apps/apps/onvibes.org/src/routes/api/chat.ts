@@ -18,13 +18,17 @@ const APP_TITLE = 'onvibes.org'
 async function answer(request: Request): Promise<Response> {
   const body: unknown = await request.json().catch(() => undefined)
   const parsed = chatRequestSchema.safeParse(body)
-  if (!parsed.success) return new Response(z.prettifyError(parsed.error), {status: 400})
+  if (!parsed.success) {
+    return new Response(z.prettifyError(parsed.error), {status: 400})
+  }
 
   // Dynamic import: `cloudflare:workers` only resolves in the workerd SSR
   // environment, and this keeps it out of the client bundle entirely.
   const {env} = await import('cloudflare:workers')
   const config = chatEnvSchema.safeParse(env)
-  if (!config.success) return new Response('Chat is not configured', {status: 503})
+  if (!config.success) {
+    return new Response('Chat is not configured', {status: 503})
+  }
 
   const {threadId, runId, messages} = parsed.data
   // Shared between the model call and the response, so a client that

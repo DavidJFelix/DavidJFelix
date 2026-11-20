@@ -109,7 +109,9 @@ test('the upsert edits only the bot marker comment and leaves comments by people
   const calls: {method: string; path: string; payload?: unknown}[] = []
   const gh = async (method: string, path: string, payload?: unknown): Promise<unknown> => {
     calls.push({method, path, payload})
-    if (method !== 'GET') return undefined
+    if (method !== 'GET') {
+      return undefined
+    }
     return [
       {id: 1, body: `${base.marker}\nolder`, user: person},
       {id: 2, body: `${base.marker}\nlast run`, user: bot},

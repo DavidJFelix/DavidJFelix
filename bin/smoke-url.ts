@@ -48,14 +48,22 @@ export async function checkRoute({
   headers,
 }: CheckRouteParams): Promise<string | null> {
   const page = await fetch(new URL(route, base), {signal: AbortSignal.timeout(15_000), headers})
-  if (isAccessLogin(page)) return `${route} -> ${ACCESS_LOGIN_DETAIL}`
-  if (!page.ok) return `${route} -> HTTP ${page.status}`
+  if (isAccessLogin(page)) {
+    return `${route} -> ${ACCESS_LOGIN_DETAIL}`
+  }
+  if (!page.ok) {
+    return `${route} -> HTTP ${page.status}`
+  }
   const html = await page.text()
-  if (!/<\/html>/i.test(html)) return `${route} -> response is not a complete HTML document`
+  if (!/<\/html>/i.test(html)) {
+    return `${route} -> response is not a complete HTML document`
+  }
   const asset = html.match(/(?:src|href)="(\/[^"]+\.(?:js|css))"/)?.[1]
   if (asset) {
     const res = await fetch(new URL(asset, base), {signal: AbortSignal.timeout(15_000), headers})
-    if (!res.ok) return `${route} asset ${asset} -> HTTP ${res.status}`
+    if (!res.ok) {
+      return `${route} asset ${asset} -> HTTP ${res.status}`
+    }
   }
   return null
 }
@@ -103,12 +111,16 @@ export async function retryCheck({
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
       const problem = await check()
-      if (problem === null) return null
+      if (problem === null) {
+        return null
+      }
       lastProblem = problem
     } catch (err) {
       lastProblem = err instanceof Error ? err.message : String(err)
     }
-    if (attempt < attempts) await sleep(retryDelayMs)
+    if (attempt < attempts) {
+      await sleep(retryDelayMs)
+    }
   }
   return lastProblem
 }
@@ -134,19 +146,29 @@ if (import.meta.main) {
       ...retry,
       check: () => checkRoute({base, route, fetch, headers}),
     })
-    if (problem === null) console.log(`OK: ${new URL(route, base)} serves a working bundle`)
-    else failures.push(problem)
+    if (problem === null) {
+      console.log(`OK: ${new URL(route, base)} serves a working bundle`)
+    } else {
+      failures.push(problem)
+    }
   }
   for (const probe of probes) {
     const problem = await retryCheck({...retry, check: () => checkProbe({base, probe, fetch})})
-    if (problem === null) console.log(`OK: ${probeName(probe)} answers HTTP ${probe.status}`)
-    else failures.push(problem)
+    if (problem === null) {
+      console.log(`OK: ${probeName(probe)} answers HTTP ${probe.status}`)
+    } else {
+      failures.push(problem)
+    }
   }
 
   if (failures.length > 0) {
-    for (const failure of failures) console.error(`::error::smoke test failed — ${failure}`)
+    for (const failure of failures) {
+      console.error(`::error::smoke test failed — ${failure}`)
+    }
     process.exit(1)
   }
   console.log(`all ${routes.length} route(s) serve a working bundle`)
-  if (probes.length > 0) console.log(`all ${probes.length} probe(s) answer as expected`)
+  if (probes.length > 0) {
+    console.log(`all ${probes.length} probe(s) answer as expected`)
+  }
 }

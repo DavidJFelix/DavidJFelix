@@ -12,7 +12,9 @@ async function runWithFakeTime(options: Omit<AwaitReadyOptions, 'sleep'>) {
   // fast if the mock ever stops taking effect.
   let t = 1_000_000
   setSystemTime(new Date(t))
-  if (Date.now() !== t) throw new Error('setSystemTime did not mock Date.now')
+  if (Date.now() !== t) {
+    throw new Error('setSystemTime did not mock Date.now')
+  }
   const sleep = (ms: number) => {
     t += ms
     setSystemTime(new Date(t))

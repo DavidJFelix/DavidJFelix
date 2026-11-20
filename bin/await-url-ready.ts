@@ -75,7 +75,9 @@ export async function probeUrl(
       signal: AbortSignal.timeout(10_000),
       headers: accessHeaders(process.env),
     })
-    if (isAccessLogin(res)) return {ok: false, detail: ACCESS_LOGIN_DETAIL}
+    if (isAccessLogin(res)) {
+      return {ok: false, detail: ACCESS_LOGIN_DETAIL}
+    }
     return {ok: res.ok, detail: `HTTP ${res.status}`}
   } catch (err) {
     return {ok: false, detail: err instanceof Error ? err.message : String(err)}

@@ -269,8 +269,12 @@ const fakeGh = (
       const page = Number(new URL(`https://x${path}`).searchParams.get('page'))
       return {status: 200, body: pages[page - 1] ?? []}
     }
-    if (method === 'POST') return {status: 201, body: {}}
-    if (method === 'DELETE') return {status: deleteStatus, body: undefined}
+    if (method === 'POST') {
+      return {status: 201, body: {}}
+    }
+    if (method === 'DELETE') {
+      return {status: deleteStatus, body: undefined}
+    }
     return {status: 200, body: {}}
   }
   return {gh, calls}

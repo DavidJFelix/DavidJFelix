@@ -16,7 +16,9 @@ const fakeFetch = (responses: readonly Response[]) => {
   const fetch: SmokeFetch = async (url, init) => {
     calls.push({url: url.href, method: init.method})
     const response = responses[calls.length - 1]
-    if (!response) throw new Error('no more fake responses')
+    if (!response) {
+      throw new Error('no more fake responses')
+    }
     return response
   }
   return {fetch, calls}

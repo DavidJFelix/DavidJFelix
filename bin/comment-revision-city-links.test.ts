@@ -77,7 +77,9 @@ function fakeGh(pages: Pages): FakeGh {
     const [route, query] = path.split('?')
     const page = Number(new URLSearchParams(query).get('page') ?? '1')
     const handler = pages[route ?? '']
-    if (!handler) return {status: 404, body: 'Not Found'}
+    if (!handler) {
+      return {status: 404, body: 'Not Found'}
+    }
     return handler(page)
   }
   return {gh, calls}

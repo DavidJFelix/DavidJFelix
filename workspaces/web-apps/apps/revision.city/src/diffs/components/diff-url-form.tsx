@@ -69,7 +69,9 @@ export function DiffUrlForm({
     const subscriptions = [
       store.on('rejected', () => {
         const rect = inputRef.current?.getBoundingClientRect()
-        if (!isNullish(rect)) setErrorAnchor({top: rect.bottom, left: rect.left})
+        if (!isNullish(rect)) {
+          setErrorAnchor({top: rect.bottom, left: rect.left})
+        }
       }),
       store.on('accepted', ({domain, splat}) => {
         startTransition(() => {
@@ -82,7 +84,9 @@ export function DiffUrlForm({
       }),
     ]
     return () => {
-      for (const subscription of subscriptions) subscription.unsubscribe()
+      for (const subscription of subscriptions) {
+        subscription.unsubscribe()
+      }
     }
   }, [navigate, store])
 
@@ -230,7 +234,9 @@ export function DiffUrlForm({
               invalid ? css({opacity: '1'}) : css({opacity: '0'}),
             )}
             onTransitionEnd={() => {
-              if (!invalid) setErrorAnchor(null)
+              if (!invalid) {
+                setErrorAnchor(null)
+              }
             }}
           >
             <div

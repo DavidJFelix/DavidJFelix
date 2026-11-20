@@ -43,7 +43,9 @@ function visibleStep({
   darkThemeName,
   resolvedThemeMode,
 }: ThemeSelection): ThemeCycleStep | undefined {
-  if (resolvedThemeMode === undefined) return undefined
+  if (resolvedThemeMode === undefined) {
+    return undefined
+  }
   return resolvedThemeMode === 'dark'
     ? {mode: 'dark', theme: darkThemeName}
     : {mode: 'light', theme: lightThemeName}
@@ -62,22 +64,30 @@ export const themeCycleLogic = createStoreLogic({
   schemas: {emitted: {stepped: z.object({step: z.custom<ThemeCycleStep>()})}},
   on: {
     toggled: (context, selection: ThemeSelection, enqueue): ThemeCycleContext | undefined => {
-      if (context.status === 'cycling') return {status: 'idle', stepSeconds: context.stepSeconds}
+      if (context.status === 'cycling') {
+        return {status: 'idle', stepSeconds: context.stepSeconds}
+      }
       const visible = visibleStep(selection)
-      if (visible === undefined) return undefined
+      if (visible === undefined) {
+        return undefined
+      }
       const step = stepAfter(visible)
       enqueue.emit.stepped({step})
       return {status: 'cycling', stepSeconds: context.stepSeconds, step}
     },
     ticked: (context, _event, enqueue): ThemeCycleContext | undefined => {
-      if (context.status === 'idle') return undefined
+      if (context.status === 'idle') {
+        return undefined
+      }
       const step = stepAfter(context.step)
       enqueue.emit.stepped({step})
       return {...context, step}
     },
     durationBumped: (context, selection: ThemeSelection, enqueue): ThemeCycleContext => {
       const stepSeconds = nextDuration(context.stepSeconds)
-      if (context.status === 'idle') return {...context, stepSeconds}
+      if (context.status === 'idle') {
+        return {...context, stepSeconds}
+      }
       const step = stepAfter(visibleStep(selection) ?? context.step)
       enqueue.emit.stepped({step})
       return {...context, stepSeconds, step}

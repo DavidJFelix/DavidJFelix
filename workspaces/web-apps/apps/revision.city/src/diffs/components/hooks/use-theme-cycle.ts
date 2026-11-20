@@ -52,7 +52,9 @@ export function useThemeCycle({
   }, [store, setLightThemeName, setDarkThemeName, setColorMode])
 
   useEffect(() => {
-    if (!cycling) return undefined
+    if (!cycling) {
+      return undefined
+    }
     const intervalId = window.setInterval(() => {
       store.trigger.ticked()
     }, stepSeconds * 1000)

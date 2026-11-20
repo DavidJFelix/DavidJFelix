@@ -18,9 +18,13 @@ export interface CheckPersonaParams {
 }
 
 export function checkPersona({file, text}: CheckPersonaParams): string[] {
-  if (!text.startsWith('---\n')) return [`${file}: missing frontmatter block`]
+  if (!text.startsWith('---\n')) {
+    return [`${file}: missing frontmatter block`]
+  }
   const end = text.indexOf('\n---\n', 4)
-  if (end === -1) return [`${file}: unterminated frontmatter block`]
+  if (end === -1) {
+    return [`${file}: unterminated frontmatter block`]
+  }
   let data: unknown
   try {
     data = Bun.YAML.parse(text.slice(4, end))
@@ -55,7 +59,9 @@ export function checkMirror({solidDir, linkDir}: CheckMirrorParams): string[] {
   const solids = readdirSync(solidDir).filter(name => name.endsWith('.md'))
   const links = readdirSync(linkDir)
   for (const name of solids) {
-    if (!links.includes(name)) findings.push(`${join(linkDir, name)}: missing symlink for solid persona`)
+    if (!links.includes(name)) {
+      findings.push(`${join(linkDir, name)}: missing symlink for solid persona`)
+    }
   }
   for (const name of links) {
     const link = join(linkDir, name)
@@ -92,7 +98,9 @@ if (import.meta.main) {
   ]
   if (findings.length > 0) {
     console.error(`check-agents: ${findings.length} finding(s)`)
-    for (const finding of findings) console.error(`  ${finding}`)
+    for (const finding of findings) {
+      console.error(`  ${finding}`)
+    }
     process.exit(1)
   }
   console.log(`check-agents: ok -- ${personas.length} personas, mirror intact`)

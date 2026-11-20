@@ -271,7 +271,9 @@ export const planAffected = ({
         productionUrl: kind === 'deploy' ? target.productionUrl : '',
         probes: kind === 'deploy' ? target.probes : [],
       }
-      if (target.devEnv === '') return [production]
+      if (target.devEnv === '') {
+        return [production]
+      }
       const dev = {
         ...target,
         worker: `${target.worker}-${target.devEnv}`,
@@ -312,7 +314,9 @@ type TurboPackageList = {
 export const parseAffectedPaths = (stdout: string): string[] => {
   // `turbo ls` prefixes its JSON with a version banner line.
   const start = stdout.indexOf('{')
-  if (start === -1) return []
+  if (start === -1) {
+    return []
+  }
   const parsed = JSON.parse(stdout.slice(start)) as TurboPackageList
   return (parsed.packages?.items ?? []).flatMap((item) => (item.path ? [item.path] : []))
 }
@@ -348,5 +352,7 @@ if (import.meta.main) {
   console.log(`affected ${kind} apps: ${names}${all ? ' (no app affected, so every app)' : ''}`)
 
   const output = process.env.GITHUB_OUTPUT
-  if (output) appendFileSync(output, `apps=${JSON.stringify(apps)}\n`)
+  if (output) {
+    appendFileSync(output, `apps=${JSON.stringify(apps)}\n`)
+  }
 }

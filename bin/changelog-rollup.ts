@@ -45,14 +45,18 @@ const fragmentNamePattern = /^(\d{4})-(\d{2})-(\d{2})-[a-z0-9]+(?:-[a-z0-9]+)*\.
 
 export function parseFragmentName(name: string): {date: string; month: string} | null {
   const match = name.match(fragmentNamePattern)
-  if (!match) return null
+  if (!match) {
+    return null
+  }
   const [, year, month, day] = match
   const utc = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)))
   const isRealDate =
     utc.getUTCFullYear() === Number(year) &&
     utc.getUTCMonth() === Number(month) - 1 &&
     utc.getUTCDate() === Number(day)
-  if (!isRealDate) return null
+  if (!isRealDate) {
+    return null
+  }
   return {date: `${year}-${month}-${day}`, month: `${year}-${month}`}
 }
 
@@ -71,7 +75,9 @@ export function validateFragmentBody({name, body}: {name: string; body: string})
   }
   let inFence = false
   for (const line of lines) {
-    if (isFenceDelimiter(line)) inFence = !inFence
+    if (isFenceDelimiter(line)) {
+      inFence = !inFence
+    }
     if (!inFence && /^##? /u.test(line)) {
       errors.push(`${name}: h1/h2 headings are reserved for the monthly files ("${line.trim()}")`)
       break
@@ -87,17 +93,23 @@ export function parseMonthFile({
   month: string
   content: string | null
 }): MonthDoc {
-  if (content === null) return {header: `# ${month}`, days: []}
+  if (content === null) {
+    return {header: `# ${month}`, days: []}
+  }
   const headerLines: string[] = []
   const days: DaySection[] = []
   let currentDate: string | null = null
   let currentLines: string[] = []
   let inFence = false
   const flush = () => {
-    if (currentDate !== null) days.push({date: currentDate, entries: currentLines.join('\n').trim()})
+    if (currentDate !== null) {
+      days.push({date: currentDate, entries: currentLines.join('\n').trim()})
+    }
   }
   for (const line of content.split('\n')) {
-    if (isFenceDelimiter(line)) inFence = !inFence
+    if (isFenceDelimiter(line)) {
+      inFence = !inFence
+    }
     if (!inFence && line.startsWith('## ')) {
       flush()
       currentDate = line.slice(3).trim()
@@ -139,7 +151,9 @@ export function foldFragments({doc, fragments}: {doc: MonthDoc; fragments: Fragm
 export function updateFilesList({readme, months}: {readme: string; months: string[]}): string {
   const lines = readme.split('\n')
   const start = lines.indexOf('## Files')
-  if (start === -1) return readme
+  if (start === -1) {
+    return readme
+  }
   let end = lines.length
   for (let i = start + 1; i < lines.length; i++) {
     if (lines[i].startsWith('## ')) {
@@ -163,7 +177,9 @@ async function readFragments(fragmentsDir: string): Promise<Fragment[]> {
   const errors: string[] = []
   const fragments: Fragment[] = []
   for (const name of names.toSorted()) {
-    if (name === 'README.md' || name.startsWith('.')) continue
+    if (name === 'README.md' || name.startsWith('.')) {
+      continue
+    }
     const parsed = parseFragmentName(name)
     if (!parsed) {
       errors.push(
@@ -180,20 +196,26 @@ async function readFragments(fragmentsDir: string): Promise<Fragment[]> {
     errors.push(...validateFragmentBody({name, body}))
     fragments.push({name, ...parsed, body})
   }
-  if (errors.length > 0) throw new Error(errors.join('\n'))
+  if (errors.length > 0) {
+    throw new Error(errors.join('\n'))
+  }
   return fragments
 }
 
 async function refreshFilesList(changelogDir: string): Promise<void> {
   const readmeFile = Bun.file(join(changelogDir, 'README.md'))
-  if (!(await readmeFile.exists())) return
+  if (!(await readmeFile.exists())) {
+    return
+  }
   const names = await readdir(changelogDir)
   const months = names
     .filter(name => /^\d{4}-\d{2}\.md$/u.test(name))
     .map(name => name.slice(0, -3))
   const readme = await readmeFile.text()
   const updated = updateFilesList({readme, months})
-  if (updated !== readme) await Bun.write(join(changelogDir, 'README.md'), updated)
+  if (updated !== readme) {
+    await Bun.write(join(changelogDir, 'README.md'), updated)
+  }
 }
 
 export async function rollupChangelog({
@@ -203,7 +225,9 @@ export async function rollupChangelog({
 }): Promise<RollupResult> {
   const fragmentsDir = join(changelogDir, 'fragments')
   const fragments = await readFragments(fragmentsDir)
-  if (fragments.length === 0) return {folded: 0, months: []}
+  if (fragments.length === 0) {
+    return {folded: 0, months: []}
+  }
 
   const months = [...new Set(fragments.map(fragment => fragment.month))].toSorted()
   for (const month of months) {

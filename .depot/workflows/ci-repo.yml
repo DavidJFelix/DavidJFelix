@@ -77,6 +77,21 @@ jobs:
         uses: ./.depot/actions/setup-mise
       - name: test bin
         run: mise run test:bin
+  bin-lint:
+    name: oxlint (bin/)
+    runs-on: depot-ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: mise
+        uses: ./.depot/actions/setup-mise
+      - name: lint bin
+        run: mise run lint:bin
   check-agents:
     name: check agents (persona frontmatter + symlink mirror)
     runs-on: depot-ubuntu-latest

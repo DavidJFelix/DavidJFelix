@@ -22,8 +22,12 @@ export interface CommentBodyParams {
 }
 
 function stageStatus(outcome: string | undefined): string {
-  if (outcome === 'success') return '✅ passed'
-  if (outcome === 'failure') return '❌ failed'
+  if (outcome === 'success') {
+    return '✅ passed'
+  }
+  if (outcome === 'failure') {
+    return '❌ failed'
+  }
   return '_skipped_'
 }
 
@@ -63,7 +67,9 @@ function makeGhClient(token: string): GhClient {
       // run (racing us in the concurrency cancel window) or a manual delete. The
       // goal state, comment absent, is already met, so a DELETE 404 is a no-op
       // rather than an abort of the otherwise-idempotent cleanup.
-      if (method === 'DELETE' && res.status === 404) return
+      if (method === 'DELETE' && res.status === 404) {
+        return
+      }
       throw new Error(`GitHub API ${method} ${path} -> HTTP ${res.status} ${await res.text()}`)
     }
     // DELETE replies 204 No Content; don't try to parse an empty body as JSON.
@@ -103,7 +109,9 @@ export async function upsertStickyComment(params: UpsertParams): Promise<void> {
     marked.push(
       ...batch.filter((c) => c.user?.type === 'Bot' && c.body?.startsWith(marker) === true),
     )
-    if (batch.length < 100) break
+    if (batch.length < 100) {
+      break
+    }
   }
 
   // Keep the oldest marked comment (stable position in the thread), edit it in

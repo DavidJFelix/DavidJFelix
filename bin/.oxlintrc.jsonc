@@ -1,0 +1,8 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxlint/configuration_schema.json",
+  "extends": ["../workspaces/web-apps/.oxlintrc.jsonc"],
+  "options": {
+    // bin/ has no tsconfig.json, and the repo root does not install a type-aware backend.
+    "typeAware": false,
+  },
+}

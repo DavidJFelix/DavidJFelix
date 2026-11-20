@@ -88,7 +88,9 @@ export function summarizeFindingsFile(raw: unknown): RunSummary {
 
 export function formatDuration(ms: number): string {
   const seconds = Math.round(ms / 1000)
-  if (seconds < 60) return `${seconds}s`
+  if (seconds < 60) {
+    return `${seconds}s`
+  }
   const minutes = Math.floor(seconds / 60)
   return `${minutes}m ${seconds % 60}s`
 }
@@ -215,7 +217,9 @@ async function listMarkedComments(gh: GhClient, path: string): Promise<IssueComm
     }
     const comments = res.body as IssueComment[]
     marked.push(...comments.filter((comment) => comment.body?.startsWith(MARKER)))
-    if (comments.length < PAGE_SIZE) return marked
+    if (comments.length < PAGE_SIZE) {
+      return marked
+    }
   }
 }
 

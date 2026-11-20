@@ -101,12 +101,16 @@ async function paginate<T>(params: PaginateParams<T>): Promise<Page<T>> {
   for (let page = 1; ; page++) {
     const res = await gh('GET', `${path}?per_page=${PAGE_SIZE}&page=${page}`)
     if (res.status !== 200) {
-      if (page === 1) return {status: res.status, items: [], error: String(res.body)}
+      if (page === 1) {
+        return {status: res.status, items: [], error: String(res.body)}
+      }
       throw new Error(`GitHub API GET ${path} page ${page} -> HTTP ${res.status} ${res.body}`)
     }
     const batch = items(res.body)
     all.push(...batch)
-    if (batch.length < PAGE_SIZE) break
+    if (batch.length < PAGE_SIZE) {
+      break
+    }
   }
   return {status: 200, items: all, error: ''}
 }
@@ -155,7 +159,9 @@ async function listPushedShas(params: CompareParams): Promise<Set<string> | unde
     path,
     items: (body) => (body as {commits: ApiCommit[]}).commits,
   })
-  if (page.status === 404 || page.status === 422) return undefined
+  if (page.status === 404 || page.status === 422) {
+    return undefined
+  }
   if (page.status !== 200) {
     throw new Error(`GitHub API GET ${path} -> HTTP ${page.status} ${page.error}`)
   }
@@ -178,7 +184,9 @@ export interface ChangedCommitsParams {
 export async function resolveChangedCommits(params: ChangedCommitsParams): Promise<CommitLink[]> {
   const {gh, repo, prNumber, action, before, after} = params
   const pullCommits = await listPullCommits({gh, repo, prNumber})
-  if (action !== 'synchronize' || !before || !after) return pullCommits
+  if (action !== 'synchronize' || !before || !after) {
+    return pullCommits
+  }
   const pushed = await listPushedShas({gh, repo, before, after})
   if (pushed === undefined) {
     console.log(

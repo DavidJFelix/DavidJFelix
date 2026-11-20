@@ -33,7 +33,9 @@ const debs = (await readdir(cacheDir).catch(() => []))
 if (debs.length > 0) {
   console.log(`installing ${debs.length} cached .deb archive(s) from ${cacheDir}`)
   const dpkg = await $`sudo dpkg -i ${debs}`.nothrow()
-  if (dpkg.exitCode === 0) process.exit(0)
+  if (dpkg.exitCode === 0) {
+    process.exit(0)
+  }
   // Stale archives -- the runner image moved under them. Repair any
   // half-configured packages, then repopulate through the cold path.
   console.warn(`::warning::dpkg exited ${dpkg.exitCode}; falling back to playwright install-deps`)

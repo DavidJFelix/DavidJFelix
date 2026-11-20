@@ -23,12 +23,16 @@ export interface AccessEnv {
 export function accessHeaders(env: AccessEnv): Record<string, string> {
   const id = env.CF_ACCESS_CLIENT_ID
   const secret = env.CF_ACCESS_CLIENT_SECRET
-  if (!id || !secret) return {}
+  if (!id || !secret) {
+    return {}
+  }
   return {'CF-Access-Client-Id': id, 'CF-Access-Client-Secret': secret}
 }
 
 export function isAccessLogin(response: Pick<Response, 'url'>): boolean {
-  if (response.url === '') return false
+  if (response.url === '') {
+    return false
+  }
   return new URL(response.url).hostname.endsWith(ACCESS_LOGIN_HOST_SUFFIX)
 }
 

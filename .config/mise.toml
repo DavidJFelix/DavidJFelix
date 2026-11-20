@@ -48,14 +48,14 @@ depends = ["format:workspace-config"]
 # --ignore-path: the root .prettierignore ignores everything but md/mdx (it
 # scopes Prettier), which would blank oxfmt's explicit file list too
 run = [
-  "oxfmt --check --ignore-path=.gitignore package.json workspaces/web-apps/biome.jsonc .oxfmtrc.json workspaces/web-apps/.oxlintrc.jsonc .prettierrc.json .config/cspell.jsonc .github/renovate.json .vscode/settings.json .vscode/extensions.json",
+  "oxfmt --check --ignore-path=.gitignore package.json workspaces/web-apps/biome.jsonc .oxfmtrc.json workspaces/web-apps/.oxlintrc.jsonc bin/.oxlintrc.jsonc .prettierrc.json .config/cspell.jsonc .github/renovate.json .vscode/settings.json .vscode/extensions.json",
   "biome lint .vscode/settings.json .vscode/extensions.json",
 ]
 dir = "{{config_root}}"
 
 [tasks."format:fix"]
 description = "Apply formatting fixes to repo-root config files"
-run = "oxfmt --ignore-path=.gitignore package.json workspaces/web-apps/biome.jsonc .oxfmtrc.json workspaces/web-apps/.oxlintrc.jsonc .prettierrc.json .config/cspell.jsonc .github/renovate.json .vscode/settings.json .vscode/extensions.json"
+run = "oxfmt --ignore-path=.gitignore package.json workspaces/web-apps/biome.jsonc .oxfmtrc.json workspaces/web-apps/.oxlintrc.jsonc bin/.oxlintrc.jsonc .prettierrc.json .config/cspell.jsonc .github/renovate.json .vscode/settings.json .vscode/extensions.json"
 dir = "{{config_root}}"
 
 [tasks."format:md"]
@@ -88,6 +88,11 @@ run = [
   "cspell --config .config/cspell.jsonc --no-progress --dot --reporter @cspell/cspell-junit-reporter 'workspaces/web-apps/**' 'workspaces/harnesses/**' 'docs/**' 'bin/**' '*.md' '.agents/agents/**' '.config/**' '.github/**' > test-results/cspell-junit.xml",
 ]
 dir = "{{config_root}}"
+
+[tasks."lint:bin"]
+description = "Lint the repo-root bin/ scripts (oxlint, bin/.oxlintrc.jsonc)"
+run = "oxlint"
+dir = "{{config_root}}/bin"
 
 [tasks."test:bin"]
 description = "Unit-test the repo-root bin/ scripts (bun test)"

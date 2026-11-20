@@ -1,12 +1,20 @@
-import {useStableCallback} from '@pierre/diffs/react'
 import {IconX} from '@pierre/icons'
 import {useNavigate} from '@tanstack/react-router'
-import {type ReactNode, type SubmitEvent, useEffect, useRef, useState, useTransition} from 'react'
+import {useSelector, useStore} from '@xstate/store-react'
+import {
+  type ReactNode,
+  type SubmitEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+} from 'react'
 import {createPortal} from 'react-dom'
 import {css, cx} from 'styled-system/css'
 import {Button} from '@/diffs/components/ui/button'
-import {getPatchViewerHref, toPatchViewerLocation} from '@/diffs/lib/get-patch-viewer-href'
 import {isNullish} from '@/diffs/lib/nullish'
+import {diffUrlFormLogic} from '@/diffs/state/diff-url-form-store'
 
 interface DiffUrlFormProps {
   className?: string
@@ -40,21 +48,47 @@ export function DiffUrlForm({
 }: DiffUrlFormProps) {
   const navigate = useNavigate()
   const [isPending, startTransition] = useTransition()
-  const [url, setURL] = useState(initialUrl)
-  const [validationError, setValidationError] = useState<string | null>(null)
+  // The store reads `initialUrl` once. To change it, give the form a new `key`,
+  // as the viewer header does.
+  const store = useStore(diffUrlFormLogic, {committedUrl: initialUrl})
+  const url = useSelector(store, ({context}) => context.url)
+  const invalid = useSelector(store, ({context}) => context.status === 'invalid')
   // Tracks the input's viewport position when an error is shown so the portal
   // can be fixed-positioned outside any contain-paint boundary.
   const [errorAnchor, setErrorAnchor] = useState<{
     top: number
     left: number
   } | null>(null)
-  // Prevents the onBlur restore from firing when blur is caused by Enter.
-  const isSubmittingRef = useRef(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     onUrlChange?.(url)
   }, [onUrlChange, url])
+
+  useEffect(() => {
+    const subscriptions = [
+      store.on('rejected', () => {
+        const rect = inputRef.current?.getBoundingClientRect()
+        if (!isNullish(rect)) {
+          setErrorAnchor({top: rect.bottom, left: rect.left})
+        }
+      }),
+      store.on('accepted', ({domain, splat}) => {
+        startTransition(() => {
+          void navigate({
+            to: '/diffs/$',
+            params: {_splat: splat},
+            search: isNullish(domain) ? {} : {domain},
+          })
+        })
+      }),
+    ]
+    return () => {
+      for (const subscription of subscriptions) {
+        subscription.unsubscribe()
+      }
+    }
+  }, [navigate, store])
 
   // Keep the portal position in sync with the input whenever it's visible.
   // Resize (including DevTools opening) and scroll both change the input's
@@ -80,34 +114,18 @@ export function DiffUrlForm({
     }
   }, [errorAnchor])
 
-  const handleSubmit = useStableCallback((event: SubmitEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    isSubmittingRef.current = false
-    const normalizedURL = url.trim()
-    const viewerHref = getPatchViewerHref(normalizedURL)
-    if (viewerHref === undefined) {
-      const rect = inputRef.current?.getBoundingClientRect()
-      if (!isNullish(rect)) setErrorAnchor({top: rect.bottom, left: rect.left})
-      setValidationError('Please enter a valid URL')
-      return
-    }
-    setValidationError(null)
-    setURL(normalizedURL)
-    const {domain, splat} = toPatchViewerLocation(viewerHref)
-    startTransition(() => {
-      void navigate({
-        to: '/diffs/$',
-        params: {_splat: splat},
-        search: isNullish(domain) ? {} : {domain},
-      })
-    })
-  })
+  const handleSubmit = useCallback(
+    (event: SubmitEvent<HTMLFormElement>) => {
+      event.preventDefault()
+      store.trigger.submitted()
+    },
+    [store],
+  )
 
   // Show the clear button when the input has content. When an initialUrl is
   // set (viewer header), hide it while the user is actively editing so it
   // doesn't distract — restore it once committed or on error.
-  const showClear =
-    url.length > 0 && (initialUrl === '' || url === initialUrl || validationError !== null)
+  const showClear = url.length > 0 && (initialUrl === '' || url === initialUrl || invalid)
 
   return (
     <form
@@ -147,25 +165,17 @@ export function DiffUrlForm({
         value={url}
         type="url"
         onChange={({currentTarget}) => {
-          setURL(currentTarget.value)
-          if (validationError) setValidationError(null)
+          store.trigger.changed({url: currentTarget.value})
         }}
         onBlur={() => {
-          if (isSubmittingRef.current) return
-          // Only restore the committed URL when the field is empty — if the
-          // user typed something and clicked away, keep their draft.
-          if (url.trim() === '') {
-            setURL(initialUrl)
-            setValidationError(null)
-          }
+          store.trigger.blurred()
         }}
         onKeyDown={(e) => {
           if (e.key === 'Escape') {
-            setURL(initialUrl)
-            setValidationError(null)
+            store.trigger.escaped()
             inputRef.current?.blur()
           } else if (e.key === 'Enter') {
-            isSubmittingRef.current = true
+            store.trigger.enterPressed()
           }
         }}
         placeholder={placeholder}
@@ -192,8 +202,7 @@ export function DiffUrlForm({
             },
           })}
           onClick={() => {
-            setURL('')
-            setValidationError(null)
+            store.trigger.cleared()
             inputRef.current?.focus()
           }}
         >
@@ -222,10 +231,12 @@ export function DiffUrlForm({
                 lineHeight: '[1rem]',
                 transition: '[opacity 150ms cubic-bezier(0.4, 0, 0.2, 1)]',
               }),
-              validationError === null ? css({opacity: '0'}) : css({opacity: '1'}),
+              invalid ? css({opacity: '1'}) : css({opacity: '0'}),
             )}
             onTransitionEnd={() => {
-              if (validationError === null) setErrorAnchor(null)
+              if (!invalid) {
+                setErrorAnchor(null)
+              }
             }}
           >
             <div

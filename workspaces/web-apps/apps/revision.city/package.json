@@ -67,6 +67,8 @@
     "@tanstack/react-store": "^0.11.1",
     "@tanstack/react-virtual": "^3.14.10",
     "@tanstack/store": "^0.11.1",
+    "@xstate/store": "^4.3.0",
+    "@xstate/store-react": "^2.1.0",
     "drizzle-orm": "0.45.4",
     "lucide-react": "1.66.0",
     "posthog-js": "^1.418.10",

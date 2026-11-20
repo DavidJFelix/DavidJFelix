@@ -27,7 +27,9 @@ export function useBaseMovedOn({domain, path, signedIn}: UseBaseMovedOnParams): 
   )
 
   useEffect(() => {
-    if (!isNullish(range)) store.trigger.requested({path, range})
+    if (!isNullish(range)) {
+      store.trigger.requested({path, range})
+    }
   }, [path, range, store])
 
   return isNullish(range) ? undefined : notice

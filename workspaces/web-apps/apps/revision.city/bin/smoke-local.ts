@@ -53,17 +53,27 @@ const DEV_ENTRY = 'virtual:tanstack-start-dev-client-entry'
 
 async function check(route: string): Promise<string | null> {
   const page = await fetch(new URL(route, BASE_URL), {signal: AbortSignal.timeout(15_000)})
-  if (!page.ok) return `${route} -> HTTP ${page.status}`
+  if (!page.ok) {
+    return `${route} -> HTTP ${page.status}`
+  }
   const html = await page.text()
-  if (!/<\/html>/i.test(html)) return `${route} -> response is not a complete HTML document`
-  if (html.includes(DEV_ENTRY))
+  if (!/<\/html>/i.test(html)) {
+    return `${route} -> response is not a complete HTML document`
+  }
+  if (html.includes(DEV_ENTRY)) {
     return `${route} -> serves a dev-mode bundle (dev virtual entry present)`
+  }
   const asset = html.match(/(?:src|href)="(\/[^"]+\.(?:js|css))"/)?.[1]
-  if (!asset) return `${route} -> no hashed client asset referenced in HTML`
+  if (!asset) {
+    return `${route} -> no hashed client asset referenced in HTML`
+  }
   const res = await fetch(new URL(asset, BASE_URL), {signal: AbortSignal.timeout(15_000)})
-  if (!res.ok) return `${route} asset ${asset} -> HTTP ${res.status}`
-  if (!res.headers.get('cache-control')?.includes('immutable'))
+  if (!res.ok) {
+    return `${route} asset ${asset} -> HTTP ${res.status}`
+  }
+  if (!res.headers.get('cache-control')?.includes('immutable')) {
     return `${route} asset ${asset} -> no immutable Cache-Control (check public/_headers)`
+  }
   return null
 }
 
@@ -72,7 +82,9 @@ async function waitForReady(): Promise<boolean> {
   while (Date.now() < deadline) {
     try {
       const res = await fetch(BASE_URL, {signal: AbortSignal.timeout(2_000)})
-      if (res.ok) return true
+      if (res.ok) {
+        return true
+      }
     } catch {
       // not up yet -- keep polling
     }

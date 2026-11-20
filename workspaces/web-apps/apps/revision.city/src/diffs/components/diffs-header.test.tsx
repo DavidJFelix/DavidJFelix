@@ -18,7 +18,9 @@ Object.assign(globalThis, {ResizeObserver: StubResizeObserver})
 // fireEvent sends only the key event. A browser clicks a focused button on
 // Enter or Space when no handler cancels the key, so do the same here.
 const pressKey = (element: HTMLElement, key: string) => {
-  if (fireEvent.keyDown(element, {key})) fireEvent.click(element)
+  if (fireEvent.keyDown(element, {key})) {
+    fireEvent.click(element)
+  }
 }
 
 const ignoreThemeName = () => {}

@@ -29,7 +29,9 @@ function createFakeStorage(): Storage {
 function setup({storedEntries = {}}: {storedEntries?: Record<string, string>} = {}) {
   vi.resetModules()
   const storage = createFakeStorage()
-  for (const [key, value] of Object.entries(storedEntries)) storage.setItem(key, value)
+  for (const [key, value] of Object.entries(storedEntries)) {
+    storage.setItem(key, value)
+  }
   vi.stubGlobal('localStorage', storage)
   vi.stubGlobal('matchMedia', () => ({
     matches: false,

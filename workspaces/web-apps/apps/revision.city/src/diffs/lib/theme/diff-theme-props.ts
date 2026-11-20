@@ -49,7 +49,9 @@ export function diffThemeSelectionFromInput(
 }
 
 function nameForDiffThemeValue(value: DiffThemeValue): string {
-  if (typeof value === 'string') return value
+  if (typeof value === 'string') {
+    return value
+  }
 
   const name = requireThemeValueName(value)
   if (!seededDiffThemeNames.has(name)) {

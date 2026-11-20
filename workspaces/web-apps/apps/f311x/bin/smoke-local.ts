@@ -78,7 +78,9 @@ try {
     // out -- plus a single retry to absorb a cold first request.
     const failures = await runSmoke([BASE_URL], {attempts: 2, retryDelayMs: 1_000})
     if (failures.length > 0) {
-      for (const failure of failures) console.error(`::error::smoke test failed — ${failure}`)
+      for (const failure of failures) {
+        console.error(`::error::smoke test failed — ${failure}`)
+      }
       exitCode = 1
     } else {
       console.log('f311x local smoke passed')

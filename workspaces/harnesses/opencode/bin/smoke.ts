@@ -88,7 +88,9 @@ async function waitForReady(deadline = Date.now() + READY_TIMEOUT_MS): Promise<b
     await fetch(BASE_URL, {signal: AbortSignal.timeout(2_000)})
     return true
   } catch {
-    if (Date.now() >= deadline) return false
+    if (Date.now() >= deadline) {
+      return false
+    }
   }
   await Bun.sleep(500)
   return waitForReady(deadline)
@@ -96,7 +98,9 @@ async function waitForReady(deadline = Date.now() + READY_TIMEOUT_MS): Promise<b
 
 async function check(): Promise<string | null> {
   const response = await fetch(new URL('/smoke', BASE_URL), {signal: AbortSignal.timeout(60_000)})
-  if (!response.ok) return `/smoke -> HTTP ${response.status}`
+  if (!response.ok) {
+    return `/smoke -> HTTP ${response.status}`
+  }
   const answer: unknown = await response.json()
   if (!isRecord(answer) || answer.status !== 'done' || answer.text !== ANSWER) {
     return `/smoke -> the harness did not answer: ${JSON.stringify(answer)}`

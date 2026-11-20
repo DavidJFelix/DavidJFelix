@@ -63,7 +63,9 @@ const defaultCache = (): OgCache | undefined =>
 // is answered as it was asked.
 const cacheKey = (request: Request, version: string | undefined): Request => {
   const url = new URL(request.url)
-  if (version) url.searchParams.set('v', version)
+  if (version) {
+    url.searchParams.set('v', version)
+  }
   return new Request(url.href)
 }
 
@@ -79,9 +81,13 @@ export const ogCards = ({runtime, cache, version, maxAge = DAY_SECONDS, card}: O
     const store = cache ?? defaultCache()
     const key = cacheKey(request, typeof version === 'function' ? await version() : version)
     const cached = await store?.match(key)
-    if (cached) return respond(request, cached)
+    if (cached) {
+      return respond(request, cached)
+    }
     const resolved = await card(request)
-    if (!resolved) return new Response(null, {status: 404})
+    if (!resolved) {
+      return new Response(null, {status: 404})
+    }
     const {maxAge: cardMaxAge = maxAge, ...params} = resolved
     const png = await render(params)
     const response = new Response(png, {

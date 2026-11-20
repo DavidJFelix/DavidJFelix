@@ -25,9 +25,13 @@ export async function findMissingChunk({
   fetch: fetcher = fetch,
 }: FindMissingChunkParams): Promise<string | undefined> {
   const match = error instanceof Error ? ASSET_URL_PATTERN.exec(error.message) : null
-  if (match === null) return undefined
+  if (match === null) {
+    return undefined
+  }
   const chunkUrl = new URL(match[0], pageUrl)
-  if (chunkUrl.origin !== new URL(pageUrl).origin) return undefined
+  if (chunkUrl.origin !== new URL(pageUrl).origin) {
+    return undefined
+  }
   try {
     const response = await fetcher(chunkUrl.href, {
       cache: 'no-store',
@@ -54,7 +58,9 @@ export function installMissingChunkReload({
   target.addEventListener('vite:preloadError', (event) => {
     void findMissingChunk({error: event.payload, pageUrl: page.href, fetch: fetcher}).then(
       (chunkUrl) => {
-        if (chunkUrl !== undefined && claimPageReload({assetUrl: chunkUrl})) page.reload()
+        if (chunkUrl !== undefined && claimPageReload({assetUrl: chunkUrl})) {
+          page.reload()
+        }
       },
     )
   })

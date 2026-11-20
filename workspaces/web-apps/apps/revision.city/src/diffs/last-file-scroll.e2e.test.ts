@@ -54,7 +54,9 @@ test('the last file scrolls fully into view when the session answers after the d
     const lastFileBox = await lastFile.boundingBox()
     expect(scrollerBox).not.toBeNull()
     expect(lastFileBox).not.toBeNull()
-    if (scrollerBox === null || lastFileBox === null) return
+    if (scrollerBox === null || lastFileBox === null) {
+      return
+    }
     expect(lastFileBox.y + lastFileBox.height).toBeLessThanOrEqual(
       scrollerBox.y + scrollerBox.height + 1,
     )

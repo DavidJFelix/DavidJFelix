@@ -61,7 +61,9 @@ function scrollerOf(main: Element): HTMLElement {
   const scroller = [...main.querySelectorAll('div')].find(
     (el) => getComputedStyle(el).overflowY === 'auto',
   )
-  if (!scroller) throw new Error('scroll container not found')
+  if (!scroller) {
+    throw new Error('scroll container not found')
+  }
   return scroller
 }
 

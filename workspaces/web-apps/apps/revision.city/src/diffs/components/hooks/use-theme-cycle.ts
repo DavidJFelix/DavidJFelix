@@ -73,7 +73,9 @@ export function useThemeCycle({
   }, [])
 
   useEffect(() => {
-    if (!cycling) return
+    if (!cycling) {
+      return
+    }
     const startMode = resolvedModeRef.current ?? 'light'
     // Snapshot the catalog once per cycle start; each tick reads the same
     // captured sequence.

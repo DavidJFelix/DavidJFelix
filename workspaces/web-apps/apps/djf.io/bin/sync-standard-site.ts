@@ -44,7 +44,9 @@ async function loadPosts(): Promise<Array<{slug: string; data: Frontmatter}>> {
   const posts: Array<{slug: string; data: Frontmatter}> = []
   for (const entry of entries) {
     const slug = POST_FILE.exec(entry)?.[1]
-    if (slug === undefined) continue
+    if (slug === undefined) {
+      continue
+    }
     const raw = await readFile(`${BLOG_DIR}/${entry}`, 'utf8')
     posts.push({slug, data: matter(raw).data as Frontmatter})
   }

@@ -56,7 +56,9 @@ const docsPersistence: ThemePersistence = {
     const mode = readKey(MODE_KEY)
     const light = readKey(LIGHT_THEME_KEY)
     const dark = readKey(DARK_THEME_KEY)
-    if (isNullish(mode) && isNullish(light) && isNullish(dark)) return null
+    if (isNullish(mode) && isNullish(light) && isNullish(dark)) {
+      return null
+    }
     const validMode = themeModeSchema.parse(mode)
     return {
       mode: validMode,
@@ -87,7 +89,9 @@ function handleStorage(event: StorageEvent): void {
     event.key === MODE_KEY ||
     event.key === LIGHT_THEME_KEY ||
     event.key === DARK_THEME_KEY
-  if (!relevant) return
+  if (!relevant) {
+    return
+  }
   const selection = docsPersistence.load()
   themeController.setColorMode(selection?.mode ?? 'system')
   themeController.setThemeNameForScheme(

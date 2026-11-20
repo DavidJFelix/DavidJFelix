@@ -37,9 +37,13 @@ export interface AppShellProps {
 
 export function AppShell({sidebar, children, sidebarOpen, onSidebarClose}: AppShellProps) {
   useEffect(() => {
-    if (!sidebarOpen) return
+    if (!sidebarOpen) {
+      return
+    }
     const onKeyDown = (event: globalThis.KeyboardEvent) => {
-      if (event.key === 'Escape') onSidebarClose()
+      if (event.key === 'Escape') {
+        onSidebarClose()
+      }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)

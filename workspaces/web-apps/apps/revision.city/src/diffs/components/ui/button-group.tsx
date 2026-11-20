@@ -120,9 +120,13 @@ function ButtonGroupProvider({children}: {children: React.ReactNode}) {
         let position: 'first' | 'middle' | 'last' | 'only' = 'only'
 
         if (childCount > 1) {
-          if (index === 0) position = 'first'
-          else if (index === childCount - 1) position = 'last'
-          else position = 'middle'
+          if (index === 0) {
+            position = 'first'
+          } else if (index === childCount - 1) {
+            position = 'last'
+          } else {
+            position = 'middle'
+          }
         }
 
         // Children.toArray assigns every element a stable key, so use it

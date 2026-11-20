@@ -49,10 +49,14 @@ export function echoReply(userText: string): string {
  * handling both the `content` (string or parts) and `parts` shapes.
  */
 export function lastUserText(messages: RunAgentInput['messages']): string {
-  if (!messages) return ''
+  if (!messages) {
+    return ''
+  }
   for (let i = messages.length - 1; i >= 0; i -= 1) {
     const message = messages[i]
-    if (message?.role !== 'user') continue
+    if (message?.role !== 'user') {
+      continue
+    }
     const fromParts = segmentsToText(message.parts)
     return fromParts === '' ? segmentsToText(message.content) : fromParts
   }
@@ -83,13 +87,19 @@ export async function* chatAgentStream(input: RunAgentInput): AsyncGenerator<Str
 }
 
 function segmentsToText(content: IncomingMessage['content']): string {
-  if (typeof content === 'string') return content
-  if (!Array.isArray(content)) return ''
+  if (typeof content === 'string') {
+    return content
+  }
+  if (!Array.isArray(content)) {
+    return ''
+  }
   return content.map((segment) => segmentText(segment)).join('')
 }
 
 function segmentText(segment: ContentSegment): string {
-  if (segment.type !== undefined && segment.type !== 'text') return ''
+  if (segment.type !== undefined && segment.type !== 'text') {
+    return ''
+  }
   return segment.text ?? segment.content ?? ''
 }
 

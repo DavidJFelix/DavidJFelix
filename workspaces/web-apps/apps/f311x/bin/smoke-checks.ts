@@ -14,13 +14,21 @@ const DEV_ENTRY = 'virtual:tanstack-start-dev-client-entry'
 
 export async function checkUrl(url: string): Promise<string | null> {
   const page = await fetch(url, {signal: AbortSignal.timeout(15_000)})
-  if (!page.ok) return `HTTP ${page.status}`
+  if (!page.ok) {
+    return `HTTP ${page.status}`
+  }
   const html = await page.text()
-  if (html.includes(DEV_ENTRY)) return 'serves a dev-mode bundle (dev virtual entry present)'
+  if (html.includes(DEV_ENTRY)) {
+    return 'serves a dev-mode bundle (dev virtual entry present)'
+  }
   const entry = html.match(/src="(\/assets\/[^"]+\.js)"/)?.[1]
-  if (!entry) return 'no hashed client JS entry in HTML'
+  if (!entry) {
+    return 'no hashed client JS entry in HTML'
+  }
   const asset = await fetch(new URL(entry, url), {signal: AbortSignal.timeout(15_000)})
-  if (!asset.ok) return `client entry ${entry} -> HTTP ${asset.status}`
+  if (!asset.ok) {
+    return `client entry ${entry} -> HTTP ${asset.status}`
+  }
   return checkChat(url)
 }
 
@@ -36,12 +44,18 @@ async function checkChat(url: string): Promise<string | null> {
     body: JSON.stringify({messages: [{role: 'user', content: sentinel}]}),
     signal: AbortSignal.timeout(15_000),
   })
-  if (!res.ok) return `chat endpoint -> HTTP ${res.status}`
+  if (!res.ok) {
+    return `chat endpoint -> HTTP ${res.status}`
+  }
   const body = await res.text()
   for (const marker of ['RUN_STARTED', 'TEXT_MESSAGE_CONTENT', 'RUN_FINISHED']) {
-    if (!body.includes(marker)) return `chat stream missing ${marker}`
+    if (!body.includes(marker)) {
+      return `chat stream missing ${marker}`
+    }
   }
-  if (!body.includes(sentinel)) return 'chat stream did not echo the message back'
+  if (!body.includes(sentinel)) {
+    return 'chat stream did not echo the message back'
+  }
   return null
 }
 
@@ -67,9 +81,13 @@ export async function runSmoke(
       } catch (err) {
         lastProblem = err instanceof Error ? err.message : String(err)
       }
-      if (attempt < attempts) await Bun.sleep(retryDelayMs)
+      if (attempt < attempts) {
+        await Bun.sleep(retryDelayMs)
+      }
     }
-    if (!passed) failures.push(`${url}: ${lastProblem}`)
+    if (!passed) {
+      failures.push(`${url}: ${lastProblem}`)
+    }
   }
   return failures
 }

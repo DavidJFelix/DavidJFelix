@@ -38,7 +38,9 @@ export const diffsChromeMapping: ChromeMapping = (chrome, theme) => {
   // the previous `bg ?? 'transparent'` fallback exactly.
   const base = bg ?? 'transparent'
   const style: CSSProperties & Record<string, string> = {}
-  if (!isNullish(bg)) style.backgroundColor = bg
+  if (!isNullish(bg)) {
+    style.backgroundColor = bg
+  }
   style.color = fg
   // Each semantic color is emitted twice: as the base variable (consumed by
   // raw var() references and third-party CSS) and as the Panda token variable

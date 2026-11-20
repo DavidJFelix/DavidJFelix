@@ -54,13 +54,17 @@ export function Composer({onSend, busy = false, onStop}: ComposerProps) {
   // rather than hoisted: a stable ref would run once, on mount, and never
   // follow the draft.
   const autosize = (el: HTMLTextAreaElement | null) => {
-    if (!el) return
+    if (!el) {
+      return
+    }
     el.style.height = 'auto'
     el.style.height = `${Math.min(el.scrollHeight, MAX_HEIGHT_PX)}px`
   }
 
   const submit = () => {
-    if (busy || text.length === 0) return
+    if (busy || text.length === 0) {
+      return
+    }
     onSend(text)
     setDraft('')
   }

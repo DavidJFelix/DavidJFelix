@@ -86,13 +86,19 @@ test('home page carries OpenGraph meta and serves the card it points at', async 
 async function measureMarkAgainstName(page: Page) {
   return page.evaluate(() => {
     const mark = document.querySelector('[data-slot="site-mark"]')
-    if (mark === null) return null
+    if (mark === null) {
+      return null
+    }
     const row = mark.parentElement
-    if (row === null) return null
+    if (row === null) {
+      return null
+    }
     const name = [...row.childNodes].find(
       (node) => node.nodeType === Node.TEXT_NODE && (node.textContent ?? '').trim() !== '',
     )
-    if (name === undefined) return null
+    if (name === undefined) {
+      return null
+    }
     const range = document.createRange()
     range.selectNodeContents(name)
     return {

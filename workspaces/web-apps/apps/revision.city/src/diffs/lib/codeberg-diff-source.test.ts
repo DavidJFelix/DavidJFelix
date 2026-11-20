@@ -74,7 +74,9 @@ test.each([
   },
 ])('fetches $path from $patchURL', ({path, patchURL, sourceURL}) => {
   const source = parseCodebergDiffSource(path)
-  if (source === undefined) throw new Error(`no source for ${path}`)
+  if (source === undefined) {
+    throw new Error(`no source for ${path}`)
+  }
   expect(createCodebergPatchURL(source)).toBe(patchURL)
   expect(createCodebergPageURL(source)).toBe(sourceURL)
 })

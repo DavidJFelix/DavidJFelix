@@ -19,7 +19,9 @@ function compareBytes(left: Uint8Array, right: Uint8Array): number {
 // Code-unit order, the order a database or `Array.prototype.sort` applies to
 // the ids; locale collation is deliberately not involved.
 function compareStrings(left: string, right: string): number {
-  if (left === right) return 0
+  if (left === right) {
+    return 0
+  }
   return left < right ? -1 : 1
 }
 

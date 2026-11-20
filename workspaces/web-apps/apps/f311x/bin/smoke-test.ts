@@ -19,6 +19,8 @@ const retryDelayMs = Number(process.env.SMOKE_RETRY_DELAY_MS ?? 10_000)
 const failures = await runSmoke(urls, {attempts, retryDelayMs})
 
 if (failures.length > 0) {
-  for (const failure of failures) console.error(`::error::smoke test failed — ${failure}`)
+  for (const failure of failures) {
+    console.error(`::error::smoke test failed — ${failure}`)
+  }
   process.exit(1)
 }

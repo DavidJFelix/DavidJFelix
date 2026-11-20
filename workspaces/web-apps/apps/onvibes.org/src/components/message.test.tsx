@@ -7,7 +7,9 @@ import {MessageBubble} from './message'
 async function renderBubble(message: Message) {
   const screen = await render(<MessageBubble message={message} />)
   const bubble = screen.getByText(message.text).element().closest('[data-role]')
-  if (!bubble) throw new Error('bubble not found')
+  if (!bubble) {
+    throw new Error('bubble not found')
+  }
   return bubble
 }
 
@@ -38,12 +40,16 @@ test('the two voices sit on opposite edges of the column', async () => {
     </div>,
   )
   const column = screen.container.firstElementChild
-  if (!column) throw new Error('column not found')
+  if (!column) {
+    throw new Error('column not found')
+  }
 
   // when
   const user = screen.getByText('Make it purple').element().closest('[data-role]')
   const assistant = screen.getByText('Purple it is').element().closest('[data-role]')
-  if (!user || !assistant) throw new Error('bubbles not found')
+  if (!user || !assistant) {
+    throw new Error('bubbles not found')
+  }
   const frame = column.getBoundingClientRect()
 
   // then

@@ -16,13 +16,17 @@ function makeResolver(
     },
     resolveTheme(name) {
       const theme = themes[name]
-      if (theme === undefined) return Promise.reject(new Error(`no theme ${name}`))
+      if (theme === undefined) {
+        return Promise.reject(new Error(`no theme ${name}`))
+      }
       warm.set(name, theme)
       return Promise.resolve(theme as never)
     },
     getResolvedOrResolveTheme(name) {
       const cached = warm.get(name)
-      if (cached !== undefined) return cached
+      if (cached !== undefined) {
+        return cached
+      }
       return this.resolveTheme(name)
     },
     // Unused by the adapters; present to satisfy the interface.
@@ -73,7 +77,9 @@ function makeController(
     destroy() {},
     set(next) {
       state = {...state, ...next}
-      for (const listener of listeners) listener()
+      for (const listener of listeners) {
+        listener()
+      }
     },
   }
 }

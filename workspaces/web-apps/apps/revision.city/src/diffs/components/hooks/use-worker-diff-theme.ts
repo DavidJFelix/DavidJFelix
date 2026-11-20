@@ -9,7 +9,9 @@ import {isNullish} from '@/diffs/lib/nullish'
 export function useWorkerDiffTheme(theme: ThemesType, disabled: boolean): void {
   const workerPool = useWorkerPool()
   useLayoutEffect(() => {
-    if (disabled || isNullish(workerPool)) return
+    if (disabled || isNullish(workerPool)) {
+      return
+    }
     void workerPool.setRenderOptions({theme})
   }, [disabled, theme, workerPool])
 }

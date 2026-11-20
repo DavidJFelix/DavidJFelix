@@ -4,7 +4,9 @@ import {chatAgentStream, echoReply, lastUserText, type RunAgentInput} from './ch
 
 async function collect(stream: AsyncIterable<StreamChunk>): Promise<Array<StreamChunk>> {
   const chunks: Array<StreamChunk> = []
-  for await (const chunk of stream) chunks.push(chunk)
+  for await (const chunk of stream) {
+    chunks.push(chunk)
+  }
   return chunks
 }
 

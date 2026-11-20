@@ -16,7 +16,9 @@ const retryingStep: DurableStep = {
       try {
         return await run({attempt})
       } catch (error) {
-        if (attempt > (stepConfig.retries?.limit ?? 0)) throw error
+        if (attempt > (stepConfig.retries?.limit ?? 0)) {
+          throw error
+        }
         return tryAttempt(attempt + 1)
       }
     }
@@ -42,7 +44,9 @@ test.each([
     const runStep = createRunStep({step: retryingStep, config})
     const result = await runStep('review 1 of 1', async (attempt) => {
       seen.push(attempt)
-      if (seen.length <= failures) throw new Error('outage')
+      if (seen.length <= failures) {
+        throw new Error('outage')
+      }
       return 'done'
     })
     expect(result).toBe('done')

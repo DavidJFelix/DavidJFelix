@@ -137,13 +137,17 @@ export function fixedSource(
   let reportedScheme: ColorScheme = colorScheme
 
   function notify(): void {
-    for (const listener of listeners) listener()
+    for (const listener of listeners) {
+      listener()
+    }
   }
 
   // Pull the name (if any) for the slot we should show, plus an already-resolved
   // object when the input carried one directly.
   function selectSlot(): {name?: string; object?: ThemeLike} {
-    if (typeof input === 'string') return {name: input}
+    if (typeof input === 'string') {
+      return {name: input}
+    }
     if (isThemePair(input)) {
       const slot = colorScheme === 'dark' ? input.dark : input.light
       return typeof slot === 'string' ? {name: slot} : {object: slot}

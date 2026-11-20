@@ -15,6 +15,8 @@ export function chromeThemeProps(
   mapping: ChromeMapping,
 ): {style: CSSProperties} {
   const theme = active.theme
-  if (isNullish(theme)) return {style: {}}
+  if (isNullish(theme)) {
+    return {style: {}}
+  }
   return {style: mapping(deriveChromeTokens(theme), theme) ?? {}}
 }

@@ -100,7 +100,9 @@ function PromptInputTextarea({
   // runs on every commit -- after the DOM holds the latest value -- and depends
   // only on the node React hands it, never on `value`.
   const autosize = (el: HTMLTextAreaElement | null) => {
-    if (!el || disableAutosize) return
+    if (!el || disableAutosize) {
+      return
+    }
     el.style.height = 'auto'
     el.style.height =
       typeof maxHeight === 'number'

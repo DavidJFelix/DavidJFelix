@@ -32,7 +32,9 @@ function ChatPage() {
 
   const handleSubmit = async () => {
     const text = draft.trim()
-    if (!text || isStreaming) return
+    if (!text || isStreaming) {
+      return
+    }
     setDraft('')
     await chat.sendMessage(text)
   }

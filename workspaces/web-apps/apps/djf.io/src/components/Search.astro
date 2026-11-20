@@ -206,11 +206,11 @@ const results = css({
         return
       }
       const found = await api.debouncedSearch(value)
-      if (!found || mine !== token) return
+      if (!found || mine !== token) {return}
       const fragments = await Promise.all(
         found.results.slice(0, RESULT_LIMIT).map((result) => result.data()),
       )
-      if (mine !== token) return
+      if (mine !== token) {return}
       if (fragments.length === 0) {
         showStatus(`No results for “${value}”`)
       } else {

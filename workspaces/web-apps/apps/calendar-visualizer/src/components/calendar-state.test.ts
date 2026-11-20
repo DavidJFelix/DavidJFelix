@@ -9,7 +9,9 @@ function daySlots(month: MonthState): GridDay[] {
 
 function dayOfMonth(month: MonthState, date: number): GridDay {
   const day = daySlots(month).find((slot) => slot.date.getDate() === date)
-  if (day === undefined) throw new Error(`no day ${date} in ${month.monthName}`)
+  if (day === undefined) {
+    throw new Error(`no day ${date} in ${month.monthName}`)
+  }
   return day
 }
 

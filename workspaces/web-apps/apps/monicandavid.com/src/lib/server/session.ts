@@ -76,8 +76,12 @@ export async function verifySession({
 }
 
 function rejectionOf(cause: unknown): SessionRejection {
-  if (cause instanceof errors.JWTExpired) return 'expired'
-  if (cause instanceof errors.JWSSignatureVerificationFailed) return 'bad-signature'
+  if (cause instanceof errors.JWTExpired) {
+    return 'expired'
+  }
+  if (cause instanceof errors.JWSSignatureVerificationFailed) {
+    return 'bad-signature'
+  }
   return 'malformed'
 }
 

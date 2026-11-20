@@ -59,13 +59,17 @@ export function bindThemeToggle(toggle: HTMLButtonElement, options: ThemeToggleO
   // Live OS tracking: while the mode is 'system', a change in the OS
   // preference re-resolves the scheme without a reload.
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-    if (currentMode() === 'system') apply('system')
+    if (currentMode() === 'system') {
+      apply('system')
+    }
   })
 
   // Cross-tab sync: another tab's choice (or a cleared store) is reflected
   // here too. key === null means the whole store was cleared.
   window.addEventListener('storage', (event) => {
-    if (event.key !== null && event.key !== storageKey) return
+    if (event.key !== null && event.key !== storageKey) {
+      return
+    }
     let stored: string | null = null
     try {
       stored = localStorage.getItem(storageKey)

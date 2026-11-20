@@ -197,6 +197,8 @@ test.each([
   },
 ])('toPatchViewerLocation: $name', ({input, expected}) => {
   const href = getPatchViewerHref(input)
-  if (href === undefined) throw new Error(`no href for ${input}`)
+  if (href === undefined) {
+    throw new Error(`no href for ${input}`)
+  }
   expect(toPatchViewerLocation(href)).toEqual(expected)
 })

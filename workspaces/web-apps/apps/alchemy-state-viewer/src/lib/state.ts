@@ -90,7 +90,9 @@ const isPlainObject = (value: unknown): value is Record<string, unknown> =>
 
 // Effect's Duration wire encoding fixes the field names. cSpell:words millis
 const formatDuration = (encoded: unknown): string | undefined => {
-  if (!isPlainObject(encoded)) return undefined
+  if (!isPlainObject(encoded)) {
+    return undefined
+  }
   const {_tag: tag, millis, nanos} = encoded
   switch (tag) {
     case 'Millis':
@@ -115,8 +117,12 @@ const formatDuration = (encoded: unknown): string | undefined => {
  * object.
  */
 export const maskState = (value: unknown): unknown => {
-  if (Array.isArray(value)) return value.map((entry) => maskState(entry))
-  if (!isPlainObject(value)) return value
+  if (Array.isArray(value)) {
+    return value.map((entry) => maskState(entry))
+  }
+  if (!isPlainObject(value)) {
+    return value
+  }
   const keys = Object.keys(value)
   if (keys.length === 1 && keys[0] === REDACTED_MARKER) {
     return REDACTED_PLACEHOLDER

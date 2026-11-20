@@ -14,7 +14,9 @@ export function claimPageReload({assetUrl, storage}: ClaimPageReloadParams): boo
   try {
     // A browser that blocks storage throws when the page reads `sessionStorage`.
     const reloadMarks = storage ?? globalThis.sessionStorage
-    if (reloadMarks.getItem(mark) !== null) return false
+    if (reloadMarks.getItem(mark) !== null) {
+      return false
+    }
     reloadMarks.setItem(mark, String(Date.now()))
     return true
   } catch {

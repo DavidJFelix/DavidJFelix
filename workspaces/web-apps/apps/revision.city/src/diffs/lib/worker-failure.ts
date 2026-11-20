@@ -46,8 +46,12 @@ export async function reloadWorkerScript({
 // second start of the pool can work. A 404 means that a deploy removed the script this page asks
 // for. Only a new load of the page gets the names of the scripts in the current deploy.
 export function chooseWorkerRecovery(reload: WorkerScriptReload): WorkerRecovery {
-  if (reload.kind === 'network-error') return 'none'
-  if (reload.status === 200) return 'retry-pool'
+  if (reload.kind === 'network-error') {
+    return 'none'
+  }
+  if (reload.status === 200) {
+    return 'retry-pool'
+  }
   return reload.status === 404 ? 'reload-page' : 'none'
 }
 

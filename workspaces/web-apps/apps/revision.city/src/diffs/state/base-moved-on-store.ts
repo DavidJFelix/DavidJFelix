@@ -1,29 +1,38 @@
 import {createStoreLogic} from '@xstate/store'
+import * as z from 'zod/mini'
 
 import {baseMovedOnText} from '@/diffs/lib/base-moved-on-text'
 import {isNullish} from '@/diffs/lib/nullish'
 
 const COMPARE_STATUS_ENDPOINT = '/api/diffs/github-compare-status'
 
-export type BaseMovedOnContext =
-  | {status: 'idle'; requestId: number}
-  | {status: 'loading'; requestId: number; path: string}
-  | {status: 'answered'; requestId: number; path: string; notice: string | undefined}
+const noticeSchema = z.union([z.string(), z.undefined()])
 
-interface CompareStatusRequest {
-  path: string
-  range: string
+const baseMovedOnContextSchema = z.readonly(
+  z.discriminatedUnion('status', [
+    z.object({status: z.literal('idle'), requestId: z.number()}),
+    z.object({status: z.literal('loading'), requestId: z.number(), path: z.string()}),
+    z.object({
+      status: z.literal('answered'),
+      requestId: z.number(),
+      path: z.string(),
+      notice: noticeSchema,
+    }),
+  ]),
+)
+
+const baseMovedOnEventSchemas = {
+  requested: z.object({path: z.string(), range: z.string()}),
+  answered: z.object({requestId: z.number(), notice: noticeSchema}),
 }
 
-interface CompareStatusAnswer {
-  requestId: number
-  notice: string | undefined
-}
+export type BaseMovedOnContext = z.infer<typeof baseMovedOnContextSchema>
 
 export const baseMovedOnLogic = createStoreLogic({
+  schemas: {context: baseMovedOnContextSchema, events: baseMovedOnEventSchemas},
   context: (): BaseMovedOnContext => ({status: 'idle', requestId: 0}),
   on: {
-    requested: (context, {path, range}: CompareStatusRequest, enqueue): BaseMovedOnContext => {
+    requested: (context, {path, range}, enqueue): BaseMovedOnContext => {
       const requestId = context.requestId + 1
       enqueue.effect(({trigger}) => {
         void fetchBehindBy(path).then((behindBy) => {
@@ -36,7 +45,7 @@ export const baseMovedOnLogic = createStoreLogic({
       })
       return {status: 'loading', requestId, path}
     },
-    answered: (context, {requestId, notice}: CompareStatusAnswer): BaseMovedOnContext | undefined =>
+    answered: (context, {requestId, notice}): BaseMovedOnContext | undefined =>
       context.status === 'loading' && context.requestId === requestId
         ? {...context, status: 'answered', notice}
         : undefined,

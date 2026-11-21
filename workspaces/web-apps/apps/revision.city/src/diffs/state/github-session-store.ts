@@ -1,38 +1,64 @@
 import {createStoreLogic} from '@xstate/store'
+import * as z from 'zod/mini'
 import {isRecord} from '@/lib/json-read'
 
 const SESSION_ENDPOINT = '/api/auth/github/session'
 
-export interface SignedInVisitor {
-  login: string
-  avatarUrl?: string
+const signedInVisitorShape = {
+  login: z.string(),
+  avatarUrl: z.optional(z.string()),
 }
 
-export type GitHubSessionAnswer =
-  | ({status: 'authenticated'} & SignedInVisitor)
-  | {status: 'anonymous'}
+const signedInVisitorSchema = z.readonly(z.object(signedInVisitorShape))
+
+const githubSessionAnswerSchema = z.readonly(
+  z.discriminatedUnion('status', [
+    z.object({status: z.literal('authenticated'), ...signedInVisitorShape}),
+    z.object({status: z.literal('anonymous')}),
+  ]),
+)
 
 // No event changes `firstAnswer` after the first lookup ends. A failed first
 // lookup counts as `anonymous`.
-interface AfterFirstLookup {
-  firstAnswer: GitHubSessionAnswer
-}
-
-type LookupResult = GitHubSessionAnswer | {status: 'unknown'}
+const afterFirstLookupShape = {firstAnswer: githubSessionAnswerSchema}
 
 // `unknown` follows a failed lookup, so the visitor can be signed in or signed out.
-export type GitHubSessionContext =
-  | {status: 'idle'}
-  | {status: 'loading'}
-  | (GitHubSessionAnswer & AfterFirstLookup)
-  | ({status: 'unknown'} & AfterFirstLookup)
-  | ({status: 'retrying'} & AfterFirstLookup)
+const githubSessionContextSchema = z.readonly(
+  z.discriminatedUnion('status', [
+    z.object({status: z.literal('idle')}),
+    z.object({status: z.literal('loading')}),
+    z.object({
+      status: z.literal('authenticated'),
+      ...signedInVisitorShape,
+      ...afterFirstLookupShape,
+    }),
+    z.object({status: z.literal('anonymous'), ...afterFirstLookupShape}),
+    z.object({status: z.literal('unknown'), ...afterFirstLookupShape}),
+    z.object({status: z.literal('retrying'), ...afterFirstLookupShape}),
+  ]),
+)
+
+const githubSessionEventSchemas = {
+  requested: z.object({}),
+  signedIn: signedInVisitorSchema,
+  signedOut: z.object({}),
+  failed: z.object({}),
+}
+
+export type SignedInVisitor = z.infer<typeof signedInVisitorSchema>
+
+export type GitHubSessionAnswer = z.infer<typeof githubSessionAnswerSchema>
+
+export type GitHubSessionContext = z.infer<typeof githubSessionContextSchema>
+
+type LookupResult = GitHubSessionAnswer | {status: 'unknown'}
 
 const ANONYMOUS_ANSWER: GitHubSessionAnswer = {status: 'anonymous'}
 
 // Signing in or out reloads the page, so one lookup per page load is enough.
 // After a failed lookup, the next hook mount asks again.
 export const githubSessionLogic = createStoreLogic({
+  schemas: {context: githubSessionContextSchema, events: githubSessionEventSchemas},
   context: (): GitHubSessionContext => ({status: 'idle'}),
   on: {
     requested: (context, _event, enqueue) => {
@@ -49,7 +75,7 @@ export const githubSessionLogic = createStoreLogic({
         ? {status: 'loading'}
         : {status: 'retrying', firstAnswer: context.firstAnswer}
     },
-    signedIn: (context, visitor: SignedInVisitor) =>
+    signedIn: (context, visitor) =>
       settle(context, {
         status: 'authenticated',
         login: visitor.login,

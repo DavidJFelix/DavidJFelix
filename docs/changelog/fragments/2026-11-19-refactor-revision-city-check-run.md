@@ -5,4 +5,6 @@ progress, superseded, passed, failed, failed-resolvable, resolved, dismissed) in
 table. `decodeCheckRun` reads the state from the status, conclusion, external id, and output that
 GitHub keeps, and `encodeCheckRun` writes it back with its title prefix and dismiss button.
 `dismissCheckRun` now asks the table if a dismissal is legal and writes the encoded state only when
-it is. The fields that it writes do not change.
+it is. The fields that it writes do not change. The store declares its context and its four events
+in `schemas`, with `zod/mini`, and the types `CheckRunState` and `CheckRunOutcome` come from them.
+The store does not validate against the schemas, so its behavior does not change.

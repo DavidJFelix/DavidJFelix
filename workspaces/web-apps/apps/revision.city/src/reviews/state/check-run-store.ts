@@ -1,4 +1,5 @@
 import {createStoreLogic} from '@xstate/store'
+import * as z from 'zod/mini'
 import type {CheckRunOutput} from '../lib/review-markdown'
 
 // A failed check run shows this button. A user who can push clicks it to pass
@@ -17,16 +18,39 @@ const RESOLVED_SUMMARY_PREFIX =
 const DISMISSED_TITLE_PREFIX = 'Dismissed: '
 const DISMISSED_SUMMARY_NOTE = ' dismissed the findings, so this check passes. '
 
+const checkRunOutputSchema = z.custom<CheckRunOutput>()
+
 // A `failed-resolvable` check run failed only on findings in threads of the
 // app. It passes when `countOpenAppThreads` finds no open thread.
-export type CheckRunOutcome = 'superseded' | 'passed' | 'failed' | 'failed-resolvable'
+const checkRunOutcomeSchema = z.enum(['superseded', 'passed', 'failed', 'failed-resolvable'])
 
 // No database table keeps the state of a review. GitHub keeps it on the check
 // run, in its status, conclusion, external id, and output.
-export type CheckRunState =
-  | {status: 'in-progress'}
-  | {status: CheckRunOutcome | 'resolved'; reviewOutput: CheckRunOutput}
-  | {status: 'dismissed'; reviewOutput: CheckRunOutput; dismissedBy: string}
+const checkRunContextSchema = z.readonly(
+  z.discriminatedUnion('status', [
+    z.object({status: z.literal('in-progress')}),
+    z.object({
+      status: z.enum([...checkRunOutcomeSchema.options, 'resolved']),
+      reviewOutput: checkRunOutputSchema,
+    }),
+    z.object({
+      status: z.literal('dismissed'),
+      reviewOutput: checkRunOutputSchema,
+      dismissedBy: z.string(),
+    }),
+  ]),
+)
+
+const checkRunEventSchemas = {
+  completed: z.object({outcome: checkRunOutcomeSchema, output: checkRunOutputSchema}),
+  threadsResolved: z.object({}),
+  threadReopened: z.object({}),
+  dismissed: z.object({by: z.string()}),
+}
+
+export type CheckRunOutcome = z.infer<typeof checkRunOutcomeSchema>
+
+export type CheckRunState = z.infer<typeof checkRunContextSchema>
 
 export interface GitHubCheckRun {
   status: string
@@ -48,19 +72,11 @@ export type CheckRunFields =
       external_id?: string
     }
 
-interface CompletedEvent {
-  outcome: CheckRunOutcome
-  output: CheckRunOutput
-}
-
-interface DismissedEvent {
-  by: string
-}
-
 export const checkRunLogic = createStoreLogic({
+  schemas: {context: checkRunContextSchema, events: checkRunEventSchemas},
   context: (state: CheckRunState) => state,
   on: {
-    completed: (state, {outcome, output}: CompletedEvent): CheckRunState | undefined =>
+    completed: (state, {outcome, output}): CheckRunState | undefined =>
       state.status === 'in-progress' ? {status: outcome, reviewOutput: output} : undefined,
     threadsResolved: (state): CheckRunState | undefined =>
       state.status === 'failed-resolvable'
@@ -70,7 +86,7 @@ export const checkRunLogic = createStoreLogic({
       state.status === 'resolved'
         ? {status: 'failed-resolvable', reviewOutput: state.reviewOutput}
         : undefined,
-    dismissed: (state, {by}: DismissedEvent): CheckRunState | undefined =>
+    dismissed: (state, {by}): CheckRunState | undefined =>
       state.status === 'failed' || state.status === 'failed-resolvable'
         ? {status: 'dismissed', reviewOutput: state.reviewOutput, dismissedBy: by}
         : undefined,

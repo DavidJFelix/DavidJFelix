@@ -1,6 +1,4 @@
 import {type DiffIndicators} from '@pierre/diffs'
-import {useWorkerPool} from '@pierre/diffs/react'
-import type {WorkerStats} from '@pierre/diffs/worker'
 import {type ColorMode} from '@pierre/theming'
 import {useThemeController} from '@pierre/theming/react'
 import {
@@ -41,7 +39,7 @@ import {useBaseMovedOn} from './hooks/use-base-moved-on'
 import {useFirstGitHubSession} from './hooks/use-github-session'
 import {usePatchLoader} from './hooks/use-patch-loader'
 import {useThemeCycle} from './hooks/use-theme-cycle'
-import {useWorkerPoolRecovering} from './worker-pool-context'
+import {useWorkerPoolState} from './worker-pool-context'
 
 interface ReviewUIProps {
   domain?: string
@@ -384,34 +382,6 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
       )}
     </ReviewGrid>
   )
-}
-
-type WorkerPoolState = 'initializing' | 'ready' | 'failed'
-
-function getWorkerPoolState(stats: WorkerStats): WorkerPoolState {
-  if (stats.workersFailed) return 'failed'
-  return stats.managerState === 'initialized' ? 'ready' : 'initializing'
-}
-
-function useWorkerPoolState(): WorkerPoolState {
-  const workerPool = useWorkerPool()
-  const recovering = useWorkerPoolRecovering()
-  const [state, setState] = useState<WorkerPoolState>(() =>
-    isNullish(workerPool) ? 'ready' : getWorkerPoolState(workerPool.getStats()),
-  )
-  const stateRef = useRef(state)
-  useEffect(() => {
-    // The callback will always be fired immediately with the new state, so we
-    // don't need to check for it in the effect
-    return workerPool?.subscribeToStatChanges((stats) => {
-      const nextState = getWorkerPoolState(stats)
-      if (nextState !== stateRef.current) {
-        setState(nextState)
-        stateRef.current = nextState
-      }
-    })
-  }, [workerPool])
-  return recovering ? 'initializing' : state
 }
 
 interface ReviewGridProps {

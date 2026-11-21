@@ -6,23 +6,51 @@ import type {DarkThemeName, LightThemeName} from '@/diffs/lib/theme-names'
 
 export const THEME_CYCLE_DURATIONS_SECONDS = [3, 0.8, 0.4, 0.1] as const
 
-export type ThemeCycleDurationSeconds = (typeof THEME_CYCLE_DURATIONS_SECONDS)[number]
+const lightThemeNameSchema = z.custom<LightThemeName>()
 
-export type ThemeCycleStep =
-  | {mode: 'light'; theme: LightThemeName}
-  | {mode: 'dark'; theme: DarkThemeName}
+const darkThemeNameSchema = z.custom<DarkThemeName>()
 
-export interface ThemeSelection {
-  lightThemeName: LightThemeName
-  darkThemeName: DarkThemeName
+const themeCycleDurationSecondsSchema = z.literal(THEME_CYCLE_DURATIONS_SECONDS)
+
+const themeCycleStepSchema = z.discriminatedUnion('mode', [
+  z.object({mode: z.literal('light'), theme: lightThemeNameSchema}),
+  z.object({mode: z.literal('dark'), theme: darkThemeNameSchema}),
+])
+
+const themeSelectionSchema = z.object({
+  lightThemeName: lightThemeNameSchema,
+  darkThemeName: darkThemeNameSchema,
   // Undefined until the theme selection is hydrated. The sweep cannot start
   // before then, because it starts from the visible mode.
-  resolvedThemeMode: 'light' | 'dark' | undefined
+  resolvedThemeMode: z.union([z.enum(['light', 'dark']), z.undefined()]),
+})
+
+const themeCycleContextSchema = z.discriminatedUnion('status', [
+  z.object({status: z.literal('idle'), stepSeconds: themeCycleDurationSecondsSchema}),
+  z.object({
+    status: z.literal('cycling'),
+    stepSeconds: themeCycleDurationSecondsSchema,
+    step: themeCycleStepSchema,
+  }),
+])
+
+const themeCycleEventSchemas = {
+  toggled: themeSelectionSchema,
+  ticked: z.object({}),
+  durationBumped: themeSelectionSchema,
 }
 
-export type ThemeCycleContext =
-  | {status: 'idle'; stepSeconds: ThemeCycleDurationSeconds}
-  | {status: 'cycling'; stepSeconds: ThemeCycleDurationSeconds; step: ThemeCycleStep}
+const themeCycleEmittedSchemas = {
+  stepped: z.object({step: themeCycleStepSchema}),
+}
+
+export type ThemeCycleDurationSeconds = z.infer<typeof themeCycleDurationSecondsSchema>
+
+export type ThemeCycleStep = z.infer<typeof themeCycleStepSchema>
+
+export type ThemeSelection = z.infer<typeof themeSelectionSchema>
+
+export type ThemeCycleContext = z.infer<typeof themeCycleContextSchema>
 
 const sweep: readonly ThemeCycleStep[] = [
   ...docsThemeCatalog
@@ -57,13 +85,17 @@ function nextDuration(stepSeconds: ThemeCycleDurationSeconds): ThemeCycleDuratio
 }
 
 export const themeCycleLogic = createStoreLogic({
+  schemas: {
+    context: themeCycleContextSchema,
+    events: themeCycleEventSchemas,
+    emitted: themeCycleEmittedSchemas,
+  },
   context: (): ThemeCycleContext => ({
     status: 'idle',
     stepSeconds: THEME_CYCLE_DURATIONS_SECONDS[0],
   }),
-  schemas: {emitted: {stepped: z.object({step: z.custom<ThemeCycleStep>()})}},
   on: {
-    toggled: (context, selection: ThemeSelection, enqueue): ThemeCycleContext | undefined => {
+    toggled: (context, selection, enqueue): ThemeCycleContext | undefined => {
       if (context.status === 'cycling') {
         return {status: 'idle', stepSeconds: context.stepSeconds}
       }
@@ -83,7 +115,7 @@ export const themeCycleLogic = createStoreLogic({
       enqueue.emit.stepped({step})
       return {...context, step}
     },
-    durationBumped: (context, selection: ThemeSelection, enqueue): ThemeCycleContext => {
+    durationBumped: (context, selection, enqueue): ThemeCycleContext => {
       const stepSeconds = nextDuration(context.stepSeconds)
       if (context.status === 'idle') {
         return {...context, stepSeconds}

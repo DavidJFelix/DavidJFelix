@@ -12,27 +12,33 @@ const darkThemeNameSchema = z.custom<DarkThemeName>()
 
 const themeCycleDurationSecondsSchema = z.literal(THEME_CYCLE_DURATIONS_SECONDS)
 
-const themeCycleStepSchema = z.discriminatedUnion('mode', [
-  z.object({mode: z.literal('light'), theme: lightThemeNameSchema}),
-  z.object({mode: z.literal('dark'), theme: darkThemeNameSchema}),
-])
+const themeCycleStepSchema = z.readonly(
+  z.discriminatedUnion('mode', [
+    z.object({mode: z.literal('light'), theme: lightThemeNameSchema}),
+    z.object({mode: z.literal('dark'), theme: darkThemeNameSchema}),
+  ]),
+)
 
-const themeSelectionSchema = z.object({
-  lightThemeName: lightThemeNameSchema,
-  darkThemeName: darkThemeNameSchema,
-  // Undefined until the theme selection is hydrated. The sweep cannot start
-  // before then, because it starts from the visible mode.
-  resolvedThemeMode: z.union([z.enum(['light', 'dark']), z.undefined()]),
-})
-
-const themeCycleContextSchema = z.discriminatedUnion('status', [
-  z.object({status: z.literal('idle'), stepSeconds: themeCycleDurationSecondsSchema}),
+const themeSelectionSchema = z.readonly(
   z.object({
-    status: z.literal('cycling'),
-    stepSeconds: themeCycleDurationSecondsSchema,
-    step: themeCycleStepSchema,
+    lightThemeName: lightThemeNameSchema,
+    darkThemeName: darkThemeNameSchema,
+    // Undefined until the theme selection is hydrated. The sweep cannot start
+    // before then, because it starts from the visible mode.
+    resolvedThemeMode: z.union([z.enum(['light', 'dark']), z.undefined()]),
   }),
-])
+)
+
+const themeCycleContextSchema = z.readonly(
+  z.discriminatedUnion('status', [
+    z.object({status: z.literal('idle'), stepSeconds: themeCycleDurationSecondsSchema}),
+    z.object({
+      status: z.literal('cycling'),
+      stepSeconds: themeCycleDurationSecondsSchema,
+      step: themeCycleStepSchema,
+    }),
+  ]),
+)
 
 const themeCycleEventSchemas = {
   toggled: themeSelectionSchema,

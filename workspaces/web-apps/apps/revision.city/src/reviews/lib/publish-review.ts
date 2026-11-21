@@ -1,5 +1,6 @@
 // cSpell:ignore revisioncity -- the GitHub App's slug
 import {z} from 'zod'
+import {type CheckRunState, DISMISS_ACTION, encodeCheckRun} from '../state/check-run-store'
 import {type Finding, SEVERITIES} from './findings'
 import {
   GitHubApiError,
@@ -49,18 +50,37 @@ export async function createCheckRun({
   const checkRun = await request({
     method: 'POST',
     path: `${repositoryPath(repository)}/check-runs`,
-    body: {name: CHECK_RUN_NAME, head_sha: headSha, status: 'in_progress'},
+    body: {
+      name: CHECK_RUN_NAME,
+      head_sha: headSha,
+      ...encodeCheckRun({status: 'in-progress'}),
+    },
     schema: z.object({id: z.number()}),
   })
   return checkRun.id
 }
 
-// A failed check run shows this button. A user who can push clicks it to pass
-// the check without a new review (src/reviews/lib/dismiss-check-run.ts).
-export const DISMISS_ACTION = {
-  label: 'Dismiss findings',
-  description: 'Pass this check without a new review',
-  identifier: 'dismiss',
+export {DISMISS_ACTION}
+
+export interface UpdateCheckRunParams {
+  request: GitHubRequest
+  repository: GitHubRepository
+  checkRunId: number
+  state: CheckRunState
+}
+
+export async function updateCheckRun({
+  request,
+  repository,
+  checkRunId,
+  state,
+}: UpdateCheckRunParams): Promise<void> {
+  await request({
+    method: 'PATCH',
+    path: `${repositoryPath(repository)}/check-runs/${checkRunId}`,
+    body: encodeCheckRun(state),
+    schema: ignoredResponse,
+  })
 }
 
 export interface CompleteCheckRunParams {

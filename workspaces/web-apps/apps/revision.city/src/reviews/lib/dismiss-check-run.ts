@@ -1,14 +1,13 @@
 import {z} from 'zod'
+import {checkRunLogic, decodeCheckRun} from '../state/check-run-store'
 import {type GitHubRepository, type GitHubRequest, repositoryPath} from './github-api'
-import {APP_SLUG, completeCheckRun} from './publish-review'
+import {APP_SLUG, updateCheckRun} from './publish-review'
 import {canPush} from './resolved-threads'
 
-// A dismissed check run has this external id, so that resolved threads no
-// longer change it.
-export const DISMISSED_EXTERNAL_ID = 'dismissed'
-
 const checkRunSchema = z.object({
+  status: z.string(),
   conclusion: z.string().nullable(),
+  external_id: z.string().nullable(),
   app: z.object({slug: z.string()}).nullable(),
   output: z.object({
     title: z.string().nullable(),
@@ -40,23 +39,11 @@ export async function dismissCheckRun({
     path: `${repositoryPath(repository)}/check-runs/${checkRunId}`,
     schema: checkRunSchema,
   })
-  if (checkRun.app?.slug !== APP_SLUG || checkRun.conclusion !== 'failure') {
+  const store = checkRunLogic.createStore(decodeCheckRun(checkRun))
+  if (checkRun.app?.slug !== APP_SLUG || !store.can.dismissed({by: clickedBy})) {
     return 'unchanged'
   }
-  const {title, summary, text} = checkRun.output
-  await completeCheckRun({
-    request,
-    repository,
-    checkRunId,
-    conclusion: 'success',
-    output: {
-      title: `Dismissed: ${title ?? ''}`,
-      // A login has only letters, digits, and hyphens, so it cannot add a
-      // mention or markup.
-      summary: `${clickedBy} dismissed the findings, so this check passes. ${summary ?? ''}`,
-      ...(text === null ? {} : {text}),
-    },
-    externalId: DISMISSED_EXTERNAL_ID,
-  })
+  store.trigger.dismissed({by: clickedBy})
+  await updateCheckRun({request, repository, checkRunId, state: store.getSnapshot().context})
   return 'dismissed'
 }

@@ -3,39 +3,54 @@ import * as z from 'zod/mini'
 
 import {getPatchViewerHref, toPatchViewerLocation} from '@/diffs/lib/get-patch-viewer-href'
 
-// `submitting` starts at the Enter key press. A blur in that status comes from
-// Enter, so it does not restore the committed URL. The submit event ends the
-// status, and so do typing, Escape, and the clear button.
-export type DiffUrlFormStatus = 'editing' | 'invalid' | 'submitting'
+const diffUrlFormInputSchema = z.object({committedUrl: z.string()})
 
-export interface DiffUrlFormContext {
-  committedUrl: string
-  status: DiffUrlFormStatus
-  url: string
+const diffUrlFormContextSchema = z.object({
+  committedUrl: z.string(),
+  // `submitting` starts at the Enter key press. A blur in that status comes from
+  // Enter, so it does not restore the committed URL. The submit event ends the
+  // status, and so do typing, Escape, and the clear button.
+  status: z.enum(['editing', 'invalid', 'submitting']),
+  url: z.string(),
+})
+
+const diffUrlFormEventSchemas = {
+  changed: z.object({url: z.string()}),
+  cleared: z.object({}),
+  escaped: z.object({}),
+  blurred: z.object({}),
+  enterPressed: z.object({}),
+  submitted: z.object({}),
 }
 
-interface DiffUrlFormInput {
-  committedUrl: string
+const diffUrlFormEmittedSchemas = {
+  accepted: z.object({domain: z.optional(z.string()), splat: z.string()}),
+  rejected: z.object({}),
 }
+
+type DiffUrlFormInput = z.infer<typeof diffUrlFormInputSchema>
+
+export type DiffUrlFormContext = z.infer<typeof diffUrlFormContextSchema>
+
+export type DiffUrlFormStatus = DiffUrlFormContext['status']
 
 function edited(context: DiffUrlFormContext, url: string): DiffUrlFormContext {
   return {...context, status: 'editing', url}
 }
 
 export const diffUrlFormLogic = createStoreLogic({
+  schemas: {
+    context: diffUrlFormContextSchema,
+    events: diffUrlFormEventSchemas,
+    emitted: diffUrlFormEmittedSchemas,
+  },
   context: ({committedUrl}: DiffUrlFormInput): DiffUrlFormContext => ({
     committedUrl,
     status: 'editing',
     url: committedUrl,
   }),
-  schemas: {
-    emitted: {
-      accepted: z.object({domain: z.optional(z.string()), splat: z.string()}),
-      rejected: z.object({}),
-    },
-  },
   on: {
-    changed: (context, {url}: {url: string}) => edited(context, url),
+    changed: (context, {url}) => edited(context, url),
     cleared: (context) => edited(context, ''),
     escaped: (context) => edited(context, context.committedUrl),
     blurred: (context) =>

@@ -1,5 +1,6 @@
 import type {WorkerStats} from '@pierre/diffs/worker'
 import {createStore, type StoreSnapshot} from '@xstate/store'
+import * as z from 'zod/mini'
 import {isNullish} from '@/diffs/lib/nullish'
 import {
   chooseWorkerRecovery,
@@ -8,19 +9,52 @@ import {
   type WorkerScriptReload,
 } from '@/diffs/lib/worker-failure'
 
-export type WorkerPoolState = 'initializing' | 'ready' | 'failed'
+const workerStatsSchema = z.custom<WorkerStats>()
+
+const workerRecoverySchema = z.custom<WorkerRecovery>()
+
+const restartPoolSchema = z.function({input: [], output: z.promise(z.void())})
+
+const workerPoolStateSchema = z.enum(['initializing', 'ready', 'failed'])
+
+const workerPoolDataShape = {
+  stats: z.optional(workerStatsSchema),
+  restartPool: z.optional(restartPoolSchema),
+  reportedThrowMessages: z.readonly(z.array(z.string())),
+}
 
 // A page recovers from a worker load failure only once. Each worker in the pool sends the same
 // failure, and a second recovery after a failed restart would start the same restart again.
-type WorkerPoolPhase =
-  | {status: WorkerPoolState; recovery: 'available' | 'used'}
-  | {status: 'recovering'; recovery: 'reloading-script' | 'restarting' | 'reloading-page'}
+const workerPoolStoreContextSchema = z.readonly(
+  z.discriminatedUnion('status', [
+    z.object({
+      ...workerPoolDataShape,
+      status: workerPoolStateSchema,
+      recovery: z.enum(['available', 'used']),
+    }),
+    z.object({
+      ...workerPoolDataShape,
+      status: z.literal('recovering'),
+      recovery: z.enum(['reloading-script', 'restarting', 'reloading-page']),
+    }),
+  ]),
+)
 
-export type WorkerPoolStoreContext = WorkerPoolPhase & {
-  stats?: WorkerStats
-  restartPool?: () => Promise<void>
-  reportedThrowMessages: readonly string[]
+const workerPoolStoreEventSchemas = {
+  poolAttached: z.object({restartPool: restartPoolSchema}),
+  poolDetached: z.object({}),
+  poolStatsChanged: z.object({stats: workerStatsSchema}),
+  workerThrew: z.object({message: z.string(), description: z.string()}),
+  workerLoadFailed: z.object({}),
+  recoveryChosen: z.object({recovery: workerRecoverySchema}),
+  restartFinished: z.object({}),
+  restartFailed: z.object({}),
+  restartTimedOut: z.object({}),
 }
+
+export type WorkerPoolState = z.infer<typeof workerPoolStateSchema>
+
+export type WorkerPoolStoreContext = z.infer<typeof workerPoolStoreContextSchema>
 
 export interface WorkerPoolStoreParams {
   scriptUrl: string
@@ -92,15 +126,16 @@ export function createWorkerPoolStore({
   }
 
   return createStore({
+    schemas: {context: workerPoolStoreContextSchema, events: workerPoolStoreEventSchemas},
     context: initialContext,
     on: {
-      poolAttached: (context, event: {restartPool: () => Promise<void>}) => ({
+      poolAttached: (context, event) => ({
         ...context,
         restartPool: event.restartPool,
       }),
       poolDetached: (context) => ({...withStats(context, undefined), restartPool: undefined}),
-      poolStatsChanged: (context, event: {stats: WorkerStats}) => withStats(context, event.stats),
-      workerThrew: (context, event: {message: string; description: string}, enqueue) => {
+      poolStatsChanged: (context, event) => withStats(context, event.stats),
+      workerThrew: (context, event, enqueue) => {
         if (context.reportedThrowMessages.includes(event.message)) {
           return undefined
         }
@@ -124,7 +159,7 @@ export function createWorkerPoolStore({
         })
         return {...context, status: 'recovering', recovery: 'reloading-script'}
       },
-      recoveryChosen: (context, event: {recovery: WorkerRecovery}, enqueue) => {
+      recoveryChosen: (context, event, enqueue) => {
         if (context.recovery !== 'reloading-script') {
           return undefined
         }

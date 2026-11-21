@@ -39,9 +39,10 @@ export default defineConfig({
     // Node cannot load. Vite transforms the package so that the imports resolve.
     server: {deps: {inline: ['@pierre/icons']}},
     // The coverage gate covers the unit-tested logic: the helpers in src/lib, the
-    // client-config resolver, the PR review engine (src/reviews/lib), and the
-    // viewer and Symbols modules that have full coverage. The build and the smoke
-    // test exercise the route glue and the client bootstrap instead.
+    // client-config resolver, the PR review engine (src/reviews/lib), the XState
+    // stores (src/**/state), and the viewer and Symbols modules that have full
+    // coverage. The build and the smoke test exercise the route glue and the
+    // client bootstrap instead.
     coverage: {
       provider: 'v8',
       include: [

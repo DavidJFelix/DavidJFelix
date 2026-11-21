@@ -15,6 +15,7 @@ const REQUESTS: readonly SymbolDiffRequest[] = [
 
 interface SymbolDiffBody {
   files: {itemId: string; name: string}[]
+  path: string
 }
 
 type SymbolDiffResolver = HttpResponseResolver<PathParams, SymbolDiffBody>
@@ -180,6 +181,29 @@ test('asks again only for the files that failed', async () => {
     expect(result.current.entries.map((entry) => entry.status)).toEqual(['ready', 'ready'])
   })
   expect(askedFor).toEqual([['item-1', 'item-2'], ['item-1']])
+})
+
+test('reads every file again for a new source', async () => {
+  const askedForPaths: string[] = []
+  serveSymbolDiffs(async ({request}) => {
+    const body = await request.json()
+    askedForPaths.push(body.path)
+    return ndjson(body.files.map(modifiedGreet))
+  })
+  const {rerender} = renderHook(
+    ({requests, sourcePath}) => useSymbolDiffs({enabled: true, requests, sourcePath}),
+    {initialProps: {requests: REQUESTS, sourcePath: 'o/r/pull/1'}},
+  )
+  onTestFinished(cleanup)
+  await waitFor(() => {
+    expect(askedForPaths).toEqual(['o/r/pull/1'])
+  })
+
+  rerender({requests: [...REQUESTS], sourcePath: 'o/r/pull/2'})
+
+  await waitFor(() => {
+    expect(askedForPaths).toEqual(['o/r/pull/1', 'o/r/pull/2'])
+  })
 })
 
 test('reads again the files that a re-run left in flight', async () => {

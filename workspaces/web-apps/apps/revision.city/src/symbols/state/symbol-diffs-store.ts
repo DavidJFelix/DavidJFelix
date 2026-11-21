@@ -1,4 +1,5 @@
-import {createStoreLogic, type EventPayloadMap, type TriggerObject} from '@xstate/store'
+import {createStoreLogic, type InferSchemaPayloadMap, type TriggerObject} from '@xstate/store'
+import * as z from 'zod/mini'
 
 import type {SymbolDiff} from '@/symbols/lib/code-symbol'
 import {
@@ -8,51 +9,90 @@ import {
   streamSymbolDiffs,
 } from '@/symbols/lib/symbol-diff-client'
 
-export type SymbolDiffStatus = 'pending' | 'loading' | 'ready' | 'error'
+const symbolDiffRequestSchema = z.custom<SymbolDiffRequest>()
 
-export interface SymbolDiffEntry {
-  readonly diff?: SymbolDiff
-  readonly error?: string
-  readonly itemId: string
-  readonly name: string
-  readonly status: SymbolDiffStatus
+const symbolDiffEntryShape = {
+  diff: z.optional(z.custom<SymbolDiff>()),
+  error: z.optional(z.string()),
+  itemId: z.string(),
+  name: z.string(),
 }
 
-export interface SymbolDiffsInput {
-  readonly domain?: string
-  readonly sourcePath: string
+const symbolDiffEntrySchema = z.readonly(
+  z.object({...symbolDiffEntryShape, status: z.enum(['pending', 'loading', 'ready', 'error'])}),
+)
+
+const settledEntrySchema = z.readonly(
+  z.object({...symbolDiffEntryShape, status: z.enum(['ready', 'error'])}),
+)
+
+const symbolDiffsInputShape = {
+  domain: z.optional(z.string()),
+  sourcePath: z.string(),
 }
 
-interface SymbolDiffBatch {
-  readonly controller: AbortController
-  readonly id: number
-  readonly unanswered: readonly SymbolDiffRequest[]
-}
+const symbolDiffsInputSchema = z.readonly(z.object(symbolDiffsInputShape))
 
-type SettledEntry = SymbolDiffEntry & {readonly status: 'ready' | 'error'}
+const symbolDiffBatchSchema = z.readonly(
+  z.object({
+    controller: z.instanceof(AbortController),
+    id: z.number(),
+    unanswered: z.readonly(z.array(symbolDiffRequestSchema)),
+  }),
+)
 
-interface SymbolDiffsData extends SymbolDiffsInput {
-  readonly batchCount: number
-  readonly requests: readonly SymbolDiffRequest[]
+const symbolDiffsDataShape = {
+  ...symbolDiffsInputShape,
+  batchCount: z.number(),
+  requests: z.readonly(z.array(symbolDiffRequestSchema)),
   // A new file list keeps these results, and a new source clears them.
-  readonly results: ReadonlyMap<string, SettledEntry>
+  results: z.readonly(z.map(z.string(), settledEntrySchema)),
 }
 
 // `stopped` sends nothing. `idle` sends a batch as soon as a file is pending.
-export type SymbolDiffsContext = SymbolDiffsData &
-  (
-    | {readonly batch?: undefined; readonly status: 'stopped' | 'idle'}
-    | {readonly batch: SymbolDiffBatch; readonly status: 'reading'}
-  )
+const symbolDiffsContextSchema = z.readonly(
+  z.discriminatedUnion('status', [
+    z.object({
+      ...symbolDiffsDataShape,
+      batch: z.optional(z.undefined()),
+      status: z.enum(['stopped', 'idle']),
+    }),
+    z.object({...symbolDiffsDataShape, batch: symbolDiffBatchSchema, status: z.literal('reading')}),
+  ]),
+)
+
+const symbolDiffsEventSchemas = {
+  requestsChanged: z.object({requests: z.readonly(z.array(symbolDiffRequestSchema))}),
+  batchStarted: z.object({}),
+  resultArrived: z.object({batchId: z.number(), result: z.custom<SymbolDiffStreamResult>()}),
+  streamEnded: z.object({batchId: z.number()}),
+  batchFailed: z.object({batchId: z.number(), error: z.string()}),
+  aborted: z.object({}),
+  retried: z.object({}),
+  sourceChanged: symbolDiffsInputSchema,
+}
+
+export type SymbolDiffEntry = z.infer<typeof symbolDiffEntrySchema>
+
+export type SymbolDiffStatus = SymbolDiffEntry['status']
+
+export type SymbolDiffsInput = z.infer<typeof symbolDiffsInputSchema>
+
+export type SymbolDiffsContext = z.infer<typeof symbolDiffsContextSchema>
+
+type SymbolDiffBatch = z.infer<typeof symbolDiffBatchSchema>
+
+type SettledEntry = z.infer<typeof settledEntrySchema>
 
 type ReadingContext = Extract<SymbolDiffsContext, {status: 'reading'}>
 
 interface ReadBatchParams extends SymbolDiffsInput {
   batch: SymbolDiffBatch
-  trigger: TriggerObject<EventPayloadMap>
+  trigger: TriggerObject<InferSchemaPayloadMap<typeof symbolDiffsEventSchemas>>
 }
 
 export const symbolDiffsLogic = createStoreLogic({
+  schemas: {context: symbolDiffsContextSchema, events: symbolDiffsEventSchemas},
   context: ({domain, sourcePath}: SymbolDiffsInput): SymbolDiffsContext => ({
     batchCount: 0,
     domain,
@@ -63,7 +103,7 @@ export const symbolDiffsLogic = createStoreLogic({
   }),
   selectors: {entries: listEntries},
   on: {
-    requestsChanged: (context, {requests}: {requests: readonly SymbolDiffRequest[]}, enqueue) => {
+    requestsChanged: (context, {requests}, enqueue) => {
       enqueue.trigger.batchStarted()
       return context.status === 'stopped'
         ? {...context, requests, status: 'idle'}
@@ -86,10 +126,7 @@ export const symbolDiffsLogic = createStoreLogic({
       })
       return {...context, batch, batchCount: batch.id, status: 'reading'}
     },
-    resultArrived: (
-      context,
-      {batchId, result}: {batchId: number; result: SymbolDiffStreamResult},
-    ) => {
+    resultArrived: (context, {batchId, result}) => {
       if (!isCurrentBatch(context, batchId)) {
         return undefined
       }
@@ -113,14 +150,14 @@ export const symbolDiffsLogic = createStoreLogic({
         results: new Map(context.results).set(resultKey(request), entry),
       }
     },
-    streamEnded: (context, {batchId}: {batchId: number}, enqueue) => {
+    streamEnded: (context, {batchId}, enqueue) => {
       if (!isCurrentBatch(context, batchId)) {
         return undefined
       }
       enqueue.trigger.batchStarted()
       return failUnanswered(context, 'No result for this file.')
     },
-    batchFailed: (context, {batchId, error}: {batchId: number; error: string}, enqueue) => {
+    batchFailed: (context, {batchId, error}, enqueue) => {
       if (!isCurrentBatch(context, batchId)) {
         return undefined
       }
@@ -147,7 +184,7 @@ export const symbolDiffsLogic = createStoreLogic({
       enqueue.trigger.batchStarted()
       return {...context, results}
     },
-    sourceChanged: (context, {domain, sourcePath}: SymbolDiffsInput, enqueue) => {
+    sourceChanged: (context, {domain, sourcePath}, enqueue) => {
       if (domain === context.domain && sourcePath === context.sourcePath) {
         return undefined
       }

@@ -3,16 +3,18 @@ import * as z from 'zod/mini'
 
 import {getPatchViewerHref, toPatchViewerLocation} from '@/diffs/lib/get-patch-viewer-href'
 
-const diffUrlFormInputSchema = z.object({committedUrl: z.string()})
+const diffUrlFormInputSchema = z.readonly(z.object({committedUrl: z.string()}))
 
-const diffUrlFormContextSchema = z.object({
-  committedUrl: z.string(),
-  // `submitting` starts at the Enter key press. A blur in that status comes from
-  // Enter, so it does not restore the committed URL. The submit event ends the
-  // status, and so do typing, Escape, and the clear button.
-  status: z.enum(['editing', 'invalid', 'submitting']),
-  url: z.string(),
-})
+const diffUrlFormContextSchema = z.readonly(
+  z.object({
+    committedUrl: z.string(),
+    // `submitting` starts at the Enter key press. A blur in that status comes from
+    // Enter, so it does not restore the committed URL. The submit event ends the
+    // status, and so do typing, Escape, and the clear button.
+    status: z.enum(['editing', 'invalid', 'submitting']),
+    url: z.string(),
+  }),
+)
 
 const diffUrlFormEventSchemas = {
   changed: z.object({url: z.string()}),

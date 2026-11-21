@@ -38,7 +38,7 @@ import {DiffsSidebar} from './diffs-sidebar'
 import {DiffsStatusPanel} from './diffs-status-panel'
 import {DiffsViewer} from './diffs-viewer'
 import {useBaseMovedOn} from './hooks/use-base-moved-on'
-import {useGitHubSession} from './hooks/use-github-session'
+import {useFirstGitHubSession} from './hooks/use-github-session'
 import {usePatchLoader} from './hooks/use-patch-loader'
 import {useThemeCycle} from './hooks/use-theme-cycle'
 import {useWorkerPoolRecovering} from './worker-pool-context'
@@ -67,10 +67,9 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
   const [showBackgrounds, setShowBackgrounds] = useState(true)
   const [diffIndicators, setDiffIndicators] = useState<DiffIndicators>('bars')
   const [lineNumbers, setLineNumbers] = useState(true)
-  // Signing in or out reloads the page, so the session is fixed for the life
-  // of this component; the cookie rides along on the same-origin API fetches
-  // without any client-side token plumbing.
-  const githubSession = useGitHubSession()
+  // The viewer keeps the first answer: CodeView does not compute its file heights
+  // again when a later answer changes `loadDiffFiles`.
+  const githubSession = useFirstGitHubSession()
   const baseMovedOn = useBaseMovedOn({
     domain,
     path,

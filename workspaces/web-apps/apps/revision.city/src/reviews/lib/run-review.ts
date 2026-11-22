@@ -1,3 +1,4 @@
+import {type CheckRunOutcome, checkRunLogic} from '../state/check-run-store'
 import type {ChunkReviewStore} from './chunk-review-store'
 import {decideOutcome, isAtLeast, REPORT_SEVERITY} from './findings'
 import {
@@ -7,14 +8,10 @@ import {
   listPullRequestFiles,
 } from './github-api'
 import type {Chat} from './openrouter'
-import {completeCheckRun, createCheckRun, postReview, removeLabel} from './publish-review'
+import {createCheckRun, postReview, removeLabel, updateCheckRun} from './publish-review'
 import {readBaseGuides} from './repository-guides'
 import {loadRepositorySnapshot} from './repository-snapshot'
-import {
-  listResolvedFingerprints,
-  RESOLVABLE_EXTERNAL_ID,
-  syncCheckRunWithThreads,
-} from './resolved-threads'
+import {listResolvedFingerprints, syncCheckRunWithThreads} from './resolved-threads'
 import {probeReviewAgent, type ReviewAgent} from './review-agent-probe'
 import {renderFileList, renderPullRequestDescription} from './review-chunks'
 import {
@@ -145,8 +142,11 @@ export async function runReview({
   const {headSha, checkRunId} = started
   const startedFields = {headSha, checkRunId}
   const isCurrentHead = async () => (await openHeadSha()) === headSha
-  const complete = (conclusion: 'success' | 'failure' | 'neutral', output: CheckRunOutput) =>
-    completeCheckRun({request, repository, checkRunId, conclusion, output})
+  const complete = (outcome: CheckRunOutcome, output: CheckRunOutput) => {
+    const checkRun = checkRunLogic.createStore({status: 'in-progress'})
+    checkRun.trigger.completed({outcome, output})
+    return updateCheckRun({request, repository, checkRunId, state: checkRun.getSnapshot().context})
+  }
   // The probe runs at the same time as the review, and the review does not use
   // its answer.
   const probe =
@@ -233,7 +233,7 @@ export async function runReview({
     })
     const completed = batchOutcomes.filter((outcomes) => outcomes !== null)
     if (completed.length < batches.length) {
-      await step('complete check run', () => complete('neutral', SUPERSEDED_OUTPUT))
+      await step('complete check run', () => complete('superseded', SUPERSEDED_OUTPUT))
       await logRun('superseded', startedFields)
       return
     }
@@ -247,7 +247,7 @@ export async function runReview({
     )
     await step('complete check run', async () => {
       if (posted === null) {
-        return complete('neutral', SUPERSEDED_OUTPUT)
+        return complete('superseded', SUPERSEDED_OUTPUT)
       }
       const output = formatCheckRunOutput({
         outcome,
@@ -264,14 +264,10 @@ export async function runReview({
         review.failures.length === 0 &&
         selection.lineTooLongCount === 0 &&
         posted.inline
-      await completeCheckRun({
-        request,
-        repository,
-        checkRunId,
-        conclusion: outcome.failed ? 'failure' : 'success',
+      await complete(
+        resolvable ? 'failed-resolvable' : outcome.failed ? 'failed' : 'passed',
         output,
-        ...(resolvable ? {externalId: RESOLVABLE_EXTERNAL_ID} : {}),
-      })
+      )
       // A failed sync must not run the step again: a new attempt would fail
       // the check run again, also after a click on the dismiss button.
       if (resolvable) {
@@ -347,7 +343,7 @@ export async function runReview({
     // GitHub is down.
     await logError(startedFields, error)
     await step('report failure', () =>
-      complete('failure', {
+      complete('failed', {
         title: 'The review failed',
         summary: neutralizeMarkdown(String(error).slice(0, 1000)),
       }),

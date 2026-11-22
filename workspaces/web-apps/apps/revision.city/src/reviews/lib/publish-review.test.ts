@@ -3,7 +3,7 @@ import {expect, test} from 'vitest'
 import {z} from 'zod'
 import type {Finding} from './findings'
 import {GitHubApiError, type GitHubRequest} from './github-api'
-import {completeCheckRun, createCheckRun, postReview, removeLabel} from './publish-review'
+import {createCheckRun, postReview, removeLabel, updateCheckRun} from './publish-review'
 import {fingerprintFinding} from './review-markdown'
 
 const repository = {owner: 'acme', name: 'repo'}
@@ -49,15 +49,14 @@ test('createCheckRun starts an in-progress check run on the head', async () => {
   ])
 })
 
-test('completeCheckRun sets the conclusion and the output', async () => {
+test('updateCheckRun sets the conclusion and the output', async () => {
   const github = fakeGitHub()
 
-  await completeCheckRun({
+  await updateCheckRun({
     request: github.request,
     repository,
     checkRunId: 31,
-    conclusion: 'success',
-    output: {title: 'No findings', summary: 'Clean'},
+    state: {status: 'passed', reviewOutput: {title: 'No findings', summary: 'Clean'}},
   })
 
   expect(github.calls).toEqual([
@@ -74,16 +73,14 @@ test('completeCheckRun sets the conclusion and the output', async () => {
   ])
 })
 
-test('completeCheckRun adds the dismiss button to a failed check run', async () => {
+test('updateCheckRun adds the dismiss button to a failed check run', async () => {
   const github = fakeGitHub()
 
-  await completeCheckRun({
+  await updateCheckRun({
     request: github.request,
     repository,
     checkRunId: 31,
-    conclusion: 'failure',
-    output: {title: '1 finding', summary: 'Cost'},
-    externalId: 'resolvable-findings',
+    state: {status: 'failed-resolvable', reviewOutput: {title: '1 finding', summary: 'Cost'}},
   })
 
   expect(github.calls[0].body).toMatchObject({

@@ -108,9 +108,7 @@ function fakeGitHub(routes: Record<string, Route> = {}) {
     [FILES]: () => [changedFile('src/a.ts', SMALL_PATCH)],
     [CHECK_RUNS]: () => ({id: 31}),
     [CHECK_RUN]: () => ({}),
-    'GET /repos/acme/repo/check-runs/31': () => ({
-      external_id: lastCheckRun().external_id ?? null,
-    }),
+    'GET /repos/acme/repo/check-runs/31': () => listedCheckRun().check_runs[0],
     [TREE]: () => ({sha: 'tree', truncated: false, tree: []}),
     [BASE_TREE]: () => ({sha: 'base-tree', truncated: false, tree: []}),
     [COMMENTS]: () => [],
@@ -451,7 +449,7 @@ test('runReview keeps the check red when GitHub refuses the inline comments', as
   await runReview(runParams({request: github.request, chat: answering([highFinding])}))
 
   expect(github.sent(CHECK_RUN)).toHaveLength(1)
-  expect(github.sent(CHECK_RUN)[0].body).not.toHaveProperty('external_id')
+  expect(github.sent(CHECK_RUN)[0].body).toMatchObject({external_id: 'failed'})
   // No sync with the threads, which would list the check runs of the head.
   expect(github.sent(checkRunList(headSha))).toEqual([])
 })
@@ -480,7 +478,7 @@ test('runReview fails the check when a file has a diff line that is too long', a
     conclusion: 'failure',
     output: {title: '1 file with a too-long line'},
   })
-  expect(body).not.toHaveProperty('external_id')
+  expect(body).toMatchObject({external_id: 'failed'})
 })
 
 const failingLog: LogWideEvent = () => {

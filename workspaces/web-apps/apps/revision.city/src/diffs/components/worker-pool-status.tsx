@@ -1,5 +1,4 @@
-import {areWorkerStatsEqual, DEFAULT_CODE_VIEW_FILE_METRICS, queueRender} from '@pierre/diffs'
-import {useWorkerPool} from '@pierre/diffs/react'
+import {DEFAULT_CODE_VIEW_FILE_METRICS, queueRender} from '@pierre/diffs'
 import type {WorkerStats} from '@pierre/diffs/worker'
 import {
   IconCircleFill,
@@ -16,6 +15,7 @@ import type {DiffsViewerHandle} from '@/diffs/lib/types'
 import type {ThemeCycleControls} from './hooks/use-theme-cycle'
 import {StatItem} from './stat-item'
 import {StatusRow} from './status-row'
+import {useWorkerPoolStats} from './worker-pool-context'
 
 // Mirrors Tailwind's `transition` utility (color/background-color/border-color/opacity).
 const TRANSITION_COLORS =
@@ -98,21 +98,7 @@ export const WorkerPoolStatus = memo(function WorkerPoolStatus({
   themeCycle,
   viewerRef,
 }: WorkerPoolStatusProps) {
-  const pool = useWorkerPool()
-  const [stats, setStats] = useState<WorkerStats | undefined>()
-  useEffect(() => {
-    if (isNullish(pool)) {
-      return
-    }
-    return pool.subscribeToStatChanges((newStats) => {
-      setStats((prevStats): WorkerStats | undefined => {
-        if (areWorkerStatsEqual(prevStats, newStats)) {
-          return prevStats
-        }
-        return newStats
-      })
-    })
-  }, [pool])
+  const stats = useWorkerPoolStats()
   return (
     !isNullish(stats) && (
       <StatsDisplay

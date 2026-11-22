@@ -22,10 +22,8 @@ import {type ColorMode} from '@pierre/theming'
 import {Link} from '@tanstack/react-router'
 import {
   type CSSProperties,
-  type Dispatch,
   type KeyboardEvent,
   memo,
-  type SetStateAction,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -98,12 +96,12 @@ interface HeaderProps {
   onToggleFileTreeOverlay: () => void
   setColorMode: (mode: ColorMode) => void
   setDarkThemeName: (name: DarkThemeName) => void
-  setDiffIndicators: Dispatch<SetStateAction<DiffIndicators>>
-  setDiffStyle: Dispatch<SetStateAction<'split' | 'unified'>>
+  setDiffIndicators: (diffIndicators: DiffIndicators) => void
+  setDiffStyle: (diffStyle: 'split' | 'unified') => void
   setLightThemeName: (name: LightThemeName) => void
-  setLineNumbers: Dispatch<SetStateAction<boolean>>
-  setOverflow: Dispatch<SetStateAction<'wrap' | 'scroll'>>
-  setShowBackgrounds: Dispatch<SetStateAction<boolean>>
+  setLineNumbers: (lineNumbers: boolean) => void
+  setOverflow: (overflow: 'wrap' | 'scroll') => void
+  setShowBackgrounds: (showBackgrounds: boolean) => void
   showBackgrounds: boolean
 }
 

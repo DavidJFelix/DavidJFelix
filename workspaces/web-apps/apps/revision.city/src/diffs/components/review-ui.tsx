@@ -2,16 +2,7 @@ import {useStableCallback} from '@pierre/diffs/react'
 import {type ColorMode} from '@pierre/theming'
 import {useThemeController} from '@pierre/theming/react'
 import {shallowEqual, useSelector, useStore} from '@xstate/store-react'
-import {
-  type Dispatch,
-  type ReactNode,
-  type SetStateAction,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useSyncExternalStore,
-} from 'react'
+import {type ReactNode, useCallback, useEffect, useMemo, useRef, useSyncExternalStore} from 'react'
 
 import {css} from 'styled-system/css'
 import {CODEBERG_HOST, canReadCodebergFiles} from '@/diffs/lib/codeberg-diff-source'
@@ -30,7 +21,11 @@ import type {
 } from '@/diffs/lib/types'
 import {upsertSavedCommentSidebarEntry} from '@/diffs/lib/upsert-saved-comment-sidebar-entry'
 import {docsThemeCatalog, themeController} from '@/diffs/state/theme-controller'
-import {type ViewSettingsStore, viewSettingsLogic} from '@/diffs/state/view-settings-store'
+import {
+  type ViewSettingsContext,
+  type ViewSettingsStore,
+  viewSettingsLogic,
+} from '@/diffs/state/view-settings-store'
 import type {SymbolSelection} from '@/symbols/components/symbol-changes-list'
 import type {SymbolDiffRequest} from '@/symbols/lib/symbol-diff-client'
 import {OverridableThemeSourceProvider} from './contexts/overridable-theme-source-provider'
@@ -386,37 +381,16 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
 }
 
 function createViewSettingSetters(store: ViewSettingsStore) {
-  const read = () => store.getSnapshot().context
   return {
-    setDiffIndicators: toStateSetter(
-      () => read().diffIndicators,
-      (diffIndicators) => store.trigger.diffIndicatorsChanged({diffIndicators}),
-    ),
-    setDiffStyle: toStateSetter(
-      () => read().diffStyle,
-      (diffStyle) => store.trigger.diffStyleChanged({diffStyle}),
-    ),
-    setLineNumbers: toStateSetter(
-      () => read().lineNumbers,
-      (lineNumbers) => store.trigger.lineNumbersChanged({lineNumbers}),
-    ),
-    setOverflow: toStateSetter(
-      () => read().overflow,
-      (overflow) => store.trigger.overflowChanged({overflow}),
-    ),
-    setShowBackgrounds: toStateSetter(
-      () => read().showBackgrounds,
-      (showBackgrounds) => store.trigger.showBackgroundsChanged({showBackgrounds}),
-    ),
-  }
-}
-
-function toStateSetter<T extends boolean | string>(
-  read: () => T,
-  write: (value: T) => void,
-): Dispatch<SetStateAction<T>> {
-  return (action) => {
-    write(typeof action === 'function' ? action(read()) : action)
+    setDiffIndicators: (diffIndicators: ViewSettingsContext['diffIndicators']) =>
+      store.trigger.diffIndicatorsChanged({diffIndicators}),
+    setDiffStyle: (diffStyle: ViewSettingsContext['diffStyle']) =>
+      store.trigger.diffStyleChanged({diffStyle}),
+    setLineNumbers: (lineNumbers: boolean) => store.trigger.lineNumbersChanged({lineNumbers}),
+    setOverflow: (overflow: ViewSettingsContext['overflow']) =>
+      store.trigger.overflowChanged({overflow}),
+    setShowBackgrounds: (showBackgrounds: boolean) =>
+      store.trigger.showBackgroundsChanged({showBackgrounds}),
   }
 }
 

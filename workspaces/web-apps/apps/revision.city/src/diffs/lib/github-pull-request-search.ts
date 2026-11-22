@@ -24,10 +24,9 @@ export interface PullRequestSummary {
   draft: boolean
 }
 
-// A search item also gives the GitHub logins of the assignees. They are not on `PullRequestSummary`,
-// because the client parses summaries that have no assignees.
+// The assignees are not on `PullRequestSummary`, because the client parses summaries that have none.
 export interface PullRequestSearchItem extends PullRequestSummary {
-  assignees: string[]
+  assigneeLogins: string[]
 }
 
 export interface PullRequestSearchResult {
@@ -233,7 +232,7 @@ function parsePullRequestSearchItem(item: unknown): PullRequestSearchItem | unde
     author: readLogin(item.user),
     updatedAt: readOptionalString(item.updated_at),
     draft: item.draft === true,
-    assignees: Array.isArray(item.assignees)
+    assigneeLogins: Array.isArray(item.assignees)
       ? item.assignees.map(readLogin).filter((login) => login !== undefined)
       : [],
   }

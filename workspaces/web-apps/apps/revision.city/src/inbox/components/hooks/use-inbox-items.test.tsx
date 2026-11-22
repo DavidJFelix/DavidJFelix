@@ -81,7 +81,19 @@ test('an item keeps the fields of its pull request and has no assignees yet', as
 
   const {items} = await loadInbox()
 
-  expect(items).toEqual([{...summary, assignees: [], reasons: ['owned']}])
+  expect(items).toEqual([
+    {
+      owner: 'acme',
+      repo: 'web',
+      number: 7,
+      title: 'Add the inbox',
+      authorLogin: 'maintainer',
+      updatedAt: new Date('2026-11-18T10:00:00Z'),
+      draft: true,
+      assigneeLogins: [],
+      reasons: ['owned'],
+    },
+  ])
 })
 
 test('items are in the order of their last update, newest first, and an item with no time last', async () => {
@@ -110,7 +122,7 @@ test.each([
 
   const inbox = await loadInbox()
 
-  expect(inbox.truncated).toBe(truncated)
+  expect(inbox.isTruncated).toBe(truncated)
 })
 
 test('a rejected sign-in has no items', async () => {
@@ -121,12 +133,12 @@ test('a rejected sign-in has no items', async () => {
 
   const inbox = await loadInbox()
 
-  expect(inbox).toEqual({status: 'sign-in-again', items: [], truncated: false})
+  expect(inbox).toEqual({status: 'sign-in-again', items: [], isTruncated: false})
 })
 
 test('a disabled inbox stays idle', () => {
   const {result} = renderHook(() => useInboxItems(false))
   onTestFinished(cleanup)
 
-  expect(result.current).toEqual({status: 'idle', items: [], truncated: false})
+  expect(result.current).toEqual({status: 'idle', items: [], isTruncated: false})
 })

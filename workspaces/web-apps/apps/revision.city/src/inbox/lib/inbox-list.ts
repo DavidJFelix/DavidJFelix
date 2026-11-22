@@ -1,5 +1,6 @@
 import type {GitHubAuthOptions} from '@/diffs/lib/github-auth'
 import {
+  type PullRequestSearchItem,
   type PullRequestSearchResult,
   searchPullRequests,
 } from '@/diffs/lib/github-pull-request-search'
@@ -10,6 +11,7 @@ import {
   type VisitorSearchParams,
 } from '@/diffs/lib/github-pull-requests'
 import {isNullish} from '@/diffs/lib/nullish'
+import {readOptionalDate} from '@/lib/json-read'
 
 import {INBOX_REASONS, type InboxItem, type InboxReason} from './inbox-item'
 
@@ -17,7 +19,7 @@ export interface InboxListBody {
   items: InboxItem[]
   // True when the list can miss pull requests: a list of organizations or repositories was cut
   // before its search, or GitHub has more pull requests than a search gave.
-  truncated: boolean
+  isTruncated: boolean
 }
 
 type InboxSearches = Readonly<Record<InboxReason, PullRequestSearchResult>>
@@ -47,7 +49,7 @@ async function listInbox(params: VisitorSearchParams): Promise<InboxListBody> {
   const searches: InboxSearches = {'review-requested': reviewRequested, ...groups}
   return {
     items: mergeInboxItems(searches),
-    truncated: Object.values(searches).some((search) => isSearchCut(search)),
+    isTruncated: Object.values(searches).some((search) => isSearchCut(search)),
   }
 }
 
@@ -60,17 +62,31 @@ function mergeInboxItems(searches: InboxSearches): InboxItem[] {
       items.set(
         key,
         isNullish(item)
-          ? {...pullRequest, reasons: [reason]}
+          ? createInboxItem(pullRequest, reason)
           : {...item, reasons: [...item.reasons, reason]},
       )
     }
   }
-  return [...items.values()].toSorted((a, b) => readSortTime(b).localeCompare(readSortTime(a)))
+  return [...items.values()].toSorted((a, b) => readSortTime(b) - readSortTime(a))
 }
 
-// An empty time is less than every ISO 8601 time, so the pull requests with no time come last.
-function readSortTime(item: InboxItem): string {
-  return item.updatedAt ?? ''
+function createInboxItem(pullRequest: PullRequestSearchItem, reason: InboxReason): InboxItem {
+  return {
+    owner: pullRequest.owner,
+    repo: pullRequest.repo,
+    number: pullRequest.number,
+    title: pullRequest.title,
+    authorLogin: pullRequest.author,
+    updatedAt: readOptionalDate(pullRequest.updatedAt),
+    draft: pullRequest.draft,
+    assigneeLogins: pullRequest.assigneeLogins,
+    reasons: [reason],
+  }
+}
+
+// A pull request with no time sorts as the start of the epoch, so it comes after the others.
+function readSortTime(item: InboxItem): number {
+  return item.updatedAt?.getTime() ?? 0
 }
 
 function isSearchCut(search: PullRequestSearchResult): boolean {

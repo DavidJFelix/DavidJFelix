@@ -2,6 +2,7 @@ import {expect, test} from 'vitest'
 
 import {
   isRecord,
+  readOptionalDate,
   readOptionalNumber,
   readOptionalString,
   readStringPath,
@@ -33,6 +34,15 @@ test.each<[unknown, number | undefined]>([
   ['3', undefined],
 ])('readOptionalNumber(%j) is %j', (value, expected) => {
   expect(readOptionalNumber(value)).toBe(expected)
+})
+
+test.each<[unknown, string | undefined]>([
+  ['2026-11-18T10:00:00Z', '2026-11-18T10:00:00.000Z'],
+  ['last week', undefined],
+  ['', undefined],
+  [1_763_460_000_000, undefined],
+])('readOptionalDate(%j) is the date %j', (value, expected) => {
+  expect(readOptionalDate(value)?.toISOString()).toBe(expected)
 })
 
 const DATA = {head: {repo: {full_name: 'owner/repo', id: 7}}}

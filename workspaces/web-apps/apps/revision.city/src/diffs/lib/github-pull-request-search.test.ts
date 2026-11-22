@@ -15,7 +15,7 @@ const searchAssignees = async (assignees: unknown): Promise<string[] | undefined
     qualifiers: ['assignee:@me'],
     token: 'ghu_token',
   })
-  return items[0]?.assignees
+  return items[0]?.assigneeLogins
 }
 
 test('searchPullRequests reads the logins of the assignees of a search item', async () => {

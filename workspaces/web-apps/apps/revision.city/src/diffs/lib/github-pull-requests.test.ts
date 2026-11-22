@@ -239,7 +239,7 @@ test('groups pull requests by assignment, ownership, membership, and watching', 
       author: 'someone',
       updatedAt: '2026-07-28T10:00:00Z',
       draft: false,
-      assignees: [],
+      assigneeLogins: [],
     },
   ])
   expect(groups[1]?.pullRequests.map((pr) => [pr.number, pr.draft])).toEqual([

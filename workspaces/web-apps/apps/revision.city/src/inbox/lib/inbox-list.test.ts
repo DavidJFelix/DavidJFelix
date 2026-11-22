@@ -1,6 +1,6 @@
 import {expect, test, vi} from 'vitest'
 
-import {handleInboxListRequest, type InboxListBody} from './inbox-list'
+import {handleInboxListRequest} from './inbox-list'
 
 const INBOX_URL = 'https://revision.city/api/inbox'
 const SEARCH_BASE_QUERY = 'is:pr is:open archived:false '
@@ -78,10 +78,16 @@ const requestInbox = (fetchImpl: FetchLike, cookie = SESSION_COOKIE): Promise<Re
     fetch: fetchImpl,
   })
 
-const readInbox = async (stub: GitHubStub): Promise<InboxListBody> => {
+// The body as JSON gives it: the dates of the items are ISO 8601 strings.
+interface InboxListJson {
+  items: Record<string, unknown>[]
+  isTruncated: boolean
+}
+
+const readInbox = async (stub: GitHubStub): Promise<InboxListJson> => {
   const response = await requestInbox(stubGitHubFetch(stub))
   expect(response.status).toBe(200)
-  const body: InboxListBody = await response.json()
+  const body: InboxListJson = await response.json()
   return body
 }
 
@@ -107,10 +113,10 @@ test('a pull request from three searches comes one time with its reasons in the 
       repo: 'tools',
       number: 7,
       title: 'Fix the widget',
-      author: 'someone',
-      updatedAt: '2026-11-18T10:00:00Z',
+      authorLogin: 'someone',
+      updatedAt: '2026-11-18T10:00:00.000Z',
       draft: false,
-      assignees: ['test-user'],
+      assigneeLogins: ['test-user'],
       reasons: ['review-requested', 'assigned', 'member'],
     },
   ])
@@ -141,29 +147,29 @@ test('the newest update comes first and a pull request with no update time comes
   expect(items.map((item) => item.number)).toEqual([3, 2, 1])
 })
 
-test.each<{name: string; stub: GitHubStub; truncated: boolean}>([
+test.each<{name: string; stub: GitHubStub; isTruncated: boolean}>([
   {
     name: 'no search is cut',
     stub: {searches: {'review-requested:@me': searchPage(searchItem())}},
-    truncated: false,
+    isTruncated: false,
   },
   {
     name: 'GitHub has more review requests than the page gives',
     stub: {searches: {'review-requested:@me': {total_count: 21, items: [searchItem()]}}},
-    truncated: true,
+    isTruncated: true,
   },
   {
     name: 'GitHub has more assigned pull requests than the page gives',
     stub: {searches: {'assignee:@me': {total_count: 2, items: [searchItem()]}}},
-    truncated: true,
+    isTruncated: true,
   },
   {
     name: 'the list of watched repositories fills a full page',
     stub: {subscriptions: Array.from({length: 100}, (_, i) => ({full_name: `other/repo-${i}`}))},
-    truncated: true,
+    isTruncated: true,
   },
-])('truncated is $truncated when $name', async ({stub, truncated}) => {
-  expect((await readInbox(stub)).truncated).toBe(truncated)
+])('isTruncated is $isTruncated when $name', async ({stub, isTruncated}) => {
+  expect((await readInbox(stub)).isTruncated).toBe(isTruncated)
 })
 
 test('a load with every search at its limit does 8 searches and is truncated', async () => {
@@ -182,7 +188,7 @@ test('a load with every search at its limit does 8 searches and is truncated', a
   const response = await requestInbox(fetchImpl)
 
   expect(searchCount(fetchImpl)).toBe(8)
-  expect(await response.json()).toEqual({items: [], truncated: true})
+  expect(await response.json()).toEqual({items: [], isTruncated: true})
 })
 
 test.each<{name: string; searchStatus: number; status: number; reason?: string; wait?: string}>([

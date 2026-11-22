@@ -11,7 +11,6 @@ import {
   createGitHubDiffFileLoader,
 } from '@/diffs/lib/diff-file-loader'
 import {isNullish} from '@/diffs/lib/nullish'
-import {removeSavedCommentSidebarEntry} from '@/diffs/lib/remove-saved-comment-sidebar-entry'
 import type {DarkThemeName, LightThemeName} from '@/diffs/lib/theme-names'
 import type {
   DiffsDeletedCommentEvent,
@@ -19,7 +18,6 @@ import type {
   DiffsSavedCommentEvent,
   DiffsViewerHandle,
 } from '@/diffs/lib/types'
-import {upsertSavedCommentSidebarEntry} from '@/diffs/lib/upsert-saved-comment-sidebar-entry'
 import {docsThemeCatalog, themeController} from '@/diffs/state/theme-controller'
 import {
   type ViewSettingsContext,
@@ -154,7 +152,7 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
     onLineLinkChange,
     onViewerReady,
     retryLoad,
-    setCommentSections,
+    savedComments,
     treeSource,
     viewerKey,
   } = usePatchLoader({
@@ -202,17 +200,15 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
   })
   const handleCommentSaved = useCallback(
     (comment: DiffsSavedCommentEvent) => {
-      setCommentSections((prev) =>
-        upsertSavedCommentSidebarEntry(prev, commentFileByItemId, comment),
-      )
+      savedComments.trigger.commentSaved({comment, files: commentFileByItemId})
     },
-    [commentFileByItemId, setCommentSections],
+    [commentFileByItemId, savedComments],
   )
   const handleCommentDeleted = useCallback(
     (comment: DiffsDeletedCommentEvent) => {
-      setCommentSections((prev) => removeSavedCommentSidebarEntry(prev, comment))
+      savedComments.trigger.commentDeleted(comment)
     },
-    [setCommentSections],
+    [savedComments],
   )
   const handleToggleFileTreeOverlay = useStableCallback(() => {
     viewSettingsStore.trigger.fileTreeOverlayToggled()

@@ -1,18 +1,18 @@
-import {
-  areSelectionsEqual,
-  type CodeViewDiffItem,
-  type CodeViewItem,
-  type CodeViewLineSelection,
-  type CodeViewOptions,
-  type DiffIndicators,
-  type DiffLineAnnotation,
-  type FileDiffContentsLoader,
-  type SelectedLineRange,
-  type ThemeTypes,
+import type {
+  CodeViewDiffItem,
+  CodeViewItem,
+  CodeViewLineSelection,
+  CodeViewOptions,
+  DiffIndicators,
+  DiffLineAnnotation,
+  FileDiffContentsLoader,
+  SelectedLineRange,
+  ThemeTypes,
 } from '@pierre/diffs'
 import {type CodeViewAnnotationArgs, useStableCallback} from '@pierre/diffs/react'
 import {IconChevronSm} from '@pierre/icons'
-import {memo, type RefObject, useMemo, useRef, useState} from 'react'
+import {useSelector, useStore} from '@xstate/store-react'
+import {memo, type RefObject, useEffect, useMemo} from 'react'
 
 import {css, cx} from 'styled-system/css'
 import type {AvatarName} from '@/diffs/lib/annotation'
@@ -31,6 +31,7 @@ import type {
   DiffsSavedCommentEvent,
   DiffsViewerHandle,
 } from '@/diffs/lib/types'
+import {type DraftComment, draftCommentLogic} from '@/diffs/state/draft-comment-store'
 import {DraftAnnotation} from './draft-annotation'
 import {ExampleAnnotation} from './example-annotation'
 import {useChromeThemeProps} from './hooks/use-chrome-theme-props'
@@ -41,12 +42,12 @@ function getNextItemVersion(item: CodeViewItem<CommentMetadata>): number {
 }
 
 function updateViewerDiffItem(
-  viewer: DiffsViewerHandle,
+  viewer: DiffsViewerHandle | null,
   itemId: string,
   updateItem: (item: CodeViewDiffItem<CommentMetadata>) => boolean,
 ): CodeViewDiffItem<CommentMetadata> | undefined {
-  const item = viewer.getItem(itemId)
-  if (isNullish(item) || !isDiffItem(item)) {
+  const item = viewer?.getItem(itemId)
+  if (isNullish(viewer) || isNullish(item) || !isDiffItem(item)) {
     return undefined
   }
 
@@ -58,9 +59,53 @@ function updateViewerDiffItem(
   return viewer.updateItem(item) ? item : undefined
 }
 
-interface ActiveDraftComment {
-  itemId: string
-  key: string
+function removeAnnotation(item: CodeViewDiffItem<CommentMetadata>, key: string): boolean {
+  if (isNullish(item.annotations)) {
+    return false
+  }
+
+  const nextAnnotations = item.annotations.filter((annotation) => annotation.metadata.key !== key)
+  if (nextAnnotations.length === item.annotations.length) {
+    return false
+  }
+
+  item.annotations = nextAnnotations
+  return true
+}
+
+function replaceDraftAnnotations(
+  item: CodeViewDiffItem<CommentMetadata>,
+  {key, lineNumber, range, side}: DraftComment,
+): boolean {
+  const nonDraftAnnotations = (item.annotations ?? []).filter(
+    (annotation) => !isDraftMetadata(annotation.metadata),
+  )
+  const draftAnnotation: DiffLineAnnotation<CommentMetadata> = {
+    side,
+    lineNumber,
+    metadata: {kind: 'draft', key, message: '', range},
+  }
+  item.annotations = [...nonDraftAnnotations, draftAnnotation]
+  return true
+}
+
+function saveDraftAnnotation(
+  item: CodeViewDiffItem<CommentMetadata>,
+  {author, key, message}: Pick<DiffsSavedCommentEvent, 'author' | 'key' | 'message'>,
+): boolean {
+  const draftAnnotation = item.annotations?.find((annotation) => annotation.metadata.key === key)
+  if (isNullish(draftAnnotation) || !isDraftAnnotation(draftAnnotation)) {
+    return false
+  }
+
+  const savedAnnotation: DiffLineAnnotation<CommentMetadata> = {
+    ...draftAnnotation,
+    metadata: {kind: 'saved', key, author, message, range: draftAnnotation.metadata.range},
+  }
+  item.annotations = item.annotations?.map((annotation) =>
+    annotation === draftAnnotation ? savedAnnotation : annotation,
+  )
+  return true
 }
 
 interface DiffsViewerProps {
@@ -100,9 +145,8 @@ export const DiffsViewer = memo(function DiffsViewer({
   onLineLinkChange,
   onViewerReady,
 }: DiffsViewerProps) {
-  const nextCommentKeyRef = useRef(0)
-  const activeDraftRef = useRef<ActiveDraftComment | null>(null)
-  const [selectedLines, setSelectedLines] = useState<CodeViewLineSelection | null>(null)
+  const store = useStore(draftCommentLogic)
+  const selectedLines = useSelector(store, ({context}) => context.selectedLines)
   const {style: chromeStyle} = useChromeThemeProps(diffsChromeMapping)
   // Preserve the previous `undefined`-means-not-resolved contract that
   // buildAnnotationThemeStyle and the className fallbacks depend on.
@@ -112,16 +156,69 @@ export const DiffsViewer = memo(function DiffsViewer({
     [themeChromeStyle],
   )
 
+  // The viewer items keep the `annotations`, so this effect applies each change
+  // that the store emits.
+  useEffect(() => {
+    const subscriptions = [
+      store.on('draftDiscarded', ({itemId, key}) => {
+        updateViewerDiffItem(viewerRef.current, itemId, (item) => removeAnnotation(item, key))
+      }),
+      store.on('draftOpened', (draft) => {
+        updateViewerDiffItem(viewerRef.current, draft.itemId, (item) =>
+          replaceDraftAnnotations(item, draft),
+        )
+      }),
+      store.on('commentRemoved', ({itemId, key}) => {
+        const {current: viewer} = viewerRef
+        if (isNullish(viewer)) {
+          return
+        }
+        const viewerItem = viewer.getItem(itemId)
+        const removedAnnotation =
+          !isNullish(viewerItem) && isDiffItem(viewerItem)
+            ? viewerItem.annotations?.find((annotation) => annotation.metadata.key === key)
+            : undefined
+
+        updateViewerDiffItem(viewer, itemId, (item) => removeAnnotation(item, key))
+        onLineLinkChange(null)
+        if (!isNullish(removedAnnotation) && isSavedAnnotation(removedAnnotation)) {
+          onCommentDeleted({itemId, key})
+        }
+      }),
+      store.on('draftSaved', ({author, itemId, key, lineNumber, message, range, side}) => {
+        const updatedItem = updateViewerDiffItem(viewerRef.current, itemId, (item) =>
+          saveDraftAnnotation(item, {author, key, message}),
+        )
+        if (isNullish(updatedItem)) {
+          return
+        }
+
+        onLineLinkChange(null)
+        onCommentSaved({
+          author,
+          itemId,
+          key,
+          lineNumber,
+          lineType: classifyCommentLineType(updatedItem.fileDiff, side, lineNumber),
+          message,
+          range,
+          side,
+        })
+      }),
+    ]
+    return () => {
+      for (const subscription of subscriptions) {
+        subscription.unsubscribe()
+      }
+    }
+  }, [onCommentDeleted, onCommentSaved, onLineLinkChange, store, viewerRef])
+
   const handleSetSelection = useStableCallback((selection: CodeViewLineSelection | null) => {
-    setSelectedLines(selection)
+    store.trigger.linesSelected({selection})
   })
 
   const handleToggleCommentSelection = useStableCallback((selection: CodeViewLineSelection) => {
-    setSelectedLines((prev) =>
-      prev?.id === selection.id && areSelectionsEqual(prev.range, selection.range)
-        ? null
-        : selection,
-    )
+    store.trigger.commentClicked({selection})
   })
 
   const handleLineSelectionEnd = useStableCallback(
@@ -142,196 +239,16 @@ export const DiffsViewer = memo(function DiffsViewer({
   })
 
   const handleCreateDraftComment = useStableCallback((range: SelectedLineRange, itemId: string) => {
-    const side = range.endSide ?? range.side
-    if (isNullish(side)) {
-      return
-    }
-
-    const lineNumber = range.end
-    const commentKey = `draft-${nextCommentKeyRef.current++}`
-    const {current: viewer} = viewerRef
-    if (isNullish(viewer)) {
-      return
-    }
-
-    const draftAnnotation: DiffLineAnnotation<CommentMetadata> = {
-      side,
-      lineNumber,
-      metadata: {
-        kind: 'draft',
-        key: commentKey,
-        message: '',
-        range,
-      },
-    }
-
-    const {current: activeDraft} = activeDraftRef
-    if (!isNullish(activeDraft) && activeDraft.itemId !== itemId) {
-      updateViewerDiffItem(viewer, activeDraft.itemId, (item) => {
-        if (isNullish(item.annotations)) {
-          return false
-        }
-
-        const nextAnnotations = item.annotations.filter(
-          (annotation) => annotation.metadata.key !== activeDraft.key,
-        )
-        if (nextAnnotations.length === item.annotations.length) {
-          return false
-        }
-
-        item.annotations = nextAnnotations
-        return true
-      })
-    }
-
-    const updatedItem = updateViewerDiffItem(viewer, itemId, (item) => {
-      const nonDraftAnnotations = (item.annotations ?? []).filter(
-        (annotation) => !isDraftMetadata(annotation.metadata),
-      )
-      item.annotations = [...nonDraftAnnotations, draftAnnotation]
-      return true
-    })
-
-    if (!isNullish(updatedItem)) {
-      activeDraftRef.current = {itemId, key: commentKey}
-    }
+    store.trigger.gutterClicked({itemId, range})
   })
 
   const handleRemoveComment = useStableCallback((itemId: string, key: string) => {
-    const {current: viewer} = viewerRef
-    if (isNullish(viewer)) {
-      return
-    }
-    const item = viewer.getItem(itemId)
-    const removedAnnotation =
-      !isNullish(item) && isDiffItem(item)
-        ? item.annotations?.find((annotation) => annotation.metadata.key === key)
-        : undefined
-
-    updateViewerDiffItem(viewer, itemId, (item) => {
-      if (isNullish(item.annotations)) {
-        return false
-      }
-
-      const nextAnnotations = item.annotations.filter(
-        (annotation) => annotation.metadata.key !== key,
-      )
-
-      if (nextAnnotations.length === item.annotations.length) {
-        return false
-      }
-
-      item.annotations = nextAnnotations
-      return true
-    })
-
-    const {current: activeDraft} = activeDraftRef
-    if (activeDraft?.itemId === itemId && activeDraft.key === key) {
-      activeDraftRef.current = null
-    }
-
-    setSelectedLines(null)
-    onLineLinkChange(null)
-    if (!isNullish(removedAnnotation) && isSavedAnnotation(removedAnnotation)) {
-      onCommentDeleted({itemId, key})
-    }
+    store.trigger.removeRequested({itemId, key})
   })
 
   const handleSaveDraftComment = useStableCallback(
-    ({
-      itemId,
-      key,
-      message,
-      author,
-    }: {
-      itemId: string
-      key: string
-      message: string
-      author: AvatarName
-    }) => {
-      const trimmedMessage = message.trim()
-      const {current: viewer} = viewerRef
-      if (trimmedMessage.length === 0 || isNullish(viewer)) {
-        return
-      }
-
-      const item = viewer.getItem(itemId)
-      if (isNullish(item) || !isDiffItem(item)) {
-        return
-      }
-
-      const draftAnnotation = item?.annotations?.find(
-        (annotation) => annotation.metadata.key === key,
-      )
-      if (isNullish(draftAnnotation) || !isDraftAnnotation(draftAnnotation)) {
-        return
-      }
-
-      const updatedItem = updateViewerDiffItem(viewer, itemId, (item) => {
-        if (isNullish(item.annotations)) {
-          return false
-        }
-
-        const nextAnnotations: DiffLineAnnotation<CommentMetadata>[] = item.annotations.map(
-          (annotation) => {
-            if (annotation.metadata.key !== key || !isDraftAnnotation(annotation)) {
-              return annotation
-            }
-
-            return {
-              ...annotation,
-              metadata: {
-                kind: 'saved',
-                key,
-                author,
-                message: trimmedMessage,
-                range: annotation.metadata.range,
-              },
-            }
-          },
-        )
-
-        let didChange = false
-        for (let index = 0; index < nextAnnotations.length; index++) {
-          if (nextAnnotations[index] !== item.annotations[index]) {
-            didChange = true
-            break
-          }
-        }
-
-        if (!didChange) {
-          return false
-        }
-
-        item.annotations = nextAnnotations
-        return true
-      })
-
-      if (isNullish(updatedItem)) {
-        return
-      }
-
-      const {current: activeDraft} = activeDraftRef
-      if (activeDraft?.itemId === itemId && activeDraft.key === key) {
-        activeDraftRef.current = null
-      }
-
-      setSelectedLines(null)
-      onLineLinkChange(null)
-      onCommentSaved({
-        author,
-        itemId,
-        key,
-        lineNumber: draftAnnotation.lineNumber,
-        lineType: classifyCommentLineType(
-          item.fileDiff,
-          draftAnnotation.side,
-          draftAnnotation.lineNumber,
-        ),
-        message: trimmedMessage,
-        range: draftAnnotation.metadata.range,
-        side: draftAnnotation.side,
-      })
+    (comment: {itemId: string; key: string; message: string; author: AvatarName}) => {
+      store.trigger.saveRequested(comment)
     },
   )
 

@@ -1,5 +1,5 @@
 // cSpell:ignore revisioncity -- the GitHub App's slug
-import {expect, test} from 'vitest'
+import {expect, test, vi} from 'vitest'
 import {z} from 'zod'
 import {GitHubApiError, type GitHubRequest} from './github-api'
 import {
@@ -183,34 +183,60 @@ const checkRun = ({
   output: {title, summary, text: '### Findings'},
 })
 
+type CheckRun = ReturnType<typeof checkRun>
+
 interface SyncSetupParams {
-  run?: object
+  run?: CheckRun
   threads?: object[]
   state?: string
-  // The external id when the sync reads the check run again.
-  currentExternalId?: string
+  // The check run when the sync reads it again after the count.
+  reread?: CheckRun
+  routes?: Record<string, Route>
 }
 
+const updateSchema = z.object({
+  conclusion: z.string(),
+  external_id: z.string().optional(),
+  output: z.object({title: z.string(), summary: z.string(), text: z.string().optional()}),
+})
+
+// Each read of the check run shows its last update. GitHub keeps the external
+// id when an update does not send one.
 function syncSetup({
   run = checkRun(),
   threads = [],
   state = 'open',
-  currentExternalId = 'resolvable-findings',
+  reread,
+  routes = {},
 }: SyncSetupParams = {}) {
+  let latest = run
   return fakeGitHub({
     ...permissions,
     [PULL]: () => ({state, head: {sha: headSha}}),
-    [CHECK_RUNS]: () => ({check_runs: [run]}),
+    [CHECK_RUNS]: () => ({check_runs: [latest]}),
     [GRAPHQL]: () => threadsPage(threads),
-    'GET /repos/acme/repo/check-runs/31': () => ({external_id: currentExternalId}),
-    [CHECK_RUN]: () => ({}),
+    'GET /repos/acme/repo/check-runs/31': () => reread ?? latest,
+    [CHECK_RUN]: ({body}) => {
+      const {conclusion, external_id: externalId, output} = updateSchema.parse(body)
+      latest = {
+        ...latest,
+        conclusion,
+        external_id: externalId ?? latest.external_id,
+        output: {...output, text: output.text ?? latest.output.text},
+      }
+      return {}
+    },
+    ...routes,
   })
 }
+
+const conclusionOf = (body: unknown) => z.object({conclusion: z.string()}).parse(body).conclusion
 
 test('syncCheckRunWithThreads passes a failed check when every thread is resolved', async () => {
   const github = syncSetup({threads: [thread({isResolved: true})]})
 
   expect(await syncCheckRunWithThreads(pull(github.request))).toBe('resolved')
+  expect(github.sent(CHECK_RUN)).toHaveLength(1)
   expect(github.sent(CHECK_RUN)[0].body).toEqual({
     status: 'completed',
     conclusion: 'success',
@@ -252,13 +278,43 @@ test.each([
   {name: 'the pull request is closed', setup: {state: 'closed'}},
   {
     name: 'a user dismissed the check while the threads were counted',
-    setup: {currentExternalId: 'dismissed'},
+    setup: {reread: checkRun({conclusion: 'success', externalId: 'dismissed'})},
   },
 ])('syncCheckRunWithThreads changes nothing when $name', async ({setup}) => {
   const github = syncSetup(setup)
 
   expect(await syncCheckRunWithThreads(pull(github.request))).toBe('unchanged')
   expect(github.sent(CHECK_RUN)).toEqual([])
+})
+
+test('syncCheckRunWithThreads counts again after a write, so a thread that opens during the count keeps the check red', async () => {
+  let finishFirstCount: (() => void) | undefined
+  const firstCount = new Promise<void>((resolve) => {
+    finishFirstCount = resolve
+  })
+  let counts = 0
+  const github = syncSetup({
+    routes: {
+      // The first count reads the thread while it is resolved, and answers late.
+      [GRAPHQL]: async () => {
+        counts += 1
+        if (counts > 1) {
+          return threadsPage([thread()])
+        }
+        await firstCount
+        return threadsPage([thread({isResolved: true})])
+      },
+    },
+  })
+
+  const resolving = syncCheckRunWithThreads(pull(github.request))
+  await vi.waitFor(() => expect(counts).toBe(1))
+  // The sync for the thread that opened reads a failed check run, so it changes nothing.
+  expect(await syncCheckRunWithThreads(pull(github.request))).toBe('unchanged')
+  finishFirstCount?.()
+
+  expect(await resolving).toBe('reopened')
+  expect(github.sent(CHECK_RUN).map(({body}) => conclusionOf(body))).toEqual(['success', 'failure'])
 })
 
 test('listResolvedFingerprints lists a finding only when a user who can push resolved all its threads', async () => {

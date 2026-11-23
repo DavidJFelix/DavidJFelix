@@ -1,7 +1,7 @@
-import {useEffect, useState} from 'react'
-import {isRecord} from '@/lib/json-read'
+import {shallowEqual, useSelector} from '@xstate/store-react'
+import {useEffect} from 'react'
+import {type GitHubSessionContext, githubSessionStore} from '@/diffs/state/github-session-store'
 
-const SESSION_ENDPOINT = '/api/auth/github/session'
 const LOGIN_ENDPOINT = '/api/auth/github/login'
 const LOGOUT_ENDPOINT = '/api/auth/github/logout'
 // Resolves to a GitHub URL server-side, since which page to land on depends on
@@ -19,29 +19,53 @@ export interface GitHubSession {
 const LOADING_SESSION: GitHubSession = {status: 'loading'}
 const ANONYMOUS_SESSION: GitHubSession = {status: 'anonymous'}
 
-// Signing in or out reloads the page, so the session cannot change within a
-// page lifetime; a single fetch per load is shared by every hook instance. A
-// failed lookup is not kept, so the next hook instance asks again.
-let sessionPromise: Promise<GitHubSession> | undefined
-
 // Reports whether the browser holds a GitHub session cookie. The token itself
 // is HttpOnly and never reaches this code; server routes read it directly.
 export function useGitHubSession(): GitHubSession {
-  const [session, setSession] = useState<GitHubSession>(LOADING_SESSION)
+  return useSessionFromStore(toLatestSession)
+}
 
+export function useFirstGitHubSession(): GitHubSession {
+  return useSessionFromStore(toFirstSession)
+}
+
+function useSessionFromStore(
+  toSession: (context: GitHubSessionContext) => GitHubSession,
+): GitHubSession {
+  const session = useSelector(
+    githubSessionStore,
+    (snapshot) => toSession(snapshot.context),
+    shallowEqual,
+  )
+  // Effects do not run on the server, so a server render gives `loading` and
+  // does not touch the store.
   useEffect(() => {
-    let cancelled = false
-    void loadGitHubSession().then((loaded) => {
-      if (!cancelled) {
-        setSession(loaded)
-      }
-    })
-    return () => {
-      cancelled = true
-    }
+    githubSessionStore.trigger.requested()
   }, [])
-
   return session
+}
+
+// The callers know only `GitHubSessionStatus`, so a failed lookup and its retry
+// show as `anonymous`.
+const SESSION_BY_STATUS: Record<
+  Exclude<GitHubSessionContext['status'], 'authenticated'>,
+  GitHubSession
+> = {
+  idle: LOADING_SESSION,
+  loading: LOADING_SESSION,
+  anonymous: ANONYMOUS_SESSION,
+  unknown: ANONYMOUS_SESSION,
+  retrying: ANONYMOUS_SESSION,
+}
+
+function toLatestSession(context: GitHubSessionContext): GitHubSession {
+  return context.status === 'authenticated'
+    ? {status: 'authenticated', login: context.login, avatarUrl: context.avatarUrl}
+    : SESSION_BY_STATUS[context.status]
+}
+
+function toFirstSession(context: GitHubSessionContext): GitHubSession {
+  return 'firstAnswer' in context ? context.firstAnswer : LOADING_SESSION
 }
 
 export function getGitHubLoginURL(returnTo: string): string {
@@ -56,31 +80,4 @@ export function getGitHubLogoutURL(returnTo: string): string {
 // path and search; line-hash targets are simply dropped.
 export function getCurrentReturnPath(): string {
   return `${window.location.pathname}${window.location.search}`
-}
-
-function loadGitHubSession(): Promise<GitHubSession> {
-  sessionPromise ??= fetchGitHubSession().catch(() => {
-    sessionPromise = undefined
-    return ANONYMOUS_SESSION
-  })
-  return sessionPromise
-}
-
-// The session route answers 200 for signed-in and signed-out visitors, so an
-// error status is a failed lookup.
-async function fetchGitHubSession(): Promise<GitHubSession> {
-  const response = await fetch(SESSION_ENDPOINT, {cache: 'no-store'})
-  if (!response.ok) {
-    throw new Error(`GitHub session lookup failed with status ${response.status}`)
-  }
-
-  const data: unknown = await response.json()
-  if (!isRecord(data) || data.authenticated !== true || typeof data.login !== 'string') {
-    return ANONYMOUS_SESSION
-  }
-  return {
-    status: 'authenticated',
-    login: data.login,
-    avatarUrl: typeof data.avatarUrl === 'string' ? data.avatarUrl : undefined,
-  }
 }

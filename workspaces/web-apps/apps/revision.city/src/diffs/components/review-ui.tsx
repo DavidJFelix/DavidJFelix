@@ -1,17 +1,8 @@
-import {type DiffIndicators} from '@pierre/diffs'
-import {useWorkerPool} from '@pierre/diffs/react'
-import type {WorkerStats} from '@pierre/diffs/worker'
+import {useStableCallback} from '@pierre/diffs/react'
 import {type ColorMode} from '@pierre/theming'
 import {useThemeController} from '@pierre/theming/react'
-import {
-  type ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from 'react'
+import {shallowEqual, useSelector, useStore} from '@xstate/store-react'
+import {type ReactNode, useCallback, useEffect, useMemo, useRef, useSyncExternalStore} from 'react'
 
 import {css} from 'styled-system/css'
 import {CODEBERG_HOST, canReadCodebergFiles} from '@/diffs/lib/codeberg-diff-source'
@@ -20,7 +11,6 @@ import {
   createGitHubDiffFileLoader,
 } from '@/diffs/lib/diff-file-loader'
 import {isNullish} from '@/diffs/lib/nullish'
-import {removeSavedCommentSidebarEntry} from '@/diffs/lib/remove-saved-comment-sidebar-entry'
 import type {DarkThemeName, LightThemeName} from '@/diffs/lib/theme-names'
 import type {
   DiffsDeletedCommentEvent,
@@ -28,8 +18,12 @@ import type {
   DiffsSavedCommentEvent,
   DiffsViewerHandle,
 } from '@/diffs/lib/types'
-import {upsertSavedCommentSidebarEntry} from '@/diffs/lib/upsert-saved-comment-sidebar-entry'
 import {docsThemeCatalog, themeController} from '@/diffs/state/theme-controller'
+import {
+  type ViewSettingsContext,
+  type ViewSettingsStore,
+  viewSettingsLogic,
+} from '@/diffs/state/view-settings-store'
 import type {SymbolSelection} from '@/symbols/components/symbol-changes-list'
 import type {SymbolDiffRequest} from '@/symbols/lib/symbol-diff-client'
 import {OverridableThemeSourceProvider} from './contexts/overridable-theme-source-provider'
@@ -38,10 +32,10 @@ import {DiffsSidebar} from './diffs-sidebar'
 import {DiffsStatusPanel} from './diffs-status-panel'
 import {DiffsViewer} from './diffs-viewer'
 import {useBaseMovedOn} from './hooks/use-base-moved-on'
-import {useGitHubSession} from './hooks/use-github-session'
+import {useFirstGitHubSession} from './hooks/use-github-session'
 import {usePatchLoader} from './hooks/use-patch-loader'
 import {useThemeCycle} from './hooks/use-theme-cycle'
-import {useWorkerPoolRecovering} from './worker-pool-context'
+import {useWorkerPoolState} from './worker-pool-context'
 
 interface ReviewUIProps {
   domain?: string
@@ -60,17 +54,22 @@ export function ReviewUI({domain, path}: ReviewUIProps) {
 
 function ReviewUIInner({domain, path}: ReviewUIProps) {
   const workerPoolState = useWorkerPoolState()
-  const [diffStyle, setDiffStyle] = useState<'split' | 'unified'>('split')
-  const [collapseMode, setCollapseMode] = useState<'expanded' | 'collapsed'>('expanded')
-  const [fileTreeOverlayOpen, setFileTreeOverlayOpen] = useState(false)
-  const [overflow, setOverflow] = useState<'wrap' | 'scroll'>('scroll')
-  const [showBackgrounds, setShowBackgrounds] = useState(true)
-  const [diffIndicators, setDiffIndicators] = useState<DiffIndicators>('bars')
-  const [lineNumbers, setLineNumbers] = useState(true)
-  // Signing in or out reloads the page, so the session is fixed for the life
-  // of this component; the cookie rides along on the same-origin API fetches
-  // without any client-side token plumbing.
-  const githubSession = useGitHubSession()
+  const viewSettingsStore = useStore(viewSettingsLogic)
+  const {
+    collapseMode,
+    diffIndicators,
+    diffStyle,
+    lineNumbers,
+    overflow,
+    showBackgrounds,
+    status: fileTreeOverlayStatus,
+  } = useSelector(viewSettingsStore, ({context}) => context, shallowEqual)
+  const fileTreeOverlayOpen = fileTreeOverlayStatus === 'open'
+  const {setDiffIndicators, setDiffStyle, setLineNumbers, setOverflow, setShowBackgrounds} =
+    useMemo(() => createViewSettingSetters(viewSettingsStore), [viewSettingsStore])
+  // The viewer keeps the first answer: CodeView does not compute its file heights
+  // again when a later answer changes `loadDiffFiles`.
+  const githubSession = useFirstGitHubSession()
   const baseMovedOn = useBaseMovedOn({
     domain,
     path,
@@ -137,9 +136,9 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
       ? createGitHubDiffFileLoader(path)
       : undefined
   }, [domain, githubSession.status, path])
-  const handlePatchLoadStart = useCallback(() => {
-    setFileTreeOverlayOpen(false)
-  }, [])
+  const handleCloseFileTreeOverlay = useStableCallback(() => {
+    viewSettingsStore.trigger.fileTreeOverlayClosed()
+  })
   const {
     allItems,
     applyCollapseModeToLoaded,
@@ -153,35 +152,31 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
     onLineLinkChange,
     onViewerReady,
     retryLoad,
-    setCommentSections,
+    savedComments,
     treeSource,
     viewerKey,
   } = usePatchLoader({
-    collapseMode,
     domain,
-    onLoadStart: handlePatchLoadStart,
+    onLoadStart: handleCloseFileTreeOverlay,
     path,
     viewerRef,
+    viewSettingsStore,
   })
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(max-width: 767px)')
-    const updateMobileState = (matches: boolean) => {
-      setDiffStyle(matches ? 'unified' : 'split')
-      if (!matches) setFileTreeOverlayOpen(false)
-    }
     const handleChange = (event: MediaQueryListEvent) => {
-      updateMobileState(event.matches)
+      viewSettingsStore.trigger.viewportChanged({mobile: event.matches})
     }
 
-    updateMobileState(mediaQuery.matches)
+    viewSettingsStore.trigger.viewportChanged({mobile: mediaQuery.matches})
     mediaQuery.addEventListener('change', handleChange)
     return () => {
       mediaQuery.removeEventListener('change', handleChange)
     }
-  }, [])
-  const handleSelectTreeItem = useCallback((itemId: string) => {
-    setFileTreeOverlayOpen(false)
+  }, [viewSettingsStore])
+  const handleSelectTreeItem = useStableCallback((itemId: string) => {
+    viewSettingsStore.trigger.fileTreeOverlayClosed()
     const viewer = viewerRef.current
     if (isNullish(viewer)) {
       return
@@ -198,32 +193,26 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
       align: 'start',
       behavior: 'smooth',
     })
-  }, [])
-  const handleToggleCollapseMode = useCallback(() => {
-    const next = collapseMode === 'expanded' ? 'collapsed' : 'expanded'
-    setCollapseMode(next)
-    applyCollapseModeToLoaded(next)
-  }, [applyCollapseModeToLoaded, collapseMode])
+  })
+  const handleToggleCollapseMode = useStableCallback(() => {
+    viewSettingsStore.trigger.collapseModeToggled()
+    applyCollapseModeToLoaded(viewSettingsStore.getSnapshot().context.collapseMode)
+  })
   const handleCommentSaved = useCallback(
     (comment: DiffsSavedCommentEvent) => {
-      setCommentSections((prev) =>
-        upsertSavedCommentSidebarEntry(prev, commentFileByItemId, comment),
-      )
+      savedComments.trigger.commentSaved({comment, files: commentFileByItemId})
     },
-    [commentFileByItemId, setCommentSections],
+    [commentFileByItemId, savedComments],
   )
   const handleCommentDeleted = useCallback(
     (comment: DiffsDeletedCommentEvent) => {
-      setCommentSections((prev) => removeSavedCommentSidebarEntry(prev, comment))
+      savedComments.trigger.commentDeleted(comment)
     },
-    [setCommentSections],
+    [savedComments],
   )
-  const handleToggleFileTreeOverlay = useCallback(() => {
-    setFileTreeOverlayOpen((open) => !open)
-  }, [])
-  const handleCloseFileTreeOverlay = useCallback(() => {
-    setFileTreeOverlayOpen(false)
-  }, [])
+  const handleToggleFileTreeOverlay = useStableCallback(() => {
+    viewSettingsStore.trigger.fileTreeOverlayToggled()
+  })
   // Only diff items carry two revisions to compare; a plain file item in the
   // viewer has nothing to diff against.
   const symbolDiffRequests = useMemo<readonly SymbolDiffRequest[]>(
@@ -242,8 +231,8 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
       ),
     [allItems],
   )
-  const handleSelectSymbol = useCallback((selection: SymbolSelection) => {
-    setFileTreeOverlayOpen(false)
+  const handleSelectSymbol = useStableCallback((selection: SymbolSelection) => {
+    viewSettingsStore.trigger.fileTreeOverlayClosed()
     const viewer = viewerRef.current
     if (isNullish(viewer)) {
       return
@@ -264,9 +253,9 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
       align: 'center',
       behavior: 'smooth-auto',
     })
-  }, [])
-  const handleSelectComment = useCallback((comment: DiffsSavedCommentEntry) => {
-    setFileTreeOverlayOpen(false)
+  })
+  const handleSelectComment = useStableCallback((comment: DiffsSavedCommentEntry) => {
+    viewSettingsStore.trigger.fileTreeOverlayClosed()
     viewerRef.current?.setSelectedLines({
       id: comment.itemId,
       range: comment.range,
@@ -279,7 +268,7 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
       align: 'center',
       behavior: 'smooth-auto',
     })
-  }, [])
+  })
   const patchShown = loadState === 'ready' || (loadState === 'streaming' && initialItems.length > 0)
   // Withhold the viewer until the persisted themes have been read from
   // localStorage. Otherwise on client-side navigation back into a diff the
@@ -387,32 +376,18 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
   )
 }
 
-type WorkerPoolState = 'initializing' | 'ready' | 'failed'
-
-function getWorkerPoolState(stats: WorkerStats): WorkerPoolState {
-  if (stats.workersFailed) return 'failed'
-  return stats.managerState === 'initialized' ? 'ready' : 'initializing'
-}
-
-function useWorkerPoolState(): WorkerPoolState {
-  const workerPool = useWorkerPool()
-  const recovering = useWorkerPoolRecovering()
-  const [state, setState] = useState<WorkerPoolState>(() =>
-    isNullish(workerPool) ? 'ready' : getWorkerPoolState(workerPool.getStats()),
-  )
-  const stateRef = useRef(state)
-  useEffect(() => {
-    // The callback will always be fired immediately with the new state, so we
-    // don't need to check for it in the effect
-    return workerPool?.subscribeToStatChanges((stats) => {
-      const nextState = getWorkerPoolState(stats)
-      if (nextState !== stateRef.current) {
-        setState(nextState)
-        stateRef.current = nextState
-      }
-    })
-  }, [workerPool])
-  return recovering ? 'initializing' : state
+function createViewSettingSetters(store: ViewSettingsStore) {
+  return {
+    setDiffIndicators: (diffIndicators: ViewSettingsContext['diffIndicators']) =>
+      store.trigger.diffIndicatorsChanged({diffIndicators}),
+    setDiffStyle: (diffStyle: ViewSettingsContext['diffStyle']) =>
+      store.trigger.diffStyleChanged({diffStyle}),
+    setLineNumbers: (lineNumbers: boolean) => store.trigger.lineNumbersChanged({lineNumbers}),
+    setOverflow: (overflow: ViewSettingsContext['overflow']) =>
+      store.trigger.overflowChanged({overflow}),
+    setShowBackgrounds: (showBackgrounds: boolean) =>
+      store.trigger.showBackgroundsChanged({showBackgrounds}),
+  }
 }
 
 interface ReviewGridProps {

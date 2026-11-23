@@ -1,4 +1,5 @@
 import {z} from 'zod'
+import {checkRunLogic, decodeCheckRun} from '../state/check-run-store'
 import {
   GitHubApiError,
   type GitHubRepository,
@@ -7,38 +8,8 @@ import {
   type PullRequestParams,
   repositoryPath,
 } from './github-api'
-import {APP_SLUG, CHECK_RUN_NAME, completeCheckRun} from './publish-review'
-import {type CheckRunOutput, readFingerprint} from './review-markdown'
-
-// A check run that failed only on findings has this external id. When every
-// thread that the app started on lines that the head still has is resolved, the
-// check run passes. A failed chunk review has no thread, so it keeps the check red.
-export const RESOLVABLE_EXTERNAL_ID = 'resolvable-findings'
-
-const RESOLVED_TITLE_PREFIX = 'Resolved: '
-
-const RESOLVED_SUMMARY_NOTE =
-  'Every current Revision City thread on this pull request is resolved, so this check passes.'
-
-function resolvedOutput({title, summary, text}: CheckRunOutput): CheckRunOutput {
-  return {
-    title: `${RESOLVED_TITLE_PREFIX}${title}`,
-    summary: `${RESOLVED_SUMMARY_NOTE} ${summary}`,
-    ...(text === undefined ? {} : {text}),
-  }
-}
-
-function reopenedOutput({title, summary, text}: CheckRunOutput): CheckRunOutput {
-  return {
-    title: title.startsWith(RESOLVED_TITLE_PREFIX)
-      ? title.slice(RESOLVED_TITLE_PREFIX.length)
-      : title,
-    summary: summary.startsWith(`${RESOLVED_SUMMARY_NOTE} `)
-      ? summary.slice(RESOLVED_SUMMARY_NOTE.length + 1)
-      : summary,
-    ...(text === undefined ? {} : {text}),
-  }
-}
+import {APP_SLUG, CHECK_RUN_NAME, updateCheckRun} from './publish-review'
+import {readFingerprint} from './review-markdown'
 
 const THREADS_QUERY = `query ($owner: String!, $name: String!, $number: Int!, $after: String) {
   repository(owner: $owner, name: $name) {
@@ -223,21 +194,17 @@ export async function canPush({request, repository, login}: CanPushParams): Prom
   return TRUSTED_PERMISSIONS.has(permission)
 }
 
-const checkRunsSchema = z.object({
-  check_runs: z.array(
-    z.object({
-      id: z.number(),
-      status: z.string(),
-      conclusion: z.string().nullable(),
-      external_id: z.string().nullable(),
-      app: z.object({slug: z.string()}).nullable(),
-      output: z.object({
-        title: z.string().nullable(),
-        summary: z.string().nullable(),
-        text: z.string().nullable(),
-      }),
-    }),
-  ),
+const checkRunSchema = z.object({
+  id: z.number(),
+  status: z.string(),
+  conclusion: z.string().nullable(),
+  external_id: z.string().nullable(),
+  app: z.object({slug: z.string()}).nullable(),
+  output: z.object({
+    title: z.string().nullable(),
+    summary: z.string().nullable(),
+    text: z.string().nullable(),
+  }),
 })
 
 export type SyncResult = 'resolved' | 'reopened' | 'unchanged'
@@ -245,6 +212,17 @@ export type SyncResult = 'resolved' | 'reopened' | 'unchanged'
 // Makes the app's latest check run on the head agree with its threads: it
 // passes when no thread is open, and fails again when one opens.
 export async function syncCheckRunWithThreads(pull: PullRequestParams): Promise<SyncResult> {
+  const first = await syncCheckRunOnce(pull)
+  if (first === 'unchanged') {
+    return first
+  }
+  // A thread can change while the first sync counts. The sync for that change
+  // can read the check run before the first write, and then change nothing.
+  const second = await syncCheckRunOnce(pull)
+  return second === 'unchanged' ? first : second
+}
+
+async function syncCheckRunOnce(pull: PullRequestParams): Promise<SyncResult> {
   const {request, repository} = pull
   const state = await getPullRequest(pull)
   if (!state.open) {
@@ -252,49 +230,36 @@ export async function syncCheckRunWithThreads(pull: PullRequestParams): Promise<
   }
   const {check_runs: checkRuns} = await request({
     path: `${repositoryPath(repository)}/commits/${state.headSha}/check-runs?check_name=${encodeURIComponent(CHECK_RUN_NAME)}&filter=latest`,
-    schema: checkRunsSchema,
+    schema: z.object({check_runs: z.array(checkRunSchema)}),
   })
   const checkRun = checkRuns.find(({app}) => app?.slug === APP_SLUG)
-  if (
-    checkRun === undefined ||
-    checkRun.status !== 'completed' ||
-    checkRun.external_id !== RESOLVABLE_EXTERNAL_ID
-  ) {
+  if (checkRun === undefined) {
     return 'unchanged'
   }
-  const resolved = (await countOpenAppThreads(pull)) === 0
-  const output: CheckRunOutput = {
-    title: checkRun.output.title ?? '',
-    summary: checkRun.output.summary ?? '',
-    ...(checkRun.output.text === null ? {} : {text: checkRun.output.text}),
-  }
-  const complete = (conclusion: 'success' | 'failure', nextOutput: CheckRunOutput) =>
-    completeCheckRun({
-      request,
-      repository,
-      checkRunId: checkRun.id,
-      conclusion,
-      output: nextOutput,
-      externalId: RESOLVABLE_EXTERNAL_ID,
-    })
-  const shouldResolve = resolved && checkRun.conclusion === 'failure'
-  const shouldReopen = !resolved && checkRun.conclusion === 'success'
-  if (!shouldResolve && !shouldReopen) {
+  const latest = checkRunLogic.createStore(decodeCheckRun(checkRun))
+  if (!latest.can.threadsResolved() && !latest.can.threadReopened()) {
     return 'unchanged'
   }
-  // Counting the threads takes time. A click on the dismiss button in that
-  // time changes the external id, and the dismissal must stay.
-  const current = await request({
-    path: `${repositoryPath(repository)}/check-runs/${checkRun.id}`,
-    schema: z.object({external_id: z.string().nullable()}),
+  const event = (await countOpenAppThreads(pull)) === 0 ? 'threadsResolved' : 'threadReopened'
+  // Counting the threads takes time. A dismissal or another sync in that time
+  // changes the check run, so the event must still be legal in a new read.
+  const current = checkRunLogic.createStore(
+    decodeCheckRun(
+      await request({
+        path: `${repositoryPath(repository)}/check-runs/${checkRun.id}`,
+        schema: checkRunSchema,
+      }),
+    ),
+  )
+  if (!current.can[event]()) {
+    return 'unchanged'
+  }
+  current.trigger[event]()
+  await updateCheckRun({
+    request,
+    repository,
+    checkRunId: checkRun.id,
+    state: current.getSnapshot().context,
   })
-  if (current.external_id !== RESOLVABLE_EXTERNAL_ID) {
-    return 'unchanged'
-  }
-  if (shouldResolve) {
-    await complete('success', resolvedOutput(output))
-    return 'resolved'
-  }
-  await complete('failure', reopenedOutput(output))
-  return 'reopened'
+  return event === 'threadsResolved' ? 'resolved' : 'reopened'
 }

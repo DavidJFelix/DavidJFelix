@@ -5,15 +5,8 @@ import {
   processFile,
 } from '@pierre/diffs'
 import {useStableCallback} from '@pierre/diffs/react'
-import {
-  type Dispatch,
-  type RefObject,
-  type SetStateAction,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react'
+import {useSelector, useStore} from '@xstate/store-react'
+import {type RefObject, useCallback, useEffect, useRef, useState} from 'react'
 
 import {CODE_VIEW_BATCH_COUNT, getInitialBatchSize} from '@/diffs/lib/constants'
 import {
@@ -44,6 +37,9 @@ import type {
   DiffsViewerHandle,
   ViewerLoadState,
 } from '@/diffs/lib/types'
+import {getPublishPhase, patchLoadLogic} from '@/diffs/state/patch-load-store'
+import {type SavedCommentsStore, savedCommentsLogic} from '@/diffs/state/saved-comments-store'
+import type {ViewSettingsStore} from '@/diffs/state/view-settings-store'
 
 const STREAM_PUBLISH_INTERVAL_MS = 100
 const STREAM_INITIAL_PUBLISH_INTERVAL_MS = 500
@@ -53,11 +49,11 @@ const STREAM_TREE_PUBLISH_INTERVAL_MS = 1_000
 const GENERIC_PATCH_LOAD_ERROR_MESSAGE = 'We couldn’t load that diff. Check the URL and try again.'
 
 interface UsePatchLoaderOptions {
-  collapseMode: 'expanded' | 'collapsed'
   domain?: string
   onLoadStart: () => void
   path: string
   viewerRef: RefObject<DiffsViewerHandle | null>
+  viewSettingsStore: ViewSettingsStore
 }
 
 interface UsePatchLoaderResult {
@@ -67,7 +63,7 @@ interface UsePatchLoaderResult {
   allItems: readonly CodeViewItem<CommentMetadata>[]
   applyCollapseModeToLoaded: (mode: 'expanded' | 'collapsed') => void
   commentFileByItemId: DiffsCommentFileByItemId | null
-  commentSections: DiffsSavedCommentItem[]
+  commentSections: readonly DiffsSavedCommentItem[]
   diffStats: DiffsStats | null
   errorMessage: string | null
   errorRemedy: GitHubAccessRemedy | null
@@ -76,18 +72,25 @@ interface UsePatchLoaderResult {
   onLineLinkChange: (selection: CodeViewLineSelection | null) => void
   onViewerReady: () => void
   retryLoad: () => void
-  setCommentSections: Dispatch<SetStateAction<DiffsSavedCommentItem[]>>
+  savedComments: SavedCommentsStore
   treeSource: DiffsFileTreeSource | null
   viewerKey: number
 }
 
 export function usePatchLoader({
-  collapseMode,
   domain,
   onLoadStart,
   path,
   viewerRef,
+  viewSettingsStore,
 }: UsePatchLoaderOptions): UsePatchLoaderResult {
+  const store = useStore(patchLoadLogic)
+  const loadState = useSelector(store, (snapshot) => snapshot.context.status)
+  const loadAttempt = useSelector(store, (snapshot) => snapshot.context.loadAttempt)
+  const viewerKey = useSelector(store, (snapshot) => snapshot.context.requestId)
+  const loadError = useSelector(store, (snapshot) =>
+    snapshot.context.status === 'error' ? snapshot.context.error : null,
+  )
   const [initialItems, setInitialItems] = useState<CodeViewItem<CommentMetadata>[]>([])
   const [allItems, setAllItems] = useState<readonly CodeViewItem<CommentMetadata>[]>([])
   // Tree data is intentionally stored separately from items so annotation
@@ -98,26 +101,24 @@ export function usePatchLoader({
   const [commentFileByItemId, setCommentFileByItemId] = useState<DiffsCommentFileByItemId | null>(
     null,
   )
-  const [commentSections, setCommentSections] = useState<DiffsSavedCommentItem[]>([])
-  const [loadState, setLoadState] = useState<ViewerLoadState>('fetching')
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [errorRemedy, setErrorRemedy] = useState<GitHubAccessRemedy | null>(null)
-  const [loadAttempt, setLoadAttempt] = useState(0)
-  const [viewerKey, setViewerKey] = useState(0)
-  const requestIdRef = useRef(0)
+  const savedComments = useStore(savedCommentsLogic)
+  const commentSections = useSelector(savedComments, ({context}) => context.sections)
+  // A new request id clears the data of the previous request during render, not in the load effect:
+  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  const [dataRequestId, setDataRequestId] = useState(viewerKey)
+  if (dataRequestId !== viewerKey) {
+    setDataRequestId(viewerKey)
+    setInitialItems([])
+    setAllItems([])
+    setTreeSource(null)
+    setDiffStats(null)
+    setCommentFileByItemId(null)
+  }
   const appliedLineHashKeyRef = useRef<string | null>(null)
-  const viewerKeyRef = useRef(0)
   // Tracks the ids of every item that has been handed to the viewer so we can
   // walk the full set when the user toggles collapse mode. The viewer handle
   // does not expose an enumeration API, so we maintain our own index.
   const loadedItemIdsRef = useRef<Set<string>>(new Set())
-  // Mirrors the latest collapse mode so the streaming code path (which lives
-  // inside a long-lived effect/closure) can read the live value without us
-  // having to re-bind it on every change.
-  const collapseModeRef = useRef(collapseMode)
-  useEffect(() => {
-    collapseModeRef.current = collapseMode
-  }, [collapseMode])
 
   // Pre-mutates fresh items so they arrive in the viewer matching the current
   // collapse mode, then records their ids for later bulk updates. Diff items
@@ -125,15 +126,17 @@ export function usePatchLoader({
   // deleted-file diffs as collapsed by default — without an unconditional
   // overwrite, those would stay collapsed even when the user is in expanded
   // mode.
-  const prepareItemsForViewer = (items: readonly CodeViewItem<CommentMetadata>[]): void => {
-    const targetCollapsed = collapseModeRef.current === 'collapsed'
-    for (const item of items) {
-      loadedItemIdsRef.current.add(item.id)
-      if (item.type === 'diff') {
-        item.collapsed = targetCollapsed
+  const prepareItemsForViewer = useStableCallback(
+    (items: readonly CodeViewItem<CommentMetadata>[]) => {
+      const targetCollapsed = viewSettingsStore.getSnapshot().context.collapseMode === 'collapsed'
+      for (const item of items) {
+        loadedItemIdsRef.current.add(item.id)
+        if (item.type === 'diff') {
+          item.collapsed = targetCollapsed
+        }
       }
-    }
-  }
+    },
+  )
 
   const applyCollapseModeToLoaded = useStableCallback((mode: 'expanded' | 'collapsed') => {
     const targetCollapsed = mode === 'collapsed'
@@ -180,7 +183,7 @@ export function usePatchLoader({
       return
     }
 
-    const applyKey = getLineHashApplyKey(viewerKeyRef.current, hash)
+    const applyKey = getLineHashApplyKey(store.getSnapshot().context.requestId, hash)
     if (appliedLineHashKeyRef.current === applyKey) {
       return
     }
@@ -199,7 +202,7 @@ export function usePatchLoader({
     const nextHash = isNullish(selection) ? null : formatDiffsLineHash(selection)
     appliedLineHashKeyRef.current = isNullish(nextHash)
       ? null
-      : getLineHashApplyKey(viewerKeyRef.current, nextHash)
+      : getLineHashApplyKey(store.getSnapshot().context.requestId, nextHash)
     replaceLocationHash(nextHash)
   })
 
@@ -211,58 +214,44 @@ export function usePatchLoader({
     }
 
     const controller = new AbortController()
-    const requestId = ++requestIdRef.current
-    const isCurrentRequest = () => requestIdRef.current === requestId && !controller.signal.aborted
+    store.trigger.loadStarted()
+    // A render must not send events to a store, so the saved comments clear here.
+    savedComments.trigger.cleared()
+    const {requestId} = store.getSnapshot().context
 
-    viewerKeyRef.current = requestId
     appliedLineHashKeyRef.current = null
     loadedItemIdsRef.current = new Set()
-    setViewerKey(requestId)
-    setInitialItems([])
-    setAllItems([])
-    setTreeSource(null)
-    setDiffStats(null)
-    setCommentFileByItemId(null)
-    setCommentSections([])
     onLoadStart()
-    setErrorMessage(null)
-    setErrorRemedy(null)
-    setLoadState('fetching')
 
     async function loadPatch() {
       try {
         const cacheKeyPrefix = encodeURIComponent(patchRequestKey)
         const preloadGrammar = createGrammarPreloader()
         const commitFullPatch = async (patchContent: string) => {
-          if (!isCurrentRequest()) {
+          if (!store.can.parsingStarted({requestId})) {
             return
           }
-          setLoadState('parsing')
+          store.trigger.parsingStarted({requestId})
           await new Promise<void>((resolve) => window.setTimeout(resolve, 0))
 
-          if (!isCurrentRequest()) {
+          if (!store.can.loadFinished({requestId})) {
             return
           }
           const loadedData = buildDiffsData(patchContent, patchRequestKey)
-          if (!isCurrentRequest()) {
-            return
-          }
           for (const item of loadedData.items.filter(isDiffItem)) {
             preloadGrammar(item.fileDiff)
           }
 
           setTreeSource(loadedData.treeSource)
           setCommentFileByItemId(loadedData.itemIdToFile)
-          setCommentSections([])
+          savedComments.trigger.cleared()
           setDiffStats(loadedData.diffStats)
           prepareItemsForViewer(loadedData.items)
           setInitialItems(loadedData.items)
           setAllItems(loadedData.items)
-          setLoadState('ready')
+          store.trigger.loadFinished({requestId})
           await yieldToBrowser()
-          if (isCurrentRequest()) {
-            tryApplyLineHashTarget()
-          }
+          tryApplyLineHashTarget()
         }
 
         // GitHub auth is the HttpOnly session cookie, which rides along on
@@ -285,9 +274,9 @@ export function usePatchLoader({
           return
         }
 
-        setLoadState('streaming')
+        store.trigger.streamOpened({requestId})
         await yieldToBrowser()
-        if (!isCurrentRequest()) {
+        if (!store.can.itemsPublished({requestId})) {
           return
         }
 
@@ -296,21 +285,19 @@ export function usePatchLoader({
         let streamTreePathPrefix: string | undefined
         let pendingPublishFileCount = 0
         let pendingTreePublishFileCount = 0
-        let hasPublishedTree = false
-        let hasPublishedInitialItems = false
-        let hasReceivedFirstStreamedFile = false
         let lastPublishTime = performance.now()
         let lastWorkYieldTime = lastPublishTime
         let lastTreePublishTime = lastPublishTime
         const initialPublishFileBatchSize = getInitialBatchSize()
+        const publishPhase = () => getPublishPhase(store.getSnapshot().context)
 
         const publishTreeSource = () => {
-          if (pendingTreePublishFileCount === 0 || !isCurrentRequest()) {
+          if (pendingTreePublishFileCount === 0 || !store.can.treePublished({requestId})) {
             return
           }
 
           pendingTreePublishFileCount = 0
-          hasPublishedTree = true
+          store.trigger.treePublished({requestId})
           lastTreePublishTime = performance.now()
           setCommentFileByItemId(accumulator.itemIdToFile)
           setDiffStats({...accumulator.diffStats})
@@ -318,7 +305,7 @@ export function usePatchLoader({
         }
 
         const publishPendingData = async () => {
-          if (pendingPublishFileCount === 0 || !isCurrentRequest()) {
+          if (pendingPublishFileCount === 0 || !store.can.itemsPublished({requestId})) {
             return
           }
 
@@ -326,7 +313,7 @@ export function usePatchLoader({
           lastPublishTime = performance.now()
           const pendingItems = takePendingDiffsItems(accumulator)
           prepareItemsForViewer(pendingItems)
-          if (hasPublishedInitialItems) {
+          if (publishPhase() === 'initial-items') {
             const viewer = viewerRef.current
             if (isNullish(viewer)) {
               setInitialItems((prev) => [...prev, ...pendingItems])
@@ -334,14 +321,12 @@ export function usePatchLoader({
               viewer.addItems(pendingItems)
             }
           } else {
-            hasPublishedInitialItems = true
             publishTreeSource()
             setInitialItems(pendingItems)
           }
+          store.trigger.itemsPublished({requestId})
           await yieldToBrowser()
-          if (isCurrentRequest()) {
-            tryApplyLineHashTarget()
-          }
+          tryApplyLineHashTarget()
           lastWorkYieldTime = performance.now()
         }
 
@@ -351,6 +336,7 @@ export function usePatchLoader({
           }
 
           const elapsed = performance.now() - lastPublishTime
+          const hasPublishedInitialItems = publishPhase() === 'initial-items'
           const publishFileBatchSize = hasPublishedInitialItems
             ? CODE_VIEW_BATCH_COUNT
             : initialPublishFileBatchSize
@@ -364,7 +350,7 @@ export function usePatchLoader({
           await publishPendingData()
         }
         const shouldDeferInitialPublishForBatchTarget = () => {
-          if (hasPublishedInitialItems) {
+          if (publishPhase() === 'initial-items') {
             return false
           }
 
@@ -381,7 +367,7 @@ export function usePatchLoader({
 
           const elapsed = performance.now() - lastTreePublishTime
           if (
-            hasPublishedTree &&
+            publishPhase() !== 'none' &&
             pendingTreePublishFileCount < STREAM_TREE_PUBLISH_FILE_BATCH_SIZE &&
             elapsed < STREAM_TREE_PUBLISH_INTERVAL_MS
           ) {
@@ -391,10 +377,6 @@ export function usePatchLoader({
           publishTreeSource()
         }
         const appendStreamedFile = async (fileText: string) => {
-          if (!hasReceivedFirstStreamedFile) {
-            hasReceivedFirstStreamedFile = true
-          }
-
           const patchMetadata = getStreamedPatchMetadata(fileText)
           if (!isNullish(patchMetadata)) {
             streamTreePathPrefix = getPatchTreePathPrefix(patchMetadata, streamPatchIndex++)
@@ -437,10 +419,6 @@ export function usePatchLoader({
         }
 
         const fallbackPatchContent = await streamGitPatchFiles(response.body, appendStreamedFile)
-        if (!isCurrentRequest()) {
-          return
-        }
-
         await publishPendingData()
         publishTreeSource()
         if (!isNullish(fallbackPatchContent)) {
@@ -448,17 +426,18 @@ export function usePatchLoader({
           return
         }
 
+        if (!store.can.loadFinished({requestId})) {
+          return
+        }
         setCommentFileByItemId(new Map(accumulator.itemIdToFile))
         setDiffStats({...accumulator.diffStats})
         setAllItems([...accumulator.items])
-        setLoadState('ready')
+        store.trigger.loadFinished({requestId})
       } catch (error) {
-        if (!isCurrentRequest()) {
-          return
-        }
-        setErrorMessage(getPatchLoadErrorMessage(error))
-        setErrorRemedy(getPatchLoadErrorRemedy(error))
-        setLoadState('error')
+        store.trigger.loadFailed({
+          requestId,
+          error: {message: getPatchLoadErrorMessage(error), remedy: getPatchLoadErrorRemedy(error)},
+        })
       }
     }
 
@@ -467,7 +446,17 @@ export function usePatchLoader({
     return () => {
       controller.abort()
     }
-  }, [domain, loadAttempt, onLoadStart, path, tryApplyLineHashTarget, viewerRef])
+  }, [
+    domain,
+    loadAttempt,
+    onLoadStart,
+    path,
+    prepareItemsForViewer,
+    savedComments,
+    store,
+    tryApplyLineHashTarget,
+    viewerRef,
+  ])
 
   useEffect(() => {
     window.addEventListener('hashchange', tryApplyLineHashTarget)
@@ -478,8 +467,8 @@ export function usePatchLoader({
   }, [tryApplyLineHashTarget])
 
   const retryLoad = useCallback(() => {
-    setLoadAttempt((attempt) => attempt + 1)
-  }, [])
+    store.trigger.retryRequested()
+  }, [store])
 
   return {
     allItems,
@@ -487,14 +476,14 @@ export function usePatchLoader({
     commentFileByItemId,
     commentSections,
     diffStats,
-    errorMessage,
-    errorRemedy,
+    errorMessage: loadError?.message ?? null,
+    errorRemedy: loadError?.remedy ?? null,
     initialItems,
     loadState,
     onLineLinkChange: handleLineLinkChange,
     onViewerReady: tryApplyLineHashTarget,
     retryLoad,
-    setCommentSections,
+    savedComments,
     treeSource,
     viewerKey,
   }

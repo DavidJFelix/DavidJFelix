@@ -9,13 +9,10 @@ export interface InboxItem {
   repo: string
   number: number
   title: string
-  // The GitHub login of the author.
-  author?: string
-  // The ISO 8601 time of the last update on GitHub.
-  updatedAt?: string
+  authorLogin?: string
+  updatedAt?: Date
   draft: boolean
-  // The GitHub logins of the assignees.
-  assignees: string[]
+  assigneeLogins: string[]
   // At least one reason, in the order of INBOX_REASONS.
   reasons: InboxReason[]
 }

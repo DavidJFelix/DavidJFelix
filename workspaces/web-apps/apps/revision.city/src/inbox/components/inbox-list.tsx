@@ -148,8 +148,7 @@ const skeletonDetailsBarClass = css(skeletonBar, {h: '2.5', w: '[40%]'})
 
 interface InboxListProps {
   items: readonly InboxItem[]
-  // The current time in milliseconds since the epoch.
-  now: number
+  now: Date
 }
 
 export function InboxList({items, now}: InboxListProps) {
@@ -166,12 +165,12 @@ export function InboxList({items, now}: InboxListProps) {
 
 interface InboxRowProps {
   item: InboxItem
-  now: number
+  now: Date
 }
 
 function InboxRow({item, now}: InboxRowProps) {
   const details = [
-    ...(item.author === undefined ? [] : [`by ${item.author}`]),
+    ...(item.authorLogin === undefined ? [] : [`by ${item.authorLogin}`]),
     ...item.reasons.map((reason) => REASON_LABELS[reason]),
   ]
   const params = useMemo(
@@ -216,8 +215,8 @@ function Detail({className, children}: DetailProps) {
 }
 
 interface UpdateTimeProps {
-  time: string | undefined
-  now: number
+  time: Date | undefined
+  now: Date
 }
 
 function UpdateTime({time, now}: UpdateTimeProps) {
@@ -227,7 +226,7 @@ function UpdateTime({time, now}: UpdateTimeProps) {
   }
   return (
     <Detail className={timeDetailClass}>
-      <time className={timeClass} dateTime={time} title={fullTimeFormat.format(Date.parse(time))}>
+      <time className={timeClass} dateTime={time.toISOString()} title={fullTimeFormat.format(time)}>
         {text}
       </time>
     </Detail>

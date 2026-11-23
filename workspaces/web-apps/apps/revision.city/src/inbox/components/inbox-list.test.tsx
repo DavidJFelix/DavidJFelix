@@ -14,7 +14,7 @@ import type {InboxItem} from '@/inbox/lib/inbox-item'
 
 import {InboxList, InboxSkeleton} from './inbox-list'
 
-const NOW = Date.parse('2026-11-18T12:00:00Z')
+const NOW = new Date('2026-11-18T12:00:00Z')
 
 function item(fields: Partial<InboxItem> = {}): InboxItem {
   return {
@@ -23,7 +23,7 @@ function item(fields: Partial<InboxItem> = {}): InboxItem {
     number: 42,
     title: 'Add the inbox page',
     draft: false,
-    assignees: [],
+    assigneeLogins: [],
     reasons: ['assigned'],
     ...fields,
   }
@@ -73,7 +73,7 @@ test('a draft has the draft badge and a ready pull request has none', async () =
 })
 
 test('a row names the author and each reason', async () => {
-  await renderList([item({author: 'contributor', reasons: ['review-requested', 'member']})])
+  await renderList([item({authorLogin: 'contributor', reasons: ['review-requested', 'member']})])
 
   const row = within(screen.getByRole('link', {name: /Add the inbox page/}))
   for (const words of ['by contributor', 'Review requested', 'Your organization']) {
@@ -82,8 +82,8 @@ test('a row names the author and each reason', async () => {
 })
 
 test('the time of the last update is a time element with the ISO time', async () => {
-  const updatedAt = '2026-11-18T09:00:00Z'
-  await renderList([item({updatedAt})])
+  const updatedAt = '2026-11-18T09:00:00.000Z'
+  await renderList([item({updatedAt: new Date(updatedAt)})])
 
   const time = screen.getByText('3 hours ago')
   expect(time.tagName).toBe('TIME')

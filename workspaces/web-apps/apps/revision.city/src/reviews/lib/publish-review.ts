@@ -1,5 +1,6 @@
 // cSpell:ignore revisioncity -- the GitHub App's slug
 import {z} from 'zod'
+import {type CheckRunState, encodeCheckRun} from '../state/check-run-store'
 import {type Finding, SEVERITIES} from './findings'
 import {
   GitHubApiError,
@@ -10,7 +11,6 @@ import {
   repositoryPath,
 } from './github-api'
 import {
-  type CheckRunOutput,
   fingerprintFinding,
   formatFindingComment,
   formatReviewBody,
@@ -49,48 +49,35 @@ export async function createCheckRun({
   const checkRun = await request({
     method: 'POST',
     path: `${repositoryPath(repository)}/check-runs`,
-    body: {name: CHECK_RUN_NAME, head_sha: headSha, status: 'in_progress'},
+    body: {
+      name: CHECK_RUN_NAME,
+      head_sha: headSha,
+      ...encodeCheckRun({status: 'in-progress'}),
+    },
     schema: z.object({id: z.number()}),
   })
   return checkRun.id
 }
 
-// A failed check run shows this button. A user who can push clicks it to pass
-// the check without a new review (src/reviews/lib/dismiss-check-run.ts).
-export const DISMISS_ACTION = {
-  label: 'Dismiss findings',
-  description: 'Pass this check without a new review',
-  identifier: 'dismiss',
-}
+export {DISMISS_ACTION} from '../state/check-run-store'
 
-export interface CompleteCheckRunParams {
+export interface UpdateCheckRunParams {
   request: GitHubRequest
   repository: GitHubRepository
   checkRunId: number
-  conclusion: 'success' | 'failure' | 'neutral'
-  output: CheckRunOutput
-  externalId?: string
+  state: CheckRunState
 }
 
-export async function completeCheckRun({
+export async function updateCheckRun({
   request,
   repository,
   checkRunId,
-  conclusion,
-  output,
-  externalId,
-}: CompleteCheckRunParams): Promise<void> {
+  state,
+}: UpdateCheckRunParams): Promise<void> {
   await request({
     method: 'PATCH',
     path: `${repositoryPath(repository)}/check-runs/${checkRunId}`,
-    body: {
-      status: 'completed',
-      conclusion,
-      output,
-      // An empty list removes the button from a check run that did not fail.
-      actions: conclusion === 'failure' ? [DISMISS_ACTION] : [],
-      ...(externalId === undefined ? {} : {external_id: externalId}),
-    },
+    body: encodeCheckRun(state),
     schema: ignoredResponse,
   })
 }

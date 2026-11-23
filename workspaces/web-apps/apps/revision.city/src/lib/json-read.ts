@@ -10,6 +10,14 @@ export function readOptionalNumber(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined
 }
 
+export function readOptionalDate(value: unknown): Date | undefined {
+  if (typeof value !== 'string') {
+    return undefined
+  }
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? undefined : date
+}
+
 export function readUnknownPath(data: unknown, path: readonly string[]): unknown {
   let current = data
   for (const key of path) {

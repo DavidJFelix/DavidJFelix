@@ -16,7 +16,7 @@ import type {InboxItem} from '@/inbox/lib/inbox-item'
 
 import {InboxView} from './inbox-page'
 
-const NOW = Date.parse('2026-11-18T12:00:00Z')
+const NOW = new Date('2026-11-18T12:00:00Z')
 const SIGNED_IN: GitHubSession = {status: 'authenticated', login: 'maintainer'}
 
 function item(fields: Partial<InboxItem> = {}): InboxItem {
@@ -26,14 +26,14 @@ function item(fields: Partial<InboxItem> = {}): InboxItem {
     number: 42,
     title: 'Add the inbox page',
     draft: false,
-    assignees: [],
+    assigneeLogins: [],
     reasons: ['assigned'],
     ...fields,
   }
 }
 
-function loaded(items: InboxItem[], truncated = false): InboxItemsState {
-  return {status: 'loaded', items, truncated}
+function loaded(items: InboxItem[], isTruncated = false): InboxItemsState {
+  return {status: 'loaded', items, isTruncated}
 }
 
 // Renders the view on /inbox in a router that has the paths its links point to.
@@ -63,31 +63,31 @@ test.each([
   {
     name: 'the session is loading',
     session: {status: 'loading'},
-    inbox: {status: 'idle', items: [], truncated: false},
+    inbox: {status: 'idle', items: [], isTruncated: false},
     words: 'Loading your open pull requests',
   },
   {
     name: 'the list is loading',
     session: SIGNED_IN,
-    inbox: {status: 'loading', items: [], truncated: false},
+    inbox: {status: 'loading', items: [], isTruncated: false},
     words: 'Loading your open pull requests',
   },
   {
     name: 'the visitor is signed out',
     session: {status: 'anonymous'},
-    inbox: {status: 'idle', items: [], truncated: false},
+    inbox: {status: 'idle', items: [], isTruncated: false},
     words: 'Sign in to see your inbox',
   },
   {
     name: 'GitHub rejected the sign-in',
     session: SIGNED_IN,
-    inbox: {status: 'sign-in-again', items: [], truncated: false},
+    inbox: {status: 'sign-in-again', items: [], isTruncated: false},
     words: 'GitHub rejected your sign-in. Sign in again.',
   },
   {
     name: 'GitHub could not list the pull requests',
     session: SIGNED_IN,
-    inbox: {status: 'error', items: [], truncated: false},
+    inbox: {status: 'error', items: [], isTruncated: false},
     words: 'GitHub could not list your pull requests just now.',
   },
   {
@@ -121,13 +121,13 @@ test.each([
   {
     name: 'signed-out',
     session: {status: 'anonymous'},
-    inbox: {status: 'idle', items: [], truncated: false},
+    inbox: {status: 'idle', items: [], isTruncated: false},
     button: 'Sign in with GitHub',
   },
   {
     name: 'rejected',
     session: SIGNED_IN,
-    inbox: {status: 'sign-in-again', items: [], truncated: false},
+    inbox: {status: 'sign-in-again', items: [], isTruncated: false},
     button: 'Sign in again',
   },
 ] satisfies Array<{name: string; session: GitHubSession; inbox: InboxItemsState; button: string}>)(

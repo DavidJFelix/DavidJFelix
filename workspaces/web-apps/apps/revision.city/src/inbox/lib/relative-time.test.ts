@@ -2,14 +2,14 @@ import {expect, test} from 'vitest'
 
 import {formatRelativeTime} from './relative-time'
 
-const NOW = Date.parse('2026-11-18T12:00:00Z')
+const NOW = new Date('2026-11-18T12:00:00Z')
 const SECOND = 1000
 const MINUTE = 60 * SECOND
 const HOUR = 60 * MINUTE
 const DAY = 24 * HOUR
 
-function before(milliseconds: number): string {
-  return new Date(NOW - milliseconds).toISOString()
+function before(milliseconds: number): Date {
+  return new Date(NOW.getTime() - milliseconds)
 }
 
 test.each([
@@ -30,7 +30,7 @@ test.each([
 
 test.each([
   {name: 'a missing time', time: undefined},
-  {name: 'text that is not a time', time: 'last week'},
+  {name: 'a date that is not a time', time: new Date('last week')},
 ])('$name has no text', ({time}) => {
   expect(formatRelativeTime({time, now: NOW, locale: 'en-US'})).toBeUndefined()
 })

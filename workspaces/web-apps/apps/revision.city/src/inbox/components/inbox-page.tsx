@@ -1,6 +1,6 @@
 import {IconBrandGithub} from '@pierre/icons'
 import {Link} from '@tanstack/react-router'
-import {type ReactNode, useSyncExternalStore} from 'react'
+import {type ReactNode, useMemo, useSyncExternalStore} from 'react'
 
 import {css, cx} from 'styled-system/css'
 
@@ -88,7 +88,8 @@ const CLOCK_TICK_MS = 30_000
 export function InboxPage() {
   const session = useGitHubSession()
   const inbox = useInboxItems(session.status === 'authenticated')
-  const now = useSyncExternalStore(subscribeToClock, readClock, readClock)
+  const clockTime = useSyncExternalStore(subscribeToClock, readClock, readClock)
+  const now = useMemo(() => new Date(clockTime), [clockTime])
   return <InboxView session={session} inbox={inbox} now={now} />
 }
 
@@ -108,8 +109,7 @@ function readClock(): number {
 interface InboxViewProps {
   session: GitHubSession
   inbox: InboxItemsState
-  // The current time in milliseconds since the epoch.
-  now: number
+  now: Date
 }
 
 export function InboxView({session, inbox, now}: InboxViewProps) {
@@ -191,9 +191,9 @@ function InboxContent({session, inbox, now}: InboxViewProps) {
   )
 }
 
-function readSummary({items, truncated}: InboxItemsState): string {
+function readSummary({items, isTruncated}: InboxItemsState): string {
   const count = items.length === 1 ? '1 open pull request' : `${items.length} open pull requests`
-  return truncated
+  return isTruncated
     ? `${count}. GitHub has more, so the list shows the most recently updated.`
     : count
 }

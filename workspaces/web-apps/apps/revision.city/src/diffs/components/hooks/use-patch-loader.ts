@@ -46,6 +46,7 @@ import type {
   ViewerLoadState,
 } from '@/diffs/lib/types'
 import {getPublishPhase, patchLoadLogic} from '@/diffs/state/patch-load-store'
+import type {ViewSettingsStore} from '@/diffs/state/view-settings-store'
 
 const STREAM_PUBLISH_INTERVAL_MS = 100
 const STREAM_INITIAL_PUBLISH_INTERVAL_MS = 500
@@ -55,11 +56,11 @@ const STREAM_TREE_PUBLISH_INTERVAL_MS = 1_000
 const GENERIC_PATCH_LOAD_ERROR_MESSAGE = 'We couldn’t load that diff. Check the URL and try again.'
 
 interface UsePatchLoaderOptions {
-  collapseMode: 'expanded' | 'collapsed'
   domain?: string
   onLoadStart: () => void
   path: string
   viewerRef: RefObject<DiffsViewerHandle | null>
+  viewSettingsStore: ViewSettingsStore
 }
 
 interface UsePatchLoaderResult {
@@ -84,11 +85,11 @@ interface UsePatchLoaderResult {
 }
 
 export function usePatchLoader({
-  collapseMode,
   domain,
   onLoadStart,
   path,
   viewerRef,
+  viewSettingsStore,
 }: UsePatchLoaderOptions): UsePatchLoaderResult {
   const store = useStore(patchLoadLogic)
   const loadState = useSelector(store, (snapshot) => snapshot.context.status)
@@ -125,13 +126,6 @@ export function usePatchLoader({
   // walk the full set when the user toggles collapse mode. The viewer handle
   // does not expose an enumeration API, so we maintain our own index.
   const loadedItemIdsRef = useRef<Set<string>>(new Set())
-  // Mirrors the latest collapse mode so the streaming code path (which lives
-  // inside a long-lived effect/closure) can read the live value without us
-  // having to re-bind it on every change.
-  const collapseModeRef = useRef(collapseMode)
-  useEffect(() => {
-    collapseModeRef.current = collapseMode
-  }, [collapseMode])
 
   // Pre-mutates fresh items so they arrive in the viewer matching the current
   // collapse mode, then records their ids for later bulk updates. Diff items
@@ -139,15 +133,17 @@ export function usePatchLoader({
   // deleted-file diffs as collapsed by default — without an unconditional
   // overwrite, those would stay collapsed even when the user is in expanded
   // mode.
-  const prepareItemsForViewer = (items: readonly CodeViewItem<CommentMetadata>[]): void => {
-    const targetCollapsed = collapseModeRef.current === 'collapsed'
-    for (const item of items) {
-      loadedItemIdsRef.current.add(item.id)
-      if (item.type === 'diff') {
-        item.collapsed = targetCollapsed
+  const prepareItemsForViewer = useStableCallback(
+    (items: readonly CodeViewItem<CommentMetadata>[]) => {
+      const targetCollapsed = viewSettingsStore.getSnapshot().context.collapseMode === 'collapsed'
+      for (const item of items) {
+        loadedItemIdsRef.current.add(item.id)
+        if (item.type === 'diff') {
+          item.collapsed = targetCollapsed
+        }
       }
-    }
-  }
+    },
+  )
 
   const applyCollapseModeToLoaded = useStableCallback((mode: 'expanded' | 'collapsed') => {
     const targetCollapsed = mode === 'collapsed'
@@ -455,7 +451,16 @@ export function usePatchLoader({
     return () => {
       controller.abort()
     }
-  }, [domain, loadAttempt, onLoadStart, path, store, tryApplyLineHashTarget, viewerRef])
+  }, [
+    domain,
+    loadAttempt,
+    onLoadStart,
+    path,
+    prepareItemsForViewer,
+    store,
+    tryApplyLineHashTarget,
+    viewerRef,
+  ])
 
   useEffect(() => {
     window.addEventListener('hashchange', tryApplyLineHashTarget)

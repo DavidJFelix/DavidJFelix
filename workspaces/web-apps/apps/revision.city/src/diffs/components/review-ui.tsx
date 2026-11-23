@@ -1,15 +1,8 @@
-import {type DiffIndicators} from '@pierre/diffs'
+import {useStableCallback} from '@pierre/diffs/react'
 import {type ColorMode} from '@pierre/theming'
 import {useThemeController} from '@pierre/theming/react'
-import {
-  type ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from 'react'
+import {shallowEqual, useSelector, useStore} from '@xstate/store-react'
+import {type ReactNode, useCallback, useEffect, useMemo, useRef, useSyncExternalStore} from 'react'
 
 import {css} from 'styled-system/css'
 import {CODEBERG_HOST, canReadCodebergFiles} from '@/diffs/lib/codeberg-diff-source'
@@ -28,6 +21,11 @@ import type {
 } from '@/diffs/lib/types'
 import {upsertSavedCommentSidebarEntry} from '@/diffs/lib/upsert-saved-comment-sidebar-entry'
 import {docsThemeCatalog, themeController} from '@/diffs/state/theme-controller'
+import {
+  type ViewSettingsContext,
+  type ViewSettingsStore,
+  viewSettingsLogic,
+} from '@/diffs/state/view-settings-store'
 import type {SymbolSelection} from '@/symbols/components/symbol-changes-list'
 import type {SymbolDiffRequest} from '@/symbols/lib/symbol-diff-client'
 import {OverridableThemeSourceProvider} from './contexts/overridable-theme-source-provider'
@@ -58,13 +56,19 @@ export function ReviewUI({domain, path}: ReviewUIProps) {
 
 function ReviewUIInner({domain, path}: ReviewUIProps) {
   const workerPoolState = useWorkerPoolState()
-  const [diffStyle, setDiffStyle] = useState<'split' | 'unified'>('split')
-  const [collapseMode, setCollapseMode] = useState<'expanded' | 'collapsed'>('expanded')
-  const [fileTreeOverlayOpen, setFileTreeOverlayOpen] = useState(false)
-  const [overflow, setOverflow] = useState<'wrap' | 'scroll'>('scroll')
-  const [showBackgrounds, setShowBackgrounds] = useState(true)
-  const [diffIndicators, setDiffIndicators] = useState<DiffIndicators>('bars')
-  const [lineNumbers, setLineNumbers] = useState(true)
+  const viewSettingsStore = useStore(viewSettingsLogic)
+  const {
+    collapseMode,
+    diffIndicators,
+    diffStyle,
+    lineNumbers,
+    overflow,
+    showBackgrounds,
+    status: fileTreeOverlayStatus,
+  } = useSelector(viewSettingsStore, ({context}) => context, shallowEqual)
+  const fileTreeOverlayOpen = fileTreeOverlayStatus === 'open'
+  const {setDiffIndicators, setDiffStyle, setLineNumbers, setOverflow, setShowBackgrounds} =
+    useMemo(() => createViewSettingSetters(viewSettingsStore), [viewSettingsStore])
   // The viewer keeps the first answer: CodeView does not compute its file heights
   // again when a later answer changes `loadDiffFiles`.
   const githubSession = useFirstGitHubSession()
@@ -134,9 +138,9 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
       ? createGitHubDiffFileLoader(path)
       : undefined
   }, [domain, githubSession.status, path])
-  const handlePatchLoadStart = useCallback(() => {
-    setFileTreeOverlayOpen(false)
-  }, [])
+  const handleCloseFileTreeOverlay = useStableCallback(() => {
+    viewSettingsStore.trigger.fileTreeOverlayClosed()
+  })
   const {
     allItems,
     applyCollapseModeToLoaded,
@@ -154,31 +158,27 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
     treeSource,
     viewerKey,
   } = usePatchLoader({
-    collapseMode,
     domain,
-    onLoadStart: handlePatchLoadStart,
+    onLoadStart: handleCloseFileTreeOverlay,
     path,
     viewerRef,
+    viewSettingsStore,
   })
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(max-width: 767px)')
-    const updateMobileState = (matches: boolean) => {
-      setDiffStyle(matches ? 'unified' : 'split')
-      if (!matches) setFileTreeOverlayOpen(false)
-    }
     const handleChange = (event: MediaQueryListEvent) => {
-      updateMobileState(event.matches)
+      viewSettingsStore.trigger.viewportChanged({mobile: event.matches})
     }
 
-    updateMobileState(mediaQuery.matches)
+    viewSettingsStore.trigger.viewportChanged({mobile: mediaQuery.matches})
     mediaQuery.addEventListener('change', handleChange)
     return () => {
       mediaQuery.removeEventListener('change', handleChange)
     }
-  }, [])
-  const handleSelectTreeItem = useCallback((itemId: string) => {
-    setFileTreeOverlayOpen(false)
+  }, [viewSettingsStore])
+  const handleSelectTreeItem = useStableCallback((itemId: string) => {
+    viewSettingsStore.trigger.fileTreeOverlayClosed()
     const viewer = viewerRef.current
     if (isNullish(viewer)) {
       return
@@ -195,12 +195,11 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
       align: 'start',
       behavior: 'smooth',
     })
-  }, [])
-  const handleToggleCollapseMode = useCallback(() => {
-    const next = collapseMode === 'expanded' ? 'collapsed' : 'expanded'
-    setCollapseMode(next)
-    applyCollapseModeToLoaded(next)
-  }, [applyCollapseModeToLoaded, collapseMode])
+  })
+  const handleToggleCollapseMode = useStableCallback(() => {
+    viewSettingsStore.trigger.collapseModeToggled()
+    applyCollapseModeToLoaded(viewSettingsStore.getSnapshot().context.collapseMode)
+  })
   const handleCommentSaved = useCallback(
     (comment: DiffsSavedCommentEvent) => {
       setCommentSections((prev) =>
@@ -215,12 +214,9 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
     },
     [setCommentSections],
   )
-  const handleToggleFileTreeOverlay = useCallback(() => {
-    setFileTreeOverlayOpen((open) => !open)
-  }, [])
-  const handleCloseFileTreeOverlay = useCallback(() => {
-    setFileTreeOverlayOpen(false)
-  }, [])
+  const handleToggleFileTreeOverlay = useStableCallback(() => {
+    viewSettingsStore.trigger.fileTreeOverlayToggled()
+  })
   // Only diff items carry two revisions to compare; a plain file item in the
   // viewer has nothing to diff against.
   const symbolDiffRequests = useMemo<readonly SymbolDiffRequest[]>(
@@ -239,8 +235,8 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
       ),
     [allItems],
   )
-  const handleSelectSymbol = useCallback((selection: SymbolSelection) => {
-    setFileTreeOverlayOpen(false)
+  const handleSelectSymbol = useStableCallback((selection: SymbolSelection) => {
+    viewSettingsStore.trigger.fileTreeOverlayClosed()
     const viewer = viewerRef.current
     if (isNullish(viewer)) {
       return
@@ -261,9 +257,9 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
       align: 'center',
       behavior: 'smooth-auto',
     })
-  }, [])
-  const handleSelectComment = useCallback((comment: DiffsSavedCommentEntry) => {
-    setFileTreeOverlayOpen(false)
+  })
+  const handleSelectComment = useStableCallback((comment: DiffsSavedCommentEntry) => {
+    viewSettingsStore.trigger.fileTreeOverlayClosed()
     viewerRef.current?.setSelectedLines({
       id: comment.itemId,
       range: comment.range,
@@ -276,7 +272,7 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
       align: 'center',
       behavior: 'smooth-auto',
     })
-  }, [])
+  })
   const patchShown = loadState === 'ready' || (loadState === 'streaming' && initialItems.length > 0)
   // Withhold the viewer until the persisted themes have been read from
   // localStorage. Otherwise on client-side navigation back into a diff the
@@ -382,6 +378,20 @@ function ReviewUIInner({domain, path}: ReviewUIProps) {
       )}
     </ReviewGrid>
   )
+}
+
+function createViewSettingSetters(store: ViewSettingsStore) {
+  return {
+    setDiffIndicators: (diffIndicators: ViewSettingsContext['diffIndicators']) =>
+      store.trigger.diffIndicatorsChanged({diffIndicators}),
+    setDiffStyle: (diffStyle: ViewSettingsContext['diffStyle']) =>
+      store.trigger.diffStyleChanged({diffStyle}),
+    setLineNumbers: (lineNumbers: boolean) => store.trigger.lineNumbersChanged({lineNumbers}),
+    setOverflow: (overflow: ViewSettingsContext['overflow']) =>
+      store.trigger.overflowChanged({overflow}),
+    setShowBackgrounds: (showBackgrounds: boolean) =>
+      store.trigger.showBackgroundsChanged({showBackgrounds}),
+  }
 }
 
 interface ReviewGridProps {

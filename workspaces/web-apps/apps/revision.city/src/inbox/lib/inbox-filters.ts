@@ -1,7 +1,3 @@
-// zod/mini, not zod: the search schema of a route loads on every page with the route tree. With
-// zod/mini this schema adds about 6 KB gzip, with zod about 25 KB.
-import {z} from 'zod/mini'
-
 import {INBOX_REASONS, type InboxItem, type InboxReason} from './inbox-item'
 
 export interface InboxFilters {
@@ -78,75 +74,6 @@ export function countActiveInboxFilters(filters: InboxFilters): number {
     filters.reasons.length > 0,
     filters.areDraftsHidden,
   ].filter(Boolean).length
-}
-
-// The router reads text that looks like a number, a boolean or JSON as that value, and a key that
-// occurs more than once as an array. A text key takes a number, a boolean or an array back as
-// text, and reads any other value as not set.
-const addressPrimitive = z.union([z.string(), z.number(), z.boolean()])
-const addressValue = z.union([addressPrimitive, z.array(addressPrimitive)])
-const addressText = z.catch(
-  z.optional(
-    z.pipe(
-      addressValue,
-      z.transform((value: z.output<typeof addressValue>) => [value].flat().join(' ')),
-    ),
-  ),
-  undefined,
-)
-
-export const inboxSearchSchema = z.object({
-  q: addressText,
-  repo: addressText,
-  author: addressText,
-  assignee: addressText,
-  reason: addressText,
-  drafts: z.catch(z.optional(z.literal('hide')), undefined),
-})
-
-export type InboxSearch = z.output<typeof inboxSearchSchema>
-
-export function readInboxFilters(search: InboxSearch): InboxFilters {
-  return {
-    query: search.q ?? '',
-    repositoryFullNames: readAddressList(search.repo),
-    authorLogins: readAddressList(search.author),
-    assigneeLogins: readAddressList(search.assignee),
-    reasons: readAddressList(search.reason).filter(isInboxReason),
-    areDraftsHidden: search.drafts === 'hide',
-  }
-}
-
-// The query goes into the address as typed, so that a space at its end stays while the visitor
-// types the next word.
-export function writeInboxSearch(filters: InboxFilters): InboxSearch {
-  return {
-    ...(isQuerySet(filters.query) && {q: filters.query}),
-    ...(filters.repositoryFullNames.length > 0 && {
-      repo: writeAddressList(filters.repositoryFullNames),
-    }),
-    ...(filters.authorLogins.length > 0 && {author: writeAddressList(filters.authorLogins)}),
-    ...(filters.assigneeLogins.length > 0 && {assignee: writeAddressList(filters.assigneeLogins)}),
-    ...(filters.reasons.length > 0 && {reason: writeAddressList(filters.reasons)}),
-    ...(filters.areDraftsHidden && {drafts: 'hide' as const}),
-  }
-}
-
-// A list goes into one key with a space between its values, because the router writes an array
-// as long JSON text. Logins, repository names and reasons contain no spaces or commas, so the reader
-// also splits a list at the commas that a person types.
-const ADDRESS_LIST_SEPARATOR = /[\s,]+/u
-
-function writeAddressList(values: readonly string[]): string {
-  return values.join(' ')
-}
-
-function readAddressList(text: string | undefined): string[] {
-  return uniqueIgnoringCase((text ?? '').split(ADDRESS_LIST_SEPARATOR).filter(Boolean))
-}
-
-function isInboxReason(value: string): value is InboxReason {
-  return INBOX_REASONS.some((reason) => reason === value)
 }
 
 function queryWords(query: string): string[] {

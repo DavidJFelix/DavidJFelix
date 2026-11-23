@@ -34,7 +34,7 @@ function inboxItem(fields: Partial<InboxItem> & Pick<InboxItem, 'number'>): Inbo
     repo: 'app',
     title: `Pull request ${fields.number}`,
     draft: false,
-    assignees: [],
+    assigneeLogins: [],
     reasons: ['watched'],
     ...fields,
   }
@@ -48,15 +48,15 @@ const ITEMS = [
   inboxItem({
     number: 1,
     title: 'Fix the login redirect',
-    author: 'Alice',
-    assignees: ['bob'],
+    authorLogin: 'Alice',
+    assigneeLogins: ['bob'],
     reasons: ['review-requested'],
   }),
   inboxItem({
     number: 2,
     repo: 'web',
     title: 'Add a dark mode',
-    author: 'bob',
+    authorLogin: 'bob',
     draft: true,
     reasons: ['assigned', 'owned'],
   }),
@@ -65,8 +65,8 @@ const ITEMS = [
     owner: 'labs',
     repo: 'api',
     title: 'Bump zod',
-    author: 'renovate[bot]',
-    assignees: ['Alice', 'carol'],
+    authorLogin: 'renovate[bot]',
+    assigneeLogins: ['Alice', 'carol'],
     reasons: ['member'],
   }),
   inboxItem({number: 30, title: 'Move the sessions table', draft: true}),
@@ -96,35 +96,35 @@ test.each<FilterRow>([
   {name: 'query words where one is not found', fields: {query: 'alice dark'}, expected: []},
   {name: 'a query of only spaces', fields: {query: '   '}, expected: [1, 2, 12, 30]},
   {name: 'a query on an item with no author', fields: {query: 'sessions'}, expected: [30]},
-  {name: 'one repository', fields: {repositories: ['acme/app']}, expected: [1, 30]},
+  {name: 'one repository', fields: {repositoryFullNames: ['acme/app']}, expected: [1, 30]},
   {
     name: 'two repositories',
-    fields: {repositories: ['acme/app', 'labs/api']},
+    fields: {repositoryFullNames: ['acme/app', 'labs/api']},
     expected: [1, 12, 30],
   },
   {
     name: 'a repository in another letter case',
-    fields: {repositories: ['ACME/App']},
+    fields: {repositoryFullNames: ['ACME/App']},
     expected: [1, 30],
   },
-  {name: 'one author', fields: {authors: ['bob']}, expected: [2]},
-  {name: 'two authors', fields: {authors: ['bob', 'renovate[bot]']}, expected: [2, 12]},
-  {name: 'an author in another letter case', fields: {authors: ['alice']}, expected: [1]},
-  {name: 'one assignee', fields: {assignees: ['carol']}, expected: [12]},
-  {name: 'two assignees', fields: {assignees: ['bob', 'carol']}, expected: [1, 12]},
-  {name: 'an assignee in another letter case', fields: {assignees: ['ALICE']}, expected: [12]},
+  {name: 'one author', fields: {authorLogins: ['bob']}, expected: [2]},
+  {name: 'two authors', fields: {authorLogins: ['bob', 'renovate[bot]']}, expected: [2, 12]},
+  {name: 'an author in another letter case', fields: {authorLogins: ['alice']}, expected: [1]},
+  {name: 'one assignee', fields: {assigneeLogins: ['carol']}, expected: [12]},
+  {name: 'two assignees', fields: {assigneeLogins: ['bob', 'carol']}, expected: [1, 12]},
+  {name: 'an assignee in another letter case', fields: {assigneeLogins: ['ALICE']}, expected: [12]},
   {name: 'one reason', fields: {reasons: ['owned']}, expected: [2]},
   {name: 'two reasons', fields: {reasons: ['review-requested', 'watched']}, expected: [1, 30]},
-  {name: 'drafts hidden', fields: {hideDrafts: true}, expected: [1, 12]},
-  {name: 'a value that no item has', fields: {authors: ['nobody']}, expected: []},
+  {name: 'drafts hidden', fields: {areDraftsHidden: true}, expected: [1, 12]},
+  {name: 'a value that no item has', fields: {authorLogins: ['nobody']}, expected: []},
   {
     name: 'a repository and hidden drafts',
-    fields: {repositories: ['acme/app'], hideDrafts: true},
+    fields: {repositoryFullNames: ['acme/app'], areDraftsHidden: true},
     expected: [1],
   },
   {
     name: 'two repositories and an author',
-    fields: {repositories: ['acme/app', 'acme/web'], authors: ['bob']},
+    fields: {repositoryFullNames: ['acme/app', 'acme/web'], authorLogins: ['bob']},
     expected: [2],
   },
   {name: 'a query and a reason', fields: {query: 'acme', reasons: ['assigned']}, expected: [2]},
@@ -132,11 +132,11 @@ test.each<FilterRow>([
     name: 'every filter',
     fields: {
       query: 'bump',
-      repositories: ['labs/api'],
-      authors: ['renovate[bot]'],
-      assignees: ['carol'],
+      repositoryFullNames: ['labs/api'],
+      authorLogins: ['renovate[bot]'],
+      assigneeLogins: ['carol'],
       reasons: ['member'],
-      hideDrafts: true,
+      areDraftsHidden: true,
     },
     expected: [12],
   },
@@ -145,8 +145,8 @@ test.each<FilterRow>([
 })
 
 test.each([
-  {name: 'an author', fields: {authors: ['alice']}},
-  {name: 'an assignee', fields: {assignees: ['alice']}},
+  {name: 'an author', fields: {authorLogins: ['alice']}},
+  {name: 'an assignee', fields: {assigneeLogins: ['alice']}},
 ])('a filter by $name drops an item with no author and no assignees', ({fields}) => {
   const item = inboxItem({number: 30})
 
@@ -155,31 +155,36 @@ test.each([
 
 test('the options count the pull requests for each value and sort by that number, then by name', () => {
   const items = [
-    inboxItem({number: 1, repo: 'web', author: 'bob', assignees: ['Carol', 'carol']}),
-    inboxItem({number: 2, author: 'Bob', assignees: ['dave'], reasons: ['owned', 'watched']}),
+    inboxItem({number: 1, repo: 'web', authorLogin: 'bob', assigneeLogins: ['Carol', 'carol']}),
+    inboxItem({
+      number: 2,
+      authorLogin: 'Bob',
+      assigneeLogins: ['dave'],
+      reasons: ['owned', 'watched'],
+    }),
     inboxItem({number: 3, reasons: ['review-requested', 'watched']}),
     inboxItem({
       number: 4,
       owner: 'Labs',
       repo: 'API',
-      author: 'alice',
-      assignees: ['carol'],
+      authorLogin: 'alice',
+      assigneeLogins: ['carol'],
       reasons: ['owned'],
     }),
-    inboxItem({number: 5, owner: 'labs', repo: 'api', author: 'alice'}),
+    inboxItem({number: 5, owner: 'labs', repo: 'api', authorLogin: 'alice'}),
   ]
 
   expect(listInboxFilterOptions(items)).toEqual({
-    repositories: [
+    repositoryFullNames: [
       {value: 'acme/app', count: 2},
       {value: 'Labs/API', count: 2},
       {value: 'acme/web', count: 1},
     ],
-    authors: [
+    authorLogins: [
       {value: 'alice', count: 2},
       {value: 'bob', count: 2},
     ],
-    assignees: [
+    assigneeLogins: [
       {value: 'Carol', count: 2},
       {value: 'dave', count: 1},
     ],
@@ -193,9 +198,9 @@ test('the options count the pull requests for each value and sort by that number
 
 test('an empty inbox has no options', () => {
   expect(listInboxFilterOptions([])).toEqual({
-    repositories: [],
-    authors: [],
-    assignees: [],
+    repositoryFullNames: [],
+    authorLogins: [],
+    assigneeLogins: [],
     reasons: [],
   })
 })
@@ -210,20 +215,20 @@ test.each<CountRow>([
   {name: 'no filter', fields: {}, expected: 0},
   {name: 'a query of only spaces', fields: {query: '  '}, expected: 0},
   {name: 'a query', fields: {query: 'login'}, expected: 1},
-  {name: 'repositories', fields: {repositories: ['acme/app', 'acme/web']}, expected: 1},
-  {name: 'an author', fields: {authors: ['alice']}, expected: 1},
-  {name: 'an assignee', fields: {assignees: ['bob']}, expected: 1},
+  {name: 'repositories', fields: {repositoryFullNames: ['acme/app', 'acme/web']}, expected: 1},
+  {name: 'an author', fields: {authorLogins: ['alice']}, expected: 1},
+  {name: 'an assignee', fields: {assigneeLogins: ['bob']}, expected: 1},
   {name: 'a reason', fields: {reasons: ['owned']}, expected: 1},
-  {name: 'hidden drafts', fields: {hideDrafts: true}, expected: 1},
+  {name: 'hidden drafts', fields: {areDraftsHidden: true}, expected: 1},
   {
     name: 'every filter',
     fields: {
       query: 'login',
-      repositories: ['acme/app'],
-      authors: ['alice'],
-      assignees: ['bob'],
+      repositoryFullNames: ['acme/app'],
+      authorLogins: ['alice'],
+      assigneeLogins: ['bob'],
       reasons: ['owned'],
-      hideDrafts: true,
+      areDraftsHidden: true,
     },
     expected: 6,
   },
@@ -259,31 +264,31 @@ test.each<AddressRow>([
   {name: 'a query that ends in a space', fields: {query: 'fix '}, address: '?q=fix+'},
   {
     name: 'two repositories',
-    fields: {repositories: ['acme/app', 'acme/web']},
+    fields: {repositoryFullNames: ['acme/app', 'acme/web']},
     address: `?repo=acme${ENCODED_SLASH}app+acme${ENCODED_SLASH}web`,
   },
   {
     name: 'two authors',
-    fields: {authors: ['alice', 'bob']},
+    fields: {authorLogins: ['alice', 'bob']},
     address: '?author=alice+bob',
   },
-  {name: 'a login of only digits', fields: {authors: ['1234']}, address: '?author=%221234%22'},
-  {name: 'an assignee', fields: {assignees: ['bob']}, address: '?assignee=bob'},
+  {name: 'a login of only digits', fields: {authorLogins: ['1234']}, address: '?author=%221234%22'},
+  {name: 'an assignee', fields: {assigneeLogins: ['bob']}, address: '?assignee=bob'},
   {
     name: 'two reasons',
     fields: {reasons: ['review-requested', 'assigned']},
     address: '?reason=review-requested+assigned',
   },
-  {name: 'hidden drafts', fields: {hideDrafts: true}, address: '?drafts=hide'},
+  {name: 'hidden drafts', fields: {areDraftsHidden: true}, address: '?drafts=hide'},
   {
     name: 'every filter',
     fields: {
       query: 'login',
-      repositories: ['acme/app'],
-      authors: ['alice'],
-      assignees: ['bob'],
+      repositoryFullNames: ['acme/app'],
+      authorLogins: ['alice'],
+      assigneeLogins: ['bob'],
       reasons: ['owned'],
-      hideDrafts: true,
+      areDraftsHidden: true,
     },
     address: `?q=login&repo=acme${ENCODED_SLASH}app&author=alice&assignee=bob&reason=owned&drafts=hide`,
   },
@@ -319,12 +324,12 @@ test.each<OddAddressRow>([
   {
     name: 'a repeated key with values in two letter cases',
     address: '?author=alice&author=Alice&author=bob',
-    expected: {authors: ['alice', 'bob']},
+    expected: {authorLogins: ['alice', 'bob']},
   },
   {
     name: 'a list with commas',
     address: '?repo=acme/app,%20acme/web',
-    expected: {repositories: ['acme/app', 'acme/web']},
+    expected: {repositoryFullNames: ['acme/app', 'acme/web']},
   },
   {name: 'a query that the router reads as a number', address: '?q=12', expected: {query: '12'}},
   {
@@ -335,7 +340,7 @@ test.each<OddAddressRow>([
   {
     name: 'a login that the router reads as a number',
     address: '?assignee=1234',
-    expected: {assignees: ['1234']},
+    expected: {assigneeLogins: ['1234']},
   },
 ])('the address with $name reads without an error', ({address, expected}) => {
   expect(readAddress(address)).toEqual(filters(expected))
@@ -354,11 +359,11 @@ test('any filters go into the address and back unchanged', () => {
       constant(''),
       string({unit: 'grapheme', minLength: 1}).filter((query) => /\S/u.test(query)),
     ),
-    repositories: uniqueArray(repositoryArbitrary, {selector: lowerCase, maxLength: 4}),
-    authors: uniqueArray(loginArbitrary, {selector: lowerCase, maxLength: 4}),
-    assignees: uniqueArray(loginArbitrary, {selector: lowerCase, maxLength: 4}),
+    repositoryFullNames: uniqueArray(repositoryArbitrary, {selector: lowerCase, maxLength: 4}),
+    authorLogins: uniqueArray(loginArbitrary, {selector: lowerCase, maxLength: 4}),
+    assigneeLogins: uniqueArray(loginArbitrary, {selector: lowerCase, maxLength: 4}),
     reasons: shuffledSubarray([...INBOX_REASONS]),
-    hideDrafts: boolean(),
+    areDraftsHidden: boolean(),
   })
 
   assert(

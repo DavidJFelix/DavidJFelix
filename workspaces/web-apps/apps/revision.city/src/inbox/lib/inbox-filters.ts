@@ -6,21 +6,20 @@ import {INBOX_REASONS, type InboxItem, type InboxReason} from './inbox-item'
 
 export interface InboxFilters {
   query: string
-  // Each value is `owner/repo`.
-  repositories: readonly string[]
-  authors: readonly string[]
-  assignees: readonly string[]
+  repositoryFullNames: readonly string[]
+  authorLogins: readonly string[]
+  assigneeLogins: readonly string[]
   reasons: readonly InboxReason[]
-  hideDrafts: boolean
+  areDraftsHidden: boolean
 }
 
 export const EMPTY_INBOX_FILTERS: InboxFilters = {
   query: '',
-  repositories: [],
-  authors: [],
-  assignees: [],
+  repositoryFullNames: [],
+  authorLogins: [],
+  assigneeLogins: [],
   reasons: [],
-  hideDrafts: false,
+  areDraftsHidden: false,
 }
 
 export interface FilterInboxItemsParams {
@@ -30,17 +29,17 @@ export interface FilterInboxItemsParams {
 
 export function filterInboxItems({items, filters}: FilterInboxItemsParams): InboxItem[] {
   const words = queryWords(filters.query)
-  const repositories = lowerCaseSet(filters.repositories)
-  const authors = lowerCaseSet(filters.authors)
-  const assignees = lowerCaseSet(filters.assignees)
+  const repositoryFullNames = lowerCaseSet(filters.repositoryFullNames)
+  const authorLogins = lowerCaseSet(filters.authorLogins)
+  const assigneeLogins = lowerCaseSet(filters.assigneeLogins)
   const reasons = lowerCaseSet(filters.reasons)
   return items.filter(
     (item) =>
-      hasChosenValue(repositories, [repositoryOf(item)]) &&
-      hasChosenValue(authors, authorsOf(item)) &&
-      hasChosenValue(assignees, item.assignees) &&
+      hasChosenValue(repositoryFullNames, [repositoryFullNameOf(item)]) &&
+      hasChosenValue(authorLogins, authorLoginsOf(item)) &&
+      hasChosenValue(assigneeLogins, item.assigneeLogins) &&
       hasChosenValue(reasons, item.reasons) &&
-      !(filters.hideDrafts && item.draft) &&
+      !(filters.areDraftsHidden && item.draft) &&
       matchesEveryWord(item, words),
   )
 }
@@ -51,18 +50,18 @@ export interface InboxFilterOption<Value extends string = string> {
 }
 
 export interface InboxFilterOptions {
-  repositories: InboxFilterOption[]
-  authors: InboxFilterOption[]
-  assignees: InboxFilterOption[]
+  repositoryFullNames: InboxFilterOption[]
+  authorLogins: InboxFilterOption[]
+  assigneeLogins: InboxFilterOption[]
   reasons: InboxFilterOption<InboxReason>[]
 }
 
 // Each option counts a pull request once, under the first spelling of the value in `items`.
 export function listInboxFilterOptions(items: readonly InboxItem[]): InboxFilterOptions {
   return {
-    repositories: countValues(items.map((item) => [repositoryOf(item)])),
-    authors: countValues(items.map(authorsOf)),
-    assignees: countValues(items.map((item) => item.assignees)),
+    repositoryFullNames: countValues(items.map((item) => [repositoryFullNameOf(item)])),
+    authorLogins: countValues(items.map(authorLoginsOf)),
+    assigneeLogins: countValues(items.map((item) => item.assigneeLogins)),
     reasons: INBOX_REASONS.map((reason) => ({
       value: reason,
       count: items.filter((item) => item.reasons.includes(reason)).length,
@@ -73,11 +72,11 @@ export function listInboxFilterOptions(items: readonly InboxItem[]): InboxFilter
 export function countActiveInboxFilters(filters: InboxFilters): number {
   return [
     isQuerySet(filters.query),
-    filters.repositories.length > 0,
-    filters.authors.length > 0,
-    filters.assignees.length > 0,
+    filters.repositoryFullNames.length > 0,
+    filters.authorLogins.length > 0,
+    filters.assigneeLogins.length > 0,
     filters.reasons.length > 0,
-    filters.hideDrafts,
+    filters.areDraftsHidden,
   ].filter(Boolean).length
 }
 
@@ -110,11 +109,11 @@ export type InboxSearch = z.output<typeof inboxSearchSchema>
 export function readInboxFilters(search: InboxSearch): InboxFilters {
   return {
     query: search.q ?? '',
-    repositories: readAddressList(search.repo),
-    authors: readAddressList(search.author),
-    assignees: readAddressList(search.assignee),
+    repositoryFullNames: readAddressList(search.repo),
+    authorLogins: readAddressList(search.author),
+    assigneeLogins: readAddressList(search.assignee),
     reasons: readAddressList(search.reason).filter(isInboxReason),
-    hideDrafts: search.drafts === 'hide',
+    areDraftsHidden: search.drafts === 'hide',
   }
 }
 
@@ -123,11 +122,13 @@ export function readInboxFilters(search: InboxSearch): InboxFilters {
 export function writeInboxSearch(filters: InboxFilters): InboxSearch {
   return {
     ...(isQuerySet(filters.query) && {q: filters.query}),
-    ...(filters.repositories.length > 0 && {repo: writeAddressList(filters.repositories)}),
-    ...(filters.authors.length > 0 && {author: writeAddressList(filters.authors)}),
-    ...(filters.assignees.length > 0 && {assignee: writeAddressList(filters.assignees)}),
+    ...(filters.repositoryFullNames.length > 0 && {
+      repo: writeAddressList(filters.repositoryFullNames),
+    }),
+    ...(filters.authorLogins.length > 0 && {author: writeAddressList(filters.authorLogins)}),
+    ...(filters.assigneeLogins.length > 0 && {assignee: writeAddressList(filters.assigneeLogins)}),
     ...(filters.reasons.length > 0 && {reason: writeAddressList(filters.reasons)}),
-    ...(filters.hideDrafts && {drafts: 'hide' as const}),
+    ...(filters.areDraftsHidden && {drafts: 'hide' as const}),
   }
 }
 
@@ -157,9 +158,12 @@ function isQuerySet(query: string): boolean {
 }
 
 function matchesEveryWord(item: InboxItem, words: readonly string[]): boolean {
-  const fields = [item.title, repositoryOf(item), `#${item.number}`, ...authorsOf(item)].map(
-    (field) => field.toLowerCase(),
-  )
+  const fields = [
+    item.title,
+    repositoryFullNameOf(item),
+    `#${item.number}`,
+    ...authorLoginsOf(item),
+  ].map((field) => field.toLowerCase())
   return words.every((word) => fields.some((field) => field.includes(word)))
 }
 
@@ -167,12 +171,12 @@ function hasChosenValue(chosen: ReadonlySet<string>, values: readonly string[]):
   return chosen.size === 0 || values.some((value) => chosen.has(value.toLowerCase()))
 }
 
-function repositoryOf(item: InboxItem): string {
+function repositoryFullNameOf(item: InboxItem): string {
   return `${item.owner}/${item.repo}`
 }
 
-function authorsOf(item: InboxItem): string[] {
-  return item.author === undefined ? [] : [item.author]
+function authorLoginsOf(item: InboxItem): string[] {
+  return item.authorLogin === undefined ? [] : [item.authorLogin]
 }
 
 function lowerCaseSet(values: readonly string[]): ReadonlySet<string> {

@@ -3,7 +3,7 @@
   "private": true,
   "license": "(MIT OR Apache-2.0)",
   "type": "module",
-  "packageManager": "bun@1.4.4",
+  "packageManager": "bun@1.4.5",
   "scripts": {
     "build": "wrangler deploy --dry-run --outdir dist",
     "smoke": "bun bin/smoke.ts",

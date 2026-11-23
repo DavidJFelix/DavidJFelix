@@ -6,15 +6,7 @@ import {
 } from '@pierre/diffs'
 import {useStableCallback} from '@pierre/diffs/react'
 import {useSelector, useStore} from '@xstate/store-react'
-import {
-  type Dispatch,
-  type RefObject,
-  type SetStateAction,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react'
+import {type RefObject, useCallback, useEffect, useRef, useState} from 'react'
 
 import {CODE_VIEW_BATCH_COUNT, getInitialBatchSize} from '@/diffs/lib/constants'
 import {
@@ -46,6 +38,7 @@ import type {
   ViewerLoadState,
 } from '@/diffs/lib/types'
 import {getPublishPhase, patchLoadLogic} from '@/diffs/state/patch-load-store'
+import {type SavedCommentsStore, savedCommentsLogic} from '@/diffs/state/saved-comments-store'
 import type {ViewSettingsStore} from '@/diffs/state/view-settings-store'
 
 const STREAM_PUBLISH_INTERVAL_MS = 100
@@ -70,7 +63,7 @@ interface UsePatchLoaderResult {
   allItems: readonly CodeViewItem<CommentMetadata>[]
   applyCollapseModeToLoaded: (mode: 'expanded' | 'collapsed') => void
   commentFileByItemId: DiffsCommentFileByItemId | null
-  commentSections: DiffsSavedCommentItem[]
+  commentSections: readonly DiffsSavedCommentItem[]
   diffStats: DiffsStats | null
   errorMessage: string | null
   errorRemedy: GitHubAccessRemedy | null
@@ -79,7 +72,7 @@ interface UsePatchLoaderResult {
   onLineLinkChange: (selection: CodeViewLineSelection | null) => void
   onViewerReady: () => void
   retryLoad: () => void
-  setCommentSections: Dispatch<SetStateAction<DiffsSavedCommentItem[]>>
+  savedComments: SavedCommentsStore
   treeSource: DiffsFileTreeSource | null
   viewerKey: number
 }
@@ -108,7 +101,8 @@ export function usePatchLoader({
   const [commentFileByItemId, setCommentFileByItemId] = useState<DiffsCommentFileByItemId | null>(
     null,
   )
-  const [commentSections, setCommentSections] = useState<DiffsSavedCommentItem[]>([])
+  const savedComments = useStore(savedCommentsLogic)
+  const commentSections = useSelector(savedComments, ({context}) => context.sections)
   // A new request id clears the data of the previous request during render, not in the load effect:
   // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
   const [dataRequestId, setDataRequestId] = useState(viewerKey)
@@ -119,7 +113,6 @@ export function usePatchLoader({
     setTreeSource(null)
     setDiffStats(null)
     setCommentFileByItemId(null)
-    setCommentSections([])
   }
   const appliedLineHashKeyRef = useRef<string | null>(null)
   // Tracks the ids of every item that has been handed to the viewer so we can
@@ -222,6 +215,8 @@ export function usePatchLoader({
 
     const controller = new AbortController()
     store.trigger.loadStarted()
+    // A render must not send events to a store, so the saved comments clear here.
+    savedComments.trigger.cleared()
     const {requestId} = store.getSnapshot().context
 
     appliedLineHashKeyRef.current = null
@@ -249,7 +244,7 @@ export function usePatchLoader({
 
           setTreeSource(loadedData.treeSource)
           setCommentFileByItemId(loadedData.itemIdToFile)
-          setCommentSections([])
+          savedComments.trigger.cleared()
           setDiffStats(loadedData.diffStats)
           prepareItemsForViewer(loadedData.items)
           setInitialItems(loadedData.items)
@@ -457,6 +452,7 @@ export function usePatchLoader({
     onLoadStart,
     path,
     prepareItemsForViewer,
+    savedComments,
     store,
     tryApplyLineHashTarget,
     viewerRef,
@@ -487,7 +483,7 @@ export function usePatchLoader({
     onLineLinkChange: handleLineLinkChange,
     onViewerReady: tryApplyLineHashTarget,
     retryLoad,
-    setCommentSections,
+    savedComments,
     treeSource,
     viewerKey,
   }

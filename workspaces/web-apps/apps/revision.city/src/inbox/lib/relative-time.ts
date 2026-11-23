@@ -12,8 +12,7 @@ const UNITS: ReadonlyArray<{unit: Intl.RelativeTimeFormatUnit; seconds: number}>
 ]
 
 export interface FormatRelativeTimeParams {
-  // An ISO 8601 time.
-  time: string | undefined
+  time: Date | undefined
   // The current time in milliseconds since the epoch.
   now: number
   // A BCP 47 language tag. Without one, the runtime picks the language.
@@ -27,7 +26,7 @@ export function formatRelativeTime({
   now,
   locale,
 }: FormatRelativeTimeParams): string | undefined {
-  const then = time === undefined ? Number.NaN : Date.parse(time)
+  const then = time?.getTime() ?? Number.NaN
   if (Number.isNaN(then)) {
     return undefined
   }

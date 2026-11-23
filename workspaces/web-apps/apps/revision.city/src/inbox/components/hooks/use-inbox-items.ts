@@ -4,6 +4,7 @@ import {usePullRequestGroups} from '@/diffs/components/hooks/use-pull-request-gr
 import {SEARCH_PAGE_SIZE} from '@/diffs/lib/github-pull-request-search'
 import type {PullRequestGroup} from '@/diffs/lib/github-pull-requests'
 import {INBOX_REASONS, type InboxItem, type InboxReason} from '@/inbox/lib/inbox-item'
+import {readOptionalDate} from '@/lib/json-read'
 
 export type InboxItemsStatus = 'idle' | 'loading' | 'error' | 'sign-in-again' | 'loaded'
 
@@ -12,7 +13,7 @@ export interface InboxItemsState {
   // Each open pull request occurs one time, and the most recent update is first.
   items: InboxItem[]
   // True when GitHub has more open pull requests than the items.
-  truncated: boolean
+  isTruncated: boolean
 }
 
 // The inbox of the signed-in visitor. While `enabled` is false, the hook sends no request, so the
@@ -20,7 +21,7 @@ export interface InboxItemsState {
 export function useInboxItems(enabled: boolean): InboxItemsState {
   const {status, groups} = usePullRequestGroups(enabled)
   return useMemo(
-    () => ({status, items: readInboxItems(groups), truncated: groups.some(isGroupTruncated)}),
+    () => ({status, items: readInboxItems(groups), isTruncated: groups.some(isGroupTruncated)}),
     [status, groups],
   )
 }
@@ -31,7 +32,17 @@ function readInboxItems(groups: readonly PullRequestGroup[]): InboxItem[] {
     for (const pullRequest of group.pullRequests) {
       const key = `${pullRequest.owner.toLowerCase()}/${pullRequest.repo.toLowerCase()}#${pullRequest.number}`
       const reasons = [...(items.get(key)?.reasons ?? []), group.kind]
-      items.set(key, {...pullRequest, assignees: [], reasons: sortReasons(reasons)})
+      items.set(key, {
+        owner: pullRequest.owner,
+        repo: pullRequest.repo,
+        number: pullRequest.number,
+        title: pullRequest.title,
+        authorLogin: pullRequest.author,
+        updatedAt: readOptionalDate(pullRequest.updatedAt),
+        draft: pullRequest.draft,
+        assigneeLogins: [],
+        reasons: sortReasons(reasons),
+      })
     }
   }
   return [...items.values()].toSorted(
@@ -45,8 +56,7 @@ function sortReasons(reasons: readonly InboxReason[]): InboxReason[] {
 
 // An item with no update time goes after the items that have one.
 function readUpdateTime(item: InboxItem): number {
-  const time = item.updatedAt === undefined ? Number.NaN : Date.parse(item.updatedAt)
-  return Number.isNaN(time) ? 0 : time
+  return item.updatedAt?.getTime() ?? 0
 }
 
 // A group drops the rows of an earlier group, but its `totalCount` still counts them. So only a

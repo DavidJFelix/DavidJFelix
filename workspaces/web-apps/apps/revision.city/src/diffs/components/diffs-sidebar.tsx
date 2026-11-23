@@ -9,6 +9,7 @@ import {
 } from '@pierre/icons'
 import type {FileTree, GitStatus} from '@pierre/trees'
 import {useFileTreeSearch} from '@pierre/trees/react'
+import {useSelector, useStore} from '@xstate/store-react'
 import {
   type CSSProperties,
   memo,
@@ -44,6 +45,7 @@ import type {
   DiffsStats as DiffsStatsData,
   DiffsViewerHandle,
 } from '@/diffs/lib/types'
+import {type SidebarTab, sidebarLogic} from '@/diffs/state/sidebar-store'
 import {SymbolChangesList, type SymbolSelection} from '@/symbols/components/symbol-changes-list'
 import {useSymbolDiffs} from '@/symbols/components/use-symbol-diffs'
 import type {SymbolDiffRequest} from '@/symbols/lib/symbol-diff-client'
@@ -56,9 +58,6 @@ import {MOBILE_MEDIA_QUERY, useMobileOverlay} from './hooks/use-mobile-overlay'
 import type {ThemeCycleControls} from './hooks/use-theme-cycle'
 import {StatusRow} from './status-row'
 import {WorkerPoolStatus} from './worker-pool-status'
-
-type SidebarTab = 'files' | 'comments' | 'symbols'
-type SidebarStatusPanel = 'diffStats' | 'systemMonitor'
 
 // Shared 16/12px icon size for the tab-row toggle buttons (search, filter,
 // mobile close), matching the header's own ICON_SIZE_CLASS.
@@ -109,11 +108,10 @@ export const DiffsSidebar = memo(function DiffsSidebar({
   themeCycle,
   viewerRef,
 }: DiffsSidebarProps) {
-  const [activeTab, setActiveTab] = useState<SidebarTab>('files')
-  // Opening the tab is what starts the work: an unopened symbols tab costs no
-  // requests. Once opened it stays enabled so results survive tab switches.
-  // Reads wait until the patch stops streaming, then cover every file.
-  const [symbolsRequested, setSymbolsRequested] = useState(false)
+  const store = useStore(sidebarLogic)
+  const activeTab = useSelector(store, ({context}) => context.activeTab)
+  const symbolsRequested = useSelector(store, ({context}) => context.status === 'symbolsOpened')
+  // The reads start after the diff stops streaming, so they cover all files.
   const symbolDiffs = useSymbolDiffs({
     domain,
     enabled: symbolsRequested && symbolsAvailable && !streaming,
@@ -135,17 +133,13 @@ export const DiffsSidebar = memo(function DiffsSidebar({
   // wrapper, so the chrome variables set on it don't cascade. Re-apply the
   // resolved chrome on the menu surface itself, mirroring the header dropdowns.
   const dropdownThemeStyle = useMemo(() => getDropdownThemeStyle(sidebarStyle), [sidebarStyle])
-  const [selectedActiveStatusPanel, setSelectedActiveStatusPanel] =
-    useState<SidebarStatusPanel | null>('diffStats')
-  let activeStatusPanel = selectedActiveStatusPanel
+  const selectedStatusPanel = useSelector(store, ({context}) => context.selectedStatusPanel)
+  let activeStatusPanel = selectedStatusPanel
   if (mobileOverlayOpen && window.matchMedia(MOBILE_MEDIA_QUERY).matches) {
     activeStatusPanel = null
   }
   const [fileTreeModel, setFileTreeModel] = useState<FileTree | null>(null)
-  // Inclusion filter: the statuses the tree should show. Empty means "no
-  // filter" — every file is shown — so the menu opens with nothing checked and
-  // checking statuses narrows the tree to just those.
-  const [selectedStatuses, setSelectedStatuses] = useState<ReadonlySet<GitStatus>>(() => new Set())
+  const selectedStatuses = useSelector(store, ({context}) => context.selectedStatuses)
   const availableStatuses = useMemo(() => getDiffsFileTreeAvailableStatuses(source), [source])
   const filteredSource = useMemo(
     () => filterDiffsFileTreeSource(source, selectedStatuses),
@@ -154,37 +148,24 @@ export const DiffsSidebar = memo(function DiffsSidebar({
   const handleModelReady = useCallback((model: FileTree | null) => {
     setFileTreeModel(model)
   }, [])
-  const toggleStatusPanel = useCallback((panel: SidebarStatusPanel) => {
-    setSelectedActiveStatusPanel((current) => (current === panel ? null : panel))
-  }, [])
 
   const clearStatusFilter = useCallback(() => {
-    setSelectedStatuses(new Set())
-  }, [])
+    store.trigger.statusFilterCleared()
+  }, [store])
 
-  const toggleSelectedStatus = useCallback((status: GitStatus) => {
-    setSelectedStatuses((prev) => {
-      const next = new Set(prev)
-      if (next.has(status)) {
-        next.delete(status)
-      } else {
-        next.add(status)
-      }
-      return next
-    })
-  }, [])
+  const toggleSelectedStatus = useCallback(
+    (gitStatus: GitStatus) => {
+      store.trigger.statusToggled({gitStatus})
+    },
+    [store],
+  )
 
-  // Alt+click "isolate": narrow the filter to only the clicked status. If it's
-  // already the sole selection, clear the filter instead so the tree returns to
-  // showing everything.
-  const isolateStatus = useCallback((status: GitStatus) => {
-    setSelectedStatuses((prev) => {
-      if (prev.size === 1 && prev.has(status)) {
-        return new Set()
-      }
-      return new Set([status])
-    })
-  }, [])
+  const isolateStatus = useCallback(
+    (gitStatus: GitStatus) => {
+      store.trigger.statusIsolated({gitStatus})
+    },
+    [store],
+  )
 
   const panelRef = useRef<HTMLDivElement | null>(null)
   useMobileOverlay({
@@ -246,10 +227,7 @@ export const DiffsSidebar = memo(function DiffsSidebar({
             variant="ghost"
             value={activeTab}
             onValueChange={(value) => {
-              if (value === 'symbols') {
-                setSymbolsRequested(true)
-              }
-              setActiveTab(isSidebarTab(value) ? value : 'files')
+              store.trigger.tabOpened({tab: isSidebarTab(value) ? value : 'files'})
             }}
           >
             <ButtonGroupItem value="files" size="icon-only" className={css({boxShadow: '[none]'})}>
@@ -376,7 +354,7 @@ export const DiffsSidebar = memo(function DiffsSidebar({
         <DiffsStats
           expanded={activeStatusPanel === 'diffStats'}
           onToggle={() => {
-            toggleStatusPanel('diffStats')
+            store.trigger.statusPanelToggled({panel: 'diffStats'})
           }}
           stats={diffStats}
           streaming={streaming}
@@ -384,7 +362,7 @@ export const DiffsSidebar = memo(function DiffsSidebar({
         <WorkerPoolStatus
           expanded={activeStatusPanel === 'systemMonitor'}
           onToggle={() => {
-            toggleStatusPanel('systemMonitor')
+            store.trigger.statusPanelToggled({panel: 'systemMonitor'})
           }}
           viewerRef={viewerRef}
           themeCycle={themeCycle}

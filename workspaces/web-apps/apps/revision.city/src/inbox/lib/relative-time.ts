@@ -13,8 +13,7 @@ const UNITS: ReadonlyArray<{unit: Intl.RelativeTimeFormatUnit; seconds: number}>
 
 export interface FormatRelativeTimeParams {
   time: Date | undefined
-  // The current time in milliseconds since the epoch.
-  now: number
+  now: Date
   // A BCP 47 language tag. Without one, the runtime picks the language.
   locale?: string
 }
@@ -31,7 +30,7 @@ export function formatRelativeTime({
     return undefined
   }
   // A time after `now` comes from a clock that is ahead of this one, so it reads as now.
-  const elapsedSeconds = Math.max(0, Math.floor((now - then) / 1000))
+  const elapsedSeconds = Math.max(0, Math.floor((now.getTime() - then) / 1000))
   const format = new Intl.RelativeTimeFormat(locale, {numeric: 'auto'})
   const match = UNITS.find(({seconds}) => elapsedSeconds >= seconds)
   return match === undefined

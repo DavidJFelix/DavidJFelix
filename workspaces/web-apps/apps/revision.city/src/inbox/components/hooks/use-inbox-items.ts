@@ -1,10 +1,12 @@
 import {useMemo} from 'react'
 
 import {usePullRequestGroups} from '@/diffs/components/hooks/use-pull-request-groups'
-import {SEARCH_PAGE_SIZE} from '@/diffs/lib/github-pull-request-search'
 import type {PullRequestGroup} from '@/diffs/lib/github-pull-requests'
 import {INBOX_REASONS, type InboxItem, type InboxReason} from '@/inbox/lib/inbox-item'
 import {readOptionalDate} from '@/lib/json-read'
+
+// The pull request list endpoint gives each group at most one GitHub search page of rows.
+const SEARCH_PAGE_SIZE = 20
 
 export type InboxItemsStatus = 'idle' | 'loading' | 'error' | 'sign-in-again' | 'loaded'
 

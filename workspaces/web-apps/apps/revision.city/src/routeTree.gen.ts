@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BugsRouteImport } from './routes/bugs'
 import { Route as DiffsRouteRouteImport } from './routes/diffs/route'
+import { Route as InboxRouteImport } from './routes/inbox'
 import { Route as ApiInboxRouteImport } from './routes/api/inbox'
 import { Route as DiagSplatRouteImport } from './routes/diag/$'
 import { Route as DiffsIndexRouteImport } from './routes/diffs/index'
@@ -45,6 +46,11 @@ const BugsRoute = BugsRouteImport.update({
 const DiffsRouteRoute = DiffsRouteRouteImport.update({
   id: '/diffs',
   path: '/diffs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InboxRoute = InboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiInboxRoute = ApiInboxRouteImport.update({
@@ -150,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/diffs': typeof DiffsRouteRouteWithChildren
   '/bugs': typeof BugsRoute
+  '/inbox': typeof InboxRoute
   '/api/inbox': typeof ApiInboxRoute
   '/diag/$': typeof DiagSplatRoute
   '/diffs/$': typeof DiffsSplatRoute
@@ -173,6 +180,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bugs': typeof BugsRoute
+  '/inbox': typeof InboxRoute
   '/api/inbox': typeof ApiInboxRoute
   '/diag/$': typeof DiagSplatRoute
   '/diffs/$': typeof DiffsSplatRoute
@@ -198,6 +206,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/diffs': typeof DiffsRouteRouteWithChildren
   '/bugs': typeof BugsRoute
+  '/inbox': typeof InboxRoute
   '/api/inbox': typeof ApiInboxRoute
   '/diag/$': typeof DiagSplatRoute
   '/diffs/$': typeof DiffsSplatRoute
@@ -224,6 +233,7 @@ export interface FileRouteTypes {
     | '/'
     | '/diffs'
     | '/bugs'
+    | '/inbox'
     | '/api/inbox'
     | '/diag/$'
     | '/diffs/$'
@@ -247,6 +257,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/bugs'
+    | '/inbox'
     | '/api/inbox'
     | '/diag/$'
     | '/diffs/$'
@@ -271,6 +282,7 @@ export interface FileRouteTypes {
     | '/'
     | '/diffs'
     | '/bugs'
+    | '/inbox'
     | '/api/inbox'
     | '/diag/$'
     | '/diffs/$'
@@ -296,6 +308,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DiffsRouteRoute: typeof DiffsRouteRouteWithChildren
   BugsRoute: typeof BugsRoute
+  InboxRoute: typeof InboxRoute
   ApiInboxRoute: typeof ApiInboxRoute
   DiagSplatRoute: typeof DiagSplatRoute
   OgDefaultDotpngRoute: typeof OgDefaultDotpngRoute
@@ -336,6 +349,13 @@ declare module '@tanstack/react-router' {
       path: '/diffs'
       fullPath: '/diffs'
       preLoaderRoute: typeof DiffsRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inbox': {
+      id: '/inbox'
+      path: '/inbox'
+      fullPath: '/inbox'
+      preLoaderRoute: typeof InboxRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/inbox': {
@@ -492,6 +512,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DiffsRouteRoute: DiffsRouteRouteWithChildren,
   BugsRoute: BugsRoute,
+  InboxRoute: InboxRoute,
   ApiInboxRoute: ApiInboxRoute,
   DiagSplatRoute: DiagSplatRoute,
   OgDefaultDotpngRoute: OgDefaultDotpngRoute,

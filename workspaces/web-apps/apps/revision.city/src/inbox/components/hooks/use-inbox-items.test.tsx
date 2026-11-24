@@ -3,6 +3,7 @@ import {HttpResponse, http} from 'msw'
 import {setupServer} from 'msw/node'
 import {expect, onTestFinished, test} from 'vitest'
 
+import {SEARCH_PAGE_SIZE} from '@/diffs/lib/github-pull-request-search'
 import type {PullRequestGroup, PullRequestSummary} from '@/diffs/lib/github-pull-requests'
 
 import {type InboxItemsState, useInboxItems} from './use-inbox-items'
@@ -111,7 +112,16 @@ test('items are in the order of their last update, newest first, and an item wit
 test.each([
   {name: 'every group is complete', fields: {}, truncated: false},
   {name: 'a group is truncated', fields: {truncated: true}, truncated: true},
-  {name: 'GitHub counts more than one search page', fields: {totalCount: 21}, truncated: true},
+  {
+    name: 'GitHub counts more than one search page',
+    fields: {totalCount: SEARCH_PAGE_SIZE + 1},
+    truncated: true,
+  },
+  {
+    name: 'GitHub counts one full search page',
+    fields: {totalCount: SEARCH_PAGE_SIZE},
+    truncated: false,
+  },
   {
     name: 'a group counts a pull request of an earlier group',
     fields: {totalCount: 2},

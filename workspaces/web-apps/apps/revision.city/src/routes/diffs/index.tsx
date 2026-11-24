@@ -8,7 +8,7 @@ import {css, cx} from 'styled-system/css'
 import {SiteMark} from '@/components/site-mark'
 import {DiffUrlForm} from '@/diffs/components/diff-url-form'
 import {GitHubAuthControl} from '@/diffs/components/github-auth-control'
-import {PullRequestList} from '@/diffs/components/pull-request-list'
+import {useGitHubSession} from '@/diffs/components/hooks/use-github-session'
 import {Button} from '@/diffs/components/ui/button'
 
 export const Route = createFileRoute('/diffs/')({
@@ -139,7 +139,7 @@ function DiffsHomePage() {
           <HomeFetchForm />
           <HomeGitHubAuthForm />
         </div>
-        <PullRequestList />
+        <InboxLink />
         <div className={css({'& > * + *': {mt: '2'}})}>
           <h3
             className={css({
@@ -251,5 +251,32 @@ const HomeGitHubAuthForm = memo(function HomeGitHubAuthForm() {
       })}
       title="Private GitHub access"
     />
+  )
+})
+
+const InboxLink = memo(function InboxLink() {
+  const session = useGitHubSession()
+  if (session.status !== 'authenticated') {
+    return null
+  }
+  return (
+    <p
+      className={css({
+        color: 'diffs.muted.foreground',
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '1',
+        fontSize: 'sm',
+        lineHeight: '[1.25rem]',
+      })}
+    >
+      <IconArrowRightShort className={css({mt: '0.5', flexShrink: '0', opacity: '0.5'})} />
+      <span>
+        <Link to="/inbox" className="inline-link">
+          Open your inbox
+        </Link>{' '}
+        to see your open pull requests.
+      </span>
+    </p>
   )
 })

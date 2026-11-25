@@ -151,8 +151,12 @@ Steps, each a small PR:
 2. **Live proof.** revision.city binds `ReviewAgent` and sends one probe prompt in each review run.
    It logs the answer as a `review agent probe` event, and the review does not use the answer. The
    probe gets an answer only after the harness Worker has the `OPENROUTER_API_KEY` secret. Done.
-3. **Reviewer tools.** The tools of OpenCode need a local disk. Read-only tools for the pull request
-   head and a tool that submits the findings replace them.
+3. **Reviewer tools.** The tools of OpenCode need a local disk and a shell, so the model does not
+   get them. The caller sends the system prompt, the tool definitions, and a callback with each
+   request. The model sees only that system prompt and those tools. The callback runs each tool call
+   in the caller, so the harness does not know GitHub. The findings are the final text of the
+   answer. A session whose caller is gone stops before its next model call. The harness part is
+   done. Next, the revision.city probe sends the read tools of the reviews.
 4. **Reviews through the agent.** The Workflow sends each chunk review to `ReviewAgent`, behind a
    setting.
 5. **Comparison.** Findings, cost, and time for the harness and the tool loop on the same pull

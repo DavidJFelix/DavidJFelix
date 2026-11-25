@@ -1,44 +1,101 @@
 /// <reference types="bun" />
 // Pre-merge smoke gate: boots the Worker in workerd (`wrangler dev`) and sends
-// one prompt through the ReviewAgent Durable Object. OpenCode starts in the
-// object, calls the model, and returns the answer with its usage. A local
+// requests through the ReviewAgent Durable Object. OpenCode starts in the
+// object, calls the model, and returns the answers with their usage. A local
 // server answers in place of OpenRouter, so the test needs no secret and no
 // network.
 //
-// The Worker serves `/smoke` only when SMOKE_TEST is `true`, which only this
+// 1. `/smoke` sends a prompt string. The model must get no tools and the short
+//    system prompt of the harness.
+// 2. `/smoke/tools` sends three requests at the same time, each with one tool.
+//    The model must get only the tool and the system prompt of its request.
+//    The tool result must be in the next model call. The request whose
+//    callback fails must end without another model call.
+//
+// The Worker serves these paths only when SMOKE_TEST is `true`, which only this
 // script sets.
 
 import {mkdtempSync, rmSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
+import {PROMPT_ONLY_SYSTEM} from '../src/lib/caller-tools'
 
 const PORT = Number(process.env.SMOKE_PORT ?? 4391)
 const MODEL_PORT = Number(process.env.SMOKE_MODEL_PORT ?? 4392)
 const BASE_URL = `http://127.0.0.1:${PORT}`
 const READY_TIMEOUT_MS = 60_000
 const ANSWER = 'ready'
+const TOOL_ARGUMENTS = JSON.stringify({path: ''})
 const USAGE = {prompt_tokens: 1200, completion_tokens: 8, total_tokens: 1208, cost: 0.0001}
 
 // A new directory for the Durable Object storage of each run. A session that
 // an earlier run left open would continue in this run and call the model again.
 const STATE_DIR = mkdtempSync(join(tmpdir(), 'harness-opencode-smoke-'))
 
-const modelCalls: string[] = []
+interface ModelCall {
+  model: string
+  system: string
+  tools: string[]
+  last?: Record<string, unknown>
+}
+
+const modelCalls: ModelCall[] = []
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
 
-// One streamed chat completion in the format of OpenRouter: the text, the
+const records = (value: unknown): Record<string, unknown>[] =>
+  Array.isArray(value) ? value.filter(isRecord) : []
+
+// The fields of an OpenRouter chat request that the checks read.
+function toModelCall(body: unknown): ModelCall {
+  const request = isRecord(body) ? body : {}
+  const messages = records(request.messages)
+  return {
+    model: String(request.model),
+    system: messages
+      .filter(({role}) => role === 'system')
+      .map(({content}) => String(content))
+      .join('\n'),
+    tools: records(request.tools).map((tool) =>
+      isRecord(tool.function) ? String(tool.function.name) : '',
+    ),
+    last: messages.at(-1),
+  }
+}
+
+// The model calls the first tool once, then answers with the tool result. A
+// request without tools gets the answer `ready`.
+function reply({tools, last}: ModelCall): object {
+  if (last?.role === 'user' && tools.length > 0) {
+    const call = {
+      index: 0,
+      id: 'call_smoke',
+      type: 'function',
+      function: {name: tools[0], arguments: TOOL_ARGUMENTS},
+    }
+    return {role: 'assistant', content: null, tool_calls: [call]}
+  }
+  return {
+    role: 'assistant',
+    content: last?.role === 'tool' ? `done: ${String(last.content)}` : ANSWER,
+  }
+}
+
+// One streamed chat completion in the format of OpenRouter: the message, the
 // finish reason, and then the usage.
-function streamAnswer(model: string): Response {
+function streamAnswer(call: ModelCall): Response {
+  const delta = reply(call)
   const chunk = (fields: object) =>
-    `data: ${JSON.stringify({id: 'smoke', object: 'chat.completion.chunk', created: 0, model, ...fields})}\n\n`
+    `data: ${JSON.stringify({id: 'smoke', object: 'chat.completion.chunk', created: 0, model: call.model, ...fields})}\n\n`
   return new Response(
     [
+      chunk({choices: [{index: 0, delta, finish_reason: null}]}),
       chunk({
-        choices: [{index: 0, delta: {role: 'assistant', content: ANSWER}, finish_reason: null}],
+        choices: [
+          {index: 0, delta: {}, finish_reason: 'tool_calls' in delta ? 'tool_calls' : 'stop'},
+        ],
       }),
-      chunk({choices: [{index: 0, delta: {}, finish_reason: 'stop'}]}),
       chunk({choices: [], usage: USAGE}),
       'data: [DONE]\n\n',
     ].join(''),
@@ -53,10 +110,9 @@ const modelServer = Bun.serve({
     if (!new URL(request.url).pathname.endsWith('/chat/completions')) {
       return new Response('Not found', {status: 404})
     }
-    const body: unknown = await request.json()
-    const model = isRecord(body) ? String(body.model) : ''
-    modelCalls.push(model)
-    return streamAnswer(model)
+    const call = toModelCall(await request.json())
+    modelCalls.push(call)
+    return streamAnswer(call)
   },
 })
 
@@ -94,10 +150,17 @@ async function waitForReady(deadline = Date.now() + READY_TIMEOUT_MS): Promise<b
   return waitForReady(deadline)
 }
 
-async function check(): Promise<string | null> {
-  const response = await fetch(new URL('/smoke', BASE_URL), {signal: AbortSignal.timeout(60_000)})
-  if (!response.ok) return `/smoke -> HTTP ${response.status}`
-  const answer: unknown = await response.json()
+async function get(path: string): Promise<unknown> {
+  const response = await fetch(new URL(path, BASE_URL), {signal: AbortSignal.timeout(60_000)})
+  if (!response.ok) throw new Error(`${path} -> HTTP ${response.status}`)
+  return response.json()
+}
+
+const sameList = (actual: readonly string[], expected: readonly string[]) =>
+  JSON.stringify(actual) === JSON.stringify(expected)
+
+async function checkPrompt(): Promise<string | null> {
+  const answer = await get('/smoke')
   if (!isRecord(answer) || answer.status !== 'done' || answer.text !== ANSWER) {
     return `/smoke -> the harness did not answer: ${JSON.stringify(answer)}`
   }
@@ -105,18 +168,60 @@ async function check(): Promise<string | null> {
     return `/smoke -> the answer has the wrong usage: ${JSON.stringify(answer)}`
   }
   // A second model call means that OpenCode used a model that the test did not ask for.
-  if (modelCalls.length !== 1 || modelCalls[0] !== answer.model) {
+  const [call, ...others] = modelCalls
+  if (call === undefined || others.length > 0 || call.model !== answer.model) {
     return `/smoke -> expected one call to ${String(answer.model)}, got ${JSON.stringify(modelCalls)}`
   }
+  if (call.tools.length > 0 || call.system !== PROMPT_ONLY_SYSTEM) {
+    return `/smoke -> the model got more than the prompt: ${JSON.stringify(call)}`
+  }
   return null
+}
+
+function checkToolCase(result: Record<string, unknown>): string | null {
+  const tool = String(result.tool)
+  const {system, calls} = result
+  const content = typeof result.content === 'string' ? result.content : undefined
+  const answer = isRecord(result.answer) ? result.answer : {}
+  const callsOfCase = modelCalls.filter((call) => call.system === system)
+  const wrongTools = callsOfCase.find((call) => !sameList(call.tools, [tool]))
+  if (wrongTools !== undefined) {
+    return `${tool}: the model got the tools ${JSON.stringify(wrongTools.tools)}`
+  }
+  if (JSON.stringify(calls) !== JSON.stringify([{name: tool, arguments: TOOL_ARGUMENTS}])) {
+    return `${tool}: the callback got ${JSON.stringify(calls)}`
+  }
+  if (content === undefined) {
+    return answer.status === 'unanswered' && callsOfCase.length === 1
+      ? null
+      : `${tool}: a failed callback did not end the turn: ${JSON.stringify({answer, callsOfCase})}`
+  }
+  const [, second] = callsOfCase
+  if (
+    callsOfCase.length !== 2 ||
+    second?.last?.role !== 'tool' ||
+    second.last.content !== content
+  ) {
+    return `${tool}: the tool result is not in the next model call: ${JSON.stringify(callsOfCase)}`
+  }
+  return answer.status === 'done' && answer.text === `done: ${content}` && answer.toolCalls === 1
+    ? null
+    : `${tool}: the harness did not answer: ${JSON.stringify(answer)}`
+}
+
+async function checkTools(): Promise<string | null> {
+  const results = records(await get('/smoke/tools'))
+  const problems = results.map(checkToolCase).filter((problem) => problem !== null)
+  if (results.length === 0) problems.push('no request ran')
+  return problems.length === 0 ? null : `/smoke/tools -> ${problems.join('; ')}`
 }
 
 let exitCode = 0
 try {
   if (await waitForReady()) {
-    const problem = await check()
+    const problem = (await checkPrompt()) ?? (await checkTools())
     if (problem === null) {
-      console.log('OK: the harness answered one prompt')
+      console.log('OK: the harness answered a prompt and ran the tools of three requests')
     } else {
       console.error(`::error::smoke test failed — ${problem}`)
       exitCode = 1

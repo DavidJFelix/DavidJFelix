@@ -1,5 +1,5 @@
 import {expect, test} from 'vitest'
-import {summarizeUsage} from './review-agent-answer'
+import {countToolCalls, summarizeUsage} from './review-agent-answer'
 
 test('adds the usage of each model call of one answer', () => {
   const usage = summarizeUsage([
@@ -42,4 +42,16 @@ test('counts a model call that has tokens and no cost', () => {
   ])
 
   expect(usage).toMatchObject({inputTokens: 10, outputTokens: 2, costUsd: 0})
+})
+
+test('counts the tool calls of all the model calls of one answer', () => {
+  const toolCalls = countToolCalls([
+    {type: 'user'},
+    {type: 'assistant', content: [{type: 'text'}, {type: 'tool'}, {type: 'tool'}]},
+    {type: 'assistant', content: [{type: 'tool'}]},
+    {type: 'assistant', content: [{type: 'text'}]},
+    {type: 'idle'},
+  ])
+
+  expect(toolCalls).toBe(3)
 })

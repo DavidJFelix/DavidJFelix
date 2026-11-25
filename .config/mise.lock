@@ -74,124 +74,124 @@ url_api = "https://api.github.com/repos/rhysd/actionlint/releases/assets/3849249
 provenance = "github-attestations"
 
 [[tools.bun]]
-version = "1.4.4"
+version = "1.4.5"
 backend = "core:bun"
-specifiers = ["1.4.4"]
+specifiers = ["1.4.5"]
 
 [tools.bun."platforms.linux-arm64"]
-checksum = "sha256:baa6bb36f51d6e58561e02bbea825038a9df454f673d6d776e8bbf86f8c7850e"
-url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.4/bun-linux-aarch64.zip"
+checksum = "sha256:18656a3bf0ea5641f5796ae4213b75255579a70a0fded2f337933785568cdf84"
+url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.5/bun-linux-aarch64.zip"
 
 [tools.bun."platforms.linux-arm64-musl"]
-checksum = "sha256:57f01b02ac7113c61c935f28f38c2eab849e3c970dab21f8b640a87b1ef65009"
-url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.4/bun-linux-aarch64-musl.zip"
+checksum = "sha256:d655765d3a0c0fdf707e27c7aa1a4f2c84f1bbc1f759db7e6e3d3c5be414396c"
+url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.5/bun-linux-aarch64-musl.zip"
 
 [tools.bun."platforms.linux-x64"]
-checksum = "sha256:bf8ccbfb2b0b80159e0f9a6d15c55317add8077534dbc6130a3edb52fccb395c"
-url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.4/bun-linux-x64.zip"
+checksum = "sha256:94559b3b528995a49452f9f2404cec74f2efd7d06e0a000a8cd214b02c3666eb"
+url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.5/bun-linux-x64.zip"
 
 [tools.bun."platforms.linux-x64-baseline"]
-checksum = "sha256:e0446eb55995772eb9894bebae9a6be368d985a8b9271ee124486f9946eedd76"
-url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.4/bun-linux-x64-baseline.zip"
+checksum = "sha256:dcb23a18a1c2fff12d57bcef696dbbb42eb67fde29f43816ecb595459a24c463"
+url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.5/bun-linux-x64-baseline.zip"
 
 [tools.bun."platforms.linux-x64-musl"]
-checksum = "sha256:a5a8ccc5e74dcb883fe974f125a7bdb3b41e5195ed1b870e73f17effd3eb2b2d"
-url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.4/bun-linux-x64-musl.zip"
+checksum = "sha256:9b6bdba1fa0914b6adfe48e4438212e2c106d9199b77ba642a9b8a3968a49a59"
+url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.5/bun-linux-x64-musl.zip"
 
 [tools.bun."platforms.linux-x64-musl-baseline"]
-checksum = "sha256:6e9c37098b293920aed28bfb51ab240e26d23bfdd9bbfecb3ad428ac166549bc"
-url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.4/bun-linux-x64-musl-baseline.zip"
+checksum = "sha256:96fb94108eed872ff623ed39007d6b5699a83a5d0086fcfba84921c18145e3e6"
+url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.5/bun-linux-x64-musl-baseline.zip"
 
 [tools.bun."platforms.macos-arm64"]
-checksum = "sha256:c240d7f0ccb90c263a849fcdb09b7ee62630d921348ed6aafda86b9d577bc510"
-url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.4/bun-darwin-aarch64.zip"
+checksum = "sha256:b5d6bc2e13caf14e57c89661e89efd073ff16165b41bfe43882616410609cd10"
+url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.5/bun-darwin-aarch64.zip"
 
 [tools.bun."platforms.macos-x64"]
-checksum = "sha256:50a3491f73abc2fe81673171a85762d3bc2cc1680ccecadd983de99adf77977e"
-url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.4/bun-darwin-x64.zip"
+checksum = "sha256:a4972e778cce4b6a194d7d289f326aa61576d71d80b7a53e9da2f3739566e5fd"
+url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.5/bun-darwin-x64.zip"
 
 [tools.bun."platforms.macos-x64-baseline"]
-checksum = "sha256:d4a155adfbfd09155eb3ba05c9e3a544f39297d7a68616d3c7759f67ab5c47dc"
-url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.4/bun-darwin-x64-baseline.zip"
+checksum = "sha256:fb0121739a7e80e7511b6bfe4d2116422b48ba18a013acadef0c425348e95891"
+url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.5/bun-darwin-x64-baseline.zip"
 
 [tools.bun."platforms.windows-x64"]
-checksum = "sha256:cd2c0fccc78f3ede1f50ca827a15f063eda13d4d150a3d0674f4f6e323d864a5"
-url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.4/bun-windows-x64.zip"
+checksum = "sha256:815ab45ec7f549abf87e6869584b506eab088e24225683957b7e150b47d6de30"
+url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.5/bun-windows-x64.zip"
 
 [tools.bun."platforms.windows-x64-baseline"]
-checksum = "sha256:0f20ce6674d4f2dbcc8c5d59fdf99f7ba45f8c3b367e0f5781cbfa30a1c78d99"
-url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.4/bun-windows-x64-baseline.zip"
+checksum = "sha256:3c081c73865e7a3453a9d514cc2ba3d699880621bcf67bb17241ff5194cb1d4b"
+url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.5/bun-windows-x64-baseline.zip"
 
 [[tools.depot]]
-version = "2.103.26"
+version = "2.103.33"
 backend = "github:depot/cli"
 specifiers = ["latest"]
 
 [tools.depot."platforms.linux-arm64"]
-checksum = "sha256:d68a5595cb37f8431c9f880604bc282ae88118c43a52b24c6c5ad61d4a287a5f"
+checksum = "sha256:e6d871a52e0bd42ca874a319fa1aa148e9fe5392f5af3b410786f8dc11165f48"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.26/depot_2.103.26_linux_arm64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/760048123"
+url = "https://github.com/depot/cli/releases/download/v2.103.33/depot_2.103.33_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/772879299"
 
 [tools.depot."platforms.linux-arm64-musl"]
-checksum = "sha256:d68a5595cb37f8431c9f880604bc282ae88118c43a52b24c6c5ad61d4a287a5f"
+checksum = "sha256:e6d871a52e0bd42ca874a319fa1aa148e9fe5392f5af3b410786f8dc11165f48"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.26/depot_2.103.26_linux_arm64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/760048123"
+url = "https://github.com/depot/cli/releases/download/v2.103.33/depot_2.103.33_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/772879299"
 
 [tools.depot."platforms.linux-x64"]
-checksum = "sha256:51fa61f9c4d05c8254f84fde5281995c56e5e2d9fe4946ddb67038c4c6a11b44"
+checksum = "sha256:aefc02ba61073bcadc7bc9453d7955e0c9b3f34ed33b5d66771e80efd6f8ff12"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.26/depot_2.103.26_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/760048126"
+url = "https://github.com/depot/cli/releases/download/v2.103.33/depot_2.103.33_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/772879301"
 
 [tools.depot."platforms.linux-x64-baseline"]
-checksum = "sha256:51fa61f9c4d05c8254f84fde5281995c56e5e2d9fe4946ddb67038c4c6a11b44"
+checksum = "sha256:aefc02ba61073bcadc7bc9453d7955e0c9b3f34ed33b5d66771e80efd6f8ff12"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.26/depot_2.103.26_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/760048126"
+url = "https://github.com/depot/cli/releases/download/v2.103.33/depot_2.103.33_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/772879301"
 
 [tools.depot."platforms.linux-x64-musl"]
-checksum = "sha256:51fa61f9c4d05c8254f84fde5281995c56e5e2d9fe4946ddb67038c4c6a11b44"
+checksum = "sha256:aefc02ba61073bcadc7bc9453d7955e0c9b3f34ed33b5d66771e80efd6f8ff12"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.26/depot_2.103.26_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/760048126"
+url = "https://github.com/depot/cli/releases/download/v2.103.33/depot_2.103.33_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/772879301"
 
 [tools.depot."platforms.linux-x64-musl-baseline"]
-checksum = "sha256:51fa61f9c4d05c8254f84fde5281995c56e5e2d9fe4946ddb67038c4c6a11b44"
+checksum = "sha256:aefc02ba61073bcadc7bc9453d7955e0c9b3f34ed33b5d66771e80efd6f8ff12"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.26/depot_2.103.26_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/760048126"
+url = "https://github.com/depot/cli/releases/download/v2.103.33/depot_2.103.33_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/772879301"
 
 [tools.depot."platforms.macos-arm64"]
-checksum = "sha256:b482f2f7c2aac9596eca3e7fc13538bddf0c7bff682630025c065751df184579"
+checksum = "sha256:067dca1955cd615d6366122d29b6554fed5a07ab9ddf3d493a1c015766a1e6d8"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.26/depot_2.103.26_darwin_arm64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/760048136"
+url = "https://github.com/depot/cli/releases/download/v2.103.33/depot_2.103.33_darwin_arm64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/772879313"
 
 [tools.depot."platforms.macos-x64"]
-checksum = "sha256:1b0e40e7bd395a0c3ab4a582395c1fb31fb902e1651fc78149a5cc3c97f03799"
+checksum = "sha256:8663c336813a8046a14666b9f60c87c8fb185d730e8dd63479a8bb6d6b387357"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.26/depot_2.103.26_darwin_amd64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/760048137"
+url = "https://github.com/depot/cli/releases/download/v2.103.33/depot_2.103.33_darwin_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/772879308"
 
 [tools.depot."platforms.macos-x64-baseline"]
-checksum = "sha256:1b0e40e7bd395a0c3ab4a582395c1fb31fb902e1651fc78149a5cc3c97f03799"
+checksum = "sha256:8663c336813a8046a14666b9f60c87c8fb185d730e8dd63479a8bb6d6b387357"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.26/depot_2.103.26_darwin_amd64.tar.gz"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/760048137"
+url = "https://github.com/depot/cli/releases/download/v2.103.33/depot_2.103.33_darwin_amd64.tar.gz"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/772879308"
 
 [tools.depot."platforms.windows-x64"]
-checksum = "sha256:0b83b0ceccf0383c19a52c48f163057ebf89877bfab36a0aab400482ca83ceca"
+checksum = "sha256:870fae274c7898b5d1bc2e35bf9ecf83c9cbbe0712d22c29d9bf29d9fb788edd"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.26/depot_2.103.26_windows_amd64.zip"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/760048131"
+url = "https://github.com/depot/cli/releases/download/v2.103.33/depot_2.103.33_windows_amd64.zip"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/772879298"
 
 [tools.depot."platforms.windows-x64-baseline"]
-checksum = "sha256:0b83b0ceccf0383c19a52c48f163057ebf89877bfab36a0aab400482ca83ceca"
+checksum = "sha256:870fae274c7898b5d1bc2e35bf9ecf83c9cbbe0712d22c29d9bf29d9fb788edd"
 checksum_source = "mise-versions"
-url = "https://github.com/depot/cli/releases/download/v2.103.26/depot_2.103.26_windows_amd64.zip"
-url_api = "https://api.github.com/repos/depot/cli/releases/assets/760048131"
+url = "https://github.com/depot/cli/releases/download/v2.103.33/depot_2.103.33_windows_amd64.zip"
+url_api = "https://api.github.com/repos/depot/cli/releases/assets/772879298"
 
 [[tools.ghalint]]
 version = "1.6.0"
@@ -385,143 +385,143 @@ url_api = "https://api.github.com/repos/suzuki-shunsuke/pinact/releases/assets/6
 provenance = "github-attestations"
 
 [[tools.worktrunk]]
-version = "0.82.0"
+version = "0.83.0"
 backend = "packslip:github.com/max-sixty/worktrunk"
 specifiers = ["latest"]
 
 [tools.worktrunk."platforms.linux-arm64"]
-checksum = "sha256:b907f891bc051dcfc13fa479194e156b356f434a37103522ea1fe1b7ded899b5"
-url = "https://github.com/max-sixty/worktrunk/releases/download/v0.82.0/worktrunk-aarch64-unknown-linux-musl.tar.xz"
+checksum = "sha256:92c68827a18b037c608b7728bcf7ce1d594771ac814bec7412a35129f276d4ae"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.83.0/worktrunk-aarch64-unknown-linux-musl.tar.xz"
 signer = "sigstore-oidc:https://github.com/max-sixty/worktrunk/.github/workflows/release.yaml"
 repository_ids = { repository = "1078528927" }
 
 [tools.worktrunk."platforms.linux-arm64-musl"]
-checksum = "sha256:b907f891bc051dcfc13fa479194e156b356f434a37103522ea1fe1b7ded899b5"
-url = "https://github.com/max-sixty/worktrunk/releases/download/v0.82.0/worktrunk-aarch64-unknown-linux-musl.tar.xz"
+checksum = "sha256:92c68827a18b037c608b7728bcf7ce1d594771ac814bec7412a35129f276d4ae"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.83.0/worktrunk-aarch64-unknown-linux-musl.tar.xz"
 signer = "sigstore-oidc:https://github.com/max-sixty/worktrunk/.github/workflows/release.yaml"
 repository_ids = { repository = "1078528927" }
 
 [tools.worktrunk."platforms.linux-x64"]
-checksum = "sha256:d1e38cf36d8c14ef0682a6d6617f8a512b1a971feb3dfa437419d00136e19a3e"
-url = "https://github.com/max-sixty/worktrunk/releases/download/v0.82.0/worktrunk-x86_64-unknown-linux-musl.tar.xz"
+checksum = "sha256:e0dd5e5eb365890ddc7b255183c227e441fbb7da04cab5b72e54fa80fd21818b"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.83.0/worktrunk-x86_64-unknown-linux-musl.tar.xz"
 signer = "sigstore-oidc:https://github.com/max-sixty/worktrunk/.github/workflows/release.yaml"
 repository_ids = { repository = "1078528927" }
 
 [tools.worktrunk."platforms.linux-x64-baseline"]
-checksum = "sha256:d1e38cf36d8c14ef0682a6d6617f8a512b1a971feb3dfa437419d00136e19a3e"
-url = "https://github.com/max-sixty/worktrunk/releases/download/v0.82.0/worktrunk-x86_64-unknown-linux-musl.tar.xz"
+checksum = "sha256:e0dd5e5eb365890ddc7b255183c227e441fbb7da04cab5b72e54fa80fd21818b"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.83.0/worktrunk-x86_64-unknown-linux-musl.tar.xz"
 signer = "sigstore-oidc:https://github.com/max-sixty/worktrunk/.github/workflows/release.yaml"
 repository_ids = { repository = "1078528927" }
 
 [tools.worktrunk."platforms.linux-x64-musl"]
-checksum = "sha256:d1e38cf36d8c14ef0682a6d6617f8a512b1a971feb3dfa437419d00136e19a3e"
-url = "https://github.com/max-sixty/worktrunk/releases/download/v0.82.0/worktrunk-x86_64-unknown-linux-musl.tar.xz"
+checksum = "sha256:e0dd5e5eb365890ddc7b255183c227e441fbb7da04cab5b72e54fa80fd21818b"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.83.0/worktrunk-x86_64-unknown-linux-musl.tar.xz"
 signer = "sigstore-oidc:https://github.com/max-sixty/worktrunk/.github/workflows/release.yaml"
 repository_ids = { repository = "1078528927" }
 
 [tools.worktrunk."platforms.linux-x64-musl-baseline"]
-checksum = "sha256:d1e38cf36d8c14ef0682a6d6617f8a512b1a971feb3dfa437419d00136e19a3e"
-url = "https://github.com/max-sixty/worktrunk/releases/download/v0.82.0/worktrunk-x86_64-unknown-linux-musl.tar.xz"
+checksum = "sha256:e0dd5e5eb365890ddc7b255183c227e441fbb7da04cab5b72e54fa80fd21818b"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.83.0/worktrunk-x86_64-unknown-linux-musl.tar.xz"
 signer = "sigstore-oidc:https://github.com/max-sixty/worktrunk/.github/workflows/release.yaml"
 repository_ids = { repository = "1078528927" }
 
 [tools.worktrunk."platforms.macos-arm64"]
-checksum = "sha256:6945bc82e0513d0b974c99fb1d30de24e448697fd533ed6b3f442c66a1b3620c"
-url = "https://github.com/max-sixty/worktrunk/releases/download/v0.82.0/worktrunk-aarch64-apple-darwin.tar.xz"
+checksum = "sha256:5e489089672b553b6277595875ef3479df011755153021c84def90eddaeef7b8"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.83.0/worktrunk-aarch64-apple-darwin.tar.xz"
 signer = "sigstore-oidc:https://github.com/max-sixty/worktrunk/.github/workflows/release.yaml"
 repository_ids = { repository = "1078528927" }
 
 [tools.worktrunk."platforms.macos-x64"]
-checksum = "sha256:d9c87668baa1aad2b44d5bfb08074609c5e4a186a0948dfed6e65d6e6c5a7744"
-url = "https://github.com/max-sixty/worktrunk/releases/download/v0.82.0/worktrunk-x86_64-apple-darwin.tar.xz"
+checksum = "sha256:9e7f92a037b7dc8cb216a0f323ece11d7ee813572a7762d62fb36c88f33ba917"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.83.0/worktrunk-x86_64-apple-darwin.tar.xz"
 signer = "sigstore-oidc:https://github.com/max-sixty/worktrunk/.github/workflows/release.yaml"
 repository_ids = { repository = "1078528927" }
 
 [tools.worktrunk."platforms.macos-x64-baseline"]
-checksum = "sha256:d9c87668baa1aad2b44d5bfb08074609c5e4a186a0948dfed6e65d6e6c5a7744"
-url = "https://github.com/max-sixty/worktrunk/releases/download/v0.82.0/worktrunk-x86_64-apple-darwin.tar.xz"
+checksum = "sha256:9e7f92a037b7dc8cb216a0f323ece11d7ee813572a7762d62fb36c88f33ba917"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.83.0/worktrunk-x86_64-apple-darwin.tar.xz"
 signer = "sigstore-oidc:https://github.com/max-sixty/worktrunk/.github/workflows/release.yaml"
 repository_ids = { repository = "1078528927" }
 
 [tools.worktrunk."platforms.windows-x64"]
-checksum = "sha256:224325f876b7e4f381255222e18130d8a7575e2c4284baaba4b233f9c56e35a8"
-url = "https://github.com/max-sixty/worktrunk/releases/download/v0.82.0/worktrunk-x86_64-pc-windows-msvc.zip"
+checksum = "sha256:db4f76d81db05ac076566511948a5c8fa792910a7dcb15a1ac23a5409298fae8"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.83.0/worktrunk-x86_64-pc-windows-msvc.zip"
 signer = "sigstore-oidc:https://github.com/max-sixty/worktrunk/.github/workflows/release.yaml"
 repository_ids = { repository = "1078528927" }
 
 [tools.worktrunk."platforms.windows-x64-baseline"]
-checksum = "sha256:224325f876b7e4f381255222e18130d8a7575e2c4284baaba4b233f9c56e35a8"
-url = "https://github.com/max-sixty/worktrunk/releases/download/v0.82.0/worktrunk-x86_64-pc-windows-msvc.zip"
+checksum = "sha256:db4f76d81db05ac076566511948a5c8fa792910a7dcb15a1ac23a5409298fae8"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.83.0/worktrunk-x86_64-pc-windows-msvc.zip"
 signer = "sigstore-oidc:https://github.com/max-sixty/worktrunk/.github/workflows/release.yaml"
 repository_ids = { repository = "1078528927" }
 
 [[tools.zizmor]]
-version = "1.32.0"
+version = "1.33.1"
 backend = "aqua:zizmorcore/zizmor"
-specifiers = ["1.32.0"]
+specifiers = ["1.33.1"]
 
 [tools.zizmor."platforms.linux-arm64"]
-checksum = "sha256:cb152b207f815116d7fa1c1ee4614f61578803351395052908095e79adfd9fd0"
-url = "https://github.com/zizmorcore/zizmor/releases/download/v1.32.0/zizmor-aarch64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/zizmorcore/zizmor/releases/assets/703541931"
+checksum = "sha256:aa487c792a7cbbe86e4f8dccd3b66de33b3b51813c090aaa0842d7ea08a3fc35"
+url = "https://github.com/zizmorcore/zizmor/releases/download/v1.33.1/zizmor-aarch64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/zizmorcore/zizmor/releases/assets/780655950"
 provenance = "github-attestations"
 
 [tools.zizmor."platforms.linux-arm64-musl"]
-checksum = "sha256:cb152b207f815116d7fa1c1ee4614f61578803351395052908095e79adfd9fd0"
-url = "https://github.com/zizmorcore/zizmor/releases/download/v1.32.0/zizmor-aarch64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/zizmorcore/zizmor/releases/assets/703541931"
+checksum = "sha256:aa487c792a7cbbe86e4f8dccd3b66de33b3b51813c090aaa0842d7ea08a3fc35"
+url = "https://github.com/zizmorcore/zizmor/releases/download/v1.33.1/zizmor-aarch64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/zizmorcore/zizmor/releases/assets/780655950"
 provenance = "github-attestations"
 
 [tools.zizmor."platforms.linux-x64"]
-checksum = "sha256:bb110cc765eca9cd7efb2e284a956be5974c60027b0970f16397d86208a9957b"
-url = "https://github.com/zizmorcore/zizmor/releases/download/v1.32.0/zizmor-x86_64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/zizmorcore/zizmor/releases/assets/703541932"
+checksum = "sha256:3e6a301c7a820a2501915f5a9de8c0486da82bdec7965f068477538a98743d43"
+url = "https://github.com/zizmorcore/zizmor/releases/download/v1.33.1/zizmor-x86_64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/zizmorcore/zizmor/releases/assets/780655958"
 provenance = "github-attestations"
 
 [tools.zizmor."platforms.linux-x64-baseline"]
-checksum = "sha256:bb110cc765eca9cd7efb2e284a956be5974c60027b0970f16397d86208a9957b"
-url = "https://github.com/zizmorcore/zizmor/releases/download/v1.32.0/zizmor-x86_64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/zizmorcore/zizmor/releases/assets/703541932"
+checksum = "sha256:3e6a301c7a820a2501915f5a9de8c0486da82bdec7965f068477538a98743d43"
+url = "https://github.com/zizmorcore/zizmor/releases/download/v1.33.1/zizmor-x86_64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/zizmorcore/zizmor/releases/assets/780655958"
 provenance = "github-attestations"
 
 [tools.zizmor."platforms.linux-x64-musl"]
-checksum = "sha256:bb110cc765eca9cd7efb2e284a956be5974c60027b0970f16397d86208a9957b"
-url = "https://github.com/zizmorcore/zizmor/releases/download/v1.32.0/zizmor-x86_64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/zizmorcore/zizmor/releases/assets/703541932"
+checksum = "sha256:3e6a301c7a820a2501915f5a9de8c0486da82bdec7965f068477538a98743d43"
+url = "https://github.com/zizmorcore/zizmor/releases/download/v1.33.1/zizmor-x86_64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/zizmorcore/zizmor/releases/assets/780655958"
 provenance = "github-attestations"
 
 [tools.zizmor."platforms.linux-x64-musl-baseline"]
-checksum = "sha256:bb110cc765eca9cd7efb2e284a956be5974c60027b0970f16397d86208a9957b"
-url = "https://github.com/zizmorcore/zizmor/releases/download/v1.32.0/zizmor-x86_64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/zizmorcore/zizmor/releases/assets/703541932"
+checksum = "sha256:3e6a301c7a820a2501915f5a9de8c0486da82bdec7965f068477538a98743d43"
+url = "https://github.com/zizmorcore/zizmor/releases/download/v1.33.1/zizmor-x86_64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/zizmorcore/zizmor/releases/assets/780655958"
 provenance = "github-attestations"
 
 [tools.zizmor."platforms.macos-arm64"]
-checksum = "sha256:6efed18c4539a663fd3c851a2be9533fd8456c4e646d9416206da059154a0d3c"
-url = "https://github.com/zizmorcore/zizmor/releases/download/v1.32.0/zizmor-aarch64-apple-darwin.tar.gz"
-url_api = "https://api.github.com/repos/zizmorcore/zizmor/releases/assets/703541933"
+checksum = "sha256:68516d45723aac36e9c87c47d56e8418009fcb919c6ceb44514d85b9d0c1c011"
+url = "https://github.com/zizmorcore/zizmor/releases/download/v1.33.1/zizmor-aarch64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/zizmorcore/zizmor/releases/assets/780655957"
 provenance = "github-attestations"
 
 [tools.zizmor."platforms.macos-x64"]
-checksum = "sha256:6983143c719ada6845a69cc4dd2bacc215f971662fecd8bbd2678388e5ce5969"
-url = "https://github.com/zizmorcore/zizmor/releases/download/v1.32.0/zizmor-x86_64-apple-darwin.tar.gz"
-url_api = "https://api.github.com/repos/zizmorcore/zizmor/releases/assets/703541930"
+checksum = "sha256:8b609d38243c6dd6ddd29bf93d02d886eb507383fe4735b1cde73e66e4de4f29"
+url = "https://github.com/zizmorcore/zizmor/releases/download/v1.33.1/zizmor-x86_64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/zizmorcore/zizmor/releases/assets/780655956"
 provenance = "github-attestations"
 
 [tools.zizmor."platforms.macos-x64-baseline"]
-checksum = "sha256:6983143c719ada6845a69cc4dd2bacc215f971662fecd8bbd2678388e5ce5969"
-url = "https://github.com/zizmorcore/zizmor/releases/download/v1.32.0/zizmor-x86_64-apple-darwin.tar.gz"
-url_api = "https://api.github.com/repos/zizmorcore/zizmor/releases/assets/703541930"
+checksum = "sha256:8b609d38243c6dd6ddd29bf93d02d886eb507383fe4735b1cde73e66e4de4f29"
+url = "https://github.com/zizmorcore/zizmor/releases/download/v1.33.1/zizmor-x86_64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/zizmorcore/zizmor/releases/assets/780655956"
 provenance = "github-attestations"
 
 [tools.zizmor."platforms.windows-x64"]
-checksum = "sha256:d284a16e09d9df4ce2c000357e7b59bd531be093bea5718a1ce225b449b59d49"
-url = "https://github.com/zizmorcore/zizmor/releases/download/v1.32.0/zizmor-x86_64-pc-windows-msvc.zip"
-url_api = "https://api.github.com/repos/zizmorcore/zizmor/releases/assets/703541929"
+checksum = "sha256:f02ebeedf651da468b4de19d31f0609050af74e11be41dc46d82e355cf44f68b"
+url = "https://github.com/zizmorcore/zizmor/releases/download/v1.33.1/zizmor-x86_64-pc-windows-msvc.zip"
+url_api = "https://api.github.com/repos/zizmorcore/zizmor/releases/assets/780655954"
 provenance = "github-attestations"
 
 [tools.zizmor."platforms.windows-x64-baseline"]
-checksum = "sha256:d284a16e09d9df4ce2c000357e7b59bd531be093bea5718a1ce225b449b59d49"
-url = "https://github.com/zizmorcore/zizmor/releases/download/v1.32.0/zizmor-x86_64-pc-windows-msvc.zip"
-url_api = "https://api.github.com/repos/zizmorcore/zizmor/releases/assets/703541929"
+checksum = "sha256:f02ebeedf651da468b4de19d31f0609050af74e11be41dc46d82e355cf44f68b"
+url = "https://github.com/zizmorcore/zizmor/releases/download/v1.33.1/zizmor-x86_64-pc-windows-msvc.zip"
+url_api = "https://api.github.com/repos/zizmorcore/zizmor/releases/assets/780655954"
 provenance = "github-attestations"

@@ -11,7 +11,7 @@
     "@biomejs/biome": "2.6.8",
     "@cspell/cspell-junit-reporter": "10.5.1",
     "@earendil-works/pi-coding-agent": "1.5.2",
-    "@sentry/warden": "0.51.1",
+    "@sentry/warden": "0.54.0",
     "cspell": "10.5.1",
     "oxfmt": "0.78.0",
     "oxlint": "1.93.0",

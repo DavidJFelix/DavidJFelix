@@ -23,7 +23,7 @@
   "dependencies": {
     "@ark-ui/vue": "^5.37.2",
     "@davidjfelix/og": "workspace:*",
-    "@sentry/browser": "11.10.0",
+    "@sentry/browser": "11.18.0",
     "h3": "^2.0.0",
     "nuxt": "^4.4.8",
     "posthog-js": "^1.393.0",

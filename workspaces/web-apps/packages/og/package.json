@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "@fontsource/inter": "5.3.0",
-    "@takumi-rs/wasm": "2.20.0"
+    "@takumi-rs/wasm": "2.22.1"
   },
   "devDependencies": {
     "@types/node": "catalog:",
